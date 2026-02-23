@@ -2,8 +2,8 @@ import { Chance } from 'chance';
 
 import {
   GrafanaAlertStateDecision,
+  GrafanaPromRulesResponse,
   PromAlertingRuleState,
-  PromRulesResponse,
   PromRuleType,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -57,7 +57,11 @@ export function getRulerRulesResponse(folderName: string, folderUid: string, rul
   };
 }
 
-export function getPrometheusRulesResponse(folderName: string, rule_uid: string): PromRulesResponse {
+export function getPrometheusRulesResponse(
+  folderName: string,
+  folderUid: string,
+  rule_uid: string
+): GrafanaPromRulesResponse {
   const random = Chance(1);
   return {
     status: 'success',
@@ -66,6 +70,7 @@ export function getPrometheusRulesResponse(folderName: string, rule_uid: string)
         {
           name: 'foo',
           file: folderName,
+          folderUid: folderUid,
           rules: [
             {
               alerts: [],
@@ -75,11 +80,15 @@ export function getPrometheusRulesResponse(folderName: string, rule_uid: string)
               query:
                 '[{"refId":"A","queryType":"","relativeTimeRange":{"from":600,"to":0},"datasourceUid":"gdev-testdata","model":{"hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A"}},{"refId":"B","queryType":"","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"name":"Expression","type":"__expr__","uid":"__expr__"},"expression":"A","intervalMs":1000,"maxDataPoints":43200,"refId":"B","type":"threshold"}}]',
               duration: 300,
+              isPaused: false,
               health: 'ok',
               type: PromRuleType.Alerting,
               lastEvaluation: '0001-01-01T00:00:00Z',
               evaluationTime: 0,
               uid: rule_uid,
+              folderUid: folderUid,
+              totals: {},
+              totalsFiltered: {},
             },
           ],
           interval: 60,

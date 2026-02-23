@@ -1,15 +1,15 @@
-import { isEmpty } from 'lodash';
+import { pickBy } from 'lodash';
 
-import { createMonitoringLogger } from '@grafana/runtime';
-import { config, reportInteraction } from '@grafana/runtime/src';
-import { contextSrv } from 'app/core/core';
+import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
-import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
+import { AdvancedFilters } from './rule-list/filter/types';
+import { RulesFilter } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
 
 export const LogMessages = {
@@ -35,23 +35,27 @@ const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger
 
 export { logError, logInfo, logMeasurement, logWarning };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
-  type: string,
-  func: TFunc,
-  context: Record<string, string>
-): (...args: Parameters<TFunc>) => Promise<Awaited<ReturnType<TFunc>>> {
-  return async function (...args) {
-    const startLoadingTs = performance.now();
+/**
+ * Utility function to measure performance of async operations
+ * @param func Function to measure
+ * @param measurementName Name of the measurement for logging
+ * @param context Context for logging
+ */
+export function withPerformanceLogging<TArgs extends unknown[], TReturn>(
+  func: (...args: TArgs) => Promise<TReturn>,
+  measurementName: string,
+  context: Record<string, string> = {}
+): (...args: TArgs) => Promise<TReturn> {
+  return async function (...args: TArgs): Promise<TReturn> {
+    const startMark = `${measurementName}:start`;
+    performance.mark(startMark);
 
     const response = await func(...args);
-    const loadTimesMs = performance.now() - startLoadingTs;
 
+    const loadTimeMeasure = performance.measure(measurementName, startMark);
     logMeasurement(
-      type,
-      {
-        loadTimesMs,
-      },
+      measurementName,
+      { duration: loadTimeMeasure.duration, loadTimesMs: loadTimeMeasure.duration },
       context
     );
 
@@ -218,43 +222,28 @@ export const trackRuleVersionsRestoreFail = async (
   reportInteraction('grafana_alerting_rule_versions_restore_error', { ...payload });
 };
 
-interface RulesSearchInteractionPayload {
-  filter: string;
-  triggeredBy: 'typing' | 'component';
-}
+export const trackDeletedRuleRestoreSuccess = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_success');
+};
 
-function trackRulesSearchInteraction(payload: RulesSearchInteractionPayload) {
-  reportInteraction('grafana_alerting_rules_search', { ...payload });
-}
+export const trackDeletedRuleRestoreFail = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_error');
+};
 
-export function trackRulesSearchInputInteraction({ oldQuery, newQuery }: { oldQuery: string; newQuery: string }) {
-  try {
-    const oldFilter = getSearchFilterFromQuery(oldQuery);
-    const newFilter = getSearchFilterFromQuery(newQuery);
+export const trackImportToGMASuccess = async (payload: {
+  importSource: 'yaml' | 'datasource';
+  isRootFolder: boolean;
+  namespace?: string;
+  ruleGroup?: string;
+  pauseRecordingRules: boolean;
+  pauseAlertingRules: boolean;
+}) => {
+  reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
+};
 
-    const oldFilterTerms = extractFilterKeys(oldFilter);
-    const newFilterTerms = extractFilterKeys(newFilter);
-
-    const newTerms = newFilterTerms.filter((term) => !oldFilterTerms.includes(term));
-    newTerms.forEach((term) => {
-      trackRulesSearchInteraction({ filter: term, triggeredBy: 'typing' });
-    });
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      logError(e);
-    }
-  }
-}
-
-function extractFilterKeys(filter: RulesFilter) {
-  return Object.entries(filter)
-    .filter(([_, value]) => !isEmpty(value))
-    .map(([key]) => key);
-}
-
-export function trackRulesSearchComponentInteraction(filter: keyof RulesFilter) {
-  trackRulesSearchInteraction({ filter, triggeredBy: 'component' });
-}
+export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'datasource' }) => {
+  reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
+};
 
 export function trackRulesListViewChange(payload: { view: string }) {
   reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
@@ -280,8 +269,174 @@ export function trackUseCentralHistoryMaxEventsReached(payload: { from: number; 
   reportInteraction('grafana_alerting_central_alert_state_history_max_events_reached', payload);
 }
 
+export function trackFolderBulkActionsDeleteSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_success');
+}
+
+export function trackFolderBulkActionsDeleteFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_fail');
+}
+
+export function trackFolderBulkActionsPauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_success');
+}
+
+export function trackFolderBulkActionsUnpauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_success');
+}
+
+export function trackFolderBulkActionsPauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_fail');
+}
+
+export function trackFolderBulkActionsUnpauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
+}
+
+export function trackFilterButtonClick() {
+  reportInteraction('grafana_alerting_filter_button_click');
+}
+
+export function trackAlertRuleFilterEvent(
+  payload:
+    | { filterMethod: 'search-input'; filter: RulesFilter; filterVariant: 'v1' | 'v2' }
+    | { filterMethod: 'filter-component'; filter: keyof RulesFilter; filterVariant: 'v1' | 'v2' }
+) {
+  const variant = payload.filterVariant;
+  if (payload.filterMethod === 'search-input') {
+    const meaningfulValues = filterMeaningfulValues(payload.filter);
+    reportInteraction('grafana_alerting_rules_filter', {
+      ...meaningfulValues,
+      filter_method: 'search-input',
+      filter_variant: variant,
+    });
+    return;
+  }
+  reportInteraction('grafana_alerting_rules_filter', {
+    filter: payload.filter,
+    filter_method: 'filter-component',
+    filter_variant: variant,
+  });
+}
+
+export function trackRulesSearchInputCleared(prev: string, next: string) {
+  // Only report an explicit clear action when transitioning from non-empty to empty
+  if (prev !== '' && next === '') {
+    reportInteraction('grafana_alerting_rules_filter_cleared', { filter_method: 'search-input' });
+  }
+}
+
+export function trackFilterButtonApplyClick(payload: AdvancedFilters, pluginsFilterEnabled: boolean) {
+  // Filter out empty/default values before tracking
+  const meaningfulValues = filterMeaningfulValues(payload, { pluginsFilterEnabled });
+
+  reportInteraction('grafana_alerting_rules_filter', {
+    ...meaningfulValues,
+    filter_method: 'filter-component',
+    filter_variant: 'v2',
+  });
+}
+
+function filterMeaningfulValues(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  obj: Record<string, any>,
+  opts?: { pluginsFilterEnabled?: boolean }
+) {
+  const { pluginsFilterEnabled = true } = opts ?? {};
+  return pickBy(obj, (value, key) => {
+    if (value === null || value === undefined || value === '') {
+      return false;
+    }
+    if (Array.isArray(value) && value.length === 0) {
+      return false;
+    }
+    if (value === '*') {
+      return false;
+    }
+    if (key === 'plugins' && !pluginsFilterEnabled) {
+      return false;
+    }
+    if (key === 'plugins' && value === 'show') {
+      return false;
+    }
+    return true;
+  });
+}
+
+export function trackFilterButtonClearClick() {
+  reportInteraction('grafana_alerting_rules_filter_cleared', {
+    filter_method: 'filter-component',
+  });
+}
+
 export type AlertRuleTrackingProps = {
   user_id: number;
   grafana_version?: string;
   org_id?: number;
 };
+
+// ============================================================================
+// Alerts Activity Banner & View Experience Telemetry
+// ============================================================================
+
+/**
+ * Track banner impression - fired once per session when banner is first shown.
+ * Note: user_id, org_id, grafana_version, and other common properties are automatically
+ * tracked by the analytics infrastructure.
+ */
+export function trackAlertsActivityBannerImpression() {
+  reportInteraction('grafana_alerting_alerts_activity_banner_impression');
+}
+
+/**
+ * Track when user clicks "Open Alerts Activity" CTA
+ */
+export function trackAlertsActivityBannerClickTry() {
+  reportInteraction('grafana_alerting_alerts_activity_banner_click');
+}
+
+/**
+ * Track when user dismisses the banner
+ */
+export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
+  reportInteraction('grafana_alerting_alerts_activity_banner_dismiss', {
+    dismissed_until: dismissedUntil,
+  });
+}
+
+// ============================================================================
+// View Experience Toggle Telemetry (persistent control near page title)
+// ============================================================================
+
+// Payload for view experience toggle telemetry.
+
+export interface ViewExperienceToggleEventPayload {
+  currentView: 'v1' | 'v2';
+  targetView: 'v1' | 'v2';
+}
+
+/**
+ * Track when user clicks the view experience toggle (either direction)
+ */
+export function trackViewExperienceToggleClick(
+  payload: ViewExperienceToggleEventPayload & { action: 'clicked' | 'canceled' | 'confirmed' }
+) {
+  reportInteraction('grafana_alerting_view_experience_toggle', { ...payload });
+}
+
+/**
+ * Track when view experience preference is persisted (or fails to persist)
+ */
+export function trackViewExperienceToggleConfirmed(
+  payload: ViewExperienceToggleEventPayload & { preferenceSaved: boolean }
+) {
+  reportInteraction('grafana_alerting_view_experience_confirmed', { ...payload });
+}
+
+/**
+ * Track which rule list version (V1 or V2) is displayed on page load.
+ * Fired once per mount in the RuleList router component.
+ */
+export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
+  reportInteraction('grafana_alerting_rule_list_page_view', payload);
+}

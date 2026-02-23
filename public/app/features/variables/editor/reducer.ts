@@ -65,7 +65,7 @@ const variableEditorReducerSlice = createSlice({
     },
     addVariableEditorError: (
       state: VariableEditorState,
-      action: PayloadAction<{ errorProp: string; errorText: any }>
+      action: PayloadAction<{ errorProp: string; errorText: string }>
     ) => {
       state.errors[action.payload.errorProp] = action.payload.errorText;
       state.isValid = Object.keys(state.errors).length === 0;

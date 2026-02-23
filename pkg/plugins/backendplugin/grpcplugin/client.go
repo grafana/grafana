@@ -1,15 +1,20 @@
 package grpcplugin
 
 import (
+	"os"
 	"os/exec"
+	"runtime"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	"github.com/hashicorp/go-hclog"
 	goplugin "github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/go-plugin/runner"
+	"github.com/hashicorp/go-secure-stdlib/plugincontainer"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	trace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/embedded"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -45,7 +50,7 @@ type clientTracerProvider struct {
 	embedded.TracerProvider
 }
 
-func (ctp *clientTracerProvider) Tracer(instrumentationName string, opts ...trace.TracerOption) trace.Tracer {
+func (ctp *clientTracerProvider) Tracer(_ string, _ ...trace.TracerOption) trace.Tracer {
 	return ctp.tracer
 }
 
@@ -53,15 +58,15 @@ func newClientTracerProvider(tracer trace.Tracer) trace.TracerProvider {
 	return &clientTracerProvider{tracer: tracer}
 }
 
-func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, logger log.Logger, tracer trace.Tracer,
-	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
-	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
-	// nolint:gosec
-	cmd := exec.Command(executablePath, args...)
-	cmd.Env = env
+func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logger, tracer trace.Tracer) (*goplugin.ClientConfig, error) {
+	executablePath := descriptor.executablePath
+	skipHostEnvVars := descriptor.skipHostEnvVars
+	versionedPlugins := descriptor.versionedPlugins
 
-	return &goplugin.ClientConfig{
-		Cmd:              cmd,
+	if runtime.GOOS == "linux" && descriptor.containerMode.enabled {
+		return containerClientConfig(executablePath, descriptor.containerMode.image, descriptor.containerMode.tag, logger, versionedPlugins, skipHostEnvVars, tracer), nil
+	}
+	cfg := &goplugin.ClientConfig{
 		HandshakeConfig:  handshake,
 		VersionedPlugins: versionedPlugins,
 		SkipHostEnv:      skipHostEnvVars,
@@ -77,6 +82,48 @@ func newClientConfig(executablePath string, args []string, env []string, skipHos
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler(otelgrpc.WithTracerProvider(newClientTracerProvider(tracer)))),
 		},
 	}
+
+	if descriptor.runnerFunc != nil {
+		cfg.RunnerFunc = descriptor.runnerFunc
+		td, err := os.MkdirTemp("", "plugin")
+		if err != nil {
+			return nil, err
+		}
+		cfg.UnixSocketConfig = &goplugin.UnixSocketConfig{TempDir: td}
+		logger.Debug("Using runner mode", "os", runtime.GOOS, "executablePath", executablePath)
+	} else {
+		logger.Debug("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
+		// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
+		// nolint:gosec
+		cfg.Cmd = exec.Command(executablePath, descriptor.executableArgs...)
+		cfg.Cmd.Env = env
+	}
+
+	return cfg, nil
+}
+
+func containerClientConfig(executablePath, containerImage, containerTag string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
+	logger.Info("Using container mode", "executable", executablePath, "image", containerImage, "tag", containerTag)
+	return &goplugin.ClientConfig{
+		RunnerFunc: func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error) {
+			logger.Info("Creating container runner", "executablePath", executablePath, "tmpDir", tmpDir)
+			config := &plugincontainer.Config{
+				Image: containerImage,
+				Tag:   containerTag,
+				Env:   cmd.Env,
+			}
+
+			return config.NewContainerRunner(l, cmd, tmpDir)
+		},
+		HandshakeConfig:  handshake,
+		VersionedPlugins: versionedPlugins,
+		SkipHostEnv:      skipHostEnvVars,
+		Logger:           logWrapper{Logger: logger},
+		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
+		GRPCDialOptions: []grpc.DialOption{
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler(otelgrpc.WithTracerProvider(newClientTracerProvider(tracer)))),
+		},
+	}
 }
 
 // StartRendererFunc callback function called when a renderer plugin is started.
@@ -89,8 +136,16 @@ type PluginDescriptor struct {
 	executableArgs   []string
 	skipHostEnvVars  bool
 	managed          bool
+	containerMode    containerModeOpts
+	runnerFunc       func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error)
 	versionedPlugins map[int]goplugin.PluginSet
 	startRendererFn  StartRendererFunc
+}
+
+type containerModeOpts struct {
+	enabled bool
+	image   string
+	tag     string
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.

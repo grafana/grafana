@@ -1,35 +1,72 @@
-import { reportInteraction } from '@grafana/runtime';
-import { Button, Stack } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { t } from 'app/core/internationalization';
-import { contextSrv } from 'app/core/services/context_srv';
-import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
-import { AccessControlAction } from 'app/types';
+import { skipToken } from '@reduxjs/toolkit/query';
+
+import { t } from '@grafana/i18n';
+import { ToolbarButton } from '@grafana/ui';
+import { useGetCurrentOrgQuotaQuery } from 'app/api/clients/legacy';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-export function InviteUserButton() {
-  return config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) ? (
-    <Stack gap={2} alignItems="center">
-      <NavToolbarSeparator />
-      <Button
-        icon="add-user"
-        size="sm"
-        variant="secondary"
-        fill="solid"
-        onClick={() => {
-          reportInteraction('invite_user_button_clicked', {
-            placement: 'top_bar_right',
-          });
+import {
+  performInviteUserClick,
+  performUpgradeUserClick,
+  shouldRenderInviteUserButton,
+  shouldRenderUpgradeUserButton,
+} from './InviteUserButtonUtils';
 
-          const url = getExternalUserMngLinkUrl('invite-user-top-bar');
-          window.open(url.toString(), '_blank');
-        }}
-        tooltip={t('navigation.invite-user.invite-tooltip', 'Invite new member')}
-      >
-        {t('navigation.invite-user.invite-button', 'Invite')}
-      </Button>
-      <NavToolbarSeparator />
-    </Stack>
-  ) : null;
+export function InviteUserButton() {
+  const isLargeScreen = useMediaQueryMinWidth('lg');
+  const shouldRender = shouldRenderInviteUserButton();
+  const shouldCheckQuota = shouldRenderUpgradeUserButton();
+
+  // Only fetch quotas when we should check quota (Cloud instance with upgrade URL configured)
+  const { data: quotas } = useGetCurrentOrgQuotaQuery(!shouldCheckQuota ? skipToken : undefined);
+
+  // Check if org_user quota is reached
+  const userQuota = quotas?.find((quota) => quota.target === 'org_user');
+  const isQuotaReached =
+    userQuota !== undefined &&
+    userQuota.used !== undefined &&
+    userQuota.limit !== undefined &&
+    userQuota.limit >= 0 &&
+    userQuota.used >= userQuota.limit;
+
+  // Show upgrade button if: should check quota (Cloud + upgrade URL configured) AND quota is reached
+  const showUpgrade = shouldCheckQuota && isQuotaReached;
+
+  const handleClick = () => {
+    try {
+      if (showUpgrade) {
+        performUpgradeUserClick('top_bar_right');
+      } else {
+        performInviteUserClick('top_bar_right', 'invite-user-top-bar');
+      }
+    } catch (error) {
+      console.error('Failed to handle invite/upgrade user click:', error);
+    }
+  };
+
+  const buttonText = showUpgrade
+    ? t('navigation.invite-user.upgrade-button', 'Upgrade')
+    : t('navigation.invite-user.invite-button', 'Invite');
+  const tooltipText = showUpgrade
+    ? t('navigation.invite-user.upgrade-tooltip', 'Upgrade to add more users')
+    : t('navigation.invite-user.invite-tooltip', 'Invite user');
+
+  return (
+    shouldRender && (
+      <>
+        <ToolbarButton
+          icon="add-user"
+          iconOnly={!isLargeScreen}
+          onClick={handleClick}
+          tooltip={tooltipText}
+          aria-label={tooltipText}
+        >
+          {isLargeScreen ? buttonText : undefined}
+        </ToolbarButton>
+        <NavToolbarSeparator />
+      </>
+    )
+  );
 }

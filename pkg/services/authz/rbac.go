@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,6 +21,9 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/middleware"
+
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,6 +32,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,21 +52,49 @@ func ProvideAuthZClient(
 	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
+	zanzanaClient zanzana.Client,
+	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
+		return zanzanaClient, nil
+	}
+
+	// Provisioning uses mode 4 (read+write only to unified storage)
+	// For G12 launch, we can disable caching for this and find a more scalable solution soon
+	// most likely this would involve passing the RV (timestamp!) in each check method
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		authCfg.cacheTTL = 0
+	}
+
 	switch authCfg.mode {
 	case clientModeCloud:
-		return newRemoteRBACClient(authCfg, tracer)
+		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
+		if zanzanaEnabled {
+			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
+		}
+		return rbacClient, err
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
+
+		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
+		if cfg != nil {
+			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
+		}
 
 		// Register the server
 		server := rbac.NewService(
@@ -68,7 +102,7 @@ func ProvideAuthZClient(
 			// When running in-proc we get a injection cycle between
 			// authz client, resource client and apiserver so we need to use
 			// package level function to get rest config
-			store.NewAPIFolderStore(tracer, apiserver.GetRestConfig),
+			store.NewAPIFolderStore(tracer, reg, restConfig.GetRestConfig),
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
@@ -78,29 +112,70 @@ func ProvideAuthZClient(
 			tracer,
 			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
+			rbacSettings,
 		)
 
 		channel := &inprocgrpc.Channel{}
-		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+
+		authInterceptor := grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
 			ctx = authlib.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "*",
 				},
 			}))
 			return ctx, nil
-		}))
+		})
+
+		// Chain trace propagation with the auth interceptor.
+		// inprocgrpc.Channel wraps the server context with noValuesContext which
+		// strips all context values — including OpenTelemetry spans — to prevent
+		// leaking client state to the server. We recover the span context from
+		// the original client context so that server-side spans are properly
+		// linked to the calling trace.
+		channel.WithServerUnaryInterceptor(func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+			if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
+				if sc := trace.SpanContextFromContext(clientCtx); sc.IsValid() {
+					ctx = trace.ContextWithRemoteSpanContext(ctx, sc)
+				}
+			}
+			return authInterceptor(ctx, req, info, handler)
+		})
 		authzv1.RegisterAuthzServiceServer(channel, server)
-		return newRBACClient(channel, tracer), nil
+		rbacClient := authzlib.NewClient(
+			channel,
+			authzlib.WithCacheClientOption(&NoopCache{}),
+			authzlib.WithTracerClientOption(tracer),
+		)
+
+		if zanzanaEnabled {
+			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
+		}
+
+		return rbacClient, nil
 	}
 }
 
 // ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
 // You need to provide a remote address in the configuration
 func ProvideStandaloneAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer, reg prometheus.Registerer,
 ) (authlib.AccessClient, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+
+	zanzanaClient, err := ProvideStandaloneZanzanaClient(cfg, features, reg)
+	if err != nil {
+		return nil, err
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
+		return zanzanaClient, nil
 	}
 
 	authCfg, err := readAuthzClientSettings(cfg)
@@ -108,10 +183,19 @@ func ProvideStandaloneAuthZClient(
 		return nil, err
 	}
 
-	return newRemoteRBACClient(authCfg, tracer)
+	remoteRBACClient, err := newRemoteRBACClient(authCfg, tracer, reg)
+	if err != nil {
+		return nil, err
+	}
+
+	if zanzanaEnabled {
+		return zClient.WithShadowClient(remoteRBACClient, zanzanaClient, reg)
+	}
+
+	return remoteRBACClient, nil
 }
 
-func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) (authlib.AccessClient, error) {
+func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (authlib.AccessClient, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            clientCfg.token,
 		TokenExchangeURL: clientCfg.tokenExchangeURL,
@@ -128,29 +212,52 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer tracing.Tracer) 
 		}
 	}
 
-	conn, err := grpc.NewClient(
-		clientCfg.remoteAddress,
+	authzRequestDuration := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+		Name:                            "authz_server_client_request_duration_seconds",
+		Help:                            "Time spent executing requests to authz server.",
+		NativeHistogramBucketFactor:     1.1,
+		NativeHistogramMaxBucketNumber:  160,
+		NativeHistogramMinResetDuration: time.Hour,
+	}, []string{"operation", "status_code"})
+
+	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
+
+	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCreds),
 		grpc.WithPerRPCCredentials(
 			NewGRPCTokenAuth(AuthzServiceAudience, clientCfg.tokenNamespace, tokenClient),
 		),
-	)
+		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
+		grpc.WithChainStreamInterceptor(streamInterceptors...),
+	}
+
+	// // if we serve the client as a load balancer
+	if clientCfg.loadBalancingEnabled {
+		// Use round_robin to balances requests more evenly over the available Grafana replicas.
+		opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`))
+
+		// Disable looking up service config from TXT DNS records.
+		// This reduces the number of requests made to the DNS servers.
+		opts = append(opts, grpc.WithDisableServiceConfig())
+	}
+
+	conn, err := grpc.NewClient(clientCfg.remoteAddress, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
 	}
 
-	return newRBACClient(conn, tracer), nil
-}
-
-func newRBACClient(conn grpc.ClientConnInterface, tracer tracing.Tracer) authlib.AccessClient {
-	return authzlib.NewClient(
-		conn,
-		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
-			Expiry:          30 * time.Second,
+	// Client side cache
+	var authzCache cache.Cache = &NoopCache{}
+	if clientCfg.cacheTTL != 0 {
+		authzCache = cache.NewLocalCache(cache.Config{
+			Expiry:          clientCfg.cacheTTL,
 			CleanupInterval: 2 * time.Minute,
-		})),
-		authzlib.WithTracerClientOption(tracer),
-	)
+		})
+	}
+
+	client := authzlib.NewClient(conn, authzlib.WithCacheClientOption(authzCache), authzlib.WithTracerClientOption(tracer))
+
+	return client, nil
 }
 
 func RegisterRBACAuthZService(
@@ -168,12 +275,14 @@ func RegisterRBACAuthZService(
 	if cfg.Folder.Host == "" {
 		folderStore = store.NewSQLFolderStore(db, tracer)
 	} else {
-		folderStore = store.NewAPIFolderStore(tracer, func(ctx context.Context) (*rest.Config, error) {
+		folderStore = store.NewAPIFolderStore(tracer, reg, func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
 				Host: cfg.Folder.Host,
-				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
-					return &tokenExhangeRoundTripper{te: exchangeClient, rt: rt}
-				},
+				WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+					exchangeClient,
+					"folder.grafana.app",
+					clientauth.WildcardNamespace,
+				),
 				TLSClientConfig: rest.TLSClientConfig{
 					Insecure: cfg.Folder.Insecure,
 					CAFile:   cfg.Folder.CAFile,
@@ -193,29 +302,34 @@ func RegisterRBACAuthZService(
 		tracer,
 		reg,
 		cache,
+		rbac.Settings{CacheTTL: cfg.CacheTTL}, // anonymous org role can only be set in-proc
 	)
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
 }
 
-var _ http.RoundTripper = tokenExhangeRoundTripper{}
+type NoopCache struct{}
 
-type tokenExhangeRoundTripper struct {
-	te authnlib.TokenExchanger
-	rt http.RoundTripper
+func (lc *NoopCache) Get(ctx context.Context, key string) ([]byte, error) {
+	return nil, cache.ErrNotFound
 }
 
-func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
-	res, err := t.te.Exchange(r.Context(), authnlib.TokenExchangeRequest{
-		Namespace: "*",
-		Audiences: []string{"folder.grafana.app"},
-	})
+func (lc *NoopCache) Set(ctx context.Context, key string, data []byte, exp time.Duration) error {
+	return nil
+}
 
-	if err != nil {
-		return nil, fmt.Errorf("create access token: %w", err)
-	}
+func (lc *NoopCache) Delete(ctx context.Context, key string) error {
+	return nil
+}
 
-	r.Header.Set("X-Access-Token", "Bearer "+res.Token)
-	return t.rt.RoundTrip(r)
+// instrument is the same as grpcclient.Instrument but without the middleware.ClientUserHeaderInterceptor,
+// otgrpc.OpenTracingClientInterceptor, otgrpc.OpenTracingStreamClientInterceptor
+// and middleware.StreamClientUserHeaderInterceptor as we don't need them.
+func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
+	return []grpc.UnaryClientInterceptor{
+			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}, []grpc.StreamClientInterceptor{
+			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+		}
 }

@@ -2,11 +2,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { mockTimeRange } from '@grafana/plugin-ui/test';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../utils';
 
 import { LogRows, Props } from './LogRows';
-import { createLogRow } from './__mocks__/logRow';
+import { createLogRow } from './mocks/logRow';
 
 jest.mock('../utils', () => ({
   ...jest.requireActual('../utils'),
@@ -17,11 +18,7 @@ jest.mock('../utils', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    featureToggles: {
-      logRowsPopoverMenu: true,
-    },
-  },
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 describe('LogRows', () => {
@@ -43,6 +40,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
 
@@ -72,6 +70,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
     expect(screen.queryAllByRole('row')).toHaveLength(2);
@@ -102,6 +101,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
 
@@ -132,6 +132,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
 
@@ -159,6 +160,7 @@ describe('Popover menu', () => {
         onClickFilterOutString={() => {}}
         onClickFilterString={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
         {...overrides}
       />
     );

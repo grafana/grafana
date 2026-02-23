@@ -1,24 +1,24 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
-import { FolderActionsButton } from '../browse-dashboards/components/FolderActionsButton';
 import { buildNavModel, getLibraryPanelsTabID } from '../folders/state/navModel';
 import { LibraryPanelsSearch } from '../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { OpenLibraryPanelModal } from '../library-panels/components/OpenLibraryPanelModal/OpenLibraryPanelModal';
 import { LibraryElementDTO } from '../library-panels/types';
 
-import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
+import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 export function BrowseFolderLibraryPanelsPage() {
   const { uid: folderUID = '' } = useParams();
-  const { data: folderDTO } = useGetFolderQuery(folderUID);
+  const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
-  const [saveFolder] = useSaveFolderMutation();
+  const [saveFolder] = useUpdateFolder();
 
   const navModel = useMemo(() => {
     if (!folderDTO) {
@@ -54,7 +54,7 @@ export function BrowseFolderLibraryPanelsPage() {
       navId="dashboards/browse"
       pageNav={navModel}
       onEditTitle={onEditTitle}
-      actions={<>{folderDTO && <FolderActionsButton folder={folderDTO} />}</>}
+      actions={folderDTO && <FolderDetailsActions folderDTO={folderDTO} />}
     >
       <Page.Contents>
         <LibraryPanelsSearch

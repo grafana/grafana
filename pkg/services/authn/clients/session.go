@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -18,12 +20,14 @@ import (
 
 var _ authn.ContextAwareClient = new(Session)
 
-func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService, authInfoService login.AuthInfoService) *Session {
+func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService,
+	authInfoService login.AuthInfoService, tracer trace.Tracer) *Session {
 	return &Session{
 		cfg:             cfg,
 		log:             log.New(authn.ClientSession),
 		sessionService:  sessionService,
 		authInfoService: authInfoService,
+		tracer:          tracer,
 	}
 }
 
@@ -32,6 +36,7 @@ type Session struct {
 	log             log.Logger
 	sessionService  auth.UserTokenService
 	authInfoService login.AuthInfoService
+	tracer          trace.Tracer
 }
 
 func (s *Session) Name() string {
@@ -55,7 +60,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
-		return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
+		return nil, authn.NewTokenNeedsRotationError(token.UserId)
 	}
 
 	ident := &authn.Identity{

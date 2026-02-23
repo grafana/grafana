@@ -6,8 +6,12 @@ describe('Trace view', () => {
   });
 
   it('Can lazy load big traces', () => {
-    cy.intercept('GET', '**/api/traces/trace', {
-      fixture: 'long-trace-response.json',
+    cy.intercept('POST', '**/api/ds/query*', (req) => {
+      if (!req.url.includes('ds_type=jaeger')) {
+        return;
+      }
+
+      req.reply({ fixture: 'long-trace-response-backend.json' });
     }).as('longTrace');
 
     e2e.pages.Explore.visit();
@@ -29,15 +33,15 @@ describe('Trace view', () => {
 
     e2e.components.TraceViewer.spanBar().should('be.visible');
 
+    e2e.components.TraceViewer.spanBar().its('length').should('be.equal', 100);
+
+    e2e.pages.Explore.General.scrollView().children().first().scrollTo('bottom');
+
+    // After scrolling we should see 50 spans
     e2e.components.TraceViewer.spanBar()
       .its('length')
-      .then((oldLength) => {
-        e2e.pages.Explore.General.scrollView().children().first().scrollTo('center');
-
-        // After scrolling we should load more spans
-        e2e.components.TraceViewer.spanBar().should(($span) => {
-          expect($span.length).to.be.gt(oldLength);
-        });
+      .should(($span) => {
+        expect($span).to.be.at.most(50);
       });
   });
 });

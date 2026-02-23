@@ -1,27 +1,21 @@
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { InspectTab } from 'app/features/inspector/types';
 
+import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
 import { getQueryRunnerFor } from './utils';
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), {
-    viewPanel: vizPanel.state.key,
+    viewPanel: vizPanel.getPathId(),
     editPanel: undefined,
   });
 }
 
 export function getEditPanelUrl(panelId: number) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });
-}
-
-export function getInspectUrl(vizPanel: VizPanel, inspectTab?: InspectTab) {
-  const inspect = vizPanel.state.key?.replace('-view', '');
-
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { inspect, inspectTab });
 }
 
 export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | undefined> {
@@ -34,10 +28,11 @@ export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | u
   }
 
   const timeRange = sceneGraph.getTimeRange(vizPanel);
+  const datasource = getDatasourceFromQueryRunner(queryRunner);
 
   return getExploreUrl({
     queries: queryRunner.state.queries,
-    dsRef: queryRunner.state.datasource,
+    dsRef: datasource,
     timeRange: timeRange.state.value,
     scopedVars: { __sceneObject: { value: vizPanel } },
     adhocFilters: queryRunner.state.data?.request?.filters,

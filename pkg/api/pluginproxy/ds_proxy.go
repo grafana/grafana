@@ -19,7 +19,6 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -33,6 +32,8 @@ import (
 var (
 	logger = glog.New("data-proxy-log")
 	client = newHTTPClient()
+
+	errPluginProxyRouteAccessDenied = errors.New("plugin proxy route access denied")
 )
 
 type DataSourceProxy struct {
@@ -149,8 +150,8 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetAttributes(
 		attribute.String("datasource_name", proxy.ds.Name),
 		attribute.String("datasource_type", proxy.ds.Type),
-		attribute.String("user", proxy.ctx.SignedInUser.Login),
-		attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID),
+		attribute.String("user", proxy.ctx.Login),
+		attribute.Int64("org_id", proxy.ctx.OrgID),
 	)
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
@@ -263,8 +264,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	}
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
-		reqCtx := contexthandler.FromContext(req.Context())
-		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, reqCtx.UserToken); token != nil {
+		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, proxy.ctx.UserToken); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
 			idToken, ok := token.Extra("id_token").(string)
@@ -302,12 +302,29 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 
 		// route match
-		if !strings.HasPrefix(proxy.proxyPath, route.Path) {
+		r1, err := plugins.CleanRelativePath(proxy.proxyPath)
+		if err != nil {
+			return err
+		}
+		r2, err := plugins.CleanRelativePath(route.Path)
+		if err != nil {
+			return err
+		}
+		// issues/116273: When we have an empty input route (or input that becomes relative to "."), we do not want it
+		//   to be ".". This is because the `CleanRelativePath` function will never return "./" prefixes, and as such,
+		//   the common prefix we need is an empty string.
+		if r1 == "." && proxy.proxyPath != "." {
+			r1 = ""
+		}
+		if r2 == "." && route.Path != "." {
+			r2 = ""
+		}
+		if !strings.HasPrefix(r1, r2) {
 			continue
 		}
 
 		if !proxy.hasAccessToRoute(route) {
-			return errors.New("plugin proxy route access denied")
+			return errPluginProxyRouteAccessDenied
 		}
 
 		proxy.matchedRoute = route
@@ -315,7 +332,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
-	if proxy.ds.Type == datasources.DS_PROMETHEUS {
+	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
 		}

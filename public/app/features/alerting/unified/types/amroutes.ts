@@ -2,6 +2,7 @@ import { MatcherFieldValue } from './silence-form';
 
 export interface FormAmRoute {
   id: string;
+  name?: string;
   object_matchers: MatcherFieldValue[];
   continue: boolean;
   receiver: string;
@@ -12,5 +13,6 @@ export interface FormAmRoute {
   groupIntervalValue: string;
   repeatIntervalValue: string;
   muteTimeIntervals: string[];
+  activeTimeIntervals: string[];
   routes: FormAmRoute[];
 }

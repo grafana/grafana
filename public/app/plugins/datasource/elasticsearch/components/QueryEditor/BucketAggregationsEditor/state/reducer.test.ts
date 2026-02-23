@@ -1,8 +1,8 @@
+import { BucketAggregation, DateHistogram, ElasticsearchDataQuery } from '../../../../dataquery.gen';
 import { defaultBucketAgg } from '../../../../queryDef';
-import { BucketAggregation, DateHistogram, ElasticsearchQuery } from '../../../../types';
 import { reducerTester } from '../../../reducerTester';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
-import { initQuery } from '../../state';
+import { changeEditorTypeAndResetQuery, initQuery } from '../../state';
 import { bucketAggregationConfig } from '../utils';
 
 import {
@@ -28,7 +28,7 @@ describe('Bucket Aggregations Reducer', () => {
       settings: bucketAggregationConfig['terms'].defaultSettings,
     };
 
-    reducerTester<ElasticsearchQuery['bucketAggs']>()
+    reducerTester<ElasticsearchDataQuery['bucketAggs']>()
       .givenReducer(createReducer('@timestamp'), [])
       .whenActionIsDispatched(addBucketAggregation(firstAggregation.id))
       .thenStateShouldEqual([firstAggregation])
@@ -47,7 +47,7 @@ describe('Bucket Aggregations Reducer', () => {
       type: 'date_histogram',
     };
 
-    reducerTester<ElasticsearchQuery['bucketAggs']>()
+    reducerTester<ElasticsearchDataQuery['bucketAggs']>()
       .givenReducer(createReducer('@timestamp'), [firstAggregation, secondAggregation])
       .whenActionIsDispatched(removeBucketAggregation(firstAggregation.id))
       .thenStateShouldEqual([secondAggregation]);
@@ -69,7 +69,7 @@ describe('Bucket Aggregations Reducer', () => {
       settings: bucketAggregationConfig['histogram'].defaultSettings,
     };
 
-    reducerTester<ElasticsearchQuery['bucketAggs']>()
+    reducerTester<ElasticsearchDataQuery['bucketAggs']>()
       .givenReducer(createReducer('@timestamp'), [firstAggregation, secondAggregation])
       .whenActionIsDispatched(
         changeBucketAggregationType({ id: secondAggregation.id, newType: expectedSecondAggregation.type })
@@ -92,7 +92,7 @@ describe('Bucket Aggregations Reducer', () => {
       field: 'new field',
     };
 
-    reducerTester<ElasticsearchQuery['bucketAggs']>()
+    reducerTester<ElasticsearchDataQuery['bucketAggs']>()
       .givenReducer(createReducer('@timestamp'), [firstAggregation, secondAggregation])
       .whenActionIsDispatched(
         changeBucketAggregationField({ id: secondAggregation.id, newField: expectedSecondAggregation.field })
@@ -109,7 +109,7 @@ describe('Bucket Aggregations Reducer', () => {
         },
       ];
 
-      reducerTester<ElasticsearchQuery['bucketAggs']>()
+      reducerTester<ElasticsearchDataQuery['bucketAggs']>()
         .givenReducer(createReducer('@timestamp'), initialState)
         // If the new metric aggregation is non-metric, we should remove all bucket aggregations.
         .whenActionIsDispatched(changeMetricType({ id: 'Some id', type: 'raw_data' }))
@@ -140,7 +140,7 @@ describe('Bucket Aggregations Reducer', () => {
       min_doc_count: '1',
     };
 
-    reducerTester<ElasticsearchQuery['bucketAggs']>()
+    reducerTester<ElasticsearchDataQuery['bucketAggs']>()
       .givenReducer(createReducer('@timestamp'), [firstAggregation, secondAggregation])
       .whenActionIsDispatched(
         changeBucketAggregationSetting({
@@ -156,7 +156,7 @@ describe('Bucket Aggregations Reducer', () => {
     it('Correctly adds a default Date Histogram if there is no aggregation', () => {
       const defaultTimeField = '@timestamp';
 
-      reducerTester<ElasticsearchQuery['bucketAggs']>()
+      reducerTester<ElasticsearchDataQuery['bucketAggs']>()
         .givenReducer(createReducer(defaultTimeField), [])
         .whenActionIsDispatched(initQuery())
         .thenStateShouldEqual([{ ...defaultBucketAgg('2'), field: defaultTimeField }]);
@@ -169,10 +169,33 @@ describe('Bucket Aggregations Reducer', () => {
         field: '@my_time_field',
       };
 
-      reducerTester<ElasticsearchQuery['bucketAggs']>()
+      reducerTester<ElasticsearchDataQuery['bucketAggs']>()
         .givenReducer(createReducer('@timestamp'), [bucketAgg])
         .whenActionIsDispatched(initQuery())
         .thenStateShouldEqual([bucketAgg]);
+    });
+  });
+
+  describe('When switching editor type', () => {
+    it('Should reset bucket aggregations to default when switching editor types', () => {
+      const defaultTimeField = '@timestamp';
+      const initialState: BucketAggregation[] = [
+        {
+          id: '1',
+          type: 'date_histogram',
+          field: '@timestamp',
+        },
+        {
+          id: '2',
+          type: 'terms',
+          field: 'status',
+        },
+      ];
+
+      reducerTester<ElasticsearchDataQuery['bucketAggs']>()
+        .givenReducer(createReducer(defaultTimeField), initialState)
+        .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+        .thenStateShouldEqual([{ ...defaultBucketAgg('2'), field: defaultTimeField }]);
     });
   });
 });

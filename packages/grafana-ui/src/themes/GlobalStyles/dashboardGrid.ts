@@ -64,6 +64,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
 
     // Disable animation on initial rendering and enable it when component has been mounted.
     '.react-grid-item.cssTransforms': {
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transitionProperty: 'none !important',
     },
 
@@ -90,12 +91,48 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       },
     },
 
-    '.dashboard-visible-hidden-element': {
-      opacity: 0.6,
+    '.dashboard-canvas-controls': {
+      opacity: 0,
 
-      '&:hover': {
+      '@media (hover: none) and (pointer: coarse)': {
+        '&': {
+          opacity: 1,
+        },
+      },
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create('opacity'),
+      },
+
+      '&:hover, :focus-within': {
         opacity: 1,
       },
+    },
+
+    '.dashboard-visible-hidden-element': {
+      position: 'relative',
+    },
+
+    // Universal style for marking drop targets when dragging between layouts
+    '.dashboard-drop-target': {
+      // Setting same options for hovered and not hovered to overwrite any conflicting styles
+      // There was a race condition with selectable elements styles
+      '&:is(:hover),&:not(:hover)': {
+        outline: `2px solid ${theme.colors.primary.border}`,
+        outlineOffset: '0px',
+        borderRadius: theme.shape.radius.default,
+      },
+    },
+
+    // Body style for preventing selection when dragging
+    '.dashboard-draggable-transparent-selection': {
+      '*::selection': {
+        all: 'inherit',
+      },
+    },
+
+    '.react-draggable-dragging': {
+      opacity: 0.8,
     },
   });
 }

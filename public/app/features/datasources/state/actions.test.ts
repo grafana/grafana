@@ -2,13 +2,13 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
 import { DataSourceSrv, FetchError } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { ThunkResult, ThunkDispatch } from 'app/types';
+import { ThunkResult, ThunkDispatch } from 'app/types/store';
 
-import { getMockDataSource } from '../__mocks__';
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
+import { getMockDataSource } from '../mocks/dataSourcesMocks';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { GenericDataSourcePlugin } from '../types';
 
@@ -31,8 +31,8 @@ import {
 
 jest.mock('../api');
 jest.mock('app/core/services/backend_srv');
-jest.mock('app/core/core', () => ({
-  ...jest.requireActual('app/core/core'),
+jest.mock('app/core/app_events', () => ({
+  ...jest.requireActual('app/core/app_events'),
   appEvents: {
     publish: jest.fn(),
   },
@@ -89,7 +89,7 @@ describe('loadDataSource()', () => {
     const dispatch = jest.fn();
     const getState = jest.fn();
 
-    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     const dataSource = await loadDataSource(dataSourceMock.uid)(dispatch, getState, undefined);
 
@@ -105,11 +105,12 @@ describe('loadDataSource()', () => {
     const dispatch = jest.fn();
     const getState = jest.fn();
 
+    const win: typeof globalThis = window;
     // @ts-ignore
-    delete window.location;
-    window.location = {} as Location;
+    delete win.location;
+    win.location = {} as Location;
 
-    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     // Fetch the datasource by ID
     const dataSource = await loadDataSource(id.toString())(dispatch, getState, undefined);
@@ -126,11 +127,12 @@ describe('loadDataSource()', () => {
     const dispatch = jest.fn();
     const getState = jest.fn();
 
+    const win: typeof globalThis = window;
     // @ts-ignore
-    delete window.location;
-    window.location = {} as Location;
+    delete win.location;
+    win.location = {} as Location;
 
-    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     // Fetch the datasource by ID
     await loadDataSource(id.toString())(dispatch, getState, undefined);
@@ -394,7 +396,7 @@ describe('addDataSource', () => {
       plugin_version: '1.2.3',
       datasource_uid: 'azure23',
       grafana_version: '1.0',
-      path: location.pathname,
+      path: window.location.pathname,
     });
   });
 });

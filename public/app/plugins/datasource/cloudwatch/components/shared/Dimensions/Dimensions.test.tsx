@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { setupMockedDataSource } from '../../../__mocks__/CloudWatchDataSource';
-import { CloudWatchMetricsQuery } from '../../../types';
+import { CloudWatchMetricsQuery } from '../../../dataquery.gen';
+import { setupMockedDataSource } from '../../../mocks/CloudWatchDataSource';
 
 import { Dimensions } from './Dimensions';
 

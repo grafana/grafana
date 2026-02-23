@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
-import { DashboardDataDTO } from 'app/types';
+import { Trans } from '@grafana/i18n';
+import { Icon, Text, useStyles2 } from '@grafana/ui';
 
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
 
-import { PanelDTO } from './DashboardPicker';
+import { PanelDTO, getDashboardTitle, getDashboardUid } from './DashboardPicker';
+import { DashboardResponse } from './useDashboardQuery';
 
 const DashboardAnnotationField = ({
   dashboard,
@@ -16,7 +17,7 @@ const DashboardAnnotationField = ({
   onEditClick,
   onDeleteClick,
 }: {
-  dashboard?: DashboardDataDTO;
+  dashboard?: DashboardResponse;
   panel?: PanelDTO;
   dashboardUid: string; //fallback
   panelId: string; //fallback
@@ -25,8 +26,8 @@ const DashboardAnnotationField = ({
 }) => {
   const styles = useStyles2(getStyles);
 
-  const dashboardLink = makeDashboardLink(dashboard?.uid || dashboardUid);
-  const panelLink = makePanelLink(dashboard?.uid || dashboardUid, panel?.id?.toString() || panelId);
+  const dashboardLink = makeDashboardLink(getDashboardUid(dashboard) || dashboardUid);
+  const panelLink = makePanelLink(getDashboardUid(dashboard) || dashboardUid, panel?.id?.toString() || panelId);
   return (
     <div className={styles.container}>
       {dashboard && (
@@ -37,11 +38,17 @@ const DashboardAnnotationField = ({
           rel="noreferrer"
           data-testid="dashboard-annotation"
         >
-          {dashboard.title} <Icon name={'external-link-alt'} />
+          {getDashboardTitle(dashboard)} <Icon name={'external-link-alt'} />
         </a>
       )}
 
-      {!dashboard && <span className={styles.noLink}>Dashboard {dashboardUid} </span>}
+      {!dashboard && (
+        <Text color="secondary">
+          <Trans i18nKey="alerting.annotations.dashboard-annotation-field.dashboard" values={{ dashboardUid }}>
+            Dashboard {{ dashboardUid }}
+          </Trans>
+        </Text>
+      )}
 
       {panel && (
         <a href={panelLink} className={styles.link} target="_blank" rel="noreferrer" data-testid="panel-annotation">
@@ -49,7 +56,16 @@ const DashboardAnnotationField = ({
         </a>
       )}
 
-      {!panel && <span className={styles.noLink}> - Panel {panelId}</span>}
+      {!panel && (
+        <>
+          <span> - </span>
+          <Text color="secondary">
+            <Trans i18nKey="alerting.annotations.dashboard-annotation-field.panel" values={{ panelId }}>
+              Panel {{ panelId }}
+            </Trans>
+          </Text>
+        </>
+      )}
 
       {(dashboard || panel) && (
         <>

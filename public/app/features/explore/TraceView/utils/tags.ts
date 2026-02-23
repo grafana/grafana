@@ -1,7 +1,6 @@
 import { SpanStatusCode } from '@opentelemetry/api';
 import { uniq } from 'lodash';
 
-import { Trace } from '../components';
 import {
   ID,
   KIND,
@@ -10,7 +9,10 @@ import {
   STATUS,
   STATUS_MESSAGE,
   TRACE_STATE,
+  SPAN_NAME,
+  SERVICE_NAME,
 } from '../components/constants/span';
+import { Trace } from '../components/types/trace';
 
 export const getTraceServiceNames = (trace: Trace) => {
   const serviceNames = trace.spans.map((span) => {
@@ -37,6 +39,11 @@ export const getTraceTagKeys = (trace: Trace) => {
     span.process.tags.forEach((tag) => {
       keys.push(tag.key);
     });
+
+    if (span.process.serviceName) {
+      keys.push(SERVICE_NAME);
+    }
+
     if (span.logs !== null) {
       span.logs.forEach((log) => {
         log.fields.forEach((field) => {
@@ -62,6 +69,9 @@ export const getTraceTagKeys = (trace: Trace) => {
     }
     if (span.traceState) {
       keys.push(TRACE_STATE);
+    }
+    if (span.operationName) {
+      keys.push(SPAN_NAME);
     }
     keys.push(ID);
   });
@@ -93,6 +103,11 @@ export const getTraceTagValues = (trace: Trace, key: string) => {
     }
 
     switch (key) {
+      case SPAN_NAME:
+        if (span.operationName) {
+          values.push(span.operationName);
+        }
+        break;
       case KIND:
         if (span.kind) {
           values.push(span.kind);

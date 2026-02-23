@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 
 import { InlineField, Input, QueryField } from '@grafana/ui';
 
+import { Filters } from '../../../../../dataquery.gen';
 import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
-import { Filters } from '../../../../../types';
 import { AddRemove } from '../../../../AddRemove';
 import { changeBucketAggregationSetting } from '../../state/actions';
 

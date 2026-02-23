@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { RefreshEvent } from '@grafana/runtime';
+import { TableOptions } from '@grafana/schema';
 import { PanelChrome } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
-import { Options } from 'app/plugins/panel/table/panelcfg.gen';
 
 import { getTimeSrv } from '../../services/TimeSrv';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -22,7 +23,7 @@ export interface Props {
 
 export function PanelEditorTableView({ width, height, panel, dashboard }: Props) {
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, false);
-  const [options, setOptions] = useState<Options>({
+  const [options, setOptions] = useState<TableOptions>({
     frameIndex: 0,
     showHeader: true,
     showTypeIcons: true,
@@ -37,6 +38,7 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
+        dashboardTitle: dashboard.title,
         timeData,
         width,
       });
@@ -61,7 +63,7 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
         <>
           <PanelHeaderCorner panel={panel} error={errorMessage} />
           <PanelRenderer
-            title="Raw data"
+            title={t('dashboard.panel-editor-table-view.title-raw-data', 'Raw data')}
             pluginId="table"
             width={innerWidth}
             height={innerHeight}

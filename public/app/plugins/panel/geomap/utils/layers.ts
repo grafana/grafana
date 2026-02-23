@@ -1,11 +1,12 @@
-import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
+import OpenLayersMap from 'ol/Map';
+import BaseLayer from 'ol/layer/Base';
 import LayerGroup from 'ol/layer/Group';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import { Subject } from 'rxjs';
 
 import { getFrameMatchers, MapLayerHandler, MapLayerOptions, PanelData, textUtil } from '@grafana/data';
-import { config } from '@grafana/runtime/src';
+import { config } from '@grafana/runtime';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { MARKERS_LAYER_ID } from '../layers/data/markersLayer';
@@ -13,6 +14,8 @@ import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry'
 import { MapLayerState } from '../types';
 
 import { getNextLayerName } from './utils';
+
+const layerStateMap = new WeakMap<BaseLayer, MapLayerState>();
 
 export const applyLayerFilter = (
   handler: MapLayerHandler<unknown>,
@@ -23,10 +26,18 @@ export const applyLayerFilter = (
     let panelData = panelDataProps;
     if (options.filterData) {
       const matcherFunc = getFrameMatchers(options.filterData);
-      panelData = {
-        ...panelData,
-        series: panelData.series.filter(matcherFunc),
-      };
+
+      const queryExists = panelData.request?.targets.some((target) => {
+        return target.refId === options.filterData?.options;
+      });
+
+      // Only apply filter if the target query exists
+      if (queryExists) {
+        panelData = {
+          ...panelData,
+          series: panelData.series.filter(matcherFunc),
+        };
+      }
     }
     handler.update(panelData);
   }
@@ -148,18 +159,16 @@ export async function initLayer(
   };
 
   panel.byName.set(UID, state);
-  // eslint-disable-next-line
-  (state.layer as any).__state = state;
+  layerStateMap.set(state.layer, state);
 
   // Pass state into WebGLPointsLayers contained in a LayerGroup
   if (layer instanceof LayerGroup) {
     layer
       .getLayers()
       .getArray()
-      .forEach((layer) => {
+      .forEach((layer: BaseLayer) => {
         if (layer instanceof WebGLPointsLayer) {
-          // eslint-disable-next-line
-          (layer as any).__state = state;
+          layerStateMap.set(layer, state);
         }
       });
   }
@@ -169,6 +178,6 @@ export async function initLayer(
   return state;
 }
 
-export const getMapLayerState = (l: any): MapLayerState => {
-  return l?.__state;
+export const getMapLayerState = (l: BaseLayer | undefined): MapLayerState | undefined => {
+  return l ? layerStateMap.get(l) : undefined;
 };

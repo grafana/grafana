@@ -1,9 +1,11 @@
 import { NavModel, NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
-import { AccessControlAction, FolderDTO, FolderParent } from 'app/types';
+import { ManagerKind } from 'app/features/apiserver/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { FolderDTO, FolderParent } from 'app/types/folders';
 
 export const FOLDER_ID = 'manage-folder';
 
@@ -15,6 +17,7 @@ export const getSettingsTabID = (folderUID: string) => `folder-settings-${folder
 
 export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: FolderParent[]): NavModelItem {
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
+  const isProvisioned = 'managedBy' in folder ? folder.managedBy === ManagerKind.Repo : false;
 
   const model: NavModelItem = {
     icon: 'folder',
@@ -39,15 +42,21 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
     model.parentItem = buildNavModel(parent, remainingParents);
   }
 
-  model.children!.push({
-    active: false,
-    icon: 'library-panel',
-    id: getLibraryPanelsTabID(folder.uid),
-    text: t('browse-dashboards.manage-folder-nav.panels', 'Panels'),
-    url: `${folder.url}/library-panels`,
-  });
+  if (!isProvisioned) {
+    model.children!.push({
+      active: false,
+      icon: 'library-panel',
+      id: getLibraryPanelsTabID(folder.uid),
+      text: t('browse-dashboards.manage-folder-nav.panels', 'Panels'),
+      url: `${folder.url}/library-panels`,
+    });
+  }
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
+  if (
+    !isProvisioned &&
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+    config.unifiedAlertingEnabled
+  ) {
     model.children!.push({
       active: false,
       icon: 'bell',
@@ -69,7 +78,7 @@ export function getLoadingNav(tabIndex: number): NavModel {
     updatedBy: '',
     id: 1,
     uid: 'loading',
-    title: 'Loading',
+    title: t('folders.get-loading-nav.main.title.loading', 'Loading'),
     url: 'url',
     canSave: true,
     canEdit: true,

@@ -156,9 +156,120 @@ A distributed trace is data that tracks an application request as it flows throu
 
 ### Usage
 
-Grafana uses [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. There's an interface `Tracer` in the `pkg/infra/tracing` package that implements the [OpenTelemetry Tracer interface](https://pkg.go.dev/go.opentelemetry.io/otel/trace), which you can use to create traces and spans. To access `Tracer` you need to get it injected as a dependency of your service. Refer to [Services](services.md) for more details. For more information, you may also refer to [The OpenTelemetry documentation](https://opentelemetry.io/docs/instrumentation/go/manual/).
+Grafana uses [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. For more information, you may also refer to [The OpenTelemetry documentation](https://opentelemetry.io/docs/instrumentation/go/manual/).
 
-For example:
+1. Import the otel package
+
+   ```Go
+   "go.opentelemetry.io/otel"
+   ```
+
+2. Initialize a package level tracer
+
+   We don't want to change the provider signature for every service across Grafana, especially in a testing scenario. otel.Tracer gets the global tracer configured in `pkg/infra/tracing` and handles whether or not we use a noop when otel is disabled.
+
+   Using the package location as the provided name allows us to determine where the trace is coming from in the event of a naming collision.
+
+   ```Go
+   var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards")
+   ```
+
+   For enterprise, refer to the enterprise repo
+
+   ```Go
+   var tracer = otel.Tracer("github.com/grafana/grafana-enterprise/src/pkg/extensions/accesscontrol")
+   ```
+
+3. Create a span
+
+   Spans are connected via the context.Context named ctx by convention. Name your span according to `<package>.<function>`. In some cases, there is a folder inside a package with a name commonly used throughout the codebase. In that case use the form `<package>.<folder>.<function>`.
+
+   It is important to match casing for each of these as it's common convention to have an internal and external functions with the same name.
+
+   Be sure to always terminate your spans.
+
+   ```Go
+   ctx, span := tracer.Start(ctx, "dashboards.store.GetDashboardByUID")
+   defer span.End()
+   ```
+
+4. Ensure spans are connected
+
+   Grafana's api package uses `*contextmodel.ReqContext` to pass between api functions with context.Context as a field on the request.
+
+   Given `func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext)`
+
+   you can fetch the context via `c.Req.Context()`
+
+   If you create a span, you need to ensure the new context is set on `ReqContext`
+
+   ```Go
+   ctx, span := tracer.Start(c.Req.Context(), "api.isDashboardStarredByUser")
+   defer span.End()
+   c.Req = c.Req.WithContext(ctx)
+   ```
+
+   If the function does not pass a `*contextmodel.ReqContext` to another function, do not set the `ctx`.
+
+5. Spans with no children
+   Often in the context of cpu bound work you want a context, but won't pass the child down. In this case use a blank identifier like any other variable and we will get appropriate timing from the span.
+
+   ```Go
+   _, span := tracer.Start(c.Req.Context(), "api.isDashboardStarredByUser")
+   defer span.End()
+   ```
+
+6. Deciding when to create a span
+
+   Only instrument functions that perform IO bound work like database calls or quantifiable cpu bound work. Simple wrappers in the service layer that make a call to the database should not be instrumented as they're just creating more data without giving us more insights.
+
+   For example, the following function is performing business logic, but not doing a meaningful amount of work. In this case, ensure ctx is passed to the child function and perform the tracing in `pd.store.FindByAccessToken`
+
+   ```Go
+   func (pd *PublicDashboardServiceImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
+     ctx, span := tracer.Start(ctx, "publicdashboards.FindByAccessToken")
+     defer span.End()
+
+     pubdash, err := pd.store.FindByAccessToken(ctx, accessToken)
+     if err != nil {
+         return nil, ErrInternalServerError.Errorf("FindByAccessToken: failed to find a public dashboard: %w", err)
+       }
+     if pubdash == nil {
+         return nil, ErrPublicDashboardNotFound.Errorf("FindByAccessToken: Public dashboard not found accessToken: %s", accessToken)
+       }
+     return pubdash, nil
+   }
+   ```
+
+7. Adding attributes for investigation
+
+   It's often helpful understand the context of a span. To help with debugging we can add attributes to a span that tell us more about the state of the function. This is very helpful for cpu bound function. In the following example we're performing a cpu bound operation and adding an attribute to the span telling us the number of permissions that were passed into the function.
+
+   Import the otel attributes and trace packages.
+
+   ```Go
+    "go.opentelemetry.io/otel/attribute"
+    "go.opentelemetry.io/otel/trace"
+   ```
+
+   Add your attributes when creating the span.
+
+   ```Go
+   func GroupScopesByActionContext(ctx context.Context, permissions []Permission) map[string][]string {
+     _, span := tracer.Start(ctx, "accesscontrol.GroupScopesByActionContext", trace.WithAttributes(
+       attribute.Int("permissions_count", len(permissions)),
+     ))
+     defer span.End()
+
+     m := make(map[string][]string)
+     for i := range permissions {
+       m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
+     }
+      return m
+   }
+   ```
+
+Complete example
 
 ```go
 import (
@@ -169,23 +280,12 @@ import (
    "go.opentelemetry.io/otel/trace"
 )
 
-type MyService struct {
-   tracer tracing.Tracer
-}
-
-func ProvideService(tracer tracing.Tracer) *MyService {
-   return &MyService{
-      tracer: tracer,
-   }
-}
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/myservice")
 
 func (s *MyService) Hello(ctx context.Context, name string) (string, error) {
    ctx, span := s.tracer.Start(ctx, "MyService.Hello", trace.WithAttributes(
       attribute.String("my_attribute", "val"),
    ))
-   // make sure the span is marked as finished when this
-   // method ends to allow the span to be flushed and sent to
-   // storage backend.
    defer span.End()
 
    // Add some event to show Events usage
@@ -215,7 +315,7 @@ func (s *MyService) Hello(ctx context.Context, name string) (string, error) {
 
 ```
 
-### Naming conventions
+### Naming conventions for spans
 
 Span names should follow the [guidelines from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/trace/api/#span).
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceSpan } from '../types';
+import { TraceSpan } from '../types/trace';
 
 export type ViewedBoundsFunctionType = (start: number, end: number) => { start: number; end: number };
 /**
@@ -122,5 +122,3 @@ export const isKindClient = (span: TraceSpan): Boolean => {
   }
   return span.tags.some(({ key, value }) => key === 'span.kind' && value === 'client');
 };
-
-export { formatDuration } from '../utils/date';

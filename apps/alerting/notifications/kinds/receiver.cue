@@ -1,37 +1,53 @@
-package core
+package kinds
 
-receiver: {
-	kind:  "Receiver"
-	group: "notifications"
-	apiResource: {
-		groupOverride: "notifications.alerting.grafana.app"
-	}
-	codegen: {
-		frontend: false
-		backend:  true
-	}
+import (
+	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
+)
+
+receiverKind: {
+	kind: "Receiver"
 	pluralName: "Receivers"
-	current:    "v0alpha1"
-	versions: {
-		"v0alpha1": {
-			schema: {
-				#Integration: {
-					uid?: string
-					type: string
-					disableResolveMessage?: bool
-					settings: {
-						[string]: _
-					}
-					secureFields?: [string]: bool
+}
+
+receiverv0alpha1: receiverKind & {
+	schema: {
+		spec: v0alpha1.ReceiverSpec
+	}
+	selectableFields: [
+		"spec.title",
+	]
+	routes: {
+		"test": {
+			"POST": {
+				name: "createReceiverIntegrationTest"
+				request: {
+					body: CreateReceiverTestRequestBody
 				}
-				spec: {
-					title: string
-					integrations : [...#Integration]
+				response: CreateReceiverTestResponse
+				responseMetadata: {
+					typeMeta: true
 				}
 			}
-			selectableFields: [
-				 "spec.title",
-			]
 		}
 	}
+}
+
+#Alert: {
+	labels: {
+		[string]: string
+	}
+	annotations: {
+		[string]: string
+	}
+}
+
+CreateReceiverTestRequestBody: {
+		integration: v0alpha1.#Integration
+		alert: #Alert
+}
+
+CreateReceiverTestResponse: {
+	status: "success" | "failure"
+	duration: string
+	error?: string
 }

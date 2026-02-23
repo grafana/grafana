@@ -4,8 +4,8 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { PasswordlessFormModel } from './LoginCtrl';
 

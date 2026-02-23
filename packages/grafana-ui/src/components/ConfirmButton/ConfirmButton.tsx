@@ -3,16 +3,16 @@ import { ReactElement, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { ComponentSize } from '../../types/size';
-import { Trans } from '../../utils/i18n';
-import { Button, ButtonVariant } from '../Button';
+import { Button, ButtonVariant } from '../Button/Button';
 
 export interface Props {
   /** Confirm action callback */
   onConfirm(): void;
-  children: string | ReactElement;
+  children: string | ReactElement<Record<string, unknown>>;
   /** Custom button styles */
   className?: string;
   /** Button size */
@@ -31,6 +31,11 @@ export interface Props {
   onCancel?(): void;
 }
 
+/**
+ * The ConfirmButton is an interactive component that adds a double-confirm option to a clickable action. When clicked, the action is replaced by an inline confirmation with the option to cancel. In Grafana, this is used, for example, for editing values in settings tables.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-confirmbutton--docs
+ */
 export const ConfirmButton = ({
   children,
   className,

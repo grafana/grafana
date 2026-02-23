@@ -1,24 +1,20 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useCallback, useId, useMemo } from 'react';
+import React, { ComponentProps, useCallback, useId, useMemo } from 'react';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
-import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { AsyncError, NotFoundError } from './MessageRows';
+import { ComboboxList } from './ComboboxList';
+import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
-import {
-  getComboboxStyles,
-  MENU_ITEM_PADDING,
-  MENU_OPTION_HEIGHT,
-  MENU_OPTION_HEIGHT_DESCRIPTION,
-} from './getComboboxStyles';
+import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
@@ -26,30 +22,31 @@ import { isNewGroup } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
-export interface ComboboxBaseProps<T extends string | number>
+
+interface ComboboxStaticProps<T extends string | number>
   extends Pick<
     InputProps,
     'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
   > {
   /**
-   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
-   */
-  isClearable?: boolean;
-  /**
    * Allows the user to set a value which is not in the list of options.
    */
   createCustomValue?: boolean;
+  /**
+   * Custom description text for the "create custom value" option.
+   * Defaults to "Use custom value".
+   */
+  customValueDescription?: string;
+  /**
+   * Custom container for rendering the dropdown menu via Portal
+   */
+  portalContainer?: HTMLElement;
 
   /**
    * An array of options, or a function that returns a promise resolving to an array of options.
    * If a function, it will be called when the menu is opened and on keypress with the current search query.
    */
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
-
-  /**
-   * onChange handler is called with the newly selected option.
-   */
-  onChange: (option: ComboboxOption<T>) => void;
 
   /**
    * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
@@ -62,24 +59,45 @@ export interface ComboboxBaseProps<T extends string | number>
    * */
   width?: number | 'auto';
 
+  ['data-testid']?: string;
+
   /**
    * Called when the input loses focus.
    */
   onBlur?: () => void;
+
+  /**
+   * Icon to display at the start of the ComboBox input
+   */
+  prefixIcon?: ComponentProps<typeof Icon>['name'];
 }
 
-type ClearableConditionals<T extends number | string> =
-  | {
-      /**
-       * Allow the user to clear the selected value. `null` is emitted from the onChange handler
-       */
-      isClearable: true;
-      /**
-       * The onChange handler is called with `null` when clearing the Combobox.
-       */
-      onChange: (option: ComboboxOption<T> | null) => void;
-    }
-  | { isClearable?: false; onChange: (option: ComboboxOption<T>) => void };
+interface ClearableProps<T extends string | number> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
+  isClearable: true;
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T> | null) => void;
+}
+
+interface NotClearableProps<T extends string | number> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
+  isClearable?: false;
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T>) => void;
+}
+
+export type ComboboxBaseProps<T extends string | number> = (ClearableProps<T> | NotClearableProps<T>) &
+  ComboboxStaticProps<T>;
 
 export type AutoSizeConditionals =
   | {
@@ -99,17 +117,17 @@ export type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
-  AutoSizeConditionals &
-  ClearableConditionals<T>;
+export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
 const noop = () => {};
 
 export const VIRTUAL_OVERSCAN_ITEMS = 4;
 
 /**
- * A performant Select replacement.
+ * A performant and accessible combobox component that supports both synchronous and asynchronous options loading. It provides type-ahead filtering, keyboard navigation, and virtual scrolling for handling large datasets efficiently.
+ * Replaces the Select component, and has better performance.
  *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-combobox--docs
  * @alpha
  */
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
@@ -118,18 +136,21 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     onChange,
     value: valueProp,
     placeholder: placeholderProp,
-    isClearable = false,
+    isClearable, // this should be default false, but TS can't infer the conditional type if you do
     createCustomValue = false,
+    customValueDescription,
     id,
     width,
     minWidth,
     maxWidth,
     'aria-labelledby': ariaLabelledBy,
+    'data-testid': dataTestId,
     autoFocus,
     onBlur,
     disabled,
-    loading,
+    portalContainer,
     invalid,
+    prefixIcon,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -143,7 +164,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     updateOptions,
     asyncLoading,
     asyncError,
-  } = useOptions(props.options, createCustomValue);
+  } = useOptions(props.options, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
 
   const selectedItemIndex = useMemo(() => {
@@ -209,11 +230,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     estimateSize: (index: number) => {
       const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
       const hasDescription = 'description' in filteredOptions[index];
+      const hasGroup = 'group' in filteredOptions[index];
+
       let itemHeight = MENU_OPTION_HEIGHT;
       if (hasDescription) {
         itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
       }
-      if (firstGroupItem) {
+      if (firstGroupItem && hasGroup) {
         itemHeight += MENU_OPTION_HEIGHT;
       }
       return itemHeight;
@@ -238,6 +261,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     items: filteredOptions,
     itemToString,
     selectedItem,
+    isItemDisabled: (item) => !!item?.infoOption,
 
     // Don't change downshift state in the onBlahChange handlers. Instead, use the stateReducer to make changes.
     // Downshift calls change handlers on the render after so you can get sync/flickering issues if you change its state
@@ -245,7 +269,20 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
 
     onSelectedItemChange: ({ selectedItem }) => {
-      onChange(selectedItem);
+      // `selectedItem` type is `ComboboxOption<T> | null`
+      // It can be null when `selectItem()` is called with null, and we never do that unless `isClearable` is true.
+      // So, when `isClearable` is false, `selectedItem` is always non-null. However, the types don't reflect that,
+      // which is why the conditions are needed.
+      //
+      // this is an else if because TS can't infer the correct onChange types from
+      // (isClearable || selectedItem !== null)
+      if (isClearable) {
+        // onChange argument type allows null
+        onChange(selectedItem);
+      } else if (selectedItem !== null) {
+        // onChange argument type *does not* allow null
+        onChange(selectedItem);
+      }
     },
 
     defaultHighlightedIndex: selectedItemIndex ?? 0,
@@ -304,16 +341,11 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
-  const suffixIcon = asyncLoading
-    ? 'spinner'
-    : // If it's loading, show loading icon. Otherwise, icon indicating menu state
-      isOpen
-      ? 'search'
-      : 'angle-down';
+  const loading = props.loading || asyncLoading;
 
   const inputSuffix = (
     <>
-      {value && value === selectedItem?.value && isClearable && (
+      {value !== undefined && value === selectedItem?.value && isClearable && (
         <Icon
           name="times"
           className={styles.clear}
@@ -331,19 +363,26 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         />
       )}
 
-      <Icon name={suffixIcon} />
+      <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
     </>
   );
 
+  const { Wrapper, wrapperProps } = isAutoSize
+    ? {
+        Wrapper: 'div',
+        wrapperProps: { className: styles.adaptToParent },
+      }
+    : { Wrapper: React.Fragment };
+
   return (
-    <div className={isAutoSize ? styles.addaptToParent : undefined}>
+    <Wrapper {...wrapperProps}>
       <InputComponent
         width={isAutoSize ? undefined : width}
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
         autoFocus={autoFocus}
         onBlur={onBlur}
+        prefix={prefixIcon && <Icon name={prefixIcon} />}
         disabled={disabled}
-        loading={loading}
         invalid={invalid}
         className={styles.input}
         suffix={inputSuffix}
@@ -352,97 +391,34 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           placeholder,
+          'data-testid': dataTestId,
         })}
       />
-      <Portal>
+      <Portal root={portalContainer}>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
-          style={floatStyles}
+          style={{
+            ...floatStyles,
+            pointerEvents: 'auto', // Override container's pointer-events: none
+          }}
           {...getMenuProps({
             ref: floatingRef,
             'aria-labelledby': ariaLabelledBy,
           })}
         >
           {isOpen && (
-            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
-              {!asyncError && (
-                <div style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-                  {rowVirtualizer.getVirtualItems().map((virtualRow, index, allVirtualRows) => {
-                    const item = filteredOptions[virtualRow.index];
-                    const startingNewGroup = isNewGroup(item, filteredOptions[virtualRow.index - 1]);
-
-                    // Find the item that renders the group header. It can be this same item if this is rendering it.
-                    const groupHeaderIndex = allVirtualRows.find((row) => {
-                      const rowItem = filteredOptions[row.index];
-                      return rowItem.group === item.group;
-                    });
-                    const groupHeaderItem = groupHeaderIndex && filteredOptions[groupHeaderIndex.index];
-
-                    const itemId = `${baseId}-option-${item.value}`;
-                    // If we're rendering the group header, this is the ID for it. Otherwise its used on
-                    // the option for aria-describedby.
-                    const groupHeaderId = groupHeaderItem
-                      ? `${baseId}-option-group-${groupHeaderItem.value}`
-                      : undefined;
-
-                    return (
-                      // Wrapping div should have no styling other than virtual list positioning.
-                      // It's children (header and option) should appear as flat list items.
-                      <div
-                        key={item.value}
-                        className={styles.listItem}
-                        style={{
-                          height: virtualRow.size,
-                          transform: `translateY(${virtualRow.start}px)`,
-                        }}
-                      >
-                        {startingNewGroup && (
-                          <div role="presentation" id={groupHeaderId} className={styles.newOptionGroup}>
-                            {item.group}
-                          </div>
-                        )}
-
-                        <div
-                          className={cx(
-                            styles.option,
-                            styles.optionBasic,
-                            selectedItem && item.value === selectedItem.value && styles.optionSelected,
-                            highlightedIndex === virtualRow.index && styles.optionFocused
-                          )}
-                          {...getItemProps({
-                            item: item,
-                            index: virtualRow.index,
-                            id: itemId,
-                            'aria-describedby': groupHeaderId,
-                          })}
-                        >
-                          <div className={styles.optionBody}>
-                            {item.imgUrl && (
-                              <img
-                                className={styles.icon}
-                                height={virtualRow.size - 2 * MENU_ITEM_PADDING}
-                                width={virtualRow.size - 2 * MENU_ITEM_PADDING}
-                                src={item.imgUrl}
-                              />
-                            )}
-                            <span className={styles.optionLabel}>{item.label ?? item.value}</span>
-                            {item.description && <span className={styles.optionDescription}>{item.description}</span>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div aria-live="polite">
-                {asyncError && <AsyncError />}
-                {filteredOptions.length === 0 && !asyncError && <NotFoundError />}
-              </div>
-            </ScrollContainer>
+            <ComboboxList
+              loading={loading}
+              options={filteredOptions}
+              highlightedIndex={highlightedIndex}
+              selectedItems={selectedItem ? [selectedItem] : []}
+              scrollRef={scrollRef}
+              getItemProps={getItemProps}
+              error={asyncError}
+            />
           )}
         </div>
       </Portal>
-    </div>
+    </Wrapper>
   );
 };

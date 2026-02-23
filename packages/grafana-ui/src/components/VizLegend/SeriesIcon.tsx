@@ -5,7 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2, fieldColorModeRegistry } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
 
-import { useTheme2, useStyles2 } from '../../themes';
+import { useTheme2, useStyles2 } from '../../themes/ThemeContext';
 
 export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   color?: string;
@@ -69,7 +69,6 @@ export const SeriesIcon = React.memo(
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    marginRight: '8px',
     display: 'inline-block',
     width: '14px',
     height: '4px',

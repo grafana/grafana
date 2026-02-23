@@ -9,6 +9,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
 )
 
@@ -43,4 +44,18 @@ func unaryRetryInstrument(metric *prometheus.CounterVec) grpc.UnaryClientInterce
 		}
 		return invoker(ctx, method, req, resp, cc, opts...)
 	}
+}
+
+// connectionBackoffOptions configures connection backoff parameters for faster recovery from
+// transient connection failures (e.g., during pod restarts).
+func connectionBackoffOptions() grpc.DialOption {
+	return grpc.WithConnectParams(grpc.ConnectParams{
+		Backoff: backoff.Config{
+			BaseDelay:  1 * time.Second,
+			Multiplier: 1.6,
+			Jitter:     0.2,
+			MaxDelay:   10 * time.Second,
+		},
+		MinConnectTimeout: 5 * time.Second,
+	})
 }

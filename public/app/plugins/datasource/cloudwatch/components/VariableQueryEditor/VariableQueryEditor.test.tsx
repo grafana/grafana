@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
 import { GetDimensionKeysRequest } from '../../resources/types';
 import { VariableQueryType } from '../../types';
 
@@ -190,7 +190,7 @@ describe('VariableEditor', () => {
       render(<VariableQueryEditor {...props} />);
 
       await waitFor(() => {
-        expect(screen.getByDisplayValue('Tags.blah')).toBeInTheDocument();
+        expect(screen.queryByText('Tags.blah')).toBeInTheDocument();
       });
 
       const filterItem = screen.getByTestId('cloudwatch-multifilter-item');

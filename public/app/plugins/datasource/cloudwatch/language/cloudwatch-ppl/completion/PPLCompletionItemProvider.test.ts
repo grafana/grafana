@@ -1,8 +1,9 @@
 import { CustomVariableModel } from '@grafana/data';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-import { logGroupNamesVariable, setupMockedTemplateService } from '../../../__mocks__/CloudWatchDataSource';
-import { newCommandQuery } from '../../../__mocks__/cloudwatch-ppl-test-data/newCommandQuery';
+import { LogGroup } from '../../../dataquery.gen';
+import { logGroupNamesVariable, setupMockedTemplateService } from '../../../mocks/CloudWatchDataSource';
+import { newCommandQuery } from '../../../mocks/cloudwatch-ppl-test-data/newCommandQuery';
 import {
   dedupQueryWithOptionalArgs,
   emptyQuery,
@@ -17,12 +18,12 @@ import {
   statsQuery,
   topQuery,
   whereQuery,
-} from '../../../__mocks__/cloudwatch-ppl-test-data/singleLineQueries';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
+} from '../../../mocks/cloudwatch-ppl-test-data/singleLineQueries';
+import MonacoMock from '../../../mocks/monarch/Monaco';
+import TextModel from '../../../mocks/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
-import { LogGroup, LogGroupField } from '../../../types';
+import { LogGroupField } from '../../../types';
 import cloudWatchLogsPPLLanguageDefinition from '../definition';
 import {
   BOOLEAN_LITERALS,

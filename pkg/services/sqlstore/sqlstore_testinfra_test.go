@@ -5,25 +5,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 // Ensure that we can get any connection at all.
 // If this test fails, it may be sensible to ignore a lot of other test failures as they may be rooted in this.
 func TestIntegrationTempDatabaseConnect(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithoutMigrator())
 	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("SELECT 1")
+		_, err := sess.Query("SELECT 1")
 		return err
 	})
 	require.NoError(t, err, "failed to execute a SELECT 1")
@@ -33,17 +33,13 @@ func TestIntegrationTempDatabaseConnect(t *testing.T) {
 // If this test fails, it may be sensible to ignore a lot of other test failures as they may be rooted in this.
 // This only applies OSS migrations, with no feature flags.
 func TestIntegrationTempDatabaseOSSMigrate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	_ = sqlstore.NewTestStore(t, sqlstore.WithOSSMigrations())
 }
 
 func TestIntegrationUniqueConstraintViolation(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
 		desc string
@@ -92,9 +88,7 @@ func TestIntegrationUniqueConstraintViolation(t *testing.T) {
 }
 
 func TestIntegrationTruncateDatabase(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	migrator := &truncateDatabaseSetup{}
 	store := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator), sqlstore.WithTruncation())

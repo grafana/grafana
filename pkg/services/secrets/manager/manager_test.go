@@ -23,13 +23,16 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestSecretsService_EnvelopeEncryption(t *testing.T) {
+func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
@@ -84,13 +87,14 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 		reports, err := svc.usageStats.GetUsageReport(context.Background())
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, reports.Metrics["stats.encryption.envelope_encryption_enabled.count"])
 		assert.Equal(t, 1, reports.Metrics["stats.encryption.current_provider.secretKey.count"])
 		assert.Equal(t, 1, reports.Metrics["stats.encryption.providers.secretKey.count"])
 	})
 }
 
-func TestSecretsService_DataKeys(t *testing.T) {
+func TestIntegrationSecretsService_DataKeys(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
 	ctx := context.Background()
@@ -168,7 +172,9 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	})
 }
 
-func TestSecretsService_UseCurrentProvider(t *testing.T) {
+func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		testDB := db.InitTestDB(t)
 		svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
@@ -273,7 +279,9 @@ func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 	return providers, nil
 }
 
-func TestSecretsService_Run(t *testing.T) {
+func TestIntegrationSecretsService_Run(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
@@ -323,7 +331,9 @@ func TestSecretsService_Run(t *testing.T) {
 	})
 }
 
-func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
+func TestIntegrationSecretsService_ReEncryptDataKeys(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
@@ -370,7 +380,9 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 	})
 }
 
-func TestSecretsService_Decrypt(t *testing.T) {
+func TestIntegrationSecretsService_Decrypt(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
@@ -383,31 +395,6 @@ func TestSecretsService_Decrypt(t *testing.T) {
 		assert.Equal(t, "unable to decrypt empty payload", err.Error())
 	})
 
-	t.Run("ee encrypted payload with ee disabled should fail", func(t *testing.T) {
-		svc := SetupTestService(t, store)
-		ciphertext, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
-		require.NoError(t, err)
-
-		svc = SetupDisabledTestService(t, store)
-
-		_, err = svc.Decrypt(ctx, ciphertext)
-		assert.Error(t, err)
-	})
-
-	t.Run("ee encrypted payload with providers initialized should work", func(t *testing.T) {
-		svc := SetupTestService(t, store)
-		ciphertext, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
-		require.NoError(t, err)
-
-		svc = SetupDisabledTestService(t, store)
-		err = svc.InitProviders()
-		require.NoError(t, err)
-
-		plaintext, err := svc.Decrypt(ctx, ciphertext)
-		assert.NoError(t, err)
-		assert.Equal(t, []byte("grafana"), plaintext)
-	})
-
 	t.Run("ee encrypted payload with ee enabled should work", func(t *testing.T) {
 		svc := SetupTestService(t, store)
 		ciphertext, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
@@ -417,26 +404,10 @@ func TestSecretsService_Decrypt(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, []byte("grafana"), plaintext)
 	})
-
-	t.Run("legacy payload should always work", func(t *testing.T) {
-		encrypted := []byte{122, 56, 53, 113, 101, 117, 73, 89, 20, 254, 36, 112, 112, 16, 128, 232, 227, 52, 166, 108, 192, 5, 28, 125, 126, 42, 197, 190, 251, 36, 94}
-
-		svc := SetupTestService(t, store)
-		decrypted, err := svc.Decrypt(context.Background(), encrypted)
-		require.NoError(t, err)
-		assert.Equal(t, []byte("grafana"), decrypted)
-
-		svc = SetupDisabledTestService(t, store)
-		decrypted, err = svc.Decrypt(context.Background(), encrypted)
-		require.NoError(t, err)
-		assert.Equal(t, []byte("grafana"), decrypted)
-	})
 }
 
 func TestIntegration_SecretsService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	someData := []byte(`some-data`)

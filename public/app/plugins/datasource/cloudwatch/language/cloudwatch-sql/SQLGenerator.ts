@@ -7,10 +7,10 @@ import {
   QueryEditorExpression,
   QueryEditorExpressionType,
   QueryEditorFunctionExpression,
-  QueryEditorOperatorExpression,
   QueryEditorPropertyExpression,
-} from '../../expressions';
-import { SQLExpression } from '../../types';
+  SQLExpression,
+} from '../../dataquery.gen';
+import { QueryEditorOperatorExpression } from '../../expressions';
 
 import { InsightsReservedKeywords } from './consts';
 

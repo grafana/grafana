@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-jest.mock('../utils');
+jest.mock('../../utils/date');
 
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame, DataSourceInstanceSettings } from '@grafana/data';
+import { createDataFrame, DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { data } from '@grafana/flamegraph';
 import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
@@ -25,7 +25,7 @@ import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
 import { TraceSpanReference } from '../../types/trace';
-import { formatDuration } from '../utils';
+import { formatDuration } from '../../utils/date';
 
 import DetailState from './DetailState';
 
@@ -71,11 +71,15 @@ describe('<SpanDetail>', () => {
     traceFlameGraphs: { [span.spanID]: createDataFrame(data) },
     setRedrawListView: jest.fn(),
     timeRange: {
+      from: dateTime(0),
+      to: dateTime(1000000000000),
       raw: {
         from: 0,
         to: 1000000000000,
       },
     },
+    datasourceType: 'tempo',
+    datasourceUid: 'grafanacloud-traces',
   };
 
   span.tags = [
@@ -216,13 +220,13 @@ describe('<SpanDetail>', () => {
 
   it('renders the span tags', async () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    await userEvent.click(screen.getByRole('switch', { name: /Span Attributes/ }));
+    await userEvent.click(screen.getByRole('switch', { name: /Span attributes/ }));
     expect(props.tagsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the process tags', async () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    await userEvent.click(screen.getByRole('switch', { name: /Resource Attributes/ }));
+    await userEvent.click(screen.getByRole('switch', { name: /Resource attributes/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
@@ -248,6 +252,7 @@ describe('<SpanDetail>', () => {
 
   it('renders deep link URL', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    expect(screen.getByTestId('share-span-button')).toBeInTheDocument();
     expect(screen.getByText('test-spanID')).toBeInTheDocument();
   });
 
@@ -257,5 +262,30 @@ describe('<SpanDetail>', () => {
       expect(screen.getByText(/16.5 Bil/)).toBeInTheDocument();
       expect(screen.getByText(/(Count)/)).toBeInTheDocument();
     });
+  });
+
+  it('should load plugin links for resource attributes', () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({ links: [] });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    expect(usePluginLinksMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: expect.objectContaining({
+          attributes: expect.objectContaining({
+            'http.url': expect.arrayContaining([expect.any(String)]),
+          }),
+          timeRange: {
+            from: 0,
+            to: 1000000000000,
+          },
+          datasource: {
+            type: 'tempo',
+            uid: 'grafanacloud-traces',
+          },
+        }),
+      })
+    );
   });
 });

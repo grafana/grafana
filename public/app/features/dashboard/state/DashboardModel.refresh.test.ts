@@ -1,4 +1,4 @@
-import { appEvents } from '../../../core/core';
+import { appEvents } from '../../../core/app_events';
 import { VariablesChanged } from '../../variables/types';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../services/TimeSrv';
 

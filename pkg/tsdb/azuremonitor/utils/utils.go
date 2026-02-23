@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
+
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -28,7 +28,7 @@ func GetFirstSubscriptionOrDefault(ctx context.Context, dsInfo types.DatasourceI
 
 	res, err := dsInfo.Services["Azure Monitor"].HTTPClient.Do(request)
 	if err != nil {
-		return "", errorsource.DownstreamError(fmt.Errorf("failed to retrieve subscriptions: %v", err), false)
+		return "", backend.DownstreamError(fmt.Errorf("failed to retrieve subscriptions: %v", err))
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -42,7 +42,7 @@ func GetFirstSubscriptionOrDefault(ctx context.Context, dsInfo types.DatasourceI
 	}
 
 	if len(subscriptions) == 0 {
-		return "", errorsource.DownstreamError(fmt.Errorf("no subscriptions found: %v", err), false)
+		return "", backend.DownstreamError(fmt.Errorf("no subscriptions found: %v", err))
 	}
 
 	return subscriptions[0], nil
@@ -73,9 +73,12 @@ func ParseSubscriptions(res *http.Response, logger log.Logger) ([]string, error)
 }
 
 func ApplySourceFromError(errorMessage error, err error) error {
-	var sourceError errorsource.Error
-	if errors.As(err, &sourceError) {
-		return errorsource.SourceError(sourceError.Source(), errorMessage, false)
+	var errorWithSource backend.ErrorWithSource
+	if errors.As(err, &errorWithSource) {
+		if errorWithSource.ErrorSource() == backend.ErrorSourcePlugin {
+			return backend.PluginError(errorMessage)
+		}
+		return backend.DownstreamError(errorMessage)
 	}
 	return errorMessage
 }

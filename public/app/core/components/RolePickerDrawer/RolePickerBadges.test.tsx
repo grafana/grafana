@@ -22,6 +22,7 @@ const props = {
         uid: 'uid',
         name: 'admin',
         displayName: 'Admin',
+        filteredDisplayName: 'group:Admin',
         description: 'description',
         group: 'group',
         global: true,

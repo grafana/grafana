@@ -1,6 +1,6 @@
 import { PanelModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
 import { Options } from './panelcfg.gen';
 

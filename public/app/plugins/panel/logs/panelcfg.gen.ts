@@ -8,16 +8,23 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/logs/panelcfg.cue file.
+
 import * as common from '@grafana/schema';
 
 export interface Options {
+  controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
+  detailsMode?: ('inline' | 'sidebar');
   displayedFields?: Array<string>;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
+  fontSize?: ('default' | 'small');
   isFilterLabelActive?: unknown;
+  logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
+  noInteractions?: boolean;
   /**
    * TODO: figure out how to define callbacks
    */
@@ -27,13 +34,21 @@ export interface Options {
   onClickFilterString?: unknown;
   onClickHideField?: unknown;
   onClickShowField?: unknown;
+  onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
   prettifyLogMessage: boolean;
+  setDisplayedFields?: unknown;
   showCommonLabels: boolean;
+  showControls?: boolean;
+  showFieldSelector?: boolean;
   showLabels: boolean;
+  showLogAttributes?: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
+  syntaxHighlighting?: boolean;
+  timestampResolution?: ('ms' | 'ns');
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 

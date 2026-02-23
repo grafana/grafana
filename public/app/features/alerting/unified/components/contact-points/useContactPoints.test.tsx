@@ -2,15 +2,17 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import { setOnCallIntegrations } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { AccessControlAction } from 'app/types';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
+import { setAlertmanagerConfig } from '../../mocks/server/entities/alertmanagers';
+import { KnownProvenance } from '../../types/knownProvenance';
 
 import { useContactPointsWithStatus } from './useContactPoints';
 
@@ -21,8 +23,7 @@ const wrapper = ({ children }: { children: ReactNode }) => {
 
 setupMswServer();
 
-const getHookResponse = async (featureToggleEnabled: boolean) => {
-  config.featureToggles.alertingApiServer = featureToggleEnabled;
+const getHookResponse = async () => {
   const { result } = renderHook(
     () =>
       useContactPointsWithStatus({
@@ -61,42 +62,245 @@ describe('useContactPoints', () => {
 
   it('should return contact points with status', async () => {
     disablePlugin(SupportedPlugin.OnCall);
-    const snapshot = await getHookResponse(false);
+    const snapshot = await getHookResponse();
     expect(snapshot).toMatchSnapshot();
-  });
-
-  it('returns ~matching responses with and without alertingApiServer', async () => {
-    // Compare the responses between the two implementations, but do not consider:
-    // - ID: k8s API will return id properties, but the AM config will fall back to the name of the contact point.
-    //       These will be different, so we don't want to compare them
-    // - Metadata: k8s API includes metadata, AM config does not
-
-    const snapshotAmConfig = await getHookResponse(false);
-    const snapshotAlertingApiServer = await getHookResponse(true);
-
-    const amContactPoints = snapshotAmConfig.contactPoints.map((receiver) => {
-      const { id, ...rest } = receiver;
-      return rest;
-    });
-
-    const k8sContactPoints = snapshotAlertingApiServer.contactPoints.map((receiver) => {
-      const { id, metadata, ...rest } = receiver;
-      return rest;
-    });
-
-    expect({
-      ...snapshotAmConfig,
-      contactPoints: amContactPoints,
-    }).toEqual({
-      ...snapshotAlertingApiServer,
-      contactPoints: k8sContactPoints,
-    });
   });
 
   describe('when having oncall plugin installed and no alert manager config data', () => {
     it('should return contact points with oncall metadata', async () => {
-      const snapshot = await getHookResponse(false);
+      const snapshot = await getHookResponse();
       expect(snapshot).toMatchSnapshot();
+    });
+  });
+
+  describe('Provenance handling', () => {
+    it('should extract provenance when provenance is "api"', async () => {
+      // Set up alertmanager config with a receiver that has API provenance
+      const config: AlertManagerCortexConfig = {
+        template_files: {},
+        alertmanager_config: {
+          receivers: [
+            {
+              name: 'api-provenance-contact-point',
+              grafana_managed_receiver_configs: [
+                {
+                  uid: 'test-uid-1',
+                  name: 'api-provenance-contact-point',
+                  type: 'email',
+                  disableResolveMessage: false,
+                  settings: {
+                    addresses: 'test@example.com',
+                  },
+                  secureFields: {},
+                  provenance: 'api', // This will be used by the K8s mock handler
+                },
+              ],
+            },
+          ],
+        },
+      };
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, config);
+
+      const { result } = renderHook(
+        () =>
+          useContactPointsWithStatus({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            fetchPolicies: false,
+            fetchStatuses: false,
+          }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'api-provenance-contact-point');
+      expect(contactPoint).toBeDefined();
+      expect(contactPoint?.provenance).toBe(KnownProvenance.API);
+    });
+
+    it('should extract provenance when provenance is "file"', async () => {
+      const config: AlertManagerCortexConfig = {
+        template_files: {},
+        alertmanager_config: {
+          receivers: [
+            {
+              name: 'file-provenance-contact-point',
+              grafana_managed_receiver_configs: [
+                {
+                  uid: 'test-uid-2',
+                  name: 'file-provenance-contact-point',
+                  type: 'email',
+                  disableResolveMessage: false,
+                  settings: {
+                    addresses: 'test@example.com',
+                  },
+                  secureFields: {},
+                  provenance: 'file',
+                },
+              ],
+            },
+          ],
+        },
+      };
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, config);
+
+      const { result } = renderHook(
+        () =>
+          useContactPointsWithStatus({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            fetchPolicies: false,
+            fetchStatuses: false,
+          }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'file-provenance-contact-point');
+      expect(contactPoint).toBeDefined();
+      expect(contactPoint?.provenance).toBe(KnownProvenance.File);
+    });
+
+    it('should extract provenance when provenance is "converted_prometheus"', async () => {
+      const config: AlertManagerCortexConfig = {
+        template_files: {},
+        alertmanager_config: {
+          receivers: [
+            {
+              name: 'mimir-provenance-contact-point',
+              grafana_managed_receiver_configs: [
+                {
+                  uid: 'test-uid-3',
+                  name: 'mimir-provenance-contact-point',
+                  type: 'email',
+                  disableResolveMessage: false,
+                  settings: {
+                    addresses: 'test@example.com',
+                  },
+                  secureFields: {},
+                  provenance: 'converted_prometheus',
+                },
+              ],
+            },
+          ],
+        },
+      };
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, config);
+
+      const { result } = renderHook(
+        () =>
+          useContactPointsWithStatus({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            fetchPolicies: false,
+            fetchStatuses: false,
+          }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'mimir-provenance-contact-point');
+      expect(contactPoint).toBeDefined();
+      expect(contactPoint?.provenance).toBe(KnownProvenance.ConvertedPrometheus);
+    });
+
+    it('should map "none" provenance annotation to undefined', async () => {
+      const config: AlertManagerCortexConfig = {
+        template_files: {},
+        alertmanager_config: {
+          receivers: [
+            {
+              name: 'none-provenance-contact-point',
+              grafana_managed_receiver_configs: [
+                {
+                  uid: 'test-uid-4',
+                  name: 'none-provenance-contact-point',
+                  type: 'email',
+                  disableResolveMessage: false,
+                  settings: {
+                    addresses: 'test@example.com',
+                  },
+                  secureFields: {},
+                  // No provenance field - will default to PROVENANCE_NONE in mock handler
+                },
+              ],
+            },
+          ],
+        },
+      };
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, config);
+
+      const { result } = renderHook(
+        () =>
+          useContactPointsWithStatus({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            fetchPolicies: false,
+            fetchStatuses: false,
+          }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'none-provenance-contact-point');
+      expect(contactPoint).toBeDefined();
+      // The mock handler sets PROVENANCE_NONE ('none') when no provenance is found
+      // parseK8sReceiver converts 'none' to undefined
+      expect(contactPoint?.provenance).toBeUndefined();
+    });
+
+    it('should handle missing annotations gracefully', async () => {
+      // This test verifies that when annotations are undefined, provenance is handled correctly
+      const config: AlertManagerCortexConfig = {
+        template_files: {},
+        alertmanager_config: {
+          receivers: [
+            {
+              name: 'no-annotations-contact-point',
+              grafana_managed_receiver_configs: [
+                {
+                  uid: 'test-uid-5',
+                  name: 'no-annotations-contact-point',
+                  type: 'email',
+                  disableResolveMessage: false,
+                  settings: {
+                    addresses: 'test@example.com',
+                  },
+                  secureFields: {},
+                },
+              ],
+            },
+          ],
+        },
+      };
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, config);
+
+      const { result } = renderHook(
+        () =>
+          useContactPointsWithStatus({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            fetchPolicies: false,
+            fetchStatuses: false,
+          }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'no-annotations-contact-point');
+      expect(contactPoint).toBeDefined();
+      // When annotations are missing, the mock handler should set provenance to undefined
+      expect(contactPoint?.provenance).toBeUndefined();
     });
   });
 });

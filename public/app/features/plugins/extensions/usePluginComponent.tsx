@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
-import { useObservable } from 'react-use';
 
 import { usePluginContext } from '@grafana/data';
 import { UsePluginComponentResult } from '@grafana/runtime';
 
-import { useExposedComponentsRegistry } from './ExtensionRegistriesContext';
 import * as errors from './errors';
 import { log } from './logs/log';
+import { useExposedComponentRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { getExposedComponentPluginDependencies, isGrafanaDevMode, wrapWithPluginContext } from './utils';
 import { isExposedComponentDependencyMissing } from './validators';
@@ -14,10 +13,9 @@ import { isExposedComponentDependencyMissing } from './validators';
 // Returns a component exposed by a plugin.
 // (Exposed components can be defined in plugins by calling .exposeComponent() on the AppPlugin instance.)
 export function usePluginComponent<Props extends object = {}>(id: string): UsePluginComponentResult<Props> {
-  const registry = useExposedComponentsRegistry();
-  const registryState = useObservable(registry.asObservable());
+  const registryItem = useExposedComponentRegistrySlice<Props>(id);
   const pluginContext = usePluginContext();
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExposedComponentPluginDependencies(id));
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(id, getExposedComponentPluginDependencies);
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
@@ -30,14 +28,13 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
       };
     }
 
-    if (!registryState?.[id]) {
+    if (!registryItem) {
       return {
         isLoading: false,
         component: null,
       };
     }
 
-    const registryItem = registryState[id];
     const componentLog = log.child({
       title: registryItem.title,
       description: registryItem.description ?? '',
@@ -54,7 +51,12 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
 
     return {
       isLoading: false,
-      component: wrapWithPluginContext(registryItem.pluginId, registryItem.component, componentLog),
+      component: wrapWithPluginContext({
+        pluginId: registryItem.pluginId,
+        extensionTitle: registryItem.title,
+        Component: registryItem.component,
+        log: componentLog,
+      }),
     };
-  }, [id, pluginContext, registryState, isLoadingAppPlugins]);
+  }, [id, pluginContext, registryItem, isLoadingAppPlugins]);
 }

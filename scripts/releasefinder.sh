@@ -2,10 +2,9 @@
 
 # This script finds which Grafana releases include a specific commit.
 # It checks both release branches and tags to determine:
-# 1. Which release branches contain the commit
-# 2. The first release tag that included the commit
-# 3. Which release tags include the commit
-# 4. The first release that included the commit
+# 1. Which previous releases include the commit
+# 2. Which upcoming releases will include the commit
+# 3. The first release that included the commit
 #
 # Usage: ./scripts/releasefinder.sh <commit-hash>
 # The commit hash can be either:
@@ -13,6 +12,9 @@
 # - Short hash (e.g., 1a2b3c4d)
 #
 # Example: ./scripts/releasefinder.sh a1b2c3d4e5f6
+#
+# Note: This script requires a full repository clone with all branches and tags.
+# It will not work correctly with shallow clones (--depth) or single-branch clones.
 #
 # If you get a "Permission denied" error, make the script executable with:
 #   chmod +x scripts/releasefinder.sh
@@ -47,104 +49,64 @@ fi
 echo "Fetching latest remote information..."
 git fetch --all --tags --prune 2>/dev/null
 
-echo "Finding release branches containing the commit..."
-echo "Finding tags associated with the commit..."
-echo
-
-echo "Results for commit: $COMMIT_HASH"
+echo "Finding releases containing commit: $COMMIT_HASH"
 echo "============================================="
 echo
 
-# Get commit details
+# Get all commit details in one call for better performance
+commit_info=$(git log -1 --format="%an <%ae>%n%ad%n%B" --date=iso "$COMMIT_HASH")
+author=$(echo "$commit_info" | sed -n '1p')
+date=$(echo "$commit_info" | sed -n '2p')
+commit_message=$(echo "$commit_info" | sed -n '3,$p')
+
 echo "Commit details:"
-echo "  Author: $(git log -1 --format="%an <%ae>" "$COMMIT_HASH")"
-echo "  Date: $(git log -1 --format="%ad" --date=iso "$COMMIT_HASH")"
-echo
+echo "  Author: $author"
+echo "  Date: $date"
 
-# Check for backport information
-echo "Backport information:"
-if git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep -q "cherry picked from commit"; then
-    ORIGINAL_COMMIT=$(git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep "cherry picked from commit" | sed 's/.*cherry picked from commit \([a-f0-9]*\).*/\1/')
-    echo "  This is a backport from commit: $ORIGINAL_COMMIT"
-    echo "  Original commit details:"
-    echo "    Author: $(git log -1 --format="%an <%ae>" "$ORIGINAL_COMMIT")"
-    echo "    Date: $(git log -1 --format="%ad" --date=iso "$ORIGINAL_COMMIT")"
-else
-    echo "  Not a backport"
+# Extract PR number and title
+PR_NUMBER=$(echo "$commit_message" | grep -o '#[0-9]\+' | head -n1 | tr -d '#')
+if [ -n "$PR_NUMBER" ]; then
+    PR_TITLE=$(echo "$commit_message" | head -n1)
+    echo "  PR: #$PR_NUMBER - $PR_TITLE"
+    echo "  Link: https://github.com/grafana/grafana/pull/$PR_NUMBER"
 fi
 echo
 
-# Arrays to store results
-declare -a release_branches=()
-declare -a direct_tags=()
-declare -a included_tags=()
+# Find release branches and tags containing the commit
+release_branches=$(git branch -r --contains "$COMMIT_HASH" 2>/dev/null | grep -E 'origin/release-[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sed 's/.*origin\///')
+release_tags=$(git tag --contains "$COMMIT_HASH" 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sort -V)
 
-# First check all release branches (including security releases)
-for branch in $(git branch -r | grep -E 'origin/release-[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sed 's/origin\///'); do
-    # Check if the commit is in this branch's history
-    if git merge-base --is-ancestor "$COMMIT_HASH" "origin/$branch" 2>/dev/null; then
-        release_branches+=("$branch")
-    fi
-done
+# Get all existing tags for upcoming release filtering
+all_tags=$(git tag 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$')
 
-# Then check all version tags (including security releases)
-for tag in $(git tag | sort -V); do
-    # Skip non-version tags
-    if ! [[ $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$ ]]; then
-        continue
-    fi
-    
-    # Check if the commit is in this tag
-    if git merge-base --is-ancestor "$COMMIT_HASH" "$tag" 2>/dev/null; then
-        # If this is the first tag containing the commit, it's the initial release tag
-        if [ ${#direct_tags[@]} -eq 0 ]; then
-            direct_tags+=("$tag")
+# Display previous releases
+if [ -n "$release_tags" ]; then
+    echo "This commit has been included in these PREVIOUS on-prem releases:"
+    first_release=$(echo "$release_tags" | head -1)
+    while read -r tag; do
+        if [ "$tag" = "$first_release" ]; then
+            echo "  - $tag (first release)"
         else
-            included_tags+=("$tag")
+            echo "  - $tag"
         fi
-    fi
-done
+    done <<< "$release_tags"
+    echo
+    echo "Note: This code may have been backported to previous release branches. Please check the original PR for backport information."
+    echo
+fi
 
-# Print release branches
-echo "Included in release branches:"
-if [ ${#release_branches[@]} -eq 0 ]; then
-    echo "  None"
-else
-    for branch in "${release_branches[@]}"; do
-        # Convert branch name to tag format (e.g., release-11.5.0 -> v11.5.0)
+# Display upcoming releases
+if [ -n "$release_branches" ]; then
+    echo "This commit will be included in these UPCOMING on-prem releases:"
+    while read -r branch; do
         tag_version="v${branch#release-}"
-        # Check if tag exists
-        if git tag | grep -q "^$tag_version$"; then
-            echo "  - $branch"
-        else
-            echo "  - $branch (release for this branch upcoming)"
+        # Only show branches that don't have a corresponding tag yet
+        if ! echo "$all_tags" | grep -q "^$tag_version$"; then
+            echo "  - $tag_version"
         fi
-    done | sort -V
+    done <<< "$release_branches" | sort -V
+else
+    echo "This commit is not yet included in any release branches."
+    echo "The corresponding release branch has likely not been created yet."
 fi
 echo
-
-# Print initial release tag
-echo "Initial release tag (the first release in which this commit was included):"
-if [ ${#direct_tags[@]} -eq 0 ]; then
-    echo "  None"
-else
-    printf "  - %s\n" "${direct_tags[@]}" | sort -V
-fi
-echo
-
-# Print included tags
-echo "Included in these release tags (the subsequent releases that included this commit):"
-if [ ${#included_tags[@]} -eq 0 ]; then
-    echo "  None"
-else
-    printf "  - %s\n" "${included_tags[@]}" | sort -V
-fi
-echo
-
-# Find first release
-if [ ${#direct_tags[@]} -gt 0 ]; then
-    first_release=$(printf "%s\n" "${direct_tags[@]}" | sort -V | head -n1)
-    echo "First included in release: $first_release"
-else
-    echo "Not included in any releases"
-fi 

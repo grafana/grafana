@@ -1,4 +1,4 @@
-import { PureComponent, createRef } from 'react';
+import { memo, useRef, useEffect } from 'react';
 
 import { JsonExplorer, JsonExplorerConfig } from './json_explorer/json_explorer'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
 
@@ -10,45 +10,32 @@ interface Props {
   onDidRender?: (formattedJson: {}) => void;
 }
 
-export class JSONFormatter extends PureComponent<Props> {
-  private wrapperRef = createRef<HTMLDivElement>();
+export const JSONFormatter = memo<Props>(
+  ({ className, json, config = { animateOpen: true }, open = 3, onDidRender }) => {
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
-  static defaultProps = {
-    open: 3,
-    config: {
-      animateOpen: true,
-    },
-  };
+    useEffect(() => {
+      const wrapperEl = wrapperRef.current;
+      if (!wrapperEl) {
+        return;
+      }
 
-  componentDidMount() {
-    this.renderJson();
+      const formatter = new JsonExplorer(json, open, config);
+      const hasChildren = wrapperEl.hasChildNodes();
+
+      if (hasChildren && wrapperEl.lastChild) {
+        wrapperEl.replaceChild(formatter.render(), wrapperEl.lastChild);
+      } else {
+        wrapperEl.appendChild(formatter.render());
+      }
+
+      if (onDidRender) {
+        onDidRender(formatter.json);
+      }
+    }, [json, config, open, onDidRender]);
+
+    return <div className={className} ref={wrapperRef} />;
   }
+);
 
-  componentDidUpdate() {
-    this.renderJson();
-  }
-
-  renderJson = () => {
-    const { json, config, open, onDidRender } = this.props;
-    const wrapperEl = this.wrapperRef.current;
-    const formatter = new JsonExplorer(json, open, config);
-    // @ts-ignore
-    const hasChildren: boolean = wrapperEl.hasChildNodes();
-    if (hasChildren) {
-      // @ts-ignore
-      wrapperEl.replaceChild(formatter.render(), wrapperEl.lastChild);
-    } else {
-      // @ts-ignore
-      wrapperEl.appendChild(formatter.render());
-    }
-
-    if (onDidRender) {
-      onDidRender(formatter.json);
-    }
-  };
-
-  render() {
-    const { className } = this.props;
-    return <div className={className} ref={this.wrapperRef} />;
-  }
-}
+JSONFormatter.displayName = 'JSONFormatter';

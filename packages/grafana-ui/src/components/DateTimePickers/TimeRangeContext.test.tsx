@@ -86,7 +86,7 @@ describe('TimeRangeProvider', () => {
       context2 = val;
     }
 
-    const renderContext = render(
+    const { rerender } = render(
       <TimeRangeProvider>
         <TestComponent onContextChange={onContextChange} />
         <TestComponent onContextChange={onContextChange2} />
@@ -104,7 +104,7 @@ describe('TimeRangeProvider', () => {
       syncedValue: timeRange,
     });
 
-    renderContext.rerender(
+    rerender(
       <TimeRangeProvider>
         <TestComponent onContextChange={onContextChange2} />
       </TimeRangeProvider>

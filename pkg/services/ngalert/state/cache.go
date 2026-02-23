@@ -25,12 +25,75 @@ type ruleStates struct {
 type cache struct {
 	states    map[int64]map[string]*ruleStates // orgID > alertRuleUID > stateID > state
 	mtxStates sync.RWMutex
+	metrics   alertMetrics
+}
+
+type alertMetrics struct {
+	lastUpdate  time.Time
+	mtx         sync.RWMutex
+	stateCounts map[eval.State]float64
 }
 
 func newCache() *cache {
 	return &cache{
 		states: make(map[int64]map[string]*ruleStates),
 	}
+}
+
+func (c *cache) reset() {
+	c.metrics.mtx.Lock()
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	defer c.metrics.mtx.Unlock()
+
+	c.states = make(map[int64]map[string]*ruleStates)
+	c.metrics.stateCounts = nil
+	c.metrics.lastUpdate = time.Time{}
+}
+
+func (c *cache) calcMetrics(states map[eval.State]struct{}) map[eval.State]float64 {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	counts := make(map[eval.State]float64, len(states))
+	for state := range states {
+		counts[state] = 0
+	}
+	for _, orgMap := range c.states {
+		for _, rule := range orgMap {
+			for _, st := range rule.states {
+				for state := range states {
+					if st.State == state {
+						counts[state] += 1
+					}
+				}
+			}
+		}
+	}
+	return counts
+}
+
+func (c *cache) updateMetrics() {
+	c.metrics.mtx.Lock()
+	defer c.metrics.mtx.Unlock()
+	if time.Since(c.metrics.lastUpdate) < time.Second {
+		return // avoid updating too frequently
+	}
+	newMetrics := c.calcMetrics(map[eval.State]struct{}{
+		eval.Normal:     {},
+		eval.Alerting:   {},
+		eval.Pending:    {},
+		eval.Error:      {},
+		eval.NoData:     {},
+		eval.Recovering: {},
+	})
+	c.metrics.lastUpdate = time.Now()
+	c.metrics.stateCounts = newMetrics
+}
+
+func (c *cache) countAlertsBy(state eval.State) float64 {
+	c.metrics.mtx.RLock()
+	defer c.metrics.mtx.RUnlock()
+	return c.metrics.stateCounts[state]
 }
 
 // RegisterMetrics registers a set of Gauges in the form of collectors for the alerts in the cache.
@@ -43,6 +106,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 			Help:        "How many alerts by state are in the scheduler.",
 			ConstLabels: prometheus.Labels{"state": strings.ToLower(state.String())},
 		}, func() float64 {
+			c.updateMetrics()
 			return c.countAlertsBy(state)
 		})
 	}
@@ -52,23 +116,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 	r.MustRegister(newAlertCountByState(eval.Pending))
 	r.MustRegister(newAlertCountByState(eval.Error))
 	r.MustRegister(newAlertCountByState(eval.NoData))
-}
-
-func (c *cache) countAlertsBy(state eval.State) float64 {
-	c.mtxStates.RLock()
-	defer c.mtxStates.RUnlock()
-	var count float64
-	for _, orgMap := range c.states {
-		for _, rule := range orgMap {
-			for _, st := range rule.states {
-				if st.State == state {
-					count++
-				}
-			}
-		}
-	}
-
-	return count
+	r.MustRegister(newAlertCountByState(eval.Recovering))
 }
 
 func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
@@ -108,9 +156,25 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
 	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
 
-	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels))
+	// If the result contains an error, we want to add the ref_id and datasource_uid labels
+	// to the new state if the alert rule should be in the ErrorErrState.
+	var errorLabels data.Labels
+	if result.State == eval.Error && alertRule.ExecErrState == ngModels.ErrorErrState {
+		refID, datasourceUID := datasourceErrorInfo(result.Error, alertRule)
+		if refID != "" || datasourceUID != "" {
+			errorLabels = data.Labels{
+				"ref_id":         refID,
+				"datasource_uid": datasourceUID,
+			}
+		}
+	}
+
+	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels)+len(errorLabels))
 	dupes := make(data.Labels)
 	for key, val := range extraLabels {
+		lbs[key] = val
+	}
+	for key, val := range errorLabels {
 		lbs[key] = val
 	}
 	for key, val := range labels {
@@ -166,25 +230,23 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 	return expanded, errs
 }
 
-func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
-	deleted := make([]*State, 0)
+func (rs *ruleStates) deleteStates(predicate func(s *State) bool) {
 	for id, state := range rs.states {
 		if predicate(state) {
 			delete(rs.states, id)
-			deleted = append(deleted, state)
 		}
 	}
-	return deleted
 }
 
-func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) []*State {
+// deleteRuleStates iterates over all states for the given rule and deletes those where predicate returns true.
+// The predicate function is called once for each state and should return true if the state should be deleted.
+func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
 	if ok {
-		return ruleStates.deleteStates(predicate)
+		ruleStates.deleteStates(predicate)
 	}
-	return nil
 }
 
 func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
@@ -287,17 +349,33 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 				if err != nil {
 					continue
 				}
+				var lastError string
+				if v2.Error != nil {
+					lastError = v2.Error.Error()
+				}
+				var lastResult ngModels.LastResult
+				if v2.LatestResult != nil {
+					lastResult = ngModels.LastResult{
+						Values:    v2.LatestResult.Values,
+						Condition: v2.LatestResult.Condition,
+					}
+				}
 				states = append(states, ngModels.AlertInstance{
-					AlertInstanceKey:  key,
-					Labels:            ngModels.InstanceLabels(v2.Labels),
-					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
-					CurrentReason:     v2.StateReason,
-					LastEvalTime:      v2.LastEvaluationTime,
-					CurrentStateSince: v2.StartsAt,
-					CurrentStateEnd:   v2.EndsAt,
-					ResolvedAt:        v2.ResolvedAt,
-					LastSentAt:        v2.LastSentAt,
-					ResultFingerprint: v2.ResultFingerprint.String(),
+					AlertInstanceKey:   key,
+					Labels:             ngModels.InstanceLabels(v2.Labels),
+					Annotations:        v2.Annotations,
+					CurrentState:       ngModels.InstanceStateType(v2.State.String()),
+					CurrentReason:      v2.StateReason,
+					LastEvalTime:       v2.LastEvaluationTime,
+					CurrentStateSince:  v2.StartsAt,
+					CurrentStateEnd:    v2.EndsAt,
+					FiredAt:            v2.FiredAt,
+					ResolvedAt:         v2.ResolvedAt,
+					LastSentAt:         v2.LastSentAt,
+					ResultFingerprint:  v2.ResultFingerprint.String(),
+					EvaluationDuration: v2.EvaluationDuration,
+					LastError:          lastError,
+					LastResult:         lastResult,
 				})
 			}
 		}

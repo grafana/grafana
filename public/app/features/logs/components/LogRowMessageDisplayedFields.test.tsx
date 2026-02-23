@@ -6,8 +6,8 @@ import { IconButton } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { LogRowMessageDisplayedFields, Props } from './LogRowMessageDisplayedFields';
-import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
 
 const setup = (propOverrides: Partial<Props> = {}, detectedFields = ['place', 'planet']) => {
   const theme = createTheme();

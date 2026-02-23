@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Pagination, Tooltip, useStyles2 } from '@grafana/ui';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
@@ -196,13 +197,13 @@ function useColumns(
     const columns: RuleTableColumnProps[] = [
       {
         id: 'state',
-        label: 'State',
+        label: t('alerting.use-columns.columns.label.state', 'State'),
         renderCell: ({ data: rule }) => <RuleStateCell rule={rule} />,
         size: '165px',
       },
       {
         id: 'name',
-        label: 'Name',
+        label: t('alerting.use-columns.columns.label.name', 'Name'),
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => rule.name,
         size: showNextEvaluationColumn ? 4 : 5,
@@ -237,7 +238,7 @@ function useColumns(
       },
       {
         id: 'health',
-        label: 'Health',
+        label: t('alerting.use-columns.columns.label.health', 'Health'),
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: { promRule, group } }) => (promRule ? <RuleHealth rule={promRule} /> : null),
         size: '75px',
@@ -246,7 +247,7 @@ function useColumns(
     if (showSummaryColumn) {
       columns.push({
         id: 'summary',
-        label: 'Summary',
+        label: t('alerting.use-columns.label.summary', 'Summary'),
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
           return <Tokenize input={rule.annotations[Annotation.summary] ?? ''} />;
@@ -258,13 +259,18 @@ function useColumns(
     if (showNextEvaluationColumn) {
       columns.push({
         id: 'nextEvaluation',
-        label: 'Next evaluation',
+        label: t('alerting.use-columns.label.next-evaluation', 'Next evaluation'),
         renderCell: ({ data: rule }) => {
           const nextEvalInfo = calculateNextEvaluationEstimate(rule.promRule?.lastEvaluation, rule.group.interval);
 
           return (
             nextEvalInfo && (
-              <Tooltip placement="top" content={`${nextEvalInfo?.fullDate}`} theme="info">
+              <Tooltip
+                placement="top"
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                content={`${nextEvalInfo?.fullDate}`}
+                theme="info"
+              >
                 <span>{nextEvalInfo?.humanized}</span>
               </Tooltip>
             )
@@ -277,7 +283,7 @@ function useColumns(
     if (showGroupColumn) {
       columns.push({
         id: 'group',
-        label: 'Group',
+        label: t('alerting.use-columns.label.group', 'Group'),
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
           const { namespace, group } = rule;
@@ -296,14 +302,14 @@ function useColumns(
     }
     columns.push({
       id: 'actions',
-      label: 'Actions',
+      label: t('alerting.use-columns.label.actions', 'Actions'),
       // eslint-disable-next-line react/display-name
       renderCell: ({ data: rule }) => <RuleActionsCell rule={rule} isLoadingRuler={isRulerLoading} />,
       size: '215px',
     });
 
     return columns;
-  }, [showSummaryColumn, showGroupColumn, showNextEvaluationColumn, isRulerLoading]);
+  }, [showNextEvaluationColumn, showSummaryColumn, showGroupColumn, isRulerLoading]);
 }
 
 function RuleStateCell({ rule }: { rule: CombinedRule }) {

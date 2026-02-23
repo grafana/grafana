@@ -1,11 +1,11 @@
-import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
-import { Role } from 'app/types';
+import { OrgRole, SelectableValue, WithAccessControlMetadata } from '@grafana/data';
 
-import { OrgRole } from '.';
+import { Role } from './accessControl';
 
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
   email: string;
+  created?: string;
   lastSeenAt: string;
   lastSeenAtAge: string;
   login: string;
@@ -19,6 +19,8 @@ export interface OrgUser extends WithAccessControlMetadata {
   isDisabled: boolean;
   authLabels?: string[];
   isExternallySynced?: boolean;
+  // Externally provisioned
+  isProvisioned?: boolean;
 }
 
 export interface User {
@@ -48,6 +50,7 @@ export interface UserDTO extends WithAccessControlMetadata {
   theme?: string;
   avatarUrl?: string;
   orgId?: number;
+  created?: string;
   lastSeenAt?: string;
   lastSeenAtAge?: string;
   licensedRole?: string;
@@ -56,6 +59,7 @@ export interface UserDTO extends WithAccessControlMetadata {
   orgs?: Unit[];
   isExternallySynced?: boolean;
   isGrafanaAdminExternallySynced?: boolean;
+  isProvisioned?: boolean;
 }
 
 export interface Invitee {
@@ -78,9 +82,6 @@ export interface Invitee {
 export interface UsersState {
   users: OrgUser[];
   searchQuery: string;
-  externalUserMngLinkUrl: string;
-  externalUserMngLinkName: string;
-  externalUserMngInfo: string;
   isLoading: boolean;
   rolesLoading?: boolean;
   page: number;

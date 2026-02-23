@@ -38,7 +38,6 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
                   return shouldDisplayCollapse ? (
                     <Collapse
                       key={key}
-                      collapsible
                       label={generateLabel(feature, idx)}
                       isOpen={rowMap.get(key)}
                       onToggle={() => {

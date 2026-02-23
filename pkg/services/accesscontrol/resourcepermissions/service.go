@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -62,6 +61,9 @@ type Store interface {
 
 	// DeleteResourcePermissions will delete all permissions for supplied resource id
 	DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error
+
+	// GetPermissionIDByRoleName returns the permission ID for a given role name and org ID
+	GetPermissionIDByRoleName(ctx context.Context, orgID int64, roleName string) (int64, error)
 }
 
 func New(cfg *setting.Cfg,
@@ -105,7 +107,7 @@ func New(cfg *setting.Cfg,
 		actionSetSvc: actionSetService,
 	}
 
-	s.api = newApi(cfg, ac, router, s)
+	s.api = newApi(cfg, ac, router, s, features, s.options.RestConfigProvider)
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err
@@ -355,9 +357,23 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		return []string{}, nil
 	}
 
+	var actions []string
+
+	// Write action sets for folders and dashboards
+	if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
+		actions = append(actions, GetActionSetName(s.options.Resource, permission))
+
+		// If we only want to store action sets, return now
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets) {
+			return actions, nil
+		}
+	}
+
 	for k, v := range s.options.PermissionsToActions {
 		if permission == k {
-			return v, nil
+			actions = append(actions, v...)
+			return actions, nil
 		}
 	}
 	return nil, ErrInvalidPermission.Build(ErrInvalidPermissionData(permission))

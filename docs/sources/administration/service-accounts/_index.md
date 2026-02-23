@@ -15,7 +15,7 @@ labels:
     - cloud
 menuTitle: Service accounts
 title: Service accounts
-weight: 800
+weight: 4200
 refs:
   service-accounts:
     - pattern: /docs/grafana/
@@ -63,10 +63,12 @@ refs:
 
 You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and tokens to authenticate applications, such as Terraform, with the Grafana API.
 
-A service account is not the same as a Grafana [user](/docs/grafana/latest/administration/user-management/). The role of a service account is primarily to automate work using the Grafana API.
+A service account is not the same as a Grafana [user](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/user-management/). The role of a service account is primarily to automate work using the Grafana API.
 
 {{< admonition type="note" >}}
 Service accounts replace [API keys](ref:migrate-api-keys) as the primary way to authenticate applications that interact with Grafana.
+
+Use service accounts to access the Grafana HTTP API (dashboards, users, data sources, alerts). If you're a Grafana Cloud user and need to send or query telemetry data (metrics, logs, traces), use [Cloud Access Policies](https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/) instead.
 {{< /admonition >}}
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
@@ -76,13 +78,13 @@ A common use case for creating a service account is to perform operations on aut
 - Set up an external SAML authentication provider
 - Interact with Grafana without signing in as a user
 
-In [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), you can also use service accounts in combination with [role-based access control](ref:rbac) to grant very specific permissions to applications that interact with Grafana.
+In [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), you can also use service accounts in combination with [role-based access control](ref:rbac) to grant very specific permissions to applications that interact with Grafana.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
 
 Service accounts can't be used for instance-wide operations, such as global user management and organization management. For these tasks, you need to use a user with [Grafana server administrator permissions](ref:roles-and-permissions).
-{{% /admonition %}}
+{{< /admonition >}}
 
 {{< vimeo 742056367 >}}
 
@@ -166,11 +168,11 @@ By default, service account tokens don't have an expiration date, meaning they w
 You can assign organization roles (`Viewer`, `Editor`, `Admin`) to a Grafana service account to control access for the associated service account tokens.
 You can assign organization roles to a service account using the Grafana UI or via the API. For more information about assigning a role to a service account via the API, refer to [Update service account using the HTTP API](ref:api-update-service-account).
 
-In [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), you can also [assign RBAC roles](ref:rbac-assign-rbac-roles) to grant very specific permissions to applications that interact with Grafana.
+In [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), you can also [assign RBAC roles](ref:rbac-assign-rbac-roles) to grant very specific permissions to applications that interact with Grafana.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Since Grafana 10.2.0, the `No Basic Role` is available for organization users or service accounts. This role has no permissions. Permissions can be granted with RBAC.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Before you begin
 
@@ -237,13 +239,13 @@ To list your token's permissions, use the `/api/access-control/user/permissions`
 
 #### Example
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The following command output is shortened to show only the relevant content.
 Authorize your request with the token whose permissions you want to check.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```bash
-curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions' | jq
+curl -H "Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697" -X GET '<grafana_url>/api/access-control/user/permissions' | jq
 ```
 
 The output lists the token's permissions:
@@ -268,7 +270,7 @@ To list which dashboards a token can view, you can filter the `/api/access-contr
 #### Example
 
 ```bash
-curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions' | jq '."dashboards:read"'
+curl -H "Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697" -X GET '<grafana_url>/api/access-control/user/permissions' | jq '."dashboards:read"'
 ```
 
 The output lists the dashboards a token can view and the folders a token can view dashboards from,

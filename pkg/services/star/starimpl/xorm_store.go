@@ -2,6 +2,8 @@ package starimpl
 
 import (
 	"context"
+	"math/rand"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -14,22 +16,9 @@ type sqlStore struct {
 func (s *sqlStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {
 	var isStarred bool
 	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if query.DashboardUID != "" && query.OrgID != 0 {
-			rawSQL := "SELECT 1 from star where user_id=? and dashboard_uid=? and org_id=?"
-			results, err := sess.Query(rawSQL, query.UserID, query.DashboardUID, query.OrgID)
+		rawSQL := "SELECT 1 from star where user_id=? and dashboard_uid=? and org_id=?"
+		results, err := sess.Query(rawSQL, query.UserID, query.DashboardUID, query.OrgID)
 
-			if err != nil {
-				return err
-			}
-
-			isStarred = len(results) != 0
-			return nil
-		}
-
-		// TODO: Remove this block after all dashboards have a UID
-		// && the deprecated endpoints have been removed
-		rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
-		results, err := sess.Query(rawSQL, query.UserID, query.DashboardID)
 		if err != nil {
 			return err
 		}
@@ -42,6 +31,11 @@ func (s *sqlStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (b
 
 func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		// nolint:staticcheck
+		if cmd.DashboardID == 0 {
+			cmd.DashboardID = time.Now().UnixMicro() + rand.Int63n(5000) // random unique value
+		}
+
 		entity := star.Star{
 			UserID: cmd.UserID,
 			// nolint:staticcheck
@@ -62,17 +56,8 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) e
 
 func (s *sqlStore) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if cmd.DashboardUID != "" && cmd.OrgID != 0 {
-			var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_uid=? and org_id=?"
-			_, err := sess.Exec(rawSQL, cmd.UserID, cmd.DashboardUID, cmd.OrgID)
-			return err
-		}
-
-		// TODO: Remove this block after all dashboards have a UID
-		// && the deprecated endpoints have been removed
-		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
-		// nolint:staticcheck
-		_, err := sess.Exec(rawSQL, cmd.UserID, cmd.DashboardID)
+		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_uid=? and org_id=?"
+		_, err := sess.Exec(rawSQL, cmd.UserID, cmd.DashboardUID, cmd.OrgID)
 		return err
 	})
 }

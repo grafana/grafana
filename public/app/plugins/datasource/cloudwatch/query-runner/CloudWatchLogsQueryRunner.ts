@@ -1,4 +1,4 @@
-import { set, uniq } from 'lodash';
+import { set, uniq, uniqBy } from 'lodash';
 import {
   concatMap,
   finalize,
@@ -23,29 +23,34 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  Field,
+  FieldType,
   LoadingState,
   LogRowContextOptions,
   LogRowContextQueryDirection,
   LogRowModel,
+  ScopedVars,
   getDefaultTimeRange,
   rangeUtil,
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
+import { GraphDrawStyle } from '@grafana/schema';
+import { TableCellDisplayMode } from '@grafana/ui';
 
+import { CloudWatchLogsQuery, LogsMode, CloudWatchLogsAnomaliesQuery, LogsQueryLanguage } from '../dataquery.gen';
 import {
   CloudWatchJsonData,
-  CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchLogsRequest,
   CloudWatchQuery,
   GetLogEventsRequest,
   LogAction,
-  LogsQueryLanguage,
   QueryParam,
   StartQueryRequest,
 } from '../types';
 import { addDataLinksToLogsResponse } from '../utils/datalinks';
+import { LOG_GROUP_ACCOUNT_MAX, LOG_GROUP_PREFIX_MAX } from '../utils/logGroupsConstants';
 import { runWithRetry } from '../utils/logsRetry';
 import { increasingInterval } from '../utils/rxjs/increasingInterval';
 import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../utils/templateVariableUtils';
@@ -92,59 +97,20 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const validLogQueries = logQueries.filter(this.filterQuery);
 
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
-      const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
-        this.templateSrv,
-        (target.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn),
-        options.scopedVars
-      );
-
-      // need to support legacy format variables too
-      const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
-        this.templateSrv,
-        target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
-        options.scopedVars,
-        'text'
-      );
-
-      // if a log group template variable expands to log group that has already been selected in the log group picker, we need to remove duplicates.
-      // Otherwise the StartLogQuery API will return a permission error
-      const logGroups = uniq(interpolatedLogGroupArns).map((arn) => ({ arn, name: arn }));
-      const logGroupNames = uniq(interpolatedLogGroupNames);
-
-      const logsSQLCustomerFormatter = (value: unknown, model: Partial<CustomFormatterVariable>) => {
-        if (
-          (typeof value === 'string' && value.startsWith('arn:') && value.endsWith(':*')) ||
-          (Array.isArray(value) &&
-            value.every((v) => typeof v === 'string' && v.startsWith('arn:') && v.endsWith(':*')))
-        ) {
-          const varName = model.name || '';
-          const variable = this.templateSrv.getVariables().find(({ name }) => name === varName);
-          // checks the raw query string for a log group template variable that occurs inside `logGroups(logGroupIdentifier:[ ... ])\`
-          // to later surround the log group names with backticks
-          // this assumes there's only a single template variable used inside the [ ]
-          const shouldSurroundInQuotes = target.expression
-            ?.replaceAll(/[\r\n\t\s]+/g, '')
-            .includes(`\`logGroups(logGroupIdentifier:[$${varName}])\``);
-          if (variable && 'current' in variable && 'text' in variable.current) {
-            if (Array.isArray(variable.current.text)) {
-              return variable.current.text.map((v) => (shouldSurroundInQuotes ? `'${v}'` : v)).join(',');
-            }
-            return shouldSurroundInQuotes ? `'${variable.current.text}'` : variable.current.text;
-          }
-        }
-
-        return value;
-      };
-      const formatter = target.queryLanguage === LogsQueryLanguage.SQL ? logsSQLCustomerFormatter : undefined;
-      const queryString = this.templateSrv.replace(target.expression || '', options.scopedVars, formatter);
-
+      const { expression, logGroups, logGroupNames, logGroupPrefixes, selectedAccountIds } =
+        this.interpolateLogsQueryVariables(target, options.scopedVars);
       return {
         refId: target.refId,
         region: this.templateSrv.replace(this.getActualRegion(target.region)),
-        queryString,
+        queryString: expression ?? '',
         logGroups,
         logGroupNames,
         queryLanguage: target.queryLanguage,
+        logsMode: target.logsMode ?? LogsMode.Insights,
+        logsQueryScope: target.logsQueryScope,
+        logGroupPrefixes,
+        logGroupClass: target.logGroupClass,
+        selectedAccountIds,
       };
     });
 
@@ -173,6 +139,63 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
               this.tracingDataSourceUid
             );
 
+            return dataQueryResponse;
+          })()
+        );
+      })
+    );
+  };
+
+  public handleLogAnomaliesQueries = (
+    logAnomaliesQueries: CloudWatchLogsAnomaliesQuery[],
+    options: DataQueryRequest<CloudWatchQuery>,
+    queryFn: (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
+  ): Observable<DataQueryResponse> => {
+    const logAnomalyTargets: StartQueryRequest[] = logAnomaliesQueries.map((target: CloudWatchLogsAnomaliesQuery) => {
+      return {
+        refId: target.refId,
+        region: this.templateSrv.replace(this.getActualRegion(target.region)),
+        queryString: '',
+        logGroups: [],
+        logsMode: LogsMode.Anomalies,
+        suppressionState: target.suppressionState || 'all',
+        anomalyDetectionARN: target.anomalyDetectionARN || '',
+      };
+    });
+
+    const range = options?.range || getDefaultTimeRange();
+    // append -logsAnomalies to prevent requestId from matching metric or logs queries from the same panel
+    const requestId = options?.requestId ? `${options?.requestId}-logsAnomalies` : '';
+
+    const requestParams: DataQueryRequest<CloudWatchLogsAnomaliesQuery> = {
+      ...options,
+      range,
+      skipQueryCache: true,
+      requestId,
+      interval: options?.interval || '', // dummy
+      intervalMs: options?.intervalMs || 1, // dummy
+      scopedVars: options?.scopedVars || {}, // dummy
+      timezone: options?.timezone || '', // dummy
+      app: options?.app || '', // dummy
+      startTime: options?.startTime || 0, // dummy
+      targets: logAnomalyTargets.map((t) => ({
+        ...t,
+        id: '',
+        queryMode: 'Logs',
+        refId: t.refId || 'A',
+        intervalMs: 1, // dummy
+        maxDataPoints: 1, // dummy
+        datasource: this.ref,
+        type: 'logAction',
+        logsMode: LogsMode.Anomalies,
+      })),
+    };
+
+    return queryFn(requestParams).pipe(
+      mergeMap((dataQueryResponse) => {
+        return from(
+          (async () => {
+            convertTrendHistogramToSparkline(dataQueryResponse);
             return dataQueryResponse;
           })()
         );
@@ -223,6 +246,102 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     return await lastValueFrom(this.makeLogActionRequest('GetLogEvents', [requestParams], queryFn));
   };
+
+  interpolateLogsQueryVariables(
+    query: CloudWatchLogsQuery,
+    scopedVars: ScopedVars
+  ): Pick<
+    CloudWatchLogsQuery,
+    'expression' | 'logGroups' | 'logGroupNames' | 'logGroupPrefixes' | 'selectedAccountIds'
+  > {
+    const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      this.templateSrv,
+      (query.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn),
+      scopedVars
+    );
+    const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      this.templateSrv,
+      (query.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.name),
+      scopedVars,
+      'text'
+    );
+    const interpolatedLogGroups = interpolatedLogGroupArns.map((arn, index) => ({
+      arn,
+      name: interpolatedLogGroupNames[index] ?? arn,
+    }));
+
+    // need to support legacy format variables too
+    const interpolatedLegacyLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      this.templateSrv,
+      query.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
+      scopedVars,
+      'text'
+    );
+
+    // if a log group template variable expands to log group that has already been selected in the log group picker, we need to remove duplicates.
+    // Otherwise the StartLogQuery API will return a permission error
+    const logGroups = uniqBy(interpolatedLogGroups, 'arn');
+    const logGroupNames = uniq(interpolatedLegacyLogGroupNames);
+
+    const logGroupPrefixes = query.logGroupPrefixes
+      ? uniq(
+          interpolateStringArrayUsingSingleOrMultiValuedVariable(this.templateSrv, query.logGroupPrefixes, scopedVars)
+        )
+      : undefined;
+
+    if (logGroupPrefixes && logGroupPrefixes.length > LOG_GROUP_PREFIX_MAX) {
+      throw new Error(`Expanded prefix count (${logGroupPrefixes.length}) exceeds maximum of ${LOG_GROUP_PREFIX_MAX}`);
+    }
+
+    // Filter out "all" which is a special UI value meaning "don't filter by account"
+    const expandedAccountIds = query.selectedAccountIds
+      ? uniq(
+          interpolateStringArrayUsingSingleOrMultiValuedVariable(this.templateSrv, query.selectedAccountIds, scopedVars)
+        ).filter((id) => id !== 'all')
+      : undefined;
+    // Return undefined if empty after filtering (means "all accounts")
+    const selectedAccountIds = expandedAccountIds?.length ? expandedAccountIds : undefined;
+
+    if (selectedAccountIds && selectedAccountIds.length > LOG_GROUP_ACCOUNT_MAX) {
+      throw new Error(
+        `Expanded account count (${selectedAccountIds.length}) exceeds maximum of ${LOG_GROUP_ACCOUNT_MAX}`
+      );
+    }
+
+    const logsSQLCustomerFormatter = (value: unknown, model: Partial<CustomFormatterVariable>) => {
+      if (
+        (typeof value === 'string' && value.startsWith('arn:') && value.endsWith(':*')) ||
+        (Array.isArray(value) && value.every((v) => typeof v === 'string' && v.startsWith('arn:') && v.endsWith(':*')))
+      ) {
+        const varName = model.name || '';
+        const variable = this.templateSrv.getVariables().find(({ name }) => name === varName);
+        // checks the raw query string for a log group template variable that occurs inside `logGroups(logGroupIdentifier:[ ... ])\`
+        // to later surround the log group names with backticks
+        // this assumes there's only a single template variable used inside the [ ]
+        const shouldSurroundInQuotes = query.expression
+          ?.replaceAll(/[\r\n\t\s]+/g, '')
+          .includes(`\`logGroups(logGroupIdentifier:[$${varName}])\``);
+        if (variable && 'current' in variable && 'text' in variable.current) {
+          if (Array.isArray(variable.current.text)) {
+            return variable.current.text.map((v) => (shouldSurroundInQuotes ? `'${v}'` : v)).join(',');
+          }
+          return shouldSurroundInQuotes ? `'${variable.current.text}'` : variable.current.text;
+        }
+      }
+
+      return value;
+    };
+    const formatter = query.queryLanguage === LogsQueryLanguage.SQL ? logsSQLCustomerFormatter : undefined;
+    const expression = this.templateSrv.replace(query.expression || '', scopedVars, formatter);
+
+    return {
+      logGroups,
+      logGroupNames,
+      expression,
+      logGroupPrefixes,
+      selectedAccountIds,
+    };
+  }
 
   /**
    * Check if an already started query is complete and returns results if it is. Otherwise it will start polling for results.
@@ -403,12 +522,14 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     options?: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> {
     const range = options?.range || getDefaultTimeRange();
+    // append -logs to prevent requestId from matching metric queries from the same panel
+    const requestId = options?.requestId ? `${options?.requestId}-logs` : '';
 
     const requestParams: DataQueryRequest<CloudWatchLogsQuery> = {
       ...options,
       range,
       skipQueryCache: true,
-      requestId: options?.requestId || '', // dummy
+      requestId,
       interval: options?.interval || '', // dummy
       intervalMs: options?.intervalMs || 1, // dummy
       scopedVars: options?.scopedVars || {}, // dummy
@@ -435,10 +556,26 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;
     const hasMissingLogGroups = !query.logGroups?.length;
     const hasMissingQueryString = !query.expression?.length;
+    const hasMissingPrefixes = !query.logGroupPrefixes?.length;
 
-    // log groups are not mandatory if language is SQL
-    const isInvalidCWLIQuery = query.queryLanguage !== 'SQL' && hasMissingLogGroups && hasMissingLegacyLogGroupNames;
-    if (isInvalidCWLIQuery || hasMissingQueryString) {
+    const isCWLIQuery = query.queryLanguage === 'CWLI' || query.queryLanguage === undefined;
+
+    // Log groups are not mandatory if:
+    // - language is SQL
+    // - language is CWLI and scope is 'namePrefix' (requires at least one prefix)
+    // - language is CWLI and scope is 'allLogGroups' (no log groups needed)
+    const usesNamePrefixScope = isCWLIQuery && query.logsQueryScope === 'namePrefix' && !hasMissingPrefixes;
+    const usesAllLogGroupsScope = isCWLIQuery && query.logsQueryScope === 'allLogGroups';
+    const isSQLQuery = query.queryLanguage === 'SQL';
+
+    const hasValidLogGroupSelection =
+      !hasMissingLogGroups ||
+      !hasMissingLegacyLogGroupNames ||
+      usesNamePrefixScope ||
+      usesAllLogGroupsScope ||
+      isSQLQuery;
+
+    if (!hasValidLogGroupSelection || hasMissingQueryString) {
       return false;
     }
 
@@ -464,4 +601,70 @@ function withTeardown<T = DataQueryResponse>(observable: Observable<T>, onUnsubs
 function parseLogGroupName(logIdentifier: string): string {
   const colonIndex = logIdentifier.lastIndexOf(':');
   return logIdentifier.slice(colonIndex + 1);
+}
+
+const LOG_TREND_FIELD_NAME = 'logTrend';
+
+/**
+ * Takes DataQueryResponse and converts any "log trend" fields (that are in JSON.rawMessage form)
+ * into data frame fields that the table vis will be able to display
+ */
+export function convertTrendHistogramToSparkline(dataQueryResponse: DataQueryResponse): void {
+  dataQueryResponse.data.forEach((frame) => {
+    let fieldIndexToReplace = null;
+    // log trend histogram field from CW API is of shape Record<timestamp as string, value>
+    const sparklineRawData: Field<Record<string, number>> = frame.fields.find((field: Field, index: number) => {
+      if (field.name === LOG_TREND_FIELD_NAME && field.type === FieldType.other) {
+        fieldIndexToReplace = index;
+        return true;
+      }
+      return false;
+    });
+
+    if (sparklineRawData) {
+      const sparklineField: Field = {
+        name: 'Log trend',
+        type: FieldType.frame,
+        config: {
+          custom: {
+            drawStyle: GraphDrawStyle.Bars,
+            cellOptions: {
+              type: TableCellDisplayMode.Sparkline,
+              // hiding the value here as it's not useful or clear on what it represents for log trend
+              hideValue: true,
+            },
+          },
+        },
+        values: [],
+      };
+
+      sparklineRawData.values.forEach((sparklineValue, rowIndex) => {
+        const timestamps: number[] = [];
+        const values: number[] = [];
+        Object.keys(sparklineValue).map((t, i) => {
+          let n = Number(t);
+          if (!isNaN(n)) {
+            timestamps.push(n);
+            values.push(sparklineValue[t]);
+          }
+        });
+
+        const sparklineFieldFrame: DataFrame = {
+          name: `Trend_row_${rowIndex}`,
+          length: timestamps.length,
+          fields: [
+            { name: 'time', type: FieldType.time, values: timestamps, config: {} },
+            { name: 'value', type: FieldType.number, values, config: {} },
+          ],
+        };
+
+        sparklineField.values.push(sparklineFieldFrame);
+      });
+
+      if (fieldIndexToReplace) {
+        // Make sure sparkline field is placed in the same order as coming from BE
+        frame.fields[fieldIndexToReplace] = sparklineField;
+      }
+    }
+  });
 }

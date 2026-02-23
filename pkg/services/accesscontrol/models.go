@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -73,11 +74,17 @@ func (r Role) MarshalJSON() ([]byte, error) {
 
 // swagger:ignore
 type RoleDTO struct {
-	Version     int64        `json:"version"`
-	UID         string       `xorm:"uid" json:"uid"`
-	Name        string       `json:"name"`
-	DisplayName string       `json:"displayName,omitempty"`
-	Description string       `json:"description"`
+	// required:true
+	Version int64 `json:"version"`
+	// required:true
+	UID string `xorm:"uid" json:"uid"`
+	// required:true
+	Name string `json:"name"`
+	// required:true
+	DisplayName string `json:"displayName,omitempty"`
+	// required:true
+	Description string `json:"description"`
+	// required:true
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
 	Delegatable *bool        `json:"delegatable,omitempty"`
@@ -87,7 +94,9 @@ type RoleDTO struct {
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
 	OrgID int64 `json:"-" xorm:"org_id"`
 
+	// required:true
 	Updated time.Time `json:"updated"`
+	// required:true
 	Created time.Time `json:"created"`
 }
 
@@ -193,7 +202,7 @@ type BuiltinRole struct {
 	Created time.Time
 }
 
-// Permission is the model for access control permissions.
+// Permission is the model for access control permissions
 type Permission struct {
 	ID     int64  `json:"-" xorm:"pk autoincr 'id'"`
 	RoleID int64  `json:"-" xorm:"role_id"`
@@ -226,6 +235,12 @@ type GetUserPermissionsQuery struct {
 	Roles        []string
 	TeamIDs      []int64
 	RolePrefixes []string
+	// ExcludeRedundantManagedPermissions filters out individual dashboard/folder action permissions
+	// from managed roles when action sets are enabled. These permissions are redundant because
+	// ExpandActionSets expands action set permissions (e.g. dashboards:view) into the individual
+	// actions (e.g. dashboards:read) in memory. Excluding them from the SQL query significantly
+	// reduces the number of rows loaded for large installations.
+	ExcludeRedundantManagedPermissions bool
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -310,6 +325,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 			continue
 		}
 		dedupMap[cmd.Permissions[i]] = true
+		cmd.Permissions[i].Kind, cmd.Permissions[i].Attribute, cmd.Permissions[i].Identifier = SplitScope(cmd.Permissions[i].Scope)
 		dedup = append(dedup, cmd.Permissions[i])
 	}
 	cmd.Permissions = dedup
@@ -327,12 +343,6 @@ const (
 	GeneralFolderUID = "general"
 	K6FolderUID      = "k6-app"
 	RoleGrafanaAdmin = "Grafana Admin"
-
-	// Permission actions
-
-	ActionAPIKeyRead   = "apikeys:read"
-	ActionAPIKeyCreate = "apikeys:create"
-	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
 	ActionUsersRead  = "users:read"
@@ -391,9 +401,6 @@ const (
 	// Global Scopes
 	ScopeGlobalUsersAll = "global.users:*"
 
-	// APIKeys scope
-	ScopeAPIKeysAll = "apikeys:*"
-
 	// Users scope
 	ScopeUsersAll    = "users:*"
 	ScopeUsersPrefix = "users:id:"
@@ -401,6 +408,7 @@ const (
 	// Settings scope
 	ScopeSettingsAll  = "settings:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
+	ScopeSettingsSCIM = "settings:auth.scim:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
@@ -446,11 +454,17 @@ const (
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
 	ActionAlertingNotificationsTemplatesWrite  = "alert.notifications.templates:write"
 	ActionAlertingNotificationsTemplatesDelete = "alert.notifications.templates:delete"
+	ActionAlertingNotificationsTemplatesTest   = "alert.notifications.templates.test:write"
 
 	// Alerting notifications time interval actions
 	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"
 	ActionAlertingNotificationsTimeIntervalsWrite  = "alert.notifications.time-intervals:write"
 	ActionAlertingNotificationsTimeIntervalsDelete = "alert.notifications.time-intervals:delete"
+
+	// Alerting notifications inhibition rules actions
+	ActionAlertingNotificationsInhibitionRulesRead   = "alert.notifications.inhibition-rules:read"
+	ActionAlertingNotificationsInhibitionRulesWrite  = "alert.notifications.inhibition-rules:write"
+	ActionAlertingNotificationsInhibitionRulesDelete = "alert.notifications.inhibition-rules:delete"
 
 	// Alerting receiver actions
 	ActionAlertingReceiversList             = "alert.notifications.receivers:list"
@@ -458,8 +472,10 @@ const (
 	ActionAlertingReceiversReadSecrets      = "alert.notifications.receivers.secrets:read"
 	ActionAlertingReceiversCreate           = "alert.notifications.receivers:create"
 	ActionAlertingReceiversUpdate           = "alert.notifications.receivers:write"
+	ActionAlertingReceiversUpdateProtected  = "alert.notifications.receivers.protected:write"
 	ActionAlertingReceiversDelete           = "alert.notifications.receivers:delete"
-	ActionAlertingReceiversTest             = "alert.notifications.receivers:test"
+	ActionAlertingReceiversTest             = "alert.notifications.receivers:test" // This is a deprecated action, use ActionAlertingReceiversTestCreate instead
+	ActionAlertingReceiversTestCreate       = "alert.notifications.receivers.test:create"
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
@@ -587,10 +603,22 @@ var OrgsCreateAccessEvaluator = EvalAll(
 	EvalPermission(ActionOrgsCreate),
 )
 
-// ApiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
-var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)
-
 type QueryWithOrg struct {
 	OrgId  *int64 `json:"orgId"`
 	Global bool   `json:"global"`
+}
+
+type SeedPermission struct {
+	BuiltInRole string `xorm:"builtin_role"`
+	Action      string `xorm:"action"`
+	Scope       string `xorm:"scope"`
+	Origin      string `xorm:"origin"`
+}
+
+type RoleStore interface {
+	LoadRoles(ctx context.Context) (map[string]*RoleDTO, error)
+	SetRole(ctx context.Context, existingRole *RoleDTO, wantedRole RoleDTO) error
+	SetPermissions(ctx context.Context, existingRole *RoleDTO, wantedRole RoleDTO) error
+	CreateRole(ctx context.Context, role RoleDTO) error
+	DeleteRoles(ctx context.Context, roleUIDs []string) error
 }

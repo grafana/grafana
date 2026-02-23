@@ -1,5 +1,6 @@
 import { UseFieldArrayRemove } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
 interface RemoveButtonProps {
@@ -9,7 +10,7 @@ interface RemoveButtonProps {
 export function RemoveButton({ remove, index }: RemoveButtonProps) {
   return (
     <Button
-      aria-label="delete label"
+      aria-label={t('alerting.remove-button.aria-label-delete-label', 'delete label')}
       icon="trash-alt"
       data-testid={`delete-label-${index}`}
       variant="secondary"
@@ -26,7 +27,7 @@ interface AddButtonProps {
 export function AddButton({ append }: AddButtonProps) {
   return (
     <Button icon="plus" type="button" variant="secondary" onClick={append}>
-      Add more
+      <Trans i18nKey="alerting.add-button.add-more">Add more</Trans>
     </Button>
   );
 }

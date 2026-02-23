@@ -1,0 +1,49 @@
+import { countBy, isEmpty } from 'lodash';
+
+import { Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
+import { ContactPoint } from '../api/notifications/v0alpha1/types';
+
+// Annotation key that indicates whether a contact point can be used in routes and rules
+const CAN_USE_ANNOTATION = 'grafana.com/canUse';
+
+/**
+ * Checks if a contact point can be used in routes and rules.
+ * Contact points that are imported from external sources (e.g., Prometheus Alertmanager)
+ * have the `grafana.com/canUse` annotation set to `false` and cannot be used.
+ *
+ * @param contactPoint - The ContactPoint object to check
+ * @returns `true` if the contact point can be used, `false` otherwise
+ */
+export function isUsableContactPoint(contactPoint: ContactPoint | Receiver): boolean {
+  const canUse = contactPoint.metadata?.annotations?.[CAN_USE_ANNOTATION];
+  return canUse === 'true';
+}
+
+/**
+ * Generates a human-readable description of a ContactPoint by summarizing its integrations.
+ * If the ContactPoint has no integrations, it returns an empty placeholder text.
+ *
+ * For integrations, it counts the occurrences of each type and formats them as a comma-separated list.
+ * Multiple integrations of the same type are indicated with a count in parentheses.
+ *
+ * @param contactPoint - The ContactPoint object to describe
+ * @returns A string description of the ContactPoint's integrations
+ */
+export function getContactPointDescription(contactPoint: ContactPoint | Receiver): string {
+  if (isEmpty(contactPoint.spec.integrations)) {
+    return '<empty contact point>';
+  }
+
+  // Count the occurrences of each integration type
+  const integrationCounts = countBy(contactPoint.spec.integrations, (integration) => integration.type);
+
+  const description = Object.entries(integrationCounts)
+    .map(([type, count]) => {
+      // either "email" or "email (2)" but not "email (1)"
+      return count > 1 ? `${type} (${count})` : type;
+    })
+    .join(', ');
+
+  return description;
+}

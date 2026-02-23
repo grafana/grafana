@@ -3,6 +3,7 @@ import { memo, ReactNode, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import {
   Badge,
@@ -11,7 +12,6 @@ import {
   Dropdown,
   Icon,
   Menu,
-  Stack,
   ToolbarButton,
   ToolbarButtonRow,
   useStyles2,
@@ -19,13 +19,15 @@ import {
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { useSelector } from 'app/types';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
+import { useSelector } from 'app/types/store';
 
-import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
@@ -36,22 +38,26 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
-import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
-import { ToolbarActionsNew } from './new-toolbar/ToolbarActionsNew';
+import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
+import { LeftActions } from './new-toolbar/LeftActions';
+import { RightActions } from './new-toolbar/RightActions';
+import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
   dashboard: DashboardScene;
 }
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
-  const hasNewToolbar = config.featureToggles.dashboardNewLayouts && config.featureToggles.newDashboardSharingComponent;
+  const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
 
-  const actions = hasNewToolbar ? (
-    <ToolbarActionsNew dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions-new`} />
+  return hasNewToolbar ? (
+    <AppChromeUpdate
+      breadcrumbActions={<LeftActions dashboard={dashboard} />}
+      actions={<RightActions dashboard={dashboard} />}
+    />
   ) : (
-    <ToolbarActions dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions`} />
+    <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} />} />
   );
-  return <AppChromeUpdate actions={actions} />;
 });
 
 NavToolbarActions.displayName = 'NavToolbarActions';
@@ -60,18 +66,28 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
-
+  const {
+    isEditing,
+    viewPanel,
+    isDirty,
+    uid,
+    meta,
+    editview,
+    editPanel,
+    editable,
+    title,
+    meta: { isEmbedded, isSnapshot, canEdit, canMakeEditable, canStar, canSave, folderUid },
+  } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
-  const leftActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
-  const isViewingPanel = Boolean(viewPanelScene);
+  const isViewingPanel = Boolean(viewPanel);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
+
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNew = !Boolean(uid || dashboard.isManaged());
 
@@ -79,8 +95,12 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
+  const folderRepo = useSelector((state) => selectFolderRepository()(state, folderUid));
   const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
+  // Get the repository for the dashboard's folder
+  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
+    folderName: folderUid,
+  });
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -89,79 +109,61 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+    condition: uid && Boolean(canStar) && isShowingDashboard && !isEditing,
     render: () => {
-      let desc = meta.isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
+      if (!uid) {
+        return null;
+      }
       return (
-        <ToolbarButton
-          tooltip={desc}
-          icon={
-            <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
-          }
+        <StarToolbarButton
           key="star-dashboard-button"
-          data-testid={selectors.components.NavToolbar.markAsFavorite}
-          onClick={() => {
-            DashboardInteractions.toolbarFavoritesClick();
-            dashboard.onStarDashboard();
-          }}
+          group="dashboard.grafana.app"
+          kind="Dashboard"
+          title={title}
+          id={uid}
         />
       );
     },
   });
 
-  if (meta.publicDashboardEnabled) {
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && Boolean(canStar) && isShowingDashboard && !isEditing,
+    render: () => {
+      return <PublicDashboardBadge key="public-dashboard-badge" dashboard={dashboard} />;
+    },
+  });
+
+  if (isReadOnlyRepo) {
     toolbarActions.push({
       group: 'icon-actions',
-      condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+      condition: true,
       render: () => {
         return (
           <Badge
-            color="blue"
-            text={t('dashboard.toolbar.public-dashboard', 'Public')}
-            key="public-dashboard-button-badge"
-            className={styles.publicBadge}
-            data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
+            color="darkgrey"
+            text={t('dashboard.toolbar.read-only', 'Read only')}
+            tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
           />
         );
       },
     });
   }
 
-  if (isManaged && meta.canEdit) {
+  if (dashboard.isManaged() && canEdit) {
     toolbarActions.push({
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return <ManagedDashboardNavBarBadge meta={meta} key="managed-dashboard-badge" />;
+        return <ManagedDashboardNavBarBadge dashboard={dashboard} key="managed-dashboard-badge" />;
       },
     });
   }
 
-  const isDevEnv = config.buildInfo.env === 'development';
-
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isDevEnv && uid && isShowingDashboard && !isEditing,
-    render: () => (
-      <ToolbarButton
-        key="view-in-old-dashboard-button"
-        tooltip={t('dashboard.toolbar.switch-old-dashboard', 'Switch to old dashboard page')}
-        icon="apps"
-        onClick={() => {
-          locationService.partial({ scenes: false });
-        }}
-      />
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
-    render: () => (
-      <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl() ?? ''} />
-    ),
+    condition: isSnapshot && !isEditing && !isEmbedded,
+    render: () => <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl()} />,
   });
 
   if (!isEditingPanel && !isEditing) {
@@ -323,27 +325,7 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
-    render: () => (
-      <Button
-        key="share-dashboard-button"
-        tooltip={t('dashboard.toolbar.share.tooltip', 'Share dashboard')}
-        size="sm"
-        className={styles.buttonWithExtraMargin}
-        fill="outline"
-        onClick={() => {
-          DashboardInteractions.toolbarShareClick();
-          locationService.partial({ shareView: shareDashboardType.link });
-        }}
-        data-testid={selectors.components.NavToolbar.shareDashboard}
-      >
-        <Trans i18nKey="dashboard.toolbar.share.label">Share</Trans>
-      </Button>
-    ),
-  });
+  const showShareButton = uid && !isEditing && !isSnapshot && !isPlaying && !isEmbedded;
 
   toolbarActions.push({
     group: 'main-buttons',
@@ -351,14 +333,20 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
+          trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
         }}
-        tooltip={t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')}
+        tooltip={
+          isReadOnlyRepo
+            ? getReadOnlyTooltipText({ isLocal: repoType === 'local' })
+            : t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')
+        }
         key="edit"
         className={styles.buttonWithExtraMargin}
-        variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
+        variant={'secondary'}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
+        disabled={isReadOnlyRepo}
       >
         <Trans i18nKey="dashboard.toolbar.edit.label">Edit</Trans>
       </Button>
@@ -371,8 +359,9 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
+          trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
-          dashboard.setState({ editable: true, meta: { ...meta, canEdit: true } });
+          dashboard.setState({ meta: { ...meta, canEdit: true, canSave: true } });
         }}
         tooltip={t('dashboard.toolbar.enter-edit-mode.tooltip', 'This dashboard was marked as read only')}
         key="edit"
@@ -388,13 +377,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'new-share-dashboard-buttons',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    condition: showShareButton,
     render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
   });
 
   toolbarActions.push({
     group: 'new-share-dashboard-buttons',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    condition: showShareButton,
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
@@ -423,7 +412,10 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditing && !isNew && isShowingDashboard,
     render: () => (
       <Button
-        onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
+        onClick={() => {
+          DashboardInteractions.exitEditButtonClicked();
+          dashboard.exitEditMode({ skipConfirm: false });
+        }}
         tooltip={t('dashboard.toolbar.exit-edit-mode.tooltip', 'Exits edit mode and discards unsaved changes')}
         size="sm"
         key="discard"
@@ -519,7 +511,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
+    condition: isEditing && !isEditingLibraryPanel && (canSave || canSaveAs),
     render: () => {
       // if we  only can save
       if (isNew) {
@@ -541,7 +533,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isManaged) {
+      if (canSaveAs && !canSave && !canMakeEditable && !isManaged) {
         return (
           <Button
             onClick={() => {
@@ -604,16 +596,7 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
-  const leftActionsElements: ReactNode[] = renderActionElements(leftActions);
-  const hasActionsToLeftAndRight = leftActionsElements.length > 0;
-
-  return (
-    <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
-      {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
-      <ToolbarButtonRow alignment="right">{rightActionsElements}</ToolbarButtonRow>
-    </Stack>
-  );
+  return <ToolbarButtonRow alignment="right">{renderActionElements(toolbarActions)}</ToolbarButtonRow>;
 }
 
 function renderActionElements(toolbarActions: ToolbarAction[]) {

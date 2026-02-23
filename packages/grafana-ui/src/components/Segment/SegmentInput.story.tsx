@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 import * as React from 'react';
 
 import { Icon } from '../Icon/Icon';
@@ -30,7 +30,7 @@ export const BasicInput = () => {
 };
 
 const meta: Meta<typeof SegmentInput> = {
-  title: 'Data Source/Segment/SegmentInput',
+  title: 'Inputs/SegmentInput',
   component: SegmentInput,
 };
 
@@ -94,6 +94,7 @@ export const InputWithAutoFocus = () => {
         <InputComponent initialValue="test" key={i} />
       ))}
       <button
+        aria-label="Add"
         type="button"
         className="gf-form-label query-part"
         onClick={() => {

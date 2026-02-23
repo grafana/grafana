@@ -14,7 +14,7 @@ import {
 import { SeriesVisibilityChangeMode } from '@grafana/ui';
 
 const displayOverrideRef = 'hideSeriesFrom';
-const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
+export const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
 
 export function seriesVisibilityConfigFactory(
   label: string,
@@ -97,7 +97,7 @@ function createOverride(
     value: {
       viz: true,
       legend: false,
-      tooltip: false,
+      tooltip: true,
     },
   };
 
@@ -118,7 +118,7 @@ function createOverride(
         value: {
           viz: true,
           legend: false,
-          tooltip: false,
+          tooltip: true,
         },
       },
     ],

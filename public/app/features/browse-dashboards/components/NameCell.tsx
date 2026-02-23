@@ -2,17 +2,17 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
+import { Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
 import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
-import { useChildrenByParentUIDState } from '../state';
+import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
+import { useChildrenByParentUIDState } from '../state/hooks';
 import { DashboardsTreeCellProps } from '../types';
-
-import { makeRowID } from './utils';
+import { makeRowID } from '../utils/dashboards';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';
@@ -25,6 +25,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
   const childrenByParentUID = useChildrenByParentUIDState();
+
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
 
@@ -91,7 +92,12 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
           {item.url ? (
             <Link
               onClick={() => {
-                reportInteraction('manage_dashboards_result_clicked');
+                reportInteraction('grafana_browse_dashboards_page_click_list_item', {
+                  itemKind: item.kind,
+                  parent: item.parentUID ? 'folder' : 'root',
+                  source: 'browseDashboardsPage_BrowseView',
+                  uid: item.uid,
+                });
               }}
               href={item.url}
               className={styles.link}
@@ -102,6 +108,8 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
             item.title
           )}
         </Text>
+
+        <FolderRepo folder={item} />
       </div>
     </>
   );

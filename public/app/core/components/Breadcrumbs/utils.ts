@@ -2,12 +2,7 @@ import { NavModelItem } from '@grafana/data';
 
 import { Breadcrumb } from './types';
 
-export function buildBreadcrumbs(
-  sectionNav: NavModelItem,
-  pageNav?: NavModelItem,
-  homeNav?: NavModelItem,
-  skipHome?: boolean
-) {
+export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelItem, homeNav?: NavModelItem) {
   const crumbs: Breadcrumb[] = [];
   let foundHome = false;
   let lastPath: string | undefined = undefined;
@@ -27,9 +22,6 @@ export function buildBreadcrumbs(
 
     // Check if we found home/root if if so return early
     if (homeNav && urlToMatch === homeNav.url) {
-      if (!skipHome) {
-        crumbs.unshift({ text: homeNav.text, href: node.url ?? '' });
-      }
       foundHome = true;
       return;
     }

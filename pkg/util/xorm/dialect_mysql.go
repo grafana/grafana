@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 var (
@@ -381,6 +381,9 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		}
 		if colType == "DOUBLE UNSIGNED" {
 			colType = "DOUBLE"
+		}
+		if colType == "BIGINT UNSIGNED" {
+			colType = "BIGINT"
 		}
 		col.Length = len1
 		col.Length2 = len2

@@ -80,8 +80,6 @@ import (
 //       204: description: The mute timing was deleted successfully.
 //       409: PublicError
 
-// swagger:route
-
 // swagger:model
 type MuteTimings []MuteTimeInterval
 
@@ -128,7 +126,7 @@ func (mt *MuteTimeInterval) ResourceType() string {
 }
 
 func (mt *MuteTimeInterval) ResourceID() string {
-	return mt.MuteTimeInterval.Name
+	return mt.Name
 }
 
 type MuteTimeIntervalExport struct {

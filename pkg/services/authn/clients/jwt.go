@@ -5,8 +5,11 @@ import (
 	"net/http"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/auth"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -29,18 +32,24 @@ var (
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
 )
 
-func ProvideJWT(jwtService auth.JWTVerifierService, cfg *setting.Cfg) *JWT {
+func ProvideJWT(jwtService auth.JWTVerifierService, orgRoleMapper *connectors.OrgRoleMapper, cfg *setting.Cfg, tracer trace.Tracer) *JWT {
 	return &JWT{
-		cfg:        cfg,
-		log:        log.New(authn.ClientJWT),
-		jwtService: jwtService,
+		cfg:           cfg,
+		log:           log.New(authn.ClientJWT),
+		jwtService:    jwtService,
+		orgRoleMapper: orgRoleMapper,
+		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), cfg.JWTAuth.OrgMapping, cfg.JWTAuth.RoleAttributeStrict),
+		tracer:        tracer,
 	}
 }
 
 type JWT struct {
-	cfg        *setting.Cfg
-	log        log.Logger
-	jwtService auth.JWTVerifierService
+	cfg           *setting.Cfg
+	orgRoleMapper *connectors.OrgRoleMapper
+	orgMappingCfg connectors.MappingConfiguration
+	log           log.Logger
+	jwtService    auth.JWTVerifierService
+	tracer        trace.Tracer
 }
 
 func (s *JWT) Name() string {
@@ -48,6 +57,9 @@ func (s *JWT) Name() string {
 }
 
 func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.jwt.Authenticate")
+	defer span.End()
+
 	jwtToken := s.retrieveToken(r.HTTPRequest)
 	s.stripSensitiveParam(r.HTTPRequest)
 
@@ -102,32 +114,28 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		id.Name = name
 	}
 
-	orgRoles, isGrafanaAdmin, err := getRoles(s.cfg, func() (org.RoleType, *bool, error) {
-		if s.cfg.JWTAuth.SkipOrgRoleSync {
-			return "", nil, nil
-		}
-
-		role, grafanaAdmin := s.extractRoleAndAdmin(claims)
-		if s.cfg.JWTAuth.RoleAttributeStrict && !role.IsValid() {
-			return "", nil, errJWTInvalidRole.Errorf("invalid role claim in JWT: %s", role)
-		}
-
-		if !s.cfg.JWTAuth.AllowAssignGrafanaAdmin {
-			return role, nil, nil
-		}
-
-		return role, &grafanaAdmin, nil
-	})
+	id.Groups, err = s.extractGroups(claims)
 	if err != nil {
 		return nil, err
 	}
 
-	id.OrgRoles = orgRoles
-	id.IsGrafanaAdmin = isGrafanaAdmin
+	if !s.cfg.JWTAuth.SkipOrgRoleSync {
+		role, grafanaAdmin := s.extractRoleAndAdmin(claims)
 
-	id.Groups, err = s.extractGroups(claims)
-	if err != nil {
-		return nil, err
+		if s.cfg.JWTAuth.AllowAssignGrafanaAdmin {
+			id.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		externalOrgs, err := s.extractOrgs(claims)
+		if err != nil {
+			s.log.Warn("Failed to extract orgs", "err", err)
+			return nil, err
+		}
+
+		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, role)
+		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
+			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
 	}
 
 	if id.Login == "" && id.Email == "" {
@@ -212,4 +220,13 @@ func (s *JWT) extractGroups(claims map[string]any) ([]string, error) {
 	}
 
 	return util.SearchJSONForStringSliceAttr(s.cfg.JWTAuth.GroupsAttributePath, claims)
+}
+
+// This code was copied from the social_base.go file and was adapted to match with the JWT structure
+func (s *JWT) extractOrgs(claims map[string]any) ([]string, error) {
+	if s.cfg.JWTAuth.OrgAttributePath == "" {
+		return []string{}, nil
+	}
+
+	return util.SearchJSONForStringSliceAttr(s.cfg.JWTAuth.OrgAttributePath, claims)
 }

@@ -1,8 +1,8 @@
 import { useContext } from 'react';
 
+import { t } from '@grafana/i18n';
 import { ModalsContext, ToolbarButton } from '@grafana/ui';
 
-import { t } from '../../../../core/internationalization';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 

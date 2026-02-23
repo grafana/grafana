@@ -1,4 +1,4 @@
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 
@@ -12,8 +12,8 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ScaleDimensionConfig } from '@grafana/schema';
-import { getScaledDimension } from 'app/features/dimensions';
-import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
+import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
+import { getScaledDimension } from 'app/features/dimensions/scale';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -46,9 +46,11 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
   /**
    * Function that configures transformation and returns a transformer
+   * @param map
    * @param options
+   * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<HeatmapConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<HeatmapConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     const location = await getLocationMatchers(options.location);

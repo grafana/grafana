@@ -9,9 +9,9 @@ import {
   sceneGraph,
   SceneTimeRangeLike,
 } from '@grafana/scenes';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/core';
+import { notifyApp } from 'app/core/reducers/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';
@@ -19,7 +19,7 @@ import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -62,7 +62,7 @@ export class AlertStatesDataLayer
 
   private async runWithTimeRange(timeRange: SceneTimeRangeLike) {
     const dashboard = getDashboardSceneFor(this);
-    const { uid, id } = dashboard.state;
+    const { uid } = dashboard.state;
 
     if (this.querySub) {
       this.querySub.unsubscribe();
@@ -108,7 +108,7 @@ export class AlertStatesDataLayer
                   state,
                   id: Object.keys(panelIdToAlertState).length,
                   panelId,
-                  dashboardId: id!,
+                  dashboardUID: uid,
                 };
               } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
                 panelIdToAlertState[panelId].state = AlertState.Alerting;

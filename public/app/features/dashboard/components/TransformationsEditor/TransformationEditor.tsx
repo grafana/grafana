@@ -3,6 +3,7 @@ import { createElement, useMemo } from 'react';
 
 import { DataFrame, DataTransformerConfig, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, JSONFormatter, useStyles2, Drawer } from '@grafana/ui';
 
 import { TransformationsEditorTransformation } from './types';
@@ -50,13 +51,19 @@ export const TransformationEditor = ({
     <div data-testid={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
       {editor}
       {debugMode && (
-        <Drawer title="Debug transformation" subtitle={uiConfig.name} onClose={toggleShowDebug}>
+        <Drawer
+          title={t('dashboard.transformation-editor.title-debug-transformation', 'Debug transformation')}
+          subtitle={uiConfig.name}
+          onClose={toggleShowDebug}
+        >
           <div
             className={styles.debugWrapper}
             data-testid={selectors.components.TransformTab.transformationEditorDebugger(uiConfig.name)}
           >
             <div className={styles.debug}>
-              <div className={styles.debugTitle}>Input data</div>
+              <div className={styles.debugTitle}>
+                <Trans i18nKey="dashboard.transformation-editor.input-data">Input data</Trans>
+              </div>
               <div className={styles.debugJson}>
                 <JSONFormatter json={input} />
               </div>
@@ -65,7 +72,9 @@ export const TransformationEditor = ({
               <Icon name="arrow-right" />
             </div>
             <div className={styles.debug}>
-              <div className={styles.debugTitle}>Output data</div>
+              <div className={styles.debugTitle}>
+                <Trans i18nKey="dashboard.transformation-editor.output-data">Output data</Trans>
+              </div>
               <div className={styles.debugJson}>{output && <JSONFormatter json={output} />}</div>
             </div>
           </div>
@@ -77,35 +86,6 @@ export const TransformationEditor = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    title: css({
-      display: 'flex',
-      padding: '4px 8px 4px 8px',
-      position: 'relative',
-      height: '35px',
-      // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderRadius: '4px 4px 0 0',
-      flexWrap: 'nowrap',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    }),
-    name: css({
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.primary.text,
-    }),
-    iconRow: css({
-      display: 'flex',
-    }),
-    icon: css({
-      background: 'transparent',
-      border: 'none',
-      boxShadow: 'none',
-      cursor: 'pointer',
-      color: theme.colors.text.secondary,
-      marginLeft: theme.spacing(1),
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
-    }),
     debugWrapper: css({
       display: 'flex',
       flexDirection: 'row',

@@ -9,7 +9,8 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
-import { StoreState, PluginsState } from 'app/types';
+import { PluginsState } from 'app/types/plugins';
+import { StoreState } from 'app/types/store';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
@@ -54,6 +55,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   updatedAt: string;
   installedVersion?: string;
   details?: CatalogPluginDetails;
+  insights?: CatalogPluginInsights;
   error?: PluginErrorCode;
   angularDetected?: boolean;
   // instance plugins may not be fully installed, which means a new instance
@@ -65,32 +67,80 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isProvisioned?: boolean;
   url?: string;
 }
+export interface Screenshots {
+  path: string;
+  name: string;
+}
 
 export interface CatalogPluginDetails {
   readme?: string;
   versions?: Version[];
-  links: Array<{
-    name: string;
-    url: string;
-  }>;
+  links: Array<{ name: string; url: string }>;
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
   statusContext?: string;
   iam?: IdentityAccessManagement;
   changelog?: string;
-  lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  sponsorshipUrl?: string;
+  repositoryUrl?: string;
   raiseAnIssueUrl?: string;
   signatureType?: PluginSignatureType;
   signature?: PluginSignatureStatus;
+  screenshots?: Screenshots[] | null;
+}
+
+export type InsightLevel = 'ok' | 'warning' | 'danger' | 'good' | 'info';
+
+export const SCORE_LEVELS = {
+  EXCELLENT: 'Excellent',
+  GOOD: 'Good',
+  FAIR: 'Fair',
+  POOR: 'Poor',
+  CRITICAL: 'Critical',
+} as const;
+
+export type ScoreLevel = (typeof SCORE_LEVELS)[keyof typeof SCORE_LEVELS];
+
+export const INSIGHT_CATEGORIES = {
+  SECURITY: 'security',
+  QUALITY: 'quality',
+  PERFORMANCE: 'performance',
+} as const;
+
+export const INSIGHT_LEVELS = {
+  GOOD: 'good',
+  OK: 'ok',
+  WARNING: 'warning',
+  DANGER: 'danger',
+  INFO: 'info',
+} as const;
+
+export interface InsightItem {
+  id: string;
+  name: string;
+  description?: string;
+  level: InsightLevel;
+  link?: string;
+}
+
+export interface InsightCategory {
+  name: string;
+  items: InsightItem[];
+  scoreValue: number;
+  scoreLevel: ScoreLevel;
+}
+
+export interface CatalogPluginInsights {
+  id: number;
+  name: string;
+  version: string;
+  insights: InsightCategory[];
 }
 
 export interface CatalogPluginInfo {
-  logos: {
-    large: string;
-    small: string;
-  };
+  logos: { large: string; small: string };
   keywords: string[];
 }
 
@@ -107,12 +157,7 @@ export type RemotePlugin = {
   json?: {
     dependencies: PluginDependencies;
     iam?: IdentityAccessManagement;
-    info: {
-      links: Array<{
-        name: string;
-        url: string;
-      }>;
-    };
+    info: { links: Array<{ name: string; url: string }>; screenshots?: Screenshots[] | null };
   };
   links: Array<{ rel: string; href: string }>;
   name: string;
@@ -120,12 +165,7 @@ export type RemotePlugin = {
   orgName: string;
   orgSlug: string;
   orgUrl: string;
-  packages: {
-    [arch: string]: {
-      packageName: string;
-      downloadUrl: string;
-    };
-  };
+  packages: { [arch: string]: { packageName: string; downloadUrl: string } };
   popularity: number;
   readme?: string;
   signatureType: PluginSignatureType | '';
@@ -145,9 +185,10 @@ export type RemotePlugin = {
   versionSignedByOrgName: string;
   versionStatus: string;
   angularDetected?: boolean;
-  lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  sponsorshipUrl?: string;
+  repositoryUrl?: string;
   raiseAnIssueUrl?: string;
 };
 
@@ -173,16 +214,10 @@ export type LocalPlugin = WithAccessControlMetadata & {
     author: Rel;
     description: string;
     links?: Rel[];
-    logos: {
-      small: string;
-      large: string;
-    };
+    logos: { small: string; large: string };
     keywords: string[];
     build: Build;
-    screenshots?: Array<{
-      path: string;
-      name: string;
-    }> | null;
+    screenshots?: Array<{ path: string; name: string }> | null;
     version: string;
     updated: string;
   };
@@ -226,6 +261,7 @@ export interface Version {
   isCompatible: boolean;
   grafanaDependency: string | null;
   angularDetected?: boolean;
+  status?: string; // Status of the version: 'active', 'deprecated'
 }
 
 export interface PluginDetails {
@@ -244,11 +280,7 @@ export interface Org {
   avatarUrl: string;
 }
 
-export type CatalogPluginsState = {
-  loading: boolean;
-  error?: Error;
-  plugins: CatalogPlugin[];
-};
+export type CatalogPluginsState = { loading: boolean; error?: Error; plugins: CatalogPlugin[] };
 
 export enum PluginStatus {
   INSTALL = 'INSTALL',
@@ -268,6 +300,7 @@ export enum PluginTabLabels {
   CHANGELOG = 'Changelog',
   PLUGINDETAILS = 'Plugin details',
   DATASOURCE_CONNECTIONS = 'Data source connections',
+  SCREENSHOTS = 'Screenshots',
 }
 
 export enum PluginTabIds {
@@ -280,6 +313,7 @@ export enum PluginTabIds {
   CHANGELOG = 'changelog',
   PLUGINDETAILS = 'right-panel',
   DATASOURCE_CONNECTIONS = 'datasource-connections',
+  SCREENSHOTS = 'screenshots',
 }
 
 export enum RequestStatus {
@@ -287,10 +321,7 @@ export enum RequestStatus {
   Fulfilled = 'Fulfilled',
   Rejected = 'Rejected',
 }
-export type RemotePluginResponse = {
-  plugins: RemotePlugin[];
-  error?: Error;
-};
+export type RemotePluginResponse = { plugins: RemotePlugin[]; error?: Error };
 
 export type RequestInfo = {
   status: RequestStatus;
@@ -337,11 +368,6 @@ export type PluginVersion = {
   angularDetected?: boolean;
 };
 
-export type InstancePlugin = {
-  pluginSlug: string;
-  version: string;
-};
+export type InstancePlugin = { pluginSlug: string; version: string };
 
-export type ProvisionedPlugin = {
-  slug: string;
-};
+export type ProvisionedPlugin = { slug: string };

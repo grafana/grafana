@@ -3,18 +3,21 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/selection"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -24,18 +27,20 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const folderSearchLimit = 100000
+const folderListLimit = 100000
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFoldersFromApiServer")
+	defer span.End()
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -74,6 +79,9 @@ func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFolde
 }
 
 func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFromApiServer")
+	defer span.End()
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -115,15 +123,8 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 		return dashFolder, nil
 	}
 
-	// do not get guardian by the folder ID because it differs from the nested folder ID
-	// and the legacy folder ID has been associated with the permissions:
-	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, q.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	if canView, err := g.CanView(); err != nil || !canView {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashFolder.UID))
+	if canView, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
 		}
@@ -145,9 +146,11 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
-	f, err = s.setFullpath(ctx, f, q.SignedInUser, false)
-	if err != nil {
-		return nil, err
+	if q.WithFullpath || q.WithFullpathUIDs {
+		f, err = s.setFullpath(ctx, f, false)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return f, err
@@ -155,6 +158,9 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 
 // searchFoldesFromApiServer uses the search grpc connection to search folders and returns the hit list
 func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.SearchFoldersQuery) (model.HitList, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.searchFoldersFromApiServer")
+	defer span.End()
+
 	if query.OrgID == 0 {
 		requester, err := identity.GetRequester(ctx)
 		if err != nil {
@@ -163,20 +169,20 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 		query.OrgID = requester.GetOrgID()
 	}
 
-	request := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Key: &resource.ResourceKey{
+	request := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Namespace: s.k8sclient.GetNamespace(query.OrgID),
-				Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-				Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+				Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+				Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 			},
-			Fields: []*resource.Requirement{},
-			Labels: []*resource.Requirement{},
+			Fields: []*resourcepb.Requirement{},
+			Labels: []*resourcepb.Requirement{},
 		},
 		Limit: folderSearchLimit}
 
 	if len(query.UIDs) > 0 {
-		request.Options.Fields = []*resource.Requirement{{
+		request.Options.Fields = []*resourcepb.Requirement{{
 			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: string(selection.In),
 			Values:   query.UIDs,
@@ -187,7 +193,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 			values[i] = strconv.FormatInt(id, 10)
 		}
 
-		request.Options.Labels = append(request.Options.Labels, &resource.Requirement{
+		request.Options.Labels = append(request.Options.Labels, &resourcepb.Requirement{
 			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
 			Operator: string(selection.In),
 			Values:   values,
@@ -197,6 +203,11 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	if query.Title != "" {
 		// allow wildcard search
 		request.Query = "*" + strings.ToLower(query.Title) + "*"
+		// or perform exact match if requested
+		if query.TitleExactMatch {
+			request.Query = query.Title
+		}
+
 		// if using query, you need to specify the fields you want
 		request.Fields = dashboardsearch.IncludeFields
 	}
@@ -216,23 +227,10 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	}
 
 	hitList := make([]*model.Hit, len(parsedResults.Hits))
-	foldersMap := map[string]*folder.Folder{}
 	for i, item := range parsedResults.Hits {
-		f, ok := foldersMap[item.Folder]
-		if !ok {
-			f, err = s.Get(ctx, &folder.GetFolderQuery{
-				UID:          &item.Folder,
-				OrgID:        query.OrgID,
-				SignedInUser: query.SignedInUser,
-			})
-			if err != nil {
-				return nil, err
-			}
-			foldersMap[item.Folder] = f
-		}
 		slug := slugify.Slugify(item.Title)
 		hitList[i] = &model.Hit{
-			ID:          item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+			ID:          item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 			UID:         item.Name,
 			OrgID:       query.OrgID,
 			Title:       item.Title,
@@ -240,8 +238,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 			URL:         dashboards.GetFolderURL(item.Name, slug),
 			Type:        model.DashHitFolder,
 			FolderUID:   item.Folder,
-			FolderTitle: f.Title,
-			FolderID:    f.ID, // nolint:staticcheck
+			Description: item.Description,
 		}
 	}
 
@@ -249,21 +246,24 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 }
 
 func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgID int64) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFolderByIDFromApiServer")
+	defer span.End()
+
 	if id == 0 {
 		return &folder.GeneralFolder, nil
 	}
 
-	folderkey := &resource.ResourceKey{
+	folderkey := &resourcepb.ResourceKey{
 		Namespace: s.k8sclient.GetNamespace(orgID),
-		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+		Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+		Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
-	request := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
+	request := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
 			Key:    folderkey,
-			Fields: []*resource.Requirement{},
-			Labels: []*resource.Requirement{
+			Fields: []*resourcepb.Requirement{},
+			Labels: []*resourcepb.Requirement{
 				{
 					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
 					Operator: string(selection.In),
@@ -283,6 +283,10 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return nil, err
 	}
 
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
+}
+
+func (s *Service) returnFirstFolderSearchResult(ctx context.Context, orgID int64, hits v0alpha1.SearchResults) (*folder.Folder, error) {
 	if len(hits.Hits) == 0 {
 		return nil, dashboards.ErrFolderNotFound
 	}
@@ -302,27 +306,35 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 }
 
 func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64, title string, parentUID *string) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFolderByTitleFromApiServer")
+	defer span.End()
+
 	if title == "" {
 		return nil, dashboards.ErrFolderTitleEmpty
 	}
 
-	folderkey := &resource.ResourceKey{
+	folderkey := &resourcepb.ResourceKey{
 		Namespace: s.k8sclient.GetNamespace(orgID),
-		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+		Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+		Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
-	request := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Key:    folderkey,
-			Fields: []*resource.Requirement{},
-			Labels: []*resource.Requirement{},
+	request := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: folderkey,
+			Fields: []*resourcepb.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
+					Operator: string(selection.Equals),
+					Values:   []string{title},
+				},
+			},
+			Labels: []*resourcepb.Requirement{},
 		},
-		Query: title,
 		Limit: folderSearchLimit}
 
 	if parentUID != nil {
-		req := []*resource.Requirement{{
+		req := []*resourcepb.Requirement{{
 			Key:      resource.SEARCH_FIELD_FOLDER,
 			Operator: string(selection.In),
 			Values:   []string{*parentUID},
@@ -340,25 +352,17 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 		return nil, err
 	}
 
-	if len(hits.Hits) == 0 {
-		return nil, dashboards.ErrFolderNotFound
+	// If we're searching for top-level folders (parentUID == nil), and the first result is not in the root folder, remove it from the results.
+	for parentUID == nil && len(hits.Hits) > 0 && hits.Hits[0].Folder != "" {
+		hits.Hits = hits.Hits[1:]
 	}
 
-	uid := hits.Hits[0].Name
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
 }
 
-func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getChildrenFromApiServer")
+	defer span.End()
 	defer func(t time.Time) {
 		parent := q.UID
 		if q.UID != folder.SharedWithMeFolderUID {
@@ -379,28 +383,16 @@ func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChi
 		return s.getRootFoldersFromApiServer(ctx, q)
 	}
 
-	var err error
-	// TODO: figure out what to do with Guardian
 	// we only need to check access to the folder
 	// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
-	f := &folder.Folder{
-		UID: q.UID,
-	}
-	g, err := guardian.NewByFolder(ctx, f, q.OrgID, q.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	guardianFunc := g.CanView
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.UID))
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		guardianFunc = g.CanEdit
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.UID))
 	}
-
-	hasAccess, err := guardianFunc()
-	if err != nil {
-		return nil, err
-	}
-	if !hasAccess {
+	if hasAccess, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator); err != nil || !hasAccess {
+		if err != nil {
+			return nil, err
+		}
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
@@ -412,7 +404,9 @@ func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChi
 	return children, nil
 }
 
-func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getRootFoldersFromApiServer")
+	defer span.End()
 	permissions := q.SignedInUser.GetPermissions()
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
@@ -447,13 +441,16 @@ func (s *Service) getRootFoldersFromApiServer(ctx context.Context, q *folder.Get
 
 	// add "shared with me" folder on the 1st page
 	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
-		children = append([]*folder.Folder{&folder.SharedWithMeFolder}, children...)
+		children = append([]*folder.FolderReference{folder.SharedWithMeFolder.ToFolderReference()}, children...)
 	}
 
 	return children, nil
 }
 
 func (s *Service) getParentsFromApiServer(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getParentsFromApiServer")
+	defer span.End()
+
 	if q.UID == accesscontrol.GeneralFolderUID {
 		return nil, nil
 	}
@@ -465,6 +462,9 @@ func (s *Service) getParentsFromApiServer(ctx context.Context, q folder.GetParen
 }
 
 func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.createOnApiServer")
+	defer span.End()
+
 	if cmd.SignedInUser == nil || cmd.SignedInUser.IsNil() {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -502,8 +502,6 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 		return nil, dashboards.ErrFolderInvalidUID
 	}
 
-	user := cmd.SignedInUser
-
 	cmd = &folder.CreateFolderCommand{
 		// TODO: Today, if a UID isn't specified, the dashboard store
 		// generates a new UID. The new folder store will need to do this as
@@ -514,14 +512,11 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 		Description:  cmd.Description,
 		ParentUID:    cmd.ParentUID,
 		SignedInUser: cmd.SignedInUser,
+		// pass along provisioning details
+		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
 	}
 
 	f, err := s.unifiedStore.Create(ctx, *cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err = s.setFullpath(ctx, f, user, false)
 	if err != nil {
 		return nil, err
 	}
@@ -530,7 +525,7 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 }
 
 func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.Update")
+	ctx, span := s.tracer.Start(ctx, "folder.updateOnApiServer")
 	defer span.End()
 
 	if cmd.SignedInUser == nil {
@@ -558,15 +553,8 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
-	f := &folder.Folder{
-		UID: cmd.UID,
-	}
-	g, err := guardian.NewByFolder(ctx, f, cmd.OrgID, cmd.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	if canSave, err := g.CanSave(); err != nil || !canSave {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
+	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
 		if err != nil {
 			return nil, err
 		}
@@ -575,12 +563,15 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 
 	user := cmd.SignedInUser
 
-	foldr, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
-		UID:            cmd.UID,
-		OrgID:          cmd.OrgID,
-		NewTitle:       cmd.NewTitle,
-		NewDescription: cmd.NewDescription,
-		SignedInUser:   user,
+	folder, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
+		UID:                  cmd.UID,
+		OrgID:                cmd.OrgID,
+		NewTitle:             cmd.NewTitle,
+		NewDescription:       cmd.NewDescription,
+		SignedInUser:         user,
+		Overwrite:            cmd.Overwrite,
+		Version:              cmd.Version,
+		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
 	})
 
 	if err != nil {
@@ -590,7 +581,7 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 	if cmd.NewTitle != nil {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 
-		if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, foldr.Updated, cmd.OrgID, cmd.UID); err != nil {
+		if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, folder.Updated, cmd.OrgID, cmd.UID); err != nil {
 			return nil, err
 		}
 	}
@@ -598,10 +589,13 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 	// always expose the dashboard store sequential ID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 
-	return foldr, nil
+	return folder, nil
 }
 
 func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	ctx, span := s.tracer.Start(ctx, "folder.deleteFromApiServer")
+	defer span.End()
+
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -612,15 +606,8 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	f := &folder.Folder{
-		UID: cmd.UID,
-	}
-	guard, err := guardian.NewByFolder(ctx, f, cmd.OrgID, cmd.SignedInUser)
-	if err != nil {
-		return err
-	}
-
-	if canSave, err := guard.CanDelete(); err != nil || !canSave {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
+	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
 		if err != nil {
 			return toFolderError(err)
 		}
@@ -631,12 +618,14 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 	if err != nil {
 		return err
 	}
+	descFolders = folder.SortByPostorder(descFolders)
 
 	folders := []string{}
 	for _, f := range descFolders {
 		folders = append(folders, f.UID)
 	}
 	// must delete children first, then the parent folder
+	s.log.InfoContext(ctx, "deleting folder with descendants", "org_id", cmd.OrgID, "uid", cmd.UID, "folderUIDs", strings.Join(folders, ","))
 	folders = append(folders, cmd.UID)
 
 	if cmd.ForceDeleteRules {
@@ -657,12 +646,27 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 		}
 
+		libraryPanelSrv, ok := s.registry[entity.StandardKindLibraryPanel]
+		if !ok {
+			return folder.ErrInternal.Errorf("no library panel service found in registry")
+		}
+		//	/* TODO: after a decision regarding folder deletion permissions has been made
+		//	(https://github.com/grafana/grafana-enterprise/issues/5144),
+		//	remove the following call to DeleteInFolders
+		//	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
+		//	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
+		//	*/
+		// Obs: DeleteInFolders only deletes dangling library panels (not linked to any dashboard) and throws errors if there are connections
+		if err := libraryPanelSrv.DeleteInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
+			s.log.Error("failed to delete dangling library panels in folders", "error", err, "folders", strings.Join(folders, ","))
+			return err
+		}
 		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
 		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
-		request := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Labels: []*resource.Requirement{},
-				Fields: []*resource.Requirement{
+		request := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Labels: []*resourcepb.Requirement{},
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -705,7 +709,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 }
 
 func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.Move")
+	ctx, span := s.tracer.Start(ctx, "folder.moveOnApiServer")
 	defer span.End()
 
 	if cmd.SignedInUser == nil {
@@ -714,19 +718,6 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 
 	// k6-specific check to prevent folder move for a k6-app folder and its children
 	if cmd.UID == accesscontrol.K6FolderUID {
-		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
-	}
-
-	f, err := s.unifiedStore.Get(ctx, folder.GetFolderQuery{
-		UID:          &cmd.UID,
-		OrgID:        cmd.OrgID,
-		SignedInUser: cmd.SignedInUser,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if f != nil && f.ParentUID == accesscontrol.K6FolderUID {
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
@@ -739,30 +730,7 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	// here we get the folder, we need to get the height of current folder
-	// and the depth of the new parent folder, the sum can't bypass 8
-	folderHeight, err := s.unifiedStore.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
-	if err != nil {
-		return nil, err
-	}
-	parents, err := s.unifiedStore.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
-	if err != nil {
-		return nil, err
-	}
-
-	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal MaxNestedFolderDepth
-	if folderHeight+len(parents)+1 > folder.MaxNestedFolderDepth {
-		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
-	}
-
-	for _, parent := range parents {
-		// if the current folder is already a parent of newparent, we should return error
-		if parent.UID == cmd.UID {
-			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
-		}
-	}
-
-	f, err = s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
+	f, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
 		NewParentUID: &cmd.NewParentUID,
@@ -811,6 +779,9 @@ func (s *Service) publishFolderFullPathUpdatedEventViaApiServer(ctx context.Cont
 }
 
 func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.canMoveViaApiServer")
+	defer span.End()
+
 	// Check that the user is allowed to move the folder to the destination folder
 	var evaluator accesscontrol.Evaluator
 	parentUID := cmd.NewParentUID
@@ -859,6 +830,9 @@ func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolde
 }
 
 func (s *Service) getFolderAndParentUIDScopesViaApiServer(ctx context.Context, folderUID string, orgID int64) ([]string, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getFolderAndParentUIDScopesViaApiServer")
+	defer span.End()
+
 	folderAndParentUIDScopes := []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}
 	if folderUID == folder.GeneralFolderUID {
 		return folderAndParentUIDScopes, nil
@@ -875,6 +849,9 @@ func (s *Service) getFolderAndParentUIDScopesViaApiServer(ctx context.Context, f
 }
 
 func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+	ctx, span := s.tracer.Start(ctx, "folder.getDescendantCountsFromApiServer")
+	defer span.End()
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
 	}
@@ -885,6 +862,7 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagK8SFolderCounts) {
 		return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
 	}

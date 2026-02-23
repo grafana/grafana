@@ -1,0 +1,149 @@
+import { AsyncState } from 'react-use/lib/useAsync';
+
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { Dashboard } from '@grafana/schema';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Alert, Icon, Label, RadioButtonGroup, Stack, Switch, Box, Tooltip } from '@grafana/ui';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { ExportFormat } from 'app/features/dashboard/api/types';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
+
+import { ExportableResource } from '../ShareExportTab';
+
+interface Props {
+  dashboardJson: AsyncState<{
+    json: Dashboard | DashboardJson | DashboardV2Spec | ExportableResource | { error: unknown };
+    hasLibraryPanels?: boolean;
+    initialSaveModelVersion: 'v1' | 'v2';
+  }>;
+  isSharingExternally: boolean;
+  exportFormat: ExportFormat;
+  isViewingYAML: boolean;
+  onExportFormatChange: (format: ExportFormat) => void;
+  onShareExternallyChange: () => void;
+  onViewYAML: () => void;
+}
+
+const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
+
+export function ResourceExport({
+  dashboardJson,
+  isSharingExternally,
+  exportFormat,
+  isViewingYAML,
+  onExportFormatChange,
+  onShareExternallyChange,
+  onViewYAML,
+}: Props) {
+  const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
+  const initialSaveModelVersion = dashboardJson.value?.initialSaveModelVersion;
+  const isV2Dashboard =
+    dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
+  const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
+
+  const switchExportLabel =
+    exportFormat === ExportFormat.V2Resource
+      ? t('dashboard-scene.resource-export.share-externally', 'Share dashboard with another instance')
+      : t('share-modal.export.share-externally-label', 'Export for sharing externally');
+  const switchExportTooltip = t(
+    'dashboard-scene.resource-export.share-externally-tooltip',
+    'Removes all instance-specific metadata and data source references from the resource before export.'
+  );
+  const switchExportModeLabel = t('export.json.export-mode', 'Model');
+  const switchExportFormatLabel = t('export.json.export-format', 'Format');
+
+  const exportResourceOptions = [
+    {
+      label: t('dashboard-scene.resource-export.label.classic', 'Classic'),
+      value: ExportFormat.Classic,
+    },
+    {
+      label: t('dashboard-scene.resource-export.label.v1-resource', 'V1 Resource'),
+      value: ExportFormat.V1Resource,
+    },
+    {
+      label: t('dashboard-scene.resource-export.label.v2-resource', 'V2 Resource'),
+      value: ExportFormat.V2Resource,
+    },
+  ];
+
+  return (
+    <>
+      <QueryOperationRow
+        id="Advanced options"
+        index={0}
+        title={t('dashboard-scene.resource-export.label.advanced-options', 'Advanced options')}
+        isOpen={false}
+      >
+        <Box marginTop={2}>
+          <Stack gap={1} direction="column">
+            {initialSaveModelVersion === 'v1' && (
+              <Stack gap={1} alignItems="center">
+                <Label>{switchExportModeLabel}</Label>
+                <RadioButtonGroup
+                  options={exportResourceOptions}
+                  value={exportFormat}
+                  onChange={(value) => onExportFormatChange(value)}
+                  aria-label={switchExportModeLabel}
+                />
+              </Stack>
+            )}
+
+            {exportFormat !== ExportFormat.Classic && (
+              <Stack gap={1} alignItems="center">
+                <Label>{switchExportFormatLabel}</Label>
+                <RadioButtonGroup
+                  options={[
+                    { label: t('dashboard-scene.resource-export.label.json', 'JSON'), value: 'json' },
+                    { label: t('dashboard-scene.resource-export.label.yaml', 'YAML'), value: 'yaml' },
+                  ]}
+                  value={isViewingYAML ? 'yaml' : 'json'}
+                  onChange={onViewYAML}
+                  aria-label={switchExportFormatLabel}
+                />
+              </Stack>
+            )}
+          </Stack>
+        </Box>
+      </QueryOperationRow>
+
+      {(isV2Dashboard ||
+        exportFormat === ExportFormat.Classic ||
+        (initialSaveModelVersion === 'v2' && exportFormat === ExportFormat.V1Resource)) && (
+        <Stack gap={1} alignItems="start">
+          <Label>
+            <Stack gap={0.5} alignItems="center">
+              <Tooltip content={switchExportTooltip} placement="bottom">
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+              {switchExportLabel}
+            </Stack>
+          </Label>
+          <Switch
+            label={switchExportLabel}
+            value={isSharingExternally}
+            onChange={onShareExternallyChange}
+            data-testid={selector.exportExternallyToggle}
+          />
+        </Stack>
+      )}
+
+      {showV2LibPanelAlert && (
+        <Alert
+          title={t(
+            'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
+            'Library panels will be converted to regular panels'
+          )}
+          severity="warning"
+          topSpacing={2}
+        >
+          <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
+            Due to limitations in the new dashboard schema (V2), library panels will be converted to regular panels with
+            embedded content during external export.
+          </Trans>
+        </Alert>
+      )}
+    </>
+  );
+}

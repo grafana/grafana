@@ -4,12 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { AwsAuthType } from '@grafana/aws-sdk';
 import { PluginContextProvider, PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 
+import { CloudWatchDatasource } from '../../datasource';
 import {
   CloudWatchSettings,
   setupMockedDataSource,
   setupMockedTemplateService,
-} from '../../__mocks__/CloudWatchDataSource';
-import { CloudWatchDatasource } from '../../datasource';
+} from '../../mocks/CloudWatchDataSource';
 
 import {
   ConfigEditor,
@@ -236,13 +236,13 @@ describe('Render', () => {
       },
     });
     await waitFor(async () => {
-      expect(await screen.getByText('logGroup-foo')).toBeInTheDocument();
-      expect(await screen.getByText('logGroup-bar')).toBeInTheDocument();
-      expect(await screen.queryByText('logGroup-baz')).not.toBeInTheDocument();
+      expect(screen.getByText('logGroup-foo')).toBeInTheDocument();
+      expect(screen.getByText('logGroup-bar')).toBeInTheDocument();
+      expect(screen.queryByText('logGroup-baz')).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByText('Show all'));
 
-      expect(await screen.getByText('logGroup-baz')).toBeInTheDocument();
+      expect(screen.getByText('logGroup-baz')).toBeInTheDocument();
     });
   });
 

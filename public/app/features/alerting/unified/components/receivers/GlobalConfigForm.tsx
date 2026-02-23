@@ -1,10 +1,10 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LinkButton, Stack } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { Trans } from 'app/core/internationalization';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
@@ -72,7 +72,10 @@ export const GlobalConfigForm = ({ config, alertManagerSourceName }: Props) => {
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmitCallback)}>
         {error && (
-          <Alert severity="error" title="Error saving receiver">
+          <Alert
+            severity="error"
+            title={t('alerting.global-config-form.title-error-saving-receiver', 'Error saving receiver')}
+          >
             {error.message || String(error)}
           </Alert>
         )}
@@ -84,6 +87,7 @@ export const GlobalConfigForm = ({ config, alertManagerSourceName }: Props) => {
             option={option}
             error={errors[option.propertyName]}
             pathPrefix={''}
+            secureFields={{}}
           />
         ))}
         <div>
@@ -92,10 +96,14 @@ export const GlobalConfigForm = ({ config, alertManagerSourceName }: Props) => {
               <>
                 {loading && (
                   <Button disabled={true} icon="spinner" variant="primary">
-                    Saving...
+                    <Trans i18nKey="alerting.global-config-form.saving">Saving...</Trans>
                   </Button>
                 )}
-                {!loading && <Button type="submit">Save global config</Button>}
+                {!loading && (
+                  <Button type="submit">
+                    <Trans i18nKey="alerting.global-config-form.save-global-config">Save global config</Trans>
+                  </Button>
+                )}
               </>
             )}
             <LinkButton

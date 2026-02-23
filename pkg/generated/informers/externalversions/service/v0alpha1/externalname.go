@@ -43,20 +43,32 @@ func NewExternalNameInformer(client versioned.Interface, namespace string, resyn
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredExternalNameInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ServiceV0alpha1().ExternalNames(namespace).List(context.TODO(), options)
+				return client.ServiceV0alpha1().ExternalNames(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ServiceV0alpha1().ExternalNames(namespace).Watch(context.TODO(), options)
+				return client.ServiceV0alpha1().ExternalNames(namespace).Watch(context.Background(), options)
 			},
-		},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ServiceV0alpha1().ExternalNames(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ServiceV0alpha1().ExternalNames(namespace).Watch(ctx, options)
+			},
+		}, client),
 		&apisservicev0alpha1.ExternalName{},
 		resyncPeriod,
 		indexers,

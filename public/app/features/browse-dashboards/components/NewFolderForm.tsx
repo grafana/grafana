@@ -1,14 +1,20 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Input, Field, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Box, Button, Checkbox, Field, Icon, Input, Space, Stack, Tooltip } from '@grafana/ui';
+import { OwnerReference } from 'app/api/clients/folder/v1beta1';
+import { FolderDTO } from 'app/types/folders';
 
+import { OwnerReferenceSelector } from '../../../core/components/OwnerReferences/OwnerReferenceSelector';
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 
 interface Props {
-  onConfirm: (folderName: string) => void;
+  onConfirm: (folderName: string, teamOwnerRefs?: OwnerReference[]) => void;
   onCancel: () => void;
+  parentFolder?: FolderDTO;
 }
 
 interface FormModel {
@@ -17,61 +23,110 @@ interface FormModel {
 
 const initialFormModel: FormModel = { folderName: '' };
 
-export function NewFolderForm({ onCancel, onConfirm }: Props) {
+export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
+  const showFolderOwnerSelector = config.featureToggles.teamFolders;
   const {
     handleSubmit,
     register,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormModel>({ defaultValues: initialFormModel });
+
+  const [createTeamFolder, setCreateTeamFolder] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<OwnerReference | null>(null);
+
+  const handleTeamFolderToggle = () => {
+    setCreateTeamFolder(!createTeamFolder);
+  };
+
+  const handleTeamSelectorChange = (ownerRef: OwnerReference | null) => {
+    setSelectedTeam(ownerRef);
+  };
 
   const translatedFolderNameRequiredPhrase = t(
     'browse-dashboards.action.new-folder-name-required-phrase',
     'Folder name is required.'
   );
-  const validateFolderName = async (folderName: string) => {
-    try {
-      await validationSrv.validateNewFolderName(folderName);
-      return true;
-    } catch (e) {
-      if (e instanceof Error) {
-        return e.message;
-      } else {
-        throw e;
-      }
-    }
-  };
 
   const fieldNameLabel = t('browse-dashboards.new-folder-form.name-label', 'Folder name');
 
   return (
     <form
       name="addFolder"
-      onSubmit={handleSubmit((form) => onConfirm(form.folderName))}
+      onSubmit={handleSubmit((form) => {
+        reportInteraction('grafana_browse_dashboards_page_action_create_folder', {
+          teamFolder: !!selectedTeam,
+          teamUid: selectedTeam?.uid,
+        });
+
+        onConfirm(form.folderName, createTeamFolder && selectedTeam ? [selectedTeam] : []);
+      })}
       data-testid={selectors.pages.BrowseDashboards.NewFolderForm.form}
     >
-      <Field
-        label={fieldNameLabel}
-        invalid={!!errors.folderName}
-        error={errors.folderName && errors.folderName.message}
-      >
-        <Input
-          data-testid={selectors.pages.BrowseDashboards.NewFolderForm.nameInput}
-          id="folder-name-input"
-          defaultValue={initialFormModel.folderName}
-          {...register('folderName', {
-            required: translatedFolderNameRequiredPhrase,
-            validate: async (v) => await validateFolderName(v),
-          })}
-        />
-      </Field>
+      <Stack gap={1} direction="column">
+        <Field
+          label={fieldNameLabel}
+          invalid={!!errors.folderName}
+          error={errors.folderName && errors.folderName.message}
+          noMargin
+        >
+          <Input
+            data-testid={selectors.pages.BrowseDashboards.NewFolderForm.nameInput}
+            id="folder-name-input"
+            defaultValue={initialFormModel.folderName}
+            {...register('folderName', {
+              required: translatedFolderNameRequiredPhrase,
+              validate: async (v) => await validateFolderName(v, parentFolder?.uid),
+            })}
+          />
+        </Field>
+        {showFolderOwnerSelector && (
+          <>
+            <Box>
+              <Checkbox
+                value={createTeamFolder}
+                label={t(
+                  'browse-dashboards.action.new-folder-owner-selector-checkbox',
+                  'Assign an owner to the folder'
+                )}
+                onChange={handleTeamFolderToggle}
+              />
+              <Tooltip
+                content={t(
+                  'browse-dashboards.action.new-folder-as-team-folder-checkbox-tooltip',
+                  'Team folders are folders owned by your team. Use them to keep your team’s content in one place—making it easier to find, organize, and manage access'
+                )}
+                placement="top"
+              >
+                <Icon name="question-circle" />
+              </Tooltip>
+            </Box>
+
+            {createTeamFolder && <OwnerReferenceSelector onChange={handleTeamSelectorChange} />}
+          </>
+        )}
+      </Stack>
+      <Space v={2} />
       <Stack>
         <Button variant="secondary" fill="outline" onClick={onCancel}>
           <Trans i18nKey="browse-dashboards.new-folder-form.cancel-label">Cancel</Trans>
         </Button>
-        <Button type="submit">
+        <Button type="submit" disabled={isSubmitting}>
           <Trans i18nKey="browse-dashboards.new-folder-form.create-label">Create</Trans>
         </Button>
       </Stack>
     </form>
   );
+}
+
+export async function validateFolderName(folderName: string, parentFolderUid?: string) {
+  try {
+    await validationSrv.validateNewFolderName(folderName, parentFolderUid);
+    return true;
+  } catch (e) {
+    if (e instanceof Error) {
+      return e.message;
+    } else {
+      throw e;
+    }
+  }
 }

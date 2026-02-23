@@ -90,12 +90,16 @@ export class DAGError extends Error {
 export function getTargets(model: ExpressionQuery) {
   const isMathExpression = model.type === ExpressionQueryType.math;
   const isClassicCondition = model.type === ExpressionQueryType.classic;
+  const isSqlExpression = model.type === ExpressionQueryType.sql;
 
   if (isMathExpression) {
     return parseRefsFromMathExpression(model.expression ?? '');
   }
   if (isClassicCondition) {
     return model.conditions?.map((c) => c.query.params[0]) ?? [];
+  }
+  if (isSqlExpression) {
+    return parseRefsFromSqlExpression(model.expression ?? '');
   }
   return [model.expression];
 }
@@ -112,6 +116,100 @@ export function parseRefsFromMathExpression(input: string): string[] {
   const m2 = Array.from(input.matchAll(r2)).map((m) => m.groups?.var);
 
   return compact(uniq([...m1, ...m2]));
+}
+
+export function parseRefsFromSqlExpression(input: string): string[] {
+  if (!input) {
+    return [];
+  }
+  // Remove any comment lines
+  const lines = input.split('\n');
+  const nonCommentLines = lines.filter((line) => !line.trim().startsWith('--'));
+  const noComments = nonCommentLines.join(' ');
+
+  const query = noComments
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    // Remove any potential multi line comments
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // Extract CTE names to exclude them from table references
+  const cteNames = parseCteNames(query);
+
+  const tableMatches = [];
+
+  // Extract tables after FROM - case insensitive with /i flag
+  // Terminate on: SQL keywords, closing paren (for CTEs/subqueries), or end of string
+  const fromRegex = /from\s+([^;)]*?)(?:\s+(?:join|where|group|having|order|limit|on|select)|\)|$)/gi;
+
+  for (const match of query.matchAll(fromRegex)) {
+    const fromClause = match[1].trim();
+    // Handle comma-separated tables
+    const tables = fromClause.split(',').map((t) => t.trim());
+    for (const table of tables) {
+      tableMatches.push(cleanTableName(table));
+    }
+  }
+
+  // Extract tables after JOIN - case insensitive with /i flag
+  const joinRegex = /join\s+([a-zA-Z0-9_."]+)/gi;
+
+  for (const match of query.matchAll(joinRegex)) {
+    tableMatches.push(cleanTableName(match[1]));
+  }
+
+  // Filter out CTE names - they're local definitions, not external references
+  const externalRefs = tableMatches.filter((table) => !cteNames.has(table.toLowerCase()));
+
+  return compact(uniq(externalRefs));
+}
+
+/**
+ * Parse CTE (Common Table Expression) names from a SQL query.
+ * CTEs are defined with: WITH cte_name AS (...), another_cte AS (...)
+ */
+function parseCteNames(query: string): Set<string> {
+  const cteNames = new Set<string>();
+
+  // Match the WITH clause - handles both regular and RECURSIVE CTEs
+  const withMatch = query.match(/^\s*with\s+(?:recursive\s+)?(.*?)(?:\s+select\s)/i);
+
+  if (!withMatch) {
+    return cteNames;
+  }
+
+  const withClause = withMatch[1];
+
+  // Match CTE names - they appear before "AS" keyword followed by opening paren
+  // This handles: cte_name AS (, "quoted_name" AS (
+  const cteNameRegex = /([a-zA-Z0-9_]+|"[^"]+"|'[^']+')\s+as\s*\(/gi;
+
+  for (const match of withClause.matchAll(cteNameRegex)) {
+    const cteName = match[1].replace(/['"]/g, '').toLowerCase();
+    cteNames.add(cteName);
+  }
+
+  return cteNames;
+}
+
+// Helper function to clean table names
+function cleanTableName(tableName: string): string {
+  // Remove quotes and parentheses
+  let name = tableName.replace(/['"()]/g, '');
+
+  // Remove alias if present (both "AS alias" and "alias" forms)
+  if (name.includes(' as ')) {
+    name = name.split(' as ')[0];
+  } else if (name.includes(' ')) {
+    name = name.split(' ')[0];
+  }
+
+  // Extract table name from schema.table format
+  if (name.includes('.')) {
+    name = name.split('.').pop() || '';
+  }
+
+  return name.trim();
 }
 
 export const getOriginOfRefId = memoize(_getOriginsOfRefId, (refId, graph) => refId + fingerprintGraph(graph));

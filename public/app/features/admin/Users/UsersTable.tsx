@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
   CellProps,
@@ -16,8 +17,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { Trans, t } from 'app/core/internationalization';
-import { UserDTO } from 'app/types';
+import { UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
 
@@ -89,7 +89,10 @@ export const UsersTable = ({
                   <Stack alignItems={'center'}>
                     <OrgUnits units={value} icon={'building'} />
                     {row.original.isAdmin && (
-                      <Tooltip placement="top" content="Grafana Admin">
+                      <Tooltip
+                        placement="top"
+                        content={t('admin.users-table.columns.content-grafana-admin', 'Grafana Admin')}
+                      >
                         <Icon name="shield" />
                       </Tooltip>
                     )}
@@ -108,7 +111,13 @@ export const UsersTable = ({
                 return value === 'None' ? (
                   <Text color={'disabled'}>
                     <Trans i18nKey="admin.users-table.no-licensed-roles">Not assigned</Trans>
-                    <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
+                    <Tooltip
+                      placement="top"
+                      content={t(
+                        'admin.users-table.tooltip-assigned-role',
+                        'A licensed role will be assigned when this user signs in'
+                      )}
+                    >
                       <Icon name="question-circle" style={{ margin: '0 0 4 4' }} />
                     </Tooltip>
                   </Text>
@@ -126,12 +135,19 @@ export const UsersTable = ({
           content: 'Time since user was seen using Grafana',
           iconName: 'question-circle',
         },
-        cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
+        cell: ({
+          cell: { value },
+          row: {
+            original: { lastSeenAt, created },
+          },
+        }: Cell<'lastSeenAtAge'>) => {
+          // The user has never logged in if lastSeenAt is before its creation date.
+          const neverLoggedIn = lastSeenAt && created && new Date(lastSeenAt) < new Date(created);
           return (
             <>
               {value && (
                 <>
-                  {value === '10 years' ? (
+                  {neverLoggedIn ? (
                     <Text color={'disabled'}>
                       <Trans i18nKey="admin.users-table.last-seen-never">Never</Trans>
                     </Text>
@@ -153,6 +169,13 @@ export const UsersTable = ({
         ),
       },
       {
+        id: 'isProvisioned',
+        header: 'Provisioned',
+        cell: ({ cell: { value } }: Cell<'isProvisioned'>) => (
+          <>{value && <Tag colorIndex={14} name={'Provisioned'} />}</>
+        ),
+      },
+      {
         id: 'isDisabled',
         header: '',
         cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
@@ -167,8 +190,8 @@ export const UsersTable = ({
               size="sm"
               icon="pen"
               href={`admin/users/edit/${original.uid}`}
-              aria-label={`Edit user ${original.name}`}
-              tooltip={'Edit user'}
+              aria-label={t('admin.users-table.edit-aria-label', 'Edit user: {{name}}', { name: original.name })}
+              tooltip={t('admin.users-table.edit-tooltip', 'Edit user')}
             />
           );
         },

@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -26,8 +25,6 @@ var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta
 var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2", GenerateName: "object-fail"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var exampleList = &example.PodList{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ListMeta: metav1.ListMeta{}, Items: []example.Pod{*exampleObj}}
 var anotherList = &example.PodList{Items: []example.Pod{*anotherObj}}
-
-var p = prometheus.NewRegistry()
 
 func TestMode1_Create(t *testing.T) {
 	type testCase struct {
@@ -74,7 +71,7 @@ func TestMode1_Create(t *testing.T) {
 				tt.setupStorageFn(us.Mock)
 			}
 
-			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
+			dw, err := NewStaticStorage(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.Create(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
@@ -157,7 +154,7 @@ func TestMode1_Get(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
+			dw, err := NewStaticStorage(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.Get(context.Background(), name, &metav1.GetOptions{})
@@ -220,7 +217,7 @@ func TestMode1_List(t *testing.T) {
 				tt.setupStorageFn(us.Mock)
 			}
 
-			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
+			dw, err := NewStaticStorage(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			_, err = dw.List(context.Background(), &metainternalversion.ListOptions{})
@@ -289,7 +286,7 @@ func TestMode1_Delete(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
+			dw, err := NewStaticStorage(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Delete(context.Background(), name, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
@@ -364,7 +361,7 @@ func TestMode1_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(us.Mock, tt.input)
 			}
 
-			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
+			dw, err := NewStaticStorage(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
@@ -437,7 +434,7 @@ func TestMode1_Update(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			dw, err := NewDualWriter(kind, rest.Mode1, ls, us)
+			dw, err := NewStaticStorage(kind, rest.Mode1, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Update(context.Background(), name, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})

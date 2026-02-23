@@ -1,16 +1,19 @@
+import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
-import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { EditorField, EditorFieldGroup } from '@grafana/plugin-ui';
+import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption, useTheme2 } from '@grafana/ui';
 
+import { METRIC_LABEL } from '../../constants';
 import { PrometheusDatasource } from '../../datasource';
-import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
-import { MetricsModal } from './metrics-modal';
-import { tracking } from './metrics-modal/state/helpers';
+import { formatKeyValueStrings } from './formatter';
+import { MetricsModal } from './metrics-modal/MetricsModal';
 
 export interface MetricComboboxProps {
   metricLookupDisabled: boolean;
@@ -21,6 +24,7 @@ export interface MetricComboboxProps {
   labelsFilters: QueryBuilderLabelFilter[];
   onBlur?: () => void;
   variableEditor?: boolean;
+  timeRange: TimeRange;
 }
 
 export function MetricCombobox({
@@ -30,25 +34,28 @@ export function MetricCombobox({
   onGetMetrics,
   labelsFilters,
   variableEditor,
+  timeRange,
 }: Readonly<MetricComboboxProps>) {
   const [metricsModalOpen, setMetricsModalOpen] = useState(false);
+  const styles = getStyles(useTheme2());
 
   /**
    * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
    */
   const getMetricLabels = useCallback(
     async (query: string) => {
-      const results = await datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
+      const match = formatKeyValueStrings(query, labelsFilters);
+      const results = await datasource.languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
 
       const resultsOptions = results.map((result) => {
         return {
-          label: result.text,
-          value: result.text,
+          label: result,
+          value: result,
         };
       });
       return resultsOptions;
     },
-    [datasource, labelsFilters]
+    [datasource.languageProvider, labelsFilters, timeRange]
   );
 
   const onComboboxChange = useCallback(
@@ -70,41 +77,37 @@ export function MetricCombobox({
     [getMetricLabels, onGetMetrics]
   );
 
-  const loadMetricsExplorerMetrics = useCallback(async () => {
-    const allMetrics = await onGetMetrics();
-    const metrics: string[] = [];
-    for (const metric of allMetrics) {
-      if (metric.value) {
-        metrics.push(metric.value);
-      }
-    }
-
-    return metrics;
-  }, [onGetMetrics]);
-
   const asyncSelect = () => {
     return (
-      <InputGroup>
+      <div className={styles.wrapper}>
         <Combobox
-          placeholder="Select metric"
+          placeholder={t(
+            'grafana-prometheus.querybuilder.metric-combobox.async-select.placeholder-select-metric',
+            'Select metric'
+          )}
           width="auto"
           minWidth={25}
           options={loadOptions}
           value={query.metric}
           onChange={onComboboxChange}
           createCustomValue
+          data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
         />
         <Button
-          tooltip="Open metrics explorer"
-          aria-label="Open metrics explorer"
+          tooltip={t(
+            'grafana-prometheus.querybuilder.metric-combobox.async-select.tooltip-open-metrics-explorer',
+            'Open metrics explorer'
+          )}
+          aria-label={t(
+            'grafana-prometheus.querybuilder.metric-combobox.async-select.aria-label-open-metrics-explorer',
+            'Open metrics explorer'
+          )}
           variant="secondary"
           icon="book-open"
-          onClick={() => {
-            tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
-            setMetricsModalOpen(true);
-          }}
+          className={styles.button}
+          onClick={() => setMetricsModalOpen(true)}
         />
-      </InputGroup>
+      </div>
     );
   };
 
@@ -117,48 +120,48 @@ export function MetricCombobox({
           onClose={() => setMetricsModalOpen(false)}
           query={query}
           onChange={onChange}
-          initialMetrics={loadMetricsExplorerMetrics}
+          timeRange={timeRange}
         />
       )}
       {variableEditor ? (
         <InlineFieldRow>
           <InlineField
-            label="Metric"
+            label={t('grafana-prometheus.querybuilder.metric-combobox.label-metric', 'Metric')}
             labelWidth={20}
-            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
+            tooltip={
+              <div>
+                <Trans i18nKey="grafana-prometheus.querybuilder.metric-combobox.tooltip-metric">
+                  Optional: returns a list of label values for the label name in the specified metric.
+                </Trans>
+              </div>
+            }
           >
             {asyncSelect()}
           </InlineField>
         </InlineFieldRow>
       ) : (
         <EditorFieldGroup>
-          <EditorField label="Metric">{asyncSelect()}</EditorField>
+          <EditorField label={t('grafana-prometheus.querybuilder.metric-combobox.label-metric', 'Metric')}>
+            {asyncSelect()}
+          </EditorField>
         </EditorFieldGroup>
       )}
     </>
   );
 }
 
-export const formatPrometheusLabelFiltersToString = (
-  queryString: string,
-  labelsFilters: QueryBuilderLabelFilter[] | undefined
-): string => {
-  const filterArray = labelsFilters ? formatPrometheusLabelFilters(labelsFilters) : [];
-
-  return `label_values({__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}},__name__)`;
-};
-
-export const formatPrometheusLabelFilters = (labelsFilters: QueryBuilderLabelFilter[]): string[] => {
-  return labelsFilters.map((label) => {
-    return `,${label.label}="${label.value}"`;
-  });
-};
-
-/**
- * Reformat the query string and label filters to return all valid results for current query editor state
- */
-const formatKeyValueStringsForLabelValuesQuery = (query: string, labelsFilters?: QueryBuilderLabelFilter[]): string => {
-  const queryString = regexifyLabelValuesQueryString(query);
-
-  return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      display: 'flex',
+      input: {
+        borderTopRightRadius: 'unset',
+        borderBottomRightRadius: 'unset',
+      },
+    }),
+    button: css({
+      borderTopLeftRadius: 'unset',
+      borderBottomLeftRadius: 'unset',
+    }),
+  };
 };

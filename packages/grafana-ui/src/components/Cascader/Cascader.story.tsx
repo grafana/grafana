@@ -1,5 +1,7 @@
 import { StoryFn, Meta } from '@storybook/react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
+
+import { Field } from '../Forms/Field';
 
 import { Cascader, CascaderOption } from './Cascader';
 import mdx from './Cascader.mdx';
@@ -31,7 +33,7 @@ const options = [
 ];
 
 const meta: Meta<typeof Cascader> = {
-  title: 'Forms/Cascader',
+  title: 'Inputs/Cascader',
   component: Cascader,
   parameters: {
     docs: {
@@ -59,7 +61,14 @@ const meta: Meta<typeof Cascader> = {
   },
 };
 
-const Template: StoryFn<typeof Cascader> = (args) => <Cascader {...args} />;
+const Template: StoryFn<typeof Cascader> = (args) => {
+  const id = useId();
+  return (
+    <Field label="Cascader field">
+      <Cascader {...args} id={id} />
+    </Field>
+  );
+};
 
 export const Simple = Template.bind({});
 Simple.args = {
@@ -91,10 +100,15 @@ export const WithOptionsStateUpdate = () => {
       value: 'initial',
     },
   ]);
+  const id = useId();
 
   setTimeout(() => setOptions(options), 2000);
 
-  return <Cascader options={updatedOptions} onSelect={onSelect} />;
+  return (
+    <Field label="Cascader field with updated options">
+      <Cascader options={updatedOptions} onSelect={onSelect} id={id} />
+    </Field>
+  );
 };
 
 export default meta;

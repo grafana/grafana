@@ -1,6 +1,7 @@
 import { memo, useCallback } from 'react';
 
 import { FieldMatcherID, fieldMatchers, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { Select } from '../Select/Select';
 
@@ -27,11 +28,11 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
 });
 FieldNameMatcherEditor.displayName = 'FieldNameMatcherEditor';
 
-export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
+export const getFieldNameMatcherItem: () => FieldMatcherUIRegistryItem<string> = () => ({
   id: FieldMatcherID.byName,
   component: FieldNameMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byName),
-  name: 'Fields with name',
-  description: 'Set properties for a specific field',
+  name: t('grafana-ui.matchers-ui.name-fields-with-name', 'Fields with name'),
+  description: t('grafana-ui.matchers-ui.description-fields-with-name', 'Set properties for a specific field'),
   optionsToLabel: (options) => options,
-};
+});

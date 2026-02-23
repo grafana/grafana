@@ -3,7 +3,9 @@ import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
+import { TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   Drawer,
@@ -16,7 +18,6 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,
@@ -28,7 +29,7 @@ import {
   useNotificationTemplates,
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotificationChannelOption } from 'app/types';
+import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import { defaultPayloadString } from '../../TemplateForm';
 
@@ -44,6 +45,7 @@ interface TemplatesPickerProps {
 }
 export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
   const [showTemplates, setShowTemplates] = useState(false);
+
   const onClick = () => {
     setShowTemplates(true);
     trackEditInputWithTemplate();
@@ -54,17 +56,31 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
     <>
       <Button
         icon="edit"
-        tooltip={`Edit ${option.label.toLowerCase()} using existing notification templates.`}
+        tooltip={t('alerting.templates-picker.tooltip-edit', 'Edit {{name}} using existing notification templates.', {
+          name: option.label.toLowerCase(),
+        })}
         onClick={onClick}
         variant="secondary"
         size="sm"
       >
-        {`Edit ${option.label}`}
+        <Trans i18nKey="alerting.templates-picker.button-edit" values={{ name: option.label }}>
+          Edit {'{{name}}'}
+        </Trans>
       </Button>
 
       {showTemplates && (
-        <Drawer title={`Edit ${option.label}`} size="md" onClose={handleClose}>
-          <TemplateSelector onSelect={onSelect} onClose={handleClose} option={option} valueInForm={valueInForm} />
+        <Drawer
+          title={t('alerting.templates-picker.title-drawer', 'Edit {{name}}', { name: option.label })}
+          size="md"
+          onClose={handleClose}
+        >
+          <TemplateSelector
+            onSelect={onSelect}
+            onClose={handleClose}
+            option={option}
+            valueInForm={valueInForm}
+            filterKind="grafana"
+          />
         </Drawer>
       )}
     </>
@@ -111,9 +127,10 @@ interface TemplateSelectorProps {
   onClose: () => void;
   option: NotificationChannelOption;
   valueInForm: string;
+  filterKind?: TemplateGroupTemplateKind;
 }
 
-function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
+export function TemplateSelector({ onSelect, onClose, option, valueInForm, filterKind }: TemplateSelectorProps) {
   const styles = useStyles2(getStyles);
   const valueInFormIsCustom = Boolean(valueInForm) && !matchesOnlyOneTemplate(valueInForm);
   const [template, setTemplate] = useState<SelectableValue<Template> | undefined>(undefined);
@@ -129,8 +146,14 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
-      label: 'Select notification template',
-      ariaLabel: 'Select notification template',
+      label: t(
+        'alerting.template-selector.template-options.label.select-notification-template',
+        'Select notification template'
+      ),
+      ariaLabel: t(
+        'alerting.template-selector.template-options.ariaLabel.select-notification-template',
+        'Select notification template'
+      ),
       value: 'Existing',
       description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,
     },
@@ -156,12 +179,20 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     setTemplateOption(option);
   };
 
+  // Filter templates by kind
+  const filteredData = useMemo(() => {
+    if (!filterKind) {
+      return data;
+    }
+    return (data ?? []).filter((template) => template.kind === filterKind);
+  }, [data, filterKind]);
+
   const options = useMemo(() => {
-    if (!defaultTemplates || !data || isLoading || error) {
+    if (!defaultTemplates || !filteredData || isLoading || error) {
       return [];
     }
-    return getTemplateOptions(data, defaultTemplates);
-  }, [data, defaultTemplates, isLoading, error]);
+    return getTemplateOptions(filteredData, defaultTemplates);
+  }, [filteredData, defaultTemplates, isLoading, error]);
 
   const defaultTemplateValue = useMemo(() => {
     if (!options.length || !Boolean(valueInForm) || !matchesOnlyOneTemplate(valueInForm)) {
@@ -173,11 +204,19 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   }, [options, valueInForm]);
 
   if (error) {
-    return <div>Error loading templates</div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.template-selector.error-loading-templates">Error loading templates</Trans>
+      </div>
+    );
   }
 
   if (isLoading || !data || !defaultTemplates) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.template-selector.loading">Loading...</Trans>
+      </div>
+    );
   }
 
   return (
@@ -195,8 +234,14 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
             <Stack direction="row" gap={1} alignItems="center">
               <Select<Template>
                 data-testid="existing-templates-selector"
-                placeholder="Choose notification template"
-                aria-label="Choose notification template"
+                placeholder={t(
+                  'alerting.template-selector.existing-templates-selector-placeholder-choose-notification-template',
+                  'Choose notification template'
+                )}
+                aria-label={t(
+                  'alerting.template-selector.existing-templates-selector-aria-label-choose-notification-template',
+                  'Choose notification template'
+                )}
                 onChange={(value: SelectableValue<Template>, _) => {
                   setTemplate(value);
                 }}
@@ -205,10 +250,11 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
                 defaultValue={defaultTemplateValue}
               />
               <IconButton
-                tooltip="Copy selected notification template to clipboard. You can use it in the custom tab."
-                onClick={() =>
-                  copyToClipboard(getUseTemplateText(template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''))
-                }
+                tooltip={t(
+                  'alerting.template-selector.tooltip-copy',
+                  'Copy selected notification template to clipboard. You can use it in the custom tab.'
+                )}
+                onClick={() => copyToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '')}
                 name="copy"
               />
             </Stack>
@@ -272,8 +318,20 @@ function OptionCustomfield({
       </Label>
       <TextArea
         id={id}
-        label="Custom template"
-        placeholder={option.placeholder}
+        label={t('alerting.option-customfield.label-custom-template', 'Custom template')}
+        placeholder={
+          option.placeholder
+            ? t(
+                'alerting.option-customfield.placeholder-with-template',
+                'Enter plain text or reference a template, e.g. {{- currentTemplate}}',
+                { currentTemplate: option.placeholder }
+              )
+            : // if "option.placeholder" is not set, the placeholder displays the "default.message" template
+              t(
+                'alerting.option-customfield.placeholder',
+                'Enter plain text or reference a template, e.g. {{template "default.message" .}}'
+              )
+        }
         onChange={(e) => onCustomTemplateChange(e.currentTarget.value)}
         defaultValue={initialValue}
       />

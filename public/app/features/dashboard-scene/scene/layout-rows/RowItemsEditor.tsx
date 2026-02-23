@@ -1,14 +1,16 @@
+import { t } from '@grafana/i18n';
 import { Checkbox } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { RowItems } from './RowItems';
 
 export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
-  const options = new OptionsPaneCategoryDescriptor({ title: '', id: `rows-options` }).addItem(
+  const categoryId = 'rows-options';
+  const options = new OptionsPaneCategoryDescriptor({ title: '', id: categoryId }).addItem(
     new OptionsPaneItemDescriptor({
       title: t('dashboard.edit-pane.row.header.title', 'Row header'),
+      id: `${categoryId}-row-header`,
       render: () => <RowHeaderCheckboxMulti model={model} />,
     })
   );
@@ -23,12 +25,12 @@ function RowHeaderCheckboxMulti({ model }: { model: RowItems }) {
   let indeterminate = false;
 
   for (let i = 0; i < rows.length; i++) {
-    const { isHeaderHidden } = rows[i].useState();
+    const { hideHeader } = rows[i].useState();
 
     const prevElement = rows[i - 1];
-    indeterminate = indeterminate || (prevElement && !!prevElement.state.isHeaderHidden !== !!isHeaderHidden);
+    indeterminate = indeterminate || (prevElement && !!prevElement.state.hideHeader !== !!hideHeader);
 
-    value = value || !!isHeaderHidden;
+    value = value || !!hideHeader;
   }
 
   return (

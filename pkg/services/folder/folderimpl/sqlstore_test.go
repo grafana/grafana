@@ -14,8 +14,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -25,15 +27,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var folderTitle string = "folder1"
 var folderDsc string = "folder desc"
+var usr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
 
 func TestIntegrationCreate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -163,9 +165,7 @@ func TestIntegrationCreate(t *testing.T) {
 }
 
 func TestIntegrationDelete(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -210,9 +210,7 @@ func TestIntegrationDelete(t *testing.T) {
 }
 
 func TestIntegrationUpdate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -385,9 +383,7 @@ func TestIntegrationUpdate(t *testing.T) {
 }
 
 func TestIntegrationGet(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -520,9 +516,7 @@ func TestIntegrationGet(t *testing.T) {
 }
 
 func TestIntegrationGetParents(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -578,7 +572,7 @@ func TestIntegrationGetParents(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		parentUIDs := make([]string, 0)
+		parentUIDs := make([]string, 0, len(parents))
 		for _, p := range parents {
 			assert.NotEmpty(t, p.URL)
 			parentUIDs = append(parentUIDs, p.UID)
@@ -588,9 +582,7 @@ func TestIntegrationGetParents(t *testing.T) {
 }
 
 func TestIntegrationGetChildren(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -633,7 +625,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs := make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -650,7 +641,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs := make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 		assert.Equal(t, []string{parent.UID}, childrenUIDs)
@@ -683,7 +673,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -701,7 +690,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -721,7 +709,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -739,7 +726,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -757,7 +743,6 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 		childrenUIDs = make([]string, 0, len(children))
 		for _, c := range children {
-			assert.NotEmpty(t, c.URL)
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
@@ -830,9 +815,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 }
 
 func TestIntegrationGetHeight(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideStore(db)
@@ -857,14 +840,12 @@ func TestIntegrationGetHeight(t *testing.T) {
 
 	t.Run("should failed when the parent folder exist in the subtree", func(t *testing.T) {
 		_, err = folderStore.GetHeight(context.Background(), parent.UID, orgID, &subTree[0])
-		require.Error(t, err, folder.ErrCircularReference)
+		require.Error(t, err, folder.ErrCircularReference.Errorf("circular reference detected"))
 	})
 }
 
 func TestIntegrationGetFolders(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	foldersNum := 10
 	db, cfg := sqlstore.InitTestDB(t)
@@ -1004,16 +985,28 @@ func TestIntegrationGetFolders(t *testing.T) {
 func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	t.Helper()
 
+	requester := &identity.StaticRequester{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionOrgsDelete: {"*"},
+			},
+			2: {
+				accesscontrol.ActionOrgsDelete: {"*"},
+			},
+		},
+	}
 	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil)
-	deleteOrgService, err := orgimpl.ProvideDeletionService(db, cfg, dashSvc)
+	deleteOrgService, err := orgimpl.ProvideDeletionService(db, cfg, dashSvc, acimpl.ProvideAccessControlTest())
 	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		err = deleteOrgService.Delete(context.Background(), &org.DeleteOrgCommand{ID: orgID})
+		ctx := identity.WithRequester(context.Background(), requester)
+		err = deleteOrgService.Delete(ctx, &org.DeleteOrgCommand{ID: orgID})
 		require.NoError(t, err)
 	})
 
@@ -1085,7 +1078,8 @@ func assertAncestorUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, 
 		OrgID: f.OrgID,
 	})
 	require.NoError(t, err)
-	actualAncestorsUIDs := []string{folder.GeneralFolderUID}
+	actualAncestorsUIDs := make([]string, 0, 1+len(ancestors))
+	actualAncestorsUIDs = append(actualAncestorsUIDs, folder.GeneralFolderUID)
 	for _, f := range ancestors {
 		actualAncestorsUIDs = append(actualAncestorsUIDs, f.UID)
 	}
@@ -1100,7 +1094,7 @@ func assertChildrenUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, 
 		OrgID: f.OrgID,
 	})
 	require.NoError(t, err)
-	actualChildrenUIDs := make([]string, 0)
+	actualChildrenUIDs := make([]string, 0, len(ancestors))
 	for _, f := range ancestors {
 		actualChildrenUIDs = append(actualChildrenUIDs, f.UID)
 	}

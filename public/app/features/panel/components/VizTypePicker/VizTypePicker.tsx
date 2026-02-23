@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { EmptySearchResult, useStyles2 } from '@grafana/ui';
 
 import { filterPluginList, getAllPanelPluginMeta } from '../../state/util';
@@ -29,21 +30,27 @@ export function VizTypePicker({ pluginId, searchQuery, onChange, trackSearch }: 
   }, [pluginsList, searchQuery, pluginId, trackSearch]);
 
   if (filteredPluginTypes.length === 0) {
-    return <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>;
+    return (
+      <EmptySearchResult>
+        <Trans i18nKey="panel.viz-type-picker.could-anything-matching-query">
+          Could not find anything matching your query
+        </Trans>
+      </EmptySearchResult>
+    );
   }
 
   return (
     <div className={styles.grid}>
-      {filteredPluginTypes.map((plugin) => (
+      {filteredPluginTypes.map((plugin, idx) => (
         <VizTypePickerPlugin
           disabled={false}
           key={plugin.id}
           isCurrent={plugin.id === pluginId}
           plugin={plugin}
-          onClick={(e) =>
+          onSelect={(withModKey) =>
             onChange({
               pluginId: plugin.id,
-              withModKey: e.metaKey || e.ctrlKey || e.altKey,
+              withModKey,
             })
           }
         />

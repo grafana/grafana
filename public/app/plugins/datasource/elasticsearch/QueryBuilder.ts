@@ -8,22 +8,22 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import {
+  DateHistogram,
+  ElasticsearchDataQuery,
+  Filters,
+  Histogram,
+  MetricAggregation,
+  MetricAggregationWithInlineScript,
+  Terms,
+} from './dataquery.gen';
+import {
   defaultBucketAgg,
-  defaultMetricAgg,
   findMetricById,
   highlightTags,
   defaultGeoHashPrecisionString,
+  queryTypeToMetricType,
 } from './queryDef';
-import {
-  ElasticsearchQuery,
-  TermsQuery,
-  Filters,
-  Terms,
-  MetricAggregation,
-  MetricAggregationWithInlineScript,
-  Histogram,
-  DateHistogram,
-} from './types';
+import { QueryType, TermsQuery } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
 // Omitting 1m, 1h, 1d for now, as these cover the main use cases for calendar_interval
@@ -31,9 +31,11 @@ export const calendarIntervals: string[] = ['1w', '1M', '1q', '1y'];
 
 export class ElasticQueryBuilder {
   timeField: string;
+  defaultQueryMode?: QueryType;
 
-  constructor(options: { timeField: string }) {
+  constructor(options: { timeField: string; defaultQueryMode?: QueryType }) {
     this.timeField = options.timeField;
+    this.defaultQueryMode = options.defaultQueryMode;
   }
 
   getRangeFilter() {
@@ -48,7 +50,11 @@ export class ElasticQueryBuilder {
     return filter;
   }
 
-  buildTermsAgg(aggDef: Terms, queryNode: { terms?: any; aggs?: Record<string, unknown> }, target: ElasticsearchQuery) {
+  buildTermsAgg(
+    aggDef: Terms,
+    queryNode: { terms?: any; aggs?: Record<string, unknown> },
+    target: ElasticsearchDataQuery
+  ) {
     queryNode.terms = { field: aggDef.field };
 
     if (!aggDef.settings) {
@@ -168,9 +174,12 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  build(target: ElasticsearchQuery) {
+  build(target: ElasticsearchDataQuery) {
     // make sure query has defaults;
-    target.metrics = target.metrics || [defaultMetricAgg()];
+    if (!target.metrics || target.metrics.length === 0) {
+      const metricType = queryTypeToMetricType(this.defaultQueryMode);
+      target.metrics = [{ type: metricType, id: '1' }];
+    }
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
     target.timeField = this.timeField;
     let metric: MetricAggregation;
@@ -448,7 +457,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: ElasticsearchQuery, limit: number) {
+  getLogsQuery(target: ElasticsearchDataQuery, limit: number) {
     let query: any = {
       size: 0,
       query: {

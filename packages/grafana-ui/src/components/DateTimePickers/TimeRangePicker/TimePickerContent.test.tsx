@@ -1,4 +1,5 @@
 import { render, RenderResult, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { dateTime, TimeRange } from '@grafana/data';
 
@@ -15,16 +16,16 @@ describe('TimePickerContent', () => {
   describe('Wide Screen', () => {
     it('renders with history', () => {
       renderComponent({ value: absoluteValue, history });
-      expect(screen.queryByText(/recently used absolute ranges/i)).toBeInTheDocument();
-      expect(screen.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
-      expect(screen.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
+      expect(screen.getByText(/recently used absolute ranges/i)).toBeInTheDocument();
+      expect(screen.getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+      expect(screen.getByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
     });
 
     it('renders with empty history', () => {
       renderComponent({ value: absoluteValue });
       expect(screen.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
       expect(
-        screen.queryByText(
+        screen.getByText(
           /it looks like you haven't used this time picker before\. as soon as you enter some time intervals, recently used intervals will appear here\./i
         )
       ).toBeInTheDocument();
@@ -39,7 +40,7 @@ describe('TimePickerContent', () => {
 
     it('renders with relative picker', () => {
       renderComponent({ value: absoluteValue });
-      expect(screen.queryByText(/Last 5 minutes/i)).toBeInTheDocument();
+      expect(screen.getByText(/Last 5 minutes/i)).toBeInTheDocument();
     });
 
     it('renders without relative picker', () => {
@@ -49,7 +50,7 @@ describe('TimePickerContent', () => {
 
     it('renders with timezone picker', () => {
       renderComponent({ value: absoluteValue, hideTimeZone: false });
-      expect(screen.queryByText(/coordinated universal time/i)).toBeInTheDocument();
+      expect(screen.getByText(/coordinated universal time/i)).toBeInTheDocument();
     });
 
     it('renders without timezone picker', () => {
@@ -61,9 +62,9 @@ describe('TimePickerContent', () => {
   describe('Narrow Screen', () => {
     it('renders with history', () => {
       renderComponent({ value: absoluteValue, history, isFullscreen: false });
-      expect(screen.queryByText(/recently used absolute ranges/i)).toBeInTheDocument();
-      expect(screen.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
-      expect(screen.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
+      expect(screen.getByText(/recently used absolute ranges/i)).toBeInTheDocument();
+      expect(screen.getByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
+      expect(screen.getByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
     });
 
     it('renders with empty history', () => {
@@ -85,7 +86,7 @@ describe('TimePickerContent', () => {
 
     it('renders with relative picker', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false });
-      expect(screen.queryByText(/Last 5 minutes/i)).toBeInTheDocument();
+      expect(screen.getByText(/Last 5 minutes/i)).toBeInTheDocument();
     });
 
     it('renders without relative picker', () => {
@@ -95,12 +96,12 @@ describe('TimePickerContent', () => {
 
     it('renders with absolute picker when absolute value and quick ranges are visible', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false });
-      expect(screen.queryByLabelText('From')).toBeInTheDocument();
+      expect(screen.getByLabelText('From')).toBeInTheDocument();
     });
 
     it('renders with absolute picker when absolute value and quick ranges are hidden', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false, hideQuickRanges: true });
-      expect(screen.queryByLabelText('From')).toBeInTheDocument();
+      expect(screen.getByLabelText('From')).toBeInTheDocument();
     });
 
     it('renders without absolute picker when narrow screen and quick ranges are visible', () => {
@@ -110,12 +111,76 @@ describe('TimePickerContent', () => {
 
     it('renders with absolute picker when narrow screen and quick ranges are hidden', () => {
       renderComponent({ value: relativeValue, isFullscreen: false, hideQuickRanges: true });
-      expect(screen.queryByLabelText('From')).toBeInTheDocument();
+      expect(screen.getByLabelText('From')).toBeInTheDocument();
     });
 
     it('renders without timezone picker', () => {
       renderComponent({ value: absoluteValue, hideTimeZone: true });
       expect(screen.queryByText(/coordinated universal time/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Time Shortcut Parsing', () => {
+    it('shows custom time option when typing a valid time shortcut', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '30m');
+
+      expect(screen.getByText('Last 30 minutes')).toBeInTheDocument();
+    });
+
+    it('does not show custom time option for compound durations', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '1h30m');
+
+      expect(screen.queryByText(/Last 1 hour 30 minutes/i)).not.toBeInTheDocument();
+    });
+
+    it('uses singular form for single units', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '1h');
+
+      expect(screen.getByText('Last 1 hour')).toBeInTheDocument();
+    });
+
+    it('does not show duplicate options if custom shortcut matches existing option', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '5m');
+
+      const options = screen.getAllByText(/Last 5 minutes/i);
+      expect(options).toHaveLength(1);
+    });
+
+    it('filters existing options while showing custom shortcut', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, '45m');
+
+      expect(screen.getByText('Last 45 minutes')).toBeInTheDocument();
+      expect(screen.queryByText(/Last 5 minutes/i)).not.toBeInTheDocument();
+    });
+
+    it('does not show custom option for invalid time shortcuts', async () => {
+      const user = userEvent.setup();
+      renderComponent({ value: relativeValue });
+
+      const searchInput = screen.getByPlaceholderText(/search quick ranges/i);
+      await user.type(searchInput, 'invalid');
+
+      expect(screen.queryByText(/Last invalid/i)).not.toBeInTheDocument();
     });
   });
 });

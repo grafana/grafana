@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { toDataFrame, FieldType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -47,7 +48,10 @@ const multiProps: MultiProps = {
 
 const setup = (testProps?: Partial<Props>) => {
   const editorProps = { ...props, ...testProps };
-  return render(<RefIDPicker {...editorProps} />);
+  return {
+    ...render(<RefIDPicker {...editorProps} />),
+    user: userEvent.setup(),
+  };
 };
 
 const multiSetup = (testProps?: Partial<MultiProps>) => {
@@ -57,10 +61,10 @@ const multiSetup = (testProps?: Partial<MultiProps>) => {
 
 describe('RefIDPicker', () => {
   it('Should be able to select frame', async () => {
-    setup();
+    const { user } = setup();
 
     const select = await screen.findByRole('combobox');
-    fireEvent.keyDown(select, { keyCode: 40 });
+    await user.type(select, '{ArrowDown}');
 
     const selectOptions = screen.getAllByTestId(selectors.components.Select.option);
 
@@ -85,6 +89,8 @@ describe('RefIDMultiPicker', () => {
   });
 
   it('Should be able to select frame', async () => {
+    // TODO: Work out why this doesn't work correctly with userEvent
+    /* eslint-disable testing-library/prefer-user-event */
     multiSetup();
 
     const select = await screen.findByRole('combobox');
@@ -101,5 +107,12 @@ describe('RefIDMultiPicker', () => {
     fireEvent.keyDown(select, { keyCode: 13 });
 
     expect(mockOnChange).toHaveBeenLastCalledWith(['A', 'B']);
+    /* eslint-enable testing-library/prefer-user-event */
+  });
+
+  // in the scenario where a refID filter was saved, but is no longer valid, it should still show.
+  it('Should display a refID that does not exist in the selection', async () => {
+    multiSetup({ value: '/^(?:merge-A-B-C)$/' });
+    expect(screen.getByText('merge-A-B-C')).toBeInTheDocument();
   });
 });

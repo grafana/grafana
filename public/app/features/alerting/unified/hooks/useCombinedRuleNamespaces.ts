@@ -320,6 +320,7 @@ export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'
   return {
     alerting: result[AlertInstanceTotalState.Alerting] || result.firing,
     pending: result[AlertInstanceTotalState.Pending],
+    recovering: result[AlertInstanceTotalState.Recovering],
     inactive: result[AlertInstanceTotalState.Normal],
     nodata: result[AlertInstanceTotalState.NoData],
     error: result[AlertInstanceTotalState.Error] || result.err || undefined, // Prometheus uses "err" instead of "error"
@@ -356,6 +357,7 @@ export function calculateGroupTotals(group: Pick<RuleGroup, 'rules' | 'totals'>)
     nodata: countsByHealth.nodata,
     inactive: countsByState[PromAlertingRuleState.Inactive],
     pending: countsByState[PromAlertingRuleState.Pending],
+    recovering: countsByState[PromAlertingRuleState.Recovering],
     recording: recordingCount,
   };
 }
@@ -398,44 +400,38 @@ function rulerRuleToCombinedRule(
   namespace: CombinedRuleNamespace,
   group: CombinedRuleGroup
 ): CombinedRule {
-  return rulerRuleType.dataSource.alertingRule(rule)
-    ? {
-        name: rule.alert,
-        query: rule.expr,
-        labels: rule.labels || {},
-        annotations: rule.annotations || {},
-        rulerRule: rule,
-        namespace,
-        group,
-        instanceTotals: {},
-        filteredInstanceTotals: {},
-        uid: rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.uid : undefined,
-      }
-    : rulerRuleType.dataSource.recordingRule(rule)
-      ? {
-          name: rule.record,
-          query: rule.expr,
-          labels: rule.labels || {},
-          annotations: {},
-          rulerRule: rule,
-          namespace,
-          group,
-          instanceTotals: {},
-          filteredInstanceTotals: {},
-          uid: rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.uid : undefined,
-        }
-      : {
-          name: rule.grafana_alert.title,
-          query: '',
-          labels: rule.labels || {},
-          annotations: rule.annotations || {},
-          rulerRule: rule,
-          namespace,
-          group,
-          instanceTotals: {},
-          filteredInstanceTotals: {},
-          uid: rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.uid : undefined,
-        };
+  const commonProps = {
+    labels: rule.labels || {},
+    rulerRule: rule,
+    namespace,
+    group,
+    instanceTotals: {},
+    filteredInstanceTotals: {},
+    uid: rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.uid : undefined,
+  };
+
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
+    return {
+      ...commonProps,
+      name: rule.alert,
+      query: rule.expr,
+      annotations: rule.annotations || {},
+    };
+  }
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
+    return {
+      ...commonProps,
+      name: rule.record,
+      query: rule.expr,
+      annotations: {},
+    };
+  }
+  return {
+    ...commonProps,
+    name: rule.grafana_alert.title,
+    query: '',
+    annotations: rule.annotations || {},
+  };
 }
 
 // find existing rule in group that matches the given prom rule

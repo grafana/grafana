@@ -2,8 +2,8 @@ import { ReactElement } from 'react';
 
 import { PluginErrorCode } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getLatestCompatibleVersion, isDisabledAngularPlugin, isNonAngularVersion } from '../helpers';
 import { CatalogPlugin } from '../types';

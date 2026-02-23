@@ -1,0 +1,85 @@
+{
+  "results": {
+    "A": {
+      "status": 200,
+      "frames": [
+        {
+          "schema": {
+            "refId": "A",
+            "meta": {
+              "type": "numeric-multi",
+              "typeVersion": [0, 1],
+              "custom": {
+                "calculatedMinStep": 30000,
+                "resultType": "vector"
+              },
+              "executedQueryString": "Expr: topk(2, sum by(slice) (prometheus_engine_query_duration_seconds))\nStep: 30s"
+            },
+            "fields": [
+              {
+                "name": "Time",
+                "type": "time",
+                "typeInfo": {
+                  "frame": "time.Time"
+                },
+                "config": {
+                  "interval": 30000
+                }
+              },
+              {
+                "name": "Value",
+                "type": "number",
+                "typeInfo": {
+                  "frame": "float64"
+                },
+                "labels": {
+                  "slice": "inner_eval"
+                }
+              }
+            ]
+          },
+          "data": {
+            "values": [[1756995119802], [0.001445292]]
+          }
+        },
+        {
+          "schema": {
+            "refId": "A",
+            "meta": {
+              "type": "numeric-multi",
+              "typeVersion": [0, 1],
+              "custom": {
+                "resultType": "vector"
+              }
+            },
+            "fields": [
+              {
+                "name": "Time",
+                "type": "time",
+                "typeInfo": {
+                  "frame": "time.Time"
+                },
+                "config": {
+                  "interval": 30000
+                }
+              },
+              {
+                "name": "Value",
+                "type": "number",
+                "typeInfo": {
+                  "frame": "float64"
+                },
+                "labels": {
+                  "slice": "prepare_time"
+                }
+              }
+            ]
+          },
+          "data": {
+            "values": [[1756995119802], [0.001351875]]
+          }
+        }
+      ]
+    }
+  }
+}

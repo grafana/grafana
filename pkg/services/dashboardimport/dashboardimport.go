@@ -52,4 +52,5 @@ type ImportDashboardResponse struct {
 // Service service interface for importing dashboards.
 type Service interface {
 	ImportDashboard(ctx context.Context, req *ImportDashboardRequest) (*ImportDashboardResponse, error)
+	InterpolateDashboard(ctx context.Context, req *ImportDashboardRequest) (*simplejson.Json, error)
 }

@@ -1,5 +1,5 @@
-import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
+import OpenLayersMap from 'ol/Map';
 import { Units } from 'ol/control/ScaleLine';
 import BaseLayer from 'ol/layer/Base';
 import { Subject } from 'rxjs';
@@ -52,11 +52,3 @@ export interface MapLayerState<TConfig = unknown> extends LayerElement {
   isBasemap?: boolean;
   mouseEvents: Subject<FeatureLike | undefined>;
 }
-
-export {
-  type Options,
-  type MapViewConfig,
-  type TooltipOptions,
-  TooltipMode,
-  defaultMapViewConfig,
-} from './panelcfg.gen';

@@ -8,6 +8,7 @@ import {
   decodeGrafanaNamespace,
   encodeGrafanaNamespace,
   formatLabels,
+  formatSeriesValue,
   getSeriesLabels,
   getSeriesName,
   getSeriesValue,
@@ -22,10 +23,6 @@ const NAMED_FRAME: DataFrame = {
 
 const DATA_FRAME: DataFrame = toDataFrame({
   fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
-});
-
-const DATA_FRAME_LARGE_DECIMAL: DataFrame = toDataFrame({
-  fields: [{ name: 'value', type: FieldType.number, values: [1.23456789] }],
 });
 
 const DATA_FRAME_WITH_LABELS: DataFrame = toDataFrame({
@@ -222,10 +219,6 @@ describe('getSeriesValue', () => {
     const name = getSeriesValue(DATA_FRAME);
     expect(name).toBe(1);
   });
-
-  it('should round values', () => {
-    expect(getSeriesValue(DATA_FRAME_LARGE_DECIMAL)).toBe(1.23457);
-  });
 });
 
 describe('getSeriesLabels', () => {
@@ -235,5 +228,37 @@ describe('getSeriesLabels', () => {
 
   it('should work for dataframe with no labels', () => {
     expect(getSeriesLabels(EMPTY_FRAME)).toStrictEqual({});
+  });
+});
+
+describe('formatSeriesValue', () => {
+  it('should convert non-numeric values to strings', () => {
+    expect(formatSeriesValue('string value')).toBe('string value');
+    expect(formatSeriesValue(null)).toBe('null');
+    expect(formatSeriesValue(undefined)).toBe('undefined');
+    expect(formatSeriesValue({})).toBe('[object Object]');
+  });
+
+  it('should return 5 significant digits in absolutely smaller than 1', () => {
+    expect(formatSeriesValue(0.00005123)).toBe('0.00005123');
+    expect(formatSeriesValue(0.7894)).toBe('0.7894');
+    expect(formatSeriesValue(-0.000051237676767)).toBe('-0.000051238');
+    expect(formatSeriesValue(-0.25)).toBe('-0.25');
+  });
+
+  it('should use standard notation for numbers absolutely larger than 1', () => {
+    expect(formatSeriesValue(1.0001)).toBe('1.0001');
+    expect(formatSeriesValue(1.234)).toBe('1.234');
+    expect(formatSeriesValue(76767345.9876)).toBe('76767345.9876');
+  });
+
+  it('should round regular numbers to 5 decimal places', () => {
+    expect(formatSeriesValue(1.23456789)).toBe('1.23457');
+    expect(formatSeriesValue(0.10000001)).toBe('0.1');
+    expect(formatSeriesValue(-42.98765432)).toBe('-42.98765');
+  });
+
+  it('should handle zero correctly', () => {
+    expect(formatSeriesValue(0)).toBe('0');
   });
 });

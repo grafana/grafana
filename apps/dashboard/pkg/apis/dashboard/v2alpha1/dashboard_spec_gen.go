@@ -5,7 +5,6 @@ package v2alpha1
 import (
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 )
 
 // +k8s:openapi-gen=true
@@ -22,6 +21,11 @@ func NewDashboardAnnotationQueryKind() *DashboardAnnotationQueryKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardAnnotationQueryKind.
+func (DashboardAnnotationQueryKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQueryKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardAnnotationQuerySpec struct {
 	Datasource *DashboardDataSourceRef         `json:"datasource,omitempty"`
@@ -32,6 +36,10 @@ type DashboardAnnotationQuerySpec struct {
 	Name       string                          `json:"name"`
 	BuiltIn    *bool                           `json:"builtIn,omitempty"`
 	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
+	// Mappings define how to convert data frame fields to annotation event fields.
+	Mappings map[string]DashboardAnnotationEventFieldMapping `json:"mappings,omitempty"`
+	// Catch-all field for datasource-specific properties
+	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
 
 // NewDashboardAnnotationQuerySpec creates a new DashboardAnnotationQuerySpec object.
@@ -39,6 +47,11 @@ func NewDashboardAnnotationQuerySpec() *DashboardAnnotationQuerySpec {
 	return &DashboardAnnotationQuerySpec{
 		BuiltIn: (func(input bool) *bool { return &input })(false),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAnnotationQuerySpec.
+func (DashboardAnnotationQuerySpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQuerySpec"
 }
 
 // +k8s:openapi-gen=true
@@ -54,6 +67,11 @@ func NewDashboardDataSourceRef() *DashboardDataSourceRef {
 	return &DashboardDataSourceRef{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardDataSourceRef.
+func (DashboardDataSourceRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+}
+
 // +k8s:openapi-gen=true
 type DashboardDataQueryKind struct {
 	// The kind of a DataQueryKind is the datasource type
@@ -63,7 +81,14 @@ type DashboardDataQueryKind struct {
 
 // NewDashboardDataQueryKind creates a new DashboardDataQueryKind object.
 func NewDashboardDataQueryKind() *DashboardDataQueryKind {
-	return &DashboardDataQueryKind{}
+	return &DashboardDataQueryKind{
+		Spec: map[string]interface{}{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDataQueryKind.
+func (DashboardDataQueryKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
 }
 
 // +k8s:openapi-gen=true
@@ -71,14 +96,43 @@ type DashboardAnnotationPanelFilter struct {
 	// Should the specified panels be included or excluded
 	Exclude *bool `json:"exclude,omitempty"`
 	// Panel IDs that should be included or excluded
-	Ids []uint8 `json:"ids"`
+	Ids []uint32 `json:"ids"`
 }
 
 // NewDashboardAnnotationPanelFilter creates a new DashboardAnnotationPanelFilter object.
 func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
+		Ids:     []uint32{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAnnotationPanelFilter.
+func (DashboardAnnotationPanelFilter) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationPanelFilter"
+}
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+// +k8s:openapi-gen=true
+type DashboardAnnotationEventFieldMapping struct {
+	// Source type for the field value
+	Source *string `json:"source,omitempty"`
+	// Constant value to use when source is "text"
+	Value *string `json:"value,omitempty"`
+	// Regular expression to apply to the field value
+	Regex *string `json:"regex,omitempty"`
+}
+
+// NewDashboardAnnotationEventFieldMapping creates a new DashboardAnnotationEventFieldMapping object.
+func NewDashboardAnnotationEventFieldMapping() *DashboardAnnotationEventFieldMapping {
+	return &DashboardAnnotationEventFieldMapping{
+		Source: (func(input string) *string { return &input })("field"),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAnnotationEventFieldMapping.
+func (DashboardAnnotationEventFieldMapping) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationEventFieldMapping"
 }
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -88,10 +142,15 @@ func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 type DashboardDashboardCursorSync string
 
 const (
-	DashboardDashboardCursorSyncOff       DashboardDashboardCursorSync = "Off"
 	DashboardDashboardCursorSyncCrosshair DashboardDashboardCursorSync = "Crosshair"
 	DashboardDashboardCursorSyncTooltip   DashboardDashboardCursorSync = "Tooltip"
+	DashboardDashboardCursorSyncOff       DashboardDashboardCursorSync = "Off"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardCursorSync.
+func (DashboardDashboardCursorSync) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDashboardCursorSync"
+}
 
 // Supported dashboard elements
 // |* more element types in the future
@@ -117,6 +176,11 @@ func NewDashboardPanelKind() *DashboardPanelKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardPanelKind.
+func (DashboardPanelKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardPanelSpec struct {
 	Id          float64                 `json:"id"`
@@ -131,9 +195,15 @@ type DashboardPanelSpec struct {
 // NewDashboardPanelSpec creates a new DashboardPanelSpec object.
 func NewDashboardPanelSpec() *DashboardPanelSpec {
 	return &DashboardPanelSpec{
+		Links:     []DashboardDataLink{},
 		Data:      *NewDashboardQueryGroupKind(),
 		VizConfig: *NewDashboardVizConfigKind(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardPanelSpec.
+func (DashboardPanelSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -146,6 +216,11 @@ type DashboardDataLink struct {
 // NewDashboardDataLink creates a new DashboardDataLink object.
 func NewDashboardDataLink() *DashboardDataLink {
 	return &DashboardDataLink{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDataLink.
+func (DashboardDataLink) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataLink"
 }
 
 // +k8s:openapi-gen=true
@@ -162,6 +237,11 @@ func NewDashboardQueryGroupKind() *DashboardQueryGroupKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryGroupKind.
+func (DashboardQueryGroupKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardQueryGroupSpec struct {
 	Queries         []DashboardPanelQueryKind     `json:"queries"`
@@ -172,8 +252,15 @@ type DashboardQueryGroupSpec struct {
 // NewDashboardQueryGroupSpec creates a new DashboardQueryGroupSpec object.
 func NewDashboardQueryGroupSpec() *DashboardQueryGroupSpec {
 	return &DashboardQueryGroupSpec{
-		QueryOptions: *NewDashboardQueryOptionsSpec(),
+		Queries:         []DashboardPanelQueryKind{},
+		Transformations: []DashboardTransformationKind{},
+		QueryOptions:    *NewDashboardQueryOptionsSpec(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryGroupSpec.
+func (DashboardQueryGroupSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryGroupSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -188,6 +275,11 @@ func NewDashboardPanelQueryKind() *DashboardPanelQueryKind {
 		Kind: "PanelQuery",
 		Spec: *NewDashboardPanelQuerySpec(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardPanelQueryKind.
+func (DashboardPanelQueryKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelQueryKind"
 }
 
 // +k8s:openapi-gen=true
@@ -205,6 +297,11 @@ func NewDashboardPanelQuerySpec() *DashboardPanelQuerySpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardPanelQuerySpec.
+func (DashboardPanelQuerySpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelQuerySpec"
+}
+
 // +k8s:openapi-gen=true
 type DashboardTransformationKind struct {
 	// The kind of a TransformationKind is the transformation ID
@@ -217,6 +314,11 @@ func NewDashboardTransformationKind() *DashboardTransformationKind {
 	return &DashboardTransformationKind{
 		Spec: *NewDashboardDataTransformerConfig(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTransformationKind.
+func (DashboardTransformationKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTransformationKind"
 }
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
@@ -242,6 +344,11 @@ func NewDashboardDataTransformerConfig() *DashboardDataTransformerConfig {
 	return &DashboardDataTransformerConfig{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardDataTransformerConfig.
+func (DashboardDataTransformerConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataTransformerConfig"
+}
+
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 // It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 // +k8s:openapi-gen=true
@@ -259,6 +366,11 @@ func NewDashboardMatcherConfig() *DashboardMatcherConfig {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardMatcherConfig.
+func (DashboardMatcherConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMatcherConfig"
+}
+
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
 // +k8s:openapi-gen=true
@@ -269,6 +381,11 @@ const (
 	DashboardDataTopicAnnotations DashboardDataTopic = "annotations"
 	DashboardDataTopicAlertStates DashboardDataTopic = "alertStates"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDataTopic.
+func (DashboardDataTopic) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataTopic"
+}
 
 // +k8s:openapi-gen=true
 type DashboardQueryOptionsSpec struct {
@@ -286,6 +403,11 @@ func NewDashboardQueryOptionsSpec() *DashboardQueryOptionsSpec {
 	return &DashboardQueryOptionsSpec{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryOptionsSpec.
+func (DashboardQueryOptionsSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryOptionsSpec"
+}
+
 // +k8s:openapi-gen=true
 type DashboardVizConfigKind struct {
 	// The kind of a VizConfigKind is the plugin ID
@@ -300,6 +422,11 @@ func NewDashboardVizConfigKind() *DashboardVizConfigKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardVizConfigKind.
+func (DashboardVizConfigKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVizConfigKind"
+}
+
 // --- Kinds ---
 // +k8s:openapi-gen=true
 type DashboardVizConfigSpec struct {
@@ -311,8 +438,14 @@ type DashboardVizConfigSpec struct {
 // NewDashboardVizConfigSpec creates a new DashboardVizConfigSpec object.
 func NewDashboardVizConfigSpec() *DashboardVizConfigSpec {
 	return &DashboardVizConfigSpec{
+		Options:     map[string]interface{}{},
 		FieldConfig: *NewDashboardFieldConfigSource(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardVizConfigSpec.
+func (DashboardVizConfigSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVizConfigSpec"
 }
 
 // The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
@@ -329,8 +462,14 @@ type DashboardFieldConfigSource struct {
 // NewDashboardFieldConfigSource creates a new DashboardFieldConfigSource object.
 func NewDashboardFieldConfigSource() *DashboardFieldConfigSource {
 	return &DashboardFieldConfigSource{
-		Defaults: *NewDashboardFieldConfig(),
+		Defaults:  *NewDashboardFieldConfig(),
+		Overrides: []DashboardV2alpha1FieldConfigSourceOverrides{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardFieldConfigSource.
+func (DashboardFieldConfigSource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldConfigSource"
 }
 
 // The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
@@ -356,7 +495,7 @@ type DashboardFieldConfig struct {
 	// True if data source field supports ad-hoc filters
 	Filterable *bool `json:"filterable,omitempty"`
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -383,16 +522,28 @@ type DashboardFieldConfig struct {
 	Color *DashboardFieldColor `json:"color,omitempty"`
 	// The behavior when clicking on a result
 	Links []interface{} `json:"links,omitempty"`
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	Actions []DashboardAction `json:"actions,omitempty"`
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	Custom map[string]interface{} `json:"custom,omitempty"`
+	// Calculate min max per field
+	FieldMinMax *bool `json:"fieldMinMax,omitempty"`
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	NullValueMode *DashboardNullValueMode `json:"nullValueMode,omitempty"`
 }
 
 // NewDashboardFieldConfig creates a new DashboardFieldConfig object.
 func NewDashboardFieldConfig() *DashboardFieldConfig {
 	return &DashboardFieldConfig{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardFieldConfig.
+func (DashboardFieldConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldConfig"
 }
 
 // +k8s:openapi-gen=true
@@ -415,8 +566,14 @@ type DashboardValueMap struct {
 // NewDashboardValueMap creates a new DashboardValueMap object.
 func NewDashboardValueMap() *DashboardValueMap {
 	return &DashboardValueMap{
-		Type: DashboardMappingTypeValue,
+		Type:    DashboardMappingTypeValue,
+		Options: map[string]DashboardValueMappingResult{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardValueMap.
+func (DashboardValueMap) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMap"
 }
 
 // Supported value mapping types
@@ -433,6 +590,11 @@ const (
 	DashboardMappingTypeRegex   DashboardMappingType = "regex"
 	DashboardMappingTypeSpecial DashboardMappingType = "special"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardMappingType.
+func (DashboardMappingType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMappingType"
+}
 
 // Result used as replacement with text and color when the value matches
 // +k8s:openapi-gen=true
@@ -452,6 +614,11 @@ func NewDashboardValueMappingResult() *DashboardValueMappingResult {
 	return &DashboardValueMappingResult{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardValueMappingResult.
+func (DashboardValueMappingResult) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMappingResult"
+}
+
 // Maps numerical ranges to a display text and color.
 // For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 // +k8s:openapi-gen=true
@@ -467,6 +634,11 @@ func NewDashboardRangeMap() *DashboardRangeMap {
 		Type:    DashboardMappingTypeRange,
 		Options: *NewDashboardV2alpha1RangeMapOptions(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRangeMap.
+func (DashboardRangeMap) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRangeMap"
 }
 
 // Maps regular expressions to replacement text and a color.
@@ -486,6 +658,11 @@ func NewDashboardRegexMap() *DashboardRegexMap {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardRegexMap.
+func (DashboardRegexMap) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRegexMap"
+}
+
 // Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
 // See SpecialValueMatch to see the list of special values.
 // For example, you can configure a special value mapping so that null values appear as N/A.
@@ -503,6 +680,11 @@ func NewDashboardSpecialValueMap() *DashboardSpecialValueMap {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardSpecialValueMap.
+func (DashboardSpecialValueMap) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSpecialValueMap"
+}
+
 // Special value types supported by the `SpecialValueMap`
 // +k8s:openapi-gen=true
 type DashboardSpecialValueMatch string
@@ -516,6 +698,11 @@ const (
 	DashboardSpecialValueMatchEmpty      DashboardSpecialValueMatch = "empty"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardSpecialValueMatch.
+func (DashboardSpecialValueMatch) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSpecialValueMatch"
+}
+
 // +k8s:openapi-gen=true
 type DashboardThresholdsConfig struct {
 	Mode  DashboardThresholdsMode `json:"mode"`
@@ -524,7 +711,14 @@ type DashboardThresholdsConfig struct {
 
 // NewDashboardThresholdsConfig creates a new DashboardThresholdsConfig object.
 func NewDashboardThresholdsConfig() *DashboardThresholdsConfig {
-	return &DashboardThresholdsConfig{}
+	return &DashboardThresholdsConfig{
+		Steps: []DashboardThreshold{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardThresholdsConfig.
+func (DashboardThresholdsConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardThresholdsConfig"
 }
 
 // +k8s:openapi-gen=true
@@ -535,15 +729,26 @@ const (
 	DashboardThresholdsModePercentage DashboardThresholdsMode = "percentage"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardThresholdsMode.
+func (DashboardThresholdsMode) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardThresholdsMode"
+}
+
 // +k8s:openapi-gen=true
 type DashboardThreshold struct {
-	Value float64 `json:"value"`
-	Color string  `json:"color"`
+	// Value null means -Infinity
+	Value *float64 `json:"value"`
+	Color string   `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.
 func NewDashboardThreshold() *DashboardThreshold {
 	return &DashboardThreshold{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardThreshold.
+func (DashboardThreshold) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardThreshold"
 }
 
 // Map a field to a color.
@@ -562,13 +767,23 @@ func NewDashboardFieldColor() *DashboardFieldColor {
 	return &DashboardFieldColor{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardFieldColor.
+func (DashboardFieldColor) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldColor"
+}
+
 // Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 // Continuous color interpolates a color using the percentage of a value relative to min and max.
 // Accepted values are:
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -587,6 +802,11 @@ const (
 	DashboardFieldColorModeIdThresholds           DashboardFieldColorModeId = "thresholds"
 	DashboardFieldColorModeIdPaletteClassic       DashboardFieldColorModeId = "palette-classic"
 	DashboardFieldColorModeIdPaletteClassicByName DashboardFieldColorModeId = "palette-classic-by-name"
+	DashboardFieldColorModeIdContinuousViridis    DashboardFieldColorModeId = "continuous-viridis"
+	DashboardFieldColorModeIdContinuousMagma      DashboardFieldColorModeId = "continuous-magma"
+	DashboardFieldColorModeIdContinuousPlasma     DashboardFieldColorModeId = "continuous-plasma"
+	DashboardFieldColorModeIdContinuousInferno    DashboardFieldColorModeId = "continuous-inferno"
+	DashboardFieldColorModeIdContinuousCividis    DashboardFieldColorModeId = "continuous-cividis"
 	DashboardFieldColorModeIdContinuousGrYlRd     DashboardFieldColorModeId = "continuous-GrYlRd"
 	DashboardFieldColorModeIdContinuousRdYlGr     DashboardFieldColorModeId = "continuous-RdYlGr"
 	DashboardFieldColorModeIdContinuousBlYlRd     DashboardFieldColorModeId = "continuous-BlYlRd"
@@ -601,6 +821,11 @@ const (
 	DashboardFieldColorModeIdShades               DashboardFieldColorModeId = "shades"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardFieldColorModeId.
+func (DashboardFieldColorModeId) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldColorModeId"
+}
+
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 // +k8s:openapi-gen=true
 type DashboardFieldColorSeriesByMode string
@@ -610,6 +835,145 @@ const (
 	DashboardFieldColorSeriesByModeMax  DashboardFieldColorSeriesByMode = "max"
 	DashboardFieldColorSeriesByModeLast DashboardFieldColorSeriesByMode = "last"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardFieldColorSeriesByMode.
+func (DashboardFieldColorSeriesByMode) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFieldColorSeriesByMode"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAction struct {
+	Type         DashboardActionType           `json:"type"`
+	Title        string                        `json:"title"`
+	Fetch        *DashboardFetchOptions        `json:"fetch,omitempty"`
+	Infinity     *DashboardInfinityOptions     `json:"infinity,omitempty"`
+	Confirmation *string                       `json:"confirmation,omitempty"`
+	OneClick     *bool                         `json:"oneClick,omitempty"`
+	Variables    []DashboardActionVariable     `json:"variables,omitempty"`
+	Style        *DashboardV2alpha1ActionStyle `json:"style,omitempty"`
+}
+
+// NewDashboardAction creates a new DashboardAction object.
+func NewDashboardAction() *DashboardAction {
+	return &DashboardAction{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAction.
+func (DashboardAction) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAction"
+}
+
+// +k8s:openapi-gen=true
+type DashboardActionType string
+
+const (
+	DashboardActionTypeFetch    DashboardActionType = "fetch"
+	DashboardActionTypeInfinity DashboardActionType = "infinity"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardActionType.
+func (DashboardActionType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardActionType"
+}
+
+// +k8s:openapi-gen=true
+type DashboardFetchOptions struct {
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams [][]string `json:"queryParams,omitempty"`
+	Headers     [][]string `json:"headers,omitempty"`
+}
+
+// NewDashboardFetchOptions creates a new DashboardFetchOptions object.
+func NewDashboardFetchOptions() *DashboardFetchOptions {
+	return &DashboardFetchOptions{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardFetchOptions.
+func (DashboardFetchOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardFetchOptions"
+}
+
+// +k8s:openapi-gen=true
+type DashboardHttpRequestMethod string
+
+const (
+	DashboardHttpRequestMethodGET    DashboardHttpRequestMethod = "GET"
+	DashboardHttpRequestMethodPUT    DashboardHttpRequestMethod = "PUT"
+	DashboardHttpRequestMethodPOST   DashboardHttpRequestMethod = "POST"
+	DashboardHttpRequestMethodDELETE DashboardHttpRequestMethod = "DELETE"
+	DashboardHttpRequestMethodPATCH  DashboardHttpRequestMethod = "PATCH"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardHttpRequestMethod.
+func (DashboardHttpRequestMethod) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardHttpRequestMethod"
+}
+
+// +k8s:openapi-gen=true
+type DashboardInfinityOptions struct {
+	Method DashboardHttpRequestMethod `json:"method"`
+	Url    string                     `json:"url"`
+	Body   *string                    `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams   [][]string `json:"queryParams,omitempty"`
+	DatasourceUid string     `json:"datasourceUid"`
+	Headers       [][]string `json:"headers,omitempty"`
+}
+
+// NewDashboardInfinityOptions creates a new DashboardInfinityOptions object.
+func NewDashboardInfinityOptions() *DashboardInfinityOptions {
+	return &DashboardInfinityOptions{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardInfinityOptions.
+func (DashboardInfinityOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardInfinityOptions"
+}
+
+// +k8s:openapi-gen=true
+type DashboardActionVariable struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// NewDashboardActionVariable creates a new DashboardActionVariable object.
+func NewDashboardActionVariable() *DashboardActionVariable {
+	return &DashboardActionVariable{
+		Type: DashboardActionVariableType,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardActionVariable.
+func (DashboardActionVariable) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardActionVariable"
+}
+
+// Action variable type
+// +k8s:openapi-gen=true
+const DashboardActionVariableType = "string"
+
+// How null values should be handled
+// +k8s:openapi-gen=true
+type DashboardNullValueMode string
+
+const (
+	DashboardNullValueModeNull       DashboardNullValueMode = "null"
+	DashboardNullValueModeConnected  DashboardNullValueMode = "connected"
+	DashboardNullValueModeNullAsZero DashboardNullValueMode = "null as zero"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardNullValueMode.
+func (DashboardNullValueMode) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardNullValueMode"
+}
 
 // +k8s:openapi-gen=true
 type DashboardDynamicConfigValue struct {
@@ -624,6 +988,11 @@ func NewDashboardDynamicConfigValue() *DashboardDynamicConfigValue {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardDynamicConfigValue.
+func (DashboardDynamicConfigValue) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDynamicConfigValue"
+}
+
 // +k8s:openapi-gen=true
 type DashboardLibraryPanelKind struct {
 	Kind string                        `json:"kind"`
@@ -636,6 +1005,11 @@ func NewDashboardLibraryPanelKind() *DashboardLibraryPanelKind {
 		Kind: "LibraryPanel",
 		Spec: *NewDashboardLibraryPanelKindSpec(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardLibraryPanelKind.
+func (DashboardLibraryPanelKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKind"
 }
 
 // +k8s:openapi-gen=true
@@ -654,6 +1028,11 @@ func NewDashboardLibraryPanelKindSpec() *DashboardLibraryPanelKindSpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardLibraryPanelKindSpec.
+func (DashboardLibraryPanelKindSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelKindSpec"
+}
+
 // A library panel is a reusable panel that you can use in any dashboard.
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
 // Library panels streamline reuse of panels across multiple dashboards.
@@ -670,6 +1049,11 @@ func NewDashboardLibraryPanelRef() *DashboardLibraryPanelRef {
 	return &DashboardLibraryPanelRef{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardLibraryPanelRef.
+func (DashboardLibraryPanelRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardLibraryPanelRef"
+}
+
 // +k8s:openapi-gen=true
 type DashboardGridLayoutKind struct {
 	Kind string                  `json:"kind"`
@@ -684,14 +1068,26 @@ func NewDashboardGridLayoutKind() *DashboardGridLayoutKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutKind.
+func (DashboardGridLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardGridLayoutSpec struct {
-	Items []DashboardGridLayoutItemKindOrGridLayoutRowKind `json:"items"`
+	Items []DashboardGridLayoutItemKind `json:"items"`
 }
 
 // NewDashboardGridLayoutSpec creates a new DashboardGridLayoutSpec object.
 func NewDashboardGridLayoutSpec() *DashboardGridLayoutSpec {
-	return &DashboardGridLayoutSpec{}
+	return &DashboardGridLayoutSpec{
+		Items: []DashboardGridLayoutItemKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutSpec.
+func (DashboardGridLayoutSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -706,6 +1102,11 @@ func NewDashboardGridLayoutItemKind() *DashboardGridLayoutItemKind {
 		Kind: "GridLayoutItem",
 		Spec: *NewDashboardGridLayoutItemSpec(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutItemKind.
+func (DashboardGridLayoutItemKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
 }
 
 // +k8s:openapi-gen=true
@@ -726,6 +1127,11 @@ func NewDashboardGridLayoutItemSpec() *DashboardGridLayoutItemSpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutItemSpec.
+func (DashboardGridLayoutItemSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemSpec"
+}
+
 // +k8s:openapi-gen=true
 type DashboardElementReference struct {
 	Kind string `json:"kind"`
@@ -739,6 +1145,11 @@ func NewDashboardElementReference() *DashboardElementReference {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardElementReference.
+func (DashboardElementReference) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardElementReference"
+}
+
 // +k8s:openapi-gen=true
 type DashboardRepeatOptions struct {
 	Mode      string                           `json:"mode"`
@@ -749,52 +1160,19 @@ type DashboardRepeatOptions struct {
 
 // NewDashboardRepeatOptions creates a new DashboardRepeatOptions object.
 func NewDashboardRepeatOptions() *DashboardRepeatOptions {
-	return &DashboardRepeatOptions{}
+	return &DashboardRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRepeatOptions.
+func (DashboardRepeatOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRepeatOptions"
 }
 
 // other repeat modes will be added in the future: label, frame
 // +k8s:openapi-gen=true
 const DashboardRepeatMode = "variable"
-
-// +k8s:openapi-gen=true
-type DashboardGridLayoutRowKind struct {
-	Kind string                     `json:"kind"`
-	Spec DashboardGridLayoutRowSpec `json:"spec"`
-}
-
-// NewDashboardGridLayoutRowKind creates a new DashboardGridLayoutRowKind object.
-func NewDashboardGridLayoutRowKind() *DashboardGridLayoutRowKind {
-	return &DashboardGridLayoutRowKind{
-		Kind: "GridLayoutRow",
-		Spec: *NewDashboardGridLayoutRowSpec(),
-	}
-}
-
-// +k8s:openapi-gen=true
-type DashboardGridLayoutRowSpec struct {
-	Y         int64  `json:"y"`
-	Collapsed bool   `json:"collapsed"`
-	Title     string `json:"title"`
-	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	Elements []DashboardGridLayoutItemKind `json:"elements"`
-	Repeat   *DashboardRowRepeatOptions    `json:"repeat,omitempty"`
-}
-
-// NewDashboardGridLayoutRowSpec creates a new DashboardGridLayoutRowSpec object.
-func NewDashboardGridLayoutRowSpec() *DashboardGridLayoutRowSpec {
-	return &DashboardGridLayoutRowSpec{}
-}
-
-// +k8s:openapi-gen=true
-type DashboardRowRepeatOptions struct {
-	Mode  string `json:"mode"`
-	Value string `json:"value"`
-}
-
-// NewDashboardRowRepeatOptions creates a new DashboardRowRepeatOptions object.
-func NewDashboardRowRepeatOptions() *DashboardRowRepeatOptions {
-	return &DashboardRowRepeatOptions{}
-}
 
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutKind struct {
@@ -810,6 +1188,11 @@ func NewDashboardRowsLayoutKind() *DashboardRowsLayoutKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutKind.
+func (DashboardRowsLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutSpec struct {
 	Rows []DashboardRowsLayoutRowKind `json:"rows"`
@@ -817,7 +1200,14 @@ type DashboardRowsLayoutSpec struct {
 
 // NewDashboardRowsLayoutSpec creates a new DashboardRowsLayoutSpec object.
 func NewDashboardRowsLayoutSpec() *DashboardRowsLayoutSpec {
-	return &DashboardRowsLayoutSpec{}
+	return &DashboardRowsLayoutSpec{
+		Rows: []DashboardRowsLayoutRowKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutSpec.
+func (DashboardRowsLayoutSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -834,20 +1224,32 @@ func NewDashboardRowsLayoutRowKind() *DashboardRowsLayoutRowKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutRowKind.
+func (DashboardRowsLayoutRowKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutRowSpec struct {
-	Title                *string                                                           `json:"title,omitempty"`
-	Collapsed            bool                                                              `json:"collapsed"`
-	ConditionalRendering *DashboardConditionalRenderingGroupKind                           `json:"conditionalRendering,omitempty"`
-	Repeat               *DashboardRowRepeatOptions                                        `json:"repeat,omitempty"`
-	Layout               DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Title                *string                                                                     `json:"title,omitempty"`
+	Collapse             *bool                                                                       `json:"collapse,omitempty"`
+	HideHeader           *bool                                                                       `json:"hideHeader,omitempty"`
+	FillScreen           *bool                                                                       `json:"fillScreen,omitempty"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
+	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
+	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
 func NewDashboardRowsLayoutRowSpec() *DashboardRowsLayoutRowSpec {
 	return &DashboardRowsLayoutRowSpec{
-		Layout: *NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(),
+		Layout: *NewDashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutRowSpec.
+func (DashboardRowsLayoutRowSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowsLayoutRowSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -864,15 +1266,28 @@ func NewDashboardConditionalRenderingGroupKind() *DashboardConditionalRenderingG
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingGroupKind.
+func (DashboardConditionalRenderingGroupKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardConditionalRenderingGroupSpec struct {
-	Condition DashboardConditionalRenderingGroupSpecCondition                                                                 `json:"condition"`
-	Items     []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind `json:"items"`
+	Visibility DashboardConditionalRenderingGroupSpecVisibility                                                                 `json:"visibility"`
+	Condition  DashboardConditionalRenderingGroupSpecCondition                                                                  `json:"condition"`
+	Items      []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind `json:"items"`
 }
 
 // NewDashboardConditionalRenderingGroupSpec creates a new DashboardConditionalRenderingGroupSpec object.
 func NewDashboardConditionalRenderingGroupSpec() *DashboardConditionalRenderingGroupSpec {
-	return &DashboardConditionalRenderingGroupSpec{}
+	return &DashboardConditionalRenderingGroupSpec{
+		Items: []DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingGroupSpec.
+func (DashboardConditionalRenderingGroupSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -889,6 +1304,11 @@ func NewDashboardConditionalRenderingVariableKind() *DashboardConditionalRenderi
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableKind.
+func (DashboardConditionalRenderingVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardConditionalRenderingVariableSpec struct {
 	Variable string                                            `json:"variable"`
@@ -899,6 +1319,11 @@ type DashboardConditionalRenderingVariableSpec struct {
 // NewDashboardConditionalRenderingVariableSpec creates a new DashboardConditionalRenderingVariableSpec object.
 func NewDashboardConditionalRenderingVariableSpec() *DashboardConditionalRenderingVariableSpec {
 	return &DashboardConditionalRenderingVariableSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableSpec.
+func (DashboardConditionalRenderingVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -915,6 +1340,11 @@ func NewDashboardConditionalRenderingDataKind() *DashboardConditionalRenderingDa
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingDataKind.
+func (DashboardConditionalRenderingDataKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingDataKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardConditionalRenderingDataSpec struct {
 	Value bool `json:"value"`
@@ -925,93 +1355,163 @@ func NewDashboardConditionalRenderingDataSpec() *DashboardConditionalRenderingDa
 	return &DashboardConditionalRenderingDataSpec{}
 }
 
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingTimeIntervalKind struct {
-	Kind string                                        `json:"kind"`
-	Spec DashboardConditionalRenderingTimeIntervalSpec `json:"spec"`
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingDataSpec.
+func (DashboardConditionalRenderingDataSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingDataSpec"
 }
 
-// NewDashboardConditionalRenderingTimeIntervalKind creates a new DashboardConditionalRenderingTimeIntervalKind object.
-func NewDashboardConditionalRenderingTimeIntervalKind() *DashboardConditionalRenderingTimeIntervalKind {
-	return &DashboardConditionalRenderingTimeIntervalKind{
-		Kind: "ConditionalRenderingTimeInterval",
-		Spec: *NewDashboardConditionalRenderingTimeIntervalSpec(),
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingTimeRangeSizeKind struct {
+	Kind string                                         `json:"kind"`
+	Spec DashboardConditionalRenderingTimeRangeSizeSpec `json:"spec"`
+}
+
+// NewDashboardConditionalRenderingTimeRangeSizeKind creates a new DashboardConditionalRenderingTimeRangeSizeKind object.
+func NewDashboardConditionalRenderingTimeRangeSizeKind() *DashboardConditionalRenderingTimeRangeSizeKind {
+	return &DashboardConditionalRenderingTimeRangeSizeKind{
+		Kind: "ConditionalRenderingTimeRangeSize",
+		Spec: *NewDashboardConditionalRenderingTimeRangeSizeSpec(),
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingTimeRangeSizeKind.
+func (DashboardConditionalRenderingTimeRangeSizeKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeRangeSizeKind"
+}
+
 // +k8s:openapi-gen=true
-type DashboardConditionalRenderingTimeIntervalSpec struct {
+type DashboardConditionalRenderingTimeRangeSizeSpec struct {
 	Value string `json:"value"`
 }
 
-// NewDashboardConditionalRenderingTimeIntervalSpec creates a new DashboardConditionalRenderingTimeIntervalSpec object.
-func NewDashboardConditionalRenderingTimeIntervalSpec() *DashboardConditionalRenderingTimeIntervalSpec {
-	return &DashboardConditionalRenderingTimeIntervalSpec{}
+// NewDashboardConditionalRenderingTimeRangeSizeSpec creates a new DashboardConditionalRenderingTimeRangeSizeSpec object.
+func NewDashboardConditionalRenderingTimeRangeSizeSpec() *DashboardConditionalRenderingTimeRangeSizeSpec {
+	return &DashboardConditionalRenderingTimeRangeSizeSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingTimeRangeSizeSpec.
+func (DashboardConditionalRenderingTimeRangeSizeSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingTimeRangeSizeSpec"
 }
 
 // +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutKind struct {
-	Kind string                            `json:"kind"`
-	Spec DashboardResponsiveGridLayoutSpec `json:"spec"`
-}
-
-// NewDashboardResponsiveGridLayoutKind creates a new DashboardResponsiveGridLayoutKind object.
-func NewDashboardResponsiveGridLayoutKind() *DashboardResponsiveGridLayoutKind {
-	return &DashboardResponsiveGridLayoutKind{
-		Kind: "ResponsiveGridLayout",
-		Spec: *NewDashboardResponsiveGridLayoutSpec(),
-	}
-}
-
-// +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutSpec struct {
-	Row   string                                  `json:"row"`
-	Col   string                                  `json:"col"`
-	Items []DashboardResponsiveGridLayoutItemKind `json:"items"`
-}
-
-// NewDashboardResponsiveGridLayoutSpec creates a new DashboardResponsiveGridLayoutSpec object.
-func NewDashboardResponsiveGridLayoutSpec() *DashboardResponsiveGridLayoutSpec {
-	return &DashboardResponsiveGridLayoutSpec{}
-}
-
-// +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutItemKind struct {
-	Kind string                                `json:"kind"`
-	Spec DashboardResponsiveGridLayoutItemSpec `json:"spec"`
-}
-
-// NewDashboardResponsiveGridLayoutItemKind creates a new DashboardResponsiveGridLayoutItemKind object.
-func NewDashboardResponsiveGridLayoutItemKind() *DashboardResponsiveGridLayoutItemKind {
-	return &DashboardResponsiveGridLayoutItemKind{
-		Kind: "ResponsiveGridLayoutItem",
-		Spec: *NewDashboardResponsiveGridLayoutItemSpec(),
-	}
-}
-
-// +k8s:openapi-gen=true
-type DashboardResponsiveGridLayoutItemSpec struct {
-	Element              DashboardElementReference               `json:"element"`
-	Repeat               *DashboardResponsiveGridRepeatOptions   `json:"repeat,omitempty"`
-	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
-}
-
-// NewDashboardResponsiveGridLayoutItemSpec creates a new DashboardResponsiveGridLayoutItemSpec object.
-func NewDashboardResponsiveGridLayoutItemSpec() *DashboardResponsiveGridLayoutItemSpec {
-	return &DashboardResponsiveGridLayoutItemSpec{
-		Element: *NewDashboardElementReference(),
-	}
-}
-
-// +k8s:openapi-gen=true
-type DashboardResponsiveGridRepeatOptions struct {
+type DashboardRowRepeatOptions struct {
 	Mode  string `json:"mode"`
 	Value string `json:"value"`
 }
 
-// NewDashboardResponsiveGridRepeatOptions creates a new DashboardResponsiveGridRepeatOptions object.
-func NewDashboardResponsiveGridRepeatOptions() *DashboardResponsiveGridRepeatOptions {
-	return &DashboardResponsiveGridRepeatOptions{}
+// NewDashboardRowRepeatOptions creates a new DashboardRowRepeatOptions object.
+func NewDashboardRowRepeatOptions() *DashboardRowRepeatOptions {
+	return &DashboardRowRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowRepeatOptions.
+func (DashboardRowRepeatOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutKind struct {
+	Kind string                      `json:"kind"`
+	Spec DashboardAutoGridLayoutSpec `json:"spec"`
+}
+
+// NewDashboardAutoGridLayoutKind creates a new DashboardAutoGridLayoutKind object.
+func NewDashboardAutoGridLayoutKind() *DashboardAutoGridLayoutKind {
+	return &DashboardAutoGridLayoutKind{
+		Kind: "AutoGridLayout",
+		Spec: *NewDashboardAutoGridLayoutSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutKind.
+func (DashboardAutoGridLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutSpec struct {
+	MaxColumnCount  *float64                                   `json:"maxColumnCount,omitempty"`
+	ColumnWidthMode DashboardAutoGridLayoutSpecColumnWidthMode `json:"columnWidthMode"`
+	ColumnWidth     *float64                                   `json:"columnWidth,omitempty"`
+	RowHeightMode   DashboardAutoGridLayoutSpecRowHeightMode   `json:"rowHeightMode"`
+	RowHeight       *float64                                   `json:"rowHeight,omitempty"`
+	FillScreen      *bool                                      `json:"fillScreen,omitempty"`
+	Items           []DashboardAutoGridLayoutItemKind          `json:"items"`
+}
+
+// NewDashboardAutoGridLayoutSpec creates a new DashboardAutoGridLayoutSpec object.
+func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
+	return &DashboardAutoGridLayoutSpec{
+		MaxColumnCount:  (func(input float64) *float64 { return &input })(3),
+		ColumnWidthMode: DashboardAutoGridLayoutSpecColumnWidthModeStandard,
+		RowHeightMode:   DashboardAutoGridLayoutSpecRowHeightModeStandard,
+		FillScreen:      (func(input bool) *bool { return &input })(false),
+		Items:           []DashboardAutoGridLayoutItemKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpec.
+func (DashboardAutoGridLayoutSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutItemKind struct {
+	Kind string                          `json:"kind"`
+	Spec DashboardAutoGridLayoutItemSpec `json:"spec"`
+}
+
+// NewDashboardAutoGridLayoutItemKind creates a new DashboardAutoGridLayoutItemKind object.
+func NewDashboardAutoGridLayoutItemKind() *DashboardAutoGridLayoutItemKind {
+	return &DashboardAutoGridLayoutItemKind{
+		Kind: "AutoGridLayoutItem",
+		Spec: *NewDashboardAutoGridLayoutItemSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutItemKind.
+func (DashboardAutoGridLayoutItemKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutItemKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutItemSpec struct {
+	Element              DashboardElementReference               `json:"element"`
+	Repeat               *DashboardAutoGridRepeatOptions         `json:"repeat,omitempty"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
+}
+
+// NewDashboardAutoGridLayoutItemSpec creates a new DashboardAutoGridLayoutItemSpec object.
+func NewDashboardAutoGridLayoutItemSpec() *DashboardAutoGridLayoutItemSpec {
+	return &DashboardAutoGridLayoutItemSpec{
+		Element: *NewDashboardElementReference(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutItemSpec.
+func (DashboardAutoGridLayoutItemSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutItemSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridRepeatOptions struct {
+	Mode  string `json:"mode"`
+	Value string `json:"value"`
+}
+
+// NewDashboardAutoGridRepeatOptions creates a new DashboardAutoGridRepeatOptions object.
+func NewDashboardAutoGridRepeatOptions() *DashboardAutoGridRepeatOptions {
+	return &DashboardAutoGridRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridRepeatOptions.
+func (DashboardAutoGridRepeatOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridRepeatOptions"
 }
 
 // +k8s:openapi-gen=true
@@ -1028,6 +1528,11 @@ func NewDashboardTabsLayoutKind() *DashboardTabsLayoutKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardTabsLayoutKind.
+func (DashboardTabsLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardTabsLayoutSpec struct {
 	Tabs []DashboardTabsLayoutTabKind `json:"tabs"`
@@ -1035,7 +1540,14 @@ type DashboardTabsLayoutSpec struct {
 
 // NewDashboardTabsLayoutSpec creates a new DashboardTabsLayoutSpec object.
 func NewDashboardTabsLayoutSpec() *DashboardTabsLayoutSpec {
-	return &DashboardTabsLayoutSpec{}
+	return &DashboardTabsLayoutSpec{
+		Tabs: []DashboardTabsLayoutTabKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTabsLayoutSpec.
+func (DashboardTabsLayoutSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -1052,17 +1564,47 @@ func NewDashboardTabsLayoutTabKind() *DashboardTabsLayoutTabKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardTabsLayoutTabKind.
+func (DashboardTabsLayoutTabKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabKind"
+}
+
 // +k8s:openapi-gen=true
 type DashboardTabsLayoutTabSpec struct {
-	Title  *string                                                           `json:"title,omitempty"`
-	Layout DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind `json:"layout"`
+	Title                *string                                                                     `json:"title,omitempty"`
+	Layout               DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
+	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
 func NewDashboardTabsLayoutTabSpec() *DashboardTabsLayoutTabSpec {
 	return &DashboardTabsLayoutTabSpec{
-		Layout: *NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind(),
+		Layout: *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTabsLayoutTabSpec.
+func (DashboardTabsLayoutTabSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutTabSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardTabRepeatOptions struct {
+	Mode  string `json:"mode"`
+	Value string `json:"value"`
+}
+
+// NewDashboardTabRepeatOptions creates a new DashboardTabRepeatOptions object.
+func NewDashboardTabRepeatOptions() *DashboardTabRepeatOptions {
+	return &DashboardTabRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTabRepeatOptions.
+func (DashboardTabRepeatOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabRepeatOptions"
 }
 
 // Links with references to other dashboards or external resources
@@ -1089,16 +1631,25 @@ type DashboardDashboardLink struct {
 	IncludeVars bool `json:"includeVars"`
 	// If true, includes current time range in the link as query params
 	KeepTime bool `json:"keepTime"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement *string `json:"placement,omitempty"`
 }
 
 // NewDashboardDashboardLink creates a new DashboardDashboardLink object.
 func NewDashboardDashboardLink() *DashboardDashboardLink {
 	return &DashboardDashboardLink{
+		Tags:        []string{},
 		AsDropdown:  false,
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
+		Placement:   (func(input string) *string { return &input })(DashboardDashboardLinkPlacement),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardLink.
+func (DashboardDashboardLink) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDashboardLink"
 }
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
@@ -1109,6 +1660,16 @@ const (
 	DashboardDashboardLinkTypeLink       DashboardDashboardLinkType = "link"
 	DashboardDashboardLinkTypeDashboards DashboardDashboardLinkType = "dashboards"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardLinkType.
+func (DashboardDashboardLinkType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDashboardLinkType"
+}
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const DashboardDashboardLinkPlacement = "inControlsMenu"
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
@@ -1149,8 +1710,16 @@ func NewDashboardTimeSettingsSpec() *DashboardTimeSettingsSpec {
 		Timezone:             (func(input string) *string { return &input })("browser"),
 		From:                 "now-6h",
 		To:                   "now",
+		AutoRefresh:          "",
 		AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
+		HideTimepicker:       false,
+		FiscalYearStartMonth: 0,
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTimeSettingsSpec.
+func (DashboardTimeSettingsSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTimeSettingsSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -1169,12 +1738,17 @@ func NewDashboardTimeRangeOption() *DashboardTimeRangeOption {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardTimeRangeOption.
+func (DashboardTimeRangeOption) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTimeRangeOption"
+}
+
 // +k8s:openapi-gen=true
-type DashboardVariableKind = DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind
+type DashboardVariableKind = DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind
 
 // NewDashboardVariableKind creates a new DashboardVariableKind object.
 func NewDashboardVariableKind() *DashboardVariableKind {
-	return NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind()
+	return NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind()
 }
 
 // Query variable kind
@@ -1192,26 +1766,35 @@ func NewDashboardQueryVariableKind() *DashboardQueryVariableKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryVariableKind.
+func (DashboardQueryVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKind"
+}
+
 // Query variable specification
 // +k8s:openapi-gen=true
 type DashboardQueryVariableSpec struct {
-	Name        string                    `json:"name"`
-	Current     DashboardVariableOption   `json:"current"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	Refresh     DashboardVariableRefresh  `json:"refresh"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
-	Datasource  *DashboardDataSourceRef   `json:"datasource,omitempty"`
-	Query       DashboardDataQueryKind    `json:"query"`
-	Regex       string                    `json:"regex"`
-	Sort        DashboardVariableSort     `json:"sort"`
-	Definition  *string                   `json:"definition,omitempty"`
-	Options     []DashboardVariableOption `json:"options"`
-	Multi       bool                      `json:"multi"`
-	IncludeAll  bool                      `json:"includeAll"`
-	AllValue    *string                   `json:"allValue,omitempty"`
-	Placeholder *string                   `json:"placeholder,omitempty"`
+	Name               string                                        `json:"name"`
+	Current            DashboardVariableOption                       `json:"current"`
+	Label              *string                                       `json:"label,omitempty"`
+	Hide               DashboardVariableHide                         `json:"hide"`
+	Refresh            DashboardVariableRefresh                      `json:"refresh"`
+	SkipUrlSync        bool                                          `json:"skipUrlSync"`
+	Description        *string                                       `json:"description,omitempty"`
+	Datasource         *DashboardDataSourceRef                       `json:"datasource,omitempty"`
+	Query              DashboardDataQueryKind                        `json:"query"`
+	Regex              string                                        `json:"regex"`
+	RegexApplyTo       *DashboardVariableRegexApplyTo                `json:"regexApplyTo,omitempty"`
+	Sort               DashboardVariableSort                         `json:"sort"`
+	Definition         *string                                       `json:"definition,omitempty"`
+	Options            []DashboardVariableOption                     `json:"options"`
+	Multi              bool                                          `json:"multi"`
+	IncludeAll         bool                                          `json:"includeAll"`
+	AllValue           *string                                       `json:"allValue,omitempty"`
+	Placeholder        *string                                       `json:"placeholder,omitempty"`
+	AllowCustomValue   bool                                          `json:"allowCustomValue"`
+	StaticOptions      []DashboardVariableOption                     `json:"staticOptions,omitempty"`
+	StaticOptionsOrder *DashboardQueryVariableSpecStaticOptionsOrder `json:"staticOptionsOrder,omitempty"`
 }
 
 // NewDashboardQueryVariableSpec creates a new DashboardQueryVariableSpec object.
@@ -1226,14 +1809,22 @@ func NewDashboardQueryVariableSpec() *DashboardQueryVariableSpec {
 				String: (func(input string) *string { return &input })(""),
 			},
 		},
-		Hide:        DashboardVariableHideDontHide,
-		Refresh:     DashboardVariableRefreshNever,
-		SkipUrlSync: false,
-		Query:       *NewDashboardDataQueryKind(),
-		Regex:       "",
-		Multi:       false,
-		IncludeAll:  false,
+		Hide:             DashboardVariableHideDontHide,
+		Refresh:          DashboardVariableRefreshNever,
+		SkipUrlSync:      false,
+		Query:            *NewDashboardDataQueryKind(),
+		Regex:            "",
+		RegexApplyTo:     (func(input DashboardVariableRegexApplyTo) *DashboardVariableRegexApplyTo { return &input })(DashboardVariableRegexApplyToValue),
+		Options:          []DashboardVariableOption{},
+		Multi:            false,
+		IncludeAll:       false,
+		AllowCustomValue: true,
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryVariableSpec.
+func (DashboardQueryVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableSpec"
 }
 
 // Variable option specification
@@ -1245,6 +1836,8 @@ type DashboardVariableOption struct {
 	Text DashboardStringOrArrayOfString `json:"text"`
 	// Value of the option
 	Value DashboardStringOrArrayOfString `json:"value"`
+	// Additional properties for multi-props variables
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // NewDashboardVariableOption creates a new DashboardVariableOption object.
@@ -1253,6 +1846,11 @@ func NewDashboardVariableOption() *DashboardVariableOption {
 		Text:  *NewDashboardStringOrArrayOfString(),
 		Value: *NewDashboardStringOrArrayOfString(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardVariableOption.
+func (DashboardVariableOption) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
 }
 
 // Determine if the variable shows on dashboard
@@ -1266,6 +1864,11 @@ const (
 	DashboardVariableHideHideVariable DashboardVariableHide = "hideVariable"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardVariableHide.
+func (DashboardVariableHide) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableHide"
+}
+
 // Options to config when to refresh a variable
 // `never`: Never refresh the variable
 // `onDashboardLoad`: Queries the data source every time the dashboard loads.
@@ -1278,6 +1881,26 @@ const (
 	DashboardVariableRefreshOnDashboardLoad    DashboardVariableRefresh = "onDashboardLoad"
 	DashboardVariableRefreshOnTimeRangeChanged DashboardVariableRefresh = "onTimeRangeChanged"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardVariableRefresh.
+func (DashboardVariableRefresh) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableRefresh"
+}
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+// +k8s:openapi-gen=true
+type DashboardVariableRegexApplyTo string
+
+const (
+	DashboardVariableRegexApplyToValue DashboardVariableRegexApplyTo = "value"
+	DashboardVariableRegexApplyToText  DashboardVariableRegexApplyTo = "text"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardVariableRegexApplyTo.
+func (DashboardVariableRegexApplyTo) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableRegexApplyTo"
+}
 
 // Sort variable options
 // Accepted values are:
@@ -1306,6 +1929,11 @@ const (
 	DashboardVariableSortNaturalDesc                     DashboardVariableSort = "naturalDesc"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardVariableSort.
+func (DashboardVariableSort) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableSort"
+}
+
 // Text variable kind
 // +k8s:openapi-gen=true
 type DashboardTextVariableKind struct {
@@ -1319,6 +1947,11 @@ func NewDashboardTextVariableKind() *DashboardTextVariableKind {
 		Kind: "TextVariable",
 		Spec: *NewDashboardTextVariableSpec(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTextVariableKind.
+func (DashboardTextVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTextVariableKind"
 }
 
 // Text variable specification
@@ -1351,6 +1984,11 @@ func NewDashboardTextVariableSpec() *DashboardTextVariableSpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardTextVariableSpec.
+func (DashboardTextVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTextVariableSpec"
+}
+
 // Constant variable kind
 // +k8s:openapi-gen=true
 type DashboardConstantVariableKind struct {
@@ -1364,6 +2002,11 @@ func NewDashboardConstantVariableKind() *DashboardConstantVariableKind {
 		Kind: "ConstantVariable",
 		Spec: *NewDashboardConstantVariableSpec(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConstantVariableKind.
+func (DashboardConstantVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableKind"
 }
 
 // Constant variable specification
@@ -1396,6 +2039,11 @@ func NewDashboardConstantVariableSpec() *DashboardConstantVariableSpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardConstantVariableSpec.
+func (DashboardConstantVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConstantVariableSpec"
+}
+
 // Datasource variable kind
 // +k8s:openapi-gen=true
 type DashboardDatasourceVariableKind struct {
@@ -1411,22 +2059,28 @@ func NewDashboardDatasourceVariableKind() *DashboardDatasourceVariableKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardDatasourceVariableKind.
+func (DashboardDatasourceVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableKind"
+}
+
 // Datasource variable specification
 // +k8s:openapi-gen=true
 type DashboardDatasourceVariableSpec struct {
-	Name        string                    `json:"name"`
-	PluginId    string                    `json:"pluginId"`
-	Refresh     DashboardVariableRefresh  `json:"refresh"`
-	Regex       string                    `json:"regex"`
-	Current     DashboardVariableOption   `json:"current"`
-	Options     []DashboardVariableOption `json:"options"`
-	Multi       bool                      `json:"multi"`
-	IncludeAll  bool                      `json:"includeAll"`
-	AllValue    *string                   `json:"allValue,omitempty"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
+	Name             string                    `json:"name"`
+	PluginId         string                    `json:"pluginId"`
+	Refresh          DashboardVariableRefresh  `json:"refresh"`
+	Regex            string                    `json:"regex"`
+	Current          DashboardVariableOption   `json:"current"`
+	Options          []DashboardVariableOption `json:"options"`
+	Multi            bool                      `json:"multi"`
+	IncludeAll       bool                      `json:"includeAll"`
+	AllValue         *string                   `json:"allValue,omitempty"`
+	Label            *string                   `json:"label,omitempty"`
+	Hide             DashboardVariableHide     `json:"hide"`
+	SkipUrlSync      bool                      `json:"skipUrlSync"`
+	Description      *string                   `json:"description,omitempty"`
+	AllowCustomValue bool                      `json:"allowCustomValue"`
 }
 
 // NewDashboardDatasourceVariableSpec creates a new DashboardDatasourceVariableSpec object.
@@ -1444,11 +2098,18 @@ func NewDashboardDatasourceVariableSpec() *DashboardDatasourceVariableSpec {
 				String: (func(input string) *string { return &input })(""),
 			},
 		},
-		Multi:       false,
-		IncludeAll:  false,
-		Hide:        DashboardVariableHideDontHide,
-		SkipUrlSync: false,
+		Options:          []DashboardVariableOption{},
+		Multi:            false,
+		IncludeAll:       false,
+		Hide:             DashboardVariableHideDontHide,
+		SkipUrlSync:      false,
+		AllowCustomValue: true,
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDatasourceVariableSpec.
+func (DashboardDatasourceVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDatasourceVariableSpec"
 }
 
 // Interval variable kind
@@ -1464,6 +2125,11 @@ func NewDashboardIntervalVariableKind() *DashboardIntervalVariableKind {
 		Kind: "IntervalVariable",
 		Spec: *NewDashboardIntervalVariableSpec(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardIntervalVariableKind.
+func (DashboardIntervalVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableKind"
 }
 
 // Interval variable specification
@@ -1496,6 +2162,7 @@ func NewDashboardIntervalVariableSpec() *DashboardIntervalVariableSpec {
 				String: (func(input string) *string { return &input })(""),
 			},
 		},
+		Options:     []DashboardVariableOption{},
 		Auto:        false,
 		AutoMin:     "",
 		AutoCount:   0,
@@ -1503,6 +2170,11 @@ func NewDashboardIntervalVariableSpec() *DashboardIntervalVariableSpec {
 		Hide:        DashboardVariableHideDontHide,
 		SkipUrlSync: false,
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardIntervalVariableSpec.
+func (DashboardIntervalVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardIntervalVariableSpec"
 }
 
 // Custom variable kind
@@ -1520,33 +2192,47 @@ func NewDashboardCustomVariableKind() *DashboardCustomVariableKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardCustomVariableKind.
+func (DashboardCustomVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableKind"
+}
+
 // Custom variable specification
 // +k8s:openapi-gen=true
 type DashboardCustomVariableSpec struct {
-	Name        string                    `json:"name"`
-	Query       string                    `json:"query"`
-	Current     DashboardVariableOption   `json:"current"`
-	Options     []DashboardVariableOption `json:"options"`
-	Multi       bool                      `json:"multi"`
-	IncludeAll  bool                      `json:"includeAll"`
-	AllValue    *string                   `json:"allValue,omitempty"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
+	Name             string                                   `json:"name"`
+	Query            string                                   `json:"query"`
+	Current          DashboardVariableOption                  `json:"current"`
+	Options          []DashboardVariableOption                `json:"options"`
+	Multi            bool                                     `json:"multi"`
+	IncludeAll       bool                                     `json:"includeAll"`
+	AllValue         *string                                  `json:"allValue,omitempty"`
+	Label            *string                                  `json:"label,omitempty"`
+	Hide             DashboardVariableHide                    `json:"hide"`
+	SkipUrlSync      bool                                     `json:"skipUrlSync"`
+	Description      *string                                  `json:"description,omitempty"`
+	AllowCustomValue bool                                     `json:"allowCustomValue"`
+	ValuesFormat     *DashboardCustomVariableSpecValuesFormat `json:"valuesFormat,omitempty"`
 }
 
 // NewDashboardCustomVariableSpec creates a new DashboardCustomVariableSpec object.
 func NewDashboardCustomVariableSpec() *DashboardCustomVariableSpec {
 	return &DashboardCustomVariableSpec{
-		Name:        "",
-		Query:       "",
-		Current:     *NewDashboardVariableOption(),
-		Multi:       false,
-		IncludeAll:  false,
-		Hide:        DashboardVariableHideDontHide,
-		SkipUrlSync: false,
+		Name:             "",
+		Query:            "",
+		Current:          *NewDashboardVariableOption(),
+		Options:          []DashboardVariableOption{},
+		Multi:            false,
+		IncludeAll:       false,
+		Hide:             DashboardVariableHideDontHide,
+		SkipUrlSync:      false,
+		AllowCustomValue: true,
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardCustomVariableSpec.
+func (DashboardCustomVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableSpec"
 }
 
 // Group variable kind
@@ -1564,18 +2250,24 @@ func NewDashboardGroupByVariableKind() *DashboardGroupByVariableKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardGroupByVariableKind.
+func (DashboardGroupByVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableKind"
+}
+
 // GroupBy variable specification
 // +k8s:openapi-gen=true
 type DashboardGroupByVariableSpec struct {
-	Name        string                    `json:"name"`
-	Datasource  *DashboardDataSourceRef   `json:"datasource,omitempty"`
-	Current     DashboardVariableOption   `json:"current"`
-	Options     []DashboardVariableOption `json:"options"`
-	Multi       bool                      `json:"multi"`
-	Label       *string                   `json:"label,omitempty"`
-	Hide        DashboardVariableHide     `json:"hide"`
-	SkipUrlSync bool                      `json:"skipUrlSync"`
-	Description *string                   `json:"description,omitempty"`
+	Name         string                    `json:"name"`
+	Datasource   *DashboardDataSourceRef   `json:"datasource,omitempty"`
+	DefaultValue *DashboardVariableOption  `json:"defaultValue,omitempty"`
+	Current      DashboardVariableOption   `json:"current"`
+	Options      []DashboardVariableOption `json:"options"`
+	Multi        bool                      `json:"multi"`
+	Label        *string                   `json:"label,omitempty"`
+	Hide         DashboardVariableHide     `json:"hide"`
+	SkipUrlSync  bool                      `json:"skipUrlSync"`
+	Description  *string                   `json:"description,omitempty"`
 }
 
 // NewDashboardGroupByVariableSpec creates a new DashboardGroupByVariableSpec object.
@@ -1590,10 +2282,16 @@ func NewDashboardGroupByVariableSpec() *DashboardGroupByVariableSpec {
 				String: (func(input string) *string { return &input })(""),
 			},
 		},
+		Options:     []DashboardVariableOption{},
 		Multi:       false,
 		Hide:        DashboardVariableHideDontHide,
 		SkipUrlSync: false,
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGroupByVariableSpec.
+func (DashboardGroupByVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGroupByVariableSpec"
 }
 
 // Adhoc variable kind
@@ -1611,27 +2309,42 @@ func NewDashboardAdhocVariableKind() *DashboardAdhocVariableKind {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardAdhocVariableKind.
+func (DashboardAdhocVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableKind"
+}
+
 // Adhoc variable specification
 // +k8s:openapi-gen=true
 type DashboardAdhocVariableSpec struct {
-	Name        string                           `json:"name"`
-	Datasource  *DashboardDataSourceRef          `json:"datasource,omitempty"`
-	BaseFilters []DashboardAdHocFilterWithLabels `json:"baseFilters"`
-	Filters     []DashboardAdHocFilterWithLabels `json:"filters"`
-	DefaultKeys []DashboardMetricFindValue       `json:"defaultKeys"`
-	Label       *string                          `json:"label,omitempty"`
-	Hide        DashboardVariableHide            `json:"hide"`
-	SkipUrlSync bool                             `json:"skipUrlSync"`
-	Description *string                          `json:"description,omitempty"`
+	Name             string                           `json:"name"`
+	Datasource       *DashboardDataSourceRef          `json:"datasource,omitempty"`
+	BaseFilters      []DashboardAdHocFilterWithLabels `json:"baseFilters"`
+	Filters          []DashboardAdHocFilterWithLabels `json:"filters"`
+	DefaultKeys      []DashboardMetricFindValue       `json:"defaultKeys"`
+	Label            *string                          `json:"label,omitempty"`
+	Hide             DashboardVariableHide            `json:"hide"`
+	SkipUrlSync      bool                             `json:"skipUrlSync"`
+	Description      *string                          `json:"description,omitempty"`
+	AllowCustomValue bool                             `json:"allowCustomValue"`
 }
 
 // NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.
 func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
 	return &DashboardAdhocVariableSpec{
-		Name:        "",
-		Hide:        DashboardVariableHideDontHide,
-		SkipUrlSync: false,
+		Name:             "",
+		BaseFilters:      []DashboardAdHocFilterWithLabels{},
+		Filters:          []DashboardAdHocFilterWithLabels{},
+		DefaultKeys:      []DashboardMetricFindValue{},
+		Hide:             DashboardVariableHideDontHide,
+		SkipUrlSync:      false,
+		AllowCustomValue: true,
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAdhocVariableSpec.
+func (DashboardAdhocVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdhocVariableSpec"
 }
 
 // Define the AdHocFilterWithLabels type
@@ -1644,14 +2357,26 @@ type DashboardAdHocFilterWithLabels struct {
 	KeyLabel    *string  `json:"keyLabel,omitempty"`
 	ValueLabels []string `json:"valueLabels,omitempty"`
 	ForceEdit   *bool    `json:"forceEdit,omitempty"`
+	Origin      *string  `json:"origin,omitempty"`
 	// @deprecated
 	Condition *string `json:"condition,omitempty"`
 }
 
 // NewDashboardAdHocFilterWithLabels creates a new DashboardAdHocFilterWithLabels object.
 func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
-	return &DashboardAdHocFilterWithLabels{}
+	return &DashboardAdHocFilterWithLabels{
+		Origin: (func(input string) *string { return &input })(DashboardFilterOrigin),
+	}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAdHocFilterWithLabels.
+func (DashboardAdHocFilterWithLabels) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAdHocFilterWithLabels"
+}
+
+// Determine the origin of the adhoc variable filter
+// +k8s:openapi-gen=true
+const DashboardFilterOrigin = "dashboard"
 
 // Define the MetricFindValue type
 // +k8s:openapi-gen=true
@@ -1667,9 +2392,62 @@ func NewDashboardMetricFindValue() *DashboardMetricFindValue {
 	return &DashboardMetricFindValue{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardMetricFindValue.
+func (DashboardMetricFindValue) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMetricFindValue"
+}
+
+// +k8s:openapi-gen=true
+type DashboardSwitchVariableKind struct {
+	Kind string                      `json:"kind"`
+	Spec DashboardSwitchVariableSpec `json:"spec"`
+}
+
+// NewDashboardSwitchVariableKind creates a new DashboardSwitchVariableKind object.
+func NewDashboardSwitchVariableKind() *DashboardSwitchVariableKind {
+	return &DashboardSwitchVariableKind{
+		Kind: "SwitchVariable",
+		Spec: *NewDashboardSwitchVariableSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardSwitchVariableKind.
+func (DashboardSwitchVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSwitchVariableKind"
+}
+
+// Switch variable specification
+// +k8s:openapi-gen=true
+type DashboardSwitchVariableSpec struct {
+	Name          string                `json:"name"`
+	Current       string                `json:"current"`
+	EnabledValue  string                `json:"enabledValue"`
+	DisabledValue string                `json:"disabledValue"`
+	Label         *string               `json:"label,omitempty"`
+	Hide          DashboardVariableHide `json:"hide"`
+	SkipUrlSync   bool                  `json:"skipUrlSync"`
+	Description   *string               `json:"description,omitempty"`
+}
+
+// NewDashboardSwitchVariableSpec creates a new DashboardSwitchVariableSpec object.
+func NewDashboardSwitchVariableSpec() *DashboardSwitchVariableSpec {
+	return &DashboardSwitchVariableSpec{
+		Name:          "",
+		Current:       "false",
+		EnabledValue:  "true",
+		DisabledValue: "false",
+		Hide:          DashboardVariableHideDontHide,
+		SkipUrlSync:   false,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardSwitchVariableSpec.
+func (DashboardSwitchVariableSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSwitchVariableSpec"
+}
+
 // +k8s:openapi-gen=true
 type DashboardSpec struct {
-	// Title of dashboard.
 	Annotations []DashboardAnnotationQueryKind `json:"annotations"`
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).
@@ -1679,9 +2457,9 @@ type DashboardSpec struct {
 	// Description of dashboard.
 	Description *string `json:"description,omitempty"`
 	// Whether a dashboard is editable or not.
-	Editable *bool                                                                             `json:"editable,omitempty"`
-	Elements map[string]DashboardElement                                                       `json:"elements"`
-	Layout   DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Editable *bool                                                                       `json:"editable,omitempty"`
+	Elements map[string]DashboardElement                                                 `json:"elements"`
+	Layout   DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
 	// Links with references to other dashboards or external websites.
 	Links []DashboardDashboardLink `json:"links"`
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -1705,14 +2483,28 @@ type DashboardSpec struct {
 // NewDashboardSpec creates a new DashboardSpec object.
 func NewDashboardSpec() *DashboardSpec {
 	return &DashboardSpec{
+		Annotations:  []DashboardAnnotationQueryKind{},
+		CursorSync:   DashboardDashboardCursorSyncOff,
 		Editable:     (func(input bool) *bool { return &input })(true),
-		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind(),
+		Elements:     map[string]DashboardElement{},
+		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
+		Links:        []DashboardDashboardLink{},
+		Preload:      false,
+		Tags:         []string{},
 		TimeSettings: *NewDashboardTimeSettingsSpec(),
+		Variables:    []DashboardVariableKind{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardSpec.
+func (DashboardSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardSpec"
 }
 
 // +k8s:openapi-gen=true
 type DashboardV2alpha1FieldConfigSourceOverrides struct {
+	// Describes config override rules created when interacting with Grafana.
+	SystemRef  *string                       `json:"__systemRef,omitempty"`
 	Matcher    DashboardMatcherConfig        `json:"matcher"`
 	Properties []DashboardDynamicConfigValue `json:"properties"`
 }
@@ -1720,8 +2512,14 @@ type DashboardV2alpha1FieldConfigSourceOverrides struct {
 // NewDashboardV2alpha1FieldConfigSourceOverrides creates a new DashboardV2alpha1FieldConfigSourceOverrides object.
 func NewDashboardV2alpha1FieldConfigSourceOverrides() *DashboardV2alpha1FieldConfigSourceOverrides {
 	return &DashboardV2alpha1FieldConfigSourceOverrides{
-		Matcher: *NewDashboardMatcherConfig(),
+		Matcher:    *NewDashboardMatcherConfig(),
+		Properties: []DashboardDynamicConfigValue{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardV2alpha1FieldConfigSourceOverrides.
+func (DashboardV2alpha1FieldConfigSourceOverrides) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1FieldConfigSourceOverrides"
 }
 
 // +k8s:openapi-gen=true
@@ -1741,6 +2539,11 @@ func NewDashboardV2alpha1RangeMapOptions() *DashboardV2alpha1RangeMapOptions {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardV2alpha1RangeMapOptions.
+func (DashboardV2alpha1RangeMapOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RangeMapOptions"
+}
+
 // +k8s:openapi-gen=true
 type DashboardV2alpha1RegexMapOptions struct {
 	// Regular expression to match against
@@ -1754,6 +2557,11 @@ func NewDashboardV2alpha1RegexMapOptions() *DashboardV2alpha1RegexMapOptions {
 	return &DashboardV2alpha1RegexMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardV2alpha1RegexMapOptions.
+func (DashboardV2alpha1RegexMapOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1RegexMapOptions"
 }
 
 // +k8s:openapi-gen=true
@@ -1771,6 +2579,26 @@ func NewDashboardV2alpha1SpecialValueMapOptions() *DashboardV2alpha1SpecialValue
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardV2alpha1SpecialValueMapOptions.
+func (DashboardV2alpha1SpecialValueMapOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1SpecialValueMapOptions"
+}
+
+// +k8s:openapi-gen=true
+type DashboardV2alpha1ActionStyle struct {
+	BackgroundColor *string `json:"backgroundColor,omitempty"`
+}
+
+// NewDashboardV2alpha1ActionStyle creates a new DashboardV2alpha1ActionStyle object.
+func NewDashboardV2alpha1ActionStyle() *DashboardV2alpha1ActionStyle {
+	return &DashboardV2alpha1ActionStyle{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardV2alpha1ActionStyle.
+func (DashboardV2alpha1ActionStyle) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1ActionStyle"
+}
+
 // +k8s:openapi-gen=true
 type DashboardRepeatOptionsDirection string
 
@@ -1778,6 +2606,24 @@ const (
 	DashboardRepeatOptionsDirectionH DashboardRepeatOptionsDirection = "h"
 	DashboardRepeatOptionsDirectionV DashboardRepeatOptionsDirection = "v"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRepeatOptionsDirection.
+func (DashboardRepeatOptionsDirection) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRepeatOptionsDirection"
+}
+
+// +k8s:openapi-gen=true
+type DashboardConditionalRenderingGroupSpecVisibility string
+
+const (
+	DashboardConditionalRenderingGroupSpecVisibilityShow DashboardConditionalRenderingGroupSpecVisibility = "show"
+	DashboardConditionalRenderingGroupSpecVisibilityHide DashboardConditionalRenderingGroupSpecVisibility = "hide"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingGroupSpecVisibility.
+func (DashboardConditionalRenderingGroupSpecVisibility) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupSpecVisibility"
+}
 
 // +k8s:openapi-gen=true
 type DashboardConditionalRenderingGroupSpecCondition string
@@ -1787,13 +2633,55 @@ const (
 	DashboardConditionalRenderingGroupSpecConditionOr  DashboardConditionalRenderingGroupSpecCondition = "or"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingGroupSpecCondition.
+func (DashboardConditionalRenderingGroupSpecCondition) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingGroupSpecCondition"
+}
+
 // +k8s:openapi-gen=true
 type DashboardConditionalRenderingVariableSpecOperator string
 
 const (
-	DashboardConditionalRenderingVariableSpecOperatorEquals    DashboardConditionalRenderingVariableSpecOperator = "equals"
-	DashboardConditionalRenderingVariableSpecOperatorNotEquals DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+	DashboardConditionalRenderingVariableSpecOperatorEquals     DashboardConditionalRenderingVariableSpecOperator = "equals"
+	DashboardConditionalRenderingVariableSpecOperatorNotEquals  DashboardConditionalRenderingVariableSpecOperator = "notEquals"
+	DashboardConditionalRenderingVariableSpecOperatorMatches    DashboardConditionalRenderingVariableSpecOperator = "matches"
+	DashboardConditionalRenderingVariableSpecOperatorNotMatches DashboardConditionalRenderingVariableSpecOperator = "notMatches"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableSpecOperator.
+func (DashboardConditionalRenderingVariableSpecOperator) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableSpecOperator"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutSpecColumnWidthMode string
+
+const (
+	DashboardAutoGridLayoutSpecColumnWidthModeNarrow   DashboardAutoGridLayoutSpecColumnWidthMode = "narrow"
+	DashboardAutoGridLayoutSpecColumnWidthModeStandard DashboardAutoGridLayoutSpecColumnWidthMode = "standard"
+	DashboardAutoGridLayoutSpecColumnWidthModeWide     DashboardAutoGridLayoutSpecColumnWidthMode = "wide"
+	DashboardAutoGridLayoutSpecColumnWidthModeCustom   DashboardAutoGridLayoutSpecColumnWidthMode = "custom"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpecColumnWidthMode.
+func (DashboardAutoGridLayoutSpecColumnWidthMode) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutSpecColumnWidthMode"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutSpecRowHeightMode string
+
+const (
+	DashboardAutoGridLayoutSpecRowHeightModeShort    DashboardAutoGridLayoutSpecRowHeightMode = "short"
+	DashboardAutoGridLayoutSpecRowHeightModeStandard DashboardAutoGridLayoutSpecRowHeightMode = "standard"
+	DashboardAutoGridLayoutSpecRowHeightModeTall     DashboardAutoGridLayoutSpecRowHeightMode = "tall"
+	DashboardAutoGridLayoutSpecRowHeightModeCustom   DashboardAutoGridLayoutSpecRowHeightMode = "custom"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpecRowHeightMode.
+func (DashboardAutoGridLayoutSpecRowHeightMode) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAutoGridLayoutSpecRowHeightMode"
+}
 
 // +k8s:openapi-gen=true
 type DashboardTimeSettingsSpecWeekStart string
@@ -1803,6 +2691,38 @@ const (
 	DashboardTimeSettingsSpecWeekStartMonday   DashboardTimeSettingsSpecWeekStart = "monday"
 	DashboardTimeSettingsSpecWeekStartSunday   DashboardTimeSettingsSpecWeekStart = "sunday"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTimeSettingsSpecWeekStart.
+func (DashboardTimeSettingsSpecWeekStart) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTimeSettingsSpecWeekStart"
+}
+
+// +k8s:openapi-gen=true
+type DashboardQueryVariableSpecStaticOptionsOrder string
+
+const (
+	DashboardQueryVariableSpecStaticOptionsOrderBefore DashboardQueryVariableSpecStaticOptionsOrder = "before"
+	DashboardQueryVariableSpecStaticOptionsOrderAfter  DashboardQueryVariableSpecStaticOptionsOrder = "after"
+	DashboardQueryVariableSpecStaticOptionsOrderSorted DashboardQueryVariableSpecStaticOptionsOrder = "sorted"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryVariableSpecStaticOptionsOrder.
+func (DashboardQueryVariableSpecStaticOptionsOrder) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableSpecStaticOptionsOrder"
+}
+
+// +k8s:openapi-gen=true
+type DashboardCustomVariableSpecValuesFormat string
+
+const (
+	DashboardCustomVariableSpecValuesFormatCsv  DashboardCustomVariableSpecValuesFormat = "csv"
+	DashboardCustomVariableSpecValuesFormatJson DashboardCustomVariableSpecValuesFormat = "json"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardCustomVariableSpecValuesFormat.
+func (DashboardCustomVariableSpecValuesFormat) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableSpecValuesFormat"
+}
 
 // +k8s:openapi-gen=true
 type DashboardPanelKindOrLibraryPanelKind struct {
@@ -1823,6 +2743,7 @@ func (resource DashboardPanelKindOrLibraryPanelKind) MarshalJSON() ([]byte, erro
 	if resource.LibraryPanelKind != nil {
 		return json.Marshal(resource.LibraryPanelKind)
 	}
+
 	return []byte("null"), nil
 }
 
@@ -1840,7 +2761,7 @@ func (resource *DashboardPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) 
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1862,7 +2783,12 @@ func (resource *DashboardPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) 
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardPanelKindOrLibraryPanelKind.
+func (DashboardPanelKindOrLibraryPanelKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardPanelKindOrLibraryPanelKind"
 }
 
 // +k8s:openapi-gen=true
@@ -1892,6 +2818,7 @@ func (resource DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) MarshalJS
 	if resource.SpecialValueMap != nil {
 		return json.Marshal(resource.SpecialValueMap)
 	}
+
 	return []byte("null"), nil
 }
 
@@ -1909,7 +2836,7 @@ func (resource *DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) Unmarsha
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1947,98 +2874,47 @@ func (resource *DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) Unmarsha
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap.
+func (DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap"
 }
 
 // +k8s:openapi-gen=true
-type DashboardGridLayoutItemKindOrGridLayoutRowKind struct {
-	GridLayoutItemKind *DashboardGridLayoutItemKind `json:"GridLayoutItemKind,omitempty"`
-	GridLayoutRowKind  *DashboardGridLayoutRowKind  `json:"GridLayoutRowKind,omitempty"`
+type DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind struct {
+	GridLayoutKind     *DashboardGridLayoutKind     `json:"GridLayoutKind,omitempty"`
+	AutoGridLayoutKind *DashboardAutoGridLayoutKind `json:"AutoGridLayoutKind,omitempty"`
+	TabsLayoutKind     *DashboardTabsLayoutKind     `json:"TabsLayoutKind,omitempty"`
+	RowsLayoutKind     *DashboardRowsLayoutKind     `json:"RowsLayoutKind,omitempty"`
 }
 
-// NewDashboardGridLayoutItemKindOrGridLayoutRowKind creates a new DashboardGridLayoutItemKindOrGridLayoutRowKind object.
-func NewDashboardGridLayoutItemKindOrGridLayoutRowKind() *DashboardGridLayoutItemKindOrGridLayoutRowKind {
-	return &DashboardGridLayoutItemKindOrGridLayoutRowKind{}
+// NewDashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind creates a new DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind object.
+func NewDashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind() *DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind {
+	return &DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutItemKindOrGridLayoutRowKind` as JSON.
-func (resource DashboardGridLayoutItemKindOrGridLayoutRowKind) MarshalJSON() ([]byte, error) {
-	if resource.GridLayoutItemKind != nil {
-		return json.Marshal(resource.GridLayoutItemKind)
-	}
-	if resource.GridLayoutRowKind != nil {
-		return json.Marshal(resource.GridLayoutRowKind)
-	}
-	return []byte("null"), nil
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutItemKindOrGridLayoutRowKind` from JSON.
-func (resource *DashboardGridLayoutItemKindOrGridLayoutRowKind) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
-	parsedAsMap := make(map[string]interface{})
-	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
-		return err
-	}
-
-	discriminator, found := parsedAsMap["kind"]
-	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
-	}
-
-	switch discriminator {
-	case "GridLayoutItem":
-		var dashboardGridLayoutItemKind DashboardGridLayoutItemKind
-		if err := json.Unmarshal(raw, &dashboardGridLayoutItemKind); err != nil {
-			return err
-		}
-
-		resource.GridLayoutItemKind = &dashboardGridLayoutItemKind
-		return nil
-	case "GridLayoutRow":
-		var dashboardGridLayoutRowKind DashboardGridLayoutRowKind
-		if err := json.Unmarshal(raw, &dashboardGridLayoutRowKind); err != nil {
-			return err
-		}
-
-		resource.GridLayoutRowKind = &dashboardGridLayoutRowKind
-		return nil
-	}
-
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
-}
-
-// +k8s:openapi-gen=true
-type DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind struct {
-	GridLayoutKind           *DashboardGridLayoutKind           `json:"GridLayoutKind,omitempty"`
-	ResponsiveGridLayoutKind *DashboardResponsiveGridLayoutKind `json:"ResponsiveGridLayoutKind,omitempty"`
-	TabsLayoutKind           *DashboardTabsLayoutKind           `json:"TabsLayoutKind,omitempty"`
-}
-
-// NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind creates a new DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind object.
-func NewDashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind() *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind {
-	return &DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` as JSON.
-func (resource DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind` as JSON.
+func (resource DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) MarshalJSON() ([]byte, error) {
 	if resource.GridLayoutKind != nil {
 		return json.Marshal(resource.GridLayoutKind)
 	}
-	if resource.ResponsiveGridLayoutKind != nil {
-		return json.Marshal(resource.ResponsiveGridLayoutKind)
+	if resource.AutoGridLayoutKind != nil {
+		return json.Marshal(resource.AutoGridLayoutKind)
 	}
 	if resource.TabsLayoutKind != nil {
 		return json.Marshal(resource.TabsLayoutKind)
 	}
+	if resource.RowsLayoutKind != nil {
+		return json.Marshal(resource.RowsLayoutKind)
+	}
+
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` from JSON.
-func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind` from JSON.
+func (resource *DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2051,10 +2927,18 @@ func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKin
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
+	case "AutoGridLayout":
+		var dashboardAutoGridLayoutKind DashboardAutoGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardAutoGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.AutoGridLayoutKind = &dashboardAutoGridLayoutKind
+		return nil
 	case "GridLayout":
 		var dashboardGridLayoutKind DashboardGridLayoutKind
 		if err := json.Unmarshal(raw, &dashboardGridLayoutKind); err != nil {
@@ -2063,13 +2947,13 @@ func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKin
 
 		resource.GridLayoutKind = &dashboardGridLayoutKind
 		return nil
-	case "ResponsiveGridLayout":
-		var dashboardResponsiveGridLayoutKind DashboardResponsiveGridLayoutKind
-		if err := json.Unmarshal(raw, &dashboardResponsiveGridLayoutKind); err != nil {
+	case "RowsLayout":
+		var dashboardRowsLayoutKind DashboardRowsLayoutKind
+		if err := json.Unmarshal(raw, &dashboardRowsLayoutKind); err != nil {
 			return err
 		}
 
-		resource.ResponsiveGridLayoutKind = &dashboardResponsiveGridLayoutKind
+		resource.RowsLayoutKind = &dashboardRowsLayoutKind
 		return nil
 	case "TabsLayout":
 		var dashboardTabsLayoutKind DashboardTabsLayoutKind
@@ -2081,37 +2965,43 @@ func (resource *DashboardGridLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKin
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind.
+func (DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
 }
 
 // +k8s:openapi-gen=true
-type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind struct {
-	ConditionalRenderingVariableKind     *DashboardConditionalRenderingVariableKind     `json:"ConditionalRenderingVariableKind,omitempty"`
-	ConditionalRenderingDataKind         *DashboardConditionalRenderingDataKind         `json:"ConditionalRenderingDataKind,omitempty"`
-	ConditionalRenderingTimeIntervalKind *DashboardConditionalRenderingTimeIntervalKind `json:"ConditionalRenderingTimeIntervalKind,omitempty"`
+type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind struct {
+	ConditionalRenderingVariableKind      *DashboardConditionalRenderingVariableKind      `json:"ConditionalRenderingVariableKind,omitempty"`
+	ConditionalRenderingDataKind          *DashboardConditionalRenderingDataKind          `json:"ConditionalRenderingDataKind,omitempty"`
+	ConditionalRenderingTimeRangeSizeKind *DashboardConditionalRenderingTimeRangeSizeKind `json:"ConditionalRenderingTimeRangeSizeKind,omitempty"`
 }
 
-// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind object.
-func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind {
-	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind{}
+// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind object.
+func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind {
+	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind` as JSON.
-func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` as JSON.
+func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) MarshalJSON() ([]byte, error) {
 	if resource.ConditionalRenderingVariableKind != nil {
 		return json.Marshal(resource.ConditionalRenderingVariableKind)
 	}
 	if resource.ConditionalRenderingDataKind != nil {
 		return json.Marshal(resource.ConditionalRenderingDataKind)
 	}
-	if resource.ConditionalRenderingTimeIntervalKind != nil {
-		return json.Marshal(resource.ConditionalRenderingTimeIntervalKind)
+	if resource.ConditionalRenderingTimeRangeSizeKind != nil {
+		return json.Marshal(resource.ConditionalRenderingTimeRangeSizeKind)
 	}
+
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind` from JSON.
-func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeIntervalKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` from JSON.
+func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2124,7 +3014,7 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -2136,13 +3026,13 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 
 		resource.ConditionalRenderingDataKind = &dashboardConditionalRenderingDataKind
 		return nil
-	case "ConditionalRenderingTimeInterval":
-		var dashboardConditionalRenderingTimeIntervalKind DashboardConditionalRenderingTimeIntervalKind
-		if err := json.Unmarshal(raw, &dashboardConditionalRenderingTimeIntervalKind); err != nil {
+	case "ConditionalRenderingTimeRangeSize":
+		var dashboardConditionalRenderingTimeRangeSizeKind DashboardConditionalRenderingTimeRangeSizeKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingTimeRangeSizeKind); err != nil {
 			return err
 		}
 
-		resource.ConditionalRenderingTimeIntervalKind = &dashboardConditionalRenderingTimeIntervalKind
+		resource.ConditionalRenderingTimeRangeSizeKind = &dashboardConditionalRenderingTimeRangeSizeKind
 		return nil
 	case "ConditionalRenderingVariable":
 		var dashboardConditionalRenderingVariableKind DashboardConditionalRenderingVariableKind
@@ -2154,37 +3044,47 @@ func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingD
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind.
+func (DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind"
 }
 
 // +k8s:openapi-gen=true
-type DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind struct {
-	GridLayoutKind           *DashboardGridLayoutKind           `json:"GridLayoutKind,omitempty"`
-	RowsLayoutKind           *DashboardRowsLayoutKind           `json:"RowsLayoutKind,omitempty"`
-	ResponsiveGridLayoutKind *DashboardResponsiveGridLayoutKind `json:"ResponsiveGridLayoutKind,omitempty"`
+type DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind struct {
+	GridLayoutKind     *DashboardGridLayoutKind     `json:"GridLayoutKind,omitempty"`
+	RowsLayoutKind     *DashboardRowsLayoutKind     `json:"RowsLayoutKind,omitempty"`
+	AutoGridLayoutKind *DashboardAutoGridLayoutKind `json:"AutoGridLayoutKind,omitempty"`
+	TabsLayoutKind     *DashboardTabsLayoutKind     `json:"TabsLayoutKind,omitempty"`
 }
 
-// NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind creates a new DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind object.
-func NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind() *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind {
-	return &DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind{}
+// NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind creates a new DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind object.
+func NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind() *DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind {
+	return &DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind` as JSON.
-func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind` as JSON.
+func (resource DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) MarshalJSON() ([]byte, error) {
 	if resource.GridLayoutKind != nil {
 		return json.Marshal(resource.GridLayoutKind)
 	}
 	if resource.RowsLayoutKind != nil {
 		return json.Marshal(resource.RowsLayoutKind)
 	}
-	if resource.ResponsiveGridLayoutKind != nil {
-		return json.Marshal(resource.ResponsiveGridLayoutKind)
+	if resource.AutoGridLayoutKind != nil {
+		return json.Marshal(resource.AutoGridLayoutKind)
 	}
+	if resource.TabsLayoutKind != nil {
+		return json.Marshal(resource.TabsLayoutKind)
+	}
+
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind` from JSON.
-func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind` from JSON.
+func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2197,10 +3097,18 @@ func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKin
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
+	case "AutoGridLayout":
+		var dashboardAutoGridLayoutKind DashboardAutoGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardAutoGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.AutoGridLayoutKind = &dashboardAutoGridLayoutKind
+		return nil
 	case "GridLayout":
 		var dashboardGridLayoutKind DashboardGridLayoutKind
 		if err := json.Unmarshal(raw, &dashboardGridLayoutKind); err != nil {
@@ -2208,14 +3116,6 @@ func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKin
 		}
 
 		resource.GridLayoutKind = &dashboardGridLayoutKind
-		return nil
-	case "ResponsiveGridLayout":
-		var dashboardResponsiveGridLayoutKind DashboardResponsiveGridLayoutKind
-		if err := json.Unmarshal(raw, &dashboardResponsiveGridLayoutKind); err != nil {
-			return err
-		}
-
-		resource.ResponsiveGridLayoutKind = &dashboardResponsiveGridLayoutKind
 		return nil
 	case "RowsLayout":
 		var dashboardRowsLayoutKind DashboardRowsLayoutKind
@@ -2225,13 +3125,26 @@ func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKin
 
 		resource.RowsLayoutKind = &dashboardRowsLayoutKind
 		return nil
+	case "TabsLayout":
+		var dashboardTabsLayoutKind DashboardTabsLayoutKind
+		if err := json.Unmarshal(raw, &dashboardTabsLayoutKind); err != nil {
+			return err
+		}
+
+		resource.TabsLayoutKind = &dashboardTabsLayoutKind
+		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind.
+func (DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
 }
 
 // +k8s:openapi-gen=true
-type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind struct {
+type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind struct {
 	QueryVariableKind      *DashboardQueryVariableKind      `json:"QueryVariableKind,omitempty"`
 	TextVariableKind       *DashboardTextVariableKind       `json:"TextVariableKind,omitempty"`
 	ConstantVariableKind   *DashboardConstantVariableKind   `json:"ConstantVariableKind,omitempty"`
@@ -2240,15 +3153,16 @@ type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasou
 	CustomVariableKind     *DashboardCustomVariableKind     `json:"CustomVariableKind,omitempty"`
 	GroupByVariableKind    *DashboardGroupByVariableKind    `json:"GroupByVariableKind,omitempty"`
 	AdhocVariableKind      *DashboardAdhocVariableKind      `json:"AdhocVariableKind,omitempty"`
+	SwitchVariableKind     *DashboardSwitchVariableKind     `json:"SwitchVariableKind,omitempty"`
 }
 
-// NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind creates a new DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind object.
-func NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind() *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind {
-	return &DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind{}
+// NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind creates a new DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind object.
+func NewDashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind() *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind {
+	return &DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind` as JSON.
-func (resource DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind` as JSON.
+func (resource DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind) MarshalJSON() ([]byte, error) {
 	if resource.QueryVariableKind != nil {
 		return json.Marshal(resource.QueryVariableKind)
 	}
@@ -2273,11 +3187,15 @@ func (resource DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKin
 	if resource.AdhocVariableKind != nil {
 		return json.Marshal(resource.AdhocVariableKind)
 	}
+	if resource.SwitchVariableKind != nil {
+		return json.Marshal(resource.SwitchVariableKind)
+	}
+
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind` from JSON.
-func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind` from JSON.
+func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2290,7 +3208,7 @@ func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKi
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -2350,6 +3268,14 @@ func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKi
 
 		resource.QueryVariableKind = &dashboardQueryVariableKind
 		return nil
+	case "SwitchVariable":
+		var dashboardSwitchVariableKind DashboardSwitchVariableKind
+		if err := json.Unmarshal(raw, &dashboardSwitchVariableKind); err != nil {
+			return err
+		}
+
+		resource.SwitchVariableKind = &dashboardSwitchVariableKind
+		return nil
 	case "TextVariable":
 		var dashboardTextVariableKind DashboardTextVariableKind
 		if err := json.Unmarshal(raw, &dashboardTextVariableKind); err != nil {
@@ -2360,7 +3286,12 @@ func (resource *DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKi
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind.
+func (DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind"
 }
 
 // +k8s:openapi-gen=true
@@ -2418,6 +3349,11 @@ func (resource *DashboardStringOrArrayOfString) UnmarshalJSON(raw []byte) error 
 	return errors.Join(errList...)
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardStringOrArrayOfString.
+func (DashboardStringOrArrayOfString) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStringOrArrayOfString"
+}
+
 // +k8s:openapi-gen=true
 type DashboardStringOrFloat64 struct {
 	String  *string  `json:"String,omitempty"`
@@ -2473,87 +3409,7 @@ func (resource *DashboardStringOrFloat64) UnmarshalJSON(raw []byte) error {
 	return errors.Join(errList...)
 }
 
-// +k8s:openapi-gen=true
-type DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind struct {
-	GridLayoutKind           *DashboardGridLayoutKind           `json:"GridLayoutKind,omitempty"`
-	RowsLayoutKind           *DashboardRowsLayoutKind           `json:"RowsLayoutKind,omitempty"`
-	ResponsiveGridLayoutKind *DashboardResponsiveGridLayoutKind `json:"ResponsiveGridLayoutKind,omitempty"`
-	TabsLayoutKind           *DashboardTabsLayoutKind           `json:"TabsLayoutKind,omitempty"`
-}
-
-// NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind creates a new DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind object.
-func NewDashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind() *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind {
-	return &DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` as JSON.
-func (resource DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) MarshalJSON() ([]byte, error) {
-	if resource.GridLayoutKind != nil {
-		return json.Marshal(resource.GridLayoutKind)
-	}
-	if resource.RowsLayoutKind != nil {
-		return json.Marshal(resource.RowsLayoutKind)
-	}
-	if resource.ResponsiveGridLayoutKind != nil {
-		return json.Marshal(resource.ResponsiveGridLayoutKind)
-	}
-	if resource.TabsLayoutKind != nil {
-		return json.Marshal(resource.TabsLayoutKind)
-	}
-	return []byte("null"), nil
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind` from JSON.
-func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrResponsiveGridLayoutKindOrTabsLayoutKind) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
-	parsedAsMap := make(map[string]interface{})
-	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
-		return err
-	}
-
-	discriminator, found := parsedAsMap["kind"]
-	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
-	}
-
-	switch discriminator {
-	case "GridLayout":
-		var dashboardGridLayoutKind DashboardGridLayoutKind
-		if err := json.Unmarshal(raw, &dashboardGridLayoutKind); err != nil {
-			return err
-		}
-
-		resource.GridLayoutKind = &dashboardGridLayoutKind
-		return nil
-	case "ResponsiveGridLayout":
-		var dashboardResponsiveGridLayoutKind DashboardResponsiveGridLayoutKind
-		if err := json.Unmarshal(raw, &dashboardResponsiveGridLayoutKind); err != nil {
-			return err
-		}
-
-		resource.ResponsiveGridLayoutKind = &dashboardResponsiveGridLayoutKind
-		return nil
-	case "RowsLayout":
-		var dashboardRowsLayoutKind DashboardRowsLayoutKind
-		if err := json.Unmarshal(raw, &dashboardRowsLayoutKind); err != nil {
-			return err
-		}
-
-		resource.RowsLayoutKind = &dashboardRowsLayoutKind
-		return nil
-	case "TabsLayout":
-		var dashboardTabsLayoutKind DashboardTabsLayoutKind
-		if err := json.Unmarshal(raw, &dashboardTabsLayoutKind); err != nil {
-			return err
-		}
-
-		resource.TabsLayoutKind = &dashboardTabsLayoutKind
-		return nil
-	}
-
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+// OpenAPIModelName returns the OpenAPI model name for DashboardStringOrFloat64.
+func (DashboardStringOrFloat64) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardStringOrFloat64"
 }

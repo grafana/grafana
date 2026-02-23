@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { addListener, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
+import { ExploreQueryParams } from 'app/types/explore';
+import { addListener, useDispatch, useSelector } from 'app/types/store';
 
 import { selectPanes } from '../../state/selectors';
 
@@ -10,8 +11,6 @@ import { parseURL } from './parseURL';
 import { syncFromURL } from './synchronizer/fromURL';
 import { initializeFromURL } from './synchronizer/init';
 import { syncToURL, syncToURLPredicate } from './synchronizer/toURL';
-
-export { getUrlStateFromPaneState } from './external.utils';
 
 /**
  * Bi-directionally syncs URL changes with Explore's state.

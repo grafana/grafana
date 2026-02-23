@@ -7,15 +7,14 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/templates"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -27,9 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -41,44 +42,44 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client := newClient(t, helper.Org1.Admin)
+	client, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	newTemplate := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
 	t.Run("create should fail if object name is specified", func(t *testing.T) {
 		template := newTemplate.Copy().(*v0alpha1.TemplateGroup)
 		template.Name = "new-templateGroup"
-		_, err := client.Create(ctx, template, v1.CreateOptions{})
+		_, err := client.Create(ctx, template, resource.CreateOptions{})
 		assert.Error(t, err)
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
 	})
 
-	var resourceID string
+	var resourceID resource.Identifier
 	t.Run("create should succeed and provide resource name", func(t *testing.T) {
-		actual, err := client.Create(ctx, newTemplate, v1.CreateOptions{})
+		actual, err := client.Create(ctx, newTemplate, resource.CreateOptions{})
 		require.NoError(t, err)
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
 		require.NotEmptyf(t, actual.UID, "Resource UID should not be empty")
-		resourceID = actual.Name
+		resourceID = actual.GetStaticMetadata().Identifier()
 	})
 
 	var existingTemplateGroup *v0alpha1.TemplateGroup
 	t.Run("resource should be available by the identifier", func(t *testing.T) {
-		actual, err := client.Get(ctx, resourceID, v1.GetOptions{})
+		actual, err := client.Get(ctx, resourceID)
 		require.NoError(t, err)
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
 		require.Equal(t, newTemplate.Spec, actual.Spec)
@@ -91,12 +92,12 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		}
 		updated := existingTemplateGroup.Copy().(*v0alpha1.TemplateGroup)
 		updated.Spec.Title = "another-templateGroup"
-		actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, updated.Spec, actual.Spec)
 		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
 
-		resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
+		resource, err := client.Get(ctx, actual.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 		require.Equal(t, actual, resource)
 
@@ -105,15 +106,16 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 	var defaultTemplateGroup *v0alpha1.TemplateGroup
 	t.Run("default template should be available by the identifier", func(t *testing.T) {
-		actual, err := client.Get(ctx, templates.DefaultTemplateName, v1.GetOptions{})
+		actual, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: templates.DefaultTemplateName})
 		require.NoError(t, err)
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
 
-		defaultDefn, err := templates.DefaultTemplate()
+		defaultDefn, err := templates.DefaultTemplate(templates.DefaultTemplatesToOmit)
 		require.NoError(t, err)
-		require.Equal(t, v0alpha1.Spec{
+		require.Equal(t, v0alpha1.TemplateGroupSpec{
 			Title:   v0alpha1.DefaultTemplateTitle,
 			Content: defaultDefn.Template,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		}, actual.Spec)
 		defaultTemplateGroup = actual
 	})
@@ -122,7 +124,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 	t.Run("create with reserved default title should work", func(t *testing.T) {
 		template := newTemplate.Copy().(*v0alpha1.TemplateGroup)
 		template.Spec.Title = defaultTemplateGroup.Spec.Title
-		actual, err := client.Create(ctx, template, v1.CreateOptions{})
+		actual, err := client.Create(ctx, template, resource.CreateOptions{})
 		require.NoError(t, err)
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
 		require.NotEmptyf(t, actual.UID, "Resource UID should not be empty")
@@ -130,7 +132,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 	})
 
 	t.Run("default template should not be available by calculated UID", func(t *testing.T) {
-		actual, err := client.Get(ctx, newTemplateWithOverlappingName.Name, v1.GetOptions{})
+		actual, err := client.Get(ctx, newTemplateWithOverlappingName.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
 
@@ -139,9 +141,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -217,19 +217,22 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	}
 
-	adminClient := newClient(t, org1.Admin)
+	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client := newClient(t, tc.user)
+			client, err := v0alpha1.NewTemplateGroupClientFromGenerator(tc.user.GetClientRegistry())
+			require.NoError(t, err)
 
 			var expected = &v0alpha1.TemplateGroup{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.TemplateGroupSpec{
 					Title:   fmt.Sprintf("template-group-1-%s", tc.user.Identity.GetLogin()),
 					Content: `{{ define "test" }} test {{ end }}`,
+					Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 				},
 			}
 			expected.SetProvenanceStatus("")
@@ -238,12 +241,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 			if tc.canCreate {
 				t.Run("should be able to create template group", func(t *testing.T) {
-					actual, err := client.Create(ctx, expected, v1.CreateOptions{})
+					actual, err := client.Create(ctx, expected, resource.CreateOptions{})
 					require.NoErrorf(t, err, "Payload %s", string(d))
 					require.Equal(t, expected.Spec, actual.Spec)
 
 					t.Run("should fail if already exists", func(t *testing.T) {
-						_, err := client.Create(ctx, actual, v1.CreateOptions{})
+						_, err := client.Create(ctx, actual, resource.CreateOptions{})
 						require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
 					})
 
@@ -251,45 +254,45 @@ func TestIntegrationAccessControl(t *testing.T) {
 				})
 			} else {
 				t.Run("should be forbidden to create", func(t *testing.T) {
-					_, err := client.Create(ctx, expected, v1.CreateOptions{})
+					_, err := client.Create(ctx, expected, resource.CreateOptions{})
 					require.Truef(t, errors.IsForbidden(err), "Payload %s", string(d))
 				})
 
 				// create resource to proceed with other tests
-				expected, err = adminClient.Create(ctx, expected, v1.CreateOptions{})
+				expected, err = adminClient.Create(ctx, expected, resource.CreateOptions{})
 				require.NoErrorf(t, err, "Payload %s", string(d))
 				require.NotNil(t, expected)
 			}
 
 			if tc.canRead {
 				t.Run("should be able to list template groups", func(t *testing.T) {
-					list, err := client.List(ctx, v1.ListOptions{})
+					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 					require.NoError(t, err)
 					require.Len(t, list.Items, 2) // Includes default template.
 				})
 
 				t.Run("should be able to read template group by resource identifier", func(t *testing.T) {
-					got, err := client.Get(ctx, expected.Name, v1.GetOptions{})
+					got, err := client.Get(ctx, expected.GetStaticMetadata().Identifier())
 					require.NoError(t, err)
-					require.Equal(t, expected, got)
+					require.Equal(t, expected.Spec, got.Spec)
 
 					t.Run("should get NotFound if resource does not exist", func(t *testing.T) {
-						_, err := client.Get(ctx, "Notfound", v1.GetOptions{})
+						_, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "Notfound"})
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
 			} else {
 				t.Run("should be forbidden to list template groups", func(t *testing.T) {
-					_, err := client.List(ctx, v1.ListOptions{})
+					_, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 				})
 
 				t.Run("should be forbidden to read template group by name", func(t *testing.T) {
-					_, err := client.Get(ctx, expected.Name, v1.GetOptions{})
+					_, err := client.Get(ctx, expected.GetStaticMetadata().Identifier())
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if name does not exist", func(t *testing.T) {
-						_, err := client.Get(ctx, "Notfound", v1.GetOptions{})
+						_, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "Notfound"})
 						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 					})
 				})
@@ -303,7 +306,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 			if tc.canUpdate {
 				t.Run("should be able to update template group", func(t *testing.T) {
-					updated, err := client.Update(ctx, updatedExpected, v1.UpdateOptions{})
+					updated, err := client.Update(ctx, updatedExpected, resource.UpdateOptions{})
 					require.NoErrorf(t, err, "Payload %s", string(d))
 
 					expected = updated
@@ -311,52 +314,54 @@ func TestIntegrationAccessControl(t *testing.T) {
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
 						up := updatedExpected.Copy().(*v0alpha1.TemplateGroup)
 						up.Name = "notFound"
-						_, err := client.Update(ctx, up, v1.UpdateOptions{})
+						_, err := client.Update(ctx, up, resource.UpdateOptions{})
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
 			} else {
 				t.Run("should be forbidden to update template group", func(t *testing.T) {
-					_, err := client.Update(ctx, updatedExpected, v1.UpdateOptions{})
+					_, err := client.Update(ctx, updatedExpected, resource.UpdateOptions{})
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if resource does not exist", func(t *testing.T) {
 						up := updatedExpected.Copy().(*v0alpha1.TemplateGroup)
 						up.Name = "notFound"
-						_, err := client.Update(ctx, up, v1.UpdateOptions{})
+						_, err := client.Update(ctx, up, resource.UpdateOptions{
+							ResourceVersion: up.ResourceVersion,
+						})
 						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 					})
 				})
 			}
 
 			deleteOptions := v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer(expected.ResourceVersion)}}
-
+			oldClient := common.NewTemplateGroupClient(t, tc.user) // TODO replace with normal client once delete is fixed
 			if tc.canDelete {
 				t.Run("should be able to delete template group", func(t *testing.T) {
-					err := client.Delete(ctx, expected.Name, deleteOptions)
+					err := oldClient.Delete(ctx, expected.GetStaticMetadata().Identifier().Name, deleteOptions)
 					require.NoError(t, err)
 
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
-						err := client.Delete(ctx, "notfound", v1.DeleteOptions{})
+						err := oldClient.Delete(ctx, "notfound", v1.DeleteOptions{})
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
 			} else {
 				t.Run("should be forbidden to delete template group", func(t *testing.T) {
-					err := client.Delete(ctx, expected.Name, deleteOptions)
+					err := oldClient.Delete(ctx, expected.GetStaticMetadata().Identifier().Name, deleteOptions)
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should be forbidden even if resource does not exist", func(t *testing.T) {
-						err := client.Delete(ctx, "notfound", v1.DeleteOptions{})
+						err := oldClient.Delete(ctx, "notfound", v1.DeleteOptions{})
 						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 					})
 				})
-				require.NoError(t, adminClient.Delete(ctx, expected.Name, v1.DeleteOptions{}))
+				require.NoError(t, adminClient.Delete(ctx, expected.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
 			}
 
 			if tc.canRead {
 				t.Run("should get list with just default template if no template groups", func(t *testing.T) {
-					list, err := client.List(ctx, v1.ListOptions{})
+					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 					require.NoError(t, err)
 					require.Len(t, list.Items, 1)
 					require.Equal(t, templates.DefaultTemplateName, list.Items[0].Name)
@@ -367,9 +372,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -377,7 +380,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminClient := newClient(t, admin)
+	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
@@ -388,11 +392,12 @@ func TestIntegrationProvisioning(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
-	}, v1.CreateOptions{})
+	}, resource.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "none", created.GetProvenanceStatus())
 
@@ -401,7 +406,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 			Name: created.Spec.Title,
 		}, admin.Identity.GetOrgID(), "API"))
 
-		got, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 		require.Equal(t, "API", got.GetProvenanceStatus())
 	})
@@ -409,51 +414,52 @@ func TestIntegrationProvisioning(t *testing.T) {
 		updated := created.Copy().(*v0alpha1.TemplateGroup)
 		updated.Spec.Content = `{{ define "another-test" }} test {{ end }}`
 
-		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 	})
 
 	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, created.Name, v1.DeleteOptions{})
+		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 	})
 }
 
 func TestIntegrationOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
-
+	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+	oldClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
-	created, err := adminClient.Create(ctx, &template, v1.CreateOptions{})
+	created, err := adminClient.Create(ctx, &template, resource.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, created)
 	require.NotEmpty(t, created.ResourceVersion)
 
 	t.Run("should forbid if version does not match", func(t *testing.T) {
 		updated := created.Copy().(*v0alpha1.TemplateGroup)
-		updated.ResourceVersion = "test"
-		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{
+			ResourceVersion: "test",
+		})
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should update if version matches", func(t *testing.T) {
 		updated := created.Copy().(*v0alpha1.TemplateGroup)
 		updated.Spec.Content = `{{ define "test-another" }} test {{ end }}`
-		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.EqualValues(t, updated.Spec, actualUpdated.Spec)
 		require.NotEqual(t, updated.ResourceVersion, actualUpdated.ResourceVersion)
@@ -463,16 +469,16 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		updated.ResourceVersion = ""
 		updated.Spec.Content = `{{ define "test-another-2" }} test {{ end }}`
 
-		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.EqualValues(t, updated.Spec, actualUpdated.Spec)
 		require.NotEqual(t, created.ResourceVersion, actualUpdated.ResourceVersion)
 	})
 	t.Run("should fail to delete if version does not match", func(t *testing.T) {
-		actual, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		actual, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 
-		err = adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{
+		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
 				ResourceVersion: util.Pointer("something"),
 			},
@@ -480,10 +486,10 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should succeed if version matches", func(t *testing.T) {
-		actual, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		actual, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 
-		err = adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{
+		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
 				ResourceVersion: util.Pointer(actual.ResourceVersion),
 			},
@@ -491,10 +497,10 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.NoError(t, err)
 	})
 	t.Run("should succeed if version is empty", func(t *testing.T) {
-		actual, err := adminClient.Create(ctx, &template, v1.CreateOptions{})
+		actual, err := adminClient.Create(ctx, &template, resource.CreateOptions{})
 		require.NoError(t, err)
 
-		err = adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{
+		err = oldClient.Delete(ctx, actual.GetStaticMetadata().Identifier().Name, v1.DeleteOptions{
 			Preconditions: &v1.Preconditions{
 				ResourceVersion: util.Pointer(actual.ResourceVersion),
 			},
@@ -504,27 +510,29 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
-	current, err := adminClient.Create(ctx, &template, v1.CreateOptions{})
+	current, err := adminClient.Create(ctx, &template, resource.CreateOptions{})
 	require.NoError(t, err)
+	oldClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
+
 	require.NotNil(t, current)
 	require.NotEmpty(t, current.ResourceVersion)
 
@@ -535,7 +543,7 @@ func TestIntegrationPatch(t *testing.T) {
              }
 		 }`
 
-		result, err := adminClient.Patch(ctx, current.Name, types.MergePatchType, []byte(patch), v1.PatchOptions{})
+		result, err := oldClient.Patch(ctx, current.GetStaticMetadata().Identifier().Name, types.MergePatchType, []byte(patch), v1.PatchOptions{})
 		require.NoError(t, err)
 		require.Equal(t, `{{ define "test-another" }} test {{ end }}`, result.Spec.Content)
 		current = result
@@ -544,18 +552,15 @@ func TestIntegrationPatch(t *testing.T) {
 	t.Run("should patch with json patch", func(t *testing.T) {
 		expected := `{{ define "test-json-patch" }} test {{ end }}`
 
-		patch := []map[string]interface{}{
+		patch := []resource.PatchOperation{
 			{
-				"op":    "replace",
-				"path":  "/spec/content",
-				"value": expected,
+				Operation: "replace",
+				Path:      "/spec/content",
+				Value:     expected,
 			},
 		}
 
-		patchData, err := json.Marshal(patch)
-		require.NoError(t, err)
-
-		result, err := adminClient.Patch(ctx, current.Name, types.JSONPatchType, patchData, v1.PatchOptions{})
+		result, err := adminClient.Patch(ctx, current.GetStaticMetadata().Identifier(), resource.PatchRequest{Operations: patch}, resource.PatchOptions{})
 		require.NoError(t, err)
 		expectedSpec := current.Spec
 		expectedSpec.Content = expected
@@ -565,36 +570,37 @@ func TestIntegrationPatch(t *testing.T) {
 }
 
 func TestIntegrationListSelector(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	template1 := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test1",
 			Content: `{{ define "test1" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
-	template1, err := adminClient.Create(ctx, template1, v1.CreateOptions{})
+	template1, err = adminClient.Create(ctx, template1, resource.CreateOptions{})
 	require.NoError(t, err)
 
 	template2 := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test2",
 			Content: `{{ define "test2" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
-	template2, err = adminClient.Create(ctx, template2, v1.CreateOptions{})
+	template2, err = adminClient.Create(ctx, template2, resource.CreateOptions{})
 	require.NoError(t, err)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
@@ -603,17 +609,18 @@ func TestIntegrationListSelector(t *testing.T) {
 	require.NoError(t, db.SetProvenance(ctx, &definitions.NotificationTemplate{
 		Name: template2.Spec.Title,
 	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
-	template2, err = adminClient.Get(ctx, template2.Name, v1.GetOptions{})
+	template2, err = adminClient.Get(ctx, template2.GetStaticMetadata().Identifier())
 
 	require.NoError(t, err)
 
-	tmpls, err := adminClient.List(ctx, v1.ListOptions{})
+	tmpls, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, tmpls.Items, 3) // Includes default template.
 
 	t.Run("should filter by template name", func(t *testing.T) {
-		list, err := adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: "spec.title=" + template1.Spec.Title,
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{"spec.title=" + template1.Spec.Title},
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
@@ -621,8 +628,8 @@ func TestIntegrationListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by template metadata name", func(t *testing.T) {
-		list, err := adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: "metadata.name=" + template2.Name,
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{"metadata.name=" + template2.Name},
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
@@ -630,8 +637,9 @@ func TestIntegrationListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
-		list, err := adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.title=%s", template2.Name, template2.Spec.Title),
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{fmt.Sprintf("metadata.name=%s,spec.title=%s", template2.Name, template2.Spec.Title)},
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
@@ -639,25 +647,26 @@ func TestIntegrationListSelector(t *testing.T) {
 	})
 
 	t.Run("should be empty when filter does not match", func(t *testing.T) {
-		list, err := adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: fmt.Sprintf("metadata.name=%s", "unknown"),
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{fmt.Sprintf("metadata.name=%s", "unknown")},
 		})
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
 	})
 
 	t.Run("should filter by default template name", func(t *testing.T) {
-		list, err := adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: "spec.title=" + v0alpha1.DefaultTemplateTitle,
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{"spec.title=" + v0alpha1.DefaultTemplateTitle},
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
 		require.Equal(t, templates.DefaultTemplateName, list.Items[0].Name)
 
 		// Now just non-default templates
-		list, err = adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: "spec.title!=" + v0alpha1.DefaultTemplateTitle,
-		})
+		list, err = adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
+			FieldSelectors: []string{"spec.title!=" + v0alpha1.DefaultTemplateTitle}},
+		)
 		require.NoError(t, err)
 		require.Len(t, list.Items, 2)
 		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[0].Name, "Expected non-default template but got %s", list.Items[0].Name)
@@ -665,18 +674,37 @@ func TestIntegrationListSelector(t *testing.T) {
 	})
 }
 
-func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList] {
-	t.Helper()
+func TestIntegrationKinds(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	client, err := dynamic.NewForConfig(user.NewRestConfig())
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	client, err := v0alpha1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	return &apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList]{
-		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.Kind().Group(),
-				Version:  v0alpha1.Kind().Version(),
-				Resource: v0alpha1.Kind().Plural(),
-			}).Namespace("default"),
+	newTemplate := &v0alpha1.TemplateGroup{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TemplateGroupSpec{
+			Title:   "templateGroup",
+			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+		},
 	}
+
+	t.Run("should not let create Mimir template", func(t *testing.T) {
+		_, err := client.Create(ctx, newTemplate, resource.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+	})
+
+	t.Run("should not let change kind", func(t *testing.T) {
+		newTemplate.Spec.Kind = v0alpha1.TemplateGroupTemplateKindGrafana
+		created, err := client.Create(ctx, newTemplate, resource.CreateOptions{})
+		require.NoError(t, err)
+
+		created.Spec.Kind = v0alpha1.TemplateGroupTemplateKindMimir
+		_, err = client.Update(ctx, created, resource.UpdateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+	})
 }

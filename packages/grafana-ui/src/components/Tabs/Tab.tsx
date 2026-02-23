@@ -5,11 +5,12 @@ import * as React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types';
-import { clearButtonStyles } from '../Button';
+import { IconName } from '../../types/icon';
+import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { Counter } from './Counter';
 
@@ -25,16 +26,41 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
   truncate?: boolean;
+  tooltip?: string;
+  /** When true, the tab will be disabled and not clickable */
+  disabled?: boolean;
+  /** When provided, used instead of label for the data-testid. Useful for locale-stable e2e selectors. */
+  'data-testid'?: string;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-tabs--docs
+ */
 export const Tab = React.forwardRef<HTMLElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, truncate, ...otherProps }, ref) => {
+  (
+    {
+      label,
+      active,
+      icon,
+      onChangeTab,
+      counter,
+      suffix: Suffix,
+      className,
+      href,
+      truncate,
+      tooltip,
+      disabled,
+      'data-testid': testId,
+      ...otherProps
+    },
+    ref
+  ) => {
     const tabsStyles = useStyles2(getStyles);
     const clearStyles = useStyles2(clearButtonStyles);
 
     const content = () => (
       <>
-        {icon && <Icon name={icon} />}
+        {icon && <Icon name={icon} data-testid={`tab-icon-${icon}`} />}
         {label}
         {typeof counter === 'number' && <Counter value={counter} />}
         {Suffix && <Suffix className={tabsStyles.suffix} />}
@@ -45,24 +71,30 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       clearStyles,
       tabsStyles.link,
       active ? tabsStyles.activeStyle : tabsStyles.notActive,
-      truncate && tabsStyles.linkTruncate
+      truncate && tabsStyles.linkTruncate,
+      disabled && tabsStyles.disabled
     );
 
     const commonProps = {
       className: linkClass,
-      'data-testid': selectors.components.Tab.title(label),
+      'data-testid': testId ?? selectors.components.Tab.title(label),
       ...otherProps,
-      onClick: onChangeTab,
+      onClick: disabled ? undefined : onChangeTab,
       role: 'tab',
       'aria-selected': active,
+      'aria-disabled': disabled,
+      tabIndex: disabled ? -1 : undefined,
+      title: !!tooltip ? undefined : otherProps.title, // If tooltip is provided, don't set the title on the link or button, it looks weird
     };
 
+    let tab = null;
+
     if (href) {
-      return (
+      tab = (
         <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
           <a
             {...commonProps}
-            href={href}
+            href={disabled ? undefined : href}
             // don't think we can avoid the type assertion here :(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             ref={ref as React.ForwardedRef<HTMLAnchorElement>}
@@ -71,21 +103,27 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
           </a>
         </div>
       );
+    } else {
+      tab = (
+        <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
+          <button
+            {...commonProps}
+            type="button"
+            // don't think we can avoid the type assertion here :(
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            ref={ref as React.ForwardedRef<HTMLButtonElement>}
+          >
+            {content()}
+          </button>
+        </div>
+      );
     }
 
-    return (
-      <div className={cx(tabsStyles.item, truncate && tabsStyles.itemTruncate, className)}>
-        <button
-          {...commonProps}
-          type="button"
-          // don't think we can avoid the type assertion here :(
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          ref={ref as React.ForwardedRef<HTMLButtonElement>}
-        >
-          {content()}
-        </button>
-      </div>
-    );
+    if (tooltip) {
+      return <Tooltip content={tooltip}>{tab}</Tooltip>;
+    }
+
+    return tab;
   }
 );
 
@@ -154,6 +192,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     suffix: css({
       marginLeft: theme.spacing(1),
+    }),
+    disabled: css({
+      color: theme.colors.text.disabled,
+      cursor: 'not-allowed',
+
+      '&:hover, &:focus': {
+        color: theme.colors.text.disabled,
+
+        '&::before': {
+          backgroundColor: 'transparent',
+        },
+      },
     }),
   };
 };

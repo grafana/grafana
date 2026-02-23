@@ -1,6 +1,6 @@
 // Library
 import { cx } from '@emotion/css';
-import { CSSProperties, PureComponent, ReactNode } from 'react';
+import { CSSProperties, PureComponent, ReactNode, type JSX } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -23,9 +23,9 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode, VizTextDisplayOptions } from '@grafana/schema';
 
-import { Themeable2 } from '../../types';
+import { Themeable2 } from '../../types/theme';
 import { calculateFontSize, measureText } from '../../utils/measureText';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 const MIN_VALUE_HEIGHT = 18;
@@ -56,6 +56,9 @@ export interface Props extends Themeable2 {
   isOverflow: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-bargauge--docs
+ */
 export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     lcdCellWidth: 12,
@@ -147,11 +150,11 @@ export class BarGauge extends PureComponent<Props> {
       lcdCellWidth,
       text,
       valueDisplayMode,
-      theme,
       isOverflow,
     } = this.props;
-    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
-      calculateBarAndValueDimensions(this.props);
+    const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperHeight } = calculateBarAndValueDimensions(
+      this.props
+    );
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
     const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 
@@ -175,18 +178,23 @@ export class BarGauge extends PureComponent<Props> {
     );
 
     const containerStyles: CSSProperties = {
-      width: `${wrapperWidth}px`,
       height: `${wrapperHeight}px`,
+      display: 'flex',
+    };
+
+    const cellsContainerStyles: CSSProperties = {
       display: 'flex',
     };
 
     if (isVert) {
       containerStyles.flexDirection = 'column-reverse';
       containerStyles.alignItems = 'center';
+      cellsContainerStyles.flexDirection = 'column-reverse';
     } else {
       containerStyles.flexDirection = 'row';
       containerStyles.alignItems = 'center';
       valueStyles.justifyContent = 'flex-end';
+      cellsContainerStyles.flexDirection = 'row';
     }
 
     const cells: JSX.Element[] = [];
@@ -195,7 +203,7 @@ export class BarGauge extends PureComponent<Props> {
       const currentValue = minValue + (valueRange / cellCount) * i;
       const cellColor = getCellColor(currentValue, value, display);
       const cellStyles: CSSProperties = {
-        borderRadius: theme.shape.radius.default,
+        borderRadius: '2px',
       };
 
       if (cellColor.isLit) {
@@ -219,7 +227,7 @@ export class BarGauge extends PureComponent<Props> {
 
     return (
       <div style={containerStyles}>
-        {cells}
+        <div style={cellsContainerStyles}>{cells}</div>
         {valueDisplayMode !== BarGaugeValueMode.Hidden && (
           <FormattedValueDisplay
             data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
@@ -525,16 +533,15 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const barStyles: CSSProperties = {
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     position: 'relative',
-    zIndex: 1,
   };
 
   const emptyBar: CSSProperties = {
     background: theme.colors.background.secondary,
     flexGrow: 1,
     display: 'flex',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.sm,
     position: 'relative',
   };
 

@@ -3,7 +3,7 @@ import { HTMLProps, useEffect } from 'react';
 import * as React from 'react';
 import { useForm, Mode, DefaultValues, SubmitHandler, FieldValues } from 'react-hook-form';
 
-import { FormAPI } from '../../types';
+import { FormAPI } from '../../types/forms';
 
 interface FormProps<T extends FieldValues> extends Omit<HTMLProps<HTMLFormElement>, 'onSubmit' | 'children'> {
   validateOn?: Mode;
@@ -18,6 +18,8 @@ interface FormProps<T extends FieldValues> extends Omit<HTMLProps<HTMLFormElemen
 
 /**
  * @deprecated use the `useForm` hook from react-hook-form instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-form--docs
  */
 export function Form<T extends FieldValues>({
   defaultValues,

@@ -1,6 +1,5 @@
 import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
 import { IconName, ButtonVariant } from '@grafana/ui';
-import { HistoryEntryView } from 'app/core/components/AppChrome/types';
 
 /**
  * Event Payloads
@@ -28,6 +27,18 @@ export interface ShowModalReactPayload {
   props?: any;
 }
 
+export interface OpenExtensionSidebarPayload {
+  props?: Record<string, unknown>;
+  pluginId: string;
+  componentTitle: string;
+}
+
+export interface ToggleExtensionSidebarPayload {
+  props?: Record<string, unknown>;
+  pluginId: string;
+  componentTitle: string;
+}
+
 export interface ShowConfirmModalPayload {
   title?: string;
   text?: string;
@@ -49,17 +60,6 @@ export interface ToggleKioskModePayload {
   exit?: boolean;
 }
 
-export interface GraphClickedPayload {
-  pos: any;
-  panel: any;
-  item: any;
-}
-
-export interface ThresholdChangedPayload {
-  threshold: any;
-  handleIndex: number;
-}
-
 export interface DashScrollPayload {
   restore?: boolean;
   animate?: boolean;
@@ -73,12 +73,6 @@ export interface PanelChangeViewPayload {}
  */
 
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
-export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
-
-/**
- * @internal
- */
-export const thresholdChanged = eventFactory<ThresholdChangedPayload>('threshold-changed');
 
 /**
  * Used for syncing queries badge count in panel edit queries tab
@@ -165,6 +159,10 @@ export class AbsoluteTimeEvent extends BusEventWithPayload<AbsoluteTimeEventPayl
   static type = 'absolute-time';
 }
 
+export class RunQueriesEvent extends BusEventBase {
+  static type = 'run-queries';
+}
+
 export class RemovePanelEvent extends BusEventWithPayload<number> {
   static type = 'remove-panel';
 }
@@ -182,6 +180,18 @@ export class ShowConfirmModalEvent extends BusEventWithPayload<ShowConfirmModalP
 
 export class ShowModalReactEvent extends BusEventWithPayload<ShowModalReactPayload> {
   static type = 'show-react-modal';
+}
+
+export class OpenExtensionSidebarEvent extends BusEventWithPayload<OpenExtensionSidebarPayload> {
+  static type = 'open-extension-sidebar';
+}
+
+export class CloseExtensionSidebarEvent extends BusEventBase {
+  static type = 'close-extension-sidebar';
+}
+
+export class ToggleExtensionSidebarEvent extends BusEventWithPayload<ToggleExtensionSidebarPayload> {
+  static type = 'toggle-extension-sidebar';
 }
 
 /**
@@ -209,8 +219,4 @@ export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
 
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
-}
-
-export class RecordHistoryEntryEvent extends BusEventWithPayload<HistoryEntryView> {
-  static type = 'record-history-entry';
 }

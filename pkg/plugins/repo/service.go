@@ -13,6 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
+const (
+	getPluginsInfoMaxPlugins = 50
+)
+
 type Manager struct {
 	client *Client
 
@@ -132,25 +136,55 @@ func (m *Manager) grafanaCompatiblePluginVersions(ctx context.Context, pluginID 
 	return v.Versions, nil
 }
 
-func (m *Manager) PluginInfo(ctx context.Context, pluginID string) (*PluginInfo, error) {
+type GetPluginsInfoOptions struct {
+	IncludeDeprecated bool
+	Plugins           []string
+}
+
+func (m *Manager) GetPluginsInfo(ctx context.Context, options GetPluginsInfoOptions, compatOpts CompatOpts) ([]PluginInfo, error) {
 	u, err := url.Parse(m.client.grafanaComAPIURL)
 	if err != nil {
 		return nil, err
 	}
 
-	u.Path = path.Join(u.Path, pluginID)
+	// If we are requesting more than 50 plugins, split the request into multiple requests to avoid
+	// the URL limit (local testing shows that the URL is <2000 characters for 100 plugins, so 50 is
+	// a safe limit).
+	plugins := [][]string{}
+	results := []PluginInfo{}
+	if len(options.Plugins) > getPluginsInfoMaxPlugins {
+		for i := 0; i < len(options.Plugins); i += getPluginsInfoMaxPlugins {
+			plugins = append(plugins, options.Plugins[i:min(i+getPluginsInfoMaxPlugins, len(options.Plugins))])
+		}
+	} else {
+		plugins = [][]string{options.Plugins}
+	}
+	for _, p := range plugins {
+		q := u.Query()
+		if options.IncludeDeprecated {
+			q.Set("includeDeprecated", "true")
+		}
+		if len(p) > 0 {
+			q.Set("slugIn", strings.Join(p, ","))
+		}
+		u.RawQuery = q.Encode()
 
-	body, err := m.client.SendReq(ctx, u, CompatOpts{})
-	if err != nil {
-		return nil, err
+		body, err := m.client.SendReq(ctx, u, compatOpts)
+		if err != nil {
+			return nil, err
+		}
+
+		var v struct {
+			Items []PluginInfo `json:"items"`
+		}
+		err = json.Unmarshal(body, &v)
+		if err != nil {
+			m.log.Error("Failed to unmarshal plugin repo response", "error", err)
+			return nil, err
+		}
+
+		results = append(results, v.Items...)
 	}
 
-	var v PluginInfo
-	err = json.Unmarshal(body, &v)
-	if err != nil {
-		m.log.Error("Failed to unmarshal plugin repo response", "error", err)
-		return nil, err
-	}
-
-	return &v, nil
+	return results, nil
 }

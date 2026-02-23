@@ -5,10 +5,10 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
-import { Button, ButtonVariant } from '../Button';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { Button, ButtonVariant } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
@@ -103,7 +103,11 @@ export const ConfirmContent = ({
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
               <Field disabled={disabled}>
-                <Input placeholder={placeholder} onChange={onConfirmationTextChange} />
+                <Input
+                  placeholder={placeholder}
+                  onChange={onConfirmationTextChange}
+                  data-testid={selectors.pages.ConfirmModal.input}
+                />
               </Field>
             </Stack>
           </div>

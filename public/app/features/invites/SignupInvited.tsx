@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
@@ -65,44 +66,90 @@ export const SignupInvitedPage = () => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h3 className="page-sub-heading">Hello {greeting || 'there'}.</h3>
+        <h3 className="page-sub-heading">
+          {greeting
+            ? t('invites.signup-invited-page.greeting-custom', 'Hello {{greeting}}.', { greeting })
+            : t('invites.signup-invited-page.greeting-default', 'Hello there.')}
+        </h3>
 
         <div className={cx('modal-tagline', styles.tagline)}>
-          <em>{invitedBy || 'Someone'}</em> has invited you to join Grafana and the organization{' '}
-          <span className="highlight-word">{initFormModel.orgName}</span>
+          {invitedBy ? (
+            <Trans
+              i18nKey="invites.signup-invited-page.custom-has-invited-you"
+              values={{ invitedBy, orgName: initFormModel.orgName }}
+            >
+              <em>{'{{invitedBy}}'}</em> has invited you to join Grafana and the organization{' '}
+              <span className="highlight-word">{'{{orgName}}'}</span>
+            </Trans>
+          ) : (
+            <Trans
+              i18nKey="invites.signup-invited-page.default-has-invited-you"
+              values={{ orgName: initFormModel.orgName }}
+            >
+              <em>Someone</em> has invited you to join Grafana and the organization{' '}
+              <span className="highlight-word">{'{{orgName}}'}</span>
+            </Trans>
+          )}
           <br />
-          Please complete the following and choose a password to accept your invitation and continue:
+          <Trans i18nKey="invites.signup-invited-page.complete-following">
+            Please complete the following and choose a password to accept your invitation and continue:
+          </Trans>
         </div>
         <Form defaultValues={initFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
             <>
-              <Field invalid={!!errors.email} error={errors.email && errors.email.message} label="Email">
+              <Field
+                invalid={!!errors.email}
+                error={errors.email && errors.email.message}
+                label={t('invites.signup-invited-page.label-email', 'Email')}
+              >
                 <Input
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="email@example.com"
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
                       value: w3cStandardEmailValidator,
-                      message: 'Email is invalid',
+                      message: t('invites.signup-invited-page.message.email-is-invalid', 'Email is invalid'),
                     },
                   })}
                 />
               </Field>
-              <Field invalid={!!errors.name} error={errors.name && errors.name.message} label="Name">
-                <Input placeholder="Name (optional)" {...register('name')} />
+              <Field
+                invalid={!!errors.name}
+                error={errors.name && errors.name.message}
+                label={t('invites.signup-invited-page.label-name', 'Name')}
+              >
+                <Input
+                  placeholder={t('invites.signup-invited-page.placeholder-name-optional', 'Name (optional)')}
+                  {...register('name')}
+                />
               </Field>
-              <Field invalid={!!errors.username} error={errors.username && errors.username.message} label="Username">
-                <Input {...register('username', { required: 'Username is required' })} placeholder="Username" />
+              <Field
+                invalid={!!errors.username}
+                error={errors.username && errors.username.message}
+                label={t('invites.signup-invited-page.label-username', 'Username')}
+              >
+                <Input
+                  {...register('username', { required: 'Username is required' })}
+                  placeholder={t('invites.signup-invited-page.placeholder-username', 'Username')}
+                />
               </Field>
-              <Field invalid={!!errors.password} error={errors.password && errors.password.message} label="Password">
+              <Field
+                invalid={!!errors.password}
+                error={errors.password && errors.password.message}
+                label={t('invites.signup-invited-page.label-password', 'Password')}
+              >
                 <Input
                   {...register('password', { required: 'Password is required' })}
                   type="password"
-                  placeholder="Password"
+                  placeholder={t('invites.signup-invited-page.placeholder-password', 'Password')}
                 />
               </Field>
 
-              <Button type="submit">Sign up</Button>
+              <Button type="submit">
+                <Trans i18nKey="invites.signup-invited-page.sign-up">Sign up</Trans>
+              </Button>
             </>
           )}
         </Form>

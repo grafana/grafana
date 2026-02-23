@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Slider from 'rc-slider';
+import Slider from '@rc-component/slider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { StandardEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
@@ -11,7 +11,7 @@ import { NumberInput } from './NumberInput';
 
 type Props = StandardEditorProps<number, SliderFieldConfigSettings>;
 
-export const SliderValueEditor = ({ value, onChange, item }: Props) => {
+export const SliderValueEditor = ({ value, onChange, item, id }: Props) => {
   // Input reference
   const inputRef = useRef<HTMLSpanElement>(null);
 
@@ -109,7 +109,7 @@ export const SliderValueEditor = ({ value, onChange, item }: Props) => {
           included={included}
         />
         <span className={stylesSlider.numberInputWrapper} ref={inputRef}>
-          <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
+          <NumberInput id={id} value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
         </span>
       </div>
     </div>

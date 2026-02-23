@@ -4,21 +4,28 @@ import (
 	"bytes"
 	"compress/zlib"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -36,6 +43,8 @@ type SocialBase struct {
 	features      featuremgmt.FeatureToggles
 	orgRoleMapper *OrgRoleMapper
 	orgMappingCfg MappingConfiguration
+	cache         remotecache.CacheStorage
+	providerName  string
 }
 
 func newSocialBase(name string,
@@ -43,6 +52,16 @@ func newSocialBase(name string,
 	info *social.OAuthInfo,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
+) *SocialBase {
+	return newSocialBaseWithCache(name, orgRoleMapper, info, features, cfg, nil)
+}
+
+func newSocialBaseWithCache(name string,
+	orgRoleMapper *OrgRoleMapper,
+	info *social.OAuthInfo,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	cache remotecache.CacheStorage,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
@@ -54,6 +73,8 @@ func newSocialBase(name string,
 		cfg:           cfg,
 		orgRoleMapper: orgRoleMapper,
 		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict),
+		providerName:  name,
+		cache:         cache,
 	}
 }
 
@@ -85,6 +106,19 @@ func (s *SocialBase) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) st
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
 
+	return s.getAuthCodeURL(state, opts...)
+}
+
+func (s *SocialBase) getAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	if s.info.LoginPrompt != "" {
+		promptOpt := oauth2.SetAuthURLParam("prompt", s.info.LoginPrompt)
+
+		// Prepend the prompt option to the opts slice to ensure it is applied last.
+		// This is necessary in case the caller provides an option that overrides the prompt,
+		// such as `oauth2.ApprovalForce`.
+		opts = append([]oauth2.AuthCodeOption{promptOpt}, opts...)
+	}
+
 	return s.Config.AuthCodeURL(state, opts...)
 }
 
@@ -112,23 +146,24 @@ func (s *SocialBase) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.To
 func (s *SocialBase) getBaseSupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString("## Client configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin))
-	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.info.AllowSignup))
-	bf.WriteString(fmt.Sprintf("allowed_domains = %v\n", s.info.AllowedDomains))
-	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.cfg.AutoAssignOrgRole))
-	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.info.RoleAttributePath))
-	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.info.RoleAttributeStrict))
-	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.info.SkipOrgRoleSync))
-	bf.WriteString(fmt.Sprintf("client_authentication = %v\n", s.info.ClientAuthentication))
-	bf.WriteString(fmt.Sprintf("client_id = %v\n", s.Config.ClientID))
-	bf.WriteString(fmt.Sprintf("client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.Config.ClientSecret))))
-	bf.WriteString(fmt.Sprintf("managed_identity_client_id = %v\n", s.info.ManagedIdentityClientID))
-	bf.WriteString(fmt.Sprintf("federated_credential_audience = %v\n", s.info.FederatedCredentialAudience))
-	bf.WriteString(fmt.Sprintf("auth_url = %v\n", s.Config.Endpoint.AuthURL))
-	bf.WriteString(fmt.Sprintf("token_url = %v\n", s.Config.Endpoint.TokenURL))
-	bf.WriteString(fmt.Sprintf("auth_style = %v\n", s.Config.Endpoint.AuthStyle))
-	bf.WriteString(fmt.Sprintf("redirect_url = %v\n", s.Config.RedirectURL))
-	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
+	fmt.Fprintf(bf, "allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin)
+	fmt.Fprintf(bf, "allow_sign_up = %v\n", s.info.AllowSignup)
+	fmt.Fprintf(bf, "allowed_domains = %v\n", s.info.AllowedDomains)
+	fmt.Fprintf(bf, "auto_assign_org_role = %v\n", s.cfg.AutoAssignOrgRole)
+	fmt.Fprintf(bf, "role_attribute_path = %v\n", s.info.RoleAttributePath)
+	fmt.Fprintf(bf, "role_attribute_strict = %v\n", s.info.RoleAttributeStrict)
+	fmt.Fprintf(bf, "skip_org_role_sync = %v\n", s.info.SkipOrgRoleSync)
+	fmt.Fprintf(bf, "client_authentication = %v\n", s.info.ClientAuthentication)
+	fmt.Fprintf(bf, "client_id = %v\n", s.ClientID)
+	fmt.Fprintf(bf, "client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.ClientSecret)))
+	fmt.Fprintf(bf, "managed_identity_client_id = %v\n", s.info.ManagedIdentityClientID)
+	fmt.Fprintf(bf, "federated_credential_audience = %v\n", s.info.FederatedCredentialAudience)
+	fmt.Fprintf(bf, "workload_identity_token_file = %v\n", s.info.WorkloadIdentityTokenFile)
+	fmt.Fprintf(bf, "auth_url = %v\n", s.Endpoint.AuthURL)
+	fmt.Fprintf(bf, "token_url = %v\n", s.Endpoint.TokenURL)
+	fmt.Fprintf(bf, "auth_style = %v\n", s.Endpoint.AuthStyle)
+	fmt.Fprintf(bf, "redirect_url = %v\n", s.RedirectURL)
+	fmt.Fprintf(bf, "scopes = %v\n", s.Scopes)
 	bf.WriteString("```\n\n")
 
 	return nil
@@ -195,21 +230,21 @@ func (s *SocialBase) isGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
-	tokenString, ok := idToken.(string)
+func (s *SocialBase) retrieveRawJWTPayload(token any) ([]byte, error) {
+	tokenString, ok := token.(string)
 	if !ok {
-		return nil, fmt.Errorf("id_token is not a string: %v", idToken)
+		return nil, fmt.Errorf("token is not a string: %v", token)
 	}
 
 	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(tokenString)
 	if matched == nil {
-		return nil, fmt.Errorf("id_token is not in JWT format: %s", tokenString)
+		return nil, fmt.Errorf("token is not in JWT format: %s", tokenString)
 	}
 
 	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
 	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding id_token: %w", err)
+		return nil, fmt.Errorf("error base64 decoding token payload: %w", err)
 	}
 
 	headerBytes, err := base64.RawURLEncoding.DecodeString(matched[1])
@@ -251,6 +286,173 @@ func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
 	return rawJSON, nil
 }
 
+// getJWKSCacheKeyPrefix returns the cache key prefix for the provider
+func (s *SocialBase) getJWKSCacheKeyPrefix() string {
+	return s.providerName + "_oauth_jwks-"
+}
+
+// getJWKSCacheKeyForURL returns a cache key for the given JWKS URL (prefix + hash of URL).
+func (s *SocialBase) getJWKSCacheKeyForURL(jwkSetURL string) string {
+	sum := sha256.Sum256([]byte(jwkSetURL))
+	return s.getJWKSCacheKeyPrefix() + hex.EncodeToString(sum[:])
+}
+
+// retrieveJWKSFromCache retrieves JWKS from cache by cache key.
+func (s *SocialBase) retrieveJWKSFromCache(ctx context.Context, cacheKey string) (*keySetJWKS, time.Duration, error) {
+	if s.cache == nil {
+		return &keySetJWKS{}, 0, nil
+	}
+
+	if val, err := s.cache.Get(ctx, cacheKey); err == nil {
+		var jwks keySetJWKS
+		err := json.Unmarshal(val, &jwks)
+		s.log.Debug("Retrieved cached key set", "cacheKey", cacheKey)
+		return &jwks, 0, err
+	}
+	s.log.Debug("Keyset not found in cache")
+
+	return &keySetJWKS{}, 0, nil
+}
+
+// cacheJWKS caches the JWKS under the given cache key.
+func (s *SocialBase) cacheJWKS(ctx context.Context, cacheKey string, jwks *keySetJWKS, cacheExpiration time.Duration) error {
+	if s.cache == nil {
+		return nil
+	}
+
+	var jsonBuf bytes.Buffer
+	if err := json.NewEncoder(&jsonBuf).Encode(jwks); err != nil {
+		return err
+	}
+
+	if err := s.cache.Set(ctx, cacheKey, jsonBuf.Bytes(), cacheExpiration); err != nil {
+		s.log.Warn("Failed to cache key set", "err", err)
+	}
+
+	return nil
+}
+
+const (
+	defaultCacheExpiration = 5 * time.Minute
+)
+
+func getCacheExpiration(header string) time.Duration {
+	if header == "" {
+		return defaultCacheExpiration
+	}
+
+	// Cache-Control: public, max-age=14400 (or "max-age = 14400" with spaces)
+	cacheControl := strings.Split(header, ",")
+	for _, v := range cacheControl {
+		if strings.Contains(v, "max-age") {
+			parts := strings.Split(v, "=")
+			if len(parts) == 2 {
+				seconds, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+				if err != nil {
+					return defaultCacheExpiration
+				}
+				return time.Duration(seconds) * time.Second
+			}
+		}
+	}
+
+	return defaultCacheExpiration
+}
+
+// retrieveJWKSFromURL retrieves JWKS from the configured URL
+func (s *SocialBase) retrieveJWKSFromURL(ctx context.Context, client *http.Client, jwkSetURL string) (*keySetJWKS, time.Duration, error) {
+	if jwkSetURL == "" {
+		return nil, 0, fmt.Errorf("JWK Set URL is not configured")
+	}
+
+	resp, err := s.httpGet(ctx, client, jwkSetURL)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	bytesReader := bytes.NewReader(resp.Body)
+	var jwks keySetJWKS
+	if err := json.NewDecoder(bytesReader).Decode(&jwks); err != nil {
+		return nil, 0, err
+	}
+
+	cacheExpiration := getCacheExpiration(resp.Headers.Get("cache-control"))
+	s.log.Debug("Retrieved key set from URL", "url", jwkSetURL, "cacheExpiration", cacheExpiration)
+
+	return &jwks, cacheExpiration, nil
+}
+
+// validateIDTokenSignatureWithURLs validates the JWT signature using JWKS from the given URLs.
+// For each URL, the cache is checked first (keyed by hash of URL), then the URL is fetched if needed.
+// Tries each URL in order until a key verifies the signature.
+func (s *SocialBase) validateIDTokenSignatureWithURLs(ctx context.Context, client *http.Client, idTokenString string, jwkSetURLs []string) ([]byte, error) {
+	parsedToken, err := jwt.ParseSigned(idTokenString, []jose.SignatureAlgorithm{
+		jose.EdDSA, jose.HS256, jose.HS384, jose.HS512,
+		jose.RS256, jose.RS384, jose.RS512,
+		jose.ES256, jose.ES384, jose.ES512,
+		jose.PS256, jose.PS384, jose.PS512,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse JWT token: %w", err)
+	}
+
+	if len(parsedToken.Headers) == 0 {
+		return nil, fmt.Errorf("JWT token has no headers")
+	}
+
+	keyID := parsedToken.Headers[0].KeyID
+
+	for _, jwkSetURL := range jwkSetURLs {
+		if jwkSetURL == "" {
+			continue
+		}
+		cacheKey := s.getJWKSCacheKeyForURL(jwkSetURL)
+
+		// Try cache first for this URL
+		keyset, expiry, err := s.retrieveJWKSFromCache(ctx, cacheKey)
+		if err != nil {
+			s.log.Warn("Error retrieving JWKS from cache", "url", jwkSetURL, "error", err)
+		}
+		// If cache miss or empty, fetch from URL
+		if keyset == nil || len(keyset.Keys) == 0 {
+			keyset, expiry, err = s.retrieveJWKSFromURL(ctx, client, jwkSetURL)
+			if err != nil {
+				s.log.Warn("Error retrieving JWKS from URL", "url", jwkSetURL, "error", err)
+				continue
+			}
+		}
+
+		keys := keyset.Key(keyID)
+		for _, key := range keys {
+			s.log.Debug("Trying to verify token with key", "kid", key.KeyID)
+			var claims map[string]any
+			if err := parsedToken.Claims(key, &claims); err == nil {
+				// Successfully verified, cache the keyset if we got it from URL (expiry > 0)
+				if expiry != 0 {
+					s.log.Debug("Caching key set", "kid", key.KeyID, "expiry", expiry)
+					if err := s.cacheJWKS(ctx, cacheKey, keyset, expiry); err != nil {
+						s.log.Warn("Failed to cache key set", "err", err)
+					}
+				}
+
+				rawJSON, err := json.Marshal(claims)
+				if err != nil {
+					return nil, fmt.Errorf("failed to marshal verified claims: %w", err)
+				}
+				return rawJSON, nil
+			}
+			s.log.Debug("Failed to verify token with key", "kid", key.KeyID, "err", err)
+		}
+	}
+
+	return nil, fmt.Errorf("signing key not found for kid: %s", keyID)
+}
+
+// validateIDTokenSignature validates the JWT signature using JWKS from cache and the given URL.
+func (s *SocialBase) validateIDTokenSignature(ctx context.Context, client *http.Client, idTokenString string, jwkSetURL string) ([]byte, error) {
+	return s.validateIDTokenSignatureWithURLs(ctx, client, idTokenString, []string{jwkSetURL})
+}
+
 // match grafana admin role and translate to org role and bool.
 // treat the JSON search result to ensure correct casing.
 func getRoleFromSearch(role string) (org.RoleType, bool) {
@@ -267,5 +469,7 @@ func validateInfo(info *social.OAuthInfo, oldInfo *social.OAuthInfo, requester i
 		validation.AllowAssignGrafanaAdminValidator(info, oldInfo, requester),
 		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator,
 		validation.OrgAttributePathValidator(info, oldInfo, requester),
-		validation.OrgMappingValidator(info, oldInfo, requester))
+		validation.OrgMappingValidator(info, oldInfo, requester),
+		validation.LoginPromptValidator,
+	)
 }

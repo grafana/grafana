@@ -3,8 +3,10 @@
 package sql
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"strings"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -28,7 +30,7 @@ func (ft *FrameTable) String() string {
 	return ft.Name()
 }
 
-func schemaFromFrame(frame *data.Frame) mysql.Schema {
+func SchemaFromFrame(frame *data.Frame) mysql.Schema {
 	schema := make(mysql.Schema, len(frame.Fields))
 
 	for i, field := range frame.Fields {
@@ -46,7 +48,7 @@ func schemaFromFrame(frame *data.Frame) mysql.Schema {
 // Schema implements the mysql.Table interface
 func (ft *FrameTable) Schema() mysql.Schema {
 	if ft.schema == nil {
-		ft.schema = schemaFromFrame(ft.Frame)
+		ft.schema = SchemaFromFrame(ft.Frame)
 	}
 	return ft.schema
 }
@@ -71,7 +73,7 @@ type rowIter struct {
 	row int
 }
 
-func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
+func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 	// We assume each field in the Frame has the same number of rows.
 	numRows := 0
 	if len(ri.ft.Frame.Fields) > 0 {
@@ -90,7 +92,31 @@ func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 		if field.NilAt(ri.row) {
 			continue
 		}
-		row[colIndex], _ = field.ConcreteAt(ri.row)
+		val, _ := field.ConcreteAt(ri.row)
+		switch v := val.(type) {
+		case float32:
+			if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
+				continue
+			}
+		case float64:
+			if math.IsNaN(v) || math.IsInf(v, 0) {
+				continue
+			}
+		}
+
+		// If the field is JSON, convert json.RawMessage to types.JSONDocument
+		if raw, ok := val.(json.RawMessage); ok {
+			doc, inRange, err := types.JSON.Convert(ctx, raw)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert json.RawMessage to JSONDocument: %w", err)
+			}
+			if !inRange {
+				return nil, fmt.Errorf("invalid JSON value detected at row %d, column %s: value required type coercion", ri.row, ri.ft.Frame.Fields[colIndex].Name)
+			}
+			val = doc
+		}
+
+		row[colIndex] = val
 	}
 
 	ri.row++
@@ -156,6 +182,8 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 		return types.Boolean
 	case data.FieldTypeTime, data.FieldTypeNullableTime:
 		return types.Timestamp
+	case data.FieldTypeJSON, data.FieldTypeNullableJSON: //nolint:staticcheck
+		return types.JSON
 	default:
 		fmt.Printf("------- Unsupported field type: %v", fieldType)
 		return types.JSON

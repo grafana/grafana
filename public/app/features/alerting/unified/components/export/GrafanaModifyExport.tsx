@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
 import { RuleIdentifier } from '../../../../../types/unified-alerting';
 import { useRuleWithLocation } from '../../hooks/useCombinedRule';
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { formValuesFromExistingRule } from '../../rule-editor/formDefaults';
 import { stringifyErrorLike } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
@@ -23,8 +25,10 @@ function GrafanaModifyExport() {
 
   if (!ruleIdentifier) {
     return (
-      <Alert title="Invalid rule ID" severity="error">
-        The rule UID in the page URL is invalid. Please check the URL and try again.
+      <Alert title={t('alerting.grafana-modify-export.title-invalid-rule-id', 'Invalid rule ID')} severity="error">
+        <Trans i18nKey="alerting.grafana-modify-export.body-invalid-rule-id">
+          The rule UID in the page URL is invalid. Please check the URL and try again.
+        </Trans>
       </Alert>
     );
   }
@@ -36,12 +40,15 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
   const { loading, error, result: rulerRule } = useRuleWithLocation({ ruleIdentifier: ruleIdentifier });
 
   if (loading) {
-    return <LoadingPlaceholder text="Loading the rule..." />;
+    return <LoadingPlaceholder text={t('alerting.rule-modify-export.text-loading-the-rule', 'Loading the rule...')} />;
   }
 
   if (error) {
     return (
-      <Alert title="Cannot load modify export" severity="error">
+      <Alert
+        title={t('alerting.rule-modify-export.title-cannot-load-modify-export', 'Cannot load modify export')}
+        severity="error"
+      >
         {stringifyErrorLike(error)}
       </Alert>
     );
@@ -51,7 +58,7 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
     // alert rule does not exist
     return (
       <Alert
-        title="Cannot load the rule. The rule does not exist"
+        title={t('alerting.rule-modify-export.title-cannot-exist', 'Cannot load the rule. The rule does not exist')}
         buttonContent="Go back to alert list"
         onRemove={() => locationService.replace(createRelativeUrl('/alerting/list'))}
       />
@@ -62,7 +69,10 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
     // alert rule exists but is not a grafana-managed rule
     return (
       <Alert
-        title="This rule is not a Grafana-managed alert rule"
+        title={t(
+          'alerting.rule-modify-export.title-grafanamanaged-alert',
+          'This rule is not a Grafana-managed alert rule'
+        )}
         buttonContent="Go back to alert list"
         onRemove={() => locationService.replace(createRelativeUrl('/alerting/list'))}
       />
@@ -78,15 +88,15 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
     );
   }
 
-  return <Alert title="Unknown error" />;
+  return <Alert title={t('alerting.rule-modify-export.title-unknown-error', 'Unknown error')} />;
 }
 
 function GrafanaModifyExportPage() {
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={getAlertRulesNavId()}
       pageNav={{
-        text: 'Modify export',
+        text: t('alerting.grafana-modify-export-page.text.modify-export', 'Modify export'),
         subTitle:
           'Modify the current alert rule and export the rule definition in the format of your choice. Any changes you make will not be saved.',
       }}

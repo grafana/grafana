@@ -1,5 +1,6 @@
 import { e2e } from '../utils';
 const DASHBOARD_ID = 'P2jR04WVk';
+const TIMEOUT = 45000;
 
 describe('Geomap layer controls options', () => {
   beforeEach(() => {
@@ -8,51 +9,62 @@ describe('Geomap layer controls options', () => {
 
   it('Tests map controls options', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    e2e.components.OptionsGroup.group('Map controls').scrollIntoView().should('exist');
+    // Wait until the query editor has been loaded by ensuring that the QueryEditor select contains the text 'flight_info_by_state.csv'
+    e2e.components.Select.singleValue().contains('flight_info_by_state.csv').should('be.visible');
+    e2e.components.OptionsGroup.group('Map controls').scrollIntoView().should('be.visible');
 
-    // Show zoom
+    // Show zoom field
     e2e.components.PanelEditor.showZoomField()
-      .should('exist')
+      .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true });
+        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
       });
-
-    cy.contains('+');
-    cy.get('.ol-zoom').should('exist');
 
     // Show attribution
     e2e.components.PanelEditor.showAttributionField()
-      .should('exist')
+      .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true });
+        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
       });
-
-    cy.get('.ol-attribution').should('exist');
 
     // Show scale
     e2e.components.PanelEditor.showScaleField()
-      .should('exist')
+      .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true });
+        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
       });
-
-    cy.get('.ol-scale-line').should('exist');
 
     // Show measure tool
     e2e.components.PanelEditor.showMeasureField()
-      .should('exist')
+      .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true });
+        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
       });
-
-    e2e.components.PanelEditor.measureButton().should('exist');
 
     // Show debug
     e2e.components.PanelEditor.showDebugField()
-      .should('exist')
+      .should('be.visible')
       .within(() => {
-        cy.get('input[type="checkbox"]').check({ force: true });
+        cy.get('input[type="checkbox"]').check({ force: true }).should('be.checked');
       });
-    e2e.components.DebugOverlay.wrapper().should('exist');
+
+    e2e.components.Panels.Panel.content({ timeout: TIMEOUT })
+      .should('be.visible')
+      .within(() => {
+        // Verify zoom
+        cy.get('.ol-zoom', { timeout: TIMEOUT }).should('be.visible');
+
+        // Verify attribution
+        cy.get('.ol-attribution', { timeout: TIMEOUT }).should('be.visible');
+
+        // Verify scale
+        cy.get('.ol-scale-line', { timeout: TIMEOUT }).should('be.visible');
+
+        // Verify measure tool
+        e2e.components.PanelEditor.measureButton({ timeout: TIMEOUT }).should('be.visible');
+
+        // Verify debug tool
+        e2e.components.DebugOverlay.wrapper({ timeout: TIMEOUT }).should('be.visible');
+      });
   });
 });

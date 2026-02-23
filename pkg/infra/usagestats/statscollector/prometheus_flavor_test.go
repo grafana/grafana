@@ -32,6 +32,18 @@ func TestDetectPrometheusVariant(t *testing.T) {
 	}))
 	t.Cleanup(cortex.Close)
 
+	// Amazon Prometheus is Cortex-like
+	amazonPrometheus := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(amazonPrometheus.Close)
+
+	// Azure Prometheus is Cortex-like
+	azurePrometheus := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(azurePrometheus.Close)
+
 	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	s := createService(
@@ -80,6 +92,26 @@ func TestDetectPrometheusVariant(t *testing.T) {
 				Access:  "proxy",
 				URL:     cortex.URL,
 			},
+			{
+				ID:      5,
+				UID:     "amazon-prometheus",
+				OrgID:   1,
+				Version: 1,
+				Name:    "Amazon Prometheus",
+				Type:    "prometheus",
+				Access:  "proxy",
+				URL:     amazonPrometheus.URL,
+			},
+			{
+				ID:      6,
+				UID:     "azure-prometheus",
+				OrgID:   1,
+				Version: 1,
+				Name:    "Azure Prometheus",
+				Type:    "prometheus",
+				Access:  "proxy",
+				URL:     azurePrometheus.URL,
+			},
 		}}),
 	)
 
@@ -88,5 +120,5 @@ func TestDetectPrometheusVariant(t *testing.T) {
 
 	assert.Equal(t, int64(2), flavors["mimir"])
 	assert.Equal(t, int64(1), flavors["vanilla"])
-	assert.Equal(t, int64(1), flavors["cortex-like"])
+	assert.Equal(t, int64(3), flavors["cortex-like"])
 }

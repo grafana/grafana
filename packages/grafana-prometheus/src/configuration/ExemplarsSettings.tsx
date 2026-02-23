@@ -2,13 +2,14 @@
 import { css } from '@emotion/css';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { Button, useTheme2 } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';
 
-import { overhaulStyles } from './ConfigEditor';
 import { ExemplarSetting } from './ExemplarSetting';
+import { overhaulStyles } from './shared/utils';
 
 type Props = {
   options?: ExemplarTraceIdDestination[];
@@ -21,7 +22,10 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
   const styles = overhaulStyles(theme);
   return (
     <div className={styles.sectionBottomPadding}>
-      <ConfigSubSection title="Exemplars" className={styles.container}>
+      <ConfigSubSection
+        title={t('grafana-prometheus.configuration.exemplars-settings.title-exemplars', 'Exemplars')}
+        className={styles.container}
+      >
         {options &&
           options.map((option, index) => {
             return (
@@ -57,10 +61,16 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
               onChange(newOptions);
             }}
           >
-            Add
+            <Trans i18nKey="grafana-prometheus.configuration.exemplars-settings.add">Add</Trans>
           </Button>
         )}
-        {disabled && !options && <i>No exemplars configurations</i>}
+        {disabled && !options && (
+          <i>
+            <Trans i18nKey="grafana-prometheus.configuration.exemplars-settings.no-exemplars-configurations">
+              No exemplars configurations
+            </Trans>
+          </i>
+        )}
       </ConfigSubSection>
     </div>
   );

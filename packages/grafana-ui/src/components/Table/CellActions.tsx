@@ -1,11 +1,13 @@
+import { isPlainObject } from 'lodash';
 import { useCallback } from 'react';
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { IconSize } from '../../types/icon';
-import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
-import { TooltipPlacement } from '../Tooltip';
+import { TooltipPlacement } from '../Tooltip/types';
 
 import { TableCellInspectorMode } from './TableCellInspector';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
@@ -62,7 +64,18 @@ export function CellActions({
             tooltip={t('grafana-ui.table.cell-inspect', 'Inspect value')}
             onClick={() => {
               if (setInspectCell) {
-                setInspectCell({ value: cell.value, mode: previewMode });
+                let mode = TableCellInspectorMode.text;
+                let inspectValue = cell.value;
+                try {
+                  const parsed = typeof inspectValue === 'string' ? JSON.parse(inspectValue) : inspectValue;
+                  if (Array.isArray(parsed) || isPlainObject(parsed)) {
+                    inspectValue = JSON.stringify(parsed, null, 2);
+                    mode = TableCellInspectorMode.code;
+                  }
+                } catch {
+                  // do nothing
+                }
+                setInspectCell({ value: inspectValue, mode });
               }
             }}
             {...commonButtonProps}

@@ -4,7 +4,7 @@ import { FormEvent, useState, ChangeEvent } from 'react';
 import { DataFrameSchema, FieldSchema, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TextArea, InlineField, Input, FieldSet, InlineSwitch } from '@grafana/ui';
 
-type Config = Record<string, any>;
+export type Config = Record<string, any>;
 
 interface SchemaFormProps {
   config: Config;

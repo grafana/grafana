@@ -3,9 +3,10 @@ import '@testing-library/jest-dom';
 
 import { QueryEditorProps } from '@grafana/data';
 
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from '../../dataquery.gen';
 import { CloudWatchDatasource } from '../../datasource';
-import { CloudWatchAnnotationQuery, CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery } from '../../types';
+import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
+import { CloudWatchJsonData, CloudWatchQuery } from '../../types';
 
 import { AnnotationQueryEditor } from './AnnotationQueryEditor';
 

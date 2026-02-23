@@ -1,21 +1,22 @@
 import { render, screen } from '@testing-library/react';
+import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { PlaylistPage } from './PlaylistPage';
+import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
+import { backendSrv } from '../../core/services/backend_srv';
 
-const fnMock = jest.fn();
+import { PlaylistPage } from './PlaylistPage';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({
-    get: fnMock,
-  }),
+  getBackendSrv: () => backendSrv,
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     isEditor: true,
   },
 }));
@@ -30,12 +31,12 @@ function setup() {
 
 describe('PlaylistPage', () => {
   beforeEach(() => {
+    jest.spyOn(backendSrv, 'fetch').mockImplementation(() => of(createFetchResponse({})));
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   describe('when mounted without a playlist', () => {
     it('page should load', () => {
-      fnMock.mockResolvedValue([]);
       setup();
       expect(screen.getByTestId('playlist-page-list-skeleton')).toBeInTheDocument();
     });
@@ -65,20 +66,33 @@ describe('PlaylistPage', () => {
   });
 
   describe('when mounted with a playlist', () => {
+    beforeEach(() => {
+      jest.spyOn(backendSrv, 'fetch').mockImplementation(() =>
+        of(
+          createFetchResponse({
+            items: [
+              {
+                spec: {
+                  title: 'A test playlist',
+                  interval: '10m',
+                  items: [
+                    { title: 'First item', type: 'dashboard_by_uid', value: '1' },
+                    { title: 'Middle item', type: 'dashboard_by_uid', value: '2' },
+                    { title: 'Last item', type: 'dashboard_by_tag', value: 'Last item' },
+                  ],
+                },
+                metadata: {
+                  name: 0,
+                  uid: 'playlist-0',
+                },
+              },
+            ],
+          })
+        )
+      );
+    });
+
     it('page should load', () => {
-      fnMock.mockResolvedValue([
-        {
-          id: 0,
-          name: 'A test playlist',
-          interval: '10m',
-          items: [
-            { title: 'First item', type: 'dashboard_by_uid', value: '1' },
-            { title: 'Middle item', type: 'dashboard_by_uid', value: '2' },
-            { title: 'Last item', type: 'dashboard_by_tag', value: 'Last item' },
-          ],
-          uid: 'playlist-0',
-        },
-      ]);
       setup();
       expect(screen.getByTestId('playlist-page-list-skeleton')).toBeInTheDocument();
     });

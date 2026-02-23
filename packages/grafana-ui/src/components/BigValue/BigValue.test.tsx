@@ -46,7 +46,7 @@ describe('BigValue', () => {
 
     it('should render without percent change', () => {
       render(<BigValue {...getProps()} />);
-      expect(screen.queryByText('%')).toBeNull();
+      expect(screen.queryByText('%')).not.toBeInTheDocument();
     });
   });
 });

@@ -1,15 +1,17 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { config } from '@grafana/runtime';
-import { Spinner, HorizontalGroup } from '@grafana/ui';
+import { Spinner, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Resource } from 'app/features/apiserver/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import {
-  historySrv,
-  RevisionsModel,
-  VersionHistoryHeader,
-  VersionsHistoryButtons,
-} from 'app/features/dashboard-scene/settings/version-history';
+  DecoratedRevisionModel,
+  RevisionModel,
+  VERSIONS_FETCH_LIMIT,
+} from 'app/features/dashboard/types/revisionModels';
+import { VersionsHistoryButtons } from 'app/features/dashboard-scene/settings/version-history/VersionHistoryButtons';
+import { VersionHistoryHeader } from 'app/features/dashboard-scene/settings/version-history/VersionHistoryHeader';
 
 import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
 import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';
@@ -23,28 +25,17 @@ type State = {
   isAppending: boolean;
   versions: DecoratedRevisionModel[];
   viewMode: 'list' | 'compare';
-  diffData: { lhs: string; rhs: string };
+  diffData: { lhs: object; rhs: object };
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest: boolean;
 };
 
-export type DecoratedRevisionModel = RevisionsModel & {
-  createdDateString: string;
-  ageString: string;
-};
-
-export const VERSIONS_FETCH_LIMIT = 10;
-
 export class VersionsSettings extends PureComponent<Props, State> {
-  limit: number;
-  start: number;
   continueToken: string;
 
   constructor(props: Props) {
     super(props);
-    this.limit = VERSIONS_FETCH_LIMIT;
-    this.start = 0;
     this.continueToken = '';
     this.state = {
       isAppending: true,
@@ -52,10 +43,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
       versions: [],
       viewMode: 'list',
       isNewLatest: false,
-      diffData: {
-        lhs: '',
-        rhs: '',
-      },
+      diffData: { lhs: {}, rhs: {} },
     };
   }
 
@@ -65,58 +53,59 @@ export class VersionsSettings extends PureComponent<Props, State> {
 
   getVersions = (append = false) => {
     this.setState({ isAppending: append });
-    const requestOptions = this.continueToken
-      ? { limit: this.limit, start: this.start, continueToken: this.continueToken }
-      : { limit: this.limit, start: this.start };
 
-    historySrv
-      .getHistoryList(this.props.dashboard.uid, requestOptions)
-      .then((res) => {
+    const options = append
+      ? { limit: VERSIONS_FETCH_LIMIT, continueToken: this.continueToken }
+      : { limit: VERSIONS_FETCH_LIMIT };
+
+    getDashboardAPI()
+      .listDashboardHistory(this.props.dashboard.uid, options)
+      .then((result) => {
+        const versions = this.transformToRevisionModels(result.items);
         this.setState({
           isLoading: false,
-          versions: [...(this.state.versions ?? []), ...this.decorateVersions(res.versions)],
+          versions: [...(this.state.versions ?? []), ...this.decorateVersions(versions)],
         });
-        this.start += this.limit;
         // Update the continueToken for the next request, if available
-        this.continueToken = res.continueToken ?? '';
+        this.continueToken = result.metadata.continue ?? '';
       })
       .catch((err) => console.log(err))
       .finally(() => this.setState({ isAppending: false }));
   };
 
-  getDiff = async () => {
+  transformToRevisionModels(items: Array<Resource<unknown>>): RevisionModel[] {
+    return items.map(
+      (item): RevisionModel => ({
+        id: item.metadata.generation ?? 0,
+        checked: false,
+        uid: item.metadata.name,
+        version: item.metadata.generation ?? 0,
+        created: item.metadata.creationTimestamp ?? new Date().toISOString(),
+        createdBy: item.metadata.annotations?.['grafana.app/updatedBy'] ?? '',
+        message: item.metadata.annotations?.['grafana.app/message'] ?? '',
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        data: item.spec as object,
+      })
+    );
+  }
+
+  getDiff = () => {
     const selectedVersions = this.state.versions.filter((version) => version.checked);
     const [newInfo, baseInfo] = selectedVersions;
     const isNewLatest = newInfo.version === this.props.dashboard.version;
 
-    this.setState({
-      isLoading: true,
-    });
-
-    let lhs, rhs;
-    if (config.featureToggles.kubernetesClientDashboardsFolders) {
-      // the id here is the resource version in k8s, use this instead to get the specific version
-      lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.id);
-      rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.id);
-    } else {
-      lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.version);
-      rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.version);
-    }
-
+    // Use the already-loaded data from listDashboardHistory - no need for another API call
     this.setState({
       baseInfo,
       isLoading: false,
       isNewLatest,
       newInfo,
       viewMode: 'compare',
-      diffData: {
-        lhs: lhs.data,
-        rhs: rhs.data,
-      },
+      diffData: { lhs: baseInfo.data, rhs: newInfo.data },
     });
   };
 
-  decorateVersions = (versions: RevisionsModel[]) =>
+  decorateVersions = (versions: RevisionModel[]) =>
     versions.map((version) => ({
       ...version,
       createdDateString: this.props.dashboard.formatDate(version.created),
@@ -125,7 +114,11 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }));
 
   isLastPage() {
-    return this.state.versions.find((rev) => rev.version === 1);
+    return (
+      this.state.versions.find((rev) => rev.version === 1) ||
+      this.state.versions.length % VERSIONS_FETCH_LIMIT !== 0 ||
+      this.continueToken === ''
+    );
   }
 
   onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
@@ -140,10 +133,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     this.continueToken = '';
     this.setState({
       baseInfo: undefined,
-      diffData: {
-        lhs: '',
-        rhs: '',
-      },
+      diffData: { lhs: {}, rhs: {} },
       isNewLatest: false,
       newInfo: undefined,
       versions: this.state.versions.map((version) => ({ ...version, checked: false })),
@@ -155,7 +145,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     const { versions, viewMode, baseInfo, newInfo, isNewLatest, isLoading, diffData } = this.state;
     const canCompare = versions.filter((version) => version.checked).length === 2;
     const showButtons = versions.length > 1;
-    const hasMore = versions.length >= this.limit;
+    const hasMore = versions.length >= VERSIONS_FETCH_LIMIT;
     const pageNav = this.props.sectionNav.node.parentItem;
 
     if (viewMode === 'compare') {
@@ -204,8 +194,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
 }
 
 export const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
-  <HorizontalGroup>
+  <Stack>
     <Spinner />
     <em>{msg}</em>
-  </HorizontalGroup>
+  </Stack>
 );

@@ -2,16 +2,16 @@ import { createAction } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
+import { SplitOpenOptions, TimeRange, EventBusSrv, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
+import { createAsyncThunk, ThunkResult } from 'app/types/store';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
-import { createAsyncThunk, ThunkResult } from '../../../types';
 import { withUniqueRefIds } from '../utils/queries';
 
 import { DEFAULT_RANGE } from './constants';
@@ -96,6 +96,7 @@ export const splitOpen = createAsyncThunk(
         panelsState: options?.panelsState || originState?.panelsState,
         correlationHelperData: options?.correlationHelperData,
         eventBridge: new EventBusSrv(),
+        compact: !!options?.compact,
       })
     );
 
@@ -151,7 +152,7 @@ export const navigateToExplore = (
       return;
     }
 
-    locationService.push(path!);
+    locationService.push(locationUtil.stripBaseFromUrl(path!));
   };
 };
 

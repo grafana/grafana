@@ -40,7 +40,7 @@ func TestExportFromPayload(t *testing.T) {
 	ruleStore := fakes.NewRuleStore(t)
 	ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 
-	srv := createService(ruleStore)
+	srv := createService(ruleStore, nil)
 
 	requestFile := "post-rulegroup-101.json"
 	rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
@@ -58,7 +58,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/yaml")
+		rc.Req.Header.Add("Accept", "application/yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 
@@ -70,7 +70,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query format contains yaml, GET returns text yaml", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "yaml")
+		rc.Req.Form.Set("format", "yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -81,7 +81,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query format contains unknown value, GET returns text yaml", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "foo")
+		rc.Req.Form.Set("format", "foo")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -92,7 +92,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("accept header contains json, GET returns json", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json")
+		rc.Req.Header.Add("Accept", "application/json")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -103,7 +103,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+		rc.Req.Header.Add("Accept", "application/json, application/yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -114,7 +114,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("download", "true")
+		rc.Req.Form.Set("download", "true")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -125,7 +125,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("download", "false")
+		rc.Req.Form.Set("download", "false")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -149,7 +149,7 @@ func TestExportFromPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json")
+		rc.Req.Header.Add("Accept", "application/json")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -164,7 +164,7 @@ func TestExportFromPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/yaml")
+		rc.Req.Header.Add("Accept", "application/yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -177,8 +177,8 @@ func TestExportFromPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "hcl")
-		rc.Context.Req.Form.Set("download", "false")
+		rc.Req.Form.Set("format", "hcl")
+		rc.Req.Form.Set("download", "false")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -189,8 +189,8 @@ func TestExportFromPayload(t *testing.T) {
 
 		t.Run("and add specific headers if download=true", func(t *testing.T) {
 			rc := createRequest()
-			rc.Context.Req.Form.Set("format", "hcl")
-			rc.Context.Req.Form.Set("download", "true")
+			rc.Req.Form.Set("format", "hcl")
+			rc.Req.Form.Set("download", "true")
 
 			response := srv.ExportFromPayload(rc, body, folder.UID)
 			response.WriteTo(rc)
@@ -200,6 +200,33 @@ func TestExportFromPayload(t *testing.T) {
 			require.Equal(t, "application/terraform+hcl", rc.Resp.Header().Get("Content-Type"))
 			require.Equal(t, `attachment;filename=export.tf`, rc.Resp.Header().Get("Content-Disposition"))
 		})
+	})
+
+	t.Run("hcl body with simplified routing is as expected", func(t *testing.T) {
+		requestFile := "post-rulegroup-simplified-routing.json"
+
+		rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
+		require.NoError(t, err)
+
+		var buf bytes.Buffer
+		require.NoError(t, json.Compact(&buf, rawBody))
+
+		var body apimodels.PostableRuleGroupConfig
+		require.NoError(t, json.Unmarshal(buf.Bytes(), &body))
+
+		expectedResponse, err := testData.ReadFile(path.Join("test-data", strings.Replace(requestFile, ".json", "-export.hcl", 1)))
+		require.NoError(t, err)
+
+		rc := createRequest()
+		rc.Req.Form.Set("format", "hcl")
+		rc.Req.Form.Set("download", "false")
+
+		response := srv.ExportFromPayload(rc, body, folder.UID)
+		response.WriteTo(rc)
+
+		require.Equal(t, 200, response.Status())
+		require.Equal(t, string(expectedResponse), string(response.Body()))
+		require.Equal(t, "text/hcl", rc.Resp.Header().Get("Content-Type"))
 	})
 }
 
@@ -253,7 +280,7 @@ func TestExportRules(t *testing.T) {
 	// overwrite the folders visible to user because PutRule automatically creates folders in the fake store.
 	ruleStore.Folders[orgID] = []*folder2.Folder{f1, f2}
 
-	srv := createService(ruleStore)
+	srv := createService(ruleStore, nil)
 
 	allRules := make([]*ngmodels.AlertRule, 0, len(hasAccess1)+len(hasAccess2)+len(noAccess1))
 	allRules = append(allRules, hasAccess1...)

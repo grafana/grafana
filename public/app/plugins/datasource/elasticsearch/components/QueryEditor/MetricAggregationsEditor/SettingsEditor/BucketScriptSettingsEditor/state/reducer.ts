@@ -1,6 +1,6 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { PipelineVariable } from '../../../../../../types';
+import { PipelineVariable } from '../../../../../../dataquery.gen';
 import { defaultPipelineVariable, generatePipelineVariableName } from '../utils';
 
 import {

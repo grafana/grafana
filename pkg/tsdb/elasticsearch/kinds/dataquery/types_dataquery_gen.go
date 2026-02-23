@@ -12,9 +12,9 @@
 package dataquery
 
 import (
+	bytes "bytes"
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 )
 
 type BucketAggregation = DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested
@@ -37,6 +37,17 @@ func NewDateHistogram() *DateHistogram {
 		Type: BucketAggregationTypeDateHistogram,
 	}
 }
+
+type BucketAggregationType string
+
+const (
+	BucketAggregationTypeTerms         BucketAggregationType = "terms"
+	BucketAggregationTypeFilters       BucketAggregationType = "filters"
+	BucketAggregationTypeGeohashGrid   BucketAggregationType = "geohash_grid"
+	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
+	BucketAggregationTypeHistogram     BucketAggregationType = "histogram"
+	BucketAggregationTypeNested        BucketAggregationType = "nested"
+)
 
 type Histogram struct {
 	Field    *string                     `json:"field,omitempty"`
@@ -143,6 +154,41 @@ func NewCount() *Count {
 		Type: MetricAggregationTypeCount,
 	}
 }
+
+type MetricAggregationType string
+
+const (
+	MetricAggregationTypeCount         MetricAggregationType = "count"
+	MetricAggregationTypeAvg           MetricAggregationType = "avg"
+	MetricAggregationTypeSum           MetricAggregationType = "sum"
+	MetricAggregationTypeMin           MetricAggregationType = "min"
+	MetricAggregationTypeMax           MetricAggregationType = "max"
+	MetricAggregationTypeExtendedStats MetricAggregationType = "extended_stats"
+	MetricAggregationTypePercentiles   MetricAggregationType = "percentiles"
+	MetricAggregationTypeCardinality   MetricAggregationType = "cardinality"
+	MetricAggregationTypeRawDocument   MetricAggregationType = "raw_document"
+	MetricAggregationTypeRawData       MetricAggregationType = "raw_data"
+	MetricAggregationTypeLogs          MetricAggregationType = "logs"
+	MetricAggregationTypeRate          MetricAggregationType = "rate"
+	MetricAggregationTypeTopMetrics    MetricAggregationType = "top_metrics"
+	MetricAggregationTypeMovingAvg     MetricAggregationType = "moving_avg"
+	MetricAggregationTypeMovingFn      MetricAggregationType = "moving_fn"
+	MetricAggregationTypeDerivative    MetricAggregationType = "derivative"
+	MetricAggregationTypeSerialDiff    MetricAggregationType = "serial_diff"
+	MetricAggregationTypeCumulativeSum MetricAggregationType = "cumulative_sum"
+	MetricAggregationTypeBucketScript  MetricAggregationType = "bucket_script"
+)
+
+type PipelineMetricAggregationType string
+
+const (
+	PipelineMetricAggregationTypeMovingAvg     PipelineMetricAggregationType = "moving_avg"
+	PipelineMetricAggregationTypeMovingFn      PipelineMetricAggregationType = "moving_fn"
+	PipelineMetricAggregationTypeDerivative    PipelineMetricAggregationType = "derivative"
+	PipelineMetricAggregationTypeSerialDiff    PipelineMetricAggregationType = "serial_diff"
+	PipelineMetricAggregationTypeCumulativeSum PipelineMetricAggregationType = "cumulative_sum"
+	PipelineMetricAggregationTypeBucketScript  PipelineMetricAggregationType = "bucket_script"
+)
 
 type PipelineMetricAggregation = MovingAverageOrDerivativeOrCumulativeSumOrBucketScript
 
@@ -448,15 +494,11 @@ func NewTopMetrics() *TopMetrics {
 	}
 }
 
-type BucketAggregationType string
+type QueryType string
 
 const (
-	BucketAggregationTypeTerms         BucketAggregationType = "terms"
-	BucketAggregationTypeFilters       BucketAggregationType = "filters"
-	BucketAggregationTypeGeohashGrid   BucketAggregationType = "geohash_grid"
-	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
-	BucketAggregationTypeHistogram     BucketAggregationType = "histogram"
-	BucketAggregationTypeNested        BucketAggregationType = "nested"
+	QueryTypeLucene QueryType = "lucene"
+	QueryTypeDsl    QueryType = "dsl"
 )
 
 type BaseBucketAggregation struct {
@@ -535,41 +577,6 @@ type GeoHashGridSettings struct {
 func NewGeoHashGridSettings() *GeoHashGridSettings {
 	return &GeoHashGridSettings{}
 }
-
-type PipelineMetricAggregationType string
-
-const (
-	PipelineMetricAggregationTypeMovingAvg     PipelineMetricAggregationType = "moving_avg"
-	PipelineMetricAggregationTypeMovingFn      PipelineMetricAggregationType = "moving_fn"
-	PipelineMetricAggregationTypeDerivative    PipelineMetricAggregationType = "derivative"
-	PipelineMetricAggregationTypeSerialDiff    PipelineMetricAggregationType = "serial_diff"
-	PipelineMetricAggregationTypeCumulativeSum PipelineMetricAggregationType = "cumulative_sum"
-	PipelineMetricAggregationTypeBucketScript  PipelineMetricAggregationType = "bucket_script"
-)
-
-type MetricAggregationType string
-
-const (
-	MetricAggregationTypeCount         MetricAggregationType = "count"
-	MetricAggregationTypeAvg           MetricAggregationType = "avg"
-	MetricAggregationTypeSum           MetricAggregationType = "sum"
-	MetricAggregationTypeMin           MetricAggregationType = "min"
-	MetricAggregationTypeMax           MetricAggregationType = "max"
-	MetricAggregationTypeExtendedStats MetricAggregationType = "extended_stats"
-	MetricAggregationTypePercentiles   MetricAggregationType = "percentiles"
-	MetricAggregationTypeCardinality   MetricAggregationType = "cardinality"
-	MetricAggregationTypeRawDocument   MetricAggregationType = "raw_document"
-	MetricAggregationTypeRawData       MetricAggregationType = "raw_data"
-	MetricAggregationTypeLogs          MetricAggregationType = "logs"
-	MetricAggregationTypeRate          MetricAggregationType = "rate"
-	MetricAggregationTypeTopMetrics    MetricAggregationType = "top_metrics"
-	MetricAggregationTypeMovingAvg     MetricAggregationType = "moving_avg"
-	MetricAggregationTypeMovingFn      MetricAggregationType = "moving_fn"
-	MetricAggregationTypeDerivative    MetricAggregationType = "derivative"
-	MetricAggregationTypeSerialDiff    MetricAggregationType = "serial_diff"
-	MetricAggregationTypeCumulativeSum MetricAggregationType = "cumulative_sum"
-	MetricAggregationTypeBucketScript  MetricAggregationType = "bucket_script"
-)
 
 type BaseMetricAggregation struct {
 	Type MetricAggregationType `json:"type"`
@@ -773,14 +780,8 @@ func NewMovingAverageHoltWintersModelSettings() *MovingAverageHoltWintersModelSe
 type ElasticsearchDataQuery struct {
 	// Alias pattern
 	Alias *string `json:"alias,omitempty"`
-	// Lucene query
+	// Query string (Lucene or DSL depending on queryType)
 	Query *string `json:"query,omitempty"`
-	// Name of time field
-	TimeField *string `json:"timeField,omitempty"`
-	// List of bucket aggregations
-	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
-	// List of metric aggregations
-	Metrics []MetricAggregation `json:"metrics,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
@@ -789,7 +790,16 @@ type ElasticsearchDataQuery struct {
 	Hide *bool `json:"hide,omitempty"`
 	// Specify the query flavor
 	// TODO make this required and give it a default
+	// Query type - determines how the query field is interpreted
 	QueryType *string `json:"queryType,omitempty"`
+	// Name of time field
+	TimeField *string `json:"timeField,omitempty"`
+	// Editor type
+	EditorType *string `json:"editorType,omitempty"`
+	// List of bucket aggregations
+	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
+	// List of metric aggregations
+	Metrics []MetricAggregation `json:"metrics,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
@@ -1117,7 +1127,7 @@ func (resource DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) Ma
 		return json.Marshal(resource.Nested)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested` from JSON.
@@ -1134,7 +1144,7 @@ func (resource *DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) U
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1188,7 +1198,7 @@ func (resource *DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) U
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {
@@ -1278,7 +1288,7 @@ func (resource CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSe
 		return json.Marshal(resource.TopMetrics)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` from JSON.
@@ -1295,7 +1305,7 @@ func (resource *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrS
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1453,7 +1463,7 @@ func (resource *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrS
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type MovingAverageOrDerivativeOrCumulativeSumOrBucketScript struct {
@@ -1483,7 +1493,7 @@ func (resource MovingAverageOrDerivativeOrCumulativeSumOrBucketScript) MarshalJS
 		return json.Marshal(resource.BucketScript)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `MovingAverageOrDerivativeOrCumulativeSumOrBucketScript` from JSON.
@@ -1500,7 +1510,7 @@ func (resource *MovingAverageOrDerivativeOrCumulativeSumOrBucketScript) Unmarsha
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1538,7 +1548,7 @@ func (resource *MovingAverageOrDerivativeOrCumulativeSumOrBucketScript) Unmarsha
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type StringOrDataqueryInlineScript struct {
@@ -1549,6 +1559,51 @@ type StringOrDataqueryInlineScript struct {
 // NewStringOrDataqueryInlineScript creates a new StringOrDataqueryInlineScript object.
 func NewStringOrDataqueryInlineScript() *StringOrDataqueryInlineScript {
 	return &StringOrDataqueryInlineScript{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrDataqueryInlineScript` as JSON.
+func (resource StringOrDataqueryInlineScript) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+	if resource.DataqueryInlineScript != nil {
+		return json.Marshal(resource.DataqueryInlineScript)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrDataqueryInlineScript` from JSON.
+func (resource *StringOrDataqueryInlineScript) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// DataqueryInlineScript
+	var DataqueryInlineScript DataqueryInlineScript
+	dataqueryInlineScriptdec := json.NewDecoder(bytes.NewReader(raw))
+	dataqueryInlineScriptdec.DisallowUnknownFields()
+	if err := dataqueryInlineScriptdec.Decode(&DataqueryInlineScript); err != nil {
+		errList = append(errList, err)
+		resource.DataqueryInlineScript = nil
+	} else {
+		resource.DataqueryInlineScript = &DataqueryInlineScript
+		return nil
+	}
+
+	return errors.Join(errList...)
 }
 
 type BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {
@@ -1634,7 +1689,7 @@ func (resource BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRaw
 		return json.Marshal(resource.TopMetrics)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` from JSON.
@@ -1651,7 +1706,7 @@ func (resource *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRa
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1801,5 +1856,5 @@ func (resource *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRa
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }

@@ -2,40 +2,68 @@ import { css } from '@emotion/css';
 
 import {
   CoreApp,
+  FieldType,
+  getPanelDataSummary,
   GrafanaTheme2,
+  PanelData,
   PanelDataSummary,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestion,
+  PanelPluginVisualizationSuggestion,
+  store,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { PanelDataErrorViewProps, locationService, config } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
+import { Icon, usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
-import store from 'app/core/store';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { useDispatch } from 'app/types';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import { useDispatch } from 'app/types/store';
 
 import { changePanelPlugin } from '../state/actions';
+import { hasData } from '../suggestions/utils';
+
+function hasNoQueryConfigured(data: PanelData): boolean {
+  return !data.request?.targets || data.request.targets.length === 0;
+}
 
 export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const styles = useStyles2(getStyles);
   const context = usePanelContext();
-  const builder = new VisualizationSuggestionsBuilder(props.data);
-  const { dataSummary } = builder;
-  const message = getMessageFor(props, dataSummary);
+  const dataSummary = getPanelDataSummary(props.data.series);
   const dispatch = useDispatch();
-  const panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
+
+  const dashboardScene: DashboardScene | undefined = window.__grafanaSceneContext;
+  let panel;
+  if (dashboardScene instanceof DashboardScene) {
+    panel = findVizPanelByKey(dashboardScene, getVizPanelKeyForPanelId(props.panelId));
+  } else {
+    panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
+  }
 
   const openVizPicker = () => {
     store.setObject(LS_VISUALIZATION_SELECT_TAB_KEY, VisualizationSelectPaneTab.Suggestions);
+    if (dashboardScene) {
+      dashboardScene.state.editPanel?.state.optionsPane?.onToggleVizPicker();
+
+      return;
+    }
+
     dispatch(toggleVizPicker(true));
   };
 
   const switchToTable = () => {
     if (!panel) {
+      return;
+    }
+
+    if (panel instanceof VizPanel) {
+      panel.changePluginType('table');
+
       return;
     }
 
@@ -47,16 +75,22 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     );
   };
 
-  const loadSuggestion = (s: VisualizationSuggestion) => {
+  const loadSuggestion = (s: PanelPluginVisualizationSuggestion) => {
     if (!panel) {
       return;
     }
-    dispatch(
-      changePanelPlugin({
-        ...s, // includes panelId, config, etc
-        panel,
-      })
-    );
+
+    if (panel instanceof VizPanel) {
+      panel.changePluginType(s.pluginId, s.options, s.fieldConfig);
+    } else {
+      dispatch(
+        changePanelPlugin({
+          ...s, // includes panelId, config, etc
+          panel,
+        })
+      );
+    }
+
     if (s.transformations) {
       setTimeout(() => {
         locationService.partial({ tab: 'transform' });
@@ -64,8 +98,16 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     }
   };
 
+  const noData = !hasData(props.data);
+  const noQueryConfigured = hasNoQueryConfigured(props.data);
+  const showEmptyState = Boolean(
+    config.featureToggles.newVizSuggestions && context.app === CoreApp.PanelEditor && noQueryConfigured && noData
+  );
+  const message = getMessageFor(props, dataSummary, showEmptyState);
+
   return (
     <div className={styles.wrapper}>
+      {showEmptyState && <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />}
       <div className={styles.message} data-testid={selectors.components.Panels.Panel.PanelDataErrorMessage}>
         {message}
       </div>
@@ -81,10 +123,12 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
             </>
           )}
           <CardButton icon="table" onClick={switchToTable}>
-            Switch to table
+            <Trans i18nKey="panel.panel-data-error-view.switch-to-table">Switch to table</Trans>
           </CardButton>
           <CardButton icon="chart-line" onClick={openVizPicker}>
-            Open visualization suggestions
+            <Trans i18nKey="panel.panel-data-error-view.open-visualization-suggestions">
+              Open visualization suggestions
+            </Trans>
           </CardButton>
         </div>
       )}
@@ -94,29 +138,39 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 
 function getMessageFor(
   { data, fieldConfig, message, needsNumberField, needsTimeField, needsStringField }: PanelDataErrorViewProps,
-  dataSummary: PanelDataSummary
+  dataSummary: PanelDataSummary,
+  showEmptyState: boolean
 ): string {
   if (message) {
     return message;
   }
 
-  if (!data.series || data.series.length === 0 || data.series.every((frame) => frame.length === 0)) {
-    return fieldConfig?.defaults.noValue ?? 'No data';
+  const noData = !hasData(data);
+
+  if (showEmptyState) {
+    return t(
+      'dashboard.new-panel.empty-state-message',
+      'Run a query to visualize it here or go to all visualizations to add other panel types'
+    );
   }
 
-  if (needsStringField && !dataSummary.hasStringField) {
-    return 'Data is missing a string field';
+  if (noData) {
+    return fieldConfig?.defaults.noValue ?? t('panel.panel-data-error-view.no-value.default', 'No data');
   }
 
-  if (needsNumberField && !dataSummary.hasNumberField) {
-    return 'Data is missing a number field';
+  if (needsStringField && !dataSummary.hasFieldType(FieldType.string)) {
+    return t('panel.panel-data-error-view.missing-value.string', 'Data is missing a string field');
   }
 
-  if (needsTimeField && !dataSummary.hasTimeField) {
-    return 'Data is missing a time field';
+  if (needsNumberField && !dataSummary.hasFieldType(FieldType.number)) {
+    return t('panel.panel-data-error-view.missing-value.number', 'Data is missing a number field');
   }
 
-  return 'Cannot visualize data';
+  if (needsTimeField && !dataSummary.hasFieldType(FieldType.time)) {
+    return t('panel.panel-data-error-view.missing-value.time', 'Data is missing a time field');
+  }
+
+  return t('panel.panel-data-error-view.missing-value.unknown', 'Cannot visualize data');
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -144,6 +198,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       rowGap: theme.spacing(1),
       width: '100%',
       maxWidth: '600px',
+    }),
+    emptyStateIcon: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(2),
     }),
   };
 };

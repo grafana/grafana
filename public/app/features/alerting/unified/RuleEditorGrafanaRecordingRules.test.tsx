@@ -2,21 +2,21 @@ import { UserEvent } from '@testing-library/user-event';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen } from 'test/test-utils';
+import { screen, testWithFeatureToggles } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { FeatureToggles } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
 import { captureRequests, serializeRequests } from './mocks/server/events';
 import { FOLDER_TITLE_HAPPY_PATH } from './mocks/server/handlers/search';
-import { testWithFeatureToggles } from './test/test-utils';
 import { setupDataSources } from './testSetup/datasources';
+import { setupPluginsExtensionsHook } from './testSetup/plugins';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
@@ -45,6 +45,10 @@ const dataSources = {
     { alerting: true, module: 'core:plugin/prometheus' }
   ),
 };
+
+// Setup plugin extensions hook to prevent setPluginLinksHook errors
+setupPluginsExtensionsHook();
+
 describe('RuleEditor grafana recording rules', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -67,7 +71,7 @@ describe('RuleEditor grafana recording rules', () => {
   });
 
   const testCreateGrafanaRR = (featureToggles: Array<keyof FeatureToggles>, testName: string) => {
-    testWithFeatureToggles(featureToggles);
+    testWithFeatureToggles({ enable: featureToggles });
 
     it(testName, async () => {
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
@@ -76,9 +80,15 @@ describe('RuleEditor grafana recording rules', () => {
 
       await user.type(await ui.inputs.name.find(), 'my great new rule');
       await user.type(await ui.inputs.metric.find(), 'metricName');
+
+      const targetDsField = await ui.inputs.targetDatasource.find();
+      const dsPickerInput = await ui.inputs.dataSource.find(targetDsField);
+      await user.click(dsPickerInput);
+      await user.click(await screen.findByText('Prom'));
+
       await selectFolderAndGroup(user);
 
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
 
       const requests = await capture;
       const serializedRequests = await serializeRequests(requests);
@@ -87,16 +97,22 @@ describe('RuleEditor grafana recording rules', () => {
   };
 
   const testCreateGrafanaRRWithInvalidMetricName = (featureToggles: Array<keyof FeatureToggles>, testName: string) => {
-    testWithFeatureToggles(featureToggles);
+    testWithFeatureToggles({ enable: featureToggles });
 
     it(testName, async () => {
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
       const { user } = renderRuleEditor(undefined, 'grafana-recording');
 
       await user.type(await ui.inputs.name.find(), 'my great new rule');
+
+      const targetDsField = await ui.inputs.targetDatasource.find();
+      const dsPickerInput = await ui.inputs.dataSource.find(targetDsField);
+      await user.click(dsPickerInput);
+      await user.click(await screen.findByText('Prom'));
+
       await selectFolderAndGroup(user);
 
-      await user.click(ui.buttons.saveAndExit.get());
+      await user.click(ui.buttons.save.get());
       const requests = await capture;
       expect(requests).toHaveLength(0);
     });

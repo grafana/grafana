@@ -14,9 +14,9 @@ import {
 } from '@grafana/data';
 import { FetchResponse, reportInteraction, getBackendSrv, setBackendSrv, BackendSrv, config } from '@grafana/runtime';
 
+import { ElasticsearchDataQuery, Filters } from './dataquery.gen';
 import { ElasticDatasource } from './datasource';
 import { createElasticDatasource, createElasticQuery, mockResponseFrames } from './mocks';
-import { Filters, ElasticsearchQuery } from './types';
 
 const originalConsoleError = console.error;
 jest.mock('@grafana/runtime', () => ({
@@ -244,16 +244,22 @@ describe('ElasticDatasource', () => {
 
     describe('reportInteraction', () => {
       it('should report metric query', async () => {
-        const query = { ...createElasticQuery(), app: CoreApp.Explore };
+        const query = {
+          ...createElasticQuery(),
+          targets: [{ ...createElasticQuery().targets[0], queryType: 'lucene' }],
+          app: CoreApp.Explore,
+        };
         await expect(ds.query(query)).toEmitValuesWith((received) => {
           expect(received[0].state).toBe(LoadingState.Done);
           expect(reportInteraction).toHaveBeenCalledWith(
             'grafana_elasticsearch_query_executed',
             expect.objectContaining({
               app: CoreApp.Explore,
+              editor_type: 'builder',
               has_data: false,
               has_error: false,
               line_limit: undefined,
+              query_language: 'lucene',
               query_type: 'metric',
               simultaneously_sent_query_count: 1,
               with_lucene_query: true,
@@ -270,7 +276,8 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'logs', id: '1' }],
               query: 'foo="bar"',
-            } as ElasticsearchQuery,
+              queryType: 'lucene',
+            } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Explore,
         };
@@ -280,9 +287,11 @@ describe('ElasticDatasource', () => {
             'grafana_elasticsearch_query_executed',
             expect.objectContaining({
               app: CoreApp.Explore,
+              editor_type: 'builder',
               has_data: false,
               has_error: false,
               line_limit: undefined,
+              query_language: 'lucene',
               query_type: 'logs',
               simultaneously_sent_query_count: 1,
               with_lucene_query: true,
@@ -299,7 +308,8 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'raw_data', id: '1' }],
               query: 'foo="bar"',
-            } as ElasticsearchQuery,
+              queryType: 'lucene',
+            } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Explore,
         };
@@ -309,9 +319,11 @@ describe('ElasticDatasource', () => {
             'grafana_elasticsearch_query_executed',
             expect.objectContaining({
               app: CoreApp.Explore,
+              editor_type: 'builder',
               has_data: false,
               has_error: false,
               line_limit: undefined,
+              query_language: 'lucene',
               query_type: 'raw_data',
               simultaneously_sent_query_count: 1,
               with_lucene_query: true,
@@ -328,7 +340,7 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'raw_data', id: '1' }],
               query: 'foo="bar"',
-            } as ElasticsearchQuery,
+            } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Dashboard,
         };
@@ -342,7 +354,7 @@ describe('ElasticDatasource', () => {
 
   describe('interpolateVariablesInQueries', () => {
     it('should correctly interpolate variables in query', () => {
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
         metrics: [{ type: 'count', id: '1' }],
@@ -356,7 +368,7 @@ describe('ElasticDatasource', () => {
 
     it('should correctly add ad hoc filters when interpolating variables in query', () => {
       const adHocFilters = [{ key: 'bar', operator: '=', value: 'test' }];
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
         metrics: [{ type: 'count', id: '1' }],
@@ -368,7 +380,7 @@ describe('ElasticDatasource', () => {
     });
 
     it('should correctly handle empty query strings in filters bucket aggregation', () => {
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
         metrics: [{ type: 'count', id: '1' }],
@@ -491,7 +503,7 @@ describe('ElasticDatasource', () => {
 
   describe('getDataProvider', () => {
     it('does not create a logs sample provider for non time series query', () => {
-      const options: DataQueryRequest<ElasticsearchQuery> = {
+      const options: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -505,7 +517,7 @@ describe('ElasticDatasource', () => {
     });
 
     it('does not create a logs volume provider for hidden queries', () => {
-      const options: DataQueryRequest<ElasticsearchQuery> = {
+      const options: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -520,7 +532,7 @@ describe('ElasticDatasource', () => {
     });
 
     it('does create a logs sample provider for time series query', () => {
-      const options: DataQueryRequest<ElasticsearchQuery> = {
+      const options: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -536,7 +548,7 @@ describe('ElasticDatasource', () => {
 
   describe('getLogsSampleDataProvider', () => {
     it("doesn't return a logs sample provider given a non time series query", () => {
-      const request: DataQueryRequest<ElasticsearchQuery> = {
+      const request: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -550,7 +562,7 @@ describe('ElasticDatasource', () => {
     });
 
     it('returns a logs sample provider given a time series query', () => {
-      const request: DataQueryRequest<ElasticsearchQuery> = {
+      const request: DataQueryRequest<ElasticsearchDataQuery> = {
         ...dataQueryDefaults,
         targets: [
           {
@@ -577,7 +589,7 @@ describe('ElasticDatasource', () => {
   });
 
   describe('modifyQuery', () => {
-    let query: ElasticsearchQuery;
+    let query: ElasticsearchDataQuery;
     beforeEach(() => {
       query = { query: '', refId: 'A' };
     });
@@ -603,7 +615,7 @@ describe('ElasticDatasource', () => {
       });
 
       describe('with non-empty query', () => {
-        let query: ElasticsearchQuery;
+        let query: ElasticsearchDataQuery;
         beforeEach(() => {
           query = { query: 'test:"value"', refId: 'A' };
         });
@@ -645,7 +657,7 @@ describe('ElasticDatasource', () => {
     });
 
     describe('with non-empty query', () => {
-      let query: ElasticsearchQuery;
+      let query: ElasticsearchDataQuery;
       beforeEach(() => {
         query = { query: 'test:"value"', refId: 'A' };
       });
@@ -665,7 +677,7 @@ describe('ElasticDatasource', () => {
 
     describe('toggleQueryFilter', () => {
       describe('with empty query', () => {
-        let query: ElasticsearchQuery;
+        let query: ElasticsearchDataQuery;
         beforeEach(() => {
           query = { query: '', refId: 'A' };
         });
@@ -698,7 +710,7 @@ describe('ElasticDatasource', () => {
       });
 
       describe('with non-empty query', () => {
-        let query: ElasticsearchQuery;
+        let query: ElasticsearchDataQuery;
         beforeEach(() => {
           query = { query: 'test:"value"', refId: 'A' };
         });
@@ -844,7 +856,7 @@ describe('ElasticDatasource', () => {
   });
 
   describe('targetContainsTemplate', () => {
-    let target: ElasticsearchQuery;
+    let target: ElasticsearchDataQuery;
     beforeEach(() => {
       target = {
         refId: 'test',
@@ -1000,7 +1012,7 @@ describe('ElasticDatasource', () => {
         });
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
-          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc"}}]}},"size":10000}\n'
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc"}}]}},"size":10000}\n'
         );
       });
 
@@ -1030,7 +1042,7 @@ describe('ElasticDatasource', () => {
         });
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
-          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@timestamp":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}}]}},"size":10000}\n'
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@timestamp":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}}]}},"size":10000}\n'
         );
       });
 
@@ -1087,7 +1099,7 @@ describe('ElasticDatasource', () => {
         });
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
-          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc AND abc_key:\\"abc_value\\""}}]}},"size":10000}\n'
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc AND abc_key:\\"abc_value\\""}}]}},"size":10000}\n'
         );
       });
     });

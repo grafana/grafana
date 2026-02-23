@@ -22,7 +22,7 @@ DashboardV2Spec: {
 
   elements: [ElementReference.name]: Element
 
-  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 
   // Links with references to other dashboards or external websites.
   links: [...DashboardLink]
@@ -64,7 +64,6 @@ LibraryPanelSpec: {
   id: number
   // Title for the library panel in the dashboard
   title: string
-
   libraryPanel: LibraryPanelRef
 }
 
@@ -188,7 +187,7 @@ FieldConfig: {
   filterable?: bool
 
   // Unit a field should use. The unit you select is applied to all fields except time.
-  // You can use the units ID availables in Grafana or a custom unit.
+  // You can use the units ID available in Grafana or a custom unit.
   // Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
   // As custom unit, you can use the following formats:
   // `suffix:<suffix>` for custom unit that should go after value.
@@ -236,7 +235,7 @@ DynamicConfigValue: {
 }
 
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
-// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+// It comes with in id ( to resolve implementation from registry) and a configuration that's specific to a particular matcher type.
 MatcherConfig: {
   // The matcher id. This is used to find the matcher implementation from registry.
   id: string | *""
@@ -335,7 +334,12 @@ ValueMappingResult: {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -347,7 +351,7 @@ ValueMappingResult: {
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
+FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 FieldColorSeriesByMode: "min" | "max" | "last"
@@ -394,6 +398,7 @@ AnnotationQuerySpec: {
   name: string
   builtIn?: bool | *false
   filter?: AnnotationPanelFilter
+  options?: [string]: _ // Catch-all field for datasource-specific properties
 }
 
 AnnotationQueryKind: {
@@ -409,6 +414,7 @@ QueryOptionsSpec: {
   interval?: string
   cacheTimeout?: string
   hideTimeOverride?: bool
+  timeCompare?: string
 }
 
 DataQueryKind: {
@@ -494,7 +500,12 @@ RowRepeatOptions: {
   value: string
 }
 
-ResponsiveGridRepeatOptions: {
+TabRepeatOptions: {
+  mode: RepeatMode,
+  value: string
+}
+
+AutoGridRepeatOptions: {
   mode: RepeatMode
   value: string
 }
@@ -513,21 +524,8 @@ GridLayoutItemKind: {
   spec: GridLayoutItemSpec
 }
 
-GridLayoutRowKind: {
-  kind: "GridLayoutRow"
-  spec: GridLayoutRowSpec 
-}
-
-GridLayoutRowSpec: {
-  y: int
-  collapsed: bool
-  title: string
-  elements: [...GridLayoutItemKind] // Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-  repeat?: RowRepeatOptions
-}
-
 GridLayoutSpec: {
-  items: [...GridLayoutItemKind | GridLayoutRowKind]
+  items: [...GridLayoutItemKind]
 }
 
 GridLayoutKind: {
@@ -551,31 +549,37 @@ RowsLayoutRowKind: {
 
 RowsLayoutRowSpec: {
   title?: string
-  collapsed: bool
+  collapse?: bool
+  hideHeader?: bool
+  fillScreen?: bool
   repeat?: RowRepeatOptions
   conditionalRendering?: ConditionalRenderingGroupKind
-  layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+  layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 }
 
-ResponsiveGridLayoutKind: {
-  kind: "ResponsiveGridLayout"
-  spec: ResponsiveGridLayoutSpec
+AutoGridLayoutKind: {
+  kind: "AutoGridLayout"
+  spec: AutoGridLayoutSpec
 }
 
-ResponsiveGridLayoutSpec: {
-  row: string,
-  col: string,
-  items: [...ResponsiveGridLayoutItemKind]
+AutoGridLayoutSpec: {
+	maxColumnCount?: number | *3
+	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?: number
+	rowHeightMode: "short" | *"standard" | "tall" | "custom"
+	rowHeight?: number
+	fillScreen?: bool | *false
+	items: [...AutoGridLayoutItemKind]
 }
 
-ResponsiveGridLayoutItemKind: {
-  kind: "ResponsiveGridLayoutItem"
-  spec: ResponsiveGridLayoutItemSpec
+AutoGridLayoutItemKind: {
+  kind: "AutoGridLayoutItem"
+  spec: AutoGridLayoutItemSpec
 }
 
-ResponsiveGridLayoutItemSpec: {
+AutoGridLayoutItemSpec: {
   element: ElementReference
-  repeat?: ResponsiveGridRepeatOptions
+  repeat?: AutoGridRepeatOptions
   conditionalRendering?: ConditionalRenderingGroupKind
 }
 
@@ -595,7 +599,9 @@ TabsLayoutTabKind: {
 
 TabsLayoutTabSpec: {
   title?: string
-  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+  repeat?: TabRepeatOptions
+  conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 PanelSpec: {
@@ -709,7 +715,9 @@ VariableOption: {
   // Text to be displayed for the option
   text: string | [...string]
   // Value of the option
-value: string | [...string]
+  value: string | [...string]
+  // Additional properties for multi-props variables
+  properties?: {[string]: string}
 }
 
 // Query variable specification
@@ -857,6 +865,7 @@ CustomVariableKind: {
 // GroupBy variable specification
 GroupByVariableSpec: {
   name: string | *""
+  defaultValue?: VariableOption
   datasource?: DataSourceRef
   current: VariableOption | *{
     text: ""
@@ -922,8 +931,9 @@ ConditionalRenderingGroupKind: {
 }
 
 ConditionalRenderingGroupSpec: {
+  visibility: "show" | "hide"
   condition: "and" | "or"
-  items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+  items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -933,7 +943,7 @@ ConditionalRenderingVariableKind: {
 
 ConditionalRenderingVariableSpec: {
   variable: string
-  operator: "equals" | "notEquals"
+  operator: "equals" | "notEquals" | "matches" | "notMatches"
   value: string
 }
 
@@ -946,11 +956,11 @@ ConditionalRenderingDataSpec: {
   value: bool
 }
 
-ConditionalRenderingTimeIntervalKind: {
-  kind: "ConditionalRenderingTimeInterval"
-  spec: ConditionalRenderingTimeIntervalSpec
-} 
+ConditionalRenderingTimeRangeSizeKind: {
+  kind: "ConditionalRenderingTimeRangeSize"
+  spec: ConditionalRenderingTimeRangeSizeSpec
+}
 
-ConditionalRenderingTimeIntervalSpec: {
+ConditionalRenderingTimeRangeSizeSpec: {
   value: string
 }

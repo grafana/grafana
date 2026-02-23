@@ -11,8 +11,11 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/httpclient"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type ManifestInfo struct {
@@ -36,6 +39,7 @@ type EntryPointInfo struct {
 var (
 	entryPointAssetsCacheMu sync.RWMutex           // guard entryPointAssetsCache
 	entryPointAssetsCache   *dtos.EntryPointAssets // TODO: get rid of global state
+	httpClient              = httpclient.New()
 )
 
 func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
@@ -57,8 +61,26 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 		result, err = readWebAssetsFromCDN(ctx, cdn)
 	}
 
+	// Get an OpenFeature client instance for feature flag evaluation
+	client := openfeature.NewDefaultClient()
+
+	// Evaluate the feature flag
+	useReact19 := client.Boolean(
+		ctx,                                 // Request context
+		featuremgmt.FlagReact19,             // Feature flag name
+		false,                               // Default value if evaluation fails
+		openfeature.TransactionContext(ctx), // Extract evaluation context from the request
+	)
+
+	var assetsFilename string
+	if useReact19 {
+		assetsFilename = "assets-manifest-react19.json"
+	} else {
+		assetsFilename = "assets-manifest.json"
+	}
+
 	if result == nil {
-		result, err = readWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
+		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", assetsFilename))
 		if err == nil {
 			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
 			if cdn != "" {
@@ -71,7 +93,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	return entryPointAssetsCache, err
 }
 
-func readWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {
+func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {
 	//nolint:gosec
 	f, err := os.Open(manifestpath)
 	if err != nil {
@@ -88,7 +110,7 @@ func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPoint
 	if err != nil {
 		return nil, err
 	}
-	response, err := http.DefaultClient.Do(req)
+	response, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

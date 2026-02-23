@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type JSX } from 'react';
 
 import { Modal } from '@grafana/ui';
 
 import { NetworkGraph, Props as NetWorkGraphProps } from './NetworkGraph';
-import { GraphEdge, GraphNode } from './utils';
+import { GraphEdge, GraphNode } from './types';
 
 interface NetworkGraphModalApi {
   showModal: () => void;

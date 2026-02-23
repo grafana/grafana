@@ -2,15 +2,13 @@ import { configureStore as reduxConfigureStore, createListenerMiddleware } from 
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
+import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
+import { legacyAPI } from 'app/api/clients/legacy';
+import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
-import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
-import { userPreferencesAPI } from 'app/features/preferences/api';
 import { StoreState } from 'app/types/store';
 
-import { folderAPI } from '../api/clients/folder';
-import { iamAPI } from '../api/clients/iam';
-import { provisioningAPI } from '../api/clients/provisioning';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
@@ -37,14 +35,14 @@ export function configureStore(initialState?: Partial<StoreState>) {
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
         listenerMiddleware.middleware,
+        // older internal alerting API client
         alertingApi.middleware,
+        // other Grafana core APIs
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
-        cloudMigrationAPI.middleware,
-        userPreferencesAPI.middleware,
-        iamAPI.middleware,
-        provisioningAPI.middleware,
-        folderAPI.middleware,
+        legacyAPI.middleware,
+        scopeAPIv0alpha1.middleware,
+        ...allApiClientMiddleware,
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -24,6 +25,7 @@ type Server struct {
 	Mux           *web.Mux
 	RouteRegister routing.RouteRegister
 	TestServer    *httptest.Server
+	HttpClient    *http.Client
 }
 
 // NewServer starts and returns a new server.
@@ -50,6 +52,7 @@ func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 		RouteRegister: routeRegister,
 		Mux:           m,
 		TestServer:    testServer,
+		HttpClient:    httpclient.New(),
 	}
 }
 
@@ -81,7 +84,7 @@ func (s *Server) NewRequest(method string, target string, body io.Reader) *http.
 
 // Send sends a HTTP request to the test server and returns an HTTP response.
 func (s *Server) Send(req *http.Request) (*http.Response, error) {
-	return http.DefaultClient.Do(req)
+	return s.HttpClient.Do(req)
 }
 
 // SendJSON sets the Content-Type header to application/json and sends
@@ -144,6 +147,7 @@ func requestContextMiddleware() web.Middleware {
 				c.RequestNonce = ctx.RequestNonce
 				c.PerfmonTimer = ctx.PerfmonTimer
 				c.LookupTokenErr = ctx.LookupTokenErr
+				c.UseSessionStorageRedirect = ctx.UseSessionStorageRedirect
 			}
 
 			next.ServeHTTP(w, r)

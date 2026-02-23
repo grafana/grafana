@@ -1,0 +1,17 @@
+alertmanager_config: |
+  route:
+    receiver: sinkhole
+    group_by:
+      - alertname
+  receivers:
+    - name: sinkhole
+  time_intervals:
+    - name: business-hours
+      time_intervals:
+        - times:
+          - start_time: '09:00'
+            end_time: '17:00'
+          weekdays: ['monday:friday']
+    - name: weekends
+      time_intervals:
+        - weekdays: ['saturday', 'sunday']

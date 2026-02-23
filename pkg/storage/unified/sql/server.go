@@ -1,80 +1,204 @@
 package sql
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"strings"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/authlib/types"
-
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
+
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// Creates a new ResourceServer
-func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
-	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient,
-	searchOptions resource.SearchOptions, storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles) (resource.ResourceServer, error) {
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-	opts := resource.ResourceServerOptions{
-		Tracer: tracer,
+type QOSEnqueueDequeuer interface {
+	services.Service
+	Enqueue(ctx context.Context, tenantID string, runnable func()) error
+	Dequeue(ctx context.Context) (func(), error)
+}
+
+// ServerOptions contains the options for creating a new ResourceServer
+type ServerOptions struct {
+	Backend          resource.StorageBackend
+	OverridesService *resource.OverridesService
+	Cfg              *setting.Cfg
+	Tracer           trace.Tracer
+	Reg              prometheus.Registerer
+	AccessClient     types.AccessClient
+	SearchOptions    resource.SearchOptions
+	SearchClient     resourcepb.ResourceIndexClient
+	StorageMetrics   *resource.StorageMetrics
+	IndexMetrics     *resource.BleveIndexMetrics
+	Features         featuremgmt.FeatureToggles
+	QOSQueue         QOSEnqueueDequeuer
+	SecureValues     secrets.InlineSecureValueSupport
+	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
+
+	// DisableStorageServices is used for standalone search server
+	DisableStorageServices bool
+}
+
+// NewResourceServer creates a new ResourceServer with support for both storage and search capabilities.
+func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
+	if opts.DisableStorageServices {
+		return nil, fmt.Errorf("cannot create ResourceServer with storage services disabled")
+	}
+	resourceOpts, err := buildResourceServerOptions(&opts,
+		withSecureValueService,
+		withBlobConfig,
+		withAccessClient,
+		withMaxPageSizeBytes,
+		withBackend,
+		withQOSQueue,
+		withOverridesService,
+		withSearch,
+		withSearchClient,
+		withQuotaConfig,
+		withStorageMetrics,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resource.NewResourceServer(*resourceOpts)
+}
+
+// NewSearchServer creates a new SearchServer with only search capabilities enabled.
+func NewSearchServer(opts ServerOptions) (resource.SearchServer, error) {
+	opts.DisableStorageServices = true
+	resourceOpts, err := buildResourceServerOptions(&opts,
+		withBlobConfig,
+		withAccessClient,
+		withBackend,
+		withSearch,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resource.NewSearchServer(*resourceOpts)
+}
+
+type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOptions) error
+
+// buildResourceServerOptions builds the resource.ResourceServerOptions from sql.ServerOptions.
+func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*resource.ResourceServerOptions, error) {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	serverOptions := &resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg: reg,
+		Reg:          opts.Reg,
+		SecureValues: opts.SecureValues,
 	}
-	if ac != nil {
-		opts.AccessClient = resource.NewAuthzLimitedClient(ac, resource.AuthzOptions{Tracer: tracer, Registry: reg})
-	}
-	// Support local file blob
-	if strings.HasPrefix(opts.Blob.URL, "./data/") {
-		dir := strings.Replace(opts.Blob.URL, "./data", cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
-		if err != nil {
+	for _, optFn := range withOpts {
+		if err := optFn(opts, serverOptions); err != nil {
 			return nil, err
 		}
-		opts.Blob.URL = "file:///" + dir
 	}
+	return serverOptions, nil
+}
 
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
+func withSecureValueService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.SecureValues != nil || opts.Cfg == nil || !opts.Cfg.SecretsManagement.GrpcClientEnable {
+		return nil
+	}
+	inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
+		opts.Cfg,
+		opts.Tracer,
+		nil, // not needed for gRPC client mode
+		nil, // not needed for gRPC client mode
+	)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to create inline secure value service: %w", err)
+	}
+	resourceOpts.SecureValues = inlineSecureValueService
+	return nil
+}
+
+func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.AccessClient != nil {
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+	}
+	return nil
+}
+
+func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	resourceOpts.Blob = resource.BlobConfig{
+		URL: apiserverCfg.Key("blob_url").MustString(""),
+	}
+	// Support local file blob
+	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
+		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
+		err := os.MkdirAll(dir, 0700)
+		if err != nil {
+			return err
+		}
+		resourceOpts.Blob.URL = "file:///" + dir
+	}
+	return nil
+}
+
+func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
+	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
+	resourceOpts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	return nil
+}
+
+func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.Backend == nil {
+		return fmt.Errorf("missing storage backend")
 	}
 
-	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"),
-		cfg.SectionWithEnvOverrides("resource_api"))
-	withPruner := features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
-
-	store, err := NewBackend(BackendOptions{
-		DBProvider:     eDB,
-		Tracer:         tracer,
-		Reg:            reg,
-		IsHA:           isHA,
-		withPruner:     withPruner,
-		storageMetrics: storageMetrics,
-	})
-	if err != nil {
-		return nil, err
+	resourceOpts.Backend = opts.Backend
+	if diagnostics, ok := opts.Backend.(resourcepb.DiagnosticsServer); ok {
+		resourceOpts.Diagnostics = diagnostics
 	}
-	opts.Backend = store
-	opts.Diagnostics = store
-	opts.Lifecycle = store
-	opts.Search = searchOptions
-	opts.IndexMetrics = indexMetrics
+	return nil
+}
 
-	rs, err := resource.NewResourceServer(opts)
-	if err != nil {
-		return nil, err
+func withSearchClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.SearchClient = opts.SearchClient
+	return nil
+}
+
+func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.Search = opts.SearchOptions
+	resourceOpts.IndexMetrics = opts.IndexMetrics
+	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
+	return nil
+}
+
+func withQOSQueue(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.QOSQueue = opts.QOSQueue
+	return nil
+}
+
+func withOverridesService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.OverridesService = opts.OverridesService
+	return nil
+}
+
+func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.QuotasConfig = resource.QuotasConfig{
+		EnforceQuotas:  opts.Cfg.EnforceQuotas,
+		SupportMessage: opts.Cfg.QuotasErrorMessageSupportInfo,
 	}
+	return nil
+}
 
-	return rs, nil
+func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.StorageMetrics = opts.StorageMetrics
+	return nil
 }
 
 // isHighAvailabilityEnabled determines if high availability mode should

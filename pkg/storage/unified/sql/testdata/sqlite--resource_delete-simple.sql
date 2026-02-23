@@ -4,4 +4,5 @@ DELETE FROM "resource"
     AND "group"     = 'gg'
     AND "resource"  = 'rr'
     AND "name"      = 'name'
+    AND "resource_version" = 0
 ;

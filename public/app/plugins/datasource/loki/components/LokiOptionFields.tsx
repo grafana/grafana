@@ -2,10 +2,11 @@ import { memo } from 'react';
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { InlineField, Input, Stack } from '@grafana/ui';
 
-import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../types';
+import { LokiQueryType, LokiQueryDirection } from '../dataquery.gen';
+import { LokiQuery } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
@@ -42,6 +43,14 @@ if (config.featureToggles.lokiShardSplitting) {
   });
 }
 
+if (config.featureToggles.lokiExperimentalStreaming) {
+  queryTypeOptions.push({
+    value: LokiQueryType.Stream,
+    label: 'Stream',
+    description: 'Run a query and keep sending results on an interval',
+  });
+}
+
 export function getQueryDirectionLabel(direction: LokiQueryDirection) {
   return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
 }
@@ -51,8 +60,12 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
   const query = props.query ?? {};
 
   function onChangeQueryLimit(value: string) {
-    const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
+    const maxLines = preprocessMaxLines(value);
+    const nextQuery = { ...query, maxLines };
     onChange(nextQuery);
+    reportInteraction('grafana_loki_max_lines_changed', {
+      maxLines,
+    });
   }
 
   function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {

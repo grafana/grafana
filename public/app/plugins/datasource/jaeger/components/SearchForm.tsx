@@ -8,7 +8,6 @@ import { fuzzyMatch, InlineField, InlineFieldRow, Input, Select } from '@grafana
 
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
-import { transformToLogfmt } from '../util';
 
 const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
 
@@ -150,7 +149,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
             <Input
               id="tags"
-              value={transformToLogfmt(query.tags)}
+              value={query.tags}
               placeholder="http.status_code=200 error=true"
               onChange={(v) =>
                 onChange({

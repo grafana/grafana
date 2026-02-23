@@ -3,6 +3,7 @@ import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip, Space } from '@grafana/ui';
@@ -12,7 +13,6 @@ import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB, SQLDia
 
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
-import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './QueryEditorFeatureFlag.utils';
 import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
@@ -25,12 +25,9 @@ export interface QueryHeaderProps {
   preconfiguredDataset: string;
   query: QueryWithDefaults;
   queryRowFilter: QueryRowFilter;
+  hideFormatSelector?: boolean;
+  hideRunButton?: boolean;
 }
-
-const editorModes = [
-  { label: 'Builder', value: EditorMode.Builder },
-  { label: 'Code', value: EditorMode.Code },
-];
 
 export function QueryHeader({
   db,
@@ -42,6 +39,8 @@ export function QueryHeader({
   preconfiguredDataset,
   query,
   queryRowFilter,
+  hideFormatSelector,
+  hideRunButton,
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -49,6 +48,14 @@ export function QueryHeader({
   const toRawSql = db.toRawSql;
 
   const htmlId = useId();
+
+  const editorModes = [
+    {
+      label: t('grafana-sql.components.query-header.editor-modes.label-builder', 'Builder'),
+      value: EditorMode.Builder,
+    },
+    { label: t('grafana-sql.components.query-header.editor-modes.label-code', 'Code'), value: EditorMode.Code },
+  ];
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
@@ -113,11 +120,6 @@ export function QueryHeader({
     if (dialect === 'influx') {
       return false;
     }
-    // If the feature flag is DISABLED, && the datasource is Postgres (`dialect = 'postgres`),
-    // we want to hide the dropdown - as per previous behavior.
-    if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && dialect === 'postgres') {
-      return false;
-    }
 
     return true;
   };
@@ -125,20 +127,22 @@ export function QueryHeader({
   return (
     <>
       <EditorHeader>
-        <InlineSelect
-          label="Format"
-          value={query.format}
-          placeholder="Select format"
-          menuShouldPortal
-          onChange={onFormatChange}
-          options={QUERY_FORMAT_OPTIONS}
-        />
+        {!hideFormatSelector && (
+          <InlineSelect
+            label={t('grafana-sql.components.query-header.label-format', 'Format')}
+            value={query.format}
+            placeholder={t('grafana-sql.components.query-header.placeholder-select-format', 'Select format')}
+            menuShouldPortal
+            onChange={onFormatChange}
+            options={QUERY_FORMAT_OPTIONS}
+          />
+        )}
 
         {editorMode === EditorMode.Builder && (
           <>
             <InlineSwitch
               id={`sql-filter-${htmlId}`}
-              label="Filter"
+              label={t('grafana-sql.components.query-header.label-filter', 'Filter')}
               data-testid={selectors.components.SQLQueryEditor.headerFilterSwitch}
               transparent={true}
               showLabel={true}
@@ -159,7 +163,7 @@ export function QueryHeader({
 
             <InlineSwitch
               id={`sql-group-${htmlId}`}
-              label="Group"
+              label={t('grafana-sql.components.query-header.label-group', 'Group')}
               data-testid={selectors.components.SQLQueryEditor.headerGroupSwitch}
               transparent={true}
               showLabel={true}
@@ -180,7 +184,7 @@ export function QueryHeader({
 
             <InlineSwitch
               id={`sql-order-${htmlId}`}
-              label="Order"
+              label={t('grafana-sql.components.query-header.label-order', 'Order')}
               data-testid={selectors.components.SQLQueryEditor.headerOrderSwitch}
               transparent={true}
               showLabel={true}
@@ -201,7 +205,7 @@ export function QueryHeader({
 
             <InlineSwitch
               id={`sql-preview-${htmlId}`}
-              label="Preview"
+              label={t('grafana-sql.components.query-header.label-preview', 'Preview')}
               data-testid={selectors.components.SQLQueryEditor.headerPreviewSwitch}
               transparent={true}
               showLabel={true}
@@ -224,26 +228,27 @@ export function QueryHeader({
 
         <FlexItem grow={1} />
 
-        {isQueryRunnable ? (
-          <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
-            Run query
-          </Button>
-        ) : (
-          <Tooltip
-            theme="error"
-            content={
-              <>
-                Your query is invalid. Check below for details. <br />
-                However, you can still run this query.
-              </>
-            }
-            placement="top"
-          >
-            <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
-              Run query
+        {!hideRunButton &&
+          (isQueryRunnable ? (
+            <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
+              <Trans i18nKey="grafana-sql.components.query-header.run-query">Run query</Trans>
             </Button>
-          </Tooltip>
-        )}
+          ) : (
+            <Tooltip
+              theme="error"
+              content={
+                <Trans i18nKey="grafana-sql.components.query-header.content-invalid-query">
+                  Your query is invalid. Check below for details. <br />
+                  However, you can still run this query.
+                </Trans>
+              }
+              placement="top"
+            >
+              <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
+                <Trans i18nKey="grafana-sql.components.query-header.run-query">Run query</Trans>
+              </Button>
+            </Tooltip>
+          ))}
 
         <RadioButtonGroup options={editorModes} size="sm" value={editorMode} onChange={onEditorModeChange} />
 
@@ -295,7 +300,7 @@ export function QueryHeader({
           <Space v={0.5} />
           <EditorRow>
             {datasetDropdownIsAvailable() && (
-              <EditorField label="Dataset" width={25}>
+              <EditorField label={t('grafana-sql.components.query-header.label-dataset', 'Dataset')} width={25}>
                 <DatasetSelector
                   db={db}
                   inputId={`sql-dataset-${htmlId}`}
@@ -306,7 +311,7 @@ export function QueryHeader({
                 />
               </EditorField>
             )}
-            <EditorField label="Table" width={25}>
+            <EditorField label={t('grafana-sql.components.query-header.label-table', 'Table')} width={25}>
               <TableSelector
                 db={db}
                 inputId={`sql-tableselect-${htmlId}`}

@@ -1,0 +1,266 @@
+import { chain } from 'lodash';
+import { useCallback } from 'react';
+
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { ComboboxOption } from '@grafana/ui';
+import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+
+import { prometheusApi } from '../../../api/prometheusApi';
+import { getRulesDataSources } from '../../../utils/datasource';
+
+// Module-scope utilities
+const collator = new Intl.Collator();
+function getExternalRuleDataSources() {
+  return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
+}
+
+const NAMESPACE_THRESHOLD_LIMIT = 500;
+const MIN_GROUP_SEARCH_CHARACTERS = 3;
+const GROUP_SEARCH_LIMIT = 100;
+
+function createInfoOption(message: string): ComboboxOption<string> {
+  return {
+    label: message,
+    value: '__GRAFANA_INFO_OPTION__',
+    infoOption: true,
+  };
+}
+
+export function useNamespaceAndGroupOptions(): {
+  namespaceOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
+  groupOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
+  namespacePlaceholder: string;
+  groupPlaceholder: string;
+} {
+  const [fetchGrafanaGroups] = prometheusApi.useLazyGetGrafanaGroupsQuery();
+  const [fetchExternalGroups] = prometheusApi.useLazyGetGroupsQuery();
+
+  // Formats a raw namespace string into a user-friendly combobox option.
+  const formatNamespaceOption = useCallback((namespaceName: string): ComboboxOption<string> => {
+    if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
+      const filename = namespaceName.split('/').pop() || namespaceName;
+      const maxDescriptionLength = 100;
+      const truncatedDescription =
+        namespaceName.length > maxDescriptionLength
+          ? `${namespaceName.substring(0, maxDescriptionLength)}...`
+          : namespaceName;
+      return { label: filename, value: namespaceName, description: truncatedDescription };
+    }
+
+    const maxLength = 50;
+    const maxDescriptionLength = 100;
+    const truncatedName =
+      namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
+    const truncatedDescription =
+      namespaceName.length > maxDescriptionLength
+        ? `${namespaceName.substring(0, maxDescriptionLength)}...`
+        : namespaceName;
+    return { label: truncatedName, value: namespaceName, description: truncatedDescription };
+  }, []);
+
+  const namespaceOptions = useCallback(
+    async (inputValue: string) => {
+      // Grafana namespaces - fetch with limit to check threshold
+      const grafanaResponse = await fetchGrafanaGroups({
+        limitAlerts: 0,
+        groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
+      }).unwrap();
+      const grafanaFolderNames = Array.from(
+        new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default'))
+      );
+
+      // External namespaces
+      const namespaceNameSet = new Set<string>();
+      const calls = getExternalRuleDataSources().map((ds) =>
+        fetchExternalGroups({
+          ruleSource: { uid: ds.uid },
+          excludeAlerts: true,
+          groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
+          notificationOptions: { showErrorAlert: false },
+        }).unwrap()
+      );
+      const results = await Promise.allSettled(calls);
+      for (const res of results) {
+        if (res.status === 'fulfilled') {
+          res.value.data.groups.forEach((group: { file?: string }) => namespaceNameSet.add(group.file || 'default'));
+        }
+      }
+
+      const totalNamespaces = grafanaFolderNames.length + namespaceNameSet.size;
+
+      // If we have more than NAMESPACE_THRESHOLD_LIMIT unique namespaces, show info message
+      if (totalNamespaces > NAMESPACE_THRESHOLD_LIMIT) {
+        return [
+          createInfoOption(
+            t(
+              'alerting.rules-filter.namespace-autocomplete-unavailable',
+              'Due to large number of folders, autocomplete is not available'
+            )
+          ),
+        ];
+      }
+
+      const grafanaFolders: Array<ComboboxOption<string>> = grafanaFolderNames
+        .map((name) => ({
+          label: name,
+          value: name,
+          description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
+        }))
+        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+
+      const externalNamespaces = Array.from(namespaceNameSet)
+        .map(formatNamespaceOption)
+        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+
+      const options = [...grafanaFolders, ...externalNamespaces];
+      const filtered = filterBySearch(options, inputValue);
+      return filtered;
+    },
+    [fetchGrafanaGroups, fetchExternalGroups, formatNamespaceOption]
+  );
+
+  const groupOptions = useCallback(
+    async (inputValue: string) => {
+      // Require minimum characters for search
+      const trimmedInput = inputValue?.trim() || '';
+      if (trimmedInput.length < MIN_GROUP_SEARCH_CHARACTERS) {
+        return [
+          createInfoOption(
+            t('alerting.rules-filter.group-search-prompt', 'Type at least 3 characters to search groups')
+          ),
+        ];
+      }
+
+      try {
+        // Use the backend search with lightweight response
+        const grafanaResponse = await fetchGrafanaGroups({
+          limitAlerts: 0, // Lightweight - no alert data
+          searchGroupName: trimmedInput, // Backend filtering via search.rule_group parameter
+          groupLimit: GROUP_SEARCH_LIMIT, // Reasonable limit for dropdown results
+        }).unwrap();
+
+        // Deduplicate group names
+        const groupNames = chain(grafanaResponse.data.groups).map('name').compact().uniq().value();
+
+        // No results found
+        if (groupNames.length === 0) {
+          return [
+            createInfoOption(
+              t('alerting.rules-filter.group-no-results', 'No groups found matching "{{search}}"', {
+                search: trimmedInput,
+              })
+            ),
+          ];
+        }
+
+        const options: Array<ComboboxOption<string>> = groupNames
+          .map((name) => ({ label: name, value: name }))
+          .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+
+        return options;
+      } catch (error) {
+        console.error('Error fetching groups:', error);
+        return [createInfoOption(t('alerting.rules-filter.group-search-error', 'Error searching groups'))];
+      }
+    },
+    [fetchGrafanaGroups]
+  );
+
+  const namespacePlaceholder = t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
+  const groupPlaceholder = t('alerting.rules-filter.placeholder-group-search', 'Search group');
+
+  return { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder };
+}
+
+export function useLabelOptions(): {
+  labelOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
+} {
+  // Use lazy queries so we only fetch when the dropdown is opened or the user types
+  const [fetchGrafanaGroups] = prometheusApi.useLazyGetGrafanaGroupsQuery();
+
+  const createInfoOption = useCallback((): ComboboxOption<string> => {
+    return {
+      label: t('label-dropdown-info', "Can't find your label? Enter it manually"),
+      value: '__GRAFANA_LABEL_DROPDOWN_INFO__',
+      infoOption: true,
+    };
+  }, []);
+
+  const toOptions = useCallback((labelsMap: Map<string, Set<string>>): Array<ComboboxOption<string>> => {
+    const selectable: Array<ComboboxOption<string>> = Array.from(labelsMap.entries()).flatMap(([key, values]) =>
+      Array.from(values).map<ComboboxOption<string>>((value) => ({
+        label: `${key}=${value}`,
+        value: `${key}=${value}`,
+      }))
+    );
+
+    selectable.sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+    return selectable;
+  }, []);
+
+  const labelOptions = useCallback(
+    async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
+      // Fetch grafana groups and prefer cache when available
+      const response = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: 1000 }, true).unwrap();
+      const labelsMap = groupsToLabels(response.data.groups);
+
+      const selectable = toOptions(labelsMap);
+      if (selectable.length === 0) {
+        return [];
+      }
+
+      const options = [...selectable, createInfoOption()];
+      return filterBySearch(options, inputValue, true);
+    },
+    [fetchGrafanaGroups, toOptions, createInfoOption]
+  );
+
+  return { labelOptions };
+}
+
+export function useAlertingDataSourceOptions(): (inputValue: string) => Promise<Array<ComboboxOption<string>>> {
+  return useCallback(async (inputValue: string) => {
+    const options = getDataSourceSrv()
+      .getList({ alerting: true })
+      .map((ds: DataSourceInstanceSettings) => ({ label: ds.name, value: ds.name }));
+    return filterBySearch(options, inputValue);
+  }, []);
+}
+
+function groupsToLabels(groups: Array<{ rules: Array<{ labels?: Record<string, string> }> }>) {
+  const rules = groups.flatMap((group) => group.rules);
+
+  return rules.reduce((result, rule) => {
+    if (!rule.labels) {
+      return result;
+    }
+
+    Object.entries(rule.labels).forEach(([labelKey, labelValue]) => {
+      if (!labelKey || !labelValue) {
+        return;
+      }
+      const existing = result.get(labelKey);
+      if (existing) {
+        existing.add(labelValue);
+      } else {
+        result.set(labelKey, new Set([labelValue]));
+      }
+    });
+
+    return result;
+  }, new Map<string, Set<string>>());
+}
+
+// Removed rulerRulesToLabels since label autocomplete only uses Prometheus namespaces for simplicity
+
+function filterBySearch(options: Array<ComboboxOption<string>>, inputValue: string, keepInfoOption = false) {
+  const search = (inputValue ?? '').toLowerCase();
+  if (!search) {
+    return options;
+  }
+  return options.filter(
+    (opt) => (opt.label ?? opt.value).toLowerCase().includes(search) || (keepInfoOption && !!opt.infoOption)
+  );
+}

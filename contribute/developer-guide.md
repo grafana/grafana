@@ -18,14 +18,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@22
-```
-
-In the repository enable and install yarn via corepack
-
-```
-corepack enable
-corepack install
+brew install node@24
 ```
 
 ### Windows
@@ -43,6 +36,15 @@ For alternative ways of cloning the Grafana repository, refer to [GitHub's docum
 
 > **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
 
+### Set up yarn
+
+In the repository enable and install yarn via corepack
+
+```
+corepack enable
+corepack install
+```
+
 ### Configure precommit hooks
 
 We use pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) to lint, fix, and format code as you commit your changes. Previously, the Grafana repository automatically installed these hook when you ran `yarn install`, but they are now opt-in for all contributors.
@@ -59,7 +61,7 @@ To remove precommit hooks:
 make lefthook-uninstall
 ```
 
-> We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `.betterer.results` file is kept in sync.
+> We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `eslint-suppressions.json` file is kept in sync.
 
 ## Build Grafana
 
@@ -99,11 +101,12 @@ If you want to contribute to any of the plugins listed below (that are found wit
 - grafana-postgresql-datasource
 - grafana-pyroscope-datasource
 - grafana-testdata-datasource
-- jaegar
+- jaeger
 - mysql
 - parca
 - tempo
 - zipkin
+- loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
 
@@ -117,11 +120,27 @@ If, instead, you would like to build and watch a specific plugin you can run the
 yarn workspace <name_of_plugin> dev
 ```
 
+If you want to run multiple specific plugins, you can use the following command.
+
+```
+yarn nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datasource,@grafana-plugins/jaeger"
+```
+
+If you're unsure of the name of the plugins you'd like to run you can query nx with the following command to get a list of all plugins:
+
+`yarn nx show projects --projects="@grafana-plugins/*"`
+
 Next, we'll explain how to build and run the web server that serves these frontend assets.
 
 ### Backend
 
-Build and run the backend by running `make run` in the root directory of the repository. This command compiles the Go source code and starts a web server.
+Build and run the backend by running
+
+```
+make run
+```
+
+in the root directory of the repository. This command compiles the Go source code and starts a web server.
 
 > **Troubleshooting:** Are you having problems with [too many open files](#troubleshooting)?
 
@@ -137,7 +156,8 @@ When you log in for the first time, Grafana asks you to change your password.
 
 #### Build on Windows
 
-The Grafana backend includes SQLite, a database which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
+The Grafana backend includes SQLite, a database which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC with binutils version 2.37 or later.
+We recommend [MinGW x64](https://www.mingw-w64.org/downloads). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
 
 You can build the back-end as follows:
 
@@ -211,55 +231,19 @@ make test-go-integration-postgres
 
 ### Run end-to-end tests
 
-Grafana uses [Cypress](https://www.cypress.io/) to end-to-end test core features. Core plugins use [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information on how to add end-to-end tests to your core plugin [in our end-to-end testing style guide](./style-guides/e2e-plugins.md)
+- Grafana uses [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information [in our end-to-end testing style guide](./style-guides/e2e-playwright.md#playwright-for-plugins)
 
-#### Run Cypress tests
+- Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers: `yarn playwright install chromium`.
+- Run tests with `yarn e2e:playwright [optional path to test file]`.
 
-To run all tests in a headless Chromium browser.
+- To open the last HTML report, you can run `yarn playwright show-report`. You can also open an arbitrary report with `yarn playwright show-report <reportLocation>`. The reports are also downloadable from CI by:
+  - Clicking through to _End-to-end tests_/_All Playwright tests complete_.
+  - Clicking _Summary_.
+  - Download the _playwright-html-<number>_ artifact.
+  - Unzip.
+  - Run `yarn playwright show-report <reportLocation>`
 
-```
-yarn e2e
-```
-
-By default, the end-to-end tests start a Grafana instance listening on `localhost:3001`. To use a different URL, set the `BASE_URL` environment variable:
-
-```
-BASE_URL=http://localhost:3333 yarn e2e
-```
-
-To follow all tests in the browser while they're running, use `yarn e2e:debug`
-
-```
-yarn e2e:debug
-```
-
-To choose a single test to follow in the browser as it runs, use `yarn e2e:dev`
-
-```
-yarn e2e:dev
-```
-
-#### To run the Playwright tests:
-
-**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to use reports to analyze failing tests, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
-
-Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers.
-
-```
-yarn playwright install chromium
-```
-
-To run all tests in a headless Chromium browser and display results in the terminal. This assumes you have Grafana running on port 3000.
-
-```
-yarn e2e:playwright
-```
-
-The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in Drone CI) on port 3001 and runs the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
-
-```
-yarn e2e:playwright:server
-```
+If you are curious about other commands, you can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options).
 
 ## Configure Grafana for development
 
@@ -334,7 +318,7 @@ ulimit -a
 To change the number of open files allowed, run:
 
 ```
-ulimit -S -n 4096
+ulimit -S -n 8000
 ```
 
 The number of files needed may be different on your environment. To determine the number of open files needed by `make run`, run:
@@ -421,6 +405,10 @@ Set NODE_OPTIONS="--max-old-space-size=8192"
 ### Getting `AggregateError` when building frontend tests
 
 If you encounter an `AggregateError` when building new tests, this is probably due to a call to our client [backend service](https://github.com/grafana/grafana/blob/main/public/app/core/services/backend_srv.ts) not being mocked. Our backend service anticipates multiple responses being returned and was built to return errors as an array. A test encountering errors from the service will group those errors as an `AggregateError` without breaking down the individual errors within. `backend_srv.processRequestError` is called once per error and is a great place to return information on what the individual errors might contain.
+
+### Getting `error reading debug_info: decoding dwarf section line_str at offset` trying to run VSCode debugger
+
+If you are trying to run the server from VS code and get this error, run `go install github.com/go-delve/delve/cmd/dlv@master` in the terminal.
 
 ## Next steps
 

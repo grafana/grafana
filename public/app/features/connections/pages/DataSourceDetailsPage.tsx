@@ -1,8 +1,10 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert, Badge } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Badge, TextLink } from '@grafana/ui';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
-import { StoreState, useSelector, AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
+import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../constants';
 
@@ -19,8 +21,11 @@ export function DataSourceDetailsPage() {
       navId={navId}
       notFoundComponent={<NotFoundDatasource />}
       notFoundNavModel={{
-        text: 'Unknown datasource',
-        subTitle: 'No datasource with this ID could be found.',
+        text: t('connections.data-source-details-page.text.unknown-datasource', 'Unknown datasource'),
+        subTitle: t(
+          'connections.data-source-details-page.subTitle.datasource-could-found',
+          'No datasource with this ID could be found.'
+        ),
         active: true,
       }}
     />
@@ -32,9 +37,11 @@ function NotFoundDatasource() {
 
   return (
     <Alert severity={AppNotificationSeverity.Warning} title="">
-      Maybe you mistyped the URL or the plugin with the id <Badge text={id} color="orange" /> is unavailable.
-      <br />
-      To see a list of available datasources please <a href={ROUTES.AddNewConnection}>click here</a>.
+      <Trans i18nKey="connections.not-found-datasource.body">
+        Maybe you mistyped the URL or the plugin with the id <Badge text={id} color="orange" /> is unavailable.
+        <br />
+        To see a list of available datasources please <TextLink href={ROUTES.AddNewConnection}>click here</TextLink>.
+      </Trans>
     </Alert>
   );
 }

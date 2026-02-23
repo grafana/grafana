@@ -1,7 +1,6 @@
-import { dateTime, DataQuery } from '@grafana/data';
-import store from 'app/core/store';
+import { dateTime, DataQuery, store } from '@grafana/data';
+import { RichHistoryQuery } from 'app/types/explore';
 
-import { RichHistoryQuery } from '../../types';
 import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHistoryStorage';
 
 import {
@@ -13,8 +12,8 @@ import {
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
-  SortOrder,
 } from './richHistory';
+import { SortOrder } from './richHistoryTypes';
 
 const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
 

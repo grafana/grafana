@@ -1,6 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/AnnotationQueryEditor.tsx
+
+import { memo } from 'react';
+
 import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorRow, EditorRows, EditorSwitch } from '@grafana/plugin-ui';
 import { AutoSizeInput, Input, Space } from '@grafana/ui';
 
@@ -14,49 +18,89 @@ type Props = PromQueryEditorProps & {
   onAnnotationChange?: (annotation: AnnotationQuery<PromQuery>) => void;
 };
 
-export function AnnotationQueryEditor(props: Props) {
-  // This is because of problematic typing. See AnnotationQueryEditorProps in grafana-data/annotations.ts.
-  const annotation = props.annotation!;
-  const onAnnotationChange = props.onAnnotationChange!;
-  const query = { expr: annotation.expr, refId: annotation.name, interval: annotation.step };
+const PLACEHOLDER_TITLE = '{{alertname}}';
+const PLACEHOLDER_TEXT = '{{instance}}';
+const PLACEHOLDER_TAGS = 'label1,label2';
+
+/**
+ * AnnotationQueryEditor component for Prometheus datasource.
+ * Allows users to configure annotation queries with options for title, tags, text format,
+ * and timestamp settings.
+ */
+export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: Props) {
+  const { annotation, onAnnotationChange, onChange, onRunQuery, query } = props;
+
+  if (!annotation || !onAnnotationChange) {
+    return (
+      <h3>
+        <Trans i18nKey="grafana-prometheus.components.annotation-query-editor.annotation-data-load-error">
+          Annotation data load error!
+        </Trans>
+      </h3>
+    );
+  }
+
+  const handleMinStepChange = (value: string) => {
+    onChange({ ...query, interval: value });
+  };
+
+  const handleTitleChange = (value: string) => {
+    onAnnotationChange({
+      ...annotation,
+      titleFormat: value,
+    });
+  };
+
+  const handleTagsChange = (value: string) => {
+    onAnnotationChange({
+      ...annotation,
+      tagKeys: value,
+    });
+  };
+
+  const handleTextChange = (value: string) => {
+    onAnnotationChange({
+      ...annotation,
+      textFormat: value,
+    });
+  };
+
+  const handleUseValueForTimeChange = (checked: boolean) => {
+    onAnnotationChange({
+      ...annotation,
+      useValueForTime: checked,
+    });
+  };
 
   return (
     <>
       <EditorRows>
-        <PromQueryCodeEditor
-          {...props}
-          query={query}
-          showExplain={false}
-          onChange={(query) => {
-            onAnnotationChange({
-              ...annotation,
-              expr: query.expr,
-            });
-          }}
-        />
+        <PromQueryCodeEditor {...props} query={query} showExplain={false} onRunQuery={onRunQuery} onChange={onChange} />
         <EditorRow>
           <EditorField
-            label="Min step"
+            label={t('grafana-prometheus.components.annotation-query-editor.label-min-step', 'Min step')}
             tooltip={
-              <>
+              <Trans
+                i18nKey="grafana-prometheus.components.annotation-query-editor.tooltip-min-step"
+                values={{ intervalVar: '$__interval', rateIntervalVar: '$__rate_interval' }}
+              >
                 An additional lower limit for the step parameter of the Prometheus query and for the{' '}
-                <code>$__interval</code> and <code>$__rate_interval</code> variables.
-              </>
+                <code>{'{{intervalVar}}'}</code> and <code>{'{{rateIntervalVar}}'}</code> variables.
+              </Trans>
             }
           >
             <AutoSizeInput
               type="text"
-              aria-label="Set lower limit for the step parameter"
-              placeholder={'auto'}
+              aria-label={t(
+                'grafana-prometheus.components.annotation-query-editor.aria-label-lower-limit-parameter',
+                'Set lower limit for the step parameter'
+              )}
+              placeholder={t('grafana-prometheus.components.annotation-query-editor.placeholder-auto', 'auto')}
               minWidth={10}
-              onCommitChange={(ev) => {
-                onAnnotationChange({
-                  ...annotation,
-                  step: ev.currentTarget.value,
-                });
-              }}
-              defaultValue={query.interval}
+              value={query.interval ?? ''}
+              onChange={(e) => handleMinStepChange(e.currentTarget.value)}
               id={selectors.components.DataSource.Prometheus.annotations.minStep}
+              data-testid={selectors.components.DataSource.Prometheus.annotations.minStep}
             />
           </EditorField>
         </EditorRow>
@@ -64,75 +108,63 @@ export function AnnotationQueryEditor(props: Props) {
       <Space v={0.5} />
       <EditorRow>
         <EditorField
-          label="Title"
-          tooltip={
-            'Use either the name or a pattern. For example, {{instance}} is replaced with label value for the label instance.'
-          }
+          label={t('grafana-prometheus.components.annotation-query-editor.label-title', 'Title')}
+          tooltip={t(
+            'grafana-prometheus.components.annotation-query-editor.tooltip-either-pattern-example-instance-replaced-label',
+            'Use either the name or a pattern. For example, {{labelTemplate}} is replaced with label value for the label {{labelName}}.',
+            { labelName: 'instance', labelTemplate: '{{instance}}' }
+          )}
         >
           <Input
             type="text"
-            placeholder="{{alertname}}"
-            value={annotation.titleFormat}
-            onChange={(event) => {
-              onAnnotationChange({
-                ...annotation,
-                titleFormat: event.currentTarget.value,
-              });
-            }}
+            placeholder={PLACEHOLDER_TITLE}
+            value={annotation.titleFormat ?? ''}
+            onChange={(event) => handleTitleChange(event.currentTarget.value)}
             data-testid={selectors.components.DataSource.Prometheus.annotations.title}
           />
         </EditorField>
-        <EditorField label="Tags">
+        <EditorField label={t('grafana-prometheus.components.annotation-query-editor.label-tags', 'Tags')}>
           <Input
             type="text"
-            placeholder="label1,label2"
-            value={annotation.tagKeys}
-            onChange={(event) => {
-              onAnnotationChange({
-                ...annotation,
-                tagKeys: event.currentTarget.value,
-              });
-            }}
+            placeholder={PLACEHOLDER_TAGS}
+            value={annotation.tagKeys ?? ''}
+            onChange={(event) => handleTagsChange(event.currentTarget.value)}
             data-testid={selectors.components.DataSource.Prometheus.annotations.tags}
           />
         </EditorField>
         <EditorField
-          label="Text"
-          tooltip={
-            'Use either the name or a pattern. For example, {{instance}} is replaced with label value for the label instance.'
-          }
+          label={t('grafana-prometheus.components.annotation-query-editor.label-text', 'Text')}
+          tooltip={t(
+            'grafana-prometheus.components.annotation-query-editor.tooltip-either-pattern-example-instance-replaced-label',
+            'Use either the name or a pattern. For example, {{labelTemplate}} is replaced with label value for the label {{labelName}}.',
+            { labelName: 'instance', labelTemplate: '{{instance}}' }
+          )}
         >
           <Input
             type="text"
-            placeholder="{{instance}}"
-            value={annotation.textFormat}
-            onChange={(event) => {
-              onAnnotationChange({
-                ...annotation,
-                textFormat: event.currentTarget.value,
-              });
-            }}
+            placeholder={PLACEHOLDER_TEXT}
+            value={annotation.textFormat ?? ''}
+            onChange={(event) => handleTextChange(event.currentTarget.value)}
             data-testid={selectors.components.DataSource.Prometheus.annotations.text}
           />
         </EditorField>
         <EditorField
-          label="Series value as timestamp"
-          tooltip={
+          label={t(
+            'grafana-prometheus.components.annotation-query-editor.label-series-value-as-timestamp',
+            'Series value as timestamp'
+          )}
+          tooltip={t(
+            'grafana-prometheus.components.annotation-query-editor.tooltip-timestamp-milliseconds-series-value-seconds-multiply',
             'The unit of timestamp is milliseconds. If the unit of the series value is seconds, multiply its range vector by 1000.'
-          }
+          )}
         >
           <EditorSwitch
-            value={annotation.useValueForTime}
-            onChange={(event) => {
-              onAnnotationChange({
-                ...annotation,
-                useValueForTime: event.currentTarget.value,
-              });
-            }}
+            value={annotation.useValueForTime ?? false}
+            onChange={(event) => handleUseValueForTimeChange(event.currentTarget.checked)}
             data-testid={selectors.components.DataSource.Prometheus.annotations.seriesValueAsTimestamp}
           />
         </EditorField>
       </EditorRow>
     </>
   );
-}
+});

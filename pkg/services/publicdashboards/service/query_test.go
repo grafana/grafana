@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/util"
 
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -307,7 +308,9 @@ const (
 }`
 )
 
-func TestGetQueryDataResponse(t *testing.T) {
+func TestIntegrationGetQueryDataResponse(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	fakeDashboardService := &dashboards.FakeDashboardService{}
 	service, sqlStore, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 	fakeQueryService := &query.FakeQueryService{}
@@ -361,7 +364,9 @@ func TestGetQueryDataResponse(t *testing.T) {
 	})
 }
 
-func TestFindAnnotations(t *testing.T) {
+func TestIntegrationFindAnnotations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	color := "red"
 	name := "annoName"
 	t.Run("service identity has correct permissions to get annotations dashboards and query datasources", func(t *testing.T) {
@@ -717,7 +722,9 @@ func TestFindAnnotations(t *testing.T) {
 	})
 }
 
-func TestGetMetricRequest(t *testing.T) {
+func TestIntegrationGetMetricRequest(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, nil, nil)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
@@ -756,7 +763,9 @@ func TestGetMetricRequest(t *testing.T) {
 	})
 }
 
-func TestBuildMetricRequest(t *testing.T) {
+func TestIntegrationBuildMetricRequest(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	fakeDashboardService := &dashboards.FakeDashboardService{}
 	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Dropdown, Button, Icon } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import AddPanelMenu from './AddPanelMenu';

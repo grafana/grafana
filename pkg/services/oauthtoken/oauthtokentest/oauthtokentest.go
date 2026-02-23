@@ -29,10 +29,10 @@ func (s *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return oauthtoken.IsOAuthPassThruEnabled(ds)
 }
 
-func (s *Service) TryTokenRefresh(context.Context, identity.Requester, *auth.UserToken) (*oauth2.Token, error) {
+func (s *Service) TryTokenRefresh(context.Context, identity.Requester, *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error) {
 	return s.Token, nil
 }
 
-func (s *Service) InvalidateOAuthTokens(context.Context, identity.Requester, *auth.UserToken) error {
+func (s *Service) InvalidateOAuthTokens(context.Context, identity.Requester, *oauthtoken.TokenRefreshMetadata) error {
 	return nil
 }

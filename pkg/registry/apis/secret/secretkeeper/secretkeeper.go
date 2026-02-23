@@ -3,43 +3,44 @@ package secretkeeper
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/trace"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
-
-// Service is the interface for secret keeper services.
-// This exists because OSS and Enterprise have different amounts of keepers available.
-type Service interface {
-	GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error)
-}
 
 // OSSKeeperService is the OSS implementation of the Service interface.
 type OSSKeeperService struct {
-	tracer            tracing.Tracer
-	encryptionManager contracts.EncryptionManager
-	store             contracts.EncryptedValueStorage
+	systemKeeper *sqlkeeper.SQLKeeper
 }
+
+var _ contracts.KeeperService = (*OSSKeeperService)(nil)
 
 func ProvideService(
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	store contracts.EncryptedValueStorage,
 	encryptionManager contracts.EncryptionManager,
-) (OSSKeeperService, error) {
-	return OSSKeeperService{
-		tracer:            tracer,
-		encryptionManager: encryptionManager,
-		store:             store,
+	migrationExecutor contracts.EncryptedValueMigrationExecutor,
+	reg prometheus.Registerer,
+	cfg *setting.Cfg,
+	_ *secret.DependencyRegisterer, // noop import so wire runs DB migrations before instantiating this service -- can be nil when manually instantiating
+) (*OSSKeeperService, error) {
+	systemKeeper, err := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, store, migrationExecutor, reg, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create system keeper: %w", err)
+	}
+
+	return &OSSKeeperService{
+		systemKeeper: systemKeeper,
 	}, nil
 }
 
-func (ks OSSKeeperService) GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error) {
-	sqlKeeper, err := sqlkeeper.NewSQLKeeper(ks.tracer, ks.encryptionManager, ks.store)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create sql keeper: %w", err)
-	}
-
-	return map[contracts.KeeperType]contracts.Keeper{
-		contracts.SQLKeeperType: sqlKeeper,
-	}, nil
+// Ignore the config, but we could use it to get the keeper type and then return the correct keeper.
+// Instantiation only happens on ProvideService ONCE.
+func (k *OSSKeeperService) KeeperForConfig(secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
+	return k.systemKeeper, nil
 }

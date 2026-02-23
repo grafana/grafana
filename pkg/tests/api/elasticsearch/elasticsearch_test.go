@@ -15,20 +15,36 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationElasticsearch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+// mockElasticsearchHandler returns a handler that mocks Elasticsearch endpoints.
+// It responds to GET / with cluster info (required for datasource initialization)
+// and returns 401 Unauthorized for all other requests.
+func mockElasticsearchHandler(onRequest func(r *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"version":{"build_flavor":"default","number":"8.0.0"}}`))
+		default:
+			if onRequest != nil {
+				onRequest(r)
+			}
+			w.WriteHeader(http.StatusUnauthorized)
+		}
 	}
+}
+
+func TestIntegrationElasticsearch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})
@@ -36,16 +52,9 @@ func TestIntegrationElasticsearch(t *testing.T) {
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()
 
-	u := testinfra.CreateUser(t, testEnv.SQLStore, testEnv.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
-
 	var outgoingRequest *http.Request
-	outgoingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	outgoingServer := httptest.NewServer(mockElasticsearchHandler(func(r *http.Request) {
 		outgoingRequest = r
-		w.WriteHeader(http.StatusUnauthorized)
 	}))
 	t.Cleanup(outgoingServer.Close)
 
@@ -61,7 +70,7 @@ func TestIntegrationElasticsearch(t *testing.T) {
 
 	uid := "es"
 	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgID:          u.OrgID,
+		OrgID:          1,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "Elasticsearch",
 		Type:           datasources.DS_ES,

@@ -10,8 +10,8 @@ import {
   VariableSort,
 } from '@grafana/data';
 import { QueryVariableEditorForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableForm';
+import { StoreState } from 'app/types/store';
 
-import { StoreState } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getQueryVariableEditorState } from '../editor/selectors';
@@ -157,6 +157,11 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         onMultiChange={this.onMultiChange}
         onIncludeAllChange={this.onIncludeAllChange}
         onAllValueChange={this.onAllValueChange}
+        options={variable.options.map((o) => ({
+          label: String(o.text),
+          value: String(o.value),
+          properties: o.properties,
+        }))}
       />
     );
   }

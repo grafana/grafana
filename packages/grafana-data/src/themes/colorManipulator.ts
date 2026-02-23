@@ -366,6 +366,32 @@ export function lighten(color: string, coefficient: number) {
   return recomposeColor(parts);
 }
 
+/**
+ * given foreground and background colors, returns the color of the foreground color on the background color.
+ * this is valuable for foreground colors with alpha.
+ *
+ * adapted from https://github.com/scttcper/tinycolor/blob/2927a9d2aa03e037486a79a295542a7848621691/src/index.ts#L583-L594
+ *
+ * @param foreground
+ * @param background
+ * @returns a tinycolor instance
+ */
+export const onBackground = (
+  foreground: tinycolor.ColorInput,
+  background: tinycolor.ColorInput
+): tinycolor.Instance => {
+  const fg = tinycolor(foreground).toRgb();
+  const bg = tinycolor(background).toRgb();
+  const alpha = fg.a + bg.a * (1 - fg.a);
+
+  return tinycolor({
+    r: (fg.r * fg.a + bg.r * bg.a * (1 - fg.a)) / alpha,
+    g: (fg.g * fg.a + bg.g * bg.a * (1 - fg.a)) / alpha,
+    b: (fg.b * fg.a + bg.b * bg.a * (1 - fg.a)) / alpha,
+    a: alpha,
+  });
+};
+
 interface DecomposeColor {
   type: string;
   values: any;
@@ -387,4 +413,5 @@ export const colorManipulator = {
   alpha,
   darken,
   lighten,
+  onBackground,
 };

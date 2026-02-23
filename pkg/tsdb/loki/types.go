@@ -3,13 +3,19 @@ package loki
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/promlib/models"
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
+
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
 type QueryType = dataquery.LokiQueryType
 type SupportingQueryType = dataquery.SupportingQueryType
 type Direction = dataquery.LokiQueryDirection
+type LimitsContext struct {
+	Expr string
+	From time.Time
+	To   time.Time
+}
 
 const (
 	QueryTypeRange   = dataquery.LokiQueryTypeRange
@@ -40,5 +46,6 @@ type lokiQuery struct {
 	End                 time.Time
 	RefID               string
 	SupportingQueryType SupportingQueryType
-	Scopes              []models.ScopeFilter
+	Scopes              []scope.ScopeFilter
+	LimitsContext       LimitsContext
 }

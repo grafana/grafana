@@ -4,6 +4,7 @@ import React from 'react';
 
 import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
 import { ComboboxOption } from './types';
+import { DEBOUNCE_TIME_MS } from './useOptions';
 
 describe('MultiCombobox', () => {
   beforeAll(() => {
@@ -115,6 +116,39 @@ describe('MultiCombobox', () => {
       { label: 'C', value: third },
     ]);
     expect(onChange).toHaveBeenNthCalledWith(3, [{ label: 'C', value: third }]);
+  });
+
+  it('should allow for options to be deselected', async () => {
+    // This test ensures that our fix for async options doesn't break sync options
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    const onChange = jest.fn();
+
+    const ControlledMultiCombobox = (props: MultiComboboxProps<string>) => {
+      const [value, setValue] = React.useState<string[]>(['a']);
+      return (
+        <MultiCombobox
+          {...props}
+          value={value}
+          onChange={(val) => {
+            setValue(val.map((v) => v.value));
+            onChange(val);
+          }}
+        />
+      );
+    };
+
+    render(<ControlledMultiCombobox options={options} value={[]} onChange={onChange} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+
+    // Click on option A to deselect it (it should be selected initially)
+    await user.click(await screen.findByRole('option', { name: 'A' }));
+
+    expect(onChange).toHaveBeenCalledWith([]);
   });
 
   it('should be able to render a value that is not in the options', async () => {
@@ -248,6 +282,25 @@ describe('MultiCombobox', () => {
       await user.type(input, 'b');
       expect(screen.getByText('A')).toBeInTheDocument();
     });
+
+    it('should not render All when only one option is available and enableAll is true', async () => {
+      const options = [{ label: 'A', value: 'a' }];
+      render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(screen.queryByRole('option', { name: 'All' })).not.toBeInTheDocument();
+    });
+
+    it('should not select option when only one option is available and enableAll is true', async () => {
+      const options = [{ label: 'A', value: 'a' }];
+      render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      const checkbox = screen.getByTestId(`combobox-option-${options[0].value}-checkbox`);
+      expect(checkbox).toBeInTheDocument();
+      expect(checkbox).not.toBeChecked();
+    });
   });
 
   describe('async', () => {
@@ -278,7 +331,7 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       // Debounce
-      await act(async () => jest.advanceTimersByTime(200));
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       expect(asyncOptions).toHaveBeenCalled();
     });
@@ -328,10 +381,10 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       await user.keyboard('a');
-      act(() => jest.advanceTimersByTime(200)); // Skip debounce
+      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
 
       await user.keyboard('b');
-      act(() => jest.advanceTimersByTime(200)); // Skip debounce
+      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
 
       await user.keyboard('c');
       act(() => jest.advanceTimersByTime(500)); // Resolve the second request, should be ignored
@@ -348,7 +401,7 @@ describe('MultiCombobox', () => {
       jest.advanceTimersByTime(1500); // Resolve the first request, should be ignored
       expect(screen.queryByRole('option', { name: 'first' })).not.toBeInTheDocument();
       expect(screen.queryByRole('option', { name: 'second' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('option', { name: 'third' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'third' })).toBeInTheDocument();
 
       jest.clearAllTimers();
     });
@@ -370,13 +423,100 @@ describe('MultiCombobox', () => {
       act(() => jest.advanceTimersByTime(10));
 
       await user.keyboard('c');
-      act(() => jest.advanceTimersByTime(200));
+      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       const item = await screen.findByRole('option', { name: 'Option 3' });
       expect(item).toBeInTheDocument();
 
       expect(asyncOptions).toHaveBeenCalledTimes(1);
       expect(asyncOptions).toHaveBeenCalledWith('abc');
+    });
+
+    it('should allow deselecting items', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(<MultiCombobox options={asyncOptions} value={['Option 1']} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      // Debounce
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      // Click on Option 1 to deselect it (it should already be selected via value prop)
+      const item = await screen.findByRole('option', { name: 'Option 1' });
+      await user.click(item);
+
+      // Verify onChange was called to remove the item
+      expect(onChangeHandler).toHaveBeenCalledWith([]);
+    });
+
+    it('should allow deselecting items with async options using ComboboxOption value format', async () => {
+      // This test reproduces the bug where deselection doesn't work with async options
+      // when the value is passed as ComboboxOption objects
+      const asyncOptionsData = [
+        { label: 'Integration A', value: 'a' },
+        { label: 'Integration B', value: 'b' },
+        { label: 'Integration C', value: 'c' },
+      ];
+
+      const asyncOptions = jest.fn(() => Promise.resolve(asyncOptionsData));
+
+      // Use a controlled component to simulate the user's scenario
+      const ControlledComponent = () => {
+        const [selectedValue, setSelectedValue] = React.useState<Array<ComboboxOption<string>>>([
+          { label: 'Integration A', value: 'a' },
+        ]);
+
+        return (
+          <MultiCombobox
+            options={asyncOptions}
+            value={selectedValue}
+            onChange={(options) => {
+              onChangeHandler(options);
+              setSelectedValue(options);
+            }}
+          />
+        );
+      };
+
+      render(<ControlledComponent />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      // Wait for async options to load
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      // Integration A should be selected (shown as pill)
+      const pillRemoveButton = screen.getByRole('button', { name: 'Remove Integration A' });
+      expect(pillRemoveButton).toBeInTheDocument();
+
+      // Click on Integration A in the dropdown to deselect it
+      const item = await screen.findByRole('option', { name: 'Integration A' });
+      await user.click(item);
+
+      // Verify onChange was called to remove the item
+      expect(onChangeHandler).toHaveBeenCalledWith([]);
+
+      // The pill should be removed
+      expect(screen.queryByRole('button', { name: 'Remove Integration A' })).not.toBeInTheDocument();
+    });
+
+    it('shows loading message', async () => {
+      const loadingMessage = 'Loading options...';
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(<MultiCombobox options={asyncOptions} value={['Option 1']} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      await act(async () => jest.advanceTimersByTime(0));
+
+      expect(await screen.findByText(loadingMessage)).toBeInTheDocument();
+
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      expect(screen.queryByText(loadingMessage)).not.toBeInTheDocument();
     });
   });
 });

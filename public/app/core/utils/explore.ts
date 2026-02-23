@@ -18,6 +18,7 @@ import {
   rangeUtil,
   RawTimeRange,
   ScopedVars,
+  store,
   TimeRange,
   TimeZone,
   toURLRange,
@@ -25,7 +26,6 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
-import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
 
@@ -93,7 +93,11 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     .map((q) => q.value);
 
   const exploreState = JSON.stringify({
-    [generateExploreId()]: { range: toURLRange(timeRange.raw), queries: interpolatedQueries, datasource: dsRef?.uid },
+    [generateExploreId()]: {
+      range: toURLRange(timeRange.raw),
+      queries: interpolatedQueries,
+      datasource: dsRef?.uid,
+    },
   });
   return locationUtil.assureBaseUrl(urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 }));
 }

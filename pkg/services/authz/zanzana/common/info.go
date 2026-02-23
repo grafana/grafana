@@ -4,8 +4,12 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 type typeInfo struct {
@@ -15,10 +19,25 @@ type typeInfo struct {
 
 var typedResources = map[string]typeInfo{
 	FormatGroupResource(
-		folderalpha1.FolderResourceInfo.GroupResource().Group,
-		folderalpha1.FolderResourceInfo.GroupResource().Resource,
+		folders.FolderResourceInfo.GroupResource().Group,
+		folders.FolderResourceInfo.GroupResource().Resource,
 		"",
-	): {Type: "folder", Relations: RelationsFolder},
+	): {Type: "folder", Relations: RelationsTyped},
+	FormatGroupResource(
+		iamv0alpha1.TeamResourceInfo.GroupResource().Group,
+		iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "team", Relations: RelationsTyped},
+	FormatGroupResource(
+		iamv0alpha1.UserResourceInfo.GroupResource().Group,
+		iamv0alpha1.UserResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "user", Relations: RelationsTyped},
+	FormatGroupResource(
+		iamv0alpha1.ServiceAccountResourceInfo.GroupResource().Group,
+		iamv0alpha1.ServiceAccountResourceInfo.GroupResource().Resource,
+		"",
+	): {Type: "service-account", Relations: RelationsTyped},
 }
 
 func getTypeInfo(group, resource string) (typeInfo, bool) {
@@ -28,7 +47,8 @@ func getTypeInfo(group, resource string) (typeInfo, bool) {
 
 func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	typ, relations := getTypeAndRelations(r.GetGroup(), r.GetResource())
-	return newResource(
+
+	resource := newResource(
 		typ,
 		r.GetGroup(),
 		r.GetResource(),
@@ -37,19 +57,19 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 		r.GetSubresource(),
 		relations,
 	)
-}
 
-func NewResourceInfoFromBatchItem(i *authzextv1.BatchCheckItem) ResourceInfo {
-	typ, relations := getTypeAndRelations(i.GetGroup(), i.GetResource())
-	return newResource(
-		typ,
-		i.GetGroup(),
-		i.GetResource(),
-		i.GetName(),
-		i.GetFolder(),
-		i.GetSubresource(),
-		relations,
-	)
+	// Special case for creating folders and resources in the root folder
+	if r.GetVerb() == utils.VerbCreate {
+		if resource.IsFolderResource() && resource.name == "" {
+			resource.name = accesscontrol.GeneralFolderUID
+		} else if resource.HasFolderSupport() && resource.folder == "" {
+			resource.folder = accesscontrol.GeneralFolderUID
+		}
+
+		return resource
+	}
+
+	return resource
 }
 
 func NewResourceInfoFromList(r *authzv1.ListRequest) ResourceInfo {
@@ -63,6 +83,33 @@ func NewResourceInfoFromList(r *authzv1.ListRequest) ResourceInfo {
 		r.GetSubresource(),
 		relations,
 	)
+}
+
+func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInfo {
+	typ, relations := getTypeAndRelations(item.GetGroup(), item.GetResource())
+
+	resource := newResource(
+		typ,
+		item.GetGroup(),
+		item.GetResource(),
+		item.GetName(),
+		item.GetFolder(),
+		item.GetSubresource(),
+		relations,
+	)
+
+	// Special case for creating folders and resources in the root folder
+	if item.GetVerb() == utils.VerbCreate {
+		if resource.IsFolderResource() && resource.name == "" {
+			resource.name = accesscontrol.GeneralFolderUID
+		} else if resource.HasFolderSupport() && resource.folder == "" {
+			resource.folder = accesscontrol.GeneralFolderUID
+		}
+
+		return resource
+	}
+
+	return resource
 }
 
 func getTypeAndRelations(group, resource string) (string, []string) {
@@ -133,17 +180,30 @@ func (r ResourceInfo) Type() string {
 }
 
 func (r ResourceInfo) Context() *structpb.Struct {
-	if !r.IsGeneric() {
-		return nil
-	}
-
 	return &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"requested_group": structpb.NewStringValue(r.GroupResource()),
+			"subresource":     structpb.NewStringValue(r.GroupResource()),
 		},
 	}
 }
 
 func (r ResourceInfo) IsValidRelation(relation string) bool {
 	return isValidRelation(relation, r.relations)
+}
+
+func (r ResourceInfo) HasSubresource() bool {
+	return r.subresource != ""
+}
+
+var resourcesWithFolderSupport = map[string]bool{
+	dashboardV1.DashboardResourceInfo.GroupResource().Group: true,
+}
+
+func (r ResourceInfo) HasFolderSupport() bool {
+	return resourcesWithFolderSupport[r.group]
+}
+
+func (r ResourceInfo) IsFolderResource() bool {
+	return r.group == folders.FolderResourceInfo.GroupResource().Group
 }

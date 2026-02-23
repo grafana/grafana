@@ -4,6 +4,7 @@ import { LRUCache } from 'lru-cache';
 import { AbstractQuery, getDefaultTimeRange, KeyValue, LanguageProvider, ScopedVars, TimeRange } from '@grafana/data';
 import { BackendSrvRequest, config } from '@grafana/runtime';
 
+import { LokiQueryType } from './dataquery.gen';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
 import { getStreamSelectorsFromQuery } from './queryUtils';
@@ -13,11 +14,11 @@ import {
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType, LokiQuery, LokiQueryType, ParserAndLabelKeysResult } from './types';
+import { DetectedFieldsResult, LabelType, LokiQuery, ParserAndLabelKeysResult } from './types';
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
-const HIDDEN_LABELS = ['__aggregrated_metric__', '__tenant_id__', '__stream_shard__'];
+const HIDDEN_LABELS = ['__aggregated_metric__', '__tenant_id__', '__stream_shard__'];
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
@@ -36,13 +37,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
   private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
   private detectedLabelValuesPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
 
-  constructor(datasource: LokiDatasource, initialValues?: any) {
+  constructor(datasource: LokiDatasource) {
     super();
 
     this.datasource = datasource;
     this.labelKeys = [];
-
-    Object.assign(this, initialValues);
   }
 
   request = async (
@@ -176,7 +175,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const { start, end } = this.datasource.getTimeRangeParams(range);
     const params: Record<string, string | number> = { start, end };
     if (options?.streamSelector && options?.streamSelector !== EMPTY_SELECTOR) {
-      params['query'] = options.streamSelector;
+      const interpolatedStreamSelector = this.datasource.interpolateString(options.streamSelector);
+      params['query'] = interpolatedStreamSelector;
     }
     const res = await this.request(url, params);
     if (Array.isArray(res)) {
@@ -477,9 +477,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
       hasLogfmt: false,
       hasPack: false,
     };
-    if (!config.featureToggles.lokiQueryHints) {
-      return empty;
-    }
 
     const series = await this.datasource.getDataSamples(
       {
@@ -514,7 +511,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *
    * @returns {TimeRange} The default time range
    */
-  private getDefaultTimeRange(): TimeRange {
+  getDefaultTimeRange(): TimeRange {
     return getDefaultTimeRange();
   }
 }

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // from http://www.postgresql.org/docs/current/static/sql-keywords-appendix.html

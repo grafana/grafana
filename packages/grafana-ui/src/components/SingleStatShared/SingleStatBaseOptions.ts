@@ -39,7 +39,7 @@ export function sharedSingleStatPanelChangedHandler(
   };
 
   // Migrating from angular singlestat
-  if (prevPluginId === 'singlestat' && prevOptions.angular) {
+  if ((prevPluginId === 'singlestat' || prevPluginId === 'grafana-singlestat-panel') && prevOptions.angular) {
     return migrateFromAngularSinglestat(panel, prevOptions);
   } else if (prevPluginId === 'graph') {
     // Migrating from Graph panel
@@ -117,12 +117,12 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
 function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
   const prevPanel = prevOptions.angular;
   const reducer = fieldReducers.getIfExists(prevPanel.valueName);
-  const options = {
+  const options: SingleStatBaseOptions = {
     reduceOptions: {
       calcs: [reducer ? reducer.id : ReducerID.mean],
     },
     orientation: VizOrientation.Horizontal,
-  } as any;
+  };
 
   const defaults: FieldConfig = {};
 
@@ -188,11 +188,16 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
 export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBaseOptions>): SingleStatBaseOptions {
   if (!panel.options) {
     // This happens on the first load or when migrating from angular
-    return {} as any;
+    return {
+      reduceOptions: {
+        calcs: [ReducerID.mean],
+      },
+      orientation: VizOrientation.Horizontal,
+    };
   }
 
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
-  let options = panel.options as any;
+  let options: any = panel.options;
 
   if (previousVersion < 6.2) {
     options = migrateFromValueOptions(options);

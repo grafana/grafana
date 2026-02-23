@@ -79,9 +79,7 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "B",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -117,9 +115,7 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "C",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -142,12 +138,14 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
             ],
             "exec_err_state": "Error",
             "is_paused": false,
+            "missing_series_evals_to_resolve": 0,
             "no_data_state": "NoData",
             "notification_settings": {
               "receiver": "lotsa-emails",
             },
             "title": "my great new rule",
           },
+          "keep_firing_for": "0s",
           "labels": {},
         },
       ],
@@ -247,9 +245,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "B",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -285,9 +281,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "C",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -316,9 +310,11 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                 "simplified_query_and_expressions_section": false,
               },
             },
+            "missing_series_evals_to_resolve": 0,
             "no_data_state": "NoData",
             "title": "my great new rule",
           },
+          "keep_firing_for": "0s",
           "labels": {},
         },
       ],
@@ -418,9 +414,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "B",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -456,9 +450,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "C",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -487,12 +479,14 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                 "simplified_query_and_expressions_section": true,
               },
             },
+            "missing_series_evals_to_resolve": 0,
             "no_data_state": "NoData",
             "notification_settings": {
               "receiver": "lotsa-emails",
             },
             "title": "my great new rule",
           },
+          "keep_firing_for": "0s",
           "labels": {},
         },
       ],
@@ -592,9 +586,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "B",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -630,9 +622,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "C",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -661,9 +651,11 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                 "simplified_query_and_expressions_section": true,
               },
             },
+            "missing_series_evals_to_resolve": 0,
             "no_data_state": "NoData",
             "title": "my great new rule",
           },
+          "keep_firing_for": "0s",
           "labels": {},
         },
       ],
@@ -763,9 +755,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "B",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -801,9 +791,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         "type": "and",
                       },
                       "query": {
-                        "params": [
-                          "C",
-                        ],
+                        "params": [],
                       },
                       "reducer": {
                         "params": [],
@@ -832,12 +820,14 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                 "simplified_query_and_expressions_section": false,
               },
             },
+            "missing_series_evals_to_resolve": 0,
             "no_data_state": "NoData",
             "notification_settings": {
               "receiver": "lotsa-emails",
             },
             "title": "my great new rule",
           },
+          "keep_firing_for": "0s",
           "labels": {},
         },
       ],

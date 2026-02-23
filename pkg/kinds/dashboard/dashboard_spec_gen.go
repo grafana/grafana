@@ -14,7 +14,6 @@ package dashboard
 import (
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 	time "time"
 )
 
@@ -87,7 +86,7 @@ func NewSpec() *Spec {
 		Editable:             (func(input bool) *bool { return &input })(true),
 		GraphTooltip:         (func(input DashboardCursorSync) *DashboardCursorSync { return &input })(DashboardCursorSyncOff),
 		FiscalYearStartMonth: (func(input uint8) *uint8 { return &input })(0),
-		SchemaVersion:        41,
+		SchemaVersion:        42,
 	}
 }
 
@@ -192,6 +191,9 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 	// Controls if the timeFrom or timeShift overrides are shown in the panel header
 	HideTimeOverride *bool `json:"hideTimeOverride,omitempty"`
+	// Compare the current time range with a previous period
+	// For example "1d" to compare current period but shifted back 1 day
+	TimeCompare *string `json:"timeCompare,omitempty"`
 	// Dynamically load the panel
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 	// Sets panel queries cache timeout.
@@ -202,12 +204,16 @@ type Panel struct {
 	Options map[string]any `json:"options,omitempty"`
 	// Field options allow you to change how the data is displayed in your visualizations.
 	FieldConfig *FieldConfigSource `json:"fieldConfig,omitempty"`
+	// When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+	// This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+	AutoMigrateFrom *string `json:"autoMigrateFrom,omitempty"`
 }
 
 // NewPanel creates a new Panel object.
 func NewPanel() *Panel {
 	return &Panel{
-		Transparent: (func(input bool) *bool { return &input })(false),
+		Transparent:     (func(input bool) *bool { return &input })(false),
+		RepeatDirection: (func(input PanelRepeatDirection) *PanelRepeatDirection { return &input })(PanelRepeatDirectionH),
 	}
 }
 
@@ -273,6 +279,8 @@ type DashboardLink struct {
 	Tags []string `json:"tags"`
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	AsDropdown bool `json:"asDropdown"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement *string `json:"placement,omitempty"`
 	// If true, the link will be opened in a new tab
 	TargetBlank bool `json:"targetBlank"`
 	// If true, includes current template variables values in the link as query params
@@ -284,7 +292,9 @@ type DashboardLink struct {
 // NewDashboardLink creates a new DashboardLink object.
 func NewDashboardLink() *DashboardLink {
 	return &DashboardLink{
+		Tags:        []string{},
 		AsDropdown:  false,
+		Placement:   (func(input string) *string { return &input })(DashboardLinkPlacement),
 		TargetBlank: false,
 		IncludeVars: false,
 		KeepTime:    false,
@@ -298,6 +308,10 @@ const (
 	DashboardLinkTypeLink       DashboardLinkType = "link"
 	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
 )
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+const DashboardLinkPlacement = "inControlsMenu"
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
@@ -366,7 +380,8 @@ type FieldConfigSource struct {
 // NewFieldConfigSource creates a new FieldConfigSource object.
 func NewFieldConfigSource() *FieldConfigSource {
 	return &FieldConfigSource{
-		Defaults: *NewFieldConfig(),
+		Defaults:  *NewFieldConfig(),
+		Overrides: []DashboardFieldConfigSourceOverrides{},
 	}
 }
 
@@ -392,7 +407,7 @@ type FieldConfig struct {
 	// True if data source field supports ad-hoc filters
 	Filterable *bool `json:"filterable,omitempty"`
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -419,6 +434,8 @@ type FieldConfig struct {
 	Color *FieldColor `json:"color,omitempty"`
 	// The behavior when clicking on a result
 	Links []any `json:"links,omitempty"`
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	Actions []Action `json:"actions,omitempty"`
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
 	// custom is specified by the FieldConfig field
@@ -450,9 +467,24 @@ type ValueMap struct {
 // NewValueMap creates a new ValueMap object.
 func NewValueMap() *ValueMap {
 	return &ValueMap{
-		Type: MappingTypeValueToText,
+		Type:    MappingTypeValueToText,
+		Options: map[string]ValueMappingResult{},
 	}
 }
+
+// Supported value mapping types
+// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+type MappingType string
+
+const (
+	MappingTypeValueToText  MappingType = "value"
+	MappingTypeRangeToText  MappingType = "range"
+	MappingTypeRegexToText  MappingType = "regex"
+	MappingTypeSpecialValue MappingType = "special"
+)
 
 // Result used as replacement with text and color when the value matches
 type ValueMappingResult struct {
@@ -541,7 +573,9 @@ type ThresholdsConfig struct {
 
 // NewThresholdsConfig creates a new ThresholdsConfig object.
 func NewThresholdsConfig() *ThresholdsConfig {
-	return &ThresholdsConfig{}
+	return &ThresholdsConfig{
+		Steps: []Threshold{},
+	}
 }
 
 // Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
@@ -588,7 +622,12 @@ func NewFieldColor() *FieldColor {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -606,6 +645,11 @@ const (
 	FieldColorModeIdThresholds           FieldColorModeId = "thresholds"
 	FieldColorModeIdPaletteClassic       FieldColorModeId = "palette-classic"
 	FieldColorModeIdPaletteClassicByName FieldColorModeId = "palette-classic-by-name"
+	FieldColorModeIdContinuousViridis    FieldColorModeId = "continuous-viridis"
+	FieldColorModeIdContinuousMagma      FieldColorModeId = "continuous-magma"
+	FieldColorModeIdContinuousPlasma     FieldColorModeId = "continuous-plasma"
+	FieldColorModeIdContinuousInferno    FieldColorModeId = "continuous-inferno"
+	FieldColorModeIdContinuousCividis    FieldColorModeId = "continuous-cividis"
 	FieldColorModeIdContinuousGrYlRd     FieldColorModeId = "continuous-GrYlRd"
 	FieldColorModeIdContinuousRdYlGr     FieldColorModeId = "continuous-RdYlGr"
 	FieldColorModeIdContinuousBlYlRd     FieldColorModeId = "continuous-BlYlRd"
@@ -628,6 +672,92 @@ const (
 	FieldColorSeriesByModeMax  FieldColorSeriesByMode = "max"
 	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
 )
+
+// Dashboard action
+type Action struct {
+	Type         ActionType            `json:"type"`
+	Title        string                `json:"title"`
+	Fetch        *FetchOptions         `json:"fetch,omitempty"`
+	Infinity     *InfinityOptions      `json:"infinity,omitempty"`
+	Confirmation *string               `json:"confirmation,omitempty"`
+	OneClick     *bool                 `json:"oneClick,omitempty"`
+	Variables    []ActionVariable      `json:"variables,omitempty"`
+	Style        *DashboardActionStyle `json:"style,omitempty"`
+}
+
+// NewAction creates a new Action object.
+func NewAction() *Action {
+	return &Action{}
+}
+
+// Dashboard action type
+type ActionType string
+
+const (
+	ActionTypeFetch    ActionType = "fetch"
+	ActionTypeInfinity ActionType = "infinity"
+)
+
+// Fetch options
+type FetchOptions struct {
+	Method HttpRequestMethod `json:"method"`
+	Url    string            `json:"url"`
+	Body   *string           `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams [][]string `json:"queryParams,omitempty"`
+	Headers     [][]string `json:"headers,omitempty"`
+}
+
+// NewFetchOptions creates a new FetchOptions object.
+func NewFetchOptions() *FetchOptions {
+	return &FetchOptions{}
+}
+
+type HttpRequestMethod string
+
+const (
+	HttpRequestMethodGET    HttpRequestMethod = "GET"
+	HttpRequestMethodPUT    HttpRequestMethod = "PUT"
+	HttpRequestMethodPOST   HttpRequestMethod = "POST"
+	HttpRequestMethodDELETE HttpRequestMethod = "DELETE"
+	HttpRequestMethodPATCH  HttpRequestMethod = "PATCH"
+)
+
+// Infinity options
+type InfinityOptions struct {
+	Method HttpRequestMethod `json:"method"`
+	Url    string            `json:"url"`
+	Body   *string           `json:"body,omitempty"`
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	QueryParams   [][]string `json:"queryParams,omitempty"`
+	Headers       [][]string `json:"headers,omitempty"`
+	DatasourceUid string     `json:"datasourceUid"`
+}
+
+// NewInfinityOptions creates a new InfinityOptions object.
+func NewInfinityOptions() *InfinityOptions {
+	return &InfinityOptions{}
+}
+
+type ActionVariable struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// NewActionVariable creates a new ActionVariable object.
+func NewActionVariable() *ActionVariable {
+	return &ActionVariable{
+		Type: ActionVariableType,
+	}
+}
+
+// Action variable type
+const ActionVariableType = "string"
 
 type DynamicConfigValue struct {
 	Id    string `json:"id"`
@@ -666,6 +796,7 @@ func NewRowPanel() *RowPanel {
 	return &RowPanel{
 		Type:      "row",
 		Collapsed: false,
+		Panels:    []Panel{},
 	}
 }
 
@@ -706,6 +837,14 @@ type VariableModel struct {
 	// Optional field, if you want to extract part of a series name or metric node segment.
 	// Named capture groups can be used to separate the display text and value.
 	Regex *string `json:"regex,omitempty"`
+	// Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+	ValuesFormat *VariableModelValuesFormat `json:"valuesFormat,omitempty"`
+	// Determine whether regex applies to variable value or display text
+	RegexApplyTo *VariableRegexApplyTo `json:"regexApplyTo,omitempty"`
+	// Additional static options for query variable
+	StaticOptions []VariableOption `json:"staticOptions,omitempty"`
+	// Ordering of static options in relation to options returned from data source for query variable
+	StaticOptionsOrder *VariableModelStaticOptionsOrder `json:"staticOptionsOrder,omitempty"`
 }
 
 // NewVariableModel creates a new VariableModel object.
@@ -715,6 +854,7 @@ func NewVariableModel() *VariableModel {
 		Multi:            (func(input bool) *bool { return &input })(false),
 		AllowCustomValue: (func(input bool) *bool { return &input })(true),
 		IncludeAll:       (func(input bool) *bool { return &input })(false),
+		ValuesFormat:     (func(input VariableModelValuesFormat) *VariableModelValuesFormat { return &input })(VariableModelValuesFormatCsv),
 	}
 }
 
@@ -727,6 +867,7 @@ func NewVariableModel() *VariableModel {
 // `textbox`: Display a free text input field with an optional default value.
 // `custom`: Define the variable options manually using a comma-separated list.
 // `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+// `switch`: Boolean variables rendered as a switch
 type VariableType string
 
 const (
@@ -740,16 +881,18 @@ const (
 	VariableTypeCustom     VariableType = "custom"
 	VariableTypeSystem     VariableType = "system"
 	VariableTypeSnapshot   VariableType = "snapshot"
+	VariableTypeSwitch     VariableType = "switch"
 )
 
 // Determine if the variable shows on dashboard
-// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
+// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing), 3 (show under the controls dropdown menu).
 type VariableHide int64
 
 const (
-	VariableHideDontHide     VariableHide = 0
-	VariableHideHideLabel    VariableHide = 1
-	VariableHideHideVariable VariableHide = 2
+	VariableHideDontHide       VariableHide = 0
+	VariableHideHideLabel      VariableHide = 1
+	VariableHideHideVariable   VariableHide = 2
+	VariableHideInControlsMenu VariableHide = 3
 )
 
 // Option to be selected in a variable.
@@ -760,6 +903,8 @@ type VariableOption struct {
 	Text StringOrArrayOfString `json:"text"`
 	// Value of the option
 	Value StringOrArrayOfString `json:"value"`
+	// Additional properties for multi-props variables
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // NewVariableOption creates a new VariableOption object.
@@ -807,6 +952,15 @@ const (
 	VariableSortNaturalDesc                     VariableSort = 8
 )
 
+// Determine whether regex applies to variable value or display text
+// Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+type VariableRegexApplyTo string
+
+const (
+	VariableRegexApplyToValue VariableRegexApplyTo = "value"
+	VariableRegexApplyToText  VariableRegexApplyTo = "text"
+)
+
 // Contains the list of annotations that are associated with the dashboard.
 // Annotations are used to overlay event markers and overlay event tags on graphs.
 // Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
@@ -843,6 +997,8 @@ type AnnotationQuery struct {
 	Type *string `json:"type,omitempty"`
 	// Set to 1 for the standard annotation query all dashboards have by default.
 	BuiltIn *float64 `json:"builtIn,omitempty"`
+	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+	Placement *string `json:"placement,omitempty"`
 }
 
 // NewAnnotationQuery creates a new AnnotationQuery object.
@@ -852,6 +1008,7 @@ func NewAnnotationQuery() *AnnotationQuery {
 		Enable:     true,
 		Hide:       (func(input bool) *bool { return &input })(false),
 		BuiltIn:    (func(input float64) *float64 { return &input })(0),
+		Placement:  (func(input string) *string { return &input })(AnnotationQueryPlacement),
 	}
 }
 
@@ -866,6 +1023,7 @@ type AnnotationPanelFilter struct {
 func NewAnnotationPanelFilter() *AnnotationPanelFilter {
 	return &AnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
+		Ids:     []uint8{},
 	}
 }
 
@@ -888,8 +1046,14 @@ type AnnotationTarget struct {
 
 // NewAnnotationTarget creates a new AnnotationTarget object.
 func NewAnnotationTarget() *AnnotationTarget {
-	return &AnnotationTarget{}
+	return &AnnotationTarget{
+		Tags: []string{},
+	}
 }
+
+// Annotation Query placement. Defines where the annotation query should be displayed.
+// - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+const AnnotationQueryPlacement = "inControlsMenu"
 
 // A dashboard snapshot shares an interactive dashboard publicly.
 // It is a read-only version of a dashboard, and is not editable.
@@ -928,20 +1092,6 @@ func NewSnapshot() *Snapshot {
 	return &Snapshot{}
 }
 
-// Supported value mapping types
-// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
-// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
-// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
-// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
-type MappingType string
-
-const (
-	MappingTypeValueToText  MappingType = "value"
-	MappingTypeRangeToText  MappingType = "range"
-	MappingTypeRegexToText  MappingType = "regex"
-	MappingTypeSpecialValue MappingType = "special"
-)
-
 type DashboardSpecTime struct {
 	From string `json:"from"`
 	To   string `json:"to"`
@@ -973,7 +1123,8 @@ type DashboardFieldConfigSourceOverrides struct {
 // NewDashboardFieldConfigSourceOverrides creates a new DashboardFieldConfigSourceOverrides object.
 func NewDashboardFieldConfigSourceOverrides() *DashboardFieldConfigSourceOverrides {
 	return &DashboardFieldConfigSourceOverrides{
-		Matcher: *NewMatcherConfig(),
+		Matcher:    *NewMatcherConfig(),
+		Properties: []DynamicConfigValue{},
 	}
 }
 
@@ -1021,6 +1172,15 @@ func NewDashboardSpecialValueMapOptions() *DashboardSpecialValueMapOptions {
 	}
 }
 
+type DashboardActionStyle struct {
+	BackgroundColor *string `json:"backgroundColor,omitempty"`
+}
+
+// NewDashboardActionStyle creates a new DashboardActionStyle object.
+func NewDashboardActionStyle() *DashboardActionStyle {
+	return &DashboardActionStyle{}
+}
+
 type PanelRepeatDirection string
 
 const (
@@ -1034,6 +1194,21 @@ const (
 	DataTransformerConfigTopicSeries      DataTransformerConfigTopic = "series"
 	DataTransformerConfigTopicAnnotations DataTransformerConfigTopic = "annotations"
 	DataTransformerConfigTopicAlertStates DataTransformerConfigTopic = "alertStates"
+)
+
+type VariableModelValuesFormat string
+
+const (
+	VariableModelValuesFormatCsv  VariableModelValuesFormat = "csv"
+	VariableModelValuesFormatJson VariableModelValuesFormat = "json"
+)
+
+type VariableModelStaticOptionsOrder string
+
+const (
+	VariableModelStaticOptionsOrderBefore VariableModelStaticOptionsOrder = "before"
+	VariableModelStaticOptionsOrderAfter  VariableModelStaticOptionsOrder = "after"
+	VariableModelStaticOptionsOrderSorted VariableModelStaticOptionsOrder = "sorted"
 )
 
 type ValueMapOrRangeMapOrRegexMapOrSpecialValueMap struct {
@@ -1063,7 +1238,7 @@ func (resource ValueMapOrRangeMapOrRegexMapOrSpecialValueMap) MarshalJSON() ([]b
 		return json.Marshal(resource.SpecialValueMap)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of refs")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `ValueMapOrRangeMapOrRegexMapOrSpecialValueMap` from JSON.
@@ -1080,7 +1255,7 @@ func (resource *ValueMapOrRangeMapOrRegexMapOrSpecialValueMap) UnmarshalJSON(raw
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1118,7 +1293,7 @@ func (resource *ValueMapOrRangeMapOrRegexMapOrSpecialValueMap) UnmarshalJSON(raw
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type StringOrMap struct {
@@ -1141,7 +1316,7 @@ func (resource StringOrMap) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.Map)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrMap` from JSON.
@@ -1195,7 +1370,7 @@ func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.ArrayOfString)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.

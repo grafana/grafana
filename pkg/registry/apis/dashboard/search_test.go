@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,11 +18,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestSearchFallback(t *testing.T) {
@@ -34,7 +37,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -61,7 +64,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -88,7 +91,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -115,7 +118,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -142,7 +145,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -169,7 +172,7 @@ func TestSearchFallback(t *testing.T) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			},
 		}
-		dual := dualwrite.ProvideService(featuremgmt.WithFeatures(), nil, cfg)
+		dual := dualwrite.ProvideStaticServiceForTests(cfg)
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
 
 		rr := httptest.NewRecorder()
@@ -188,99 +191,104 @@ func TestSearchFallback(t *testing.T) {
 	})
 }
 
+func TestSearchHandlerPagination(t *testing.T) {
+	t.Run("should calculate offset and page parameters", func(t *testing.T) {
+		limit := 50
+		for i, tt := range []struct {
+			offset         int
+			page           int
+			expectedOffset int
+			expectedPage   int
+		}{
+			{
+				offset:         0,
+				page:           0,
+				expectedOffset: 0,
+				expectedPage:   1,
+			},
+			{
+				offset:         0,
+				page:           1,
+				expectedOffset: 0,
+				expectedPage:   1,
+			},
+			{
+				offset:         0,
+				page:           2,
+				expectedOffset: 50,
+				expectedPage:   2,
+			},
+			{
+				offset:         0,
+				page:           3,
+				expectedOffset: 100,
+				expectedPage:   3,
+			},
+			{
+				offset:         50,
+				page:           0,
+				expectedOffset: 50,
+				expectedPage:   2,
+			},
+			{
+				offset:         100,
+				page:           0,
+				expectedOffset: 100,
+				expectedPage:   3,
+			},
+			{
+				offset:         149,
+				page:           0,
+				expectedOffset: 149,
+				expectedPage:   3,
+			},
+			{
+				offset:         150,
+				page:           0,
+				expectedOffset: 150,
+				expectedPage:   4,
+			},
+		} {
+			mockClient := &MockClient{}
+
+			cfg := &setting.Cfg{
+				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
+				},
+			}
+			dual := dualwrite.ProvideStaticServiceForTests(cfg)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil)
+
+			rr := httptest.NewRecorder()
+			endpoint := fmt.Sprintf("/search?limit=%d", limit)
+			if tt.offset > 0 {
+				endpoint = fmt.Sprintf("%s&offset=%d", endpoint, tt.offset)
+			}
+			if tt.page > 0 {
+				endpoint = fmt.Sprintf("%s&page=%d", endpoint, tt.page)
+			}
+			req := httptest.NewRequest("GET", endpoint, nil)
+			req.Header.Add("content-type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+			searchHandler.DoSearch(rr, req)
+
+			if mockClient.LastSearchRequest == nil {
+				t.Fatalf("expected Search to be called, but it was not")
+			}
+
+			require.Equal(t, int(mockClient.LastSearchRequest.Offset), tt.expectedOffset, fmt.Sprintf("mismatch offset in test %d", i))
+			require.Equal(t, int(mockClient.LastSearchRequest.Page), tt.expectedPage, fmt.Sprintf("mismatch page in test %d", i))
+		}
+	})
+}
+
 func TestSearchHandler(t *testing.T) {
-	t.Run("Multiple comma separated fields will be appended to default dashboard search fields", func(t *testing.T) {
-		// Create a mock client
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		// Initialize the search handler with the mock client
-		searchHandler := SearchHandler{
-			log:      log.New("test", "test"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?field=field1&field=field2&field=field3", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		expectedFields := []string{"title", "folder", "tags", "field1", "field2", "field3"}
-		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
-			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
-		}
-	})
-
-	t.Run("Single field will be appended to default dashboard search fields", func(t *testing.T) {
-		// Create a mock client
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		// Initialize the search handler with the mock client
-		searchHandler := SearchHandler{
-			log:      log.New("test", "test"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?field=field1", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		expectedFields := []string{"title", "folder", "tags", "field1"}
-		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
-			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
-		}
-	})
-
-	t.Run("Passing no fields will search using default dashboard fields", func(t *testing.T) {
-		// Create a mock client
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		// Initialize the search handler with the mock client
-		searchHandler := SearchHandler{
-			log:      log.New("test", "test"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		expectedFields := []string{"title", "folder", "tags"}
-		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
-			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
-		}
-	})
-
 	t.Run("Sort - default sort by resource", func(t *testing.T) {
-		rows := make([]*resource.ResourceTableRow, len(mockResults))
+		rows := make([]*resourcepb.ResourceTableRow, len(mockResults))
 		for i, r := range mockResults {
-			rows[i] = &resource.ResourceTableRow{
-				Key: &resource.ResourceKey{
+			rows[i] = &resourcepb.ResourceTableRow{
+				Key: &resourcepb.ResourceKey{
 					Name:     r.Name,
 					Resource: r.Resource,
 				},
@@ -290,9 +298,9 @@ func TestSearchHandler(t *testing.T) {
 			}
 		}
 
-		mockResponse := &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		mockResponse := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{Name: resource.SEARCH_FIELD_TITLE},
 				},
 				Rows: rows,
@@ -300,7 +308,7 @@ func TestSearchHandler(t *testing.T) {
 		}
 		// Create a mock client
 		mockClient := &MockClient{
-			MockResponses: []*resource.ResourceSearchResponse{mockResponse},
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse},
 		}
 
 		features := featuremgmt.WithFeatures()
@@ -340,30 +348,10 @@ func TestSearchHandler(t *testing.T) {
 }
 
 func TestSearchHandlerSharedDashboards(t *testing.T) {
-	t.Run("should bail out if FlagUnifiedStorageSearchPermissionFiltering is not enabled globally", func(t *testing.T) {
-		mockClient := &MockClient{}
-
-		features := featuremgmt.WithFeatures()
-		searchHandler := SearchHandler{
-			log:      log.New("test", "test"),
-			client:   mockClient,
-			tracer:   tracing.NewNoopTracerService(),
-			features: features,
-		}
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		assert.Equal(t, mockClient.CallCount, 0)
-	})
-
 	t.Run("should return empty result without searching if user does not have shared dashboards", func(t *testing.T) {
 		mockClient := &MockClient{}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
 			client:   mockClient,
@@ -396,23 +384,23 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 	t.Run("should return empty result if user has access to folder of all shared dashboards", func(t *testing.T) {
 		// dashboardSearchRequest
-		mockResponse1 := &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "folder",
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "dashboardinroot",
 							Resource: "dashboard",
 						},
 						Cells: [][]byte{[]byte("")}, // root folder doesn't have uid
 					},
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "dashboardinpublicfolder",
 							Resource: "dashboard",
 						},
@@ -425,16 +413,16 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		}
 
 		// folderSearchRequest
-		mockResponse2 := &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "folder",
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "publicfolder",
 							Resource: "folder",
 						},
@@ -447,10 +435,10 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		}
 
 		mockClient := &MockClient{
-			MockResponses: []*resource.ResourceSearchResponse{mockResponse1, mockResponse2},
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
 			client:   mockClient,
@@ -486,23 +474,23 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 	t.Run("should return the dashboards shared with the user", func(t *testing.T) {
 		// dashboardSearchRequest
-		mockResponse1 := &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "folder",
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "dashboardinroot",
 							Resource: "dashboard",
 						},
 						Cells: [][]byte{[]byte("")}, // root folder doesn't have uid
 					},
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "dashboardinprivatefolder",
 							Resource: "dashboard",
 						},
@@ -511,7 +499,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 						},
 					},
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "dashboardinpublicfolder",
 							Resource: "dashboard",
 						},
@@ -519,21 +507,30 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 							[]byte("publicfolder"), // folder uid
 						},
 					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "sharedfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
 				},
 			},
 		}
 
 		// folderSearchRequest
-		mockResponse2 := &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "folder",
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "publicfolder",
 							Resource: "folder",
 						},
@@ -545,18 +542,27 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			},
 		}
 
-		mockResponse3 := &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "folder",
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "dashboardinprivatefolder",
 							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "sharedfolder",
+							Resource: "folder",
 						},
 						Cells: [][]byte{
 							[]byte("privatefolder"), // folder uid
@@ -567,10 +573,10 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		}
 
 		mockClient := &MockClient{
-			MockResponses: []*resource.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering)
+		features := featuremgmt.WithFeatures()
 		searchHandler := SearchHandler{
 			log:      log.New("test", "test"),
 			client:   mockClient,
@@ -583,6 +589,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		allPermissions := make(map[int64]map[string][]string)
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
+		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:sharedfolder"}
 		allPermissions[1] = permissions
 		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
@@ -593,14 +600,147 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// first call gets all dashboards user has permission for
 		firstCall := mockClient.MockCalls[0]
-		assert.Equal(t, firstCall.Options.Fields[0].Values, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder"})
+		assert.Equal(t, firstCall.Options.Fields[0].Values, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"})
+		// verify federated field is set to include folders
+		assert.NotNil(t, firstCall.Federated)
+		assert.Equal(t, 1, len(firstCall.Federated))
+		assert.Equal(t, "folder.grafana.app", firstCall.Federated[0].Group)
+		assert.Equal(t, "folders", firstCall.Federated[0].Resource)
 		// second call gets folders associated with the previous dashboards
 		secondCall := mockClient.MockCalls[1]
 		assert.Equal(t, secondCall.Options.Fields[0].Values, []string{"privatefolder", "publicfolder"})
-		// lastly, search ONLY for dashboards user has permission to read that are within folders the user does NOT have
+		// lastly, search ONLY for dashboards and folders user has permission to read that are within folders the user does NOT have
 		// permission to read
 		thirdCall := mockClient.MockCalls[2]
-		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder"})
+		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder", "sharedfolder"})
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
+	})
+
+	t.Run("should compute shared dashboards based on requested edit permission", func(t *testing.T) {
+		// dashboardSearchRequest
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dashboardinprivatefolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dashboardinpublicfolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("publicfolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest: only folders the user can EDIT should be returned here
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "publicfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte(""), // root folder uid
+						},
+					},
+				},
+			},
+		}
+
+		// final search should only include items in folders the user cannot edit
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dashboardinprivatefolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
+		}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme&permission=edit", nil)
+		req.Header.Add("content-type", "application/json")
+
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsWrite] = []string{"dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
+		// user can view the private folder, but cannot edit it. This should still classify dashboards in it as "shared with me" for edit.
+		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:privatefolder"}
+		allPermissions[1] = permissions
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, 3, mockClient.CallCount)
+
+		firstCall := mockClient.MockCalls[0]
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), firstCall.Permission)
+		assert.Equal(t, []string{"dashboardinprivatefolder", "dashboardinpublicfolder"}, firstCall.Options.Fields[0].Values)
+
+		secondCall := mockClient.MockCalls[1]
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), secondCall.Permission)
+		assert.Equal(t, []string{"privatefolder", "publicfolder"}, secondCall.Options.Fields[0].Values)
+
+		thirdCall := mockClient.MockCalls[2]
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), thirdCall.Permission)
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[0].Values)
 
 		resp := rr.Result()
 		defer func() {
@@ -616,16 +756,472 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 	})
 }
 
+func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
+	testUser := &user.SignedInUser{
+		Namespace: "test-namespace",
+		OrgID:     1,
+	}
+
+	dashboardKey := &resourcepb.ResourceKey{
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+		Namespace: "test-namespace",
+	}
+	folderKey := &resourcepb.ResourceKey{
+		Group:     "folder.grafana.app",
+		Resource:  "folders",
+		Namespace: "test-namespace",
+	}
+	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
+
+	tests := map[string]struct {
+		queryString           string
+		sharedDashboards      []string
+		sharedDashboardsError error
+		expected              *resourcepb.ResourceSearchRequest
+		expectedError         error
+	}{
+		"default values with no query params": {
+			queryString: "",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"custom limit and offset": {
+			queryString: "limit=100&offset=50",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     100,
+				Offset:    50,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"pagination with page parameter": {
+			queryString: "limit=25&page=3",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     25,
+				Offset:    50,
+				Page:      3,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"query string and explain": {
+			queryString: "query=test-query&explain=true",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "test-query",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   true,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"additional fields": {
+			queryString: "field=custom1&field=custom2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    append(defaultFields, "custom1", "custom2"),
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"view permission": {
+			queryString: "permission=view",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:    &resourcepb.ListOptions{Key: dashboardKey},
+				Query:      "",
+				Limit:      50,
+				Offset:     0,
+				Page:       1,
+				Explain:    false,
+				Fields:     defaultFields,
+				Permission: int64(dashboardaccess.PERMISSION_VIEW),
+				Federated:  []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"edit permission": {
+			queryString: "permission=Edit",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:    &resourcepb.ListOptions{Key: dashboardKey},
+				Query:      "",
+				Limit:      50,
+				Offset:     0,
+				Page:       1,
+				Explain:    false,
+				Fields:     defaultFields,
+				Permission: int64(dashboardaccess.PERMISSION_EDIT),
+				Federated:  []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"admin permission": {
+			queryString: "permission=ADMIN",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:    &resourcepb.ListOptions{Key: dashboardKey},
+				Query:      "",
+				Limit:      50,
+				Offset:     0,
+				Page:       1,
+				Explain:    false,
+				Fields:     defaultFields,
+				Permission: int64(dashboardaccess.PERMISSION_ADMIN),
+				Federated:  []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"type dashboard only": {
+			queryString: "type=dashboard",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+			},
+		},
+		"type folder only": {
+			queryString: "type=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: folderKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+			},
+		},
+		"both types should include federated": {
+			queryString: "type=dashboard&type=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort ascending": {
+			queryString: "sort=title",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "title", Desc: false}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort descending": {
+			queryString: "sort=-title",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "title", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields": {
+			queryString: "facet=tags&facet=folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags":   {Field: "tags", Limit: 50},
+					"folder": {Field: "folder", Limit: 50},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields with custom limit": {
+			queryString: "facet=tags&facetLimit=500",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 500},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields with limit exceeding max": {
+			queryString: "facet=tags&facetLimit=5000",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 1000},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"tag filter": {
+			queryString: "tag=tag1&tag=tag2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "tags", Operator: "=", Values: []string{"tag1", "tag2"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"folder filter": {
+			queryString: "folder=my-folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "folder", Operator: "=", Values: []string{"my-folder"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"tag and folder filter together": {
+			queryString: "tag=tag1&tag=tag2&folder=my-folder",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: dashboardKey,
+					Fields: []*resourcepb.Requirement{
+						{Key: "tags", Operator: "=", Values: []string{"tag1", "tag2"}},
+						{Key: "folder", Operator: "=", Values: []string{"my-folder"}},
+					},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"root folder should be converted to empty string": {
+			queryString: "folder=general",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "folder", Operator: "=", Values: []string{""}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"shared with me folder with dashboards": {
+			queryString:      "folder=sharedwithme",
+			sharedDashboards: []string{"dash1", "dash2", "dash3"},
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "name", Operator: "in", Values: []string{"dash1", "dash2", "dash3"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"shared with me folder without dashboards returns error": {
+			queryString:      "folder=sharedwithme",
+			sharedDashboards: []string{},
+			expectedError:    errEmptyResults,
+		},
+		"name filter": {
+			queryString: "name=name1&name=name2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "name", Operator: "in", Values: []string{"name1", "name2"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"comprehensive filter with query, tags, folder, and name": {
+			queryString: "query=search-term&tag=monitoring&tag=prod&folder=my-folder&name=dash1&name=dash2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: dashboardKey,
+					Fields: []*resourcepb.Requirement{
+						{Key: "tags", Operator: "=", Values: []string{"monitoring", "prod"}},
+						{Key: "folder", Operator: "=", Values: []string{"my-folder"}},
+						{Key: "name", Operator: "in", Values: []string{"dash1", "dash2"}},
+					},
+				},
+				Query:     "search-term",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"libraryPanel filter": {
+			queryString: "libraryPanel=panel1&libraryPanel=panel2",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "reference.LibraryPanel", Operator: "=", Values: []string{"panel1", "panel2"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"libraryPanel and tag filter together": {
+			queryString: "libraryPanel=panel1&tag=monitoring&tag=prod",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: dashboardKey,
+					Fields: []*resourcepb.Requirement{
+						{Key: "tags", Operator: "=", Values: []string{"monitoring", "prod"}},
+						{Key: "reference.LibraryPanel", Operator: "=", Values: []string{"panel1"}},
+					},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"createdBy filter": {
+			queryString: "createdBy=user:abc123",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "createdBy", Operator: "=", Values: []string{"user:abc123"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			queryParams, err := url.ParseQuery(tt.queryString)
+			require.NoError(t, err)
+
+			getDashboardsFunc := func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+				if tt.sharedDashboardsError != nil {
+					return nil, tt.sharedDashboardsError
+				}
+				return tt.sharedDashboards, nil
+			}
+
+			result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, getDashboardsFunc)
+
+			if tt.expectedError != nil {
+				assert.ErrorIs(t, err, tt.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, result)
+
+			// Exclude query fields from the expected search
+			if tt.queryString != "" {
+				result.QueryFields = nil
+			}
+
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 // MockClient implements the ResourceIndexClient interface for testing
 type MockClient struct {
-	resource.ResourceIndexClient
+	resourcepb.ResourceIndexClient
 	resource.ResourceIndex
 
 	// Capture the last SearchRequest for assertions
-	LastSearchRequest *resource.ResourceSearchRequest
+	LastSearchRequest *resourcepb.ResourceSearchRequest
 
-	MockResponses []*resource.ResourceSearchResponse
-	MockCalls     []*resource.ResourceSearchRequest
+	MockResponses []*resourcepb.ResourceSearchResponse
+	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
 }
 
@@ -658,11 +1254,11 @@ var mockResults = []MockResult{
 	},
 }
 
-func (m *MockClient) Search(ctx context.Context, in *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
+func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	m.LastSearchRequest = in
 	m.MockCalls = append(m.MockCalls, in)
 
-	var response *resource.ResourceSearchResponse
+	var response *resourcepb.ResourceSearchResponse
 	if m.CallCount < len(m.MockResponses) {
 		response = m.MockResponses[m.CallCount]
 	}
@@ -671,42 +1267,49 @@ func (m *MockClient) Search(ctx context.Context, in *resource.ResourceSearchRequ
 
 	return response, nil
 }
-func (m *MockClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
+func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) CountManagedObjects(ctx context.Context, in *resource.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resource.CountManagedObjectsResponse, error) {
+func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
+func (m *MockClient) Watch(ctx context.Context, in *resourcepb.WatchRequest, opts ...grpc.CallOption) (resourcepb.ResourceStore_WatchClient, error) {
 	return nil, nil
 }
-func (m *MockClient) Delete(ctx context.Context, in *resource.DeleteRequest, opts ...grpc.CallOption) (*resource.DeleteResponse, error) {
+func (m *MockClient) Delete(ctx context.Context, in *resourcepb.DeleteRequest, opts ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) Create(ctx context.Context, in *resource.CreateRequest, opts ...grpc.CallOption) (*resource.CreateResponse, error) {
+func (m *MockClient) Create(ctx context.Context, in *resourcepb.CreateRequest, opts ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) Update(ctx context.Context, in *resource.UpdateRequest, opts ...grpc.CallOption) (*resource.UpdateResponse, error) {
+func (m *MockClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, opts ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) Read(ctx context.Context, in *resource.ReadRequest, opts ...grpc.CallOption) (*resource.ReadResponse, error) {
+func (m *MockClient) Read(ctx context.Context, in *resourcepb.ReadRequest, opts ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) GetBlob(ctx context.Context, in *resource.GetBlobRequest, opts ...grpc.CallOption) (*resource.GetBlobResponse, error) {
+func (m *MockClient) GetBlob(ctx context.Context, in *resourcepb.GetBlobRequest, opts ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) PutBlob(ctx context.Context, in *resource.PutBlobRequest, opts ...grpc.CallOption) (*resource.PutBlobResponse, error) {
+func (m *MockClient) PutBlob(ctx context.Context, in *resourcepb.PutBlobRequest, opts ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) List(ctx context.Context, in *resource.ListRequest, opts ...grpc.CallOption) (*resource.ListResponse, error) {
+func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts ...grpc.CallOption) (*resourcepb.ListResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) ListManagedObjects(ctx context.Context, in *resource.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resource.ListManagedObjectsResponse, error) {
+func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
+func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
 	return nil, nil
 }
-func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resource.BulkStore_BulkProcessClient, error) {
+func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
+	return nil, nil
+}
+func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
+	return nil
+}
+
+func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
 	return nil, nil
 }

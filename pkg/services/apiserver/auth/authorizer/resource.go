@@ -9,13 +9,13 @@ import (
 	claims "github.com/grafana/authlib/types"
 )
 
-func NewResourceAuthorizer(c claims.AccessClient) authorizer.Authorizer {
+func NewResourceAuthorizer(c claims.AccessChecker) authorizer.Authorizer {
 	return ResourceAuthorizer{c}
 }
 
 // ResourceAuthorizer is used to translate authorizer.Authorizer calls to claims.AccessClient calls
 type ResourceAuthorizer struct {
-	c claims.AccessClient
+	c claims.AccessChecker
 }
 
 func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -36,7 +36,7 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 		Name:        attr.GetName(),
 		Subresource: attr.GetSubresource(),
 		Path:        attr.GetPath(),
-	})
+	}, "") // NOTE: we do not know the folder in this context
 
 	if err != nil {
 		return authorizer.DecisionDeny, "", err

@@ -1,8 +1,8 @@
 import { groupBy } from 'lodash';
-import { FC, useCallback, useMemo, useState } from 'react';
+import { FC, type JSX, useCallback, useMemo, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
@@ -52,7 +52,10 @@ const useAddPolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title="Add notification policy"
+          title={t(
+            'alerting.use-add-policy-modal.modal-element.title-add-notification-policy',
+            'Add notification policy'
+          )}
         >
           {error && <NotificationPoliciesErrorAlert error={error} />}
           <AmRoutesExpandedForm
@@ -116,7 +119,10 @@ const useEditPolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title="Edit notification policy"
+          title={t(
+            'alerting.use-edit-policy-modal.modal-element.title-edit-notification-policy',
+            'Edit notification policy'
+          )}
         >
           {error && <NotificationPoliciesErrorAlert error={error} />}
           {isDefaultPolicy && route && (
@@ -191,7 +197,10 @@ const useDeletePolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title="Delete notification policy"
+          title={t(
+            'alerting.use-delete-policy-modal.modal-element.title-delete-notification-policy',
+            'Delete notification policy'
+          )}
         >
           {error && <NotificationPoliciesErrorAlert error={error} />}
           <Trans i18nKey="alerting.policies.delete.warning-1">
@@ -254,6 +263,7 @@ const useAlertGroupsModal = (
         onDismiss={handleDismiss}
         closeOnBackdropClick={true}
         closeOnEscape={true}
+        ariaLabel={t('alerting.policies.matchers', 'Matchers')}
         title={
           <Stack direction="row" alignItems="center" gap={1} wrap={'wrap'}>
             <Stack direction="row" alignItems="center" gap={0.5}>
@@ -288,12 +298,13 @@ const useAlertGroupsModal = (
   return [modalElement, handleShow, handleDismiss];
 };
 
-const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
+export const UpdatingModal: FC<Pick<ModalProps, 'isOpen' | 'onDismiss'>> = ({ isOpen, onDismiss = () => {} }) => (
   <Modal
     isOpen={isOpen}
-    onDismiss={() => {}}
+    onDismiss={onDismiss}
     closeOnBackdropClick={false}
     closeOnEscape={false}
+    ariaLabel={t('alerting.policies.update.updating', 'Updating...')}
     title={
       <Stack direction="row" alignItems="center" gap={0.5}>
         <Trans i18nKey="alerting.policies.update.updating">Updating...</Trans> <Spinner inline />

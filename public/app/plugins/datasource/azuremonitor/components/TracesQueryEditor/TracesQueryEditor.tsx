@@ -3,14 +3,17 @@ import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
+import { AzureQueryType, ResultFormat } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureQueryType, ResultFormat } from '../../types';
+import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
 import AdvancedResourcePicker from '../LogsQueryEditor/AdvancedResourcePicker';
-import ResourceField from '../ResourceField';
+import ResourceField from '../ResourceField/ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 import { Field } from '../shared/Field';
@@ -127,7 +130,7 @@ const TracesQueryEditor = ({
               variableOptionGroup={variableOptionGroup}
               range={range}
             />
-            <Field label="Operation ID">
+            <Field label={t('components.traces-query-editor.label-operation-id', 'Operation ID')}>
               <Input
                 id="azure-monitor-traces-operation-id-field"
                 value={operationId}

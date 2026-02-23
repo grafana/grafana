@@ -47,6 +47,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		}
 		return &authn.Identity{
 			ID:              "0",
+			UID:             "0",
 			Type:            identityType,
 			OrgID:           renderUsr.OrgID,
 			OrgRoles:        map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},

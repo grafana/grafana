@@ -7,9 +7,13 @@ import (
 )
 
 var (
-	ErrPrometheusRuleValidationFailed      = errutil.ValidationFailed("alerting.prometheusRuleInvalid")
-	ErrPrometheusRuleGroupValidationFailed = errutil.ValidationFailed("alerting.prometheusRuleGroupInvalid")
+	errPrometheusRuleGroupValidationFailedMsg = "{{.Public.Message}}"
+	ErrPrometheusRuleGroupValidationFailed    = errutil.ValidationFailed("alerting.prometheusRuleGroupInvalid").MustTemplate(errPrometheusRuleGroupValidationFailedMsg, errutil.WithPublic(errPrometheusRuleGroupValidationFailedMsg))
 )
+
+func errPrometheusRuleGroupValidationFailed(message string) error {
+	return ErrPrometheusRuleGroupValidationFailed.Build(errutil.TemplateData{Public: map[string]any{"Message": message}})
+}
 
 type PrometheusRulesFile struct {
 	Groups []PrometheusRuleGroup `yaml:"groups"`
@@ -25,18 +29,16 @@ type PrometheusRuleGroup struct {
 }
 
 func (g *PrometheusRuleGroup) Validate() error {
+	if g.Name == "" {
+		return errPrometheusRuleGroupValidationFailed("rule group name must not be empty")
+	}
+
 	if g.Limit != 0 {
-		return ErrPrometheusRuleGroupValidationFailed.Errorf("limit is not supported")
+		return errPrometheusRuleGroupValidationFailed("limit is not supported")
 	}
 
 	if g.QueryOffset != nil && *g.QueryOffset < prommodel.Duration(0) {
-		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset must be >= 0")
-	}
-
-	for _, rule := range g.Rules {
-		if err := rule.Validate(); err != nil {
-			return err
-		}
+		return errPrometheusRuleGroupValidationFailed("query_offset must be >= 0")
 	}
 
 	return nil
@@ -50,12 +52,4 @@ type PrometheusRule struct {
 	Labels        map[string]string   `yaml:"labels,omitempty"`
 	Annotations   map[string]string   `yaml:"annotations,omitempty"`
 	Record        string              `yaml:"record,omitempty"`
-}
-
-func (r *PrometheusRule) Validate() error {
-	if r.KeepFiringFor != nil {
-		return ErrPrometheusRuleValidationFailed.Errorf("keep_firing_for is not supported")
-	}
-
-	return nil
 }

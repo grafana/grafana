@@ -1,4 +1,10 @@
-import { CombinedRule, RuleGroupIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import {
+  CloudRuleIdentifier,
+  CombinedRule,
+  PrometheusRuleIdentifier,
+  RuleGroupIdentifier,
+  RuleGroupIdentifierV2,
+} from 'app/types/unified-alerting';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { rulerRuleType } from './rules';
@@ -37,6 +43,20 @@ export function ruleGroupIdentifierV2toV1(groupIdentifier: RuleGroupIdentifierV2
   };
 }
 
+function fromRuleIdentifier(ruleIdentifier: PrometheusRuleIdentifier | CloudRuleIdentifier): RuleGroupIdentifierV2 {
+  return {
+    rulesSource: {
+      ruleSourceType: 'datasource',
+      name: ruleIdentifier.ruleSourceName,
+      uid: getDatasourceAPIUid(ruleIdentifier.ruleSourceName),
+    },
+    namespace: { name: ruleIdentifier.namespace },
+    groupName: ruleIdentifier.groupName,
+    groupOrigin: 'datasource',
+  };
+}
+
 export const groupIdentifier = {
   fromCombinedRule,
+  fromRuleIdentifier,
 };

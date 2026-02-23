@@ -1,6 +1,11 @@
 package server
 
 import (
+	"github.com/stretchr/testify/mock"
+
+	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -15,6 +20,10 @@ import (
 )
 
 func ProvideTestEnv(
+	testingT interface {
+		mock.TestingT
+		Cleanup(func())
+	},
 	server *Server,
 	db db.DB,
 	cfg *setting.Cfg,
@@ -26,33 +35,47 @@ func ProvideTestEnv(
 	featureMgmt featuremgmt.FeatureToggles,
 	resourceClient resource.ResourceClient,
 	idService auth.IDService,
+	githubRepoFactory *github.Factory,
+	githubConnectionFactory githubconnection.GithubFactory,
+	decryptService decrypt.DecryptService,
 ) (*TestEnv, error) {
 	return &TestEnv{
-		Server:              server,
-		SQLStore:            db,
-		Cfg:                 cfg,
-		NotificationService: ns,
-		GRPCServer:          grpcServer,
-		PluginRegistry:      pluginRegistry,
-		HTTPClientProvider:  httpClientProvider,
-		OAuthTokenService:   oAuthTokenService,
-		FeatureToggles:      featureMgmt,
-		ResourceClient:      resourceClient,
-		IDService:           idService,
+		TestingT:                testingT,
+		Server:                  server,
+		SQLStore:                db,
+		Cfg:                     cfg,
+		NotificationService:     ns,
+		GRPCServer:              grpcServer,
+		PluginRegistry:          pluginRegistry,
+		HTTPClientProvider:      httpClientProvider,
+		OAuthTokenService:       oAuthTokenService,
+		FeatureToggles:          featureMgmt,
+		ResourceClient:          resourceClient,
+		IDService:               idService,
+		GithubRepoFactory:       githubRepoFactory,
+		GithubConnectionFactory: githubConnectionFactory,
+		DecryptService:          decryptService,
 	}, nil
 }
 
 type TestEnv struct {
-	Server              *Server
-	SQLStore            db.DB
-	Cfg                 *setting.Cfg
-	NotificationService *notifications.NotificationServiceMock
-	GRPCServer          grpcserver.Provider
-	PluginRegistry      registry.Service
-	HTTPClientProvider  httpclient.Provider
-	OAuthTokenService   *oauthtokentest.Service
-	RequestMiddleware   web.Middleware
-	FeatureToggles      featuremgmt.FeatureToggles
-	ResourceClient      resource.ResourceClient
-	IDService           auth.IDService
+	TestingT interface {
+		mock.TestingT
+		Cleanup(func())
+	}
+	Server                  *Server
+	SQLStore                db.DB
+	Cfg                     *setting.Cfg
+	NotificationService     *notifications.NotificationServiceMock
+	GRPCServer              grpcserver.Provider
+	PluginRegistry          registry.Service
+	HTTPClientProvider      httpclient.Provider
+	OAuthTokenService       *oauthtokentest.Service
+	RequestMiddleware       web.Middleware
+	FeatureToggles          featuremgmt.FeatureToggles
+	ResourceClient          resource.ResourceClient
+	IDService               auth.IDService
+	GithubRepoFactory       *github.Factory
+	GithubConnectionFactory githubconnection.GithubFactory
+	DecryptService          decrypt.DecryptService
 }

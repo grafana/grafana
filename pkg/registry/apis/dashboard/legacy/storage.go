@@ -3,16 +3,21 @@ package legacy
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"iter"
 	"net/http"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 func getDashboardFromEvent(event resource.WriteEvent) (*dashboard.Dashboard, error) {
@@ -58,7 +63,7 @@ func getProvisioningDataFromEvent(event resource.WriteEvent) (*dashboards.Dashbo
 	return provisioning, nil
 }
 
-func isDashboardKey(key *resource.ResourceKey, requireName bool) error {
+func isDashboardKey(key *resourcepb.ResourceKey, requireName bool) error {
 	gr := dashboard.DashboardResourceInfo.GroupResource()
 	if key.Group != gr.Group {
 		return fmt.Errorf("expecting dashboard group (%s != %s)", key.Group, gr.Group)
@@ -73,6 +78,9 @@ func isDashboardKey(key *resource.ResourceKey, requireName bool) error {
 }
 
 func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.WriteEvent) (rv int64, err error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.WriteEvent")
+	defer span.End()
+
 	info, err := claims.ParseNamespace(event.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(event.Key, true)
@@ -82,13 +90,13 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	}
 
 	switch event.Type {
-	case resource.WatchEvent_DELETED:
+	case resourcepb.WatchEvent_DELETED:
 		{
 			_, _, err = a.DeleteDashboard(ctx, info.OrgID, event.Key.Name)
 			//rv = ???
 		}
 	// The difference depends on embedded internal ID
-	case resource.WatchEvent_ADDED, resource.WatchEvent_MODIFIED:
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
 		{
 			dash, err := getDashboardFromEvent(event)
 			if err != nil {
@@ -114,12 +122,27 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 				}
 
 				// dashboard version is the RV in legacy storage
+				// and deprecatedInternalID must be set here (as SaveDashboard does below for non-provisioned dashboards)
 				if after != nil {
 					rv = int64(after.Version)
+					access := GetLegacyAccess(ctx)
+					if access != nil {
+						access.DashboardID = after.ID
+					}
 				}
 			} else {
-				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash)
+				failOnExisting := event.Type == resourcepb.WatchEvent_ADDED
+				sql, err := a.sql(ctx)
 				if err != nil {
+					return 0, err
+				}
+
+				var after *dashboard.Dashboard
+				if err := sql.DB.InTransaction(ctx, func(ctx context.Context) error {
+					var err error
+					after, _, err = a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
+					return err
+				}); err != nil {
 					return 0, err
 				}
 				if after != nil {
@@ -159,6 +182,9 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 }
 
 func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string, v int64) (*dashboard.Dashboard, int64, error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.GetDashboard")
+	defer span.End()
+
 	sql, err := a.sql(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -185,7 +211,10 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 }
 
 // Read implements ResourceStoreServer.
-func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
+func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.ReadResource")
+	defer span.End()
+
 	rsp := &resource.BackendReadResponse{}
 	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
@@ -206,10 +235,16 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 		return rsp
 	}
 	if dash == nil {
-		rsp.Error = &resource.ErrorResult{
+		rsp.Error = &resourcepb.ErrorResult{
 			Code: http.StatusNotFound,
 		}
 	} else {
+		meta, err := utils.MetaAccessor(dash)
+		if err != nil {
+			rsp.Error = resource.AsErrorResult(err)
+		}
+		rsp.Folder = meta.GetFolder()
+
 		rsp.Value, err = json.Marshal(dash)
 		if err != nil {
 			rsp.Error = resource.AsErrorResult(err)
@@ -219,8 +254,40 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 	return rsp
 }
 
-// List implements AppendingStore.
-func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+// ListHistory implements StorageBackend.
+func (a *dashboardSqlAccess) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.ListHistory")
+	defer span.End()
+
+	return a.ListIterator(ctx, req, cb)
+}
+
+func (a *dashboardSqlAccess) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	_, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.ListModifiedSince")
+	defer span.End()
+
+	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+		yield(nil, errors.New("not implemented"))
+	}
+}
+
+func (a *dashboardSqlAccess) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	_, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.GetResourceLastImportTimes")
+	defer span.End()
+
+	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+		yield(resource.ResourceLastImportTime{}, errors.New("not implemented"))
+	}
+}
+
+// List implements StorageBackend.
+func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.ListIterator")
+	defer span.End()
+
+	if req.ResourceVersion != 0 {
+		return 0, apierrors.NewBadRequest("List with explicit resourceVersion is not supported with this storage backend")
+	}
 	opts := req.Options
 	info, err := claims.ParseNamespace(opts.Key.Namespace)
 	if err == nil {
@@ -238,11 +305,19 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 		return 0, fmt.Errorf("token and orgID mismatch")
 	}
 
+	// Default batch size for iterator - fetch rows in batches to avoid slow queries
+	const defaultMaxRows = 500
+	maxRows := defaultMaxRows
+	if req.Limit > 0 && req.Limit < int64(defaultMaxRows) {
+		maxRows = int(req.Limit)
+	}
+
 	query := &DashboardQuery{
-		OrgID:  info.OrgID,
-		Limit:  int(req.Limit),
-		LastID: token.id,
-		Labels: req.Options.Labels,
+		OrgID:   info.OrgID,
+		Limit:   int(req.Limit),
+		MaxRows: maxRows,
+		LastID:  token.id,
+		Labels:  req.Options.Labels,
 	}
 
 	sql, err := a.sql(ctx)
@@ -251,12 +326,12 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 	}
 
 	switch req.Source {
-	case resource.ListRequest_HISTORY:
+	case resourcepb.ListRequest_HISTORY:
 		query.GetHistory = true
 		query.UID = req.Options.Key.Name
-	case resource.ListRequest_TRASH:
+	case resourcepb.ListRequest_TRASH:
 		query.GetTrash = true
-	case resource.ListRequest_STORE:
+	case resourcepb.ListRequest_STORE:
 		// normal
 	}
 
@@ -264,14 +339,16 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 	if err != nil {
 		return 0, err
 	}
-	rows, err := a.getRows(ctx, sql, query)
-	if rows != nil {
+	listRV *= 1000 // Convert to microseconds
+
+	iter, err := newBatchingIterator(ctx, a, sql, query)
+	if iter != nil {
 		defer func() {
-			_ = rows.Close()
+			_ = iter.Close()
 		}()
 	}
 	if err == nil {
-		err = cb(rows)
+		err = cb(iter)
 	}
 	return listRV, err
 }
@@ -309,23 +386,32 @@ func (a *dashboardSqlAccess) WatchWriteEvents(ctx context.Context) (<-chan *reso
 }
 
 // Simple wrapper for index implementation
-func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.BackendReadResponse, error) {
+func (a *dashboardSqlAccess) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resource.BackendReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.Read")
+	defer span.End()
+
 	return a.ReadResource(ctx, req), nil
 }
 
-func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
+func (a *dashboardSqlAccess) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.Search")
+	defer span.End()
+
 	return a.dashboardSearchClient.Search(ctx, req)
 }
 
-func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
+func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
+func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 // GetStats implements ResourceServer.
-func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.GetStats")
+	defer span.End()
+
 	return a.dashboardSearchClient.GetStats(ctx, req)
 }

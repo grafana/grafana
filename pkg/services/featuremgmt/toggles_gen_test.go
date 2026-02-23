@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,165 +16,160 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	featuretoggleapi "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	featuretoggleapi "github.com/grafana/grafana/pkg/services/featuremgmt/feature_toggle_api"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
 func TestFeatureToggleFiles(t *testing.T) {
 	t.Run("check registry constraints", func(t *testing.T) {
 		verifyFlagsConfiguration(t)
-		// Now that we know they are valid, update the json database
-		t.Run("update k8s resource list", func(t *testing.T) {
-			created := v1.NewTime(time.Now().UTC())
-			resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
-
-			featuresFile := "toggles_gen.json"
-			current := featuretoggleapi.FeatureList{
-				TypeMeta: v1.TypeMeta{
-					Kind:       "FeatureList",
-					APIVersion: featuretoggleapi.APIVERSION,
-				},
-			}
-			existing := featuretoggleapi.FeatureList{}
-			body, err := os.ReadFile(featuresFile)
-			if err == nil {
-				_ = json.Unmarshal(body, &existing)
-				current.ListMeta = existing.ListMeta
-			}
-
-			lookup := map[string]featuretoggleapi.FeatureSpec{}
-			for _, flag := range standardFeatureFlags {
-				lookup[flag.Name] = featuretoggleapi.FeatureSpec{
-					Description:       flag.Description,
-					Stage:             flag.Stage.String(),
-					Owner:             string(flag.Owner),
-					RequiresDevMode:   flag.RequiresDevMode,
-					FrontendOnly:      flag.FrontendOnly,
-					RequiresRestart:   flag.RequiresRestart,
-					AllowSelfServe:    flag.AllowSelfServe,
-					HideFromAdminPage: flag.HideFromAdminPage,
-					HideFromDocs:      flag.HideFromDocs,
-					Expression:        flag.Expression,
-					// EnabledVersion: ???,
-				}
-
-				// Replace them all
-				// current.Items = append(current.Items, featuretoggleapi.Feature{
-				// 	ObjectMeta: v1.ObjectMeta{
-				// 		Name:              flag.Name,
-				// 		CreationTimestamp: v1.NewTime(flag.Created),
-				// 		ResourceVersion:   fmt.Sprintf("%d", flag.Created.UnixMilli()),
-				// 	},
-				// 	Spec: lookup[flag.Name],
-				// })
-				// current.ListMeta.ResourceVersion = resourceVersion
-			}
-
-			// Check for changes in any existing values
-			for _, item := range existing.Items {
-				v, ok := lookup[item.Name]
-				if ok {
-					delete(lookup, item.Name)
-					a, e1 := json.Marshal(v)
-					b, e2 := json.Marshal(item.Spec)
-					if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
-						item.ResourceVersion = resourceVersion
-						if item.Annotations == nil {
-							item.Annotations = make(map[string]string)
-						}
-						item.Annotations[utils.AnnoKeyUpdatedTimestamp] = created.String()
-						item.Spec = v // the current value
-					}
-				} else if item.DeletionTimestamp == nil {
-					item.DeletionTimestamp = &created
-					fmt.Printf("mark feature as deleted")
-				}
-				current.Items = append(current.Items, item)
-			}
-
-			// New flags not in the existing list
-			for k, v := range lookup {
-				current.Items = append(current.Items, featuretoggleapi.Feature{
-					ObjectMeta: v1.ObjectMeta{
-						Name:              k,
-						CreationTimestamp: created,
-						ResourceVersion:   fmt.Sprintf("%d", created.UnixMilli()),
-					},
-					Spec: v,
-				})
-			}
-
-			// Set the dates from git history
-			dates := readFlagDateInfo(t)
-			for idx, item := range current.Items {
-				found, ok := dates[item.Name]
-				if ok {
-					// current.Items[idx].ResourceVersion = fmt.Sprintf("%d", found.created.UnixMilli()+int64(idx))
-					current.Items[idx].CreationTimestamp = v1.NewTime(found.created)
-					if found.deleted != nil {
-						tmp := v1.NewTime(*found.deleted)
-						current.Items[idx].DeletionTimestamp = &tmp
-					}
-				}
-			}
-
-			// Sort by name -- will avoid more git conflicts
-			sort.Slice(current.Items, func(i, j int) bool {
-				return current.Items[i].Name < current.Items[j].Name
-			})
-
-			out, err := json.MarshalIndent(current, "", "  ")
-			require.NoError(t, err)
-
-			err = os.WriteFile(featuresFile, out, 0644)
-			require.NoError(t, err, "error writing file")
-		})
 	})
 
 	t.Run("verify files", func(t *testing.T) {
-		// Typescript files
-		verifyAndGenerateFile(t,
-			"../../../packages/grafana-data/src/types/featureToggles.gen.ts",
-			generateTypeScript(),
-		)
+		lookup := readFeatureList(t)
 
-		// Golang files
-		verifyAndGenerateFile(t,
-			"toggles_gen.go",
-			generateRegistry(t),
-		)
+		t.Run("typescript", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"../../../packages/grafana-data/src/types/featureToggles.gen.ts",
+				generateTypeScript(),
+			)
+		})
 
-		// Docs files
-		verifyAndGenerateFile(t,
-			"../../../docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md",
-			generateDocsMD(),
-		)
+		t.Run("golang", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"toggles_gen.go",
+				generateRegistry(t),
+			)
+		})
 
-		// CSV Analytics
-		verifyAndGenerateFile(t,
-			"toggles_gen.csv",
-			generateCSV(),
-		)
+		t.Run("docs", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"../../../docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md",
+				generateDocsMD(),
+			)
+		})
+
+		t.Run("CSV Report", func(t *testing.T) {
+			generateFile(t,
+				"toggles_gen.csv",
+				generateCSV(lookup),
+			)
+		})
 	})
+}
+
+func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
+	created := v1.NewTime(time.Now().UTC())
+	resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
+
+	featuresFile := "toggles_gen.json"
+	current := featuretoggleapi.FeatureList{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "FeatureList",
+			APIVersion: featuretoggleapi.APIVERSION,
+		},
+	}
+	existing := featuretoggleapi.FeatureList{}
+	body, err := os.ReadFile(featuresFile)
+	if err == nil {
+		_ = json.Unmarshal(body, &existing)
+		current.ListMeta = existing.ListMeta
+	}
+
+	lookup := map[string]featuretoggleapi.FeatureSpec{}
+	for _, flag := range standardFeatureFlags {
+		lookup[flag.Name] = featuretoggleapi.FeatureSpec{
+			Description:     flag.Description,
+			Stage:           flag.Stage.String(),
+			Owner:           string(flag.Owner),
+			RequiresDevMode: flag.RequiresDevMode,
+			FrontendOnly:    flag.FrontendOnly,
+			RequiresRestart: flag.RequiresRestart,
+			HideFromDocs:    flag.HideFromDocs,
+			Expression:      flag.Expression,
+		}
+	}
+
+	// Check for changes in any existing values
+	for _, item := range existing.Items {
+		v, ok := lookup[item.Name]
+		if ok {
+			delete(lookup, item.Name)
+			a, e1 := json.Marshal(v)
+			b, e2 := json.Marshal(item.Spec)
+			if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
+				item.ResourceVersion = resourceVersion
+				if item.Annotations == nil {
+					item.Annotations = make(map[string]string)
+				}
+				item.Annotations[utils.AnnoKeyUpdatedTimestamp] = created.String()
+				item.Spec = v // the current value
+			}
+		} else if item.DeletionTimestamp == nil {
+			item.DeletionTimestamp = &created
+		}
+		current.Items = append(current.Items, item)
+	}
+
+	// New flags not in the existing list
+	for k, v := range lookup {
+		current.Items = append(current.Items, featuretoggleapi.Feature{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              k,
+				CreationTimestamp: created,
+				ResourceVersion:   fmt.Sprintf("%d", created.UnixMilli()),
+			},
+			Spec: v,
+		})
+	}
+
+	all := make(map[string]featuretoggleapi.Feature, len(current.Items))
+
+	// Set the dates from git history
+	dates := readFlagDateInfo(t)
+	for idx, item := range current.Items {
+		found, ok := dates[item.Name]
+		if ok {
+			// current.Items[idx].ResourceVersion = fmt.Sprintf("%d", found.created.UnixMilli()+int64(idx))
+			current.Items[idx].CreationTimestamp = v1.NewTime(found.created)
+			if found.deleted != nil {
+				tmp := v1.NewTime(*found.deleted)
+				current.Items[idx].DeletionTimestamp = &tmp
+			}
+		}
+		all[item.Name] = item
+	}
+
+	// Sort by name -- will avoid more git conflicts
+	sort.Slice(current.Items, func(i, j int) bool {
+		return current.Items[i].Name < current.Items[j].Name
+	})
+
+	out, err := json.MarshalIndent(current, "", "  ")
+	require.NoError(t, err)
+
+	err = os.WriteFile(featuresFile, out, 0644)
+	require.NoError(t, err, "error writing file")
+
+	return all
 }
 
 // Check if all flags are configured properly
 func verifyFlagsConfiguration(t *testing.T) {
 	legacyNames := map[string]bool{
 		"live-service-web-worker": true,
-		// TODO: Remove this when removing feature toggles
-		"ABTestFeatureToggleA": true,
-		"ABTestFeatureToggleB": true,
 	}
 	invalidNames := make([]string, 0)
 
 	// Check that all flags set in code are valid
 	for _, flag := range standardFeatureFlags {
-		if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated || flag.Stage == FeatureStagePublicPreview) {
+		if flag.Expression == "true" && (flag.Stage != FeatureStageGeneralAvailability && flag.Stage != FeatureStageDeprecated && flag.Stage != FeatureStagePublicPreview) {
 			t.Errorf("only features that are FeatureStagePublicPreview, FeatureStageGeneralAvailability, or FeatureStageDeprecated can be enabled by default.  See: %s", flag.Name)
 		}
 		if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
@@ -190,17 +184,14 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if flag.Name != strings.TrimSpace(flag.Name) {
 			t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
 		}
-		if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
-			t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
-		}
 		if flag.Owner == "" {
 			t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
 		}
 		if flag.Stage == FeatureStageGeneralAvailability && flag.Expression == "" {
 			t.Errorf("GA features must be explicitly enabled or disabled, please add the `Expression` property for %s", flag.Name)
 		}
-		if !(flag.Expression == "" || flag.Expression == "true" || flag.Expression == "false") {
-			t.Errorf("the `Expression` property for %s is incorrect. valid values are: `true`, `false` or empty string for default", flag.Name)
+		if flag.Expression == "" {
+			t.Errorf("the `Expression` property for %s is incorrect. Empty string values are not allowed. Please explicitly define the default value of the Feature Flag. Valid values include boolean, non-empty string, integer, float, and structured values in JSON format.", flag.Name)
 		}
 		// Check camel case names
 		if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
@@ -256,13 +247,17 @@ func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
 	}
 
 	if err != nil {
-		e2 := os.WriteFile(fpath, []byte(gen), 0644)
-		if e2 != nil {
-			t.Errorf("error writing file: %s", e2.Error())
-		}
+		generateFile(t, fpath, gen)
 		abs, _ := filepath.Abs(fpath)
 		t.Errorf("feature toggle do not match: %s (%s)", err.Error(), abs)
 		t.Fail()
+	}
+}
+
+func generateFile(t *testing.T, fpath string, gen string) {
+	e2 := os.WriteFile(fpath, []byte(gen), 0644)
+	if e2 != nil {
+		t.Errorf("error writing file: %s", e2.Error())
 	}
 }
 
@@ -343,6 +338,10 @@ package featuremgmt
 const (`)
 
 	for _, flag := range standardFeatureFlags {
+		if flag.FrontendOnly {
+			continue // no need to have the golang constant for frontend only flags
+		}
+
 		data.CamelCase = strcase.ToCamel(flag.Name)
 		data.Flag = flag
 		data.Ext = ""
@@ -358,36 +357,43 @@ const (`)
 	return buff.String()
 }
 
-func generateCSV() string {
-	var buf bytes.Buffer
+func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
+	var sb strings.Builder
 
-	w := csv.NewWriter(&buf)
-	if err := w.Write([]string{
+	write := func(vals []string) {
+		for i, v := range vals {
+			if i > 0 {
+				_, _ = sb.WriteString(",")
+			}
+			_, _ = sb.WriteString(v)
+		}
+		_, _ = sb.WriteString("\n")
+	}
+
+	write([]string{
+		"Created",
 		"Name",
 		"Stage",           //flag.Stage.String(),
 		"Owner",           //string(flag.Owner),
 		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
 		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
 		"FrontendOnly",    //strconv.FormatBool(flag.FrontendOnly),
-	}); err != nil {
-		log.Fatalln("error writing record to csv:", err)
-	}
+	})
 
 	for _, flag := range standardFeatureFlags {
-		if err := w.Write([]string{
+		info := lookup[flag.Name]
+		write([]string{
+			info.GetCreationTimestamp().Format("2006-01-02"),
 			flag.Name,
 			flag.Stage.String(),
 			string(flag.Owner),
 			strconv.FormatBool(flag.RequiresDevMode),
 			strconv.FormatBool(flag.RequiresRestart),
 			strconv.FormatBool(flag.FrontendOnly),
-		}); err != nil {
-			log.Fatalln("error writing record to csv:", err)
-		}
+		})
 	}
 
-	w.Flush()
-	return buf.String()
+	return sb.String()
 }
 
 func generateDocsMD() string {
@@ -396,6 +402,7 @@ func generateDocsMD() string {
 	buf := `---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
+  - ../../administration/feature-toggles/ # /docs/grafana/latest/administration/feature-toggles/
 description: Learn about feature toggles, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
@@ -441,16 +448,6 @@ When features are slated for removal, they will be marked as Deprecated first.
 	}
 
 	buf += `
-## Experimental feature toggles
-
-[Experimental](https://grafana.com/docs/release-life-cycle/#experimental) features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
-Experimental features might be changed or removed without prior notice.
-
-` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.Stage == FeatureStageExperimental && !flag.RequiresDevMode
-	}, false)
-
-	buf += `
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode](../#app_mode) to 'development' before you can enable this feature toggle. These features tend to be experimental.
@@ -478,24 +475,44 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 		}
 	}
 
-	header := []string{"Feature toggle name", "Description"}
+	header := []any{"Feature toggle name", "Description"}
 	if showEnableByDefault {
 		header = append(header, "Enabled by default")
 	}
 
 	sb := &strings.Builder{}
-	table := tablewriter.NewWriter(sb)
-	table.SetHeader(header)
-	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	table.SetCenterSeparator("|")
-	table.SetAutoFormatHeaders(false)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.AppendBulk(data) // Add Bulk Data
-	table.Render()
+	table := tablewriter.NewTable(sb,
+		tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{
+			Symbols: tw.NewSymbols(tw.StyleMarkdown),
+			Borders: tw.Border{
+				Top:    tw.Off,
+				Bottom: tw.Off,
+			},
+		})),
+		tablewriter.WithConfig(tablewriter.Config{
+			Header: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					AutoFormat: tw.Off,
+				},
+				Alignment: tw.CellAlignment{
+					Global: tw.AlignLeft,
+				},
+			},
+			Row: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					AutoWrap: tw.WrapNone,
+				},
+				Alignment: tw.CellAlignment{
+					Global: tw.AlignLeft,
+				},
+			},
+		}),
+	)
+	table.Header(header...)
+	_ = table.Bulk(data) // Add Bulk Data
+	_ = table.Render()
 
-	// Markdown table formatting (from prittier)
+	// Markdown table formatting (from prettier)
 	v := strings.ReplaceAll(sb.String(), "|--", "| -")
 	return strings.ReplaceAll(v, "--|", "- |")
 }

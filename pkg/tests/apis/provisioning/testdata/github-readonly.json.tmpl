@@ -1,0 +1,27 @@
+{
+    "apiVersion": "provisioning.grafana.app/v0alpha1",
+    "kind": "Repository",
+    "metadata": {
+        "name": "{{ or .Name "github-repository" }}"
+    },
+    "spec": {
+        "title": "{{ or .Title .Name "GitHub repository" }}",
+        "description": "{{ or .Description .Name "Load grafana dashboard from fake repository" }}",
+        "type": "github",
+        "github": {
+            "url": "{{ or .URL "https://github.com/grafana/grafana-git-sync-demo" }}",
+            "branch": "{{ or .Branch "integration-test" }}",
+            "generateDashboardPreviews": {{ if .GenerateDashboardPreviews }} true {{ else }} false {{ end }},
+            "path": "{{ or .Path "grafana/" }}"
+        },
+        "sync": {
+            "enabled": {{ if .SyncEnabled }} true {{ else }} false {{ end }},
+            "target": "{{ or .SyncTarget "folder" }}",
+            "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
+        },
+        "workflows": []
+    },
+    "secure": {
+        "token": { "create": "{{ or .Token "" }}" }
+    }
+}

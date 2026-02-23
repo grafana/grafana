@@ -7,6 +7,7 @@ import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -43,7 +44,7 @@ export function AppChromeMenu({}: Props) {
     },
     ref
   );
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog({ 'aria-label': t('navigation.megamenu.dialog-label', 'Navigation') }, ref);
   const styles = useStyles2(getStyles);
 
   return (
@@ -81,7 +82,6 @@ export function AppChromeMenu({}: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     backdrop: css({
-      backdropFilter: 'blur(1px)',
       backgroundColor: theme.components.overlay.background,
       bottom: 0,
       left: 0,

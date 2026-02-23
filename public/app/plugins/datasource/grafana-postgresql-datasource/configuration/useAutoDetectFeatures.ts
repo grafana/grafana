@@ -29,7 +29,7 @@ export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
       if (!saved) {
         // We need to save the datasource before we can get the version so we can query the database with the options we have.
         const result = await getBackendSrv().put<{ datasource: DataSourceSettings }>(
-          `/api/datasources/${options.id}`,
+          `/api/datasources/uid/${options.uid}`,
           options
         );
 

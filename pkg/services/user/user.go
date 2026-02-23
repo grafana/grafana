@@ -16,6 +16,7 @@ type Service interface {
 	GetByID(context.Context, *GetUserByIDQuery) (*User, error)
 	// GetByUID returns a user by UID. This also includes service accounts (identity use only)
 	GetByUID(context.Context, *GetUserByUIDQuery) (*User, error)
+	ListByIdOrUID(context.Context, []string, []int64) ([]*User, error)
 	GetByLogin(context.Context, *GetUserByLoginQuery) (*User, error)
 	GetByEmail(context.Context, *GetUserByEmailQuery) (*User, error)
 	Update(context.Context, *UpdateUserCommand) error

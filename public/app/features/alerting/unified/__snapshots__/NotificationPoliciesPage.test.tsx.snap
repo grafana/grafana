@@ -1,30 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Grafana alertmanager - config API Converts matchers to object_matchers for grafana alertmanager 1`] = `
-[
-  [
-    "sub1matcher1",
-    "=",
-    "sub1value1",
-  ],
-  [
-    "sub1matcher2",
-    "=",
-    "sub1value2",
-  ],
-  [
-    "sub1matcher3",
-    "=~",
-    "sub1value3",
-  ],
-  [
-    "sub1matcher4",
-    "=~",
-    "sub1value4",
-  ],
-]
-`;
-
 exports[`Non-Grafana alertmanagers Keeps matchers for non-grafana alertmanager sources 1`] = `
 [
   "hello="world"",
@@ -44,41 +19,101 @@ exports[`findRoutesMatchingFilters should work with all filters 1`] = `
   "filtersApplied": true,
   "matchedRoutesWithPath": Map {
     {
+      "active_time_intervals": undefined,
+      "continue": false,
+      "group_by": undefined,
+      "group_interval": undefined,
+      "group_wait": undefined,
       "id": "1",
-      "matchers": [
-        "hello=world",
-        "foo!=bar",
+      "mute_time_intervals": undefined,
+      "object_matchers": [
+        [
+          "hello",
+          "=",
+          "world",
+        ],
+        [
+          "foo",
+          "!=",
+          "bar",
+        ],
       ],
       "receiver": "simple-receiver",
+      "repeat_interval": undefined,
       "routes": [
         {
+          "active_time_intervals": undefined,
+          "continue": false,
+          "group_by": undefined,
+          "group_interval": undefined,
+          "group_wait": undefined,
           "id": "2",
-          "matchers": [
-            "bar=baz",
+          "mute_time_intervals": undefined,
+          "object_matchers": [
+            [
+              "bar",
+              "=",
+              "baz",
+            ],
           ],
           "receiver": "simple-receiver",
+          "repeat_interval": undefined,
           "routes": undefined,
         },
       ],
     } => [
       {
+        "active_time_intervals": undefined,
+        "continue": false,
+        "group_by": undefined,
+        "group_interval": undefined,
+        "group_wait": undefined,
         "id": "0",
+        "mute_time_intervals": undefined,
+        "object_matchers": [],
         "receiver": "default-receiver",
+        "repeat_interval": undefined,
         "routes": [
           {
+            "active_time_intervals": undefined,
+            "continue": false,
+            "group_by": undefined,
+            "group_interval": undefined,
+            "group_wait": undefined,
             "id": "1",
-            "matchers": [
-              "hello=world",
-              "foo!=bar",
+            "mute_time_intervals": undefined,
+            "object_matchers": [
+              [
+                "hello",
+                "=",
+                "world",
+              ],
+              [
+                "foo",
+                "!=",
+                "bar",
+              ],
             ],
             "receiver": "simple-receiver",
+            "repeat_interval": undefined,
             "routes": [
               {
+                "active_time_intervals": undefined,
+                "continue": false,
+                "group_by": undefined,
+                "group_interval": undefined,
+                "group_wait": undefined,
                 "id": "2",
-                "matchers": [
-                  "bar=baz",
+                "mute_time_intervals": undefined,
+                "object_matchers": [
+                  [
+                    "bar",
+                    "=",
+                    "baz",
+                  ],
                 ],
                 "receiver": "simple-receiver",
+                "repeat_interval": undefined,
                 "routes": undefined,
               },
             ],
@@ -86,19 +121,45 @@ exports[`findRoutesMatchingFilters should work with all filters 1`] = `
         ],
       },
       {
+        "active_time_intervals": undefined,
+        "continue": false,
+        "group_by": undefined,
+        "group_interval": undefined,
+        "group_wait": undefined,
         "id": "1",
-        "matchers": [
-          "hello=world",
-          "foo!=bar",
+        "mute_time_intervals": undefined,
+        "object_matchers": [
+          [
+            "hello",
+            "=",
+            "world",
+          ],
+          [
+            "foo",
+            "!=",
+            "bar",
+          ],
         ],
         "receiver": "simple-receiver",
+        "repeat_interval": undefined,
         "routes": [
           {
+            "active_time_intervals": undefined,
+            "continue": false,
+            "group_by": undefined,
+            "group_interval": undefined,
+            "group_wait": undefined,
             "id": "2",
-            "matchers": [
-              "bar=baz",
+            "mute_time_intervals": undefined,
+            "object_matchers": [
+              [
+                "bar",
+                "=",
+                "baz",
+              ],
             ],
             "receiver": "simple-receiver",
+            "repeat_interval": undefined,
             "routes": undefined,
           },
         ],
@@ -120,41 +181,101 @@ exports[`findRoutesMatchingFilters should work with only contact point and inher
   "filtersApplied": true,
   "matchedRoutesWithPath": Map {
     {
+      "active_time_intervals": undefined,
+      "continue": false,
+      "group_by": undefined,
+      "group_interval": undefined,
+      "group_wait": undefined,
       "id": "1",
-      "matchers": [
-        "hello=world",
-        "foo!=bar",
+      "mute_time_intervals": undefined,
+      "object_matchers": [
+        [
+          "hello",
+          "=",
+          "world",
+        ],
+        [
+          "foo",
+          "!=",
+          "bar",
+        ],
       ],
       "receiver": "simple-receiver",
+      "repeat_interval": undefined,
       "routes": [
         {
+          "active_time_intervals": undefined,
+          "continue": false,
+          "group_by": undefined,
+          "group_interval": undefined,
+          "group_wait": undefined,
           "id": "2",
-          "matchers": [
-            "bar=baz",
+          "mute_time_intervals": undefined,
+          "object_matchers": [
+            [
+              "bar",
+              "=",
+              "baz",
+            ],
           ],
           "receiver": "simple-receiver",
+          "repeat_interval": undefined,
           "routes": undefined,
         },
       ],
     } => [
       {
+        "active_time_intervals": undefined,
+        "continue": false,
+        "group_by": undefined,
+        "group_interval": undefined,
+        "group_wait": undefined,
         "id": "0",
+        "mute_time_intervals": undefined,
+        "object_matchers": [],
         "receiver": "default-receiver",
+        "repeat_interval": undefined,
         "routes": [
           {
+            "active_time_intervals": undefined,
+            "continue": false,
+            "group_by": undefined,
+            "group_interval": undefined,
+            "group_wait": undefined,
             "id": "1",
-            "matchers": [
-              "hello=world",
-              "foo!=bar",
+            "mute_time_intervals": undefined,
+            "object_matchers": [
+              [
+                "hello",
+                "=",
+                "world",
+              ],
+              [
+                "foo",
+                "!=",
+                "bar",
+              ],
             ],
             "receiver": "simple-receiver",
+            "repeat_interval": undefined,
             "routes": [
               {
+                "active_time_intervals": undefined,
+                "continue": false,
+                "group_by": undefined,
+                "group_interval": undefined,
+                "group_wait": undefined,
                 "id": "2",
-                "matchers": [
-                  "bar=baz",
+                "mute_time_intervals": undefined,
+                "object_matchers": [
+                  [
+                    "bar",
+                    "=",
+                    "baz",
+                  ],
                 ],
                 "receiver": "simple-receiver",
+                "repeat_interval": undefined,
                 "routes": undefined,
               },
             ],
@@ -162,50 +283,121 @@ exports[`findRoutesMatchingFilters should work with only contact point and inher
         ],
       },
       {
+        "active_time_intervals": undefined,
+        "continue": false,
+        "group_by": undefined,
+        "group_interval": undefined,
+        "group_wait": undefined,
         "id": "1",
-        "matchers": [
-          "hello=world",
-          "foo!=bar",
+        "mute_time_intervals": undefined,
+        "object_matchers": [
+          [
+            "hello",
+            "=",
+            "world",
+          ],
+          [
+            "foo",
+            "!=",
+            "bar",
+          ],
         ],
         "receiver": "simple-receiver",
+        "repeat_interval": undefined,
         "routes": [
           {
+            "active_time_intervals": undefined,
+            "continue": false,
+            "group_by": undefined,
+            "group_interval": undefined,
+            "group_wait": undefined,
             "id": "2",
-            "matchers": [
-              "bar=baz",
+            "mute_time_intervals": undefined,
+            "object_matchers": [
+              [
+                "bar",
+                "=",
+                "baz",
+              ],
             ],
             "receiver": "simple-receiver",
+            "repeat_interval": undefined,
             "routes": undefined,
           },
         ],
       },
     ],
     {
+      "active_time_intervals": undefined,
+      "continue": false,
+      "group_by": undefined,
+      "group_interval": undefined,
+      "group_wait": undefined,
       "id": "2",
-      "matchers": [
-        "bar=baz",
+      "mute_time_intervals": undefined,
+      "object_matchers": [
+        [
+          "bar",
+          "=",
+          "baz",
+        ],
       ],
       "receiver": "simple-receiver",
+      "repeat_interval": undefined,
       "routes": undefined,
     } => [
       {
+        "active_time_intervals": undefined,
+        "continue": false,
+        "group_by": undefined,
+        "group_interval": undefined,
+        "group_wait": undefined,
         "id": "0",
+        "mute_time_intervals": undefined,
+        "object_matchers": [],
         "receiver": "default-receiver",
+        "repeat_interval": undefined,
         "routes": [
           {
+            "active_time_intervals": undefined,
+            "continue": false,
+            "group_by": undefined,
+            "group_interval": undefined,
+            "group_wait": undefined,
             "id": "1",
-            "matchers": [
-              "hello=world",
-              "foo!=bar",
+            "mute_time_intervals": undefined,
+            "object_matchers": [
+              [
+                "hello",
+                "=",
+                "world",
+              ],
+              [
+                "foo",
+                "!=",
+                "bar",
+              ],
             ],
             "receiver": "simple-receiver",
+            "repeat_interval": undefined,
             "routes": [
               {
+                "active_time_intervals": undefined,
+                "continue": false,
+                "group_by": undefined,
+                "group_interval": undefined,
+                "group_wait": undefined,
                 "id": "2",
-                "matchers": [
-                  "bar=baz",
+                "mute_time_intervals": undefined,
+                "object_matchers": [
+                  [
+                    "bar",
+                    "=",
+                    "baz",
+                  ],
                 ],
                 "receiver": "simple-receiver",
+                "repeat_interval": undefined,
                 "routes": undefined,
               },
             ],
@@ -213,29 +405,66 @@ exports[`findRoutesMatchingFilters should work with only contact point and inher
         ],
       },
       {
+        "active_time_intervals": undefined,
+        "continue": false,
+        "group_by": undefined,
+        "group_interval": undefined,
+        "group_wait": undefined,
         "id": "1",
-        "matchers": [
-          "hello=world",
-          "foo!=bar",
+        "mute_time_intervals": undefined,
+        "object_matchers": [
+          [
+            "hello",
+            "=",
+            "world",
+          ],
+          [
+            "foo",
+            "!=",
+            "bar",
+          ],
         ],
         "receiver": "simple-receiver",
+        "repeat_interval": undefined,
         "routes": [
           {
+            "active_time_intervals": undefined,
+            "continue": false,
+            "group_by": undefined,
+            "group_interval": undefined,
+            "group_wait": undefined,
             "id": "2",
-            "matchers": [
-              "bar=baz",
+            "mute_time_intervals": undefined,
+            "object_matchers": [
+              [
+                "bar",
+                "=",
+                "baz",
+              ],
             ],
             "receiver": "simple-receiver",
+            "repeat_interval": undefined,
             "routes": undefined,
           },
         ],
       },
       {
+        "active_time_intervals": undefined,
+        "continue": false,
+        "group_by": undefined,
+        "group_interval": undefined,
+        "group_wait": undefined,
         "id": "2",
-        "matchers": [
-          "bar=baz",
+        "mute_time_intervals": undefined,
+        "object_matchers": [
+          [
+            "bar",
+            "=",
+            "baz",
+          ],
         ],
         "receiver": "simple-receiver",
+        "repeat_interval": undefined,
         "routes": undefined,
       },
     ],
@@ -248,41 +477,101 @@ exports[`findRoutesMatchingFilters should work with only label matchers 1`] = `
   "filtersApplied": true,
   "matchedRoutesWithPath": Map {
     {
+      "active_time_intervals": undefined,
+      "continue": false,
+      "group_by": undefined,
+      "group_interval": undefined,
+      "group_wait": undefined,
       "id": "1",
-      "matchers": [
-        "hello=world",
-        "foo!=bar",
+      "mute_time_intervals": undefined,
+      "object_matchers": [
+        [
+          "hello",
+          "=",
+          "world",
+        ],
+        [
+          "foo",
+          "!=",
+          "bar",
+        ],
       ],
       "receiver": "simple-receiver",
+      "repeat_interval": undefined,
       "routes": [
         {
+          "active_time_intervals": undefined,
+          "continue": false,
+          "group_by": undefined,
+          "group_interval": undefined,
+          "group_wait": undefined,
           "id": "2",
-          "matchers": [
-            "bar=baz",
+          "mute_time_intervals": undefined,
+          "object_matchers": [
+            [
+              "bar",
+              "=",
+              "baz",
+            ],
           ],
           "receiver": "simple-receiver",
+          "repeat_interval": undefined,
           "routes": undefined,
         },
       ],
     } => [
       {
+        "active_time_intervals": undefined,
+        "continue": false,
+        "group_by": undefined,
+        "group_interval": undefined,
+        "group_wait": undefined,
         "id": "0",
+        "mute_time_intervals": undefined,
+        "object_matchers": [],
         "receiver": "default-receiver",
+        "repeat_interval": undefined,
         "routes": [
           {
+            "active_time_intervals": undefined,
+            "continue": false,
+            "group_by": undefined,
+            "group_interval": undefined,
+            "group_wait": undefined,
             "id": "1",
-            "matchers": [
-              "hello=world",
-              "foo!=bar",
+            "mute_time_intervals": undefined,
+            "object_matchers": [
+              [
+                "hello",
+                "=",
+                "world",
+              ],
+              [
+                "foo",
+                "!=",
+                "bar",
+              ],
             ],
             "receiver": "simple-receiver",
+            "repeat_interval": undefined,
             "routes": [
               {
+                "active_time_intervals": undefined,
+                "continue": false,
+                "group_by": undefined,
+                "group_interval": undefined,
+                "group_wait": undefined,
                 "id": "2",
-                "matchers": [
-                  "bar=baz",
+                "mute_time_intervals": undefined,
+                "object_matchers": [
+                  [
+                    "bar",
+                    "=",
+                    "baz",
+                  ],
                 ],
                 "receiver": "simple-receiver",
+                "repeat_interval": undefined,
                 "routes": undefined,
               },
             ],
@@ -290,19 +579,45 @@ exports[`findRoutesMatchingFilters should work with only label matchers 1`] = `
         ],
       },
       {
+        "active_time_intervals": undefined,
+        "continue": false,
+        "group_by": undefined,
+        "group_interval": undefined,
+        "group_wait": undefined,
         "id": "1",
-        "matchers": [
-          "hello=world",
-          "foo!=bar",
+        "mute_time_intervals": undefined,
+        "object_matchers": [
+          [
+            "hello",
+            "=",
+            "world",
+          ],
+          [
+            "foo",
+            "!=",
+            "bar",
+          ],
         ],
         "receiver": "simple-receiver",
+        "repeat_interval": undefined,
         "routes": [
           {
+            "active_time_intervals": undefined,
+            "continue": false,
+            "group_by": undefined,
+            "group_interval": undefined,
+            "group_wait": undefined,
             "id": "2",
-            "matchers": [
-              "bar=baz",
+            "mute_time_intervals": undefined,
+            "object_matchers": [
+              [
+                "bar",
+                "=",
+                "baz",
+              ],
             ],
             "receiver": "simple-receiver",
+            "repeat_interval": undefined,
             "routes": undefined,
           },
         ],

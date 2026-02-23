@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { LiveChannelAddress, isValidLiveChannelAddress } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { CodeEditor, Button } from '@grafana/ui';
 
@@ -36,7 +37,7 @@ export function LivePublish({ height, mode, body, addr, onSave }: Props) {
         alert('expected stream scope!');
         return;
       }
-      return getBackendSrv().post(`api/live/push/${addr.namespace}`, body);
+      return getBackendSrv().post(`api/live/push/${addr.stream}`, body);
     }
 
     if (!isValidLiveChannelAddress(addr)) {
@@ -60,7 +61,9 @@ export function LivePublish({ height, mode, body, addr, onSave }: Props) {
         showLineNumbers={true}
       />
       <div style={{ height: 32 }}>
-        <Button onClick={onPublishClicked}>Publish</Button>
+        <Button onClick={onPublishClicked}>
+          <Trans i18nKey="live.live-publish.publish">Publish</Trans>
+        </Button>
       </div>
     </>
   );

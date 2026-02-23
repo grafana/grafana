@@ -26,6 +26,11 @@ labels:
 title: Configure contact points
 weight: 410
 refs:
+  alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
   sns:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-amazon-sns/
@@ -66,11 +71,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
-  oncall:
+  irm:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-irm/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-irm/
   slack:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
@@ -115,7 +120,7 @@ refs:
 
 # Configure contact points
 
-Use contact points to specify where to receive alert notifications. Contact points contain the configuration for sending alert notifications, including destinations like email, Slack, OnCall, webhooks, and their notification messages.
+Use contact points to specify where to receive alert notifications. Contact points contain the configuration for sending alert notifications, including destinations like email, Slack, IRM, webhooks, and their notification messages.
 
 A contact point can have one or multiple destinations, known as [contact point integrations](#supported-contact-point-integrations). Alert notifications are sent to each integration within the chosen contact point.
 
@@ -128,9 +133,26 @@ On the **Contact Points** tab, you can:
 - Export individual contact points or all contact points in JSON, YAML, or Terraform format.
 - Delete contact points. Note that you cannot delete contact points that are in use by a notification policy. To proceed, either delete the notification policy or update it to use another contact point.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Contact points are assigned to a [specific Alertmanager](ref:configure-alertmanager) and cannot be used by notification policies in other Alertmanagers.
-{{% /admonition %}}
+{{< /admonition >}}
+
+## Grafana Cloud Protected fields
+
+For Grafana Cloud users, contact points may contain protected fields that require admin permissions to modify. Protected fields are sensitive configuration settings that affect where notifications are sent, such as:
+
+- Target URLs for integrations (webhooks, PagerDuty, Opsgenie, or other integrations.)
+- API endpoints
+- Other destination-related settings
+
+These fields are protected to prevent unauthorized users from redirecting notifications to compromised servers, which could expose sensitive information such as authorization tokens, API keys, or alert data.
+
+Users with edit permissions can modify most contact point settings and can add or remove integrations, but cannot change protected fields in existing integrations. Only users with admin permissions to the contact point can update protected fields.
+
+The ability to modify protected fields is controlled by the RBAC action `alert.notifications.receivers.protected:write`. This role is granted by default to:
+
+- Users with the fixed "Alerting Admin" role
+- Users with admin permissions for the specific contact point
 
 ## Supported contact point integrations
 
@@ -138,14 +160,14 @@ Each contact point integration has its own configuration options and setup proce
 
 {{< column-list >}}
 
-- Alertmanager
+- [Alertmanager](ref:alertmanager)
 - [AWS SNS](ref:sns)
 - Cisco Webex Teams
 - DingDing
 - [Discord](ref:discord)
 - [Email](ref:email)
 - [Google Chat](ref:gchat)
-- [Grafana OnCall](ref:oncall)
+- [Grafana IRM](ref:irm)
 - Kafka REST Proxy
 - [Jira](ref:jira)
 - Line

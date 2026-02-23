@@ -6,63 +6,97 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/grafana/grafana/apps/playlist/pkg/apis"
+
+	"github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type PlaylistAppProvider struct {
-	app.Provider
+var (
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
+)
+
+type AppInstaller struct {
+	appsdkapiserver.AppInstaller
 	cfg     *setting.Cfg
 	service playlistsvc.Service
 }
 
-func RegisterApp(
+func RegisterAppInstaller(
 	p playlistsvc.Service,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-) *PlaylistAppProvider {
-	provider := &PlaylistAppProvider{
+) (*AppInstaller, error) {
+	installer := &AppInstaller{
 		cfg:     cfg,
 		service: p,
 	}
-	appCfg := &runner.AppBuilderConfig{
-		OpenAPIDefGetter:    playlistv0alpha1.GetOpenAPIDefinitions,
-		LegacyStorageGetter: provider.legacyStorageGetter,
-		ManagedKinds:        playlistapp.GetKinds(),
-		CustomConfig: any(&playlistapp.PlaylistConfig{
-			EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
-		}),
+	specificConfig := any(&playlistapp.PlaylistConfig{
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
+	})
+	provider := simple.NewAppProvider(manifestdata.LocalManifest(), specificConfig, playlistapp.New)
+
+	appConfig := app.Config{
+		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
+		ManifestData:   *manifestdata.LocalManifest().ManifestData,
+		SpecificConfig: specificConfig,
 	}
-	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, playlistapp.New)
-	return provider
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &manifestdata.GoTypeAssociator{})
+	if err != nil {
+		return nil, err
+	}
+	installer.AppInstaller = i
+
+	return installer, nil
 }
 
-func (p *PlaylistAppProvider) legacyStorageGetter(requested schema.GroupVersionResource) grafanarest.Storage {
-	gvr := schema.GroupVersionResource{
-		Group:    playlistv0alpha1.PlaylistKind().Group(),
-		Version:  playlistv0alpha1.PlaylistKind().Version(),
-		Resource: playlistv0alpha1.PlaylistKind().Plural(),
-	}
-	if requested.String() != gvr.String() {
+func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
+	//nolint:staticcheck // not yet migrated to Resource Authorizer
+	return roleauthorizer.NewRoleAuthorizer()
+}
+
+// GetLegacyStorage returns the legacy storage for the playlist app.
+// v0alpha1 and v1 use the same storage implementation since they share the same schema
+func (p *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
+	gvrV0alpha1 := playlistv0alpha1.PlaylistKind().GroupVersionResource()
+	gvrV1 := playlistv1.PlaylistKind().GroupVersionResource()
+
+	// check if the requested GVR matches either v0alpha1 or v1
+	var gvk schema.GroupVersionKind
+	switch requested.String() {
+	case gvrV0alpha1.String():
+		gvk = playlistv0alpha1.PlaylistKind().GroupVersionKind()
+	case gvrV1.String():
+		gvk = playlistv1.PlaylistKind().GroupVersionKind()
+	default:
 		return nil
 	}
+
 	legacyStore := &legacyStorage{
 		service:    p.service,
 		namespacer: request.GetNamespaceMapper(p.cfg),
+		gvk:        gvk,
 	}
+
 	legacyStore.tableConverter = utils.NewTableConverter(
-		gvr.GroupResource(),
+		requested.GroupResource(),
 		utils.TableColumns{
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
@@ -71,9 +105,9 @@ func (p *PlaylistAppProvider) legacyStorageGetter(requested schema.GroupVersionR
 				{Name: "Created At", Type: "date"},
 			},
 			Reader: func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*playlistv0alpha1.Playlist)
+				m, ok := obj.(*playlistv1.Playlist)
 				if !ok {
-					return nil, fmt.Errorf("expected playlist")
+					return nil, fmt.Errorf("expected playlist, got %T", obj)
 				}
 				return []interface{}{
 					m.Name,

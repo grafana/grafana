@@ -8,8 +8,8 @@ import {
   ThresholdsMode,
   isTimeSeriesFrames,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
-import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';

@@ -4,7 +4,6 @@ import { useTheme2 } from '../ThemeContext';
 
 import { getAccessibilityStyles } from './accessibility';
 import { getAlertingStyles } from './alerting';
-import { getAgularPanelStyles } from './angularPanelStyles';
 import { getCardStyles } from './card';
 import { getCodeStyles } from './code';
 import { getDashboardGridStyles } from './dashboardGrid';
@@ -25,20 +24,14 @@ import { getSlateStyles } from './slate';
 import { getUplotStyles } from './uPlot';
 import { getUtilityClassStyles } from './utilityClasses';
 
-interface GlobalStylesProps {
-  hackNoBackdropBlur?: boolean;
-}
-
 /** @internal */
-export function GlobalStyles(props: GlobalStylesProps) {
+export function GlobalStyles() {
   const theme = useTheme2();
-  const { hackNoBackdropBlur } = props;
 
   return (
     <Global
       styles={[
         getAccessibilityStyles(theme),
-        getAgularPanelStyles(theme),
         getAlertingStyles(theme),
         getCodeStyles(theme),
         getDashDiffStyles(theme),
@@ -58,7 +51,7 @@ export function GlobalStyles(props: GlobalStylesProps) {
         getUplotStyles(theme),
         getUtilityClassStyles(theme),
         getLegacySelectStyles(theme),
-        getHacksStyles({ hackNoBackdropBlur }),
+        getHacksStyles({}),
       ]}
     />
   );

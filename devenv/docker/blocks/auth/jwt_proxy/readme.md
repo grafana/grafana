@@ -1,4 +1,5 @@
 # JWT PROXY BLOCK
+
 ## Devenv setup jwt auth
 
 To launch the block, use the oauth source. Ex:
@@ -28,13 +29,14 @@ groups_attribute_path = groups[]
 allow_assign_grafana_admin = true
 ```
 
-Add *env.grafana.local* to /etc/hosts (Mac/Linux) or C:\Windows\System32\drivers\etc\hosts (Windows):
+Add _env.grafana.local_ to /etc/hosts (Mac/Linux) or C:\Windows\System32\drivers\etc\hosts (Windows):
+
 ```ini
 127.0.0.1   env.grafana.local
 ::1         env.grafana.local
 ```
 
-Access Grafana through: 
+Access Grafana through:
 
 ```sh
 http://env.grafana.local:8088
@@ -72,11 +74,11 @@ docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > 
 
 ## Connecting to keycloak:
 
-- keycloak admin:                     http://localhost:8087
-- keycloak admin login:               admin:admin
-- grafana jwt viewer login:          jwt-viewer:grafana
-- grafana jwt editor login:          jwt-editor:grafana
-- grafana jwt admin login:           jwt-admin:grafana
+- keycloak admin: http://localhost:8087
+- keycloak admin login: admin:admin
+- grafana jwt viewer login: jwt-viewer:grafana
+- grafana jwt editor login: jwt-editor:grafana
+- grafana jwt admin login: jwt-admin:grafana
 
 # Troubleshooting
 
@@ -86,13 +88,17 @@ The new arm64 architecture does not build for the latest docker image of keycloa
 Until then you need to build the docker image locally and then run `devenv`.
 
 1. Remove any lingering keycloak image
+
 ```sh
 $ docker rmi $(docker images | grep 'keycloak')
 ```
+
 1. Build keycloak image locally
+
 ```sh
 $ ./docker-build-keycloak-m1-image.sh
 ```
+
 1. Start from beginning of this readme
 
 ## Docker for Windows Users
@@ -102,12 +108,16 @@ $ ./docker-build-keycloak-m1-image.sh
 Port forwarding needs to be set up between the WSL 2 VM (which runs Grafana, in my case it is Ubuntu) and the host system. (https://docs.microsoft.com/en-us/windows/wsl/networking)
 
 Run the following commands from an elevated PowerShell prompt:
+
 1. Change the default WSL 2 distribution if necessary
+
 ```powershell
 wsl --list # Find the default
 wsl -s Ubuntu # Change the default
 ```
+
 2. Open port 3000 between the Windows host and the WSL 2 VM
+
 ```powershell
 $hostAddr = '0.0.0.0';
 $wslHostAddr = wsl hostname -I;

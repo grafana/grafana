@@ -5,7 +5,7 @@ import { TimeZone } from '../types/time';
 
 import { getCategories } from './categories';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';
-import { getOffsetFromSIPrefix, SIPrefix, currency } from './symbolFormatters';
+import { getOffsetFromSIPrefix, SIPrefix, currency, fullCurrency } from './symbolFormatters';
 
 export interface FormattedValue {
   text: string;
@@ -257,8 +257,23 @@ export function getValueFormat(id?: string | null): ValueFormatter {
         return simpleCountUnit(sub);
       }
 
+      // Supported formats:
+      // currency:$           -> scaled currency ($1.2K)
+      // currency:financial:$ -> full currency ($1,234)
+      // currency:financial:€:suffix -> full currency with suffix (1,234€)
       if (key === 'currency') {
-        return currency(sub);
+        const keySplit = sub.split(':');
+
+        if (keySplit[0] === 'financial' && keySplit.length >= 2) {
+          const symbol = keySplit[1];
+          if (!symbol) {
+            return toFixedUnit(''); // fallback for empty symbol
+          }
+          const asSuffix = keySplit[2] === 'suffix';
+          return fullCurrency(symbol, asSuffix);
+        } else {
+          return currency(sub);
+        }
       }
 
       if (key === 'bool') {

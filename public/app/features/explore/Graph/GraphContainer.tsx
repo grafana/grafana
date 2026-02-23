@@ -11,9 +11,9 @@ import {
   ThresholdsConfig,
   TimeRange,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { GraphThresholdsStyleConfig, PanelChrome, PanelChromeProps } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
-import { ExploreGraphStyle } from 'app/types';
+import { ExploreGraphStyle } from 'app/types/explore';
 
 import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { storeGraphStyle } from '../state/utils';
@@ -37,6 +37,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   loadingState: LoadingState;
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
+  queriesChangedIndexAtRun?: number;
 }
 
 export const GraphContainer = ({
@@ -53,6 +54,7 @@ export const GraphContainer = ({
   thresholdsStyle,
   loadingState,
   statusMessage,
+  queriesChangedIndexAtRun,
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
@@ -108,6 +110,7 @@ export const GraphContainer = ({
           thresholdsConfig={thresholdsConfig}
           thresholdsStyle={thresholdsStyle}
           eventBus={eventBus}
+          queriesChangedIndexAtRun={queriesChangedIndexAtRun}
         />
       )}
     </PanelChrome>

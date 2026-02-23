@@ -9,12 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestGetProvisioningDataFromEvent(t *testing.T) {
@@ -81,11 +83,12 @@ func TestWriteProvisioningEvent(t *testing.T) {
 	dashData := &dashboards.Dashboard{
 		Title:   "Test Dashboard",
 		Version: 2,
+		ID:      3,
 	}
 	dashBytes, err := json.Marshal(dashData)
 	require.NoError(t, err)
 
-	key := &resource.ResourceKey{
+	key := &resourcepb.ResourceKey{
 		Group:     dashboard.DashboardResourceInfo.GroupResource().Group,
 		Resource:  dashboard.DashboardResourceInfo.GroupResource().Resource,
 		Name:      "test-dashboard",
@@ -108,7 +111,7 @@ func TestWriteProvisioningEvent(t *testing.T) {
 	})
 
 	event := resource.WriteEvent{
-		Type:   resource.WatchEvent_ADDED,
+		Type:   resourcepb.WatchEvent_ADDED,
 		Key:    key,
 		Object: meta,
 		Value:  dashBytes,
@@ -119,11 +122,16 @@ func TestWriteProvisioningEvent(t *testing.T) {
 
 	access := &dashboardSqlAccess{
 		dashStore: mockStore,
+		log:       log.New("test"),
 	}
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{})
+	ctx = WithLegacyAccess(ctx)
 	rv, err := access.WriteEvent(ctx, event)
 	require.NoError(t, err)
 	require.Equal(t, int64(2), rv)
+	a := GetLegacyAccess(ctx)
+	require.NotNil(t, a)
+	require.Equal(t, int64(3), a.DashboardID)
 	mockStore.AssertExpectations(t)
 }

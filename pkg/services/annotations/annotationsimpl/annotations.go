@@ -3,6 +3,8 @@ package annotationsimpl
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl/loki"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -33,15 +35,16 @@ func ProvideService(
 	tracer tracing.Tracer,
 	ruleStore *alertingStore.DBstore,
 	dashSvc dashboards.DashboardService,
+	reg prometheus.Registerer,
 ) *RepositoryImpl {
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
 
-	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService)
+	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, reg)
 	write := xormStore
 
 	var read readStore
-	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, ruleStore, log.New("annotations.loki"), tracer)
+	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, db, ruleStore, log.New("annotations.loki"), tracer, reg)
 	if historianStore != nil {
 		l.Debug("Using composite read store")
 		read = NewCompositeStore(log.New("annotations.composite"), xormStore, historianStore)
@@ -53,7 +56,7 @@ func ProvideService(
 	return &RepositoryImpl{
 		db:       db,
 		features: features,
-		authZ:    accesscontrol.NewAuthService(db, features, dashSvc),
+		authZ:    accesscontrol.NewAuthService(db, features, dashSvc, cfg),
 		reader:   read,
 		writer:   write,
 	}
@@ -79,6 +82,7 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	}
 
 	// Search without dashboard UID filter is expensive, so check without access control first
+	// nolint: staticcheck
 	if query.DashboardID == 0 && query.DashboardUID == "" {
 		// Return early if no annotations found, it's not necessary to perform expensive access control filtering
 		res, err := r.reader.Get(ctx, *query, &accesscontrol.AccessResources{
@@ -94,6 +98,7 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	}
 
 	results := make([]*annotations.ItemDTO, 0, query.Limit)
+	// Page paginates dashboards (used in Authorize → SearchDashboards), not annotation rows (store uses Limit/Offset).
 	query.Page = 1
 
 	// Iterate over available annotations until query limit is reached
@@ -110,7 +115,7 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 		}
 
 		results = append(results, res...)
-		query.Page++
+		query.Page++ // next iteration fetches the next page of dashboards
 		// All user's dashboards are fetched
 		if len(resources.Dashboards) < int(query.Limit) {
 			break

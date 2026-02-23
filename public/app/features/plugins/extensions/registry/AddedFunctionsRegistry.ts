@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash';
 import { ReplaySubject } from 'rxjs';
 
-import { PluginExtensionAddedFunctionConfig } from '@grafana/data';
+import { AppPluginConfig, PluginExtensionAddedFunctionConfig } from '@grafana/data';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
@@ -11,21 +11,22 @@ import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
 const logPrefix = 'Could not register function extension. Reason:';
 
-export type AddedFunctionsRegistryItem = {
+export type AddedFunctionsRegistryItem<Signature = unknown> = {
   pluginId: string;
   title: string;
-  fn: unknown;
+  fn: Signature;
   description?: string;
 };
 
 export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[], PluginExtensionAddedFunctionConfig> {
   constructor(
+    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedFunctionsRegistryItem[]>>;
       initialState?: RegistryType<AddedFunctionsRegistryItem[]>;
     } = {}
   ) {
-    super(options);
+    super(apps, options);
   }
 
   mapToRegistry(
@@ -49,7 +50,11 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedFunctionMetaInfoMissing(pluginId, config, configLog)) {
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isAddedFunctionMetaInfoMissing(pluginId, config, configLog, this.apps)
+      ) {
         continue;
       }
 
@@ -67,11 +72,9 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
 
         pointIdLog.debug('Added function extension successfully registered');
 
-        if (!(extensionPointId in registry)) {
-          registry[extensionPointId] = [result];
-        } else {
-          registry[extensionPointId].push(result);
-        }
+        // Creating a new array instead of pushing to get a new reference
+        const slice = registry[extensionPointId] ?? [];
+        registry[extensionPointId] = slice.concat(result);
       }
     }
 
@@ -80,7 +83,7 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new AddedFunctionsRegistry({
+    return new AddedFunctionsRegistry(this.apps, {
       registrySubject: this.registrySubject,
     });
   }

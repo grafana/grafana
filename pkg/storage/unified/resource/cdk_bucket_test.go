@@ -8,9 +8,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel"
 	"gocloud.dev/blob"
 )
+
+var _ CDKBucket = (*fakeCDKBucket)(nil)
 
 type fakeCDKBucket struct {
 	attributesFunc func(ctx context.Context, key string) (*blob.Attributes, error)
@@ -19,6 +20,7 @@ type fakeCDKBucket struct {
 	signedURLFunc  func(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error)
 	listFunc       func(opts *blob.ListOptions) *blob.ListIterator
 	listPageFunc   func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error)
+	deleteFunc     func(ctx context.Context, key string) error
 }
 
 func (f *fakeCDKBucket) Attributes(ctx context.Context, key string) (*blob.Attributes, error) {
@@ -61,6 +63,13 @@ func (f *fakeCDKBucket) ListPage(ctx context.Context, pageToken []byte, pageSize
 		return f.listPageFunc(ctx, pageToken, pageSize, opts)
 	}
 	return nil, nil, nil
+}
+
+func (f *fakeCDKBucket) Delete(ctx context.Context, key string) error {
+	if f.deleteFunc != nil {
+		return f.deleteFunc(ctx, key)
+	}
+	return nil
 }
 
 func TestInstrumentedBucket(t *testing.T) {
@@ -106,6 +115,24 @@ func TestInstrumentedBucket(t *testing.T) {
 			call: func(instrumentedBucket *InstrumentedBucket) error {
 				err := instrumentedBucket.WriteAll(context.Background(), "key", []byte("data"), nil)
 				return err
+			},
+		},
+		{
+			name:      "Delete",
+			operation: "Delete",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.deleteFunc = func(ctx context.Context, key string) error {
+						return nil
+					}
+				} else {
+					fakeBucket.deleteFunc = func(ctx context.Context, key string) error {
+						return fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				return instrumentedBucket.Delete(context.Background(), "key")
 			},
 		},
 		{
@@ -168,8 +195,7 @@ func TestInstrumentedBucket(t *testing.T) {
 			t.Run(op.name+" "+tc.name, func(t *testing.T) {
 				fakeBucket := &fakeCDKBucket{}
 				reg := prometheus.NewPedanticRegistry()
-				tracer := otel.Tracer("test")
-				instrumentedBucket := NewInstrumentedBucket(fakeBucket, reg, tracer)
+				instrumentedBucket := NewInstrumentedBucket(fakeBucket, reg)
 
 				op.setup(fakeBucket, tc.success)
 				err := op.call(instrumentedBucket)

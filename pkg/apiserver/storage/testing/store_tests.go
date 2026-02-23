@@ -63,8 +63,8 @@ func RunTestCreate(ctx context.Context, t *testing.T, store storage.Interface, v
 				return
 			}
 			// basic tests of the output
-			if tt.inputObj.ObjectMeta.Name != out.ObjectMeta.Name {
-				t.Errorf("pod name want=%s, get=%s", tt.inputObj.ObjectMeta.Name, out.ObjectMeta.Name)
+			if tt.inputObj.Name != out.Name {
+				t.Errorf("pod name want=%s, get=%s", tt.inputObj.Name, out.Name)
 			}
 			if out.ResourceVersion == "" {
 				t.Errorf("output should have non-empty resource version")
@@ -360,7 +360,7 @@ func RunTestDeleteWithSuggestionAndConflict(ctx context.Context, t *testing.T, s
 	if err := store.GuaranteedUpdate(ctx, key, updatedPod, false, nil,
 		storage.SimpleUpdate(func(obj runtime.Object) (runtime.Object, error) {
 			pod := obj.(*example.Pod)
-			pod.ObjectMeta.Labels = map[string]string{"foo": "bar"}
+			pod.Labels = map[string]string{"foo": "bar"}
 			return pod, nil
 		}), nil); err != nil {
 		t.Errorf("Unexpected failure during updated: %v", err)
@@ -374,7 +374,7 @@ func RunTestDeleteWithSuggestionAndConflict(ctx context.Context, t *testing.T, s
 	if err := store.Get(ctx, key, storage.GetOptions{}, &example.Pod{}); !storage.IsNotFound(err) {
 		t.Errorf("Unexpected error on reading object: %v", err)
 	}
-	updatedPod.ObjectMeta.ResourceVersion = out.ObjectMeta.ResourceVersion
+	updatedPod.ResourceVersion = out.ResourceVersion
 	expectNoDiff(t, "incorrect pod:", updatedPod, out)
 }
 
@@ -395,7 +395,7 @@ func RunTestDeleteWithConflict(ctx context.Context, t *testing.T, store storage.
 		if err := store.GuaranteedUpdate(ctx, key, updatedPod, false, nil,
 			storage.SimpleUpdate(func(obj runtime.Object) (runtime.Object, error) {
 				pod := obj.(*example.Pod)
-				pod.ObjectMeta.Labels = map[string]string{"foo": "bar"}
+				pod.Labels = map[string]string{"foo": "bar"}
 				return pod, nil
 			}), nil); err != nil {
 			t.Errorf("Unexpected failure during updated: %v", err)
@@ -419,7 +419,7 @@ func RunTestDeleteWithConflict(ctx context.Context, t *testing.T, store storage.
 	if err := store.Get(ctx, key, storage.GetOptions{}, &example.Pod{}); !storage.IsNotFound(err) {
 		t.Errorf("Unexpected error on reading object: %v", err)
 	}
-	updatedPod.ObjectMeta.ResourceVersion = out.ObjectMeta.ResourceVersion
+	updatedPod.ResourceVersion = out.ResourceVersion
 	expectNoDiff(t, "incorrect pod:", updatedPod, out)
 }
 
@@ -462,7 +462,7 @@ func RunTestValidateDeletionWithSuggestion(ctx context.Context, t *testing.T, st
 	if err := store.GuaranteedUpdate(ctx, key, updatedPod, false, nil,
 		storage.SimpleUpdate(func(obj runtime.Object) (runtime.Object, error) {
 			pod := obj.(*example.Pod)
-			pod.ObjectMeta.Labels = map[string]string{"foo": "bar"}
+			pod.Labels = map[string]string{"foo": "bar"}
 			return pod, nil
 		}), nil); err != nil {
 		t.Errorf("Unexpected failure during updated: %v", err)
@@ -472,7 +472,7 @@ func RunTestValidateDeletionWithSuggestion(ctx context.Context, t *testing.T, st
 	validateFresh := func(_ context.Context, obj runtime.Object) error {
 		calls++
 		pod := obj.(*example.Pod)
-		if pod.ObjectMeta.Labels == nil || pod.ObjectMeta.Labels["foo"] != "bar" {
+		if pod.Labels == nil || pod.Labels["foo"] != "bar" {
 			return fmt.Errorf("stale object")
 		}
 		return nil
@@ -518,7 +518,7 @@ func RunTestValidateDeletionWithOnlySuggestionValid(ctx context.Context, t *test
 	if err := store.GuaranteedUpdate(ctx, key, updatedPod, false, nil,
 		storage.SimpleUpdate(func(obj runtime.Object) (runtime.Object, error) {
 			pod := obj.(*example.Pod)
-			pod.ObjectMeta.Labels = map[string]string{"foo": "barbar"}
+			pod.Labels = map[string]string{"foo": "barbar"}
 			return pod, nil
 		}), nil); err != nil {
 		t.Errorf("Unexpected failure during updated: %v", err)
@@ -528,7 +528,7 @@ func RunTestValidateDeletionWithOnlySuggestionValid(ctx context.Context, t *test
 	validateFresh := func(_ context.Context, obj runtime.Object) error {
 		calls++
 		pod := obj.(*example.Pod)
-		if pod.ObjectMeta.Labels == nil || pod.ObjectMeta.Labels["foo"] != "bar" {
+		if pod.Labels == nil || pod.Labels["foo"] != "bar" {
 			return fmt.Errorf("stale object")
 		}
 		return nil
@@ -559,7 +559,7 @@ func RunTestPreconditionalDeleteWithSuggestion(ctx context.Context, t *testing.T
 	if err := store.GuaranteedUpdate(ctx, key, updatedPod, false, nil,
 		storage.SimpleUpdate(func(obj runtime.Object) (runtime.Object, error) {
 			pod := obj.(*example.Pod)
-			pod.ObjectMeta.UID = "myUID"
+			pod.UID = "myUID"
 			return pod, nil
 		}), nil); err != nil {
 		t.Errorf("Unexpected failure during updated: %v", err)
@@ -587,7 +587,7 @@ func RunTestPreconditionalDeleteWithOnlySuggestionPass(ctx context.Context, t *t
 	if err := store.GuaranteedUpdate(ctx, key, updatedPod, false, nil,
 		storage.SimpleUpdate(func(obj runtime.Object) (runtime.Object, error) {
 			pod := obj.(*example.Pod)
-			pod.ObjectMeta.UID = "otherUID"
+			pod.UID = "otherUID"
 			return pod, nil
 		}), nil); err != nil {
 		t.Errorf("Unexpected failure during updated: %v", err)
@@ -2083,7 +2083,7 @@ func RunTestListInconsistentContinuation(ctx context.Context, t *testing.T, stor
 	if !ok {
 		t.Fatalf("expect error of implements the APIStatus interface, got %v", reflect.TypeOf(err))
 	}
-	inconsistentContinueFromSecondItem := status.Status().ListMeta.Continue
+	inconsistentContinueFromSecondItem := status.Status().Continue
 	if len(inconsistentContinueFromSecondItem) == 0 {
 		t.Fatalf("expect non-empty continue token")
 	}
@@ -2345,8 +2345,8 @@ func RunTestGuaranteedUpdate(ctx context.Context, t *testing.T, store InterfaceW
 			if err != nil {
 				t.Fatalf("%s: GuaranteedUpdate failed: %v", tt.name, err)
 			}
-			if !reflect.DeepEqual(out.ObjectMeta.Annotations, annotations) {
-				t.Errorf("%s: pod annotations want=%s, get=%s", tt.name, annotations, out.ObjectMeta.Annotations)
+			if !reflect.DeepEqual(out.Annotations, annotations) {
+				t.Errorf("%s: pod annotations want=%s, get=%s", tt.name, annotations, out.Annotations)
 			}
 			// nolint:staticcheck
 			if out.SelfLink != "" {
@@ -2456,6 +2456,21 @@ func RunTestGuaranteedUpdateChecksStoredData(ctx context.Context, t *testing.T, 
 	}
 }
 
+func RunTestValidUpdate(ctx context.Context, t *testing.T, store storage.Interface) {
+	pod := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}
+	key, pod := testPropagateStore(ctx, t, store, pod)
+
+	err := store.GuaranteedUpdate(ctx, key, &example.Pod{}, false, nil,
+		storage.SimpleUpdate(func(o runtime.Object) (runtime.Object, error) {
+			pod := o.(*example.Pod)
+			pod.Spec.Hostname = "example"
+			return pod, nil
+		}), pod)
+	if err != nil {
+		t.Errorf("got error on update: %v", err)
+	}
+}
+
 func RunTestGuaranteedUpdateWithConflict(ctx context.Context, t *testing.T, store storage.Interface) {
 	key, _ := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}})
 
@@ -2543,7 +2558,7 @@ func RunTestGuaranteedUpdateWithSuggestionAndConflict(ctx context.Context, t *te
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if updatedPod2.Generation != 3 {
-		t.Errorf("unexpected pod generation: %q", updatedPod2.Generation)
+		t.Errorf("unexpected pod generation: %d", updatedPod2.Generation)
 	}
 
 	// Third, update using a current version as the suggestion.
@@ -2648,44 +2663,5 @@ func RunTestTransformationFailure(ctx context.Context, t *testing.T, store Inter
 	}
 	if err := store.Get(ctx, preset[1].key, storage.GetOptions{}, &example.Pod{}); !storage.IsInternalError(err) {
 		t.Errorf("Unexpected error: %v", err)
-	}
-}
-
-func RunTestCount(ctx context.Context, t *testing.T, store storage.Interface) {
-	resourceA := "/foo.bar.io/abc"
-
-	// resourceA is intentionally a prefix of resourceB to ensure that the count
-	// for resourceA does not include any objects from resourceB.
-	resourceB := fmt.Sprintf("%sdef", resourceA)
-
-	resourceACountExpected := 5
-	for i := 1; i <= resourceACountExpected; i++ {
-		obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i)}}
-
-		key := fmt.Sprintf("%s/%d", resourceA, i)
-		if err := store.Create(ctx, key, obj, nil, 0); err != nil {
-			t.Fatalf("Create failed: %v", err)
-		}
-	}
-
-	resourceBCount := 4
-	for i := 1; i <= resourceBCount; i++ {
-		obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i)}}
-
-		key := fmt.Sprintf("%s/%d", resourceB, i)
-		if err := store.Create(ctx, key, obj, nil, 0); err != nil {
-			t.Fatalf("Create failed: %v", err)
-		}
-	}
-
-	resourceACountGot, err := store.Count(resourceA)
-	if err != nil {
-		t.Fatalf("store.Count failed: %v", err)
-	}
-
-	// count for resourceA should not include the objects for resourceB
-	// even though resourceA is a prefix of resourceB.
-	if int64(resourceACountExpected) != resourceACountGot {
-		t.Fatalf("store.Count for resource %s: expected %d but got %d", resourceA, resourceACountExpected, resourceACountGot)
 	}
 }

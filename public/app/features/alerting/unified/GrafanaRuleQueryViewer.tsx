@@ -3,7 +3,7 @@ import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
-import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
@@ -25,6 +25,7 @@ import {
 import alertDef, { EvalFunction } from '../state/alertDef';
 
 import { Spacer } from './components/Spacer';
+import { TimeRangeLabel } from './components/TimeRangeLabel';
 import { WithReturnButton } from './components/WithReturnButton';
 import { ExpressionResult } from './components/expressions/Expression';
 import { ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
@@ -123,7 +124,7 @@ export function QueryPreview({
   if (relativeTimeRange) {
     headerItems.push(
       <Text color="secondary" key="timerange">
-        {secondsToHms(relativeTimeRange.from)} to now
+        <TimeRangeLabel relativeTimeRange={relativeTimeRange} />
       </Text>
     );
   }
@@ -229,7 +230,11 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
         return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
-        return <>Expression not supported: {model.type}</>;
+        return (
+          <Trans i18nKey="alerting.expression-preview.expression-not-supported" values={{ type: model.type }}>
+            Expression not supported: {'{{type}}'}
+          </Trans>
+        );
     }
   }
 
@@ -245,7 +250,12 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
     >
       <div className={styles.previewWrapper}>
         {evalData?.errors?.map((error) => (
-          <Alert key={uniqueId()} title="Expression failed" severity="error" bottomSpacing={1}>
+          <Alert
+            key={uniqueId()}
+            title={t('alerting.expression-preview.title-expression-failed', 'Expression failed')}
+            severity="error"
+            bottomSpacing={1}
+          >
             {error.message}
           </Alert>
         ))}
@@ -273,12 +283,14 @@ function QueryBox({ refId, headerItems = [], children, isAlertCondition, explore
         <span className={styles.refId}>{refId}</span>
         {headerItems}
         <Spacer />
-        {isAlertCondition && <Badge color="green" icon="check" text="Alert condition" />}
+        {isAlertCondition && (
+          <Badge color="green" icon="check" text={t('alerting.query-box.text-alert-condition', 'Alert condition')} />
+        )}
         {exploreLink && (
           <WithReturnButton
             component={
               <LinkButton size="md" variant="secondary" icon="compass" href={exploreLink}>
-                View in Explore
+                <Trans i18nKey="alerting.query-box.view-in-explore">View in Explore</Trans>
               </LinkButton>
             }
           />
@@ -337,10 +349,14 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
         return (
           <React.Fragment key={index}>
             <div className={styles.blue}>
-              {index === 0 ? 'WHEN' : !!operator?.type && evalOperators[operator?.type]?.text}
+              {index === 0
+                ? t('alerting.classic-condition-viewer.when', 'WHEN')
+                : !!operator?.type && evalOperators[operator?.type]?.text}
             </div>
             <div className={styles.bold}>{reducer?.type && reducerFunctions[reducer.type]?.text}</div>
-            <div className={styles.blue}>OF</div>
+            <div className={styles.blue}>
+              <Trans i18nKey="alerting.classic-condition-viewer.of">OF</Trans>
+            </div>
             <div className={styles.bold}>{query.params[0]}</div>
             <div className={styles.blue}>{evalFunctions[evaluator.type].text}</div>
             <div className={styles.bold}>
@@ -373,13 +389,19 @@ function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.label}>Function</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.reduce-condition-viewer.function">Function</Trans>
+      </div>
       <div className={styles.value}>{reducerType?.label}</div>
 
-      <div className={styles.label}>Input</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.reduce-condition-viewer.input">Input</Trans>
+      </div>
       <div className={styles.value}>{expression}</div>
 
-      <div className={styles.label}>Mode</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.reduce-condition-viewer.mode">Mode</Trans>
+      </div>
       <div className={styles.value}>{modeName?.label}</div>
     </div>
   );
@@ -408,16 +430,24 @@ function ResampleExpressionViewer({ model }: { model: ExpressionQuery }) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.label}>Input</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.resample-expression-viewer.input">Input</Trans>
+      </div>
       <div className={styles.value}>{expression}</div>
 
-      <div className={styles.label}>Resample to</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.resample-expression-viewer.resample-to">Resample to</Trans>
+      </div>
       <div className={styles.value}>{window}</div>
 
-      <div className={styles.label}>Downsample</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.resample-expression-viewer.downsample">Downsample</Trans>
+      </div>
       <div className={styles.value}>{downsamplerType?.label}</div>
 
-      <div className={styles.label}>Upsample</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.resample-expression-viewer.upsample">Upsample</Trans>
+      </div>
       <div className={styles.value}>{upsamplerType?.label}</div>
     </div>
   );
@@ -451,7 +481,9 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
   return (
     <>
       <div className={styles.container}>
-        <div className={styles.label}>Input</div>
+        <div className={styles.label}>
+          <Trans i18nKey="alerting.threshold-expression-viewer.input">Input</Trans>
+        </div>
         <div className={styles.value}>{expression}</div>
 
         {evaluator && (
@@ -466,7 +498,11 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
       <div className={styles.container}>
         {unloadEvaluator && (
           <>
-            <div className={styles.label}>Stop alerting when </div>
+            <div className={styles.label}>
+              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">
+                Stop alerting (or pending state) when{' '}
+              </Trans>
+            </div>
             <div className={styles.value}>{expression}</div>
 
             <>
@@ -508,7 +544,9 @@ function MathExpressionViewer({ model }: { model: ExpressionQuery }) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.label}>Input</div>
+      <div className={styles.label}>
+        <Trans i18nKey="alerting.math-expression-viewer.input">Input</Trans>
+      </div>
       <div className={styles.value}>{expression}</div>
     </div>
   );

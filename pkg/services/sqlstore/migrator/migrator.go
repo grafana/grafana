@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/grafana/dskit/backoff"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -17,7 +19,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/sqlite"
+
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -67,12 +71,16 @@ func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 
 // NewScopedMigrator should only be used for the transition to a new storage engine
 func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Migrator {
+	return newMigrator(engine, cfg, scope, NewDialect(engine.DriverName()))
+}
+
+func newMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string, dialect Dialect) *Migrator {
 	mg := &Migrator{
 		Cfg:          cfg,
 		DBEngine:     engine,
 		migrations:   make([]Migration, 0),
 		migrationIds: make(map[string]struct{}),
-		Dialect:      NewDialect(engine.DriverName()),
+		Dialect:      dialect,
 		metrics: migratorMetrics{
 			migCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 				Namespace: "grafana_database",
@@ -245,7 +253,7 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 
 	if !migrationLogExists {
 		// Check if dialect can initialize database from a snapshot.
-		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName)
+		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName, logger)
 		if err != nil {
 			return fmt.Errorf("failed to create database from snapshot: %w", err)
 		}
@@ -323,19 +331,6 @@ func (mg *Migrator) doMigration(ctx context.Context, m Migration) error {
 		sess = sess.Context(ctx)
 
 		err := mg.exec(ctx, m, sess)
-		// if we get an sqlite busy/locked error, sleep 100ms and try again
-		cnt := 0
-		for cnt < 3 && (errors.Is(err, sqlite3.ErrLocked) || errors.Is(err, sqlite3.ErrBusy)) {
-			cnt++
-			logger.Debug("Database locked, sleeping then retrying", "error", err, "sql", sql)
-			span.AddEvent("Database locked, sleeping then retrying",
-				trace.WithAttributes(attribute.String("error", err.Error())),
-				trace.WithAttributes(attribute.String("sql", sql)),
-			)
-			time.Sleep(100 * time.Millisecond)
-			err = mg.exec(ctx, m, sess)
-		}
-
 		if err != nil {
 			logger.Error("Exec failed", "error", err, "sql", sql)
 			record.Error = err.Error()
@@ -392,8 +387,12 @@ func (mg *Migrator) exec(ctx context.Context, m Migration, sess *xorm.Session) e
 		err = codeMigration.Exec(sess, mg)
 	} else {
 		sql := m.SQL(mg.Dialect)
-		logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
-		_, err = sess.Exec(sql)
+		if strings.TrimSpace(sql) == "" {
+			logger.Debug("Skipping empty sql migration", "id", m.Id())
+		} else {
+			logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+			_, err = sess.Exec(sql)
+		}
 	}
 
 	if err != nil {
@@ -409,13 +408,27 @@ func (mg *Migrator) exec(ctx context.Context, m Migration, sess *xorm.Session) e
 type dbTransactionFunc func(sess *xorm.Session) error
 
 func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
+	b := backoff.New(context.Background(), backoff.Config{
+		MinBackoff: 100 * time.Millisecond,
+		MaxBackoff: time.Second,
+		MaxRetries: 10,
+	})
+
+	var lastErr error
+	for b.Ongoing() {
+		lastErr = mg.inTransaction(callback)
+		if !sqlite.IsBusyOrLocked(lastErr) {
+			break
+		}
+		mg.Logger.Info("Database locked on migration, retrying transaction", "error", lastErr)
+		b.Wait()
+	}
+	return errors.Join(lastErr, b.Err())
+}
+
+func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
 	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
-
-	// XXX: Spanner cannot execute DDL statements in transactions
-	if mg.Dialect.DriverName() == Spanner {
-		return callback(sess)
-	}
 
 	if err := sess.Begin(); err != nil {
 		return err
@@ -425,7 +438,6 @@ func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 		if rollErr := sess.Rollback(); rollErr != nil {
 			return fmt.Errorf("failed to roll back transaction due to error: %s: %w", rollErr, err)
 		}
-
 		return err
 	}
 

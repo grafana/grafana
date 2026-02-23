@@ -28,13 +28,20 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			Message: "Health check failed: Failed to get data source info",
 		}, nil
 	}
-
 	healthStatusUrl, err := url.Parse(ds.URL)
 	if err != nil {
 		logger.Error("Failed to parse data source URL", "error", err)
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusUnknown,
 			Message: "Failed to parse data source URL",
+		}, nil
+	}
+
+	// If the cluster is serverless, return a healthy result
+	if ds.ClusterInfo.IsServerless() {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusOk,
+			Message: "Elasticsearch Serverless data source is healthy.",
 		}, nil
 	}
 
@@ -163,7 +170,7 @@ func validateIndex(ctx context.Context, ds *es.DatasourceInfo) (message string, 
 	indexList := strings.Join(indices, ",")
 
 	validateUrl := fmt.Sprintf("%s/%s/_field_caps?fields=%s", ds.URL, indexList, ds.ConfiguredFields.TimeField)
-	if indexList == "" || strings.Replace(indexList, ",", "", -1) == "" {
+	if indexList == "" || strings.ReplaceAll(indexList, ",", "") == "" {
 		validateUrl = fmt.Sprintf("%s/_field_caps?fields=%s", ds.URL, ds.ConfiguredFields.TimeField)
 	}
 
@@ -191,11 +198,15 @@ func validateIndex(ctx context.Context, ds *es.DatasourceInfo) (message string, 
 		return "Failed to unmarshal field capabilities response", "error"
 	}
 	if fieldCaps["error"] != nil {
-		if errorMessage, ok := fieldCaps["error"].(map[string]any)["reason"].(string); ok {
-			return fmt.Sprintf("Error validating index: %s", errorMessage), "warning"
-		} else {
+		errorMap, ok := fieldCaps["error"].(map[string]any)
+		if !ok {
 			return "Error validating index", "warning"
 		}
+		errorMessage, ok := errorMap["reason"].(string)
+		if !ok {
+			return "Error validating index", "warning"
+		}
+		return fmt.Sprintf("Error validating index: %s", errorMessage), "warning"
 	}
 
 	fields, ok := fieldCaps["fields"].(map[string]any)

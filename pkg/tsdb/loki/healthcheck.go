@@ -78,7 +78,7 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Servic
 
 	fieldValueLen := resp.Responses[refID].Frames[0].Fields[0].Len()
 	if fieldValueLen != 1 {
-		return getHealthCheckMessage(fmt.Errorf("invalid dataframe field value length, expected %d got %d", 1, fieldLen), logger)
+		return getHealthCheckMessage(fmt.Errorf("invalid dataframe field value length, expected %d got %d", 1, fieldValueLen), logger)
 	}
 
 	rspValue := resp.Responses[refID].Frames[0].Fields[1].At(0).(float64)

@@ -7,6 +7,7 @@
 //          1
 //      ],
 //      "custom": {
+//          "calculatedMinStep": 1000,
 //          "resultType": "matrix"
 //      },
 //      "executedQueryString": "Expr: 1 / 0\nStep: 1s"
@@ -37,6 +38,7 @@
             1
           ],
           "custom": {
+            "calculatedMinStep": 1000,
             "resultType": "matrix"
           },
           "executedQueryString": "Expr: 1 / 0\nStep: 1s"

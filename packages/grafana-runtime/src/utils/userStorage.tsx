@@ -1,12 +1,34 @@
 import { get } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
-import { usePluginContext } from '@grafana/data';
+import { usePluginContext, type UserStorage as UserStorageType, store } from '@grafana/data';
 
 import { config } from '../config';
 import { BackendSrvRequest, getBackendSrv } from '../services';
 
 const baseURL = `/apis/userstorage.grafana.app/v0alpha1/namespaces/${config.namespace}/user-storage`;
+
+// Global cache for user storage initialization requests
+// Cache key: resourceName (e.g., "plugin-id:user-uid")
+// Cache value: Promise<UserStorageSpec | null> | UserStorageSpec | null
+const storageCache = new Map<string, Promise<UserStorageSpec | null> | UserStorageSpec | null>();
+
+// Lock map to serialize operations per resourceName
+// Cache key: resourceName
+// Cache value: Promise that resolves when the lock is available
+const operationLocks = new Map<string, Promise<void>>();
+
+/**
+ * Clears the global storage cache. Used for testing purposes.
+ * @internal
+ */
+export function _clearStorageCache() {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('clearStorageCache() function can only be called from tests.');
+  }
+  storageCache.clear();
+  operationLocks.clear();
+}
 
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
@@ -27,6 +49,7 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
         ...requestOptions,
         url: baseURL + requestOptions.url,
         data: requestOptions.body,
+        showErrorAlert: false,
       })
     );
     return { data: responseData, meta };
@@ -37,107 +60,234 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
 
 /**
  * A class for interacting with the backend user storage.
- * Unexported because it is currently only be used through the useUserStorage hook.
+ * Exposed internally only to avoid misuse (wrong service name)..
  */
-class UserStorage {
+export class UserStorage implements UserStorageType {
   private service: string;
   private resourceName: string;
   private userUID: string;
   private canUseUserStorage: boolean;
-  private storageSpec: UserStorageSpec | null | undefined;
 
   constructor(service: string) {
     this.service = service;
     this.userUID = config.bootData.user.uid === '' ? config.bootData.user.id.toString() : config.bootData.user.uid;
     this.resourceName = `${service}:${this.userUID}`;
-    this.canUseUserStorage = config.featureToggles.userStorageAPI === true && config.bootData.user.isSignedIn;
+    this.canUseUserStorage = config.bootData.user.isSignedIn;
   }
 
-  private async init() {
-    if (this.storageSpec !== undefined) {
+  /**
+   * Acquires a lock for this resourceName to serialize operations.
+   * Returns a function to release the lock when done.
+   */
+  private async acquireLock(): Promise<() => void> {
+    // Wait for any existing lock
+    let lockPromise = operationLocks.get(this.resourceName);
+    if (lockPromise) {
+      await lockPromise;
+    }
+
+    // Create a new lock promise that will be resolved when this operation completes
+    let resolveLock: (() => void) | undefined;
+    const newLockPromise = new Promise<void>((resolve) => {
+      resolveLock = resolve;
+    });
+    operationLocks.set(this.resourceName, newLockPromise);
+
+    // Return a function to release the lock
+    return () => {
+      if (resolveLock) {
+        resolveLock();
+      }
+      // Remove lock if it's still the current one (in case another operation started)
+      if (operationLocks.get(this.resourceName) === newLockPromise) {
+        operationLocks.delete(this.resourceName);
+      }
+    };
+  }
+
+  private async init(): Promise<unknown> {
+    // Check global cache first
+    const cached = storageCache.get(this.resourceName);
+    if (cached !== undefined) {
+      if (cached instanceof Promise) {
+        // Cache has a promise, await it
+        try {
+          await cached;
+          return;
+        } catch (error) {
+          // Promise rejected, return error to match original behavior
+          return error;
+        }
+      } else {
+        // Cache has a resolved result, already initialized
+        return;
+      }
+    }
+
+    // No cache entry, create the request promise and cache it atomically
+    // Use a double-check pattern to handle race conditions
+    let requestPromise = storageCache.get(this.resourceName);
+    if (requestPromise instanceof Promise) {
+      // Another instance created the promise between our check and now, use it
+      try {
+        await requestPromise;
+        return;
+      } catch (error) {
+        return error;
+      }
+    }
+
+    // Create new promise
+    requestPromise = (async (): Promise<UserStorageSpec | null> => {
+      const userStorage = await apiRequest<{ spec: UserStorageSpec }>({
+        url: `/${this.resourceName}`,
+        method: 'GET',
+        manageError: (error) => {
+          if (get(error, 'status') === 404) {
+            return { error: null };
+          }
+          return { error };
+        },
+      });
+      if ('error' in userStorage) {
+        if (userStorage.error === null) {
+          // 404 - storage doesn't exist
+          return null;
+        }
+        // Other error, throw so it can be caught and returned
+        throw userStorage.error;
+      }
+      return userStorage.data.spec;
+    })();
+
+    // Atomically set the promise only if cache is still empty
+    const existing = storageCache.get(this.resourceName);
+    if (existing === undefined) {
+      storageCache.set(this.resourceName, requestPromise);
+    } else if (existing instanceof Promise) {
+      // Another instance set a promise, use it instead
+      requestPromise = existing;
+    } else {
+      // Another instance already resolved, we're done
       return;
     }
-    const userStorage = await apiRequest<{ spec: UserStorageSpec }>({
-      url: `/${this.resourceName}`,
-      method: 'GET',
-      showErrorAlert: false,
-    });
-    if ('error' in userStorage) {
-      if (get(userStorage, 'error.status') !== 404) {
-        console.error('Failed to get user storage', userStorage.error);
-      }
-      // No user storage found, return null
-      this.storageSpec = null;
-    } else {
-      this.storageSpec = userStorage.data.spec;
+
+    try {
+      const result = await requestPromise;
+      // Replace promise with resolved result in cache
+      storageCache.set(this.resourceName, result);
+    } catch (error) {
+      // Remove failed promise from cache so it can be retried
+      storageCache.delete(this.resourceName);
+      return error;
     }
+    return;
   }
 
   async getItem(key: string): Promise<string | null> {
     if (!this.canUseUserStorage) {
       // Fallback to localStorage
-      return localStorage.getItem(this.resourceName);
+      return store.get(`${this.resourceName}:${key}`) ?? null;
     }
-    // Ensure this.storageSpec is initialized
-    await this.init();
-    if (!this.storageSpec) {
-      // Also, fallback to localStorage for backward compatibility once userStorageAPI is enabled
-      return localStorage.getItem(this.resourceName);
+
+    // Acquire lock to serialize operations
+    const releaseLock = await this.acquireLock();
+    try {
+      // Ensure storage is initialized
+      await this.init();
+      const storageSpec = storageCache.get(this.resourceName);
+      if (!storageSpec) {
+        // Storage doesn't exist or still loading, fallback to localStorage
+        return store.get(`${this.resourceName}:${key}`) ?? null;
+      }
+      if (storageSpec instanceof Promise) {
+        const result = await storageSpec;
+        return result?.data[key] ?? null;
+      }
+      return storageSpec.data[key];
+    } finally {
+      releaseLock();
     }
-    return this.storageSpec.data[key];
   }
 
   async setItem(key: string, value: string): Promise<void> {
     if (!this.canUseUserStorage) {
       // Fallback to localStorage
-      localStorage.setItem(key, value);
+      store.set(`${this.resourceName}:${key}`, value);
       return;
     }
 
-    const newData = { data: { [key]: value } };
-    // Ensure this.storageSpec is initialized
-    await this.init();
+    // Acquire lock to serialize operations
+    const releaseLock = await this.acquireLock();
+    try {
+      const newData = { data: { [key]: value } };
+      // Ensure storage is initialized
+      const error = await this.init();
+      if (error) {
+        // Fallback to localStorage
+        store.set(`${this.resourceName}:${key}`, value);
+        return;
+      }
 
-    if (!this.storageSpec) {
-      // No user storage found, create a new one
-      await apiRequest<UserStorageSpec>({
-        url: `/`,
-        method: 'POST',
-        body: {
-          metadata: { name: this.resourceName, labels: { user: this.userUID, service: this.service } },
-          spec: newData,
+      let storageSpec = storageCache.get(this.resourceName);
+      if (storageSpec instanceof Promise) {
+        storageSpec = await storageSpec;
+      }
+      if (!storageSpec) {
+        // No user storage found, create a new one
+        const createResult = await apiRequest<UserStorageSpec>({
+          url: `/`,
+          method: 'POST',
+          body: {
+            metadata: { name: this.resourceName, labels: { user: this.userUID, service: this.service } },
+            spec: newData,
+          },
+          manageError: (error) => {
+            // Fallback to localStorage
+            store.set(`${this.resourceName}:${key}`, value);
+            return { error };
+          },
+        });
+        if ('error' in createResult && createResult.error) {
+          // Error occurred, fallback already handled in manageError
+          return;
+        }
+        // Update global cache with the new storage
+        storageCache.set(this.resourceName, newData);
+        return;
+      }
+
+      // Clone the storage spec to avoid mutating the cached object directly
+      // This prevents race conditions where multiple setItem calls modify the same object
+      const updatedSpec: UserStorageSpec = {
+        data: { ...storageSpec.data, [key]: value },
+      };
+
+      const updateResult = await apiRequest<UserStorageSpec>({
+        headers: { 'Content-Type': 'application/merge-patch+json' },
+        url: `/${this.resourceName}`,
+        method: 'PATCH',
+        body: { spec: newData },
+        manageError: (error) => {
+          // Fallback to localStorage
+          store.set(`${this.resourceName}:${key}`, value);
+          return { error };
         },
       });
-      this.storageSpec = newData;
-      return;
+      if ('error' in updateResult && updateResult.error) {
+        // Error occurred, fallback already handled in manageError
+        return;
+      }
+      // Update global cache with the modified storage (using cloned object)
+      storageCache.set(this.resourceName, updatedSpec);
+    } finally {
+      releaseLock();
     }
-
-    // Update existing user storage
-    this.storageSpec.data[key] = value;
-    await apiRequest<UserStorageSpec>({
-      headers: { 'Content-Type': 'application/merge-patch+json' },
-      url: `/${this.resourceName}`,
-      method: 'PATCH',
-      body: { spec: newData },
-    });
   }
 }
 
-export interface PluginUserStorage {
-  /**
-   * Retrieves an item from the backend user storage or local storage if not enabled.
-   * @param key - The key of the item to retrieve.
-   * @returns A promise that resolves to the item value or null if not found.
-   */
-  getItem(key: string): Promise<string | null>;
-  /**
-   * Sets an item in the backend user storage or local storage if not enabled.
-   * @param key - The key of the item to set.
-   * @param value - The value of the item to set.
-   * @returns A promise that resolves when the item is set.
-   */
-  setItem(key: string, value: string): Promise<void>;
-}
+// This is a type alias to avoid breaking changes
+export interface PluginUserStorage extends UserStorageType {}
 
 /**
  * A hook for interacting with the backend user storage (or local storage if not enabled).

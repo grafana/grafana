@@ -3,9 +3,14 @@ package discovery
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/tracing"
 )
 
 // Discoverer is responsible for the Discovery stage of the plugin loader pipeline.
@@ -13,62 +18,66 @@ type Discoverer interface {
 	Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
 }
 
-// FindFunc is the function used for the Find step of the Discovery stage.
-type FindFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
-
-// FindFilterFunc is the function used for the Filter step of the Discovery stage.
-type FindFilterFunc func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
+// FilterFunc is the function used for the Filter step of the Discovery stage.
+type FilterFunc func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
 
 // Discovery implements the Discoverer interface.
 //
 // The Discovery stage is made up of the following steps (in order):
-// - Find: Find plugins (from disk, remote, etc.)
+// - Discover: Each source discovers its own plugins
 // - Filter: Filter the results based on some criteria.
 //
-// The Find step is implemented by the FindFunc type.
-//
-// The Filter step is implemented by the FindFilterFunc type.
+// The Filter step is implemented by the FilterFunc type.
 type Discovery struct {
-	findStep        FindFunc
-	findFilterSteps []FindFilterFunc
-	log             log.Logger
+	filterSteps []FilterFunc
+	log         log.Logger
+	tracer      trace.Tracer
 }
 
 type Opts struct {
-	FindFunc        FindFunc
-	FindFilterFuncs []FindFilterFunc
+	FilterFuncs []FilterFunc
 }
 
 // New returns a new Discovery stage.
-func New(cfg *config.PluginManagementCfg, opts Opts) *Discovery {
-	if opts.FindFunc == nil {
-		opts.FindFunc = DefaultFindFunc(cfg)
-	}
-
-	if opts.FindFilterFuncs == nil {
-		opts.FindFilterFuncs = []FindFilterFunc{} // no filters by default
+func New(_ *config.PluginManagementCfg, opts Opts) *Discovery {
+	if opts.FilterFuncs == nil {
+		opts.FilterFuncs = []FilterFunc{} // no filters by default
 	}
 
 	return &Discovery{
-		findStep:        opts.FindFunc,
-		findFilterSteps: opts.FindFilterFuncs,
-		log:             log.New("plugins.discovery"),
+		filterSteps: opts.FilterFuncs,
+		log:         log.New("plugins.discovery"),
+		tracer:      otel.Tracer("github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"),
 	}
 }
 
-// Discover will execute the Find and Filter steps of the Discovery stage.
+// Discover will execute the Filter step of the Discovery stage.
 func (d *Discovery) Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
-	discoveredPlugins, err := d.findStep(ctx, src)
+	pluginClass := src.PluginClass(ctx)
+	ctx, span := d.tracer.Start(ctx, "discovery.Discover", trace.WithAttributes(
+		attribute.String("grafana.plugins.class", string(pluginClass)),
+	))
+	defer span.End()
+	ctxLogger := d.log.FromContext(ctx)
+
+	// Use the source's own Discover method
+	found, err := src.Discover(ctx)
 	if err != nil {
-		return nil, err
+		ctxLogger.Warn("Discovery source failed", "class", pluginClass, "error", err)
+		return nil, tracing.Error(span, err)
 	}
 
-	for _, filter := range d.findFilterSteps {
-		discoveredPlugins, err = filter(ctx, src.PluginClass(ctx), discoveredPlugins)
+	ctxLogger.Debug("Found plugins", "class", pluginClass, "count", len(found))
+
+	// Apply filtering steps
+	result := found
+	for _, filter := range d.filterSteps {
+		result, err = filter(ctx, src.PluginClass(ctx), result)
 		if err != nil {
-			return nil, err
+			return nil, tracing.Error(span, err)
 		}
 	}
 
-	return discoveredPlugins, nil
+	ctxLogger.Debug("Discovery complete", "class", pluginClass, "found", len(found), "filtered", len(result))
+	return result, nil
 }

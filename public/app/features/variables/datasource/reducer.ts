@@ -7,9 +7,10 @@ import {
   VariableOption,
   VariableRefresh,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { getInstanceState } from '../state/selectors';
+import { getInstanceState } from '../state/getInstanceState';
 import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';
 
@@ -52,12 +53,20 @@ export const dataSourceVariableSlice = createSlice({
         }
 
         if (isDefault(source, regex)) {
-          options.push({ text: 'default', value: 'default', selected: false });
+          options.push({
+            text: t('variables.data-source-variable-slice.text.default', 'default'),
+            value: 'default',
+            selected: false,
+          });
         }
       }
 
       if (options.length === 0) {
-        options.push({ text: 'No data sources found', value: '', selected: false });
+        options.push({
+          text: t('variables.data-source-variable-slice.text.no-data-sources-found', 'No data sources found'),
+          value: '',
+          selected: false,
+        });
       }
 
       if (instanceState.includeAll) {

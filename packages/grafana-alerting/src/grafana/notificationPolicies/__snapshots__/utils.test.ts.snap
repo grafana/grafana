@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`matchLabels should match with non-equal matchers 1`] = `
+[
+  {
+    "labelIndex": 0,
+    "match": true,
+    "matcher": {
+      "label": "team",
+      "type": "=",
+      "value": "operations",
+    },
+  },
+]
+`;
+
+exports[`matchLabels should match with non-matching matchers 1`] = `
+[
+  {
+    "labelIndex": 0,
+    "match": true,
+    "matcher": {
+      "label": "team",
+      "type": "=",
+      "value": "operations",
+    },
+  },
+]
+`;
+
+exports[`matchLabels should not match with a set of matchers 1`] = `
+[
+  {
+    "labelIndex": 0,
+    "match": true,
+    "matcher": {
+      "label": "team",
+      "type": "=",
+      "value": "operations",
+    },
+  },
+  {
+    "labelIndex": 1,
+    "match": false,
+    "matcher": null,
+  },
+]
+`;

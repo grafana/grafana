@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { Store } from '@reduxjs/toolkit';
 import { render, RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -10,7 +11,15 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
+import { FeatureToggles } from '@grafana/data';
+import {
+  config,
+  HistoryWrapper,
+  LocationServiceProvider,
+  setChromeHeaderHeightHook,
+  setLocationService,
+} from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
@@ -79,15 +88,17 @@ const getWrapper = ({
   return function Wrapper({ children }: PropsWithChildren) {
     return (
       <Provider store={reduxStore}>
-        <GrafanaContext.Provider value={context}>
-          <PotentialRouter>
-            <LocationServiceProvider service={locationService}>
-              <PotentialCompatRouter>
-                <ModalsContextProvider>{children}</ModalsContextProvider>
-              </PotentialCompatRouter>
-            </LocationServiceProvider>
-          </PotentialRouter>
-        </GrafanaContext.Provider>
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <GrafanaContext.Provider value={context}>
+            <PotentialRouter>
+              <LocationServiceProvider service={locationService}>
+                <PotentialCompatRouter>
+                  <ModalsContextProvider>{children}</ModalsContextProvider>
+                </PotentialCompatRouter>
+              </LocationServiceProvider>
+            </PotentialRouter>
+          </GrafanaContext.Provider>
+        </OpenFeatureProvider>
       </Provider>
     );
   };
@@ -106,12 +117,58 @@ const customRender = (
   const store = renderOptions.preloadedState ? configureStore(renderOptions?.preloadedState) : undefined;
   const AllTheProviders = renderOptions.wrapper || getWrapper({ store, renderWithRouter, ...renderOptions });
 
+  setChromeHeaderHeightHook(() => 40);
+
   return {
     ...render(ui, { wrapper: AllTheProviders, ...renderOptions }),
     /** Instance of `userEvent.setup()` ready for use to interact with rendered component */
     user,
     store,
   };
+};
+
+/**
+ * Enables and disables feature toggles `beforeEach` test, and sets back to empty object `afterEach` test
+ */
+export const testWithFeatureToggles = ({
+  enable,
+  disable,
+}: {
+  enable?: Array<keyof FeatureToggles>;
+  disable?: Array<keyof FeatureToggles>;
+}) => {
+  beforeEach(() => {
+    for (const featureToggle of enable || []) {
+      config.featureToggles[featureToggle] = true;
+    }
+    for (const featureToggle of disable || []) {
+      config.featureToggles[featureToggle] = false;
+    }
+  });
+
+  afterEach(() => {
+    config.featureToggles = {};
+  });
+};
+
+/**
+ * Enables license features `beforeEach` test, and sets back to empty object `afterEach` test
+ */
+export const testWithLicenseFeatures = ({ enable, disable }: { enable?: string[]; disable?: string[] }) => {
+  beforeEach(() => {
+    config.licenseInfo.enabledFeatures = config.licenseInfo.enabledFeatures || {};
+
+    for (const feature of enable || []) {
+      config.licenseInfo.enabledFeatures[feature] = true;
+    }
+    for (const feature of disable || []) {
+      config.licenseInfo.enabledFeatures[feature] = false;
+    }
+  });
+
+  afterEach(() => {
+    config.licenseInfo.enabledFeatures = {};
+  });
 };
 
 export * from '@testing-library/react';

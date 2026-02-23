@@ -34,7 +34,7 @@ export class FlightSQLDatasource extends SqlDatasource {
       getMeta: (identifier?: TableIdentifier) => this.fetchMeta(identifier),
     };
     this.sqlLanguageDefinition = {
-      id: 'flightsql',
+      id: 'sql',
       completionProvider: getSqlCompletionProvider(args),
       formatter: formatSQL,
     };
@@ -144,7 +144,6 @@ export class FlightSQLDatasource extends SqlDatasource {
       fields: (query: SQLQuery) => this.fetchFields(query),
       validateQuery: (query: SQLQuery, range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
-      dsID: () => this.id,
       toRawSql,
       functions: () => this.getFunctions(),
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(),

@@ -25,8 +25,17 @@ export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
       return of([]);
     }
 
-    return from(datasource!.annotationQuery!({ range, rangeRaw: range.raw, annotation, dashboard })).pipe(
-      catchError(handleAnnotationQueryRunnerError)
-    );
+    if (datasource?.annotationQuery === undefined) {
+      console.warn('datasource does not have an annotation query');
+      return of([]);
+    }
+
+    const annotationQuery = datasource.annotationQuery({ range, rangeRaw: range.raw, annotation, dashboard });
+    if (annotationQuery === undefined) {
+      console.warn('datasource does not have an annotation query');
+      return of([]);
+    }
+
+    return from(annotationQuery).pipe(catchError(handleAnnotationQueryRunnerError));
   }
 }

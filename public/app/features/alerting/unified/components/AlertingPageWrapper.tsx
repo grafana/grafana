@@ -1,18 +1,22 @@
-import { PropsWithChildren, ReactNode } from 'react';
+import { PropsWithChildren, ReactNode, useMemo } from 'react';
 import { useLocation } from 'react-use';
 
 import { Page } from 'app/core/components/Page/Page';
 import { PageProps } from 'app/core/components/Page/types';
 
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
+import { getRulesDataSources } from '../utils/datasource';
 
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
 
 /**
  * This is the main alerting page wrapper, used by the alertmanager page wrapper and the alert rules list view
+ *
+ * NOTE: we're omitting "title" here because it's not actually rendering the title (it's the html attribute "title").
+ * Use "renderTitle" instead for custom page titles.
  */
-type AlertingPageWrapperProps = Omit<PageProps, 'children'> & {
+type AlertingPageWrapperProps = Omit<PageProps, 'children' | 'title'> & {
   isLoading?: boolean;
   children?: ReactNode;
 };
@@ -31,10 +35,16 @@ interface AlertmanagerPageWrapperProps extends AlertingPageWrapperProps {
 }
 export const AlertmanagerPageWrapper = ({ children, accessType, ...props }: AlertmanagerPageWrapperProps) => {
   const disableAlertmanager = useIsDisabledAlertmanagerSelection();
+  // Check if there are any external data sources that can manage alerts
+  // If so, show the AlertManagerPicker so users can configure their alertmanagers
+  const hasExternalManagedAlerts = useMemo(() => getRulesDataSources().length > 0, []);
 
   return (
     <AlertmanagerProvider accessType={accessType}>
-      <AlertingPageWrapper {...props} actions={<AlertManagerPicker disabled={disableAlertmanager} />}>
+      <AlertingPageWrapper
+        {...props}
+        actions={hasExternalManagedAlerts && <AlertManagerPicker disabled={disableAlertmanager} />}
+      >
         <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
       </AlertingPageWrapper>
     </AlertmanagerProvider>

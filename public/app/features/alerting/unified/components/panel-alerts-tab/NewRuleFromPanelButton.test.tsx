@@ -9,8 +9,8 @@ import * as analytics from '../../Analytics';
 
 import { NewRuleFromPanelButton } from './NewRuleFromPanelButton';
 
-jest.mock('app/types', () => {
-  const original = jest.requireActual('app/types');
+jest.mock('app/types/store', () => {
+  const original = jest.requireActual('app/types/store');
   return {
     ...original,
     useSelector: jest.fn(),

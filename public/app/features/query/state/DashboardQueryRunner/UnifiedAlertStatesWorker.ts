@@ -11,7 +11,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
 import { promAlertStateToAlertState } from 'app/features/dashboard-scene/scene/AlertStatesDataLayer';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -94,7 +94,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
                   state,
                   id: Object.keys(panelIdToAlertState).length,
                   panelId,
-                  dashboardId: dashboard.id,
+                  dashboardUID: dashboard.uid,
                 };
               } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
                 panelIdToAlertState[panelId].state = AlertState.Alerting;

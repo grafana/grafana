@@ -1,7 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { memo, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
 import { featureEnabled } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
@@ -9,14 +8,14 @@ import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
 import config from 'app/core/config';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, StoreState, useDispatch, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { StoreState, useSelector } from 'app/types/store';
 
 import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
 import TeamPermissions from './TeamPermissions';
 import TeamSettings from './TeamSettings';
-import { loadTeam } from './state/actions';
+import { useGetTeam } from './hooks';
 import { getTeamLoadingNav } from './state/navModel';
-import { getTeam } from './state/selectors';
 
 type TeamPageRouteParams = {
   uid: string;
@@ -30,11 +29,6 @@ enum PageTypes {
 }
 
 const PAGES = ['members', 'settings', 'groupsync'];
-
-const teamSelector = createSelector(
-  [(state: StoreState) => state.team, (_: StoreState, teamUid: string) => teamUid],
-  (team, teamUid) => getTeam(team, teamUid)
-);
 
 const pageNavSelector = createSelector(
   [
@@ -51,7 +45,8 @@ const pageNavSelector = createSelector(
 const TeamPages = memo(() => {
   const isSyncEnabled = useRef(featureEnabled('teamsync'));
   const { uid: teamUid = '', page } = useParams<TeamPageRouteParams>();
-  const team = useSelector((state) => teamSelector(state, teamUid));
+
+  const { data: team, isLoading } = useGetTeam({ uid: teamUid });
 
   let defaultPage = 'members';
   // With RBAC the settings page will always be available
@@ -60,9 +55,6 @@ const TeamPages = memo(() => {
   }
   const pageName = page ?? defaultPage;
   const pageNav = useSelector((state) => pageNavSelector(state, pageName, teamUid));
-
-  const dispatch = useDispatch();
-  const { loading: isLoading } = useAsync(async () => dispatch(loadTeam(teamUid)), [teamUid]);
 
   const renderPage = () => {
     const currentPage = PAGES.includes(pageName) ? pageName : PAGES[0];
@@ -88,7 +80,7 @@ const TeamPages = memo(() => {
       case PageTypes.GroupSync:
         if (isSyncEnabled.current) {
           if (canReadTeamPermissions) {
-            return <TeamGroupSync isReadOnly={!canWriteTeamPermissions} />;
+            return <TeamGroupSync isReadOnly={!canWriteTeamPermissions} teamUid={teamUid} />;
           }
         } else if (config.featureToggles.featureHighlights) {
           return (

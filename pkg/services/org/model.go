@@ -151,12 +151,13 @@ type OrgUserDTO struct {
 	Role               string          `json:"role"`
 	LastSeenAt         time.Time       `json:"lastSeenAt"`
 	Updated            time.Time       `json:"-"`
-	Created            time.Time       `json:"-"`
+	Created            time.Time       `json:"created"`
 	LastSeenAtAge      string          `json:"lastSeenAtAge"`
 	AccessControl      map[string]bool `json:"accessControl,omitempty"`
 	IsDisabled         bool            `json:"isDisabled"`
 	AuthLabels         []string        `json:"authLabels" xorm:"-"`
 	IsExternallySynced bool            `json:"isExternallySynced"`
+	IsProvisioned      bool            `json:"isProvisioned"`
 }
 
 type RemoveOrgUserCommand struct {
@@ -187,6 +188,8 @@ type SearchOrgUsersQuery struct {
 	SortOpts []model.SortOption
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
+	// Flag used to exclude hidden users from the result
+	ExcludeHiddenUsers bool
 
 	User identity.Requester
 }

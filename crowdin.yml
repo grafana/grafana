@@ -1,5 +1,36 @@
-files:
-  - type: i18next_json
 # The following are pulled from env variables
 project_id_env: CROWDIN_PROJECT_ID
 api_token_env: CROWDIN_PERSONAL_TOKEN
+
+preserve_hierarchy: true
+files: [
+  {
+    "source": "public/locales/en-US/grafana.json",
+    "translation": "public/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
+  },
+  {
+    "source": "public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json",
+    "translation": "public/app/plugins/datasource/azuremonitor/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
+    "dest": "plugins/azuremonitor/en-US/%original_file_name%"
+  },
+  {
+    "source": "public/app/plugins/datasource/mssql/locales/en-US/mssql.json",
+    "translation": "public/app/plugins/datasource/mssql/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
+    "dest": "plugins/mssql/en-US/%original_file_name%"
+  },
+  {
+    "source": "packages/grafana-sql/src/locales/en-US/grafana-sql.json",
+    "translation": "packages/grafana-sql/src/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
+    "dest": "packages/grafana-sql/en-US/%original_file_name%"
+  },
+  {
+    "source": "packages/grafana-prometheus/src/locales/en-US/grafana-prometheus.json",
+    "translation": "packages/grafana-prometheus/src/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
+    "dest": "packages/grafana-prometheus/en-US/%original_file_name%"
+  },
+]

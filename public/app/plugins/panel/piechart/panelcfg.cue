@@ -46,6 +46,7 @@ composableKinds: PanelCfg: {
 					common.OptionsWithTooltip
 					common.SingleStatBaseOptions
 					pieType: PieChartType
+				sort: common.SortOrder
 					displayLabels: [...PieChartLabels]
 					legend: PieChartLegendOptions
 				} @cuetsy(kind="interface")

@@ -6,7 +6,7 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Collapse, useStyles2, Stack } from '@grafana/ui';
 
-export interface Props {
+interface Props {
   title: string;
   collapsedInfo: string[];
   children: React.ReactNode;
@@ -20,7 +20,6 @@ export function QueryOptionGroup({ title, children, collapsedInfo }: Props) {
     <div className={styles.wrapper}>
       <Collapse
         className={styles.collapse}
-        collapsible
         isOpen={isOpen}
         onToggle={toggleOpen}
         label={

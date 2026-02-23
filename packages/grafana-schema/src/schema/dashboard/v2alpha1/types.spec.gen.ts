@@ -19,6 +19,10 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?: Record<string, AnnotationEventFieldMapping>;
+	// Catch-all field for datasource-specific properties
+	legacyOptions?: Record<string, any>;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
@@ -62,10 +66,24 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 	ids: [],
 });
 
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+export interface AnnotationEventFieldMapping {
+	// Source type for the field value
+	source?: string;
+	// Constant value to use when source is "text"
+	value?: string;
+	// Regular expression to apply to the field value
+	regex?: string;
+}
+
+export const defaultAnnotationEventFieldMapping = (): AnnotationEventFieldMapping => ({
+	source: "field",
+});
+
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-export type DashboardCursorSync = "Off" | "Crosshair" | "Tooltip";
+export type DashboardCursorSync = "Crosshair" | "Tooltip" | "Off";
 
 export const defaultDashboardCursorSync = (): DashboardCursorSync => ("Off");
 
@@ -257,6 +275,8 @@ export interface FieldConfigSource {
 	defaults: FieldConfig;
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: {
+		// Describes config override rules created when interacting with Grafana.
+		__systemRef?: string;
 		matcher: MatcherConfig;
 		properties: DynamicConfigValue[];
 	}[];
@@ -289,7 +309,7 @@ export interface FieldConfig {
 	// True if data source field supports ad-hoc filters
 	filterable?: boolean;
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -316,11 +336,18 @@ export interface FieldConfig {
 	color?: FieldColor;
 	// The behavior when clicking on a result
 	links?: any[];
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	actions?: Action[];
 	// Alternative to empty string
 	noValue?: string;
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: Record<string, any>;
+	// Calculate min max per field
+	fieldMinMax?: boolean;
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode;
 }
 
 export const defaultFieldConfig = (): FieldConfig => ({
@@ -333,7 +360,7 @@ export const defaultValueMapping = (): ValueMapping => (defaultValueMap());
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 export interface ValueMap {
-	type: MappingType & "value";
+	type: "value";
 	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 	options: Record<string, ValueMappingResult>;
 }
@@ -370,7 +397,7 @@ export const defaultValueMappingResult = (): ValueMappingResult => ({
 // Maps numerical ranges to a display text and color.
 // For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 export interface RangeMap {
-	type: MappingType & "range";
+	type: "range";
 	// Range to match against and the result to apply when the value is within the range
 	options: {
 		// Min value of the range. It can be null which means -Infinity
@@ -394,7 +421,7 @@ export const defaultRangeMap = (): RangeMap => ({
 // Maps regular expressions to replacement text and a color.
 // For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 export interface RegexMap {
-	type: MappingType & "regex";
+	type: "regex";
 	// Regular expression to match against and the result to apply when the value matches the regex
 	options: {
 		// Regular expression to match against
@@ -416,7 +443,7 @@ export const defaultRegexMap = (): RegexMap => ({
 // See SpecialValueMatch to see the list of special values.
 // For example, you can configure a special value mapping so that null values appear as N/A.
 export interface SpecialValueMap {
-	type: MappingType & "special";
+	type: "special";
 	options: {
 		// Special value to match against
 		match: SpecialValueMatch;
@@ -453,7 +480,8 @@ export type ThresholdsMode = "absolute" | "percentage";
 export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 
 export interface Threshold {
-	value: number;
+	// Value null means -Infinity
+	value: number | null;
 	color: string;
 }
 
@@ -482,7 +510,12 @@ export const defaultFieldColor = (): FieldColor => ({
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -494,7 +527,7 @@ export const defaultFieldColor = (): FieldColor => ({
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades";
+export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades";
 
 export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 
@@ -502,6 +535,86 @@ export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 export type FieldColorSeriesByMode = "min" | "max" | "last";
 
 export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => ("min");
+
+export interface Action {
+	type: ActionType;
+	title: string;
+	fetch?: FetchOptions;
+	infinity?: InfinityOptions;
+	confirmation?: string;
+	oneClick?: boolean;
+	variables?: ActionVariable[];
+	style?: {
+		backgroundColor?: string;
+	};
+}
+
+export const defaultAction = (): Action => ({
+	type: "fetch",
+	title: "",
+});
+
+export type ActionType = "fetch" | "infinity";
+
+export const defaultActionType = (): ActionType => ("fetch");
+
+export interface FetchOptions {
+	method: HttpRequestMethod;
+	url: string;
+	body?: string;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
+	headers?: string[][];
+}
+
+export const defaultFetchOptions = (): FetchOptions => ({
+	method: "GET",
+	url: "",
+});
+
+export type HttpRequestMethod = "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
+
+export const defaultHttpRequestMethod = (): HttpRequestMethod => ("GET");
+
+export interface InfinityOptions {
+	method: HttpRequestMethod;
+	url: string;
+	body?: string;
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: string[][];
+	datasourceUid: string;
+	headers?: string[][];
+}
+
+export const defaultInfinityOptions = (): InfinityOptions => ({
+	method: "GET",
+	url: "",
+	datasourceUid: "",
+});
+
+export interface ActionVariable {
+	key: string;
+	name: string;
+	type: "string";
+}
+
+export const defaultActionVariable = (): ActionVariable => ({
+	key: "",
+	name: "",
+	type: ActionVariableType,
+});
+
+// Action variable type
+export const ActionVariableType = "string";
+
+// How null values should be handled
+export type NullValueMode = "null" | "connected" | "null as zero";
+
+export const defaultNullValueMode = (): NullValueMode => ("null");
 
 export interface DynamicConfigValue {
 	id: string;
@@ -562,7 +675,7 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface GridLayoutSpec {
-	items: (GridLayoutItemKind | GridLayoutRowKind)[];
+	items: GridLayoutItemKind[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({
@@ -622,42 +735,6 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 // other repeat modes will be added in the future: label, frame
 export const RepeatMode = "variable";
 
-export interface GridLayoutRowKind {
-	kind: "GridLayoutRow";
-	spec: GridLayoutRowSpec;
-}
-
-export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
-	kind: "GridLayoutRow",
-	spec: defaultGridLayoutRowSpec(),
-});
-
-export interface GridLayoutRowSpec {
-	y: number;
-	collapsed: boolean;
-	title: string;
-	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	elements: GridLayoutItemKind[];
-	repeat?: RowRepeatOptions;
-}
-
-export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
-	y: 0,
-	collapsed: false,
-	title: "",
-	elements: [],
-});
-
-export interface RowRepeatOptions {
-	mode: "variable";
-	value: string;
-}
-
-export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
-	mode: RepeatMode,
-	value: "",
-});
-
 export interface RowsLayoutKind {
 	kind: "RowsLayout";
 	spec: RowsLayoutSpec;
@@ -688,14 +765,15 @@ export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
 
 export interface RowsLayoutRowSpec {
 	title?: string;
-	collapsed: boolean;
+	collapse?: boolean;
+	hideHeader?: boolean;
+	fillScreen?: boolean;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: RowRepeatOptions;
-	layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
-	collapsed: false,
 	layout: defaultGridLayoutKind(),
 });
 
@@ -710,11 +788,13 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 });
 
 export interface ConditionalRenderingGroupSpec {
+	visibility: "show" | "hide";
 	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
+	visibility: "show",
 	condition: "and",
 	items: [],
 });
@@ -731,7 +811,7 @@ export const defaultConditionalRenderingVariableKind = (): ConditionalRenderingV
 
 export interface ConditionalRenderingVariableSpec {
 	variable: string;
-	operator: "equals" | "notEquals";
+	operator: "equals" | "notEquals" | "matches" | "notMatches";
 	value: string;
 }
 
@@ -759,72 +839,88 @@ export const defaultConditionalRenderingDataSpec = (): ConditionalRenderingDataS
 	value: false,
 });
 
-export interface ConditionalRenderingTimeIntervalKind {
-	kind: "ConditionalRenderingTimeInterval";
-	spec: ConditionalRenderingTimeIntervalSpec;
+export interface ConditionalRenderingTimeRangeSizeKind {
+	kind: "ConditionalRenderingTimeRangeSize";
+	spec: ConditionalRenderingTimeRangeSizeSpec;
 }
 
-export const defaultConditionalRenderingTimeIntervalKind = (): ConditionalRenderingTimeIntervalKind => ({
-	kind: "ConditionalRenderingTimeInterval",
-	spec: defaultConditionalRenderingTimeIntervalSpec(),
+export const defaultConditionalRenderingTimeRangeSizeKind = (): ConditionalRenderingTimeRangeSizeKind => ({
+	kind: "ConditionalRenderingTimeRangeSize",
+	spec: defaultConditionalRenderingTimeRangeSizeSpec(),
 });
 
-export interface ConditionalRenderingTimeIntervalSpec {
+export interface ConditionalRenderingTimeRangeSizeSpec {
 	value: string;
 }
 
-export const defaultConditionalRenderingTimeIntervalSpec = (): ConditionalRenderingTimeIntervalSpec => ({
+export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
 	value: "",
 });
 
-export interface ResponsiveGridLayoutKind {
-	kind: "ResponsiveGridLayout";
-	spec: ResponsiveGridLayoutSpec;
-}
-
-export const defaultResponsiveGridLayoutKind = (): ResponsiveGridLayoutKind => ({
-	kind: "ResponsiveGridLayout",
-	spec: defaultResponsiveGridLayoutSpec(),
-});
-
-export interface ResponsiveGridLayoutSpec {
-	row: string;
-	col: string;
-	items: ResponsiveGridLayoutItemKind[];
-}
-
-export const defaultResponsiveGridLayoutSpec = (): ResponsiveGridLayoutSpec => ({
-	row: "",
-	col: "",
-	items: [],
-});
-
-export interface ResponsiveGridLayoutItemKind {
-	kind: "ResponsiveGridLayoutItem";
-	spec: ResponsiveGridLayoutItemSpec;
-}
-
-export const defaultResponsiveGridLayoutItemKind = (): ResponsiveGridLayoutItemKind => ({
-	kind: "ResponsiveGridLayoutItem",
-	spec: defaultResponsiveGridLayoutItemSpec(),
-});
-
-export interface ResponsiveGridLayoutItemSpec {
-	element: ElementReference;
-	repeat?: ResponsiveGridRepeatOptions;
-	conditionalRendering?: ConditionalRenderingGroupKind;
-}
-
-export const defaultResponsiveGridLayoutItemSpec = (): ResponsiveGridLayoutItemSpec => ({
-	element: defaultElementReference(),
-});
-
-export interface ResponsiveGridRepeatOptions {
+export interface RowRepeatOptions {
 	mode: "variable";
 	value: string;
 }
 
-export const defaultResponsiveGridRepeatOptions = (): ResponsiveGridRepeatOptions => ({
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
+export interface AutoGridLayoutKind {
+	kind: "AutoGridLayout";
+	spec: AutoGridLayoutSpec;
+}
+
+export const defaultAutoGridLayoutKind = (): AutoGridLayoutKind => ({
+	kind: "AutoGridLayout",
+	spec: defaultAutoGridLayoutSpec(),
+});
+
+export interface AutoGridLayoutSpec {
+	maxColumnCount?: number;
+	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
+	columnWidth?: number;
+	rowHeightMode: "short" | "standard" | "tall" | "custom";
+	rowHeight?: number;
+	fillScreen?: boolean;
+	items: AutoGridLayoutItemKind[];
+}
+
+export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
+	maxColumnCount: 3,
+	columnWidthMode: "standard",
+	rowHeightMode: "standard",
+	fillScreen: false,
+	items: [],
+});
+
+export interface AutoGridLayoutItemKind {
+	kind: "AutoGridLayoutItem";
+	spec: AutoGridLayoutItemSpec;
+}
+
+export const defaultAutoGridLayoutItemKind = (): AutoGridLayoutItemKind => ({
+	kind: "AutoGridLayoutItem",
+	spec: defaultAutoGridLayoutItemSpec(),
+});
+
+export interface AutoGridLayoutItemSpec {
+	element: ElementReference;
+	repeat?: AutoGridRepeatOptions;
+	conditionalRendering?: ConditionalRenderingGroupKind;
+}
+
+export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({
+	element: defaultElementReference(),
+});
+
+export interface AutoGridRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultAutoGridRepeatOptions = (): AutoGridRepeatOptions => ({
 	mode: RepeatMode,
 	value: "",
 });
@@ -859,11 +955,23 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 
 export interface TabsLayoutTabSpec {
 	title?: string;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
+	conditionalRendering?: ConditionalRenderingGroupKind;
+	repeat?: TabRepeatOptions;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
 	layout: defaultGridLayoutKind(),
+});
+
+export interface TabRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
 });
 
 // Links with references to other dashboards or external resources
@@ -889,6 +997,8 @@ export interface DashboardLink {
 	includeVars: boolean;
 	// If true, includes current time range in the link as query params
 	keepTime: boolean;
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	placement?: "inControlsMenu";
 }
 
 export const defaultDashboardLink = (): DashboardLink => ({
@@ -901,12 +1011,17 @@ export const defaultDashboardLink = (): DashboardLink => ({
 	targetBlank: false,
 	includeVars: false,
 	keepTime: false,
+	placement: DashboardLinkPlacement,
 });
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 export type DashboardLinkType = "link" | "dashboards";
 
 export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+export const DashboardLinkPlacement = "inControlsMenu";
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
@@ -973,7 +1088,7 @@ export const defaultTimeRangeOption = (): TimeRangeOption => ({
 	to: "now",
 });
 
-export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind;
+export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind | SwitchVariableKind;
 
 export const defaultVariableKind = (): VariableKind => (defaultQueryVariableKind());
 
@@ -1000,6 +1115,7 @@ export interface QueryVariableSpec {
 	datasource?: DataSourceRef;
 	query: DataQueryKind;
 	regex: string;
+	regexApplyTo?: VariableRegexApplyTo;
 	sort: VariableSort;
 	definition?: string;
 	options: VariableOption[];
@@ -1007,6 +1123,9 @@ export interface QueryVariableSpec {
 	includeAll: boolean;
 	allValue?: string;
 	placeholder?: string;
+	allowCustomValue: boolean;
+	staticOptions?: VariableOption[];
+	staticOptionsOrder?: "before" | "after" | "sorted";
 }
 
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
@@ -1017,10 +1136,12 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	skipUrlSync: false,
 	query: defaultDataQueryKind(),
 	regex: "",
+	regexApplyTo: "value",
 	sort: "disabled",
 	options: [],
 	multi: false,
 	includeAll: false,
+	allowCustomValue: true,
 });
 
 // Variable option specification
@@ -1031,6 +1152,8 @@ export interface VariableOption {
 	text: string | string[];
 	// Value of the option
 	value: string | string[];
+	// Additional properties for multi-props variables
+	properties?: Record<string, string>;
 }
 
 export const defaultVariableOption = (): VariableOption => ({
@@ -1051,6 +1174,12 @@ export const defaultVariableHide = (): VariableHide => ("dontHide");
 export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
 
 export const defaultVariableRefresh = (): VariableRefresh => ("never");
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+export type VariableRegexApplyTo = "value" | "text";
+
+export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value");
 
 // Sort variable options
 // Accepted values are:
@@ -1154,6 +1283,7 @@ export interface DatasourceVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
@@ -1167,6 +1297,7 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Interval variable kind
@@ -1233,6 +1364,8 @@ export interface CustomVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
+	valuesFormat?: "csv" | "json";
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1244,6 +1377,7 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Group variable kind
@@ -1261,6 +1395,7 @@ export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
 export interface GroupByVariableSpec {
 	name: string;
 	datasource?: DataSourceRef;
+	defaultValue?: VariableOption;
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
@@ -1301,6 +1436,7 @@ export interface AdhocVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	allowCustomValue: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1310,6 +1446,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	defaultKeys: [],
 	hide: "dontHide",
 	skipUrlSync: false,
+	allowCustomValue: true,
 });
 
 // Define the AdHocFilterWithLabels type
@@ -1321,6 +1458,7 @@ export interface AdHocFilterWithLabels {
 	keyLabel?: string;
 	valueLabels?: string[];
 	forceEdit?: boolean;
+	origin?: "dashboard";
 	// @deprecated
 	condition?: string;
 }
@@ -1329,7 +1467,11 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 	key: "",
 	operator: "",
 	value: "",
+	origin: FilterOrigin,
 });
+
+// Determine the origin of the adhoc variable filter
+export const FilterOrigin = "dashboard";
 
 // Define the MetricFindValue type
 export interface MetricFindValue {
@@ -1343,8 +1485,38 @@ export const defaultMetricFindValue = (): MetricFindValue => ({
 	text: "",
 });
 
+export interface SwitchVariableKind {
+	kind: "SwitchVariable";
+	spec: SwitchVariableSpec;
+}
+
+export const defaultSwitchVariableKind = (): SwitchVariableKind => ({
+	kind: "SwitchVariable",
+	spec: defaultSwitchVariableSpec(),
+});
+
+// Switch variable specification
+export interface SwitchVariableSpec {
+	name: string;
+	current: string;
+	enabledValue: string;
+	disabledValue: string;
+	label?: string;
+	hide: VariableHide;
+	skipUrlSync: boolean;
+	description?: string;
+}
+
+export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
+	name: "",
+	current: "false",
+	enabledValue: "true",
+	disabledValue: "false",
+	hide: "dontHide",
+	skipUrlSync: false,
+});
+
 export interface Spec {
-	// Title of dashboard.
 	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).
@@ -1356,7 +1528,7 @@ export interface Spec {
 	// Whether a dashboard is editable or not.
 	editable?: boolean;
 	elements: Record<string, Element>;
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.

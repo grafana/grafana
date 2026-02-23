@@ -141,6 +141,12 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
           Service for Prometheus data source to authenticate with SigV4.
         </Alert>
       )}
+      {azureAuthSelected && (
+        <Alert title="Deprecation Notice" severity="warning">
+          Azure authentication in the core Prometheus data source is deprecated. Please use the Azure Monitor Managed
+          Service for Prometheus data source to authenticate using Azure authentication.
+        </Alert>
+      )}
       <Auth
         {...newAuthProps}
         customMethods={customMethods}

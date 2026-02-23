@@ -8,9 +8,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func testCheck(t *testing.T, server *Server) {
+func TestIntegrationServerCheck(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+
 	newReq := func(subject, verb, group, resource, subresource, folder, name string) *authzv1.CheckRequest {
 		return &authzv1.CheckRequest{
 			Namespace:   namespace,
@@ -151,5 +157,77 @@ func testCheck(t *testing.T, server *Server) {
 		res, err = server.Check(newContextWithNamespace(), newReq("user:12", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "1", "13"))
 		require.NoError(t, err)
 		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("user:13 should be able to read folder status for all subfolders of folder 5", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "", "5"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "", "6"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:13", utils.VerbGet, folderGroup, folderResource, statusSubresource, "", "4"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("user:14 should be able to read team subresources for team 1", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:14", utils.VerbGet, "iam.grafana.app", "teams", statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:15 should be able to read user subresources for user 1", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:15", utils.VerbGet, "iam.grafana.app", "users", statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:16 should be able to read serviceaccount subresources for serviceaccount 1", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:16", utils.VerbGet, "iam.grafana.app", "serviceaccounts", statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:17 should be able to view dashboards in folder 4 and all subfolders", func(t *testing.T) {
+		// Check for folders
+		res, err := server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, folderGroup, folderResource, "", "", "4"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, folderGroup, folderResource, "", "", "5"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, folderGroup, folderResource, "", "", "6"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		// Check for dashboards
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, dashboardGroup, dashboardResource, "", "4", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed(), "user should be able to view dashboards in folder 4")
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, dashboardGroup, dashboardResource, "", "5", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed(), "user should be able to view dashboards in folder 5")
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:17", utils.VerbGet, dashboardGroup, dashboardResource, "", "6", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed(), "user should be able to view dashboards in folder 6")
+	})
+
+	t.Run("user:18 should be able to create folder in root folder", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:18", utils.VerbCreate, folderGroup, folderResource, "", "", ""))
+		require.NoError(t, err)
+		assert.Equal(t, true, res.GetAllowed())
+	})
+
+	t.Run("user:18 should be able to create dashboard in root folder", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq("user:18", utils.VerbCreate, dashboardGroup, dashboardResource, "", "", ""))
+		require.NoError(t, err)
+		assert.Equal(t, true, res.GetAllowed())
 	})
 }

@@ -1,84 +1,148 @@
-import { Dictionary, groupBy } from 'lodash';
-import { useMemo } from 'react';
+import { css } from '@emotion/css';
+import { useId } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
+import { GrafanaTheme2, Scope } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
-import { ScopesTreeItem } from './ScopesTreeItem';
-import { ScopesTreeLoading } from './ScopesTreeLoading';
+import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { Node, NodeReason, NodesMap, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
+import { NodesMap, SelectedScope, TreeNode } from './types';
+import { useScopeActions } from './useScopeActions';
+import { useScopesHighlighting } from './useScopesHighlighting';
 
 export interface ScopesTreeProps {
-  nodes: NodesMap;
-  nodePath: string[];
+  tree: TreeNode;
   loadingNodeName: string | undefined;
-  scopes: TreeScope[];
-  onNodeUpdate: OnNodeUpdate;
-  onNodeSelectToggle: OnNodeSelectToggle;
+  selectedScopes: SelectedScope[];
+  scopeNodes: NodesMap;
+
+  // Recent scopes are only shown at the root node
+  recentScopes?: Scope[][];
+  onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => void;
 }
 
 export function ScopesTree({
-  nodes,
-  nodePath,
+  tree,
   loadingNodeName,
-  scopes,
-  onNodeUpdate,
-  onNodeSelectToggle,
+  selectedScopes,
+  recentScopes,
+  onRecentScopesSelect,
+  scopeNodes,
 }: ScopesTreeProps) {
-  const nodeId = nodePath[nodePath.length - 1];
-  const node = nodes[nodeId];
-  const childNodes = Object.values(node.nodes);
-  const nodeLoading = loadingNodeName === nodeId;
-  const scopeNames = scopes.map(({ scopeName }) => scopeName);
-  const anyChildExpanded = childNodes.some(({ expanded }) => expanded);
-  const groupedNodes: Dictionary<Node[]> = useMemo(() => groupBy(childNodes, 'reason'), [childNodes]);
-  const lastExpandedNode = !anyChildExpanded && node.expanded;
+  const { selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
+  const styles = useStyles2(getStyles);
+
+  // Used for a11y reference
+  const selectedNodesToShowId = useId();
+  const childrenArrayId = useId();
+
+  const nodeLoading = loadingNodeName === tree.scopeNodeId;
+
+  const children = tree.children;
+  let childrenArray = Object.values(children || {});
+  const anyChildExpanded = childrenArray.some(({ expanded }) => expanded);
+
+  // Nodes that are already selected (not applied) are always shown if we are in their category, even if they are
+  // filtered out by query filter. Only consider the first selected scope for this display logic.
+  let selectedNodesToShow: TreeNode[] = [];
+  const firstSelectedScope = selectedScopes[0];
+  if (
+    firstSelectedScope?.scopeNodeId &&
+    scopeNodes[firstSelectedScope.scopeNodeId] &&
+    tree.scopeNodeId === scopeNodes[firstSelectedScope.scopeNodeId]?.spec.parentName &&
+    !childrenArray.map((c) => c.scopeNodeId).includes(firstSelectedScope.scopeNodeId)
+  ) {
+    selectedNodesToShow = [
+      {
+        scopeNodeId: firstSelectedScope.scopeNodeId,
+        query: '',
+        expanded: false,
+      },
+    ];
+  }
+
+  const { highlightedId, ariaActiveDescendant, enableHighlighting, disableHighlighting } = useScopesHighlighting({
+    selectedNodes: selectedNodesToShow,
+    resultNodes: childrenArray,
+    treeQuery: tree.query,
+    scopeNodes,
+    selectedScopes,
+    toggleExpandedNode,
+    selectScope,
+    deselectScope,
+  });
+
+  // Used as a label and placeholder for search field
+  const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
+  const searchArea = tree.scopeNodeId === '' ? '' : nodeTitle;
+
+  const lastExpandedNode = !anyChildExpanded && tree.expanded;
 
   return (
     <>
       <ScopesTreeSearch
         anyChildExpanded={anyChildExpanded}
-        nodePath={nodePath}
-        query={node.query}
-        onNodeUpdate={onNodeUpdate}
+        searchArea={searchArea}
+        treeNode={tree}
+        aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
+        aria-activedescendant={ariaActiveDescendant}
+        onFocus={enableHighlighting}
+        onBlur={disableHighlighting}
       />
+      {tree.scopeNodeId === '' &&
+        !anyChildExpanded &&
+        recentScopes &&
+        recentScopes.length > 0 &&
+        onRecentScopesSelect &&
+        !tree.query && <RecentScopes recentScopes={recentScopes} onSelect={onRecentScopesSelect} />}
 
-      <ScopesTreeLoading nodeLoading={nodeLoading}>
-        <ScopesTreeItem
-          anyChildExpanded={anyChildExpanded}
-          groupedNodes={groupedNodes}
-          lastExpandedNode={lastExpandedNode}
-          loadingNodeName={loadingNodeName}
-          node={node}
-          nodePath={nodePath}
-          nodeReason={NodeReason.Persisted}
-          scopes={scopes}
-          scopeNames={scopeNames}
-          type="persisted"
-          onNodeSelectToggle={onNodeSelectToggle}
-          onNodeUpdate={onNodeUpdate}
-        />
+      {nodeLoading ? (
+        <Skeleton count={5} className={styles.loader} />
+      ) : (
+        <>
+          <ScopesTreeItemList
+            items={selectedNodesToShow}
+            anyChildExpanded={anyChildExpanded}
+            lastExpandedNode={lastExpandedNode}
+            loadingNodeName={loadingNodeName}
+            selectedScopes={selectedScopes}
+            scopeNodes={scopeNodes}
+            maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
+            highlightedId={highlightedId}
+            id={selectedNodesToShowId}
+          />
 
-        <ScopesTreeHeadline
-          anyChildExpanded={anyChildExpanded}
-          query={node.query}
-          resultsNodes={groupedNodes[NodeReason.Result] ?? []}
-        />
+          <ScopesTreeHeadline
+            anyChildExpanded={anyChildExpanded}
+            query={tree.query}
+            resultsNodes={childrenArray}
+            scopeNodes={scopeNodes}
+          />
 
-        <ScopesTreeItem
-          anyChildExpanded={anyChildExpanded}
-          groupedNodes={groupedNodes}
-          lastExpandedNode={lastExpandedNode}
-          loadingNodeName={loadingNodeName}
-          node={node}
-          nodePath={nodePath}
-          nodeReason={NodeReason.Result}
-          scopes={scopes}
-          scopeNames={scopeNames}
-          type="result"
-          onNodeSelectToggle={onNodeSelectToggle}
-          onNodeUpdate={onNodeUpdate}
-        />
-      </ScopesTreeLoading>
+          <ScopesTreeItemList
+            items={childrenArray}
+            anyChildExpanded={anyChildExpanded}
+            lastExpandedNode={lastExpandedNode}
+            loadingNodeName={loadingNodeName}
+            selectedScopes={selectedScopes}
+            scopeNodes={scopeNodes}
+            maxHeight={'100%'}
+            highlightedId={highlightedId}
+            id={childrenArrayId}
+          />
+        </>
+      )}
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    loader: css({
+      margin: theme.spacing(0.5, 0),
+    }),
+  };
+};

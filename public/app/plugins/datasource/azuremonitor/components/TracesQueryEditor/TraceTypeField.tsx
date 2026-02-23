@@ -1,10 +1,11 @@
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { MultiSelect } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types/types';
 import { findOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 
@@ -39,9 +40,9 @@ const TraceTypeField = ({ query, variableOptionGroup, onQueryChange }: AzureQuer
   };
 
   return (
-    <Field label="Event Type">
+    <Field label={t('components.trace-type-field.label-event-type', 'Event Type')}>
       <MultiSelect
-        placeholder="Choose event types"
+        placeholder={t('components.trace-type-field.placeholder-event-type', 'Choose event types')}
         inputId="azure-monitor-traces-type-field"
         value={findOptions(
           [...tables, ...variableOptionGroup.options],

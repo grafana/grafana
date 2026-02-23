@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 
 import { ElasticDetails } from './ElasticDetails';
-import { createDefaultConfigOptions } from './__mocks__/configOptions';
+import { createDefaultConfigOptions } from './mocks/configOptions';
 
 describe('ElasticDetails', () => {
   describe('Max concurrent Shard Requests', () => {
@@ -39,6 +39,18 @@ describe('ElasticDetails', () => {
       expect.objectContaining({
         jsonData: expect.objectContaining({ interval: 'Monthly', index: '[logstash-]YYYY.MM' }),
       })
+    );
+  });
+
+  it('should change default query mode when selected', async () => {
+    const onChangeMock = jest.fn();
+    render(<ElasticDetails onChange={onChangeMock} value={createDefaultConfigOptions()} />);
+    const selectEl = screen.getByLabelText('Default query mode');
+
+    await selectEvent.select(selectEl, 'Logs', { container: document.body });
+
+    expect(onChangeMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ jsonData: expect.objectContaining({ defaultQueryMode: 'logs' }) })
     );
   });
 });

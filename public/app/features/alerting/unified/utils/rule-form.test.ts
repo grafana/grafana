@@ -1,13 +1,17 @@
 import { PromQuery } from '@grafana/prometheus';
+import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
+import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,
   AlertQuery,
   GrafanaAlertStateDecision,
   GrafanaRuleDefinition,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { mockDataSource } from '../mocks';
+import { EvalFunction } from '../../state/alertDef';
+import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule } from '../mocks';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { setupDataSources } from '../testSetup/datasources';
 import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
@@ -17,11 +21,14 @@ import {
   alertingRulerRuleToRuleForm,
   cleanAnnotations,
   cleanLabels,
+  fixMissingRefIdsInExpressionModel,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
+  getDefaultExpressions,
   getInstantFromDataQuery,
   getNotificationSettingsForDTO,
+  rulerRuleToFormValues,
 } from './rule-form';
 
 describe('formValuesToRulerGrafanaRuleDTO', () => {
@@ -111,6 +118,85 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
     expect(alertingRulerRuleToRuleForm(rule)).toMatchSnapshot();
   });
 });
+
+describe('rulerRuleToFormValues', () => {
+  it('should convert grafana recording rule to form values', () => {
+    const mockRecordingRule = mockRulerGrafanaRecordingRule({
+      grafana_alert: {
+        uid: 'recording-rule-uid',
+        title: 'My Recording Rule',
+        namespace_uid: 'folder-uid',
+        rule_group: 'recording-group',
+        condition: 'A',
+        record: {
+          metric: 'my_metric',
+          from: 'A',
+          target_datasource_uid: 'target-ds-uid',
+        },
+        data: [
+          {
+            datasourceUid: 'prom-uid',
+            refId: 'A',
+            queryType: '',
+            model: { refId: 'A' },
+          },
+        ],
+        is_paused: false,
+      },
+      annotations: {
+        description: 'This is a recording rule',
+        summary: 'Recording rule summary',
+      },
+      labels: {
+        team: 'platform',
+        env: 'production',
+      },
+    });
+
+    const ruleWithLocation: RuleWithLocation = mockRuleWithLocation(mockRecordingRule, {
+      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+      namespace: 'Test Folder',
+      group: {
+        name: 'recording-group',
+        interval: '1m',
+        rules: [mockRecordingRule],
+      },
+    });
+
+    const result = rulerRuleToFormValues(ruleWithLocation);
+
+    expect(result).toMatchObject({
+      name: 'My Recording Rule',
+      type: RuleFormType.grafanaRecording,
+      group: 'recording-group',
+      evaluateEvery: '1m',
+      queries: [
+        {
+          datasourceUid: 'prom-uid',
+          refId: 'A',
+          queryType: '',
+          model: { refId: 'A' },
+        },
+      ],
+      condition: 'A',
+      annotations: [
+        { key: 'summary', value: 'Recording rule summary' },
+        { key: 'description', value: 'This is a recording rule' },
+        { key: 'runbook_url', value: '' },
+      ],
+      labels: [
+        { key: 'team', value: 'platform' },
+        { key: 'env', value: 'production' },
+        { key: '', value: '' }, // empty row added for form editing
+      ],
+      folder: { title: 'Test Folder', uid: 'folder-uid' },
+      isPaused: false,
+      metric: 'my_metric',
+      targetDatasourceUid: 'target-ds-uid',
+    });
+  });
+});
+
 describe('getContactPointsFromDTO', () => {
   it('should return undefined if notification_settings is not defined', () => {
     const ga: GrafanaRuleDefinition = {
@@ -158,6 +244,7 @@ describe('getContactPointsFromDTO', () => {
       notification_settings: {
         receiver: 'receiver',
         mute_time_intervals: ['mute_timing'],
+        active_time_intervals: ['active_timing'],
         group_by: ['group_by'],
         group_wait: 'group_wait',
         group_interval: 'group_interval',
@@ -170,6 +257,7 @@ describe('getContactPointsFromDTO', () => {
       [GRAFANA_RULES_SOURCE_NAME]: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
+        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -188,6 +276,7 @@ describe('getNotificationSettingsForDTO', () => {
       grafana: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
+        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -214,6 +303,7 @@ describe('getNotificationSettingsForDTO', () => {
       grafana: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
+        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -227,6 +317,7 @@ describe('getNotificationSettingsForDTO', () => {
     expect(result).toEqual({
       receiver: 'receiver',
       mute_time_intervals: ['mute_timing'],
+      active_time_intervals: ['active_timing'],
       group_by: ['group_by'],
       group_wait: 'group_wait',
       group_interval: 'group_interval',
@@ -329,5 +420,172 @@ describe('getInstantFromDataQuery', () => {
     });
 
     expect(result).toBe(false);
+  });
+});
+
+describe('getDefaultExpressions', () => {
+  it('should create a reduce expression as the first query', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const reduceQuery = result[0];
+    const model = reduceQuery.model;
+
+    expect(reduceQuery.refId).toBe('B');
+    expect(reduceQuery.datasourceUid).toBe(ExpressionDatasourceUID);
+    expect(reduceQuery.queryType).toBe('');
+    expect(model.type).toBe(ExpressionQueryType.reduce);
+    expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
+    expect(model.reducer).toBe('last');
+  });
+
+  it('should create reduce expression with proper conditions structure', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const reduceQuery = result[0];
+    const model = reduceQuery.model;
+
+    expect(model.conditions).toHaveLength(1);
+    expect(model.expression).toBe('A');
+    expect(model.conditions?.[0]).toEqual({
+      type: 'query',
+      evaluator: {
+        params: [],
+        type: EvalFunction.IsAbove,
+      },
+      operator: {
+        type: 'and',
+      },
+      query: {
+        params: [],
+      },
+      reducer: {
+        params: [],
+        type: 'last',
+      },
+    });
+  });
+
+  it('should create a threshold expression as the second query', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const thresholdQuery = result[1];
+    const model = thresholdQuery.model;
+
+    expect(thresholdQuery.refId).toBe('C');
+    expect(thresholdQuery.datasourceUid).toBe(ExpressionDatasourceUID);
+    expect(thresholdQuery.queryType).toBe('');
+    expect(model.type).toBe(ExpressionQueryType.threshold);
+    expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
+  });
+
+  it('should create threshold expression with proper conditions structure', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const thresholdQuery = result[1];
+    const model = thresholdQuery.model;
+
+    expect(model.conditions).toHaveLength(1);
+    expect(model.conditions?.[0]).toEqual({
+      type: 'query',
+      evaluator: {
+        params: [0],
+        type: EvalFunction.IsAbove,
+      },
+      operator: {
+        type: 'and',
+      },
+      query: {
+        params: [],
+      },
+      reducer: {
+        params: [],
+        type: 'last',
+      },
+    });
+  });
+
+  it('should reference the reduce expression in the threshold expression', () => {
+    const result = getDefaultExpressions('B', 'C');
+    const thresholdQuery = result[1];
+    const model = thresholdQuery.model;
+
+    expect(model.expression).toBe('B');
+  });
+
+  it('should properly use different refIds throughout the structure', () => {
+    const result = getDefaultExpressions('X', 'Y');
+    const reduceModel = result[0].model;
+    const thresholdModel = result[1].model;
+
+    expect(result[0].refId).toBe('X');
+    expect(reduceModel.refId).toBe('X');
+    expect(reduceModel.conditions?.[0].query.params).toEqual([]);
+
+    expect(result[1].refId).toBe('Y');
+    expect(thresholdModel.refId).toBe('Y');
+    expect(thresholdModel.expression).toBe('X');
+  });
+});
+
+describe('fixMissingRefIdsInExpressionModel', () => {
+  it('should return non-Grafana managed rules unchanged', () => {
+    const cloudAlertingRule: RulerAlertingRuleDTO = {
+      alert: 'CloudAlert',
+      expr: 'up == 0',
+      for: '5m',
+      labels: { severity: 'critical' },
+      annotations: { summary: 'Instance down' },
+    };
+
+    const result = fixMissingRefIdsInExpressionModel(cloudAlertingRule);
+
+    expect(result).toEqual(cloudAlertingRule);
+    expect(result).toBe(cloudAlertingRule); // should be the exact same reference
+  });
+
+  it('should copy refId from query to model when model.refId is missing in Grafana managed rules', () => {
+    const ruleWithMissingRefId: RulerGrafanaRuleDTO = {
+      grafana_alert: {
+        uid: 'test-uid',
+        title: 'Test Alert',
+        namespace_uid: 'namespace-uid',
+        rule_group: 'test-group',
+        condition: 'B',
+        no_data_state: GrafanaAlertStateDecision.NoData,
+        exec_err_state: GrafanaAlertStateDecision.Alerting,
+        is_paused: false,
+        data: [
+          {
+            refId: 'A',
+            datasourceUid: 'datasource-uid',
+            queryType: '',
+            relativeTimeRange: { from: 600, to: 0 },
+            // @ts-ignore
+            model: {
+              // refId is missing here
+              datasource: {
+                type: 'grafana-testdata-datasource',
+                uid: 'PD8C576611E62080A',
+              },
+            },
+          },
+          {
+            refId: 'B',
+            datasourceUid: ExpressionDatasourceUID,
+            queryType: '',
+            // @ts-ignore
+            model: {
+              // refId is missing here
+              type: ExpressionQueryType.reduce,
+              expression: 'A',
+            },
+          },
+        ],
+      },
+      for: '5m',
+      labels: {},
+      annotations: {},
+    };
+
+    const result = fixMissingRefIdsInExpressionModel(ruleWithMissingRefId);
+
+    expect(result.grafana_alert.data[0].model.refId).toBe('A');
+    expect(result.grafana_alert.data[1].model.refId).toBe('B');
   });
 });

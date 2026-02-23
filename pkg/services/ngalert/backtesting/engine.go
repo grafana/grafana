@@ -15,10 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule/ticker"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -28,7 +34,7 @@ var (
 	backtestingEvaluatorFactory = newBacktestingEvaluator
 )
 
-type callbackFunc = func(evaluationIndex int, now time.Time, results eval.Results) error
+type callbackFunc = func(evaluationIndex int, now time.Time, results eval.Results) (bool, error)
 
 type backtestingEvaluator interface {
 	Eval(ctx context.Context, from time.Time, interval time.Duration, evaluations int, callback callbackFunc) error
@@ -40,11 +46,17 @@ type stateManager interface {
 }
 
 type Engine struct {
-	evalFactory        eval.EvaluatorFactory
-	createStateManager func() stateManager
+	evalFactory          eval.EvaluatorFactory
+	createStateManager   func() stateManager
+	disableGrafanaFolder bool
+	featureToggles       featuremgmt.FeatureToggles
+	minInterval          time.Duration
+	baseInterval         time.Duration
+	jitterStrategy       schedule.JitterStrategy
+	maxEvaluations       int
 }
 
-func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracing.Tracer) *Engine {
+func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracing.Tracer, cfg setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) *Engine {
 	return &Engine{
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
@@ -60,74 +72,139 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 			}
 			return state.NewManager(cfg, state.NewNoopPersister())
 		},
+		disableGrafanaFolder: false,
+		featureToggles:       toggles,
+		minInterval:          cfg.MinInterval,
+		baseInterval:         cfg.BaseInterval,
+		maxEvaluations:       cfg.BacktestingMaxEvaluations,
+		jitterStrategy:       schedule.JitterStrategyFrom(cfg, toggles),
 	}
 }
 
-func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models.AlertRule, from, to time.Time) (*data.Frame, error) {
-	ruleCtx := models.WithRuleKey(ctx, rule.GetKey())
-	logger := logger.FromContext(ctx)
-
+func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models.AlertRule, from, to time.Time, folderTitle string) (res *data.Frame, err error) {
+	if rule == nil {
+		return nil, fmt.Errorf("%w: rule is not defined", ErrInvalidInputData)
+	}
 	if !from.Before(to) {
-		return nil, fmt.Errorf("%w: invalid interval of the backtesting [%d,%d]", ErrInvalidInputData, from.Unix(), to.Unix())
+		return nil, fmt.Errorf("%w: invalid interval [%d,%d]", ErrInvalidInputData, from.Unix(), to.Unix())
 	}
-	if to.Sub(from).Seconds() < float64(rule.IntervalSeconds) {
-		return nil, fmt.Errorf("%w: interval of the backtesting [%d,%d] is less than evaluation interval [%ds]", ErrInvalidInputData, from.Unix(), to.Unix(), rule.IntervalSeconds)
+
+	ruleCtx := models.WithRuleKey(ctx, rule.GetKey())
+	logger := logger.FromContext(ruleCtx).New("backtesting", util.GenerateShortUID())
+
+	var warns []string
+	if rule.GetInterval() < e.minInterval {
+		logger.Warn("Interval adjusted to minimal interval", "originalInterval", rule.GetInterval(), "adjustedInterval", e.minInterval)
+		rule = rule.Copy()
+		rule.IntervalSeconds = int64(e.minInterval.Seconds())
+		warns = append(warns, fmt.Sprintf("Interval adjusted to minimal interval %ds", rule.IntervalSeconds))
 	}
-	length := int(to.Sub(from).Seconds()) / int(rule.IntervalSeconds)
 
-	stateManager := e.createStateManager()
+	effectiveStrategy := e.jitterStrategy
+	if e.jitterStrategy == schedule.JitterByGroup && (rule.RuleGroup == "" || rule.NamespaceUID == "") ||
+		e.jitterStrategy == schedule.JitterByRule && rule.UID == "" {
+		logger.Warn(fmt.Sprintf("Jitter strategy is set to %s, but rule group or namespace is not set. Ignore jitter", e.jitterStrategy))
+		warns = append(warns, fmt.Sprintf("Jitter strategy is set to %s, but rule group or namespace is not set. Ignore jitter. The results of testing will be different than real evaluations", e.jitterStrategy))
+		effectiveStrategy = schedule.JitterNever
+	}
+	jitterOffset := schedule.JitterOffsetInDuration(rule, e.baseInterval, effectiveStrategy)
+	firstEval, err := getFirstEvaluationTime(from, rule, e.baseInterval, jitterOffset)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrInvalidInputData, err)
+	}
 
-	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition().WithSource("backtesting"), &schedule.AlertingResultsFromRuleState{
-		Manager: stateManager,
-		Rule:    rule,
-	})
+	evaluations := calculateNumberOfEvaluations(firstEval, to, rule.GetInterval())
+	if e.maxEvaluations > 0 && evaluations > e.maxEvaluations {
+		logger.Warn("Evaluations adjusted to maximal number", "originalEvaluations", evaluations, "adjustedEvaluations", e.maxEvaluations)
+		warns = append(warns, fmt.Sprintf("Number of evaluations are adjusted to the limit of %d evaluations. Requested: %d", e.maxEvaluations, evaluations))
+		evaluations = e.maxEvaluations
+	}
+
+	start := time.Now()
+	defer func() {
+		if err == nil {
+			logger.Info("Rule testing finished successfully", "duration", time.Since(start))
+		} else {
+			logger.Error("Rule testing finished with error", "duration", time.Since(start), "error", err)
+		}
+	}()
+
+	stateMgr := e.createStateManager()
+
+	evaluator, err := backtestingEvaluatorFactory(ruleCtx,
+		e.evalFactory,
+		user,
+		rule.GetEvalCondition().WithSource("backtesting"),
+		&schedule.AlertingResultsFromRuleState{
+			Manager: stateMgr,
+			Rule:    rule,
+		},
+	)
 	if err != nil {
 		return nil, errors.Join(ErrInvalidInputData, err)
 	}
 
-	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluations", length)
+	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.GetInterval(), "firstTick", firstEval, "evaluations", evaluations, "jitterOffset", jitterOffset, "jitterStrategy", effectiveStrategy)
 
-	start := time.Now()
+	var builder *historian.QueryResultBuilder
 
-	tsField := data.NewField("Time", nil, make([]time.Time, length))
-	valueFields := make(map[data.Fingerprint]*data.Field)
-
-	err = evaluator.Eval(ruleCtx, from, time.Duration(rule.IntervalSeconds)*time.Second, length, func(idx int, currentTime time.Time, results eval.Results) error {
-		if idx >= length {
-			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", length)
-			return nil
-		}
-		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil, nil)
-		tsField.Set(idx, currentTime)
-		for _, s := range states {
-			field, ok := valueFields[s.CacheID]
-			if !ok {
-				field = data.NewField("", s.Labels, make([]*string, length))
-				valueFields[s.CacheID] = field
-			}
-			if s.State.State != eval.NoData { // set nil if NoData
-				value := s.State.State.String()
-				if s.StateReason != "" {
-					value += " (" + s.StateReason + ")"
-				}
-				field.Set(idx, &value)
-				continue
-			}
-		}
-		return nil
-	})
-	fields := make([]*data.Field, 0, len(valueFields)+1)
-	fields = append(fields, tsField)
-	for _, f := range valueFields {
-		fields = append(fields, f)
+	ruleMeta := history_model.RuleMeta{
+		ID:           rule.ID,
+		OrgID:        rule.OrgID,
+		UID:          rule.UID,
+		Title:        rule.Title,
+		Group:        rule.RuleGroup,
+		NamespaceUID: rule.NamespaceUID,
+		// DashboardUID: "",
+		// PanelID:      0,
+		Condition: rule.Condition,
 	}
-	result := data.NewFrame("Testing results", fields...)
-
+	labels := map[string]string{
+		historian.OrgIDLabel:     fmt.Sprint(ruleMeta.OrgID),
+		historian.GroupLabel:     fmt.Sprint(ruleMeta.Group),
+		historian.FolderUIDLabel: fmt.Sprint(rule.NamespaceUID),
+	}
+	labelsBytes, err := json.Marshal(labels)
 	if err != nil {
 		return nil, err
 	}
-	logger.Info("Rule testing finished successfully", "duration", time.Since(start))
-	return result, nil
+
+	// Ensure fallback if empty string is passed
+	if folderTitle == "" {
+		folderTitle = "Backtesting"
+	}
+	extraLabels := state.GetRuleExtraLabels(logger, rule, folderTitle, !e.disableGrafanaFolder, e.featureToggles)
+
+	processFn := func(idx int, currentTime time.Time, results eval.Results) (bool, error) {
+		// init the builder. Do the best guess for the size of the result
+		if builder == nil {
+			builder = historian.NewQueryResultBuilder(evaluations * len(results))
+			for _, warn := range warns {
+				builder.AddWarn(warn)
+			}
+		}
+		states := stateMgr.ProcessEvalResults(ruleCtx, currentTime, rule, results, extraLabels, nil)
+		for _, s := range states {
+			if !historian.ShouldRecord(s) {
+				continue
+			}
+			entry := historian.StateTransitionToLokiEntry(ruleMeta, s)
+			err := builder.AddRow(currentTime, entry, labelsBytes)
+			if err != nil {
+				return false, err
+			}
+		}
+		return idx <= evaluations, nil
+	}
+
+	err = evaluator.Eval(ruleCtx, firstEval, rule.GetInterval(), evaluations, processFn)
+	if err != nil {
+		return nil, err
+	}
+	if builder == nil {
+		return nil, errors.New("no results were produced")
+	}
+	return builder.ToFrame(), nil
 }
 
 func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user identity.Requester, condition models.Condition, reader eval.AlertingResultsReader) (backtestingEvaluator, error) {
@@ -172,4 +249,54 @@ type NoopImageService struct{}
 
 func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
 	return &models.Image{}, nil
+}
+
+func getNextEvaluationTime(currentTime time.Time, rule *models.AlertRule, baseInterval time.Duration, jitterOffset time.Duration) (time.Time, error) {
+	if rule.IntervalSeconds%int64(baseInterval.Seconds()) != 0 {
+		return time.Time{}, fmt.Errorf("interval %ds is not divisible by base interval %ds", rule.IntervalSeconds, int64(baseInterval.Seconds()))
+	}
+
+	freq := rule.IntervalSeconds / int64(baseInterval.Seconds())
+
+	firstTickNum := currentTime.Unix() / int64(baseInterval.Seconds())
+
+	jitterOffsetTicks := int64(jitterOffset / baseInterval)
+
+	firstEvalTickNum := firstTickNum + (jitterOffsetTicks-(firstTickNum%freq)+freq)%freq
+
+	return time.Unix(firstEvalTickNum*int64(baseInterval.Seconds()), 0), nil
+}
+
+func getFirstEvaluationTime(from time.Time, rule *models.AlertRule, baseInterval time.Duration, jitterOffset time.Duration) (time.Time, error) {
+	// Now calculate the time of the tick the same way as in the scheduler
+	firstTick := ticker.GetStartTick(from, baseInterval)
+
+	// calculate time of the first evaluation that is at or after the first tick
+	firstEval, err := getNextEvaluationTime(firstTick, rule, baseInterval, jitterOffset)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	// Ensure firstEval is at or after from
+	// Calculate how many intervals to skip to get past 'from'
+	if firstEval.Before(from) {
+		diff := from.Sub(firstEval)
+		interval := rule.GetInterval()
+		// Ceiling division: how many intervals needed to cover the difference
+		intervalsToAdd := (diff + interval - 1) / interval
+		firstEval = firstEval.Add(interval * intervalsToAdd)
+	}
+
+	return firstEval, nil
+}
+
+func calculateNumberOfEvaluations(firstEval, to time.Time, interval time.Duration) int {
+	var evaluations int
+	if to.After(firstEval) {
+		evaluations = int(to.Sub(firstEval).Seconds()) / int(interval.Seconds())
+	}
+	if evaluations == 0 {
+		evaluations = 1
+	}
+	return evaluations
 }

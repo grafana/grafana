@@ -42,20 +42,32 @@ func NewDataPlaneServiceInformer(client versioned.Interface, resyncPeriod time.D
 // one. This reduces memory footprint and number of connections to the server.
 func NewFilteredDataPlaneServiceInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AggregationV0alpha1().DataPlaneServices().List(context.TODO(), options)
+				return client.AggregationV0alpha1().DataPlaneServices().List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AggregationV0alpha1().DataPlaneServices().Watch(context.TODO(), options)
+				return client.AggregationV0alpha1().DataPlaneServices().Watch(context.Background(), options)
 			},
-		},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AggregationV0alpha1().DataPlaneServices().List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.AggregationV0alpha1().DataPlaneServices().Watch(ctx, options)
+			},
+		}, client),
 		&apisaggregationv0alpha1.DataPlaneService{},
 		resyncPeriod,
 		indexers,

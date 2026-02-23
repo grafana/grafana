@@ -76,6 +76,8 @@ type Identity struct {
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	IDToken string
+	// ExternalUID is the unique identifier for the entity in the external system.
+	ExternalUID string
 
 	IDTokenClaims     *authn.Claims[authn.IDTokenClaims]
 	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
@@ -153,6 +155,9 @@ func (i *Identity) GetExtra() map[string][]string {
 	}
 	if i.GetOrgRole().IsValid() {
 		extra["user-instance-role"] = []string{string(i.GetOrgRole())}
+	}
+	if i.AccessTokenClaims != nil && i.AccessTokenClaims.Rest.ServiceIdentity != "" {
+		extra[authn.ServiceIdentityKey] = []string{i.AccessTokenClaims.Rest.ServiceIdentity}
 	}
 	return extra
 }

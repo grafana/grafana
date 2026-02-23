@@ -39,20 +39,25 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 //go:embed test-data/*.*
 var testData embed.FS
 
 func TestIntegrationAlertRulePermissions(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
+		DisableAuthZClientCache: true,
+		DisableLegacyAlerting:   true,
+		EnableUnifiedAlerting:   true,
+		DisableAnonymous:        true,
+		AppModeProduction:       true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -349,15 +354,18 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
+		DisableAuthZClientCache: true,
+		DisableLegacyAlerting:   true,
+		EnableUnifiedAlerting:   true,
+		DisableAnonymous:        true,
+		AppModeProduction:       true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -705,7 +713,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	})
 }
 
-func TestAlertRulePostExport(t *testing.T) {
+func TestIntegrationAlertRulePostExport(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
@@ -784,6 +792,8 @@ func TestAlertRulePostExport(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	const folderName = "folder1"
@@ -799,13 +809,8 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 	apiClient.CreateFolder(t, folderName, folderName)
 
 	createAlertInGrafana := func(metadata *apimodels.AlertRuleMetadata) apimodels.GettableRuleGroupConfig {
@@ -961,9 +966,12 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -973,14 +981,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	// Create user
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -1048,6 +1049,8 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 }
 
 func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1165,6 +1168,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
+						"refId": "A",
 						"type": "math"
 					}
 				}],
@@ -1208,6 +1212,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
+						"refId": "A",
 						"type": "math"
 					}
 				}],
@@ -1263,6 +1268,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
 						"maxDataPoints": 43200,
+						"refId": "A",
 						"type": "math"
 					}
 				}],
@@ -1418,14 +1424,18 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestIntegrationRuleGroupSequence(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
+		DisableAuthZClientCache: true,
+		DisableLegacyAlerting:   true,
+		EnableUnifiedAlerting:   true,
+		DisableAnonymous:        true,
+		AppModeProduction:       true,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
@@ -1524,18 +1534,16 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 }
 
 func TestIntegrationRuleCreate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
+
 	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	namespaceUID := "default"
@@ -1608,7 +1616,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 									To:   apimodels.Duration(15 * time.Minute),
 								},
 								DatasourceUID: expr.DatasourceUID,
-								Model:         json.RawMessage(`{"expression":"1","intervalMs":1000,"maxDataPoints":43200,"type":"math"}`),
+								Model:         json.RawMessage(`{"expression":"1","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}`),
 							},
 						},
 						UpdatedBy: &apimodels.UserInfo{
@@ -1663,9 +1671,12 @@ func TestIntegrationRuleCreate(t *testing.T) {
 }
 
 func TestIntegrationRuleUpdate(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1698,13 +1709,6 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
-
 	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
@@ -1714,43 +1718,131 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("should be able to reset 'for' to 0", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		expected := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
-		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+		require.Equal(t, expected, *getGroup.Rules[0].For)
 
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		expected = 0
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
-		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+		require.Equal(t, expected, *getGroup.Rules[0].For)
 	})
 
 	t.Run("should be able to reset 'keep_firing_for' to 0", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		keepFiringFor := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.KeepFiringFor = &keepFiringFor
+		group.Rules[0].KeepFiringFor = &keepFiringFor
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, _ := client.GetRulesGroup(t, folderUID, group.Name)
-		require.Equal(t, keepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+		require.Equal(t, keepFiringFor, *getGroup.Rules[0].KeepFiringFor)
 
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		newKeepFiringFor := model.Duration(0)
-		group.Rules[0].ApiRuleNode.KeepFiringFor = &newKeepFiringFor
+		group.Rules[0].KeepFiringFor = &newKeepFiringFor
 		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, _ = client.GetRulesGroup(t, folderUID, group.Name)
-		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].KeepFiringFor)
+	})
+
+	t.Run("missing_series_evals_to_resolve", func(t *testing.T) {
+		testCases := []struct {
+			name           string
+			initialValue   *int64
+			updatedValue   *int64
+			expectedValue  *int64
+			expectedStatus int
+		}{
+			{
+				name:           "should be able to set missing_series_evals_to_resolve to 5",
+				initialValue:   nil,
+				updatedValue:   util.Pointer[int64](5),
+				expectedValue:  util.Pointer[int64](5),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should be able to update missing_series_evals_to_resolve",
+				initialValue:   util.Pointer[int64](1),
+				updatedValue:   util.Pointer[int64](2),
+				expectedValue:  util.Pointer[int64](2),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should preserve missing_series_evals_to_resolve when it's set nil",
+				initialValue:   util.Pointer[int64](5),
+				updatedValue:   nil,
+				expectedValue:  util.Pointer[int64](5),
+				expectedStatus: http.StatusAccepted,
+			},
+			{
+				name:           "should reject missing_series_evals_to_resolve < 0",
+				initialValue:   util.Pointer[int64](1),
+				updatedValue:   util.Pointer[int64](-1),
+				expectedStatus: http.StatusBadRequest,
+			},
+			{
+				name:           "should be able to reset missing_series_evals_to_resolve by setting it to 0",
+				initialValue:   util.Pointer[int64](1),
+				updatedValue:   util.Pointer[int64](0),
+				expectedValue:  nil,
+				expectedStatus: http.StatusAccepted,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				// Create a new rule
+				group := generateAlertRuleGroup(1, alertRuleGen())
+				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.initialValue
+
+				// Post the rule group with our alert rule
+				_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+				require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+				// and the value of the missing_series_evals_to_resolve
+				getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
+				require.Equal(t, http.StatusAccepted, status)
+				if tc.initialValue == nil {
+					require.Nil(t, getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				} else {
+					require.Equal(t, *tc.initialValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				}
+
+				// Now let's update the initial value with the updated value
+				group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+				group.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve = tc.updatedValue
+				_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
+				require.Equalf(t, tc.expectedStatus, status, "failed to post rule group. Response: %s", body)
+				// Check the response status
+				require.Equal(t, tc.expectedStatus, status)
+				if tc.expectedStatus != http.StatusAccepted {
+					// If the status is not accepted, we don't need to check the response body
+					return
+				}
+
+				// Get the group again and check that the value is updated to updatedValue
+				getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
+				require.Equal(t, http.StatusAccepted, status)
+
+				if tc.expectedValue == nil {
+					require.Nil(t, getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				} else {
+					require.Equal(t, *tc.expectedValue, *getGroup.Rules[0].GrafanaManagedAlert.MissingSeriesEvalsToResolve)
+				}
+			})
+		}
 	})
 
 	t.Run("when data source missing", func(t *testing.T) {
@@ -1843,7 +1935,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("should set updated_by", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		expected := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
@@ -1856,6 +1948,8 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 }
 
 func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -2015,9 +2109,12 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 }
 
 func TestIntegrationRulerAccess(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -2029,7 +2126,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	// Create a users to make authenticated requests
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -2039,11 +2136,6 @@ func TestIntegrationRulerAccess(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	client := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
@@ -2132,9 +2224,12 @@ func TestIntegrationRulerAccess(t *testing.T) {
 }
 
 func TestIntegrationEval(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -2412,9 +2507,12 @@ func TestIntegrationEval(t *testing.T) {
 }
 
 func TestIntegrationQuota(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -2589,6 +2687,7 @@ func TestIntegrationQuota(t *testing.T) {
 							   "expression":"2 + 4 \u003E 1",
 							   "intervalMs":1000,
 							   "maxDataPoints":43200,
+							   "refId":"A",
 							   "type":"math"
 							}
 						     }
@@ -2623,6 +2722,8 @@ func TestIntegrationQuota(t *testing.T) {
 }
 
 func TestIntegrationDeleteFolderWithRules(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
 	opts := testinfra.GrafanaOpts{
@@ -2704,6 +2805,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 												"expression": "2 + 3 > 1",
 												"intervalMs": 1000,
 												"maxDataPoints": 43200,
+												"refId": "A",
 												"type": "math"
 											}
 										}
@@ -2789,9 +2891,12 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleCRUD(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -3188,6 +3293,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3200,7 +3306,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
-						  "uid":"uid", 
+						  "uid":"uid",
                           "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
@@ -3234,6 +3340,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3362,16 +3469,17 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 											}`),
 							},
 						},
-						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+						NoDataState:                 apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState:                apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+						MissingSeriesEvalsToResolve: util.Pointer[int64](2), // If UID is specified, this field is required
 					},
 				},
 			},
 			Interval: interval,
 		}
 
-		response, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
-		assert.Equal(t, http.StatusAccepted, status)
+		response, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules, false)
+		assert.Equal(t, http.StatusAccepted, status, body)
 
 		require.Len(t, response.Created, 1)
 		require.Len(t, response.Updated, 2)
@@ -3585,6 +3693,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3631,6 +3740,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
 								   "maxDataPoints":43200,
+								   "refId":"A",
 								   "type":"math"
 								}
 							 }
@@ -3774,6 +3884,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                           "expression":"2 + 3 \u003C 1",
 		                           "intervalMs":1000,
 		                           "maxDataPoints":43200,
+								   "refId":"A",
 		                           "type":"math"
 		                        }
 		                     }
@@ -3897,6 +4008,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						   "expression":"2 + 3 \u003C 1",
 						   "intervalMs":1000,
 						   "maxDataPoints":43200,
+						   "refId":"A",
 						   "type":"math"
 						}
 					     }
@@ -3995,6 +4107,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						   "expression":"2 + 3 \u003C 1",
 						   "intervalMs":1000,
 						   "maxDataPoints":43200,
+						   "refId":"A",
 						   "type":"math"
 						}
 					     }
@@ -4069,9 +4182,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 }
 
 func TestIntegrationRulePause(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4199,16 +4315,19 @@ func TestIntegrationRulePause(t *testing.T) {
 }
 
 func TestIntegrationHysteresisRule(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
+
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:        true,
 		EnableUnifiedAlerting:        true,
 		DisableAnonymous:             true,
 		AppModeProduction:            true,
 		NGAlertSchedulerBaseInterval: 1 * time.Second,
-		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagRecoveryThreshold},
+		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -4273,16 +4392,17 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 }
 
 func TestIntegrationRuleNotificationSettings(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:        true,
 		EnableUnifiedAlerting:        true,
 		DisableAnonymous:             true,
 		AppModeProduction:            true,
 		NGAlertSchedulerBaseInterval: 1 * time.Second,
-		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagAlertingSimplifiedRouting},
+		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -4326,16 +4446,27 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		t.Log(body)
 	})
 
-	t.Run("create should fail if mute timing does not exist", func(t *testing.T) {
-		var copyD testData
-		err = json.Unmarshal(testDataRaw, &copyD)
-		group := copyD.RuleGroup
-		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
-		ns.MuteTimeIntervals = []string{"random-time-interval"}
+	t.Run("create should fail if time interval does not exist", func(t *testing.T) {
+		t.Run("mute time interval", func(t *testing.T) {
+			var copyD testData
+			err = json.Unmarshal(testDataRaw, &copyD)
+			group := copyD.RuleGroup
+			ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+			ns.MuteTimeIntervals = []string{"random-time-interval"}
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
-		require.Equalf(t, http.StatusBadRequest, status, body)
-		t.Log(body)
+			_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
+			require.Equalf(t, http.StatusBadRequest, status, body)
+		})
+		t.Run("active time interval", func(t *testing.T) {
+			var copyD testData
+			err = json.Unmarshal(testDataRaw, &copyD)
+			group := copyD.RuleGroup
+			ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+			ns.ActiveTimeIntervals = []string{"random-time-interval"}
+
+			_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
+			require.Equalf(t, http.StatusBadRequest, status, body)
+		})
 	})
 
 	t.Run("create should not fail if group_by is missing required labels but they should still be used", func(t *testing.T) {
@@ -4360,32 +4491,6 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		assert.Equal(t, []model.LabelName{ngmodels.FolderTitleLabel, model.AlertNameLabel, "label1"}, ruleRoute.GroupBy)
 
 		t.Log(body)
-	})
-
-	t.Run("create with '...' groupBy followed by config post should succeed", func(t *testing.T) {
-		var copyD testData
-		err = json.Unmarshal(testDataRaw, &copyD)
-		group := copyD.RuleGroup
-		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
-		ns.GroupBy = []string{ngmodels.FolderTitleLabel, model.AlertNameLabel, ngmodels.GroupByAll}
-
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
-		require.Equalf(t, http.StatusAccepted, status, body)
-
-		// Now update the config with no changes.
-		_, status, body = apiClient.GetAlertmanagerConfigWithStatus(t)
-		if !assert.Equalf(t, http.StatusOK, status, body) {
-			return
-		}
-
-		cfg := apimodels.PostableUserConfig{}
-
-		err = json.Unmarshal([]byte(body), &cfg)
-		require.NoError(t, err)
-
-		ok, err := apiClient.PostConfiguration(t, cfg)
-		require.NoError(t, err)
-		require.True(t, ok)
 	})
 
 	t.Run("should create rule and generate route", func(t *testing.T) {
@@ -4420,6 +4525,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 			assert.Nil(c, autogenRoute.GroupInterval)
 			assert.Nil(c, autogenRoute.RepeatInterval)
 			assert.Empty(c, autogenRoute.MuteTimeIntervals)
+			assert.Empty(c, autogenRoute.ActiveTimeIntervals)
 			assert.Empty(c, autogenRoute.GroupBy)
 			if !canContinue {
 				return
@@ -4448,6 +4554,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 			assert.Nil(c, receiverRoute.GroupInterval)
 			assert.Nil(c, receiverRoute.RepeatInterval)
 			assert.Empty(c, receiverRoute.MuteTimeIntervals)
+			assert.Empty(c, receiverRoute.ActiveTimeIntervals)
 			var groupBy []string
 			for _, name := range receiverRoute.GroupBy {
 				groupBy = append(groupBy, string(name))
@@ -4555,21 +4662,15 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 }
 
 func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
-	// Setup Grafana and its Database
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -4614,9 +4715,10 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 }
 
 func TestIntegrationRuleVersions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4704,9 +4806,10 @@ func TestIntegrationRuleVersions(t *testing.T) {
 }
 
 func TestIntegrationRuleSoftDelete(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4717,12 +4820,6 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
@@ -4821,9 +4918,10 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 }
 
 func TestIntegrationRulePermanentlyDelete(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4834,12 +4932,6 @@ func TestIntegrationRulePermanentlyDelete(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
@@ -5013,42 +5105,70 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	return string(json), m
 }
 
-func createRule(t *testing.T, client apiClient, folder string) (apimodels.PostableRuleGroupConfig, string) {
+type ruleOption func(*ruleConfig)
+
+type ruleConfig struct {
+	rule      *apimodels.PostableExtendedRuleNode
+	groupName string
+}
+
+func withLabels(labels map[string]string) ruleOption {
+	return func(cfg *ruleConfig) {
+		cfg.rule.Labels = labels
+	}
+}
+
+func withRuleGroup(groupName string) ruleOption {
+	return func(cfg *ruleConfig) {
+		cfg.groupName = groupName
+	}
+}
+
+func createRule(t *testing.T, client apiClient, folder string, opts ...ruleOption) (apimodels.PostableRuleGroupConfig, string) {
 	t.Helper()
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
 	doubleInterval := 2 * interval
-	rules := apimodels.PostableRuleGroupConfig{
-		Name:     "arulegroup",
-		Interval: interval,
-		Rules: []apimodels.PostableExtendedRuleNode{
-			{
-				ApiRuleNode: &apimodels.ApiRuleNode{
-					For:         &doubleInterval,
-					Labels:      map[string]string{"label1": "val1"},
-					Annotations: map[string]string{"annotation1": "val1"},
-				},
-				GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-					Title:     fmt.Sprintf("rule under folder %s", folder),
-					Condition: "A",
-					Data: []apimodels.AlertQuery{
-						{
-							RefID: "A",
-							RelativeTimeRange: apimodels.RelativeTimeRange{
-								From: apimodels.Duration(time.Duration(5) * time.Hour),
-								To:   apimodels.Duration(time.Duration(3) * time.Hour),
-							},
-							DatasourceUID: expr.DatasourceUID,
-							Model: json.RawMessage(`{
-								"type": "math",
-								"expression": "2 + 3 > 1"
-								}`),
-						},
+
+	rule := apimodels.PostableExtendedRuleNode{
+		ApiRuleNode: &apimodels.ApiRuleNode{
+			For:         &doubleInterval,
+			Labels:      map[string]string{"label1": "val1"},
+			Annotations: map[string]string{"annotation1": "val1"},
+		},
+		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+			Title:     fmt.Sprintf("rule under folder %s", folder),
+			Condition: "A",
+			Data: []apimodels.AlertQuery{
+				{
+					RefID: "A",
+					RelativeTimeRange: apimodels.RelativeTimeRange{
+						From: apimodels.Duration(time.Duration(5) * time.Hour),
+						To:   apimodels.Duration(time.Duration(3) * time.Hour),
 					},
+					DatasourceUID: expr.DatasourceUID,
+					Model: json.RawMessage(`{
+						"type": "math",
+						"expression": "2 + 3 > 1"
+						}`),
 				},
 			},
 		},
+	}
+
+	cfg := &ruleConfig{
+		rule:      &rule,
+		groupName: "arulegroup",
+	}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	rules := apimodels.PostableRuleGroupConfig{
+		Name:     cfg.groupName,
+		Interval: interval,
+		Rules:    []apimodels.PostableExtendedRuleNode{*cfg.rule},
 	}
 	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules, false)
 	require.Equal(t, http.StatusAccepted, status)

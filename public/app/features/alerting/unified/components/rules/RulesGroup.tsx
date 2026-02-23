@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
@@ -13,11 +13,12 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
-import { isFederatedRuleGroup, isPluginProvidedRule, rulerRuleType } from '../../utils/rules';
+import { isFederatedRuleGroup, isPluginProvidedRule, isUngroupedRuleGroup, rulerRuleType } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
+import { FolderActionsButton } from '../folder-actions/FolderActionsButton';
 
 import { ActionIcon } from './ActionIcon';
 import { RuleGroupStats } from './RuleStats';
@@ -78,7 +79,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     actionIcons.push(
       <Stack key="is-deleting">
         <Spinner />
-        deleting
+        <Trans i18nKey="alerting.rules-group.deleting">Deleting</Trans>
       </Stack>
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
@@ -135,16 +136,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       }
       if (folder) {
         if (isListView) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
-              data-testid="export-folder"
-              key="export-folder"
-              icon="download-alt"
-              tooltip={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
-              onClick={() => setIsExporting('folder')}
-            />
-          );
+          actionIcons.push(<FolderActionsButton folderUID={folderUID} key="folder-bulk-actions" />);
         }
       }
     }
@@ -172,11 +164,16 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   }
 
   // ungrouped rules are rules that are in the "default" group name
-  const groupName = isListView ? (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
-  ) : (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
-  );
+  let groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />;
+  if (isListView) {
+    groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />;
+  } else if (isUngroupedRuleGroup(group.name)) {
+    const firstRuleName = group.rules[0]?.name ?? t('alerting.rules-group.unknown-rule', 'Unknown Rule');
+    const groupDisplayName = t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', {
+      ruleName: firstRuleName,
+    });
+    groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={groupDisplayName} />;
+  }
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">
@@ -193,7 +190,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         {
           // eslint-disable-next-line
           <div className={styles.groupName} onClick={() => setIsCollapsed(!isCollapsed)}>
-            {isFederated && <Badge color="purple" text="Federated" />} {groupName}
+            {isFederated && <Badge color="purple" text={t('alerting.rules-group.text-federated', 'Federated')} />}{' '}
+            {groupName}
           </div>
         }
         <div className={styles.spacer} />
@@ -204,7 +202,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           <>
             <div className={styles.actionsSeparator}>|</div>
             <div className={styles.actionIcons}>
-              <Badge color="purple" text="Provisioned" />
+              <Badge color="purple" text={t('alerting.rules-group.text-provisioned', 'Provisioned')} />
             </div>
           </>
         )}
@@ -325,7 +323,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin: `0 ${theme.spacing(2)}`,
     }),
     actionIcons: css({
-      width: '80px',
+      width: '120px',
       alignItems: 'center',
 
       flexShrink: 0,

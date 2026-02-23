@@ -1,0 +1,32 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "dashboard-nested",
+    "annotations": {
+      "hello": "world"
+    },
+    "labels": {
+      "region": "west"
+    }
+  },
+  "spec": {
+    "title": "Dashboard nested under A/B",
+    "panels": [
+      {
+        "gridPos": {
+          "h": 13,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "options": {
+          "content": "<div style=\"background:#1cac78; color:#000; padding:50px; height:1000px\"><h1>This dashboard was loaded from provisioning (nested) 🎉🎉🎉🎉🎉🎉</h1></div>",
+          "mode": "html"
+        },
+        "transparent": true,
+        "type": "text"
+      }
+    ]
+  }
+}

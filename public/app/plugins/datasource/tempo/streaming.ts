@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   DataFrame,
   dataFrameFromJSON,
+  DataFrameJSON,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -20,7 +21,7 @@ import {
 import { cloneQueryResponse, combineResponses } from '@grafana/o11y-ds-frontend';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
-import { SearchStreamingState } from './dataquery.gen';
+import { MetricsQueryType, SearchStreamingState } from './dataquery.gen';
 import { DEFAULT_SPSS, TempoDatasource } from './datasource';
 import { formatTraceQLResponse } from './resultTransformer';
 import { SearchMetrics, TempoJsonData, TempoQuery } from './types';
@@ -45,7 +46,7 @@ export function doTempoSearchStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `search/${getLiveStreamKey()}`,
       data: {
         ...query,
@@ -122,7 +123,7 @@ export function doTempoMetricsStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `metrics/${key}`,
       data: {
         ...query,
@@ -165,7 +166,15 @@ export function doTempoMetricsStreaming(
           }
 
           newResult = {
-            data: data?.map(dataFrameFromJSON) ?? [],
+            data:
+              data?.map((frame: DataFrameJSON) => {
+                const df = dataFrameFromJSON(frame);
+                // preserve the query's refId to prevent conflation of series from different queries
+                if (query.refId) {
+                  df.refId = query.refId;
+                }
+                return df;
+              }) ?? [],
             state,
           };
         }
@@ -177,7 +186,8 @@ export function doTempoMetricsStreaming(
         if (!curr) {
           return acc;
         }
-        if (!acc) {
+        // If the query is an instant query, we always want the latest result.
+        if (!acc || query.metricsQueryType === MetricsQueryType.Instant) {
           return cloneQueryResponse(curr);
         }
         return mergeFrames(acc, curr);
@@ -188,7 +198,6 @@ export function doTempoMetricsStreaming(
 function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse): DataQueryResponse {
   const result = combineResponses(cloneQueryResponse(acc), newResult);
 
-  // Remove duplicate time field values for all frames
   result.data = result.data.map((frame: DataFrame) => {
     let newFrame = frame;
     const timeFieldIndex = frame.fields.findIndex((f) => f.type === FieldType.time);
@@ -227,6 +236,15 @@ function removeDuplicateTimeFieldValues(accFrame: DataFrame, timeFieldIndex: num
   accFrame.fields.forEach((field) => {
     field.values = field.values.filter((_, index) => !indexesToRemove.includes(index));
   });
+
+  // This updates the length of the dataframe having already removed duplicate values.
+  // This is necessary because Tempo sends partial results to Grafana and
+  // this can result in duplicate values for the same timestamp so this removes
+  // older values and keeps the latest value, and ensures the length of the dataframe is updated,
+  // which would otherwise cause issues with rendering the exemplar data.
+  if (accFrame.name === 'exemplar' && accFrame.meta?.dataTopic === 'annotations' && indexesToRemove.length > 0) {
+    accFrame.length = accFrame.fields[timeFieldIndex].values.length;
+  }
 }
 
 function metricsDataFrame(metrics: SearchMetrics, state: SearchStreamingState, elapsedTime: number) {

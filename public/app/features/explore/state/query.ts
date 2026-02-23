@@ -15,15 +15,14 @@ import {
   hasQueryImportSupport,
   LoadingState,
   LogsVolumeType,
-  PanelEvents,
   QueryFixAction,
   ScopedVars,
   SupplementaryQueryType,
-  toLegacyResponseData,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -35,23 +34,21 @@ import {
   stopQueryState,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
+import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
-  createAsyncThunk,
   ExploreItemState,
   ExplorePanelData,
+  ExploreState,
+  QueryOptions,
   QueryTransaction,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-} from 'app/types';
-import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
+  SupplementaryQueries,
+} from 'app/types/explore';
+import { createAsyncThunk, StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
-import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
@@ -66,13 +63,7 @@ import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
-import {
-  createCacheKey,
-  filterLogRowsByIndex,
-  getCorrelationsData,
-  getDatasourceUIDs,
-  getResultsFromCache,
-} from './utils';
+import { createCacheKey, filterLogRowsByIndex, getCorrelationsData, getResultsFromCache } from './utils';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -107,6 +98,9 @@ export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQu
 export interface ChangeQueriesPayload {
   exploreId: string;
   queries: DataQuery[];
+  options?: {
+    skipAutoImport?: boolean;
+  };
 }
 export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
@@ -325,7 +319,7 @@ const getImportableQueries = async (
 
 export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
   'explore/changeQueries',
-  async ({ queries, exploreId }, { getState, dispatch }) => {
+  async ({ queries, exploreId, options }, { getState, dispatch }) => {
     let queriesImported = false;
     const oldQueries = getState().explore.panes[exploreId]!.queries;
     const rootUID = getState().explore.panes[exploreId]!.datasourceInstance?.uid;
@@ -340,10 +334,13 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     for (const newQuery of queries) {
       for (const oldQuery of oldQueries) {
         if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
-          const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
-          const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
-          await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
-          queriesImported = true;
+          // Skip automatic import if explicitly requested (e.g., query library replacement)
+          if (!options?.skipAutoImport) {
+            const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
+            const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
+            await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
+            queriesImported = true;
+          }
         }
 
         if (
@@ -351,8 +348,7 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
           newQuery.refId === oldQuery.refId &&
           newQuery.datasource?.uid !== oldQuery.datasource?.uid
         ) {
-          const datasourceUIDs = getDatasourceUIDs(MIXED_DATASOURCE_NAME, queries);
-          const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+          const correlations = await getCorrelationsFromStorage(dispatch, queries, rootUID);
           dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
         }
       }
@@ -1057,6 +1053,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     return {
       ...state,
+      queriesChangedIndex: state.queriesChangedIndex + 1,
       queries,
     };
   }
@@ -1311,7 +1308,6 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
   const { response } = action.payload;
   const {
     request,
-    series,
     error,
     graphResult,
     logsResult,
@@ -1328,27 +1324,15 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
     if (error.type === DataQueryErrorType.Timeout || error.type === DataQueryErrorType.Cancelled) {
       return { ...state };
     }
-
-    // Send error to Angular editors
-    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
-    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
-      state.eventBridge.emit(PanelEvents.dataError, error);
-    }
   }
 
   if (!request) {
     return { ...state };
   }
 
-  // Send legacy data to Angular editors
-  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
-  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
-    const legacy = series.map((v) => toLegacyResponseData(v));
-    state.eventBridge.emit(PanelEvents.dataReceived, legacy);
-  }
-
   return {
     ...state,
+    queriesChangedIndexAtRun: state.queriesChangedIndex,
     queryResponse: response,
     graphResult,
     tableResult,

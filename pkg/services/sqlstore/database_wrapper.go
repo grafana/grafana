@@ -10,12 +10,12 @@ import (
 
 	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/util/sqlite"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"xorm.io/core"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -42,7 +42,7 @@ func init() {
 // database queries. It also registers the metrics.
 func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	drivers := map[string]driver.Driver{
-		migrator.SQLite:   &sqlite3.SQLiteDriver{},
+		migrator.SQLite:   &sqlite.Driver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
 		migrator.Postgres: &pq.Driver{},
 	}
@@ -97,6 +97,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 	}
 
 	ctx = log.IncDBCallCounter(ctx)
+	ctx = log.IncDBQueryTimer(ctx, elapsed.Milliseconds())
 
 	// timestamp overridden and recorded AFTER query is run
 	_, span := h.tracer.Start(ctx, "database query", trace.WithTimestamp(begin))

@@ -1,7 +1,7 @@
 import { render, fireEvent } from '@testing-library/react';
 
 import { DataFrame, FieldType, ValueMatcherID, valueMatchers } from '@grafana/data';
-import { FilterByValueMatch, FilterByValueType } from '@grafana/data/src/transformations/transformers/filterByValue';
+import { FilterByValueMatch, FilterByValueType } from '@grafana/data/internal';
 
 import { FilterByValueTransformerEditor } from './FilterByValueTransformerEditor';
 
@@ -66,4 +66,63 @@ describe('FilterByValueTransformerEditor', () => {
       type: FilterByValueType.include,
     });
   });
+});
+it('hides conditions field when there is 0 or 1 filter', () => {
+  const onChangeMock = jest.fn();
+  const input: DataFrame[] = [
+    {
+      fields: [{ name: 'field1', type: FieldType.string, config: {}, values: [] }],
+      length: 0,
+    },
+  ];
+
+  // Test with 0 filters
+  const { queryByText, rerender } = render(
+    <FilterByValueTransformerEditor
+      input={input}
+      options={{ type: FilterByValueType.include, match: FilterByValueMatch.all, filters: [] }}
+      onChange={onChangeMock}
+    />
+  );
+  expect(queryByText('Conditions')).not.toBeInTheDocument();
+
+  // Test with 1 filter
+  rerender(
+    <FilterByValueTransformerEditor
+      input={input}
+      options={{
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.all,
+        filters: [{ fieldName: 'test', config: { id: ValueMatcherID.isNull, options: {} } }],
+      }}
+      onChange={onChangeMock}
+    />
+  );
+  expect(queryByText('Conditions')).not.toBeInTheDocument();
+});
+
+it('shows conditions field when there are more than 1 filter', () => {
+  const onChangeMock = jest.fn();
+  const input: DataFrame[] = [
+    {
+      fields: [{ name: 'field1', type: FieldType.string, config: {}, values: [] }],
+      length: 0,
+    },
+  ];
+
+  const { getByText } = render(
+    <FilterByValueTransformerEditor
+      input={input}
+      options={{
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.all,
+        filters: [
+          { fieldName: 'test1', config: { id: ValueMatcherID.isNull, options: {} } },
+          { fieldName: 'test2', config: { id: ValueMatcherID.isNull, options: {} } },
+        ],
+      }}
+      onChange={onChangeMock}
+    />
+  );
+  expect(getByText('Conditions')).toBeInTheDocument();
 });

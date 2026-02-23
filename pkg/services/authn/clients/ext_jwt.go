@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
+	"go.opentelemetry.io/otel/trace"
 
 	authlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +44,7 @@ var (
 	)
 )
 
-func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
+func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
 	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 	})
@@ -60,6 +63,7 @@ func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
 		namespaceMapper:     request.GetNamespaceMapper(cfg),
 		accessTokenVerifier: accessTokenVerifier,
 		idTokenVerifier:     idTokenVerifier,
+		tracer:              tracer,
 	}
 }
 
@@ -69,9 +73,13 @@ type ExtendedJWT struct {
 	accessTokenVerifier authlib.Verifier[authlib.AccessTokenClaims]
 	idTokenVerifier     authlib.Verifier[authlib.IDTokenClaims]
 	namespaceMapper     request.NamespaceMapper
+	tracer              trace.Tracer
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.extjwt.Authenticate")
+	defer span.End()
+
 	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
 	accessTokenClaims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
@@ -124,11 +132,11 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !claims.IsIdentityType(t, claims.TypeUser) {
+	if !claims.IsIdentityType(t, claims.TypeUser, claims.TypeServiceAccount, claims.TypeRenderService, claims.TypeAnonymous) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
-	return &authn.Identity{
+	identity := &authn.Identity{
 		ID:                id,
 		Type:              t,
 		OrgID:             s.cfg.DefaultOrgID(),
@@ -144,7 +152,24 @@ func (s *ExtendedJWT) authenticateAsUser(
 			},
 			FetchSyncedUser: true,
 		},
-	}, nil
+	}
+
+	if t == claims.TypeAnonymous {
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleType(s.cfg.Anonymous.OrgRole),
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	if t == claims.TypeRenderService {
+		// RenderService always has Admin role (based on render.go logic)
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleAdmin,
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	return identity, nil
 }
 
 func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
@@ -167,9 +192,14 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	if len(permissions) > 0 {
 		fetchPermissionsParams.Roles = make([]string, 0, len(permissions))
 		fetchPermissionsParams.AllowedActions = make([]string, 0, len(permissions))
+		fetchPermissionsParams.K8s = make([]string, 0, len(permissions))
+
 		for i := range permissions {
 			if strings.HasPrefix(permissions[i], "fixed:") {
 				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
+			} else if strings.Contains(permissions[i], "grafana.app") {
+				// Check for pattern <resource>.grafana.app/<resource>:<action>
+				fetchPermissionsParams.K8s = append(fetchPermissionsParams.K8s, permissions[i])
 			} else {
 				fetchPermissionsParams.AllowedActions = append(fetchPermissionsParams.AllowedActions, permissions[i])
 			}
@@ -204,7 +234,7 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	parsedToken, err := jwt.ParseSigned(rawToken)
+	parsedToken, err := jwt.ParseSigned(rawToken, []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return false
 	}

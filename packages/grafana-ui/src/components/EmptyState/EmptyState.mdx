@@ -22,6 +22,8 @@ There are different variants to handle the most common empty state use cases. Th
 
 Use when there is no data to display and you want to encourage the user to take an action. Usually either to complete some initial configuration, or to create an item.
 
+If there is already a primary call to action button visible (e.g. in the page header), this should be hidden whilst the empty state is shown to avoid duplicate primary actions on the page.
+
 ```jsx
 import { EmptyState, LinkButton, TextLink } from '@grafana/ui';
 

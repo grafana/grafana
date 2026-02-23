@@ -10,8 +10,8 @@ import {
   VariablesUnknownTable,
   VariablesUnknownTableProps,
 } from './VariablesUnknownTable';
+import { UsagesToNetwork } from './types';
 import * as utils from './utils';
-import { UsagesToNetwork } from './utils';
 
 async function getTestContext(
   overrides: Partial<VariablesUnknownTableProps> | undefined = {},
@@ -81,6 +81,7 @@ describe('VariablesUnknownTable', () => {
 
         await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
 
+        await waitFor(() => expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument());
         expect(screen.getByText('No renamed or missing variables found.')).toBeInTheDocument();
       });
     });

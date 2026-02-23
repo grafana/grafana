@@ -1,22 +1,29 @@
 import { omit } from 'lodash';
 
-import { AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
+  QueryVariable,
+  sceneGraph,
   SceneDataQuery,
   SceneDataTransformer,
   SceneQueryRunner,
+  SceneVariables,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
-  DashboardV2Spec,
-  defaultDashboardV2Spec,
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
   defaultFieldConfigSource,
   PanelKind,
   PanelQueryKind,
@@ -39,22 +46,23 @@ import {
   LibraryPanelKind,
   Element,
   DashboardCursorSync,
-  FieldConfig,
   FieldColor,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
+  defaultFieldConfig,
+  defaultDataQueryKind,
+  SwitchVariableKind,
+  defaultTimeSettingsSpec,
+  defaultDashboardLinkType,
+  defaultDashboardLink,
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import {
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  isLibraryPanel,
-} from '../utils/utils';
+import { djb2Hash } from '../utils/djb2Hash';
+import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
-import { getLayout } from './layoutSerializers/utils';
+import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
@@ -65,6 +73,11 @@ type DeepPartial<T> = T extends object
     }
   : T;
 
+/**
+ * Transform a DashboardScene to a v2beta1 DashboardSpec.
+ * @param scene - The DashboardScene to transform
+ * @param isSnapshot - Whether this is a snapshot transformation
+ */
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
   const sceneDash = scene.state;
   const timeRange = sceneDash.$timeRange!.state;
@@ -72,26 +85,42 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   const controlsState = sceneDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
 
+  const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
+
+  const timeSettingsDefaults = defaultTimeSettingsSpec();
+
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
-    description: sceneDash.description,
+    description: sceneDash.description || undefined,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
-    preload: sceneDash.preload,
-    editable: sceneDash.editable,
-    links: sceneDash.links,
-    tags: sceneDash.tags,
+    preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
+    editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
+    links: (sceneDash.links || []).map((link) => ({
+      title: link.title ?? defaultDashboardLink().title,
+      url: link.url ?? defaultDashboardLink().url,
+      type: link.type ?? defaultDashboardLinkType(),
+      icon: link.icon ?? defaultDashboardLink().icon,
+      tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
+      tags: link.tags ?? defaultDashboardLink().tags,
+      asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
+      keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
+      includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
+      targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+      ...(link.placement !== undefined && { placement: link.placement }),
+    })),
+    tags: sceneDash.tags ?? defaultDashboardV2Spec().tags,
     // EOF dashboard settings
 
     // time settings
     timeSettings: {
-      timezone: timeRange.timeZone,
+      timezone: timeRange.timeZone || timeSettingsDefaults.timezone,
       from: timeRange.from,
       to: timeRange.to,
-      autoRefresh: refreshPicker?.state.refresh || '',
-      autoRefreshIntervals: refreshPicker?.state.intervals,
-      hideTimepicker: controlsState?.hideTimeControls ?? false,
+      autoRefresh: refreshPicker?.state.refresh || timeSettingsDefaults.autoRefresh,
+      autoRefreshIntervals: refreshPicker?.state.intervals || timeSettingsDefaults.autoRefreshIntervals,
+      hideTimepicker: controlsState?.hideTimeControls || timeSettingsDefaults.hideTimepicker,
       weekStart: timeRange.weekStart,
       fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
       nowDelay: timeRange.UNSAFE_nowDelay,
@@ -100,26 +129,27 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF time settings
 
     // variables
-    variables: getVariables(sceneDash),
+    variables: getVariables(sceneDash, dsReferencesMapping),
     // EOF variables
 
     // elements
-    elements: getElements(scene),
+    elements: getElements(scene, dsReferencesMapping, isSnapshot),
     // EOF elements
 
     // annotations
-    annotations: getAnnotations(sceneDash),
+    annotations: getAnnotations(sceneDash, dsReferencesMapping),
     // EOF annotations
 
     // layout
-    layout: getLayout(sceneDash.body),
+    layout: sceneDash.body.serialize(isSnapshot),
     // EOF layout
   };
 
   try {
     // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
     if (validateDashboardSchemaV2(dashboardSchemaV2)) {
-      return sortedDeepCloneWithoutNulls(dashboardSchemaV2);
+      // Strip BOMs from all strings to prevent CUE validation errors ("illegal byte order mark")
+      return sortedDeepCloneWithoutNulls(dashboardSchemaV2, true, true);
     }
     // should never reach this point, validation should throw an error
     throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
@@ -147,14 +177,74 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(scene: DashboardScene) {
+function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping, isSnapshot = false) {
   const panels = scene.state.body.getVizPanels() ?? [];
 
-  const panelsArray = panels.map(vizPanelToSchemaV2);
-  return createElements(panelsArray, scene);
+  // For snapshot serialization we must also include repeated panel clones (panel repeaters store clones in state,
+  // not as layout children), otherwise the snapshot layout will reference elements that are missing.
+  if (isSnapshot) {
+    panels.push(...getRepeatedPanelsForSnapshot(scene));
+  }
+
+  return panels.reduce<Record<string, Element>>((elements, vizPanel) => {
+    const element = vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
+
+    // Snapshot layout expands repeaters into explicit panels and references repeat clones by their `key`.
+    // Non-clone panels should keep their stable element identifier.
+    const elementKey =
+      isSnapshot && vizPanel.state.repeatSourceKey
+        ? (() => {
+            if (!vizPanel.state.key) {
+              throw new Error('Snapshot serialization expected repeat clone to have a key');
+            }
+            return vizPanel.state.key;
+          })()
+        : dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+
+    elements[elementKey] = element;
+    return elements;
+  }, {});
 }
 
-export function vizPanelToSchemaV2(vizPanel: VizPanel): PanelKind | LibraryPanelKind {
+function getRepeatedPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
+  const panels: VizPanel[] = [];
+
+  const repeaters = sceneGraph.findAllObjects(scene.getRoot(), (obj) => {
+    const state = obj.state;
+    if (state === null || typeof state !== 'object') {
+      return false;
+    }
+
+    const repeatedPanels = Object.getOwnPropertyDescriptor(state, 'repeatedPanels')?.value;
+    return Array.isArray(repeatedPanels) && repeatedPanels.length > 0;
+  });
+
+  for (const repeater of repeaters) {
+    const state = repeater.state;
+    if (state === null || typeof state !== 'object') {
+      continue;
+    }
+
+    const repeatedPanels = Object.getOwnPropertyDescriptor(state, 'repeatedPanels')?.value;
+    if (!Array.isArray(repeatedPanels)) {
+      continue;
+    }
+
+    for (const panel of repeatedPanels) {
+      if (panel instanceof VizPanel) {
+        panels.push(panel);
+      }
+    }
+  }
+
+  return panels;
+}
+
+export function vizPanelToSchemaV2(
+  vizPanel: VizPanel,
+  dsReferencesMapping?: DSReferencesMapping,
+  isSnapshot = false
+): PanelKind | LibraryPanelKind {
   if (isLibraryPanel(vizPanel)) {
     const behavior = getLibraryPanelBehavior(vizPanel)!;
     const elementSpec: LibraryPanelKind = {
@@ -169,6 +259,53 @@ export function vizPanelToSchemaV2(vizPanel: VizPanel): PanelKind | LibraryPanel
       },
     };
     return elementSpec;
+  }
+
+  const defaults = handleFieldConfigDefaultsConversion(vizPanel);
+
+  const vizFieldConfig: FieldConfigSource = {
+    defaults,
+    overrides: vizPanel.state.fieldConfig?.overrides ?? [],
+  };
+
+  const elementSpec: PanelKind = {
+    kind: 'Panel',
+    spec: {
+      // Repeat clones share the same numeric panel id (parsed from `panel-<id>-clone-<n>`),
+      // so snapshots must assign a stable unique id per clone.
+      id:
+        isSnapshot && vizPanel.state.repeatSourceKey && vizPanel.state.key
+          ? djb2Hash(vizPanel.state.key)
+          : getPanelIdForVizPanel(vizPanel),
+      title: vizPanel.state.title,
+      description: vizPanel.state.description ?? '',
+      links: getPanelLinks(vizPanel),
+      transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
+      data: {
+        kind: 'QueryGroup',
+        spec: {
+          queries: getVizPanelQueries(vizPanel, dsReferencesMapping, isSnapshot),
+          transformations: getVizPanelTransformations(vizPanel),
+          queryOptions: getVizPanelQueryOptions(vizPanel),
+        },
+      },
+      vizConfig: {
+        kind: 'VizConfig',
+        group: vizPanel.state.pluginId,
+        version: vizPanel.state.pluginVersion ?? '',
+        spec: {
+          options: vizPanel.state.options,
+          fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
+        },
+      },
+    },
+  };
+  return elementSpec;
+}
+
+function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
+  if (!vizPanel.state.fieldConfig || !vizPanel.state.fieldConfig.defaults) {
+    return defaultFieldConfig();
   }
 
   // Handle type conversion for color mode
@@ -191,47 +328,26 @@ export function vizPanelToSchemaV2(vizPanel: VizPanel): PanelKind | LibraryPanel
   const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
   const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
 
-  const defaults: FieldConfig = Object.fromEntries(
+  const defaults = Object.fromEntries(
     Object.entries({
       ...vizPanel.state.fieldConfig.defaults,
       decimals,
       min,
       max,
       color,
-    }).filter(([_, value]) => value !== undefined)
+    }).filter(([_, value]) => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      // Filter out empty objects (like custom: {})
+      if (typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0) {
+        return false;
+      }
+      return value !== undefined;
+    })
   );
 
-  const vizFieldConfig: FieldConfigSource = {
-    ...vizPanel.state.fieldConfig,
-    defaults,
-  };
-
-  const elementSpec: PanelKind = {
-    kind: 'Panel',
-    spec: {
-      id: getPanelIdForVizPanel(vizPanel),
-      title: vizPanel.state.title,
-      description: vizPanel.state.description ?? '',
-      links: getPanelLinks(vizPanel),
-      data: {
-        kind: 'QueryGroup',
-        spec: {
-          queries: getVizPanelQueries(vizPanel),
-          transformations: getVizPanelTransformations(vizPanel),
-          queryOptions: getVizPanelQueryOptions(vizPanel),
-        },
-      },
-      vizConfig: {
-        kind: vizPanel.state.pluginId,
-        spec: {
-          pluginVersion: vizPanel.state.pluginVersion ?? '',
-          options: vizPanel.state.options,
-          fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
-        },
-      },
-    },
-  };
-  return elementSpec;
+  return defaults;
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -242,43 +358,124 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
+export function getVizPanelQueries(
+  vizPanel: VizPanel,
+  dsReferencesMapping?: DSReferencesMapping,
+  isSnapshot = false
+): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
+
+  if (isSnapshot) {
+    const dataProvider = vizPanel.state.$data;
+    if (!dataProvider) {
+      return queries;
+    }
+
+    let snapshotData = getPanelDataFrames(dataProvider.state.data);
+    if (dataProvider instanceof SceneDataTransformer) {
+      snapshotData = getPanelDataFrames(dataProvider.state.$data!.state.data);
+    }
+
+    const snapshotQuery: DataQueryKind = {
+      kind: 'DataQuery',
+      version: defaultDataQueryKind().version,
+      group: 'grafana',
+      datasource: {
+        name: 'grafana',
+      },
+      spec: {
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot: snapshotData,
+      },
+    };
+
+    queries.push({
+      kind: 'PanelQuery',
+      spec: {
+        query: snapshotQuery,
+        refId: 'A',
+        hidden: false,
+      },
+    });
+
+    return queries;
+  }
+
+  // Regular query handling (non-snapshot)
   const vizPanelQueries = queryRunner?.state.queries;
-  const autoAssignedPanelDSRef = getAutoAssignedPanelDSRef(vizPanel);
+
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
-      const queryDatasource = getPersistedDSForQuery(query, queryRunner, autoAssignedPanelDSRef);
+      // Check if this is a default empty query (refId "A", empty spec)
+      // Default queries are injected during deserialization when panels have no queries
+      const querySpec = omit(query, 'datasource', 'refId', 'hide');
+      const isDefaultEmptyQuery =
+        query.refId === 'A' && !query.datasource && vizPanelQueries.length === 1 && Object.keys(querySpec).length === 0;
+
+      // For default empty queries, don't use getElementDatasource as it will assign a datasource
+      // Instead, leave datasource undefined so it gets deleted below
+      const queryDatasource = isDefaultEmptyQuery
+        ? undefined
+        : getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
+
       const dataQuery: DataQueryKind = {
-        kind: getDataQueryKind(query),
-        spec: omit(query, 'datasource', 'refId', 'hide'),
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: queryDatasource
+          ? queryDatasource.type || getDataQueryKind(query, queryRunner)
+          : defaultDataQueryKind().group,
+        datasource: {
+          name: queryDatasource?.uid,
+        },
+        spec: querySpec,
       };
-      const querySpec: PanelQuerySpec = {
-        datasource: queryDatasource,
+
+      if (!dataQuery.datasource?.name) {
+        delete dataQuery.datasource;
+      }
+
+      const querySpecObj: PanelQuerySpec = {
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
       };
       queries.push({
         kind: 'PanelQuery',
-        spec: querySpec,
+        spec: querySpecObj,
       });
     });
   }
   return queries;
 }
 
-export function getDataQueryKind(query: SceneDataQuery | string): string {
-  if (typeof query === 'string') {
-    return getDefaultDataSourceRef()?.type ?? '';
+export function getDataQueryKind(query: SceneDataQuery | string | undefined, queryRunner?: SceneQueryRunner): string {
+  // Handle undefined query - return default data source type
+  if (query === undefined || query === null) {
+    const defaultDS = getDefaultDataSourceRef();
+    return defaultDS?.type || '';
   }
 
-  return query.datasource?.type ?? getDefaultDataSourceRef()?.type ?? '';
-}
+  // Query is a string - get default data source type
+  if (typeof query === 'string') {
+    const defaultDS = getDefaultDataSourceRef();
+    return defaultDS?.type || '';
+  }
 
-export function getDataQuerySpec(query: SceneDataQuery): DataQueryKind['spec'] {
-  return query;
+  // If query has a datasource UID (even without type), check if it matches the queryRunner's datasource
+  // Only use queryRunner's type if the UIDs match or if query has no datasource at all
+  if (queryRunner?.state.datasource?.type) {
+    // If query has a datasource UID that differs from queryRunner's, fall back to default
+    if (query.datasource?.uid && query.datasource.uid !== queryRunner.state.datasource.uid) {
+      const defaultDS = getDefaultDataSourceRef();
+      return defaultDS?.type || '';
+    }
+    return queryRunner.state.datasource.type;
+  }
+
+  // Fall back to default datasource
+  const defaultDS = getDefaultDataSourceRef();
+  return defaultDS?.type || '';
 }
 
 function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
@@ -299,10 +496,7 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
         const transformationSpec: DataTransformerConfig = {
           id: transformation.id,
           disabled: transformation.disabled,
-          filter: {
-            id: transformation.filter?.id ?? '',
-            options: transformation.filter?.options ?? {},
-          },
+          filter: transformation.filter,
           ...(transformation.topic && { topic: transformation.topic }),
           options: transformation.options,
         };
@@ -344,11 +538,12 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
     queryOptions.timeFrom = panelTime.state.timeFrom;
     queryOptions.timeShift = panelTime.state.timeShift;
     queryOptions.hideTimeOverride = panelTime.state.hideTimeOverride;
+    queryOptions.timeCompare = panelTime.state.compareWith;
   }
   return queryOptions;
 }
 
-function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
+export function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
     let elementKey = scene.serializer.getElementIdForPanel(panel.spec.id);
     elements[elementKey!] = panel;
@@ -356,7 +551,7 @@ function createElements(panels: Element[], scene: DashboardScene): Record<string
   }, {});
 }
 
-function getVariables(oldDash: DashboardSceneState) {
+function getVariables(oldDash: DashboardSceneState, dsReferencesMapping?: DSReferencesMapping) {
   const variablesSet = oldDash.$variables;
 
   // variables is an array of all variables kind (union)
@@ -369,16 +564,17 @@ function getVariables(oldDash: DashboardSceneState) {
     | ConstantVariableKind
     | GroupByVariableKind
     | AdhocVariableKind
+    | SwitchVariableKind
   > = [];
 
   if (variablesSet instanceof SceneVariableSet) {
-    variables = sceneVariablesSetToSchemaV2Variables(variablesSet);
+    variables = sceneVariablesSetToSchemaV2Variables(variablesSet, false, dsReferencesMapping);
   }
 
   return variables;
 }
 
-function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
+function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSReferencesMapping): AnnotationQueryKind[] {
   const data = state.$data;
   if (!(data instanceof DashboardDataLayerSet)) {
     return [];
@@ -388,34 +584,46 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
       continue;
     }
-    const result: AnnotationQueryKind = {
-      kind: 'AnnotationQuery',
-      spec: {
-        builtIn: Boolean(layer.state.query.builtIn),
-        name: layer.state.query.name,
-        datasource: layer.state.query.datasource || getDefaultDataSourceRef(),
-        enable: Boolean(layer.state.isEnabled),
-        hide: Boolean(layer.state.isHidden),
-        iconColor: layer.state.query.iconColor,
-      },
-    };
 
-    // Check if DataQueryKind exists
-    const queryKind = getAnnotationQueryKind(layer.state.query);
-    if (layer.state.query.query?.kind === queryKind) {
-      result.spec.query = {
-        kind: queryKind,
-        spec: layer.state.query.query.spec,
-      };
+    const datasource = getElementDatasource(layer, layer.state.query, 'annotation', undefined, dsReferencesMapping);
+
+    let layerDs = layer.state.query.datasource;
+
+    if (!layerDs || !layerDs.type) {
+      // This can happen only if we are transforming a scene that was created
+      // from a v1 spec. In v1 annotation layer can contain no datasource ref, which is guaranteed
+      // for layers created for v2 schema. See transform transformSaveModelSchemaV2ToScene.ts.
+      // In this case we will resolve default data source
+      layerDs = getDefaultDataSourceRef();
+      console.error(
+        'Misconfigured AnnotationsDataLayer: Data source is required for annotations. Resolving default data source',
+        layer,
+        layerDs
+      );
     }
 
+    const result = transformV1ToV2AnnotationQuery(layer.state.query, layerDs.type!, layerDs.uid!, {
+      enable: layer.state.isEnabled,
+      hide: layer.state.isHidden,
+    });
+
+    const annotationQuery = layer.state.query;
+
     // If filter is an empty array, don't save it
-    if (layer.state.query.filter?.ids?.length) {
-      result.spec.filter = layer.state.query.filter;
+    if (annotationQuery.filter?.ids?.length) {
+      result.spec.filter = annotationQuery.filter;
+    }
+
+    // Finally, if the datasource references mapping did not containt data source ref,
+    // this means that the original model that was fetched did not contain it. In such scenario we don't want to save
+    // the explicit data source reference, so lets remove it from the save model.
+    if (!datasource) {
+      delete result.spec.query.datasource;
     }
 
     annotations.push(result);
   }
+
   return annotations;
 }
 
@@ -434,108 +642,132 @@ export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string
 
 export function getDefaultDataSourceRef(): DataSourceRef {
   // we need to return the default datasource configured in the BootConfig
-  const defaultDatasource = config.bootData.settings.defaultDatasource;
+  const defaultDatasource = config.defaultDatasource;
 
   // get default datasource type
-  const dsList = config.bootData.settings.datasources;
+  const dsList = config.datasources;
   const ds = dsList[defaultDatasource];
 
-  return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
+  // If we can't find the default datasource, fall back to grafana
+  if (!ds) {
+    return { type: 'grafana', uid: '-- Grafana --' };
+  }
+
+  return { type: ds.type, uid: ds.uid };
+}
+
+export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: DashboardV2Spec, panel?: VizPanel) {
+  let spec: DashboardV2Spec = {
+    ...dash,
+    title,
+    timeSettings: {
+      ...dash.timeSettings,
+      from: time.from.toISOString(),
+      to: time.to.toISOString(),
+    },
+    links: [],
+  };
+
+  // When VizPanel is present, we are snapshoting a single panel. The rest of the panels is removed from the dashboard,
+  // and the panel is resized to 24x20 grid and placed at the top of the dashboard.
+  if (panel) {
+    const panelId = getPanelIdForVizPanel(panel);
+
+    // Find the panel in elements
+    const panelElementKey = Object.keys(dash.elements || {}).find((key) => {
+      const element = dash.elements![key];
+      return element.spec.id === panelId;
+    });
+
+    if (panelElementKey) {
+      // Keep only this panel in elements
+      spec.elements = {
+        [panelElementKey]: dash.elements![panelElementKey],
+      };
+
+      spec.layout = {
+        kind: 'GridLayout',
+        spec: {
+          items: [
+            {
+              kind: 'GridLayoutItem',
+              spec: {
+                element: {
+                  kind: 'ElementReference',
+                  name: panelElementKey,
+                },
+                width: 24,
+                height: 20,
+                x: 0,
+                y: 0,
+              },
+            },
+          ],
+        },
+      };
+    }
+  }
+
+  // Remove links from all panels
+  spec.elements = Object.fromEntries(
+    Object.entries(spec.elements).map(([key, element]) => {
+      if ('links' in element) {
+        element.links = [];
+      }
+      return [key, element];
+    })
+  );
+
+  if (spec.annotations) {
+    const annotations = spec.annotations.filter((annotation) => annotation.spec.enable) || [];
+    const trimedAnnotations = annotations.map((annotation): AnnotationQueryKind => {
+      return {
+        kind: 'AnnotationQuery',
+        spec: {
+          name: annotation.spec.name,
+          enable: annotation.spec.enable,
+          iconColor: annotation.spec.iconColor,
+          builtIn: annotation.spec.builtIn,
+          hide: annotation.spec.hide,
+          query: annotation.spec.query,
+        },
+      };
+    });
+    spec.annotations = trimedAnnotations;
+  }
+
+  if (spec.variables) {
+    spec.variables.forEach((variable) => {
+      if ('query' in variable.spec) {
+        variable.spec.query = '';
+      }
+      if ('options' in variable.spec && 'current' in variable.spec) {
+        variable.spec.options =
+          variable.spec.current && !isEmptyObject(variable.spec.current) ? [variable.spec.current] : [];
+      }
+
+      if ('refresh' in variable.spec) {
+        variable.spec.refresh = 'never';
+      }
+    });
+  }
+
+  return spec;
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
-function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
-  if (typeof dash !== 'object' || dash === null) {
+export function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
+  if (typeof dash !== 'object' || dash === null || Array.isArray(dash)) {
     throw new Error('Dashboard is not an object or is null');
   }
 
-  if ('title' in dash && typeof dash.title !== 'string') {
+  // Required properties
+  if (!('title' in dash) || typeof dash.title !== 'string') {
     throw new Error('Title is not a string');
   }
-  if ('description' in dash && dash.description !== undefined && typeof dash.description !== 'string') {
-    throw new Error('Description is not a string');
-  }
-  if ('cursorSync' in dash && typeof dash.cursorSync !== 'string') {
-    const validCursorSyncValues = ((): string[] => {
-      const typeValues: DashboardCursorSync[] = ['Off', 'Crosshair', 'Tooltip'];
-      return typeValues;
-    })();
-
-    if (
-      'cursorSync' in dash &&
-      (typeof dash.cursorSync !== 'string' || !validCursorSyncValues.includes(dash.cursorSync))
-    ) {
-      throw new Error('CursorSync is not a string');
-    }
-  }
-  if ('liveNow' in dash && typeof dash.liveNow !== 'boolean') {
-    throw new Error('LiveNow is not a boolean');
-  }
-  if ('preload' in dash && typeof dash.preload !== 'boolean') {
-    throw new Error('Preload is not a boolean');
-  }
-  if ('editable' in dash && typeof dash.editable !== 'boolean') {
-    throw new Error('Editable is not a boolean');
-  }
-  if ('links' in dash && !Array.isArray(dash.links)) {
-    throw new Error('Links is not an array');
-  }
-  if ('tags' in dash && !Array.isArray(dash.tags)) {
-    throw new Error('Tags is not an array');
-  }
-
-  if ('id' in dash && dash.id !== undefined && typeof dash.id !== 'number') {
-    throw new Error('ID is not a number');
-  }
-
-  // Time settings
   if (!('timeSettings' in dash) || typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
     throw new Error('TimeSettings is not an object or is null');
   }
-  if (!('timezone' in dash.timeSettings) || typeof dash.timeSettings.timezone !== 'string') {
-    throw new Error('Timezone is not a string');
-  }
-  if (!('from' in dash.timeSettings) || typeof dash.timeSettings.from !== 'string') {
-    throw new Error('From is not a string');
-  }
-  if (!('to' in dash.timeSettings) || typeof dash.timeSettings.to !== 'string') {
-    throw new Error('To is not a string');
-  }
-  if (!('autoRefresh' in dash.timeSettings) || typeof dash.timeSettings.autoRefresh !== 'string') {
-    throw new Error('AutoRefresh is not a string');
-  }
-  if (!('autoRefreshIntervals' in dash.timeSettings) || !Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
-    throw new Error('AutoRefreshIntervals is not an array');
-  }
-  if (
-    'quickRanges' in dash.timeSettings &&
-    dash.timeSettings.quickRanges &&
-    !Array.isArray(dash.timeSettings.quickRanges)
-  ) {
-    throw new Error('QuickRanges is not an array');
-  }
-  if (!('hideTimepicker' in dash.timeSettings) || typeof dash.timeSettings.hideTimepicker !== 'boolean') {
-    throw new Error('HideTimepicker is not a boolean');
-  }
-  if (
-    'weekStart' in dash.timeSettings &&
-    typeof dash.timeSettings.weekStart === 'string' &&
-    !['saturday', 'sunday', 'monday'].includes(dash.timeSettings.weekStart)
-  ) {
-    throw new Error('WeekStart should be one of "saturday", "sunday" or "monday"');
-  }
-  if (!('fiscalYearStartMonth' in dash.timeSettings) || typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
-    throw new Error('FiscalYearStartMonth is not a number');
-  }
-  if (
-    'nowDelay' in dash.timeSettings &&
-    dash.timeSettings.nowDelay !== undefined &&
-    typeof dash.timeSettings.nowDelay !== 'string'
-  ) {
-    throw new Error('NowDelay is not a string');
-  }
-
-  // Other sections
   if (!('variables' in dash) || !Array.isArray(dash.variables)) {
     throw new Error('Variables is not an array');
   }
@@ -545,17 +777,105 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (!('annotations' in dash) || !Array.isArray(dash.annotations)) {
     throw new Error('Annotations is not an array');
   }
-
-  // Layout
   if (!('layout' in dash) || typeof dash.layout !== 'object' || dash.layout === null) {
     throw new Error('Layout is not an object or is null');
   }
 
-  if (!('kind' in dash.layout) || dash.layout.kind === 'GridLayout') {
-    validateGridLayout(dash.layout);
+  // Optional properties - only validate if present
+  if ('description' in dash && dash.description !== undefined && typeof dash.description !== 'string') {
+    throw new Error('Description is not a string');
+  }
+  if ('cursorSync' in dash && dash.cursorSync !== undefined) {
+    const validCursorSyncValues = ((): string[] => {
+      const typeValues: DashboardCursorSync[] = ['Off', 'Crosshair', 'Tooltip'];
+      return typeValues;
+    })();
+
+    if (typeof dash.cursorSync !== 'string' || !validCursorSyncValues.includes(dash.cursorSync)) {
+      throw new Error('CursorSync is not a valid value');
+    }
+  }
+  if ('liveNow' in dash && dash.liveNow !== undefined && typeof dash.liveNow !== 'boolean') {
+    throw new Error('LiveNow is not a boolean');
+  }
+  if ('preload' in dash && dash.preload !== undefined && typeof dash.preload !== 'boolean') {
+    throw new Error('Preload is not a boolean');
+  }
+  if ('editable' in dash && dash.editable !== undefined && typeof dash.editable !== 'boolean') {
+    throw new Error('Editable is not a boolean');
+  }
+  if ('links' in dash && dash.links !== undefined && !Array.isArray(dash.links)) {
+    throw new Error('Links is not an array');
+  }
+  if ('tags' in dash && dash.tags !== undefined && !Array.isArray(dash.tags)) {
+    throw new Error('Tags is not an array');
+  }
+  if ('id' in dash && dash.id !== undefined && typeof dash.id !== 'number') {
+    throw new Error('ID is not a number');
   }
 
-  if (!('kind' in dash.layout) || dash.layout.kind === 'RowsLayout') {
+  // Time settings validation
+  const timeSettings = dash.timeSettings;
+
+  // Required time settings
+  if (!('from' in timeSettings) || typeof timeSettings.from !== 'string') {
+    throw new Error('From is not a string');
+  }
+  if (!('to' in timeSettings) || typeof timeSettings.to !== 'string') {
+    throw new Error('To is not a string');
+  }
+  if (!('autoRefresh' in timeSettings) || typeof timeSettings.autoRefresh !== 'string') {
+    throw new Error('AutoRefresh is not a string');
+  }
+  if (!('hideTimepicker' in timeSettings) || typeof timeSettings.hideTimepicker !== 'boolean') {
+    throw new Error('HideTimepicker is not a boolean');
+  }
+
+  // Optional time settings with defaults
+  if (
+    'autoRefreshIntervals' in timeSettings &&
+    timeSettings.autoRefreshIntervals !== undefined &&
+    !Array.isArray(timeSettings.autoRefreshIntervals)
+  ) {
+    throw new Error('AutoRefreshIntervals is not an array');
+  }
+  if ('timezone' in timeSettings && timeSettings.timezone !== undefined && typeof timeSettings.timezone !== 'string') {
+    throw new Error('Timezone is not a string');
+  }
+  if (
+    'quickRanges' in timeSettings &&
+    timeSettings.quickRanges !== undefined &&
+    !Array.isArray(timeSettings.quickRanges)
+  ) {
+    throw new Error('QuickRanges is not an array');
+  }
+  if ('weekStart' in timeSettings && timeSettings.weekStart !== undefined) {
+    if (
+      typeof timeSettings.weekStart !== 'string' ||
+      !['saturday', 'sunday', 'monday'].includes(timeSettings.weekStart)
+    ) {
+      throw new Error('WeekStart should be one of "saturday", "sunday" or "monday"');
+    }
+  }
+  if ('nowDelay' in timeSettings && timeSettings.nowDelay !== undefined && typeof timeSettings.nowDelay !== 'string') {
+    throw new Error('NowDelay is not a string');
+  }
+  if (
+    'fiscalYearStartMonth' in timeSettings &&
+    timeSettings.fiscalYearStartMonth !== undefined &&
+    typeof timeSettings.fiscalYearStartMonth !== 'number'
+  ) {
+    throw new Error('FiscalYearStartMonth is not a number');
+  }
+
+  // Layout validation
+  if (!('kind' in dash.layout)) {
+    throw new Error('Layout kind is required');
+  }
+
+  if (dash.layout.kind === 'GridLayout') {
+    validateGridLayout(dash.layout);
+  } else if (dash.layout.kind === 'RowsLayout') {
     validateRowsLayout(dash.layout);
   }
 
@@ -592,40 +912,189 @@ function validateRowsLayout(layout: unknown) {
   }
 }
 
-/**
- * Get a collection of panel queries refIds
- * the refIds are the ones which did not have a datasource set
- * @returns a set of panel queries refIds
- */
-function getAutoAssignedPanelDSRef(vizPanel: VizPanel) {
-  const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
-  const scene = getDashboardSceneFor(vizPanel);
-  const elementMapReferences = scene.serializer.getDSReferencesMapping();
+export function getAutoAssignedDSRef(
+  element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer,
+  type: 'panels' | 'variables' | 'annotations',
+  elementMapReferences?: DSReferencesMapping
+): Map<string, string | undefined> {
+  if (!elementMapReferences) {
+    return new Map();
+  }
+  if (type === 'panels' && isVizPanel(element)) {
+    const elementKey = dashboardSceneGraph.getElementIdentifierForVizPanel(element);
+    return elementMapReferences.panels.get(elementKey) || new Map();
+  }
 
-  const panelQueries = elementMapReferences.panels.get(elementKey);
-  return panelQueries;
+  if (type === 'variables') {
+    return elementMapReferences.variables;
+  }
+
+  if (type === 'annotations') {
+    return elementMapReferences.annotations;
+  }
+
+  // if type is not panels, annotations, or variables, throw error
+  throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
 }
 
 /**
- * Get the persisted datasource for a query
- * When a query is created it could not have a datasource set
- * we want to respect that and not overwrite it with the auto assigned datasources
- * resolved in runtime
- * @param query
- * @param queryRunner
- * @param autoAssignedPanelDsRef
- * @returns
+ * Returns the datasource value that should be persisted for a panel query, variable or annotation
+ * - Undefined if the datasource was not defined in the initial save model
+ * - { type: string } if the datasource was autossigned defined by the initial group value
+ * - { uid: string, type: string } if the datasource was defined in the initial save model
  */
-export function getPersistedDSForQuery(
-  query: SceneDataQuery,
-  queryRunner: SceneQueryRunner,
-  autoAssignedPanelDsRef: Set<string> | undefined
-) {
-  // if the query has a refId and it is in the panelDsReferences then it did NOT have a datasource
-  const hasMatchingRefId = autoAssignedPanelDsRef?.has(query.refId);
-  if (hasMatchingRefId) {
-    return undefined;
+export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | AnnotationQuery>(
+  element: T,
+  autoAssignedDsRef: Map<string, string | undefined>,
+
+  type: 'query' | 'variable' | 'annotation',
+  context?: SceneQueryRunner
+): DataSourceRef | undefined {
+  let datasource: DataSourceRef | undefined;
+
+  // First, try to resolve from the element's current datasource if it has one
+  if (type === 'query') {
+    if ('datasource' in element && element.datasource) {
+      const isEmptyDatasourceObject =
+        typeof element.datasource === 'object' && Object.keys(element.datasource).length === 0;
+      if (!isEmptyDatasourceObject) {
+        datasource = element.datasource;
+      }
+    }
+
+    const panelDS = context?.state?.datasource;
+    if (panelDS?.uid) {
+      const notMixed = panelDS?.uid !== MIXED_DATASOURCE_NAME;
+      const notExpr =
+        !datasource ||
+        (datasource.uid !== ExpressionDatasourceRef.uid && datasource.type !== ExpressionDatasourceRef.type);
+
+      if (notMixed && (!datasource || (panelDS?.uid !== datasource.uid && notExpr))) {
+        datasource = panelDS;
+      }
+    }
   }
 
-  return query.datasource || queryRunner?.state?.datasource;
+  if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
+    datasource = element.state.datasource || undefined;
+  }
+
+  if (type === 'annotation' && 'datasource' in element) {
+    datasource = element.datasource || undefined;
+  }
+
+  // If a datasource was resolved from the element, use it
+  if (datasource) {
+    return datasource;
+  }
+
+  const elementId = getElementIdentifier(element, type);
+  if (autoAssignedDsRef?.has(elementId)) {
+    const dsType = autoAssignedDsRef.get(elementId);
+    // If the ds type was defined, return datasource with only the type; otherwise undefined
+    return dsType ? { type: dsType } : undefined;
+  }
+
+  return undefined;
+}
+
+/**
+ * Helper function to extract which identifier to use from a query or variable element
+ * @returns refId for queries, name for variables
+ * TODO: we will add annotations in the future
+ */
+function getElementIdentifier<T extends SceneDataQuery | QueryVariable | AnnotationQuery>(
+  element: T,
+  type: 'query' | 'variable' | 'annotation'
+): string {
+  // when is type query look for refId
+  if (type === 'query') {
+    return 'refId' in element ? element.refId : '';
+  }
+
+  if (type === 'variable') {
+    // when is type variable look for the name of the variable
+    return 'state' in element && 'name' in element.state ? element.state.name : '';
+  }
+
+  // when is type annotation look for annotation name
+  if (type === 'annotation') {
+    return 'name' in element ? element.name : '';
+  }
+
+  throw new Error(`Invalid type ${type} for getElementIdentifier`);
+}
+
+function isVizPanel(element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer): element is VizPanel {
+  // FIXME: is there another way to do this?
+  return 'pluginId' in element.state;
+}
+
+function isSceneVariables(
+  element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer
+): element is SceneVariables {
+  // Check for properties unique to SceneVariables but not in VizPanel
+  return !('pluginId' in element.state) && ('variables' in element.state || 'getValue' in element);
+}
+
+function isSceneDataQuery(query: SceneDataQuery | QueryVariable | AnnotationQuery): query is SceneDataQuery {
+  return 'refId' in query && !('state' in query);
+}
+
+function isAnnotationQuery(query: SceneDataQuery | QueryVariable | AnnotationQuery): query is AnnotationQuery {
+  return 'datasource' in query && 'name' in query;
+}
+
+function isQueryVariable(query: SceneDataQuery | QueryVariable | AnnotationQuery): query is QueryVariable {
+  return 'state' in query && 'name' in query.state;
+}
+
+/**
+ * Get the persisted datasource for a panel query, annotation or variable
+ * When a panel query, annotation or variable is created it could not have a datasource set
+ * we want to respect that and not overwrite it with the auto assigned datasources
+ * resolved in runtime
+ *
+ * - Undefined if the datasource was not defined in the initial save model
+ * - { type: string } if the datasource was autossigned defined by the initial group value
+ * - { uid: string, type: string } if the datasource was defined in the initial save model
+ */
+export function getElementDatasource(
+  element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer,
+  queryElement: SceneDataQuery | QueryVariable | AnnotationQuery,
+  type: 'panel' | 'variable' | 'annotation',
+  queryRunner?: SceneQueryRunner,
+  dsReferencesMapping?: DSReferencesMapping
+): DataSourceRef | undefined {
+  let result: DataSourceRef | undefined;
+  if (type === 'panel') {
+    if (!queryRunner || !isVizPanel(element) || !isSceneDataQuery(queryElement)) {
+      return undefined;
+    }
+    // Get datasource for panel query
+    const autoAssignedRefs = getAutoAssignedDSRef(element, 'panels', dsReferencesMapping);
+    result = getPersistedDSFor(queryElement, autoAssignedRefs, 'query', queryRunner);
+  }
+
+  if (type === 'variable') {
+    if (!isSceneVariables(element) || !isQueryVariable(queryElement)) {
+      return undefined;
+    }
+    // Get datasource for variable
+    const autoAssignedRefs = getAutoAssignedDSRef(element, 'variables', dsReferencesMapping);
+
+    result = getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
+  }
+
+  if (type === 'annotation') {
+    if (!isAnnotationQuery(queryElement)) {
+      return undefined;
+    }
+    // Get datasource for annotation
+    const autoAssignedRefs = getAutoAssignedDSRef(element, 'annotations', dsReferencesMapping);
+    result = getPersistedDSFor(queryElement, autoAssignedRefs, 'annotation');
+  }
+
+  // Avoid returning an empty object
+  return Object.keys(result || {}).length > 0 ? result : undefined;
 }

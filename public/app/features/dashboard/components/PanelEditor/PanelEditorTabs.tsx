@@ -29,10 +29,7 @@ export const PanelEditorTabs = memo(({ panel, dashboard, tabs, onChangeTab }: Pa
 
   const instrumentedOnChangeTab = useCallback(
     (tab: PanelEditorTab) => {
-      let eventName = 'panel_editor_tabs_changed';
-      if (config.featureToggles.transformationsRedesign) {
-        eventName = 'transformations_redesign_' + eventName;
-      }
+      let eventName = 'transformations_redesign_panel_editor_tabs_changed';
 
       if (!tab.active) {
         reportInteraction(eventName, { tab_id: tab.id });

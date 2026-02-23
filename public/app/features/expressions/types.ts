@@ -1,5 +1,5 @@
 import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 import { EvalFunction } from '../alerting/state/alertDef';
 
@@ -36,6 +36,11 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
 
 export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   {
+    value: ExpressionQueryType.sql,
+    label: 'SQL',
+    description: 'Transform data using SQL. Supports MySQL syntax.',
+  },
+  {
     value: ExpressionQueryType.math,
     label: 'Math',
     description: 'Free-form math formulas on time series or number data.',
@@ -63,14 +68,9 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     description:
       'Takes one or more time series returned from a query or an expression and checks if any of the series match the threshold condition.',
   },
-  {
-    value: ExpressionQueryType.sql,
-    label: 'SQL',
-    description: 'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
-  },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
-    return config.featureToggles?.sqlExpressions;
+    return config?.featureToggles?.sqlExpressions;
   }
   return true;
 });
@@ -149,6 +149,11 @@ export interface ExpressionQuery extends DataQuery {
   upsampler?: string;
   conditions?: ClassicCondition[];
   settings?: ExpressionQuerySettings;
+}
+
+export interface SqlExpressionQuery extends ExpressionQuery {
+  /** Format `alerting` is expected when using SQL expressions in alert rules */
+  format?: 'alerting';
 }
 
 export interface ThresholdExpressionQuery extends ExpressionQuery {

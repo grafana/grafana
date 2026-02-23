@@ -150,7 +150,7 @@ describe('SearchResultsTable', () => {
           width={1000}
         />
       );
-      const noData = await screen.findByText('No data');
+      const noData = await screen.findByText('No values');
       expect(noData).toBeInTheDocument();
       expect(screen.queryByRole('table', { name: 'Search results table' })).not.toBeInTheDocument();
     });

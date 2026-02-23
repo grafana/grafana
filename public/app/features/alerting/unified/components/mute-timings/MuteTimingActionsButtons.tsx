@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
 import { Authorize } from '../../components/Authorize';
@@ -24,7 +24,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
-  const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportMuteTimings);
+  const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportTimeIntervals);
 
   const closeDeleteModal = () => setShowDeleteDrawer(false);
 
@@ -52,8 +52,10 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   return (
     <>
       <Stack direction="row" alignItems="center" justifyContent="flex-end" wrap="wrap">
-        {!isGrafanaDataSource && isDisabled(muteTiming) && <Badge text="Disabled" color="orange" />}
-        <Authorize actions={[AlertmanagerAction.UpdateMuteTiming]}>{viewOrEditButton}</Authorize>
+        {!isGrafanaDataSource && isDisabled(muteTiming) && (
+          <Badge text={t('alerting.mute-timing-actions-buttons.text-disabled', 'Disabled')} color="orange" />
+        )}
+        <Authorize actions={[AlertmanagerAction.UpdateTimeInterval]}>{viewOrEditButton}</Authorize>
 
         {exportSupported && (
           <LinkButton
@@ -69,7 +71,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         )}
 
         {!muteTiming.provisioned && (
-          <Authorize actions={[AlertmanagerAction.DeleteMuteTiming]}>
+          <Authorize actions={[AlertmanagerAction.DeleteTimeInterval]}>
             <LinkButton
               icon="trash-alt"
               variant="secondary"
@@ -84,8 +86,12 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
       </Stack>
       <ConfirmModal
         isOpen={showDeleteDrawer}
-        title="Delete mute timing"
-        body={`Are you sure you would like to delete "${muteTiming.name}"?`}
+        title={t('alerting.mute-timing-actions-buttons.title-delete-mute-timing', 'Delete mute timing')}
+        body={t(
+          'alerting.mute-timing-actions-button.body-delete-mute-timing',
+          'Are you sure you would like to delete "{{muteTiming}}"?',
+          { muteTiming: muteTiming.name }
+        )}
         confirmText={t('alerting.common.delete', 'Delete')}
         onConfirm={async () => {
           await deleteMuteTiming.execute({

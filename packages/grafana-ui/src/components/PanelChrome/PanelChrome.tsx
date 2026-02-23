@@ -1,19 +1,22 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactElement, ReactNode, useId, useRef, useState } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
+import { getFeatureToggle } from '../../utils/featureToggle';
+import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Text } from '../Text/Text';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { HoverWidget } from './HoverWidget';
 import { PanelDescription } from './PanelDescription';
@@ -69,6 +72,15 @@ interface BaseProps {
    */
   onMouseMove?: () => void;
   onMouseEnter?: () => void;
+  /**
+   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
+   */
+  showMenuAlways?: boolean;
+  /**
+   * Content to display in the sub-header area below the main header.
+   * Can contain text, pills, links, buttons, or any other React elements.
+   */
+  subHeaderContent?: ReactNode;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -86,10 +98,6 @@ interface AutoSize extends BaseProps {
 interface Collapsible {
   collapsible: boolean;
   collapsed?: boolean;
-  /**
-   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
-   */
-  showMenuAlways?: boolean;
   /**
    * callback when collapsing or expanding the panel
    */
@@ -113,6 +121,10 @@ interface HoverHeader {
 export type PanelPadding = 'none' | 'md';
 
 /**
+ * Component used for rendering content wrapped in the same style as grafana panels.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-panelchrome--docs
+ *
  * @internal
  */
 export function PanelChrome({
@@ -145,13 +157,15 @@ export function PanelChrome({
   onMouseEnter,
   onDragStart,
   showMenuAlways = false,
+  subHeaderContent,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerDownEvt = useRef<React.PointerEvent | undefined>();
+  const pointerDistance = usePointerDistance();
+  const [subHeaderRef, { height: measuredSubHeaderHeight }] = useMeasure<HTMLDivElement>();
 
   const hasHeader = !hoverHeader;
 
@@ -172,11 +186,13 @@ export function PanelChrome({
   const isPanelTransparent = displayMode === 'transparent';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
+  const subHeaderHeight = Math.min(measuredSubHeaderHeight, headerHeight);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
     headerHeight,
     collapsed,
+    subHeaderHeight,
     height,
     width
   );
@@ -198,32 +214,50 @@ export function PanelChrome({
 
   // Handle drag & selection events
   // Mainly the tricky bit of differentiating between dragging and selecting
+  const onPointerUp = React.useCallback(
+    (evt: React.PointerEvent) => {
+      if (
+        pointerDistance.check(evt) ||
+        (dragClassCancel && evt.target instanceof Element && evt.target.closest(`.${dragClassCancel}`))
+      ) {
+        return;
+      }
+      // setTimeout is needed here because onSelect stops the event propagation
+      // By doing so, the event won't get to the document and drag will never be stopped
+      setTimeout(() => onSelect?.(evt));
+    },
+    [dragClassCancel, onSelect, pointerDistance]
+  );
 
-  const onPointerUp = (evt: React.PointerEvent) => {
-    evt.stopPropagation();
+  const onPointerDown = React.useCallback(
+    (evt: React.PointerEvent) => {
+      evt.stopPropagation();
 
-    const distance = Math.hypot(
-      pointerDownEvt.current?.screenX ?? 0 - evt.screenX,
-      pointerDownEvt.current?.screenY ?? 0 - evt.screenY
-    );
+      pointerDistance.set(evt);
 
-    pointerDownEvt.current = undefined;
+      onDragStart?.(evt);
+    },
+    [pointerDistance, onDragStart]
+  );
 
-    // If we are dragging some distance or clicking on elements that should cancel dragging (panel menu, etc)
-    if (
-      distance > 10 ||
-      (dragClassCancel && evt.target instanceof HTMLElement && evt.target.closest(`.${dragClassCancel}`))
-    ) {
-      return;
-    }
+  const onContentPointerDown = React.useCallback(
+    (evt: React.PointerEvent) => {
+      // Ignore clicks inside buttons, links, canvas and svg elments
+      // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
+      if (
+        evt.target instanceof Element &&
+        (evt.target.closest('button,a,canvas,svg,[role="button"],#grafana-portal-container') ||
+          evt.target.classList.contains('u-over'))
+      ) {
+        // Stop propagation otherwise row config editor will get selected
+        evt.stopPropagation();
+        return;
+      }
 
-    onSelect?.(evt);
-  };
-
-  const onPointerDown = (evt: React.PointerEvent) => {
-    evt.stopPropagation();
-    pointerDownEvt.current = evt;
-  };
+      onSelect?.(evt);
+    },
+    [onSelect]
+  );
 
   const headerContent = (
     <>
@@ -261,7 +295,9 @@ export function PanelChrome({
               <Icon
                 name={!collapsed ? 'angle-down' : 'angle-right'}
                 aria-hidden={!!title}
-                aria-label={!title ? 'toggle collapse panel' : undefined}
+                aria-label={
+                  !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
+                }
               />
               <Text variant="h6" truncate id={panelTitleId}>
                 {title}
@@ -271,12 +307,21 @@ export function PanelChrome({
         </div>
       )}
 
-      <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-        <PanelDescription description={description} className={dragClassCancel} />
-        {titleItems}
-      </div>
+      {(titleItems || description) && (
+        <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+          <PanelDescription description={description} className={dragClassCancel} />
+          {titleItems}
+        </div>
+      )}
+
       {loadingState === LoadingState.Streaming && (
-        <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
+        <Tooltip
+          content={
+            onCancelQuery
+              ? t('grafana-ui.panel-chrome.tooltip-stop-streaming', 'Stop streaming')
+              : t('grafana-ui.panel-chrome.tooltip-streaming', 'Streaming')
+          }
+        >
           <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
             <Icon name="circle-mono" size="md" className={styles.streaming} />
           </TitleItem>
@@ -284,7 +329,7 @@ export function PanelChrome({
       )}
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <DelayRender delay={2000}>
-          <Tooltip content="Cancel query">
+          <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
             <TitleItem
               className={cx(dragClassCancel, styles.pointer)}
               data-testid="panel-cancel-query"
@@ -295,102 +340,125 @@ export function PanelChrome({
           </Tooltip>
         </DelayRender>
       )}
-      <div className={styles.rightAligned}>
-        {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
-      </div>
+      {!hoverHeader && <div className={styles.flexGrow} />}
+      {actions && itemsRenderer(actions, (item) => item)}
     </>
   );
 
+  // Ignores streaming and loading (cancel query) states for simplicity
+  // If you need to cancel streaming / loading panels set a title
+  const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
+
   return (
-    // tabIndex={0} is needed for keyboard accessibility in the plot area
-    <section
-      className={cx(
-        styles.container,
-        isPanelTransparent && styles.transparentContainer,
-        isSelected && 'dashboard-selected-element',
-        !isSelected && isSelectable && selectableHighlight && 'dashboard-selectable-element'
-      )}
-      style={containerStyles}
-      aria-labelledby={!!title ? panelTitleId : undefined}
-      data-testid={testid}
-      tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
-      onFocus={onFocus}
-      onMouseMove={onMouseMove}
-      onMouseEnter={onMouseEnter}
-      ref={ref}
-    >
-      <div className={styles.loadingBarContainer}>
-        {loadingState === LoadingState.Loading ? (
-          <LoadingBar width={loadingBarWidth} ariaLabel="Panel loading bar" />
-        ) : null}
-      </div>
-
-      {hoverHeader && (
-        <>
-          <HoverWidget
-            menu={menu}
-            title={typeof title === 'string' ? title : undefined}
-            offset={hoverHeaderOffset}
-            dragClass={dragClass}
-            onOpenMenu={onOpenMenu}
-          >
-            {headerContent}
-          </HoverWidget>
-
-          {statusMessage && (
-            <div className={styles.errorContainerFloating}>
-              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
-            </div>
-          )}
-        </>
-      )}
-
-      {hasHeader && (
-        <div
-          className={cx(styles.headerContainer, dragClass)}
-          style={headerStyles}
-          data-testid="header-container"
-          onPointerMove={() => {
-            if (pointerDownEvt.current) {
-              onDragStart?.(pointerDownEvt.current);
-            }
-          }}
-          onPointerDown={onPointerDown}
-          onMouseEnter={isSelectable ? onHeaderEnter : undefined}
-          onMouseLeave={isSelectable ? onHeaderLeave : undefined}
-          onPointerUp={onPointerUp}
-        >
-          {statusMessage && (
-            <div className={dragClassCancel}>
-              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
-            </div>
-          )}
-
-          {headerContent}
-
-          {menu && (
-            <PanelMenu
-              menu={menu}
-              title={typeof title === 'string' ? title : undefined}
-              placement="bottom-end"
-              menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
-              onOpenMenu={onOpenMenu}
+    <div className={styles.container}>
+      {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
+      <section
+        className={cx(
+          styles.panel,
+          isPanelTransparent && styles.panelTransparent,
+          isSelected && 'dashboard-selected-element',
+          !isSelected && isSelectable && selectableHighlight && 'dashboard-selectable-element'
+        )}
+        style={containerStyles}
+        aria-labelledby={!!title ? panelTitleId : undefined}
+        data-testid={testid}
+        tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
+        onFocus={onFocus}
+        onMouseMove={onMouseMove}
+        onMouseEnter={onMouseEnter}
+        ref={ref}
+      >
+        <div className={styles.loadingBarContainer}>
+          {loadingState === LoadingState.Loading ? (
+            <LoadingBar
+              width={loadingBarWidth}
+              ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-loading', 'Panel loading bar')}
             />
-          )}
+          ) : null}
         </div>
-      )}
 
-      {!collapsed && (
-        <div
-          id={panelContentId}
-          data-testid={selectors.components.Panels.Panel.content}
-          className={cx(styles.content, height === undefined && styles.containNone)}
-          style={contentStyle}
-        >
-          {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
-        </div>
-      )}
-    </section>
+        {hoverHeader && (
+          <>
+            {hasHeaderContent && (
+              <HoverWidget
+                menu={menu}
+                title={typeof title === 'string' ? title : undefined}
+                dragClass={dragClass}
+                onDragStart={onDragStart}
+                offset={hoverHeaderOffset}
+                onOpenMenu={onOpenMenu}
+              >
+                {headerContent}
+              </HoverWidget>
+            )}
+
+            {statusMessage && (
+              <div className={styles.errorContainerFloating}>
+                <PanelStatus
+                  message={statusMessage}
+                  onClick={statusMessageOnClick}
+                  ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {hasHeader && (
+          <>
+            <div
+              className={cx(styles.headerContainer, dragClass)}
+              style={headerStyles}
+              data-testid={selectors.components.Panels.Panel.headerContainer}
+              onPointerDown={onPointerDown}
+              onMouseEnter={isSelectable ? onHeaderEnter : undefined}
+              onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+              onPointerUp={onPointerUp}
+            >
+              {statusMessage && (
+                <div className={dragClassCancel}>
+                  <PanelStatus
+                    message={statusMessage}
+                    onClick={statusMessageOnClick}
+                    ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+                  />
+                </div>
+              )}
+
+              {headerContent}
+
+              {menu && (
+                <PanelMenu
+                  menu={menu}
+                  title={typeof title === 'string' ? title : undefined}
+                  placement="bottom-end"
+                  menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
+                  onOpenMenu={onOpenMenu}
+                  dragClassCancel={dragClassCancel}
+                />
+              )}
+            </div>
+            {!collapsed && subHeaderContent && (
+              <div className={styles.subHeader} ref={subHeaderRef}>
+                {subHeaderContent}
+              </div>
+            )}
+          </>
+        )}
+
+        {!collapsed && (
+          <div
+            id={panelContentId}
+            data-testid={selectors.components.Panels.Panel.content}
+            className={cx(styles.content, height === undefined && styles.containNone)}
+            style={contentStyle}
+            onPointerDown={onContentPointerDown}
+          >
+            {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -401,6 +469,10 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
 
 const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
   if (hasHeader) {
+    if (getFeatureToggle('newPanelPadding')) {
+      return theme.spacing.gridSize * 5;
+    }
+
     return theme.spacing.gridSize * theme.components.panel.headerHeight;
   }
 
@@ -412,6 +484,7 @@ const getContentStyle = (
   theme: GrafanaTheme2,
   headerHeight: number,
   collapsed: boolean,
+  subHeaderHeight: number,
   height?: number,
   width?: number
 ) => {
@@ -427,7 +500,7 @@ const getContentStyle = (
 
   let innerHeight = 0;
   if (height) {
-    innerHeight = height - headerHeight - panelPadding - panelBorder;
+    innerHeight = height - headerHeight - panelPadding - panelBorder - subHeaderHeight;
   }
 
   if (collapsed) {
@@ -442,18 +515,24 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor, padding } = theme.components.panel;
+  const { background, borderColor } = theme.components.panel;
+  const newPanelPadding = getFeatureToggle('newPanelPadding');
 
   return {
     container: css({
+      height: '100%',
+      position: 'relative',
+    }),
+    panel: css({
       label: 'panel-container',
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
-      position: 'relative',
+      position: 'unset',
       borderRadius: theme.shape.radius.default,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+      overflow: 'hidden',
 
       '.always-show': {
         background: 'none',
@@ -485,7 +564,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
-    transparentContainer: css({
+    panelTransparent: css({
       label: 'panel-transparent-container',
       backgroundColor: 'transparent',
       border: '1px solid transparent',
@@ -516,6 +595,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
+      // remove logic after newPanelPadding feature toggle is removed
+      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1) : theme.spacing(0, 0.5, 0, 1),
+      gap: theme.spacing(1),
+    }),
+    subHeader: css({
+      label: 'panel-sub-header',
+      display: 'flex',
+      alignItems: 'center',
+      maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
+      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      overflow: 'hidden',
+      gap: theme.spacing(1),
     }),
     pointer: css({
       cursor: 'pointer',
@@ -532,8 +623,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       label: 'panel-title',
       display: 'flex',
-      padding: theme.spacing(0, padding),
       minWidth: 0,
+      paddingLeft: theme.spacing.x0_5,
       '& > h2': {
         minWidth: 0,
       },
@@ -564,20 +655,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
       zIndex: 1,
     }),
-    rightActions: css({
-      display: 'flex',
-      padding: theme.spacing(0, padding),
-      gap: theme.spacing(1),
-    }),
-    rightAligned: css({
-      label: 'right-aligned-container',
-      marginLeft: 'auto',
-      display: 'flex',
-      alignItems: 'center',
-    }),
     titleItems: css({
       display: 'flex',
       height: '100%',
+      alignItems: 'center',
     }),
     clearButtonStyles: css({
       alignItems: 'center',
@@ -587,6 +668,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       padding: 0,
       maxWidth: '100%',
+    }),
+    flexGrow: css({
+      flexGrow: 1,
     }),
   };
 };

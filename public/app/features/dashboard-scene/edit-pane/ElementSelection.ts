@@ -10,8 +10,8 @@ import { getEditableElementFor } from './shared';
 export class ElementSelection {
   private selectedObjects: Map<string, SceneObjectRef<SceneObject>>;
   private sameType?: boolean;
-
   private _isMultiSelection: boolean;
+  private _isNewElement = false;
 
   constructor(values: Array<[string, SceneObjectRef<SceneObject>]>) {
     this.selectedObjects = new Map(values);
@@ -20,6 +20,14 @@ export class ElementSelection {
     if (this.isMultiSelection) {
       this.sameType = this.checkSameType();
     }
+  }
+
+  public markAsNewElement() {
+    this._isNewElement = true;
+  }
+
+  public isNewElement() {
+    return this._isNewElement;
   }
 
   private checkSameType() {

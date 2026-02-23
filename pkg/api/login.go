@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
@@ -21,7 +23,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
-	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,42 +40,45 @@ var getViewIndex = func() string {
 	return viewIndex
 }
 
+var redirectAllowRe = regexp.MustCompile(`^/[a-zA-Z0-9-_./]*$`)
+
+// Do not allow redirect URLs that contain "//" or ".."
+var redirectDenyRe = regexp.MustCompile(`(//|\.\.)`)
+
 var (
 	errAbsoluteRedirectTo  = errors.New("absolute URLs are not allowed for redirect_to cookie value")
 	errInvalidRedirectTo   = errors.New("invalid redirect_to cookie value")
 	errForbiddenRedirectTo = errors.New("forbidden redirect_to cookie value")
 )
 
-func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
+func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) (string, error) {
 	to, err := url.Parse(redirectTo)
 	if err != nil {
-		return errInvalidRedirectTo
+		return "", errInvalidRedirectTo
 	}
 
 	if to.IsAbs() {
-		return errAbsoluteRedirectTo
+		return "", errAbsoluteRedirectTo
 	}
 
 	if to.Host != "" {
-		return errForbiddenRedirectTo
+		return "", errForbiddenRedirectTo
 	}
 
-	// path should have exactly one leading slash
-	if !strings.HasPrefix(to.Path, "/") {
-		return errForbiddenRedirectTo
+	if redirectDenyRe.MatchString(to.Path) || redirectDenyRe.MatchString(to.Fragment) {
+		return "", errForbiddenRedirectTo
 	}
 
-	if strings.HasPrefix(to.Path, "//") {
-		return errForbiddenRedirectTo
+	if to.Path != "/" && !redirectAllowRe.MatchString(to.Path) {
+		return "", errForbiddenRedirectTo
 	}
 
 	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
 	// will send the user to the wrong location
 	if hs.Cfg.AppSubURL != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubURL+"/") {
-		return errInvalidRedirectTo
+		return "", errInvalidRedirectTo
 	}
-
-	return nil
+	return to.String(), nil
 }
 
 func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
@@ -91,11 +95,16 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+	var tokenRotationErr authn.TokenNeedsRotationError
+	if errors.As(c.LookupTokenErr, &tokenRotationErr) {
 		c.Redirect(hs.Cfg.AppSubURL + "/")
 		return
 	}
 
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.htmlHandlerRequestsDuration.WithLabelValues("login"), time.Since(start).Seconds())
+	}()
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
@@ -130,8 +139,8 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 		// LDAP users authenticated by auth proxy are also assigned login token but their auth module is LDAP
 		if hs.Cfg.AuthProxy.Enabled &&
 			hs.Cfg.AuthProxy.EnableLoginToken &&
-			c.SignedInUser.IsAuthenticatedBy(loginservice.AuthProxyAuthModule, loginservice.LDAPAuthModule) {
-			user := &user.User{ID: c.SignedInUser.UserID, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
+			c.IsAuthenticatedBy(loginservice.AuthProxyAuthModule, loginservice.LDAPAuthModule) {
+			user := &user.User{ID: c.UserID, Email: c.Email, Login: c.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
 				c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to sign in user", err)
@@ -183,6 +192,7 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 	for providerName, provider := range oauthInfos {
 		if provider.AutoLogin || hs.Cfg.OAuthAutoLogin {
 			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
 				redirectUrl += hs.getRedirectToForAutoLogin(c)
 			}
@@ -194,6 +204,7 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 
 	if samlAutoLogin {
 		redirectUrl := hs.Cfg.AppSubURL + "/login/saml"
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
 			redirectUrl += hs.getRedirectToForAutoLogin(c)
 		}
@@ -290,7 +301,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	// FIXME: restructure saml client to implement authn.LogoutClient
 	if hs.samlSingleLogoutEnabled() {
-		if c.SignedInUser.GetAuthenticatedBy() == loginservice.SAMLAuthModule {
+		if c.GetAuthenticatedBy() == loginservice.SAMLAuthModule {
 			c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 			return
 		}
@@ -305,7 +316,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		return
 	}
 
-	hs.log.Info("Successful Logout", "id", c.SignedInUser.GetID())
+	hs.log.Info("Successful Logout", "id", c.GetID())
 	c.Redirect(redirect.URL)
 }
 
@@ -347,29 +358,8 @@ func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err 
 }
 
 func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
-	setCookie := true
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
-		var userID int64
-		if c.SignedInUser != nil && !c.SignedInUser.IsNil() {
-			var errID error
-			userID, errID = identity.UserIdentifier(c.SignedInUser.GetID())
-			if errID != nil {
-				hs.log.Error("failed to retrieve user ID", "error", errID)
-			}
-		}
-
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
-		prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
-		if err != nil {
-			c.Redirect(hs.Cfg.AppSubURL + "/login")
-		}
-		setCookie = prefs.Cookies("functional")
-	}
-
-	if setCookie {
-		if err := hs.trySetEncryptedCookie(c, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
-			hs.log.Error("Failed to set encrypted cookie", "err", err)
-		}
+	if err := hs.trySetEncryptedCookie(c, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
+		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
 	return hs.Cfg.AppSubURL + "/login"

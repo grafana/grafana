@@ -135,11 +135,29 @@ export interface ExploreItemState {
    * converted to a query row.
    */
   queries: DataQuery[];
+
+  /**
+   * Index increased when queries change.
+   * Required to derive queriesChangedIndexAtRun correctly.
+   */
+  queriesChangedIndex: number;
+
+  /**
+   * Index updated after running the query. Changes if new query was run.
+   * Used to reset legend in the main graph to match Dashboard's behavior (#113975)
+   */
+  queriesChangedIndexAtRun: number;
+
   /**
    * True if this Explore area has been initialized.
    * Used to distinguish URL state injection versus split view state injection.
    */
   initialized: boolean;
+  /**
+   * Query library reference identifier when editing a query from the query library
+   *
+   */
+  queryLibraryRef?: string;
   /**
    * Log query result to be displayed in the logs result viewer.
    */
@@ -229,6 +247,11 @@ export interface ExploreItemState {
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 
   correlations?: CorrelationData[];
+
+  /**
+   * If set to true, all query rows will be collapsed initially and the content outline will be hidden
+   */
+  compact: boolean;
 }
 
 export interface ExploreUpdateState {

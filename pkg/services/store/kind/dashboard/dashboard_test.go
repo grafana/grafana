@@ -55,6 +55,7 @@ func dsLookupForTests() DatasourceLookup {
 
 func TestReadDashboard(t *testing.T) {
 	inputs := []string{
+		"absolute-garbage",
 		"check-string-datasource-id",
 		"all-panels",
 		"panel-graph/graph-shared-tooltips",
@@ -72,6 +73,10 @@ func TestReadDashboard(t *testing.T) {
 		"panels-without-datasources",
 		"panel-with-library-panel-field",
 		"k8s-wrapper",
+		"k8s-wrapper-editable-string",
+		"k8s-wrapper-tags-string",
+		"k8s-wrapper-with-parsing-errors",
+		"v2-elements",
 	}
 
 	devdash := "../../../../../devenv/dev-dashboards/"

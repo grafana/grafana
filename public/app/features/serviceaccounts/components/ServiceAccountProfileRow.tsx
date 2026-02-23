@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ConfirmButton, Input, Label, LegacyInputStatus, useStyles2 } from '@grafana/ui';
 
 interface Props {
@@ -84,13 +85,13 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
         {onChange && (
           <ConfirmButton
             closeOnConfirm
-            confirmText="Save"
+            confirmText={t('serviceaccounts.service-account-profile-row.confirmText-save', 'Save')}
             onConfirm={onSave}
             onClick={onEditClick}
             onCancel={onCancelClick}
             disabled={disabled}
           >
-            Edit
+            {t('serviceaccounts.service-account-profile-row.edit', 'Edit')}
           </ConfirmButton>
         )}
       </td>

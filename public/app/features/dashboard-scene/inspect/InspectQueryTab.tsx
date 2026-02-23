@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -6,7 +7,6 @@ import {
   SceneObjectRef,
   VizPanel,
 } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 

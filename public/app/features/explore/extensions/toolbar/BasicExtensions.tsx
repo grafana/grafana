@@ -1,10 +1,11 @@
 import { lazy, Suspense } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { Trans } from '../../../../core/internationalization';
 import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
 
 import { ExtensionDropdownProps } from './types';
@@ -38,7 +39,13 @@ export function BasicExtensions(props: ExtensionDropdownProps) {
   return (
     <>
       <Dropdown onVisibleChange={setIsModalOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton aria-label="Add" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isModalOpen}>
+        <ToolbarButton
+          aria-label={t('explore.basic-extensions.aria-label-add', 'Add')}
+          data-testid={selectors.pages.Explore.toolbar.addTo}
+          disabled={!Boolean(noQueriesInPane)}
+          variant="canvas"
+          isOpen={isModalOpen}
+        >
           <Trans i18nKey="explore.toolbar.add-to-extensions">Add</Trans>
         </ToolbarButton>
       </Dropdown>

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { useStyles2, Badge } from '@grafana/ui';
 
 import { getLatestCompatibleVersion } from '../helpers';
 import { Version } from '../types';
@@ -27,8 +27,20 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
     setIsInstalling(false);
   }, [installedVersion]);
 
-  if (versions.length === 0) {
-    return <p>No version history was found.</p>;
+  // Check if installed version is in the versions list
+  const isInstalledVersionMissing = useMemo(() => {
+    if (!installedVersion) {
+      return false;
+    }
+    return !versions.some((v) => v.version === installedVersion);
+  }, [versions, installedVersion]);
+
+  if (versions.length === 0 && !isInstalledVersionMissing) {
+    return (
+      <p>
+        <Trans i18nKey="plugins.version-list.no-version-history-was-found">No version history was found.</Trans>
+      </p>
+    );
   }
 
   const onInstallClick = () => {
@@ -39,19 +51,24 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
     <table className={styles.table}>
       <thead>
         <tr>
-          <th>Version</th>
+          <th>
+            <Trans i18nKey="plugins.version-list.version">Version</Trans>
+          </th>
           <th></th>
-          <th>Last updated</th>
-          <th>Grafana Dependency</th>
+          <th>
+            <Trans i18nKey="plugins.version-list.latest-release-date">Latest release date</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="plugins.version-list.grafana-dependency">Grafana dependency</Trans>
+          </th>
         </tr>
       </thead>
       <tbody>
         {versions.map((version) => {
           let tooltip: string | undefined = undefined;
           const isInstalledVersion = installedVersion === version.version;
-          const canInstall = version.angularDetected ? config.angularSupportEnabled : true;
 
-          if (!canInstall) {
+          if (version.angularDetected) {
             tooltip = 'This plugin version is AngularJS type which is not supported';
           }
 
@@ -67,34 +84,48 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
             <tr key={version.version}>
               {/* Version number */}
               {isInstalledVersion ? (
-                <td className={styles.currentVersion}>{version.version} (installed version)</td>
+                <td className={styles.currentVersion}>
+                  <Trans i18nKey="plugins.version-list.installed-version" values={{ versionNumber: version.version }}>
+                    {'{{versionNumber}}'} (installed version)
+                  </Trans>
+                </td>
               ) : version.version === latestCompatibleVersion?.version ? (
-                <td>{version.version} (latest compatible version)</td>
+                <td>
+                  <Trans
+                    i18nKey="plugins.version-list.latest-compatible-version"
+                    values={{ versionNumber: version.version }}
+                  >
+                    {'{{versionNumber}}'} (latest compatible version)
+                  </Trans>
+                </td>
               ) : (
                 <td>{version.version}</td>
               )}
 
-              {/* Install button */}
+              {/* Install button or status badge */}
               <td>
-                <VersionInstallButton
-                  pluginId={pluginId}
-                  version={version}
-                  latestCompatibleVersion={latestCompatibleVersion?.version}
-                  installedVersion={installedVersion}
-                  onConfirmInstallation={onInstallClick}
-                  disabled={
-                    isInstalledVersion ||
-                    isInstalling ||
-                    !canInstall ||
-                    !version.isCompatible ||
-                    !canInstall ||
-                    disableInstallation
-                  }
-                  tooltip={tooltip}
-                />
+                {isInstalledVersion && version.status === 'deprecated' ? (
+                  <Badge text={t('plugins.version-list.deprecated', 'Deprecated')} color="orange" />
+                ) : (
+                  <VersionInstallButton
+                    pluginId={pluginId}
+                    version={version}
+                    latestCompatibleVersion={latestCompatibleVersion?.version}
+                    installedVersion={installedVersion}
+                    onConfirmInstallation={onInstallClick}
+                    disabled={
+                      isInstalledVersion ||
+                      isInstalling ||
+                      version.angularDetected ||
+                      !version.isCompatible ||
+                      disableInstallation
+                    }
+                    tooltip={tooltip}
+                  />
+                )}
               </td>
 
-              {/* Last updated */}
+              {/* Latest release date */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>
                 {dateTimeFormatTimeAgo(version.updatedAt || version.createdAt)}
               </td>
@@ -109,29 +140,52 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    padding: theme.spacing(2, 4, 3),
-  }),
-  currentVersion: css({
-    fontWeight: theme.typography.fontWeightBold,
-  }),
-  spinner: css({
-    marginLeft: theme.spacing(1),
-  }),
+  container: css({ padding: theme.spacing(2, 4, 3) }),
+  currentVersion: css({ fontWeight: theme.typography.fontWeightBold }),
+  spinner: css({ marginLeft: theme.spacing(1) }),
+  badge: css({ marginLeft: theme.spacing(1) }),
   table: css({
     tableLayout: 'fixed',
     width: '100%',
-    'td, th': {
-      padding: `${theme.spacing()} 0`,
-    },
-    th: {
-      fontSize: theme.typography.h5.fontSize,
-    },
-    td: {
-      wordBreak: 'break-word',
-    },
-    'tbody tr:nth-child(odd)': {
-      background: theme.colors.emphasize(theme.colors.background.primary, 0.02),
+    'td, th': { padding: `${theme.spacing()} 0` },
+    th: { fontSize: theme.typography.h5.fontSize },
+    td: { wordBreak: 'break-word' },
+    'tbody tr:nth-child(odd)': { background: theme.colors.emphasize(theme.colors.background.primary, 0.02) },
+
+    // Display table as cards on narrow screens
+    [theme.breakpoints.down('md')]: {
+      tableLayout: 'auto',
+      thead: { display: 'none' },
+      tbody: { display: 'block' },
+      'tbody tr': {
+        display: 'block',
+        marginBottom: theme.spacing(2),
+        padding: theme.spacing(2),
+        background: theme.colors.background.primary,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.default,
+        boxShadow: theme.shadows.z1,
+      },
+      'tbody td': {
+        display: 'block',
+        padding: `${theme.spacing(0.5)} 0`,
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+        textAlign: 'left',
+        '&:last-child': { borderBottom: 'none' },
+        '&:before': {
+          content: 'attr(data-label)',
+          display: 'inline-block',
+          fontWeight: theme.typography.fontWeightMedium,
+          color: theme.colors.text.secondary,
+          fontSize: theme.typography.size.sm,
+          marginRight: theme.spacing(1),
+          minWidth: '120px',
+        },
+      },
+      'tbody td:nth-child(1)': { '&:before': { content: '"Version:"' } },
+      'tbody td:nth-child(2)': { '&:before': { content: '"Action:"' } },
+      'tbody td:nth-child(3)': { '&:before': { content: '"Release date:"' } },
+      'tbody td:nth-child(4)': { '&:before': { content: '"Dependency:"' } },
     },
   }),
 });

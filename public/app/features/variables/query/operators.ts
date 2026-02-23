@@ -10,8 +10,8 @@ import {
   PanelData,
   QueryVariableModel,
 } from '@grafana/data';
+import { ThunkDispatch } from 'app/types/store';
 
-import { ThunkDispatch } from '../../../types';
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
@@ -143,7 +143,7 @@ export function validateVariableSelection(args: {
     );
 }
 
-export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
+export function areMetricFindValues(data: unknown[]): data is MetricFindValue[] {
   if (!data) {
     return false;
   }

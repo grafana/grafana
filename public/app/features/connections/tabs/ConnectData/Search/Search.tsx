@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { Icon, Input, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
   searchContainer: css({
@@ -19,8 +19,6 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
   }),
 });
 
-const placeholder = t('connections.search.placeholder', 'Search all');
-
 export interface Props {
   onChange: (e: React.FormEvent<HTMLInputElement>) => void;
   value: string | undefined;
@@ -30,6 +28,8 @@ export const Search = ({ onChange, value }: Props) => {
   const chromeHeaderHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
 
+  const placeholder = t('connections.search.placeholder', 'Search all');
+
   return (
     <div className={styles.searchContainer}>
       <Input
@@ -37,7 +37,7 @@ export const Search = ({ onChange, value }: Props) => {
         onChange={onChange}
         prefix={<Icon name="search" />}
         placeholder={placeholder}
-        aria-label="Search all"
+        aria-label={t('connections.search.aria-label-search-all', 'Search all')}
       />
     </div>
   );

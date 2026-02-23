@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import createMockRaf from 'mock-raf';
 import uPlot from 'uplot';
 
@@ -115,11 +115,11 @@ describe('UPlotChart', () => {
   describe('config update', () => {
     it('skips uPlot intialization for width and height equal 0', async () => {
       const { data, config } = mockData();
-      const { queryAllByTestId } = render(
+      render(
         <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={0} height={0} />
       );
 
-      expect(queryAllByTestId('uplot-main-div')).toHaveLength(1);
+      expect(screen.queryAllByTestId('uplot-main-div')).toHaveLength(1);
       expect(uPlot).not.toBeCalled();
     });
 

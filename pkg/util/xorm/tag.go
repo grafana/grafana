@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 type tagContext struct {
@@ -34,12 +34,11 @@ type tagHandler func(ctx *tagContext) error
 var (
 	// defaultTagHandlers enumerates all the default tag handler
 	defaultTagHandlers = map[string]tagHandler{
-		"<-":       OnlyFromDBTagHandler,
-		"->":       OnlyToDBTagHandler,
 		"PK":       PKTagHandler,
 		"NULL":     NULLTagHandler,
 		"NOT":      IgnoreTagHandler,
 		"AUTOINCR": AutoIncrTagHandler,
+		"RANDOMID": RandomIDTagHandler,
 		"DEFAULT":  DefaultTagHandler,
 		"CREATED":  CreatedTagHandler,
 		"UPDATED":  UpdatedTagHandler,
@@ -65,18 +64,6 @@ func IgnoreTagHandler(ctx *tagContext) error {
 	return nil
 }
 
-// OnlyFromDBTagHandler describes mapping direction tag handler
-func OnlyFromDBTagHandler(ctx *tagContext) error {
-	ctx.col.MapType = core.ONLYFROMDB
-	return nil
-}
-
-// OnlyToDBTagHandler describes mapping direction tag handler
-func OnlyToDBTagHandler(ctx *tagContext) error {
-	ctx.col.MapType = core.ONLYTODB
-	return nil
-}
-
 // PKTagHandler describes primary key tag handler
 func PKTagHandler(ctx *tagContext) error {
 	ctx.col.IsPrimaryKey = true
@@ -99,6 +86,12 @@ func NotNullTagHandler(ctx *tagContext) error {
 // AutoIncrTagHandler describes autoincr tag handler
 func AutoIncrTagHandler(ctx *tagContext) error {
 	ctx.col.IsAutoIncrement = true
+	return nil
+}
+
+// RandomIDTagHandler describes snowflake id tag handler
+func RandomIDTagHandler(ctx *tagContext) error {
+	ctx.col.IsRandomID = true
 	return nil
 }
 

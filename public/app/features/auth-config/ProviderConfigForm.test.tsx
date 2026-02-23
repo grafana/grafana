@@ -17,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
     delete: deleteMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     panels: {
       test: {
         id: 'test',
@@ -61,7 +62,7 @@ const testConfig: SSOProvider = {
   },
 };
 
-jest.mock('app/core/core', () => {
+jest.mock('app/core/services/context_srv', () => {
   return {
     contextSrv: {
       isGrafanaAdmin: true,
@@ -153,6 +154,7 @@ describe('ProviderConfigForm', () => {
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
             enabled: true,
+            loginPrompt: '',
             name: 'GitHub',
             orgMapping: '["Group A:1:Editor","Group B:2:Admin"]',
             roleAttributePath: 'new-attribute-path',
@@ -203,6 +205,7 @@ describe('ProviderConfigForm', () => {
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
             enabled: false,
+            loginPrompt: '',
             name: 'GitHub',
             roleAttributePath: '',
             roleAttributeStrict: false,

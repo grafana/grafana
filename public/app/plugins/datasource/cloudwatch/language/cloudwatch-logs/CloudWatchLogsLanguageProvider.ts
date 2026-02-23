@@ -5,8 +5,9 @@ import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data'
 import { BackendDataSourceResponse, FetchResponse, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { LogGroup } from '../../dataquery.gen';
 import { CloudWatchDatasource } from '../../datasource';
-import { CloudWatchQuery, LogGroup } from '../../types';
+import { CloudWatchQuery } from '../../types';
 import { fetchLogGroupFields } from '../utils';
 
 import syntax, {
@@ -35,13 +36,11 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
   datasource: CloudWatchDatasource;
   templateSrv: TemplateSrv;
 
-  constructor(datasource: CloudWatchDatasource, templateSrv?: TemplateSrv, initialValues?: any) {
+  constructor(datasource: CloudWatchDatasource, templateSrv?: TemplateSrv) {
     super();
 
     this.datasource = datasource;
     this.templateSrv = templateSrv ?? getTemplateSrv();
-
-    Object.assign(this, initialValues);
   }
 
   // Strip syntax chars
@@ -90,15 +89,17 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
     const { value } = input;
 
     // Get tokens
-    const tokens = value?.data.get('tokens');
+    const tokens: Token[] = value?.data.get('tokens');
 
     if (!tokens || !tokens.length) {
       return { suggestions: [] };
     }
 
-    const curToken: Token = tokens.filter(
-      (token: any) =>
-        token.offsets.start <= value!.selection?.start?.offset && token.offsets.end >= value!.selection?.start?.offset
+    const curToken = tokens.filter(
+      (token) =>
+        token.offsets &&
+        token.offsets.start <= value!.selection?.start?.offset &&
+        token.offsets.end >= value!.selection?.start?.offset
     )[0];
 
     const isFirstToken = !curToken.prev;

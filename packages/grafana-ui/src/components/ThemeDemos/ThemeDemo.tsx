@@ -1,12 +1,12 @@
-/* eslint-disable @grafana/no-untranslated-strings */
+/* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { css, cx } from '@emotion/css';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, ThemeRichColor, ThemeVizHue } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { allButtonVariants, Button } from '../Button';
+import { allButtonVariants, Button } from '../Button/Button';
 import { Card } from '../Card/Card';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
 import { Combobox } from '../Combobox/Combobox';
@@ -18,17 +18,20 @@ import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
 import { BackgroundColor, BorderColor, Box, BoxShadow } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Switch } from '../Switch/Switch';
 import { Text, TextProps } from '../Text/Text';
 
 interface DemoBoxProps {
   bg?: BackgroundColor;
   border?: BorderColor;
+  scrollable?: boolean;
   shadow?: BoxShadow;
   textColor?: TextProps['color'];
 }
 
-const DemoBox = ({ bg, border, children, shadow }: React.PropsWithChildren<DemoBoxProps>) => {
+const DemoBox = ({ bg, border, children, shadow, scrollable }: React.PropsWithChildren<DemoBoxProps>) => {
+  const MaybeScroll = scrollable ? ScrollContainer : React.Fragment;
   return (
     <Box
       backgroundColor={bg ? bg : undefined}
@@ -36,9 +39,9 @@ const DemoBox = ({ bg, border, children, shadow }: React.PropsWithChildren<DemoB
       borderStyle={border ? 'solid' : undefined}
       borderColor={border}
       boxShadow={shadow}
-      borderRadius={'default'}
+      borderRadius={'lg'}
     >
-      {children}
+      <MaybeScroll>{children}</MaybeScroll>
     </Box>
   );
 };
@@ -64,6 +67,15 @@ export const ThemeDemo = () => {
   const [boolValue, setBoolValue] = useState(false);
   const [selectValue, setSelectValue] = useState('Item 2');
   const t = useTheme2();
+  const inputId = useId();
+  const disabledInputId = useId();
+  const comboboxId = useId();
+  const radioId = useId();
+  const switchId = useId();
+  const switchTrueId = useId();
+  const switchDisabledId = useId();
+  const inlineId = useId();
+  const inlineDisabledId = useId();
 
   const richColors = [
     t.colors.primary,
@@ -73,6 +85,8 @@ export const ThemeDemo = () => {
     t.colors.warning,
     t.colors.info,
   ];
+
+  const vizColors = t.visualization.hues;
 
   const selectOptions = [
     { label: 'Item 1', value: 'Item 1' },
@@ -110,7 +124,7 @@ export const ThemeDemo = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Text colors" isOpen={true}>
-          <Stack justifyContent="flex-start">
+          <Stack justifyContent="flex-start" wrap="wrap">
             <DemoBox>
               <TextColors t={t} />
             </DemoBox>
@@ -123,8 +137,8 @@ export const ThemeDemo = () => {
           </Stack>
         </CollapsableSection>
         <CollapsableSection label="Rich colors" isOpen={true}>
-          <DemoBox bg="primary">
-            <table className={colorsTableStyle}>
+          <DemoBox bg="primary" scrollable>
+            <table className={colorsTableStyle(t)}>
               <thead>
                 <tr>
                   <td>name</td>
@@ -142,39 +156,65 @@ export const ThemeDemo = () => {
             </table>
           </DemoBox>
         </CollapsableSection>
+        <CollapsableSection label="Viz hues" isOpen={true}>
+          <DemoBox bg="primary" scrollable>
+            <table className={colorsTableStyle(t)}>
+              <thead>
+                <tr>
+                  <td>name</td>
+                  <td>super-light</td>
+                  <td>light</td>
+                  <td>primary</td>
+                  <td>semi-dark</td>
+                  <td>dark</td>
+                </tr>
+              </thead>
+              <tbody>
+                {vizColors.map((color) => (
+                  <VizHuesDemo key={color.name} color={color} theme={t} />
+                ))}
+              </tbody>
+            </table>
+          </DemoBox>
+        </CollapsableSection>
         <CollapsableSection label="Forms" isOpen={true}>
           <DemoBox bg="primary">
             <Field label="Input label" description="Field description">
-              <Input placeholder="Placeholder" />
+              <Input id={inputId} placeholder="Placeholder" />
             </Field>
             <Field label="Input disabled" disabled>
-              <Input placeholder="Placeholder" value="Disabled value" />
+              <Input id={disabledInputId} placeholder="Placeholder" value="Disabled value" />
             </Field>
             <Field label="Combobox">
-              <Combobox options={selectOptions} value={selectValue} onChange={(v) => setSelectValue(v?.value!)} />
+              <Combobox
+                id={comboboxId}
+                options={selectOptions}
+                value={selectValue}
+                onChange={(v) => setSelectValue(v?.value!)}
+              />
             </Field>
             <Field label="Radio label">
-              <RadioButtonGroup options={radioOptions} value={radioValue} onChange={setRadioValue} />
+              <RadioButtonGroup id={radioId} options={radioOptions} value={radioValue} onChange={setRadioValue} />
             </Field>
             <Stack>
               <Field label="Switch">
-                <Switch value={boolValue} onChange={(e) => setBoolValue(e.currentTarget.checked)} />
+                <Switch id={switchId} value={boolValue} onChange={(e) => setBoolValue(e.currentTarget.checked)} />
               </Field>
               <Field label="Switch true">
-                <Switch value={true} />
+                <Switch id={switchTrueId} value={true} />
               </Field>
               <Field label="Switch false disabled" disabled={true}>
-                <Switch value={false} />
+                <Switch id={switchDisabledId} value={false} />
               </Field>
             </Stack>
             <Stack direction="column">
               <div>Inline forms</div>
               <InlineFieldRow>
                 <InlineField label="Label">
-                  <Input placeholder="Placeholder" />
+                  <Input id={inlineId} placeholder="Placeholder" />
                 </InlineField>
                 <InlineField label="Another Label" disabled>
-                  <Input placeholder="Disabled" />
+                  <Input id={inlineDisabledId} placeholder="Disabled" />
                 </InlineField>
               </InlineFieldRow>
             </Stack>
@@ -192,7 +232,7 @@ export const ThemeDemo = () => {
         <CollapsableSection label="Buttons" isOpen={true}>
           <DemoBox bg="primary">
             <Stack direction="column" gap={3}>
-              <Stack>
+              <Stack wrap="wrap">
                 {allButtonVariants.map((variant) => (
                   <Button variant={variant} key={variant}>
                     {variant}
@@ -202,7 +242,7 @@ export const ThemeDemo = () => {
                   Disabled
                 </Button>
               </Stack>
-              <Card>
+              <Card noMargin>
                 <Card.Heading>Button inside card</Card.Heading>
                 <Card.Actions>
                   {allButtonVariants.map((variant) => (
@@ -226,6 +266,33 @@ export const ThemeDemo = () => {
   );
 };
 
+interface VizHuesDemoProps {
+  color: ThemeVizHue;
+  theme: GrafanaTheme2;
+}
+
+export function VizHuesDemo({ theme, color }: VizHuesDemoProps) {
+  return (
+    <tr>
+      <td>{color.name}</td>
+      {color.shades.map((shade, index) => (
+        <td key={index}>
+          <div
+            className={css({
+              background: shade.color,
+              borderRadius: theme.shape.radius.default,
+              color: colorManipulator.getContrastRatio('#FFFFFF', shade.color) >= 4.5 ? '#FFFFFF' : '#000000',
+              padding: theme.spacing(1),
+            })}
+          >
+            {shade.color}
+          </div>
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 interface RichColorDemoProps {
   theme: GrafanaTheme2;
   color: ThemeRichColor;
@@ -241,7 +308,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             background: color.main,
             borderRadius: theme.shape.radius.default,
             color: color.contrastText,
-            padding: '8px',
+            padding: theme.spacing(1),
             fontWeight: 500,
           })}
         >
@@ -252,9 +319,9 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
         <div
           className={css({
             background: color.shade,
-            color: color.contrastText,
+            color: theme.colors.getContrastText(color.shade, 4.5),
             borderRadius: theme.shape.radius.default,
-            padding: '8px',
+            padding: theme.spacing(1),
           })}
         >
           {color.shade}
@@ -265,7 +332,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css({
             background: color.transparent,
             borderRadius: theme.shape.radius.default,
-            padding: '8px',
+            padding: theme.spacing(1),
           })}
         >
           {color.shade}
@@ -277,7 +344,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             border: `1px solid ${color.border}`,
             color: color.text,
             borderRadius: theme.shape.radius.default,
-            padding: '8px',
+            padding: theme.spacing(1),
           })}
         >
           {color.text}
@@ -287,14 +354,16 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
   );
 }
 
-const colorsTableStyle = css({
-  textAlign: 'center',
-
-  td: {
-    padding: '8px',
+const colorsTableStyle = (theme: GrafanaTheme2) =>
+  css({
     textAlign: 'center',
-  },
-});
+    overflow: 'auto',
+
+    td: {
+      padding: theme.spacing(1),
+      textAlign: 'center',
+    },
+  });
 
 export function TextColors({ t }: { t: GrafanaTheme2 }) {
   return (
@@ -316,8 +385,10 @@ export function TextColors({ t }: { t: GrafanaTheme2 }) {
 }
 
 export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
+  const t = useTheme2();
   const style = css({
-    padding: '16px',
+    padding: t.spacing(2),
+    borderRadius: t.shape.radius.default,
     boxShadow: shadow,
   });
   return <div className={style}>{name}</div>;
@@ -327,7 +398,8 @@ export function ActionsDemo() {
   const t = useTheme2();
 
   const item = css({
-    padding: '8px',
+    borderRadius: t.shape.radius.default,
+    padding: t.spacing(1),
     ':hover': {
       background: t.colors.action.hover,
     },

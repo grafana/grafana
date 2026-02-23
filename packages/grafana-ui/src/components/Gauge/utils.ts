@@ -1,7 +1,4 @@
 import {
-  DisplayValue,
-  FALLBACK_COLOR,
-  FieldColorModeId,
   FieldConfig,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
@@ -51,13 +48,9 @@ export function calculateGaugeAutoProps(
 export function getFormattedThresholds(
   decimals: number,
   field: FieldConfig,
-  value: DisplayValue,
-  theme: GrafanaTheme | GrafanaTheme2
+  theme: GrafanaTheme | GrafanaTheme2,
+  offsetColor = true
 ): Threshold[] {
-  if (field.color?.mode !== FieldColorModeId.Thresholds) {
-    return [{ value: field.min ?? GAUGE_DEFAULT_MINIMUM, color: value.color ?? FALLBACK_COLOR }];
-  }
-
   const thresholds = field.thresholds ?? DEFAULT_THRESHOLDS;
   const isPercent = thresholds.mode === ThresholdsMode.Percentage;
   const steps = thresholds.steps;
@@ -72,10 +65,16 @@ export function getFormattedThresholds(
 
   const first = getActiveThreshold(min, steps);
   const last = getActiveThreshold(max, steps);
-  const formatted: Threshold[] = [
-    { value: +min.toFixed(decimals), color: theme.visualization.getColorByName(first.color) },
-  ];
-  let skip = true;
+  const formatted: Threshold[] = [];
+
+  if (offsetColor) {
+    formatted.push({
+      value: parseFloat(min.toFixed(decimals)),
+      color: theme.visualization.getColorByName(first.color),
+    });
+  }
+
+  let skip = offsetColor;
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     if (skip) {
@@ -85,11 +84,16 @@ export function getFormattedThresholds(
       continue;
     }
     const prev = steps[i - 1];
-    formatted.push({ value: step.value, color: theme.visualization.getColorByName(prev.color) });
+    formatted.push({
+      value: isFinite(step.value) ? step.value : 0,
+      color: theme.visualization.getColorByName((offsetColor ? prev : step).color),
+    });
     if (step === last) {
       break;
     }
   }
-  formatted.push({ value: +max.toFixed(decimals), color: theme.visualization.getColorByName(last.color) });
+  if (max > last.value) {
+    formatted.push({ value: parseFloat(max.toFixed(decimals)), color: theme.visualization.getColorByName(last.color) });
+  }
   return formatted;
 }

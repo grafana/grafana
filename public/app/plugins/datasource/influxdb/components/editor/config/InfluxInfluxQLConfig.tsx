@@ -16,6 +16,11 @@ import { Alert, Field, InlineLabel, Input, SecretInput, Select, useStyles2 } fro
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
 
 import { WIDTH_SHORT } from './constants';
+import {
+  trackInfluxDBConfigV1InfluxQLDatabaseInputField,
+  trackInfluxDBConfigV1InfluxQLPasswordInputField,
+  trackInfluxDBConfigV1InfluxQLUserInputField,
+} from './trackingv1';
 
 const httpModes: SelectableValue[] = [
   { label: 'GET', value: 'GET' },
@@ -50,6 +55,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         label={<InlineLabel width={WIDTH_SHORT}>Database</InlineLabel>}
         className={styles.horizontalField}
         htmlFor={`${htmlPrefix}-db`}
+        noMargin
       >
         <Input
           id={`${htmlPrefix}-db`}
@@ -65,6 +71,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
               },
             });
           }}
+          onBlur={trackInfluxDBConfigV1InfluxQLDatabaseInputField}
         />
       </Field>
       <Field
@@ -72,18 +79,21 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         label={<InlineLabel width={WIDTH_SHORT}>User</InlineLabel>}
         className={styles.horizontalField}
         htmlFor={`${htmlPrefix}-user`}
+        noMargin
       >
         <Input
           id={`${htmlPrefix}-user`}
           className="width-20"
           value={options.user || ''}
           onChange={onUpdateDatasourceOption(props, 'user')}
+          onBlur={trackInfluxDBConfigV1InfluxQLUserInputField}
         />
       </Field>
       <Field
         horizontal
         label={<InlineLabel width={WIDTH_SHORT}>Password</InlineLabel>}
         className={styles.horizontalField}
+        noMargin
       >
         <SecretInput
           isConfigured={Boolean(secureJsonFields && secureJsonFields.password)}
@@ -93,6 +103,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           className="width-20"
           onReset={() => updateDatasourcePluginResetOption(props, 'password')}
           onChange={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
+          onBlur={trackInfluxDBConfigV1InfluxQLPasswordInputField}
         />
       </Field>
       <Field
@@ -109,6 +120,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         }
         htmlFor={`${htmlPrefix}-http-method`}
         className={styles.horizontalField}
+        noMargin
       >
         <Select
           inputId={`${htmlPrefix}-http-method`}
@@ -131,12 +143,34 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           </InlineLabel>
         }
         className={styles.horizontalField}
+        noMargin
       >
         <Input
           className="width-20"
           placeholder="10s"
           value={options.jsonData.timeInterval || ''}
           onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
+        />
+      </Field>
+
+      <Field
+        horizontal
+        label={
+          <InlineLabel
+            width={WIDTH_SHORT}
+            tooltip="This time range is used in the query editor's autocomplete to reduce the execution time of tag filter queries."
+          >
+            Autocomplete range
+          </InlineLabel>
+        }
+        className={styles.horizontalField}
+        noMargin
+      >
+        <Input
+          className="width-20"
+          placeholder="12h"
+          value={options.jsonData.showTagTime || ''}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'showTagTime')}
         />
       </Field>
     </>

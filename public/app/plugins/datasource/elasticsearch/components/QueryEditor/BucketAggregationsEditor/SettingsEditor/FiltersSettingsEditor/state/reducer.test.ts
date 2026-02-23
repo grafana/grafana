@@ -1,6 +1,5 @@
-import { reducerTester } from 'test/core/redux/reducerTester';
-
-import { Filter } from '../../../../../../types';
+import { Filter } from '../../../../../../dataquery.gen';
+import { reducerTester } from '../../../../../reducerTester';
 
 import { addFilter, changeFilter, removeFilter } from './actions';
 import { reducer } from './reducer';

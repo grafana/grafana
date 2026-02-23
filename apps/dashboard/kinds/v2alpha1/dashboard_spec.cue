@@ -1,8 +1,7 @@
 package v2alpha1
 
 DashboardSpec: {
-	// Title of dashboard.
-	annotations: [...AnnotationQueryKind]
+	annotations: [...AnnotationQueryKind] | *[]
 
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).
@@ -16,12 +15,12 @@ DashboardSpec: {
 	// Whether a dashboard is editable or not.
 	editable?: bool | *true
 
-	elements: [ElementReference.name]: Element
+	elements: [ElementReference.name]: Element | *{}
 
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 
 	// Links with references to other dashboards or external websites.
-	links: [...DashboardLink]
+	links: [...DashboardLink] | *[]
 
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
 	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
@@ -29,14 +28,14 @@ DashboardSpec: {
 	liveNow?: bool
 
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
-	preload: bool
+	preload: bool | *false
 
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: uint16
 
 	// Tags associated with dashboard.
-	tags: [...string]
+	tags: [...string] | *[]
 
 	timeSettings: TimeSettingsSpec
 
@@ -44,7 +43,7 @@ DashboardSpec: {
 	title: string
 
 	// Configured template variables.
-	variables: [...VariableKind]
+	variables: [...VariableKind] | *[]
 }
 
 // Supported dashboard elements
@@ -79,13 +78,29 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint8]
+	ids: [...uint32]
+}
+
+// Annotation event field source. Defines how to obtain the value for an annotation event field.
+// - "field": Find the value with a matching key (default)
+// - "text": Write a constant string into the value
+// - "skip": Do not include the field
+AnnotationEventFieldSource: "field" | "text" | "skip" | *"field"
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+AnnotationEventFieldMapping: {
+	// Source type for the field value
+	source?: AnnotationEventFieldSource | *"field"
+	// Constant value to use when source is "text"
+	value?: string
+	// Regular expression to apply to the field value
+	regex?: string
 }
 
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-DashboardCursorSync: "Off" | "Crosshair" | "Tooltip"
+DashboardCursorSync: "Crosshair" | "Tooltip" | *"Off"
 
 // Links with references to other dashboards or external resources
 DashboardLink: {
@@ -101,7 +116,7 @@ DashboardLink: {
 	// Link URL. Only required/valid if the type is link
 	url?: string
 	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
-	tags: [...string]
+	tags: [...string] | *[]
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	asDropdown: bool | *false
 	// If true, the link will be opened in a new tab
@@ -110,7 +125,13 @@ DashboardLink: {
 	includeVars: bool | *false
 	// If true, includes current time range in the link as query params
 	keepTime: bool | *false
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	placement?: DashboardLinkPlacement
 }
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+DashboardLinkPlacement: "inControlsMenu"
 
 DataSourceRef: {
 	// The plugin type-id
@@ -155,6 +176,8 @@ FieldConfigSource: {
 	defaults: FieldConfig
 	// Overrides are the options applied to specific fields overriding the defaults.
 	overrides: [...{
+		// Describes config override rules created when interacting with Grafana.
+		"__systemRef"?: string
 		matcher: MatcherConfig
 		properties: [...DynamicConfigValue]
 	}]
@@ -188,7 +211,7 @@ FieldConfig: {
 	filterable?: bool
 
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -222,13 +245,26 @@ FieldConfig: {
 	// The behavior when clicking on a result
 	links?: [...]
 
+	// Define interactive HTTP requests that can be triggered from data visualizations.
+	actions?: [...Action]
+
 	// Alternative to empty string
 	noValue?: string
 
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: {...}
+
+	// Calculate min max per field
+	fieldMinMax?: bool
+
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode
 }
+
+// How null values should be handled
+NullValueMode: "null" | "connected" | "null as zero"
 
 DynamicConfigValue: {
 	id:     string | *""
@@ -245,7 +281,8 @@ MatcherConfig: {
 }
 
 Threshold: {
-	value: number
+	// Value null means -Infinity
+	value: number | null
 	color: string
 }
 
@@ -335,7 +372,12 @@ ValueMappingResult: {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-viridis`: Continuous Viridis palette mode
+// `continuous-magma`: Continuous Magma palette mode
+// `continuous-plasma`: Continuous Plasma palette mode
+// `continuous-inferno`: Continuous Inferno palette mode
+// `continuous-cividis`: Continuous Cividis palette mode
+// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
 // `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
 // `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
 // `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -347,7 +389,7 @@ ValueMappingResult: {
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
+FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 FieldColorSeriesByMode: "min" | "max" | "last"
@@ -364,6 +406,47 @@ FieldColor: {
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 DashboardLinkType: "link" | "dashboards"
+
+ActionType: "fetch" | "infinity"
+
+FetchOptions: {
+	method: HttpRequestMethod
+	url: string
+	body?: string
+	// These are 2D arrays of strings, each representing a key-value pair
+	// We are defining them this way because we can't generate a go struct that
+	// that would have exactly two strings in each sub-array
+	queryParams?: [...[...string]]
+	headers?: [...[...string]]
+}
+
+InfinityOptions: FetchOptions & {
+	datasourceUid: string
+}
+
+HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH"
+
+// Action variable type
+ActionVariableType: "string"
+
+ActionVariable: {
+	key: string
+	name: string
+	type: ActionVariableType
+}
+
+Action: {
+	type: ActionType
+	title: string
+	fetch?: FetchOptions
+	infinity?: InfinityOptions
+	confirmation?: string
+	oneClick?: bool
+	variables?: [...ActionVariable]
+	style?: {
+		backgroundColor?: string
+	}
+}
 
 // --- Common types ---
 Kind: {
@@ -394,6 +477,10 @@ AnnotationQuerySpec: {
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?:   [string]: AnnotationEventFieldMapping
+	// Catch-all field for datasource-specific properties
+	legacyOptions?:     [string]: _
 }
 
 AnnotationQueryKind: {
@@ -465,17 +552,17 @@ TimeSettingsSpec: {
 	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
 	to: string | *"now"
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	autoRefresh: string // v1: refresh
+	autoRefresh: string | *"" // v1: refresh
 	// Interval options available in the refresh picker dropdown.
 	autoRefreshIntervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"] // v1: timepicker.refresh_intervals
 	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
 	quickRanges?: [...TimeRangeOption] // v1: timepicker.quick_ranges , not exposed in the UI
 	// Whether timepicker is visible or not.
-	hideTimepicker: bool // v1: timepicker.hidden
+	hideTimepicker: bool | *false // v1: timepicker.hidden
 	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
 	weekStart?: "saturday" | "monday" | "sunday"
 	// The month that the fiscal year starts on. 0 = January, 11 = December
-	fiscalYearStartMonth: int
+	fiscalYearStartMonth: int | *0
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 	nowDelay?: string // v1: timepicker.nowDelay
 }
@@ -494,7 +581,12 @@ RowRepeatOptions: {
 	value: string
 }
 
-ResponsiveGridRepeatOptions: {
+TabRepeatOptions: {
+	mode:  RepeatMode
+	value: string
+}
+
+AutoGridRepeatOptions: {
 	mode:  RepeatMode
 	value: string
 }
@@ -513,21 +605,8 @@ GridLayoutItemKind: {
 	spec: GridLayoutItemSpec
 }
 
-GridLayoutRowKind: {
-	kind: "GridLayoutRow"
-	spec: GridLayoutRowSpec
-}
-
-GridLayoutRowSpec: {
-	y:         int
-	collapsed: bool
-	title:     string
-	elements: [...GridLayoutItemKind] // Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	repeat?:                          RowRepeatOptions
-}
-
 GridLayoutSpec: {
-	items: [...GridLayoutItemKind | GridLayoutRowKind]
+	items: [...GridLayoutItemKind]
 }
 
 GridLayoutKind: {
@@ -551,31 +630,37 @@ RowsLayoutRowKind: {
 
 RowsLayoutRowSpec: {
 	title?:                string
-	collapsed:             bool
+	collapse?:             bool
+	hideHeader?:           bool
+	fillScreen?:           bool
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               RowRepeatOptions
-	layout:                GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 }
 
-ResponsiveGridLayoutKind: {
-	kind: "ResponsiveGridLayout"
-	spec: ResponsiveGridLayoutSpec
+AutoGridLayoutKind: {
+	kind: "AutoGridLayout"
+	spec: AutoGridLayoutSpec
 }
 
-ResponsiveGridLayoutSpec: {
-	row: string
-	col: string
-	items: [...ResponsiveGridLayoutItemKind]
+AutoGridLayoutSpec: {
+	maxColumnCount?: number | *3
+	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?: number
+	rowHeightMode: "short" | *"standard" | "tall" | "custom"
+	rowHeight?: number
+	fillScreen?: bool | *false
+	items: [...AutoGridLayoutItemKind]
 }
 
-ResponsiveGridLayoutItemKind: {
-	kind: "ResponsiveGridLayoutItem"
-	spec: ResponsiveGridLayoutItemSpec
+AutoGridLayoutItemKind: {
+	kind: "AutoGridLayoutItem"
+	spec: AutoGridLayoutItemSpec
 }
 
-ResponsiveGridLayoutItemSpec: {
+AutoGridLayoutItemSpec: {
 	element:               ElementReference
-	repeat?:               ResponsiveGridRepeatOptions
+	repeat?:               AutoGridRepeatOptions
 	conditionalRendering?: ConditionalRenderingGroupKind
 }
 
@@ -594,8 +679,10 @@ TabsLayoutTabKind: {
 }
 
 TabsLayoutTabSpec: {
-	title?: string
-	layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind
+	title?:                string
+	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+	conditionalRendering?: ConditionalRenderingGroupKind
+	repeat?:               TabRepeatOptions
 }
 
 PanelSpec: {
@@ -663,9 +750,9 @@ VariableCustomFormatterFn: {
 // `custom`: Define the variable options manually using a comma-separated list.
 // `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-	"system" | "snapshot"
+	"system" | "snapshot" | "switch"
 
-VariableKind: QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind
+VariableKind: QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind | SwitchVariableKind
 
 // Sort variable options
 // Accepted values are:
@@ -691,6 +778,13 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+VariableRegexApplyTo: *"value" | "text"
+
+// Determine the origin of the adhoc variable filter
+FilterOrigin: "dashboard"
+
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {
 	label:  string
@@ -706,6 +800,8 @@ VariableOption: {
 	text: string | [...string]
 	// Value of the option
 	value: string | [...string]
+	// Additional properties for multi-props variables
+	properties?: {[string]: string}
 }
 
 // Query variable specification
@@ -723,6 +819,7 @@ QueryVariableSpec: {
 	datasource?:  DataSourceRef
 	query:        DataQueryKind
 	regex:        string | *""
+	regexApplyTo?: VariableRegexApplyTo
 	sort:         VariableSort
 	definition?:  string
 	options: [...VariableOption] | *[]
@@ -730,6 +827,9 @@ QueryVariableSpec: {
 	includeAll:   bool | *false
 	allValue?:    string
 	placeholder?: string
+	allowCustomValue: bool | *true
+	staticOptions?: [...VariableOption]
+	staticOptionsOrder?: "before" | "after" | "sorted"
 }
 
 // Query variable kind
@@ -796,6 +896,7 @@ DatasourceVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Datasource variable kind
@@ -842,6 +943,8 @@ CustomVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
+	valuesFormat?: "csv" | "json"
 }
 
 // Custom variable kind
@@ -854,6 +957,7 @@ CustomVariableKind: {
 GroupByVariableSpec: {
 	name:        string | *""
 	datasource?: DataSourceRef
+	defaultValue?: VariableOption
 	current: VariableOption | *{
 		text:  ""
 		value: ""
@@ -883,6 +987,7 @@ AdhocVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Define the MetricFindValue type
@@ -902,6 +1007,7 @@ AdHocFilterWithLabels: {
 	keyLabel?: string
 	valueLabels?: [...string]
 	forceEdit?: bool
+	origin?: FilterOrigin
 	// @deprecated
 	condition?: string
 }
@@ -912,14 +1018,32 @@ AdhocVariableKind: {
 	spec: AdhocVariableSpec
 }
 
+// Switch variable specification
+SwitchVariableSpec: {
+	name:         string | *""
+	current:      string | *"false"
+	enabledValue:  string | *"true"
+	disabledValue: string | *"false"
+	label?:        string
+	hide:          VariableHide
+	skipUrlSync:   bool | *false
+	description?:  string
+}
+
+SwitchVariableKind: {
+	kind: "SwitchVariable"
+	spec: SwitchVariableSpec
+}
+
 ConditionalRenderingGroupKind: {
 	kind: "ConditionalRenderingGroup"
 	spec: ConditionalRenderingGroupSpec
 }
 
 ConditionalRenderingGroupSpec: {
+	visibility: "show" | "hide"
 	condition: "and" | "or"
-	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -929,7 +1053,7 @@ ConditionalRenderingVariableKind: {
 
 ConditionalRenderingVariableSpec: {
 	variable: string
-	operator: "equals" | "notEquals"
+	operator: "equals" | "notEquals" | "matches" | "notMatches"
 	value:    string
 }
 
@@ -942,11 +1066,11 @@ ConditionalRenderingDataSpec: {
 	value: bool
 }
 
-ConditionalRenderingTimeIntervalKind: {
-	kind: "ConditionalRenderingTimeInterval"
-	spec: ConditionalRenderingTimeIntervalSpec
+ConditionalRenderingTimeRangeSizeKind: {
+	kind: "ConditionalRenderingTimeRangeSize"
+	spec: ConditionalRenderingTimeRangeSizeSpec
 }
 
-ConditionalRenderingTimeIntervalSpec: {
+ConditionalRenderingTimeRangeSizeSpec: {
 	value: string
 }

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
+import { createLokiDatasource } from '../../mocks/datasource';
 import { LokiQuery } from '../../types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';

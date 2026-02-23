@@ -3,6 +3,7 @@ import { StoryFn, Meta } from '@storybook/react';
 import * as React from 'react';
 
 import { IconButton } from '../IconButton/IconButton';
+import { Text } from '../Text/Text';
 
 import { ContextMenu, ContextMenuProps } from './ContextMenu';
 import mdx from './ContextMenu.mdx';
@@ -10,7 +11,7 @@ import { renderMenuItems } from './ContextMenuStoryHelper';
 import { WithContextMenu, WithContextMenuProps } from './WithContextMenu';
 
 const meta: Meta<typeof ContextMenu> = {
-  title: 'General/ContextMenu',
+  title: 'Overlays/ContextMenu',
   component: ContextMenu,
   parameters: {
     docs: {
@@ -29,7 +30,7 @@ const meta: Meta<typeof ContextMenu> = {
 };
 
 const renderHeader = (): React.ReactNode => {
-  return <h6>Menu</h6>;
+  return <Text variant="h6">Menu</Text>;
 };
 
 export const Basic: StoryFn<typeof ContextMenu> = (args: ContextMenuProps) => {

@@ -263,6 +263,7 @@ export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => 
         background: theme.colors.background.primary,
       },
       '::-webkit-scrollbar-thumb': {
+        // eslint-disable-next-line @grafana/no-border-radius-literal
         borderRadius: '10px',
       },
       '::-webkit-scrollbar-corner': {
@@ -284,7 +285,9 @@ export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => 
         color: theme.colors.text.primary,
         borderRight: `1px solid ${theme.components.panel.borderColor}`,
         borderBottom: `1px solid ${theme.components.panel.borderColor}`,
-        transition: 'background-color 200ms',
+        [theme.transitions.handleMotion('no-preference')]: {
+          transition: 'background-color 200ms',
+        },
         cursor: 'pointer',
         ':hover': {
           backgroundColor: theme.colors.background.secondary,

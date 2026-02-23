@@ -13,6 +13,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
+import { Trans } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -131,6 +132,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
               type: profilesDataSourceSettings.type,
               uid: profilesDataSourceSettings.uid,
             },
+            includeExemplars: false,
           },
         ],
       };
@@ -174,7 +176,9 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
 
   return (
     <div className={styles.flameGraph} ref={sizeRef}>
-      <div className={styles.flameGraphTitle}>Flame graph</div>
+      <div className={styles.flameGraphTitle}>
+        <Trans i18nKey="explore.span-flame-graph.flame-graph">Flame graph</Trans>
+      </div>
       <FlameGraph
         data={traceFlameGraphs[profileTagValue]}
         getTheme={() => config.theme2}

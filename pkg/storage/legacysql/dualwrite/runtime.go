@@ -11,43 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
-
-func (m *service) NewStorage(gr schema.GroupResource, legacy grafanarest.Storage, unified grafanarest.Storage) (grafanarest.Storage, error) {
-	status, err := m.Status(context.Background(), gr)
-	if err != nil {
-		return nil, err
-	}
-
-	log := logging.DefaultLogger.With("gr", gr.String())
-
-	if m.enabled && status.Runtime {
-		// Dynamic storage behavior
-		return &runtimeDualWriter{
-			service:   m,
-			legacy:    legacy,
-			unified:   unified,
-			dualwrite: &dualWriter{legacy: legacy, unified: unified, log: log}, // not used for read
-			gr:        gr,
-		}, nil
-	}
-
-	if status.ReadUnified {
-		if status.WriteLegacy {
-			// Write both, read unified
-			return &dualWriter{legacy: legacy, unified: unified, log: log, readUnified: true}, nil
-		}
-		return unified, nil
-	}
-	if status.WriteUnified {
-		// Write both, read legacy
-		return &dualWriter{legacy: legacy, unified: unified, log: log}, nil
-	}
-	return legacy, nil
-}
 
 // The runtime dual writer implements the various modes we have described as: mode:1/2/3/4/5
 // However the behavior can be configured at runtime rather than just at startup.

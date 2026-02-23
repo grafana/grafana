@@ -71,6 +71,17 @@ func UnprocessableEntity(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusUnprocessableEntity, msgID, opts...)
 }
 
+// UnsupportedMediaType initializes a new [Base] error with reason StatusUnsupportedMediaType
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	plugin.unsupportedMediaType
+func UnsupportedMediaType(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusUnsupportedMediaType, msgID, opts...)
+}
+
 // Conflict initializes a new [Base] error with reason StatusConflict
 // that is used to construct [Error]. The msgID is passed to the caller
 // to serve as the base for user facing error messages.
@@ -191,7 +202,7 @@ func NotImplemented(msgID string, opts ...BaseOpt) Base {
 //
 //	area.downstreamError
 func BadGateway(msgID string, opts ...BaseOpt) Base {
-	newOpts := []BaseOpt{WithDownstream()}
+	newOpts := []BaseOpt{WithDownstream()} //nolint:prealloc
 	newOpts = append(newOpts, opts...)
 	return NewBase(StatusBadGateway, msgID, newOpts...)
 }
@@ -204,7 +215,7 @@ func BadGateway(msgID string, opts ...BaseOpt) Base {
 //
 //	area.downstreamTimeout
 func GatewayTimeout(msgID string, opts ...BaseOpt) Base {
-	newOpts := []BaseOpt{WithDownstream()}
+	newOpts := []BaseOpt{WithDownstream()} //nolint:prealloc
 	newOpts = append(newOpts, opts...)
 	return NewBase(StatusGatewayTimeout, msgID, newOpts...)
 }

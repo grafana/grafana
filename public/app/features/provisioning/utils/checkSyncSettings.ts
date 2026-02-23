@@ -1,10 +1,31 @@
-import { RepositoryViewList } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
-export function checkSyncSettings(settings?: RepositoryViewList): [boolean, boolean] {
-  if (!settings?.items?.length) {
-    return [false, false];
+import { isFreeTierLicense } from './isFreeTierLicense';
+
+type syncState = {
+  instanceConnected: boolean;
+  folderConnected: boolean;
+  repoCount: number;
+  maxReposReached: boolean;
+};
+
+export function checkSyncSettings(repos?: Repository[]): syncState {
+  if (!repos?.length) {
+    return {
+      instanceConnected: false,
+      folderConnected: false,
+      repoCount: 0,
+      maxReposReached: false,
+    };
   }
-  const instanceConnected = settings.items.some((item) => item.target === 'instance');
-  const folderConnected = settings.items.some((item) => item.target === 'folder');
-  return [instanceConnected, folderConnected];
+
+  const repoCount = repos.length;
+  const maxReposReached = isFreeTierLicense() ? repoCount >= 1 : false;
+
+  return {
+    instanceConnected: repos.some((item) => item.spec?.sync.target === 'instance'),
+    folderConnected: repos.some((item) => item.spec?.sync.target === 'folder'),
+    maxReposReached,
+    repoCount,
+  };
 }

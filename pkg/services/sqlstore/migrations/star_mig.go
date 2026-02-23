@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 // does not rely on dashboard table existing, can be run before dashboard migrations
@@ -37,6 +37,9 @@ func addStarMigrations(mg *Migrator) {
 			Cols: []string{"user_id", "dashboard_uid", "org_id"},
 			Type: UniqueIndex,
 		}))
+
+	// NOTE: in Grafana 12.2 the dashboard_id is no longer used
+	// However, we will keep the column + index so that rollback is still possible
 }
 
 // relies on the dashboard table existing & must be run after the dashboard migrations are run
@@ -59,25 +62,26 @@ func (m *FillDashbordUIDMigration) Exec(sess *xorm.Session, mg *Migrator) error 
 func RunStarMigrations(sess *xorm.Session, driverName string) error {
 	// sqlite
 	sql := `UPDATE star
-	SET 
+	SET
     	dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = star.dashboard_id),
     	org_id = (SELECT org_id FROM dashboard WHERE dashboard.id = star.dashboard_id),
     	updated = DATETIME('now')
-	WHERE 
+	WHERE
     	(dashboard_uid IS NULL OR org_id IS NULL)
     	AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = star.dashboard_id);`
-	if driverName == Postgres {
-		sql = `UPDATE star 
-		SET dashboard_uid = dashboard.uid, 
+	switch driverName {
+	case Postgres:
+		sql = `UPDATE star
+		SET dashboard_uid = dashboard.uid,
 			org_id = dashboard.org_id,
 			updated = NOW()
-		FROM dashboard 
+		FROM dashboard
 		WHERE star.dashboard_id = dashboard.id
 			AND (star.dashboard_uid IS NULL OR star.org_id IS NULL);`
-	} else if driverName == MySQL {
-		sql = `UPDATE star 
-		LEFT JOIN dashboard ON star.dashboard_id = dashboard.id 
-		SET star.dashboard_uid = dashboard.uid, 
+	case MySQL:
+		sql = `UPDATE star
+		LEFT JOIN dashboard ON star.dashboard_id = dashboard.id
+		SET star.dashboard_uid = dashboard.uid,
 			star.org_id = dashboard.org_id,
 			star.updated = NOW()
 		WHERE star.dashboard_uid IS NULL OR star.org_id IS NULL;`

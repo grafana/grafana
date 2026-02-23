@@ -1,6 +1,6 @@
+import { BucketAggregation } from '../../../../dataquery.gen';
 import { defaultGeoHashPrecisionString } from '../../../../queryDef';
-import { BucketAggregation } from '../../../../types';
-import { describeMetric, convertOrderByToMetricId } from '../../../../utils';
+import { convertOrderByToMetricId, describeMetric } from '../../../../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';
 import { bucketAggregationConfig, orderByOptions, orderOptions } from '../utils';
 

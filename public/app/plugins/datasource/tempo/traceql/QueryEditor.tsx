@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { defaults } from 'lodash';
 import { useState } from 'react';
 
-import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, InlineLabel, useStyles2 } from '@grafana/ui';
+import { Alert, Button, InlineLabel, TextLink, useStyles2 } from '@grafana/ui';
 
 import { TempoDatasource } from '../datasource';
 import { defaultQuery, MyDataSourceOptions, TempoQuery } from '../types';
@@ -22,17 +22,32 @@ export function QueryEditor(props: Props) {
   const styles = useStyles2(getStyles);
   const query = defaults(props.query, defaultQuery);
   const [showCopyFromSearchButton, setShowCopyFromSearchButton] = useState(() => {
-    const genQuery = props.datasource.languageProvider.generateQueryFromFilters(query.filters || []);
+    const genQuery = props.datasource.languageProvider.generateQueryFromFilters({
+      traceqlFilters: query.filters || [],
+    });
     return genQuery === query.query || genQuery === '{}';
   });
 
+  const alertingWarning = (
+    <Alert title="Tempo metrics is an experimental feature" severity="warning">
+      Please note that TraceQL metrics is an experimental feature and should not be used in production. Read more about
+      it in{' '}
+      <TextLink external href="https://grafana.com/docs/tempo/latest/operations/traceql-metrics/">
+        documentation
+      </TextLink>
+      .
+    </Alert>
+  );
+  const inAlerting = props.app === CoreApp.UnifiedAlerting || props.app === CoreApp.CloudAlerting;
+
   return (
     <>
+      {inAlerting && alertingWarning}
       <InlineLabel>
         Build complex queries using TraceQL to select a list of traces.{' '}
-        <a rel="noreferrer" target="_blank" href="https://grafana.com/docs/tempo/latest/traceql/">
+        <TextLink external href="https://grafana.com/docs/tempo/latest/traceql/">
           Documentation
-        </a>
+        </TextLink>
       </InlineLabel>
       {!showCopyFromSearchButton && (
         <div className={styles.copyContainer}>
@@ -50,7 +65,9 @@ export function QueryEditor(props: Props) {
               props.onClearResults();
               props.onChange({
                 ...query,
-                query: props.datasource.languageProvider.generateQueryFromFilters(query.filters || []),
+                query: props.datasource.languageProvider.generateQueryFromFilters({
+                  traceqlFilters: query.filters || [],
+                }),
               });
               setShowCopyFromSearchButton(true);
             }}
@@ -66,6 +83,7 @@ export function QueryEditor(props: Props) {
         onChange={props.onChange}
         datasource={props.datasource}
         onRunQuery={props.onRunQuery}
+        range={props.range}
       />
       <div className={styles.optionsContainer}>
         <TempoQueryBuilderOptions
@@ -73,6 +91,7 @@ export function QueryEditor(props: Props) {
           onChange={props.onChange}
           searchStreaming={props.datasource.isStreamingSearchEnabled() ?? false}
           metricsStreaming={props.datasource.isStreamingMetricsEnabled() ?? false}
+          app={props.app}
         />
       </div>
     </>

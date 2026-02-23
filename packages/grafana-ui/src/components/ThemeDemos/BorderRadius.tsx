@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getInternalRadius, getExternalRadius } from '../../themes/mixins';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
@@ -24,14 +24,14 @@ export const BorderRadiusContainer = ({
   return (
     <Stack direction="column" alignItems="center" gap={4}>
       <Stack alignItems="center">
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Text variant="code">getInternalRadius</Text>
         <div className={styles.baseForInternal}>
           <div className={styles.internalContainer} />
         </div>
       </Stack>
       <Stack alignItems="center">
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Text variant="code">getExternalRadius</Text>
         <div className={styles.externalContainer}>
           <div className={styles.baseForExternal} />

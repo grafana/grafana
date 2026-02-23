@@ -97,6 +97,19 @@ import (
 //       403: ForbiddenError
 //
 
+// swagger:route PATCH /ruler/grafana/api/v1/rules/{Namespace} ruler RouteUpdateNamespaceRules
+//
+// Update all rules in a namespace
+//
+//     Consumes:
+//     - application/json
+//
+//     Responses:
+//       202: UpdateNamespaceRulesResponse
+//       403: ForbiddenError
+//       404: NotFound.
+//
+
 // swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
 // Converts submitted rule group to provisioning format
@@ -271,11 +284,20 @@ type PostableRuleGroupConfig struct {
 
 	// fields below are used by Mimir/Loki rulers
 
-	SourceTenants                 []string        `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
-	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
-	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
-	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
-	Limit                         int             `yaml:"limit,omitempty" json:"limit,omitempty"`
+	SourceTenants                 []string          `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	EvaluationDelay               *model.Duration   `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
+	QueryOffset                   *model.Duration   `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	AlignEvaluationTimeOnInterval bool              `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
+	Limit                         int               `yaml:"limit,omitempty" json:"limit,omitempty"`
+	Labels                        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+
+	// GEM Ruler.
+
+	RWConfigs []RemoteWriteConfig `yaml:"remote_write,omitempty" json:"remote_write,omitempty"`
+}
+
+type RemoteWriteConfig struct {
+	URL string `yaml:"url,omitempty" json:"url,omitempty"`
 }
 
 func (c *PostableRuleGroupConfig) UnmarshalJSON(b []byte) error {
@@ -315,8 +337,8 @@ func (c *PostableRuleGroupConfig) validate() error {
 		return fmt.Errorf("cannot mix Grafana & Prometheus style rules")
 	}
 
-	if hasGrafRules && (len(c.SourceTenants) > 0 || c.EvaluationDelay != nil || c.QueryOffset != nil || c.AlignEvaluationTimeOnInterval || c.Limit > 0) {
-		return fmt.Errorf("fields source_tenants, evaluation_delay, query_offset, align_evaluation_time_on_interval and limit are not supported for Grafana rules")
+	if hasGrafRules && (len(c.SourceTenants) > 0 || c.EvaluationDelay != nil || c.QueryOffset != nil || c.AlignEvaluationTimeOnInterval || c.Limit > 0 || len(c.Labels) > 0 || len(c.RWConfigs) > 0) {
+		return fmt.Errorf("fields source_tenants, evaluation_delay, query_offset, align_evaluation_time_on_interval, limit, labels, and remote_write are not supported for Grafana rules")
 	}
 	return nil
 }
@@ -332,11 +354,16 @@ type GettableRuleGroupConfig struct {
 
 	// fields below are used by Mimir/Loki rulers
 
-	SourceTenants                 []string        `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
-	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
-	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
-	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
-	Limit                         int             `yaml:"limit,omitempty" json:"limit,omitempty"`
+	SourceTenants                 []string          `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	EvaluationDelay               *model.Duration   `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
+	QueryOffset                   *model.Duration   `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	AlignEvaluationTimeOnInterval bool              `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
+	Limit                         int               `yaml:"limit,omitempty" json:"limit,omitempty"`
+	Labels                        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+
+	// GEM Ruler.
+
+	RWConfigs []RemoteWriteConfig `yaml:"remote_write,omitempty" json:"remote_write,omitempty"`
 }
 
 func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
@@ -425,7 +452,7 @@ func (n *PostableExtendedRuleNode) validate() error {
 	}
 
 	if n.GrafanaManagedAlert != nil {
-		if n.ApiRuleNode != nil && (n.ApiRuleNode.Expr != "" || n.ApiRuleNode.Record != "") {
+		if n.ApiRuleNode != nil && (n.Expr != "" || n.Record != "") {
 			return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
 		}
 	}
@@ -461,7 +488,7 @@ func (n *GettableExtendedRuleNode) validate() error {
 	}
 
 	if n.GrafanaManagedAlert != nil {
-		if n.ApiRuleNode != nil && (n.ApiRuleNode.Expr != "" || n.ApiRuleNode.Record != "") {
+		if n.ApiRuleNode != nil && (n.Expr != "" || n.Record != "") {
 			return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
 		}
 	}
@@ -535,10 +562,16 @@ type AlertRuleNotificationSettings struct {
 	RepeatInterval *model.Duration `json:"repeat_interval,omitempty"`
 
 	// Override the times when notifications should be muted. These must match the name of a mute time interval defined
-	// in the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but
+	// in the alertmanager configuration time_intervals section. When muted it will not send any notifications, but
 	// otherwise acts normally.
 	// example: ["maintenance"]
 	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
+
+	// Override the times when notifications should not be muted. These must match the name of a mute time interval defined
+	// in the alertmanager configuration time_intervals section. All notifications will be suppressed unless they are sent
+	// at the time that matches any interval.
+	// example: ["maintenance"]
+	ActiveTimeIntervals []string `json:"active_time_intervals,omitempty"`
 }
 
 // swagger:model
@@ -569,28 +602,38 @@ type PostableGrafanaRule struct {
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
 	Record               *Record                        `json:"record" yaml:"record"`
 	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	// Number of consecutive evaluation intervals with no data for a dimension must pass
+	// before the alert state is considered stale and automatically resolved.
+	// If set to 0, the value is reset to the default.
+	// required: false
+	// example: 3
+	MissingSeriesEvalsToResolve *int64 `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
 }
 
 // swagger:model
 type GettableGrafanaRule struct {
-	Title                string                         `json:"title" yaml:"title"`
-	Condition            string                         `json:"condition" yaml:"condition"`
-	Data                 []AlertQuery                   `json:"data" yaml:"data"`
-	Updated              time.Time                      `json:"updated" yaml:"updated"`
-	UpdatedBy            *UserInfo                      `json:"updated_by" yaml:"updated_by"`
-	IntervalSeconds      int64                          `json:"intervalSeconds" yaml:"intervalSeconds"`
-	Version              int64                          `json:"version" yaml:"version"`
-	UID                  string                         `json:"uid" yaml:"uid"`
-	NamespaceUID         string                         `json:"namespace_uid" yaml:"namespace_uid"`
-	RuleGroup            string                         `json:"rule_group" yaml:"rule_group"`
-	NoDataState          NoDataState                    `json:"no_data_state" yaml:"no_data_state"`
-	ExecErrState         ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
-	Provenance           Provenance                     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
-	IsPaused             bool                           `json:"is_paused" yaml:"is_paused"`
-	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
-	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
-	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	GUID                 string                         `json:"guid" yaml:"guid"`
+	Title                       string                         `json:"title" yaml:"title"`
+	Condition                   string                         `json:"condition" yaml:"condition"`
+	Data                        []AlertQuery                   `json:"data" yaml:"data"`
+	Updated                     time.Time                      `json:"updated" yaml:"updated"`
+	UpdatedBy                   *UserInfo                      `json:"updated_by" yaml:"updated_by"`
+	IntervalSeconds             int64                          `json:"intervalSeconds" yaml:"intervalSeconds"`
+	Version                     int64                          `json:"version" yaml:"version"`
+	UID                         string                         `json:"uid" yaml:"uid"`
+	NamespaceUID                string                         `json:"namespace_uid" yaml:"namespace_uid"`
+	RuleGroup                   string                         `json:"rule_group" yaml:"rule_group"`
+	NoDataState                 NoDataState                    `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState                ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
+	Provenance                  Provenance                     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	IsPaused                    bool                           `json:"is_paused" yaml:"is_paused"`
+	NotificationSettings        *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
+	Record                      *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
+	Metadata                    *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	GUID                        string                         `json:"guid" yaml:"guid"`
+	MissingSeriesEvalsToResolve *int64                         `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
+
+	// Field is only populated when listing alert rule versions.
+	Message string `yaml:"message,omitempty" json:"message,omitempty"`
 }
 
 // UserInfo represents user-related information, including a unique identifier and a name.
@@ -672,4 +715,23 @@ type UpdateRuleGroupResponse struct {
 	Created []string `json:"created,omitempty"`
 	Updated []string `json:"updated,omitempty"`
 	Deleted []string `json:"deleted,omitempty"`
+}
+
+// swagger:parameters RouteUpdateNamespaceRules
+type UpdateNamespaceRulesParams struct {
+	// The UID of the rule folder
+	// in:path
+	Namespace string
+	// in:body
+	Body UpdateNamespaceRulesRequest
+}
+
+// swagger:model
+type UpdateNamespaceRulesRequest struct {
+	IsPaused *bool `json:"is_paused"`
+}
+
+// swagger:model
+type UpdateNamespaceRulesResponse struct {
+	Message string `json:"message"`
 }

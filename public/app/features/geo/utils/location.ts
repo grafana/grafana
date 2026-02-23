@@ -9,6 +9,7 @@ import {
   getFieldDisplayName,
   FieldType,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 
 import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
@@ -66,6 +67,16 @@ const defaultMatchers: LocationFieldMatchers = {
   lookup: matchLowerNames(new Set(['lookup'])),
   geo: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.geo),
 };
+
+/**
+ * suggestions needs to run sync, and we just want to use the default matchers in that situation.
+ */
+export function getDefaultLocationMatchers(): LocationFieldMatchers {
+  return {
+    ...defaultMatchers,
+    mode: FrameGeometrySourceMode.Auto,
+  };
+}
 
 export async function getLocationMatchers(src?: FrameGeometrySource): Promise<LocationFieldMatchers> {
   const info: LocationFieldMatchers = {
@@ -178,7 +189,7 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
         };
       }
       return {
-        warning: 'Unable to find location fields',
+        warning: t('geo.get-geometry-field.warning-unable-to-find', 'Unable to find location fields'),
       };
 
     case FrameGeometrySourceMode.Coords:
@@ -190,7 +201,7 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
         };
       }
       return {
-        warning: 'Select latitude/longitude fields',
+        warning: t('geo.get-geometry-field.warning-select-lat-long', 'Select latitude/longitude fields'),
       };
 
     case FrameGeometrySourceMode.Geohash:
@@ -202,7 +213,7 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
         };
       }
       return {
-        warning: 'Select geohash field',
+        warning: t('geo.get-geometry-field.warning-select-geohash', 'Select geohash field'),
       };
 
     case FrameGeometrySourceMode.Lookup:
@@ -215,13 +226,13 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
           };
         }
         return {
-          warning: 'Gazetteer not found',
+          warning: t('geo.get-geometry-field.warning-gazetteer-not-found', 'Gazetteer not found'),
         };
       }
       return {
-        warning: 'Select lookup field',
+        warning: t('geo.get-geometry-field.warning-select-lookup', 'Select lookup field'),
       };
   }
 
-  return { warning: 'unable to find geometry' };
+  return { warning: t('geo.get-geometry-field.warning-no-geometry', 'unable to find geometry') };
 }

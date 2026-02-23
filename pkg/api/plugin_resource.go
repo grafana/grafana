@@ -27,7 +27,7 @@ func (hs *HTTPServer) CallResource(c *contextmodel.ReqContext) {
 }
 
 func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID string) {
-	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.SignedInUser.GetOrgID())
+	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.GetOrgID())
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			c.JsonApiErr(404, "Plugin not found", nil)
@@ -62,7 +62,7 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 		return
 	}
 
-	err = hs.DataSourceRequestValidator.Validate(ds, c.Req)
+	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonData, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return

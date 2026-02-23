@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/nodeGraph/panelcfg.cue file.
+
 export interface ArcOption {
   /**
    * The color of the arc.
@@ -24,6 +26,12 @@ export enum ZoomMode {
   Greedy = 'greedy',
 }
 
+export enum LayoutAlgorithm {
+  Force = 'force',
+  Grid = 'grid',
+  Layered = 'layered',
+}
+
 export interface Options {
   edges?: {
     /**
@@ -35,6 +43,10 @@ export interface Options {
      */
     secondaryStatUnit?: string;
   };
+  /**
+   * How to layout the nodes in the node graph
+   */
+  layoutAlgorithm?: LayoutAlgorithm;
   nodes?: {
     /**
      * Unit for the main stat to override what ever is set in the data frame.

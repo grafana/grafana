@@ -5,17 +5,16 @@ import {
   TimeZone,
   LogsDedupStrategy,
   LogRowModel,
-  Field,
-  LinkModel,
   LogsSortOrder,
   CoreApp,
   DataFrame,
   LogRowContextOptions,
+  TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -44,7 +43,7 @@ export interface Props {
   showContextToggle?: (row: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: GetFieldLinksFn;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
@@ -62,6 +61,7 @@ export interface Props {
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedLogs?: string[];
+  timeRange: TimeRange;
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
    * Any overflowing content will be clipped at the table boundary.
@@ -75,7 +75,7 @@ export interface Props {
   renderPreview?: boolean;
 }
 
-type PopoverStateType = {
+export type PopoverStateType = {
   selection: string;
   selectedRow: LogRowModel | null;
   popoverMenuCoordinates: { x: number; y: number };
@@ -168,7 +168,7 @@ export const LogRows = memo(
     );
 
     const popoverMenuSupported = useCallback(() => {
-      if (!config.featureToggles.logRowsPopoverMenu || isPopoverMenuDisabled()) {
+      if (isPopoverMenuDisabled()) {
         return false;
       }
       return Boolean(onClickFilterOutString || onClickFilterString);
@@ -329,3 +329,4 @@ export const LogRows = memo(
     );
   }
 );
+LogRows.displayName = 'LogRows';

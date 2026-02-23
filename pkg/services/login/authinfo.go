@@ -2,19 +2,24 @@ package login
 
 import (
 	"context"
+	"strings"
 )
 
+//go:generate mockery --name AuthInfoService --structname MockAuthInfoService --outpkg authinfotest --filename auth_info_service_mock.go --output ./authinfotest/
 type AuthInfoService interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
-	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
 }
 
+//go:generate mockery --name Store --structname MockAuthInfoStore --outpkg authinfotest --filename auth_info_store_mock.go --output ./authinfotest/
 type Store interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
-	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetUserAuthModules(ctx context.Context, userID int64) ([]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
@@ -56,22 +61,23 @@ const (
 	OktaLabel         = "Okta"
 )
 
-// used for frontend to display a more user friendly label
+// GetAuthProviderLabel returns the label for the given auth module.
+// Used for frontend to display a more user friendly label.
 func GetAuthProviderLabel(authModule string) string {
 	switch authModule {
-	case GithubAuthModule:
+	case GithubAuthModule, strings.TrimPrefix(GithubAuthModule, "oauth_"):
 		return GithubLabel
-	case GoogleAuthModule:
+	case GoogleAuthModule, strings.TrimPrefix(GoogleAuthModule, "oauth_"):
 		return GoogleLabel
-	case AzureADAuthModule:
+	case AzureADAuthModule, strings.TrimPrefix(AzureADAuthModule, "oauth_"):
 		return AzureADLabel
-	case GitLabAuthModule:
+	case GitLabAuthModule, strings.TrimPrefix(GitLabAuthModule, "oauth_"):
 		return GitLabLabel
-	case OktaAuthModule:
+	case OktaAuthModule, strings.TrimPrefix(OktaAuthModule, "oauth_"):
 		return OktaLabel
-	case GrafanaComAuthModule, GrafanaNetAuthModule:
+	case GrafanaComAuthModule, GrafanaNetAuthModule, strings.TrimPrefix(GrafanaComAuthModule, "oauth_"), strings.TrimPrefix(GrafanaNetAuthModule, "oauth_"):
 		return GrafanaComLabel
-	case SAMLAuthModule:
+	case SAMLAuthModule, strings.TrimPrefix(SAMLAuthModule, "auth."):
 		return SAMLLabel
 	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
 		return LDAPLabel
@@ -79,7 +85,7 @@ func GetAuthProviderLabel(authModule string) string {
 		return JWTLabel
 	case AuthProxyAuthModule:
 		return AuthProxyLabel
-	case GenericOAuthModule:
+	case GenericOAuthModule, strings.TrimPrefix(GenericOAuthModule, "oauth_"):
 		return GenericOAuthLabel
 	default:
 		return "Unknown"

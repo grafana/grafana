@@ -6,10 +6,10 @@ import { CustomVariableModel, getDefaultTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
-import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
-import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
-import { PreprocessorType, MetricKind, ValueTypes } from '../types/query';
+import { PreprocessorType, MetricKind, ValueTypes } from '../dataquery.gen';
+import { createMockDatasource } from '../mocks/cloudMonitoringDatasource';
+import { createMockMetricDescriptor } from '../mocks/cloudMonitoringMetricDescriptor';
+import { createMockTimeSeriesList } from '../mocks/cloudMonitoringQuery';
 
 import { defaultTimeSeriesList } from './MetricQueryEditor';
 import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';

@@ -57,9 +57,7 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapp
 		allowedOrganizations: allowedOrganizations,
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.GrafanaComProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.GrafanaComProviderName, provider)
 
 	return provider
 }

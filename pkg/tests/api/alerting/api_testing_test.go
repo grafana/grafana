@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -48,12 +47,6 @@ func TestGrafanaRuleConfig(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
-
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	apiCli.CreateFolder(t, "NamespaceUID", "NamespaceTitle")
@@ -63,7 +56,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		Type:   "testdata",
 		Access: datasources.DS_ACCESS_PROXY,
 		UID:    TESTDATA_UID,
-		UserID: userId,
+		UserID: 1,
 		OrgID:  1,
 	}
 	_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
@@ -157,8 +150,8 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		for i, alert := range result {
 			require.NotEmpty(t, alert.Annotations["values.B"])
 			require.NotEmpty(t, alert.Annotations["values.C"])
-			valueB := fmt.Sprintf("[ var='B' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Annotations["values.B"])
-			valueC := fmt.Sprintf("[ var='C' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Annotations["values.C"])
+			valueB := fmt.Sprintf("[ var='B' labels={state=%s} type='reduce' value=%s ]", dynamicLabels[i], alert.Annotations["values.B"])
+			valueC := fmt.Sprintf("[ var='C' labels={state=%s} type='threshold' value=%s ]", dynamicLabels[i], alert.Annotations["values.C"])
 			require.Contains(t, alert.Annotations["value"], valueB)
 			require.Contains(t, alert.Annotations["value"], valueC)
 		}
@@ -179,8 +172,8 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		for i, alert := range result {
 			require.NotEmpty(t, alert.Labels["values.B"])
 			require.NotEmpty(t, alert.Labels["values.C"])
-			valueB := fmt.Sprintf("[ var='B' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Labels["values.B"])
-			valueC := fmt.Sprintf("[ var='C' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Labels["values.C"])
+			valueB := fmt.Sprintf("[ var='B' labels={state=%s} type='reduce' value=%s ]", dynamicLabels[i], alert.Labels["values.B"])
+			valueC := fmt.Sprintf("[ var='C' labels={state=%s} type='threshold' value=%s ]", dynamicLabels[i], alert.Labels["values.C"])
 			require.Contains(t, alert.Labels["value"], valueB)
 			require.Contains(t, alert.Labels["value"], valueC)
 		}

@@ -3,7 +3,7 @@ import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../mockApi';
@@ -31,7 +31,6 @@ describe('pause rule', () => {
     expect(byText(/uninitialized/i).get()).toBeInTheDocument();
 
     await userEvent.click(byRole('button').get());
-    expect(await byText(/loading/i).find()).toBeInTheDocument();
 
     expect(await byText(/success/i).find()).toBeInTheDocument();
     expect(await byText(/result/i).find()).toBeInTheDocument();
@@ -68,9 +67,8 @@ describe('pause rule', () => {
     expect(await byText(/uninitialized/i).find()).toBeInTheDocument();
 
     await userEvent.click(byRole('button').get());
-    expect(await byText(/loading/i).find()).toBeInTheDocument();
     expect(byText(/success/i).query()).not.toBeInTheDocument();
-    expect(await byText(/error: oops/i).find()).toBeInTheDocument();
+    expect(await byText(/error:(.+)oops/i).find()).toBeInTheDocument();
   });
 });
 

@@ -31,7 +31,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	}, middleware.ReqSignedIn)
 }
 
-// swagger:route POST /datasources/uid/{sourceUID}/correlations correlations createCorrelation
+// swagger:route POST /datasources/uid/{sourceUID}/correlations datasources correlations createCorrelation
 //
 // Add correlation.
 //
@@ -48,7 +48,7 @@ func (s *CorrelationsService) createHandler(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.SignedInUser.GetOrgID()
+	cmd.OrgId = c.GetOrgID()
 
 	correlation, err := s.CreateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
@@ -77,7 +77,7 @@ type CreateCorrelationResponse struct {
 	Body CreateCorrelationResponseBody `json:"body"`
 }
 
-// swagger:route DELETE /datasources/uid/{uid}/correlations/{correlationUID} correlations deleteCorrelation
+// swagger:route DELETE /datasources/uid/{uid}/correlations/{correlationUID} datasources correlations deleteCorrelation
 //
 // Delete a correlation.
 //
@@ -91,7 +91,7 @@ func (s *CorrelationsService) deleteHandler(c *contextmodel.ReqContext) response
 	cmd := DeleteCorrelationCommand{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.SignedInUser.GetOrgID(),
+		OrgId:     c.GetOrgID(),
 	}
 
 	err := s.DeleteCorrelation(c.Req.Context(), cmd)
@@ -130,7 +130,7 @@ type DeleteCorrelationResponse struct {
 	Body DeleteCorrelationResponseBody `json:"body"`
 }
 
-// swagger:route PATCH /datasources/uid/{sourceUID}/correlations/{correlationUID} correlations updateCorrelation
+// swagger:route PATCH /datasources/uid/{sourceUID}/correlations/{correlationUID} datasources correlations updateCorrelation
 //
 // Updates a correlation.
 //
@@ -153,7 +153,7 @@ func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response
 
 	cmd.UID = web.Params(c.Req)[":correlationUID"]
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.SignedInUser.GetOrgID()
+	cmd.OrgId = c.GetOrgID()
 
 	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
@@ -193,7 +193,7 @@ type UpdateCorrelationResponse struct {
 	Body UpdateCorrelationResponseBody `json:"body"`
 }
 
-// swagger:route GET /datasources/uid/{sourceUID}/correlations/{correlationUID} correlations getCorrelation
+// swagger:route GET /datasources/uid/{sourceUID}/correlations/{correlationUID} datasources correlations getCorrelation
 //
 // Gets a correlation.
 //
@@ -206,7 +206,7 @@ func (s *CorrelationsService) getCorrelationHandler(c *contextmodel.ReqContext) 
 	query := GetCorrelationQuery{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.SignedInUser.GetOrgID(),
+		OrgId:     c.GetOrgID(),
 	}
 
 	correlation, err := s.getCorrelation(c.Req.Context(), query)
@@ -240,7 +240,7 @@ type GetCorrelationResponse struct {
 	Body Correlation `json:"body"`
 }
 
-// swagger:route GET /datasources/uid/{sourceUID}/correlations correlations getCorrelationsBySourceUID
+// swagger:route GET /datasources/uid/{sourceUID}/correlations datasources correlations getCorrelationsBySourceUID
 //
 // Gets all correlations originating from the given data source.
 //
@@ -252,7 +252,7 @@ type GetCorrelationResponse struct {
 func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *contextmodel.ReqContext) response.Response {
 	query := GetCorrelationsBySourceUIDQuery{
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.SignedInUser.GetOrgID(),
+		OrgId:     c.GetOrgID(),
 	}
 
 	correlations, err := s.getCorrelationsBySourceUID(c.Req.Context(), query)
@@ -283,7 +283,7 @@ type GetCorrelationsBySourceUIDResponse struct {
 	Body []Correlation `json:"body"`
 }
 
-// swagger:route GET /datasources/correlations correlations getCorrelations
+// swagger:route GET /datasources/correlations datasources correlations getCorrelations
 //
 // Gets all correlations.
 //
@@ -308,7 +308,7 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 	sourceUIDs := c.QueryStrings("sourceUID")
 
 	query := GetCorrelationsQuery{
-		OrgId:      c.SignedInUser.GetOrgID(),
+		OrgId:      c.GetOrgID(),
 		Limit:      limit,
 		Page:       page,
 		SourceUIDs: sourceUIDs,

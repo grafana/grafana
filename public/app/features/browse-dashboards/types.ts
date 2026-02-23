@@ -2,6 +2,10 @@ import { CellProps, Column, HeaderProps } from 'react-table';
 
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
+/**
+ * Object of what is selected in the tree. It is record where keys are categories from DashboardViewItemKind and
+ * each category is a record where the key is the UID of the object and value is whether it is selected or not.
+ */
 export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string, boolean | undefined>> & {
   $all: boolean;
 };
@@ -40,6 +44,7 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   level: number;
   isOpen: boolean;
   parentUID?: string;
+  disabled?: boolean;
 }
 
 interface RendererUserProps {
@@ -49,6 +54,7 @@ interface RendererUserProps {
   onAllSelectionChange?: (newState: boolean) => void;
   onItemSelectionChange?: (item: DashboardViewItem, newState: boolean) => void;
   treeID?: string;
+  permissions?: BrowseDashboardsPermissions;
 }
 
 export type DashboardsTreeColumn = Column<DashboardsTreeItem>;
@@ -60,3 +66,26 @@ export enum SelectionState {
   Selected,
   Mixed,
 }
+
+export interface BrowseDashboardsPermissions {
+  canEditFolders: boolean;
+  canEditDashboards: boolean;
+  canDeleteFolders?: boolean;
+  canDeleteDashboards?: boolean;
+  isReadOnlyRepo?: boolean;
+}
+
+interface NotificationEventData {
+  alertType: string;
+  message: string;
+}
+
+interface NotificationActionData {
+  title: string;
+  buttonLabel: string;
+  targetUrl: string;
+}
+
+export type RestoreNotificationData =
+  | { kind: 'action'; data: NotificationActionData }
+  | { kind: 'event'; data: NotificationEventData };

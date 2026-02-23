@@ -3,40 +3,59 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
-ARG BASE_IMAGE=alpine:3.21
-ARG JS_IMAGE=node:22-alpine
+ARG BASE_IMAGE=alpine-base
+ARG GO_IMAGE=go-builder-base
+ARG JS_IMAGE=js-builder-base
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.24.1-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
+# Dependabot cannot update dependencies listed in ARGs
+# By using FROM instructions we can delegate dependency updates to dependabot
+FROM alpine:3.23.3 AS alpine-base
+FROM ubuntu:22.04 AS ubuntu-base
+FROM golang:1.25.7-alpine AS go-builder-base
+FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
+ARG JS_NODE_ENV=production
+ARG JS_YARN_INSTALL_FLAG=--immutable
+ARG JS_YARN_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
+RUN apk add --no-cache make build-base python3
+
 COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
+COPY e2e-playwright e2e-playwright
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
 COPY e2e e2e
 
-RUN apk add --no-cache make build-base python3
-
-RUN yarn install --immutable
+#
+# Set the node env according to defaults or argument passed
+#
+ENV NODE_ENV=${JS_NODE_ENV}
+#
+RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
+    yarn install; \
+  else \
+    yarn install --immutable; \
+  fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
-ENV NODE_ENV=production
-RUN yarn build
+# Set the build argument according to default or argument passed
+RUN yarn ${JS_YARN_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
@@ -45,7 +64,6 @@ ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
-ARG BINGO="true"
 
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache \
@@ -59,43 +77,51 @@ RUN if grep -i -q alpine /etc/issue; then \
 WORKDIR /tmp/grafana
 
 COPY go.* ./
-COPY .bingo .bingo
-COPY .citools/bra .citools/bra
-COPY .citools/cue .citools/cue
-COPY .citools/cog .citools/cog
-COPY .citools/lefthook .citools/lefthook
-COPY .citools/jb .citools/jb
-COPY .citools/drone .citools/drone
-COPY .citools/golangci-lint .citools/golangci-lint
-COPY .citools/swagger ./citools/swagger
+COPY .citools .citools
 
-# Include vendored dependencies
+# Copy go dependencies first
+# If updating this, please also update devenv/frontend-service/backend.dockerfile
 COPY pkg/util/xorm pkg/util/xorm
-COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
 COPY pkg/build/wire pkg/build/wire
 COPY pkg/promlib pkg/promlib
 COPY pkg/storage/unified/resource pkg/storage/unified/resource
+COPY pkg/storage/unified/resource/kv/go.* pkg/storage/unified/resource/kv
+COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
 COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
+COPY pkg/plugins pkg/plugins
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
-COPY apps/investigations apps/investigations
+COPY apps/quotas apps/quotas
+COPY apps/plugins apps/plugins
+COPY apps/shorturl apps/shorturl
+COPY apps/annotation apps/annotation
+COPY apps/correlations apps/correlations
+COPY apps/preferences apps/preferences
+COPY apps/collections apps/collections
+COPY apps/provisioning apps/provisioning
+COPY apps/secret apps/secret
+COPY apps/scope apps/scope
+COPY apps/logsdrilldown apps/logsdrilldown
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
+COPY apps/dashvalidator apps/dashvalidator
+COPY apps/folder apps/folder
+COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
+COPY apps/alerting/alertenrichment apps/alerting/alertenrichment
+COPY apps/alerting/historian apps/alerting/historian
 COPY apps/alerting/notifications apps/alerting/notifications
+COPY apps/alerting/rules apps/alerting/rules
 COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
+COPY apps/example apps/example
 
 RUN go mod download
-RUN if [[ "$BINGO" = "true" ]]; then \
-  go install github.com/bwplotka/bingo@latest && \
-  bingo get -v; \
-  fi
 
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
@@ -114,6 +140,8 @@ ENV BUILD_BRANCH=${BUILD_BRANCH}
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
+RUN mkdir -p data/plugins-bundled
+
 # From-tarball build stage
 FROM ${BASE_IMAGE} AS tgz-builder
 
@@ -125,6 +153,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # add -v to make tar print every file it extracts
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
+
+RUN mkdir -p data/plugins-bundled
 
 # helpers for COPY --from
 FROM ${GO_SRC} AS go-src
@@ -151,7 +181,7 @@ WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-  apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
+  apk add --no-cache ca-certificates bash bubblewrap curl tzdata musl-utils && \
   apk info -vv | sort; \
   elif grep -i -q ubuntu /etc/issue; then \
   DEBIAN_FRONTEND=noninteractive && \
@@ -213,6 +243,10 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
+COPY --from=go-src /tmp/grafana/data/plugins-bundled ./data/plugins-bundled
+
+RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
+RUN chmod 644 /.grafana-version
 
 EXPOSE 3000
 

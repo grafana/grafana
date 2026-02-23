@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -297,7 +298,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			res := evaluateExecutionResult(tc.execResults, time.Time{})
+			res := evaluateExecutionResult(tc.execResults, time.Time{}, time.Time{})
 
 			require.Equal(t, tc.expectResultLength, len(res))
 
@@ -319,7 +320,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 				"A": "1",
 			},
 		}
-		v := evaluateExecutionResult(results, time.Time{})
+		v := evaluateExecutionResult(results, time.Time{}, time.Time{})
 		require.Len(t, v, 1)
 		require.Equal(t, data.Labels{"datasource_uid": "1", "ref_id": "A"}, v[0].Instance)
 		require.Equal(t, NoData, v[0].State)
@@ -333,7 +334,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 				"C": "2",
 			},
 		}
-		v := evaluateExecutionResult(results, time.Time{})
+		v := evaluateExecutionResult(results, time.Time{}, time.Time{})
 		require.Len(t, v, 2)
 
 		datasourceUIDs := make([]string, 0, len(v))
@@ -591,7 +592,15 @@ func TestValidate(t *testing.T) {
 				pluginsStore: store,
 			})
 
-			expressions := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())
+			expressions := expr.ProvideService(
+				&setting.Cfg{ExpressionsEnabled: true},
+				nil,
+				nil,
+				featuremgmt.WithFeatures(),
+				nil,
+				tracing.InitializeTracerForTest(),
+				dsquerierclient.NewNullQSDatasourceClientBuilder(),
+			)
 			validator := NewConditionValidator(cacheService, expressions, store)
 			evalCtx := NewContext(context.Background(), u)
 
@@ -710,7 +719,19 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				cache:        cacheService,
 				pluginsStore: store,
 			})
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()))
+			evaluator := NewEvaluatorFactory(
+				setting.UnifiedAlertingSettings{},
+				cacheService,
+				expr.ProvideService(
+					&setting.Cfg{ExpressionsEnabled: true},
+					nil,
+					nil,
+					featuremgmt.WithFeatures(),
+					nil,
+					tracing.InitializeTracerForTest(),
+					dsquerierclient.NewNullQSDatasourceClientBuilder(),
+				),
+			)
 			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
 
 			eval, err := evaluator.Create(evalCtx, condition)
@@ -726,10 +747,71 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 			if testCase.reader == nil {
 				require.Empty(t, cmds[0].LoadedDimensions)
 			} else {
-				require.EqualValues(t, testCase.reader.Read(), cmds[0].LoadedDimensions)
+				require.EqualValues(t, testCase.reader.Read(context.Background()), cmds[0].LoadedDimensions)
 			}
 		})
 	}
+}
+
+func TestQueryDataResponseToExecutionResults(t *testing.T) {
+	t.Run("should set datasource type for captured values", func(t *testing.T) {
+		c := models.Condition{
+			Condition: "B",
+			Data: []models.AlertQuery{
+				{
+					RefID:         "A",
+					DatasourceUID: "test-ds",
+				},
+				{
+					RefID:         "B",
+					DatasourceUID: expr.DatasourceUID,
+				},
+			},
+		}
+
+		execResp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{
+						{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0)},
+								),
+							},
+						},
+					},
+				},
+				"B": {
+					Frames: []*data.Frame{
+						{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		results := queryDataResponseToExecutionResults(c, execResp)
+		evaluatedResults := evaluateExecutionResult(results, time.Now(), time.Now())
+
+		require.Len(t, evaluatedResults, 1)
+		result := evaluatedResults[0]
+
+		// Validate that IsDatasourceNode were correctly set
+		require.True(t, result.Values["A"].IsDatasourceNode)
+		require.False(t, result.Values["B"].IsDatasourceNode)
+	})
 }
 
 func TestEvaluate(t *testing.T) {
@@ -1054,6 +1136,109 @@ func TestEvaluate(t *testing.T) {
 				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=10 ], [ var='C' labels={foo=bar} value=1 ]",
 			}},
 		},
+		{
+			name: "range query with reducer includes only reducer and condition values in EvaluationString",
+			cond: models.Condition{
+				Condition: "C",
+			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						// This simulates a range query data response with time series data
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Time",
+									nil,
+									[]time.Time{time.Now(), time.Now().Add(10 * time.Second)},
+								),
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(10.0), util.Pointer(20.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						// Reduce node
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(15.0)},
+								),
+							},
+							Meta: &data.FrameMeta{
+								Custom: []NumberValueCapture{
+									{
+										Var:              "B",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            util.Pointer(15.0),
+									},
+								},
+							},
+						}},
+					},
+					"C": {
+						// Threshold
+						Frames: []*data.Frame{{
+							RefID: "C",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{util.Pointer(1.0)},
+								),
+							},
+							Meta: &data.FrameMeta{
+								Custom: []NumberValueCapture{
+									{
+										Var:              "B",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            util.Pointer(15.0),
+									},
+									{
+										Var:              "C",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            util.Pointer(1.0),
+									},
+								},
+							},
+						}},
+					},
+				},
+			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+				},
+				Values: map[string]NumberValueCapture{
+					"B": {
+						Var:              "B",
+						IsDatasourceNode: false,
+						Labels:           data.Labels{"foo": "bar"},
+						Value:            util.Pointer(15.0),
+					},
+					"C": {
+						Var:              "C",
+						IsDatasourceNode: false,
+						Labels:           data.Labels{"foo": "bar"},
+						Value:            util.Pointer(1.0),
+					},
+				},
+				// Note the absence of "A" in the EvaluationString.
+				// For range queries, the raw datasource values are not included
+				EvaluationString: "[ var='B' labels={foo=bar} value=15 ], [ var='C' labels={foo=bar} value=1 ]",
+			}},
+		},
 	}
 
 	for _, tc := range cases {
@@ -1067,15 +1252,21 @@ func TestEvaluate(t *testing.T) {
 				},
 				condition: tc.cond,
 			}
-			results, err := ev.Evaluate(context.Background(), time.Now())
+			// Use a time far in the past so we can easily check if eval duration times are influenced by scheduledAt.
+			scheduledAt := time.Now().Add(-24 * time.Hour)
+			results, err := ev.Evaluate(context.Background(), scheduledAt)
 			if tc.error != "" {
 				require.EqualError(t, err, tc.error)
 			} else {
 				require.NoError(t, err)
 				require.Len(t, results, len(tc.expected))
 				for i := range results {
-					tc.expected[i].EvaluatedAt = results[i].EvaluatedAt
+					tc.expected[i].EvaluatedAt = scheduledAt
+
+					// Check if duration is a reasonably short amount of time to discount influence from scheduledAt.
+					assert.Lessf(t, results[i].EvaluationDuration, 1*time.Hour, "EvaluationDuration is too long, value may be influenced by scheduledAt")
 					tc.expected[i].EvaluationDuration = results[i].EvaluationDuration
+
 					assert.Equal(t, tc.expected[i], results[i])
 				}
 			}
@@ -1354,7 +1545,7 @@ func TestCreate(t *testing.T) {
 
 		factory := evaluatorImpl{
 			expressionService: fakeExpressionService{
-				buildHook: func(req *expr.Request) (expr.DataPipeline, error) {
+				buildHook: func(ctx context.Context, req *expr.Request) (expr.DataPipeline, error) {
 					if request != nil {
 						assert.Fail(t, "BuildPipeline was called twice but should be only once")
 					}
@@ -1377,15 +1568,15 @@ func TestCreate(t *testing.T) {
 
 type fakeExpressionService struct {
 	hook      func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
-	buildHook func(req *expr.Request) (expr.DataPipeline, error)
+	buildHook func(ctx context.Context, req *expr.Request) (expr.DataPipeline, error)
 }
 
 func (f fakeExpressionService) ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 	return f.hook(ctx, now, pipeline)
 }
 
-func (f fakeExpressionService) BuildPipeline(req *expr.Request) (expr.DataPipeline, error) {
-	return f.buildHook(req)
+func (f fakeExpressionService) BuildPipeline(ctx context.Context, req *expr.Request) (expr.DataPipeline, error) {
+	return f.buildHook(ctx, req)
 }
 
 type fakeNode struct {
@@ -1410,4 +1601,11 @@ func (f fakeNode) String() string {
 
 func (f fakeNode) NeedsVars() []string {
 	return nil
+}
+
+func (f fakeNode) IsInputTo() map[string]struct{} {
+	return nil
+}
+
+func (f fakeNode) SetInputTo(a string) {
 }

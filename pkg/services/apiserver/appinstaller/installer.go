@@ -1,0 +1,225 @@
+package appinstaller
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"maps"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	serverstore "k8s.io/apiserver/pkg/server/storage"
+	"k8s.io/kube-openapi/pkg/common"
+
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/logging"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+)
+
+type LegacyStorageProvider interface {
+	GetLegacyStorage(schema.GroupVersionResource) grafanarest.Storage
+}
+
+// In the rare case that that legacy needs to support the status subresource
+// Unlike resource storage, dual writing must be managed explicitly
+type LegacyStatusProvider interface {
+	GetLegacyStatus(schema.GroupVersionResource, *appsdkapiserver.StatusREST) rest.Storage
+}
+
+type AuthorizerProvider interface {
+	GetAuthorizer() authorizer.Authorizer
+}
+
+// ClusterScopedStorageAuthorizerProvider allows apps to provide custom storage-level
+// authorizers for cluster-scoped resources.
+// Apps with cluster-scoped resources MUST implement this interface to explicitly
+// opt-in to cluster-scoped storage handling.
+type ClusterScopedStorageAuthorizerProvider interface {
+	// GetClusterScopedStorageAuthorizer returns the storage-level authorizer
+	// for a given cluster-scoped GroupResource.
+	// Return nil to use the default deny authorizer.
+	GetClusterScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer
+}
+
+// NamespaceScopedStorageAuthorizerProvider allows apps to provide custom authorizers on the storage layer,
+// specifically when they are needing to authorize based on the name of the resource (and need to filter lists accordingly)
+// or if they need the spec of the object.
+// Optional to implement.
+type NamespaceScopedStorageAuthorizerProvider interface {
+	// return nil to skip
+	GetNamespaceScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer
+}
+
+type AppInstallerConfig struct {
+	CustomConfig             any
+	AllowedV0Alpha1Resources []string
+}
+
+// AddToScheme adds app installer schemas to the runtime scheme
+func AddToScheme(
+	appInstallers []appsdkapiserver.AppInstaller,
+	scheme *runtime.Scheme,
+) ([]schema.GroupVersion, error) {
+	var additionalGroupVersions []schema.GroupVersion
+	for _, installer := range appInstallers {
+		if err := installer.AddToScheme(scheme); err != nil {
+			return nil, fmt.Errorf("failed to add app installer scheme: %w", err)
+		}
+		additionalGroupVersions = append(additionalGroupVersions, installer.GroupVersions()...)
+	}
+	return additionalGroupVersions, nil
+}
+
+// RegisterAdmission combines the existing admission control from builders.
+func RegisterAdmission(
+	existingAdmission admission.Interface,
+	appInstallers []appsdkapiserver.AppInstaller,
+) (admission.Interface, error) {
+	controllers := []admission.Interface{}
+
+	for _, installer := range appInstallers {
+		factory := installer.AdmissionPlugin()
+		if factory == nil {
+			continue
+		}
+
+		admissionInterface, err := factory(nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create admission plugin: %w", err)
+		}
+		controllers = append(controllers, admissionInterface)
+	}
+
+	if existingAdmission != nil {
+		controllers = append(controllers, existingAdmission)
+	}
+
+	return admission.NewChainHandler(controllers...), nil
+}
+
+type AuthorizerRegistrar interface {
+	Register(gv schema.GroupVersion, authorizer authorizer.Authorizer)
+}
+
+func RegisterAuthorizers(
+	ctx context.Context,
+	appInstallers []appsdkapiserver.AppInstaller,
+	registrar AuthorizerRegistrar,
+) {
+	logger := logging.FromContext(ctx)
+	for _, installer := range appInstallers {
+		if authorizerProvider, ok := installer.(AuthorizerProvider); ok {
+			authorizer := authorizerProvider.GetAuthorizer()
+			for _, gv := range installer.GroupVersions() {
+				if authorizer == nil {
+					panic("authorizer cannot be nil for api group: " + gv.String())
+				}
+				registrar.Register(gv, authorizer)
+				logger.Debug("Registered authorizer", "group", gv.Group, "version", gv.Version, "app")
+			}
+		} else {
+			panic("authorizer cannot be nil for api group: " + installer.GroupVersions()[0].Group)
+		}
+	}
+}
+
+func BuildOpenAPIDefGetter(
+	appInstallers []appsdkapiserver.AppInstaller,
+) func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		defs := make(map[string]common.OpenAPIDefinition)
+		maps.Copy(defs, appsdkapiserver.GetCommonOpenAPIDefinitions(ref))
+		for _, installer := range appInstallers {
+			maps.Copy(defs, installer.GetOpenAPIDefinitions(ref))
+		}
+		return defs
+	}
+}
+
+func InstallAPIs(
+	ctx context.Context,
+	appInstallers []appsdkapiserver.AppInstaller,
+	server *genericapiserver.GenericAPIServer,
+	restOpsGetter generic.RESTOptionsGetter,
+	storageOpts *grafanaapiserveroptions.StorageOptions,
+	dualWriteService dualwrite.Service,
+	builderMetrics *builder.BuilderMetrics,
+	apiResourceConfig *serverstore.ResourceConfig,
+) error {
+	logger := logging.FromContext(ctx)
+	for _, installer := range appInstallers {
+		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
+		wrapper := &serverWrapper{
+			ctx:               ctx,
+			GenericAPIServer:  appsdkapiserver.NewKubernetesGenericAPIServer(server),
+			installer:         installer,
+			storageOpts:       storageOpts,
+			restOptionsGetter: restOpsGetter,
+			dualWriteService:  dualWriteService,
+			builderMetrics:    builderMetrics,
+			apiResourceConfig: apiResourceConfig,
+		}
+		if err := installer.InstallAPIs(wrapper, restOpsGetter); err != nil {
+			return fmt.Errorf("failed to install APIs for app %s: %w", installer.ManifestData().AppName, err)
+		}
+		logger.Info("Installed APIs for app", "app", installer.ManifestData().AppName)
+	}
+	return nil
+}
+
+// RegisterPostStartHooks registers individual post start hooks for each app installer
+func RegisterPostStartHooks(
+	appInstallers []appsdkapiserver.AppInstaller,
+	serverConfig *genericapiserver.RecommendedConfig,
+) error {
+	for _, installer := range appInstallers {
+		md := installer.ManifestData()
+		if md == nil {
+			return fmt.Errorf("app installer has nil manifest data: %T", installer)
+		}
+		hook := createPostStartHook(installer)
+		if err := serverConfig.AddPostStartHook(md.AppName, hook); err != nil {
+			return fmt.Errorf("failed to register post start hook for app %s: %w", md.AppName, err)
+		}
+	}
+	return nil
+}
+
+func createPostStartHook(
+	installer appsdkapiserver.AppInstaller,
+) genericapiserver.PostStartHookFunc {
+	return func(hookContext genericapiserver.PostStartHookContext) error {
+		logger := logging.FromContext(hookContext.Context)
+		logger.Debug("Initializing app", "app", installer.ManifestData().AppName)
+
+		if err := installer.InitializeApp(*hookContext.LoopbackClientConfig); err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
+			logger.Error("Failed to initialize app", "app", installer.ManifestData().AppName, "error", err)
+			return fmt.Errorf("failed to initialize app %s: %w", installer.ManifestData().AppName, err)
+		}
+
+		logger.Info("App initialized", "app", installer.ManifestData().AppName)
+		app, err := installer.App()
+		if err != nil {
+			logger.Error("Failed to initialize app", "app", installer.ManifestData().AppName, "error", err)
+			return fmt.Errorf("failed to get app from installer %s: %w", installer.ManifestData().AppName, err)
+		}
+		go func() {
+			err := app.Runner().Run(hookContext.Context)
+			if err != nil {
+				logger.Error("App runner exited with error", "app", installer.ManifestData().AppName, "error", err)
+			} else {
+				logger.Info("App runner exited without error", "app", installer.ManifestData().AppName)
+			}
+		}()
+		return nil
+	}
+}

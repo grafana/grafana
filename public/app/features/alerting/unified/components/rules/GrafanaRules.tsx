@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -15,6 +15,7 @@ import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespace
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
+import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
@@ -56,8 +57,8 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const hasGrafanaAlerts = namespaces.length > 0;
-
-  const grafanaRecordingRulesEnabled = config.featureToggles.grafanaManagedRecordingRules;
+  const { canCreateGrafanaRules } = useRulesAccess();
+  const grafanaRecordingRulesEnabled = config.unifiedAlerting.recordingRulesEnabled && canCreateGrafanaRules;
 
   return (
     <section className={styles.wrapper}>
@@ -77,10 +78,16 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {hasGrafanaAlerts && canExportRules && (
               <Button
-                aria-label="export all grafana rules"
+                aria-label={t(
+                  'alerting.grafana-rules.export-all-grafana-rules-aria-label-export-all-grafana-rules',
+                  'export all grafana rules'
+                )}
                 data-testid="export-all-grafana-rules"
                 icon="download-alt"
-                tooltip="Export all Grafana-managed rules"
+                tooltip={t(
+                  'alerting.grafana-rules.export-all-grafana-rules-tooltip-export-all-grafanamanaged-rules',
+                  'Export all Grafana-managed rules'
+                )}
                 onClick={toggleShowExportDrawer}
                 variant="secondary"
               >
@@ -90,11 +97,14 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
             {grafanaRecordingRulesEnabled && (
               <LinkButton
                 href={createRelativeUrl('/alerting/new/grafana-recording', {
-                  returnTo: '/alerting/list' + location.search,
+                  returnTo: '/alerting/list' + window.location.search,
                 })}
                 icon="plus"
                 variant="secondary"
-                tooltip="Create new Grafana-managed recording rule"
+                tooltip={t(
+                  'alerting.grafana-rules.tooltip-create-new-grafanamanaged-recording-rule',
+                  'Create new Grafana-managed recording rule'
+                )}
                 onClick={() => logInfo(LogMessages.grafanaRecording)}
               >
                 <Trans i18nKey="alerting.list-view.section.grafanaManaged.new-recording-rule">New recording rule</Trans>
@@ -113,7 +123,11 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
           viewMode={wantsListView ? 'list' : 'grouped'}
         />
       ))}
-      {hasResult && namespacesFormat?.length === 0 && <p>No rules found.</p>}
+      {hasResult && namespacesFormat?.length === 0 && (
+        <p>
+          <Trans i18nKey="alerting.grafana-rules.no-rules-found">No rules found.</Trans>
+        </p>
+      )}
       {!hasResult && loading && <Spinner size="xl" className={styles.spinner} />}
       <Pagination
         className={styles.pagination}

@@ -3,10 +3,16 @@ import { DetailedHTMLProps, HTMLAttributes } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 type Props = DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
 
+// TODO: Reimplement this with Box
+/**
+ * @deprecated Use Box instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-deprecated-panelcontainer--docs
+ */
 export const PanelContainer = ({ children, className, ...props }: Props) => {
   const styles = useStyles2(getStyles);
   return (

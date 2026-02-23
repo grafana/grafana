@@ -40,9 +40,9 @@ refs:
 
 # Migrate API keys to service account tokens
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 API keys are deprecated. [Service accounts](ref:service-accounts) now replace API keys for authenticating with the **HTTP APIs** and interacting with Grafana.
-{{% /admonition %}}
+{{< /admonition >}}
 
 API keys specify a role—either **Admin**, **Editor**, or **Viewer**—that determine the permissions associated with interacting with Grafana.
 
@@ -136,10 +136,10 @@ curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-accoun
 curl -X POST -H "Content-Type: application/json" -d '{"name": "my-service-account-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/1/tokens
 
 # response with the created SAT id,name and key.
-{"id":2,"name":"my-service-account-token","key":"glsa_9244xlVFZK0j8Lh4fU8Cz6Z5tO664zIi_7a762939"}%
+{"id":2,"name":"my-service-account-token","key":"glsa_iNValIdinValiDinvalidinvalidinva_5b582697"}%
 
 # now you can authenticate the same way as you did with the API key
-curl --request GET --url http://localhost:3000/api/folders --header 'Authorization: Bearer glsa_9244xlVFZK0j8Lh4fU8Cz6Z5tO664zIi_7a762939'
+curl --request GET --url http://localhost:3000/api/folders --header 'Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697'
 
 # response
 [{"id":1,"uid":"a5261a84-eebc-4733-83a9-61f4713561d1","title":"gdev dashboards"}]%
@@ -252,9 +252,9 @@ This section shows you how to migrate your Terraform configuration for Grafana c
 
 For migration your cloud stack api keys, use the `grafana_cloud_stack_service_account` and `gafana_cloud_stack_service_account_token` resources. For additional information, refer to [Grafana Cloud Stack Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_stack_service_account).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This is only relevant for Grafana Cloud **Stack** API keys `grafana_cloud_stack_api_key`. Grafana Cloud API keys resource `grafana_cloud_api_key` are not deprecated and should be used for authentication for managing your Grafana cloud.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Steps
 

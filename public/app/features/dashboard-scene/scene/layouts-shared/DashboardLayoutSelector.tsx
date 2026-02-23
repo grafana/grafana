@@ -1,16 +1,17 @@
-import { css, cx } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { RadioButtonDot, Stack, useStyles2, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { RadioButtonGroup, Box, ConfirmModal } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
+import { containsTabsLayout } from './findAllGridTypes';
 import { layoutRegistry } from './layoutRegistry';
 
 export interface Props {
@@ -20,172 +21,117 @@ export interface Props {
 export function DashboardLayoutSelector({ layoutManager }: Props) {
   const isGridLayout = layoutManager.descriptor.isGridLayout;
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
-  const styles = useStyles2(getStyles);
+  const [newLayout, setNewLayout] = useState<LayoutRegistryItem | undefined>();
 
-  const onChangeLayout = useCallback(
-    (newLayout: LayoutRegistryItem) => {
+  const disableTabsReason = useMemo(() => {
+    if (config.featureToggles.unlimitedLayoutsNesting) {
+      return undefined;
+    }
+
+    // Check parent hierarchy
+    let parent = layoutManager.parent;
+    while (parent) {
+      if (parent instanceof TabsLayoutManager) {
+        return 'parent';
+      }
+      parent = parent.parent;
+    }
+
+    // Check child hierarchy
+    if (containsTabsLayout(layoutManager)) {
+      return 'child';
+    }
+
+    return undefined;
+  }, [layoutManager]);
+
+  const promptLayoutChange = useCallback((newLayout: LayoutRegistryItem) => setNewLayout(newLayout), []);
+
+  const switchLayout = useCallback(
+    (layoutItem: LayoutRegistryItem) => {
       const layoutParent = layoutManager.parent;
 
       if (layoutParent && isLayoutParent(layoutParent)) {
-        layoutParent.switchLayout(newLayout.createFromLayout(layoutManager));
+        layoutParent.switchLayout(layoutItem.createFromLayout(layoutManager));
       }
     },
     [layoutManager]
   );
 
-  return (
-    <div role="radiogroup" className={styles.radioGroup}>
-      {options.map((opt) => {
-        switch (opt.id) {
-          case 'rows-layout':
-            return (
-              <LayoutRadioButton
-                item={opt}
-                isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={onChangeLayout}
-                key={opt.id}
-              >
-                <div className={styles.rowsLayoutViz}>
-                  {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                  <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
-                  <GridCell />
-                  <GridCell />
-                  <GridCell />
-                  {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                  <div style={{ gridColumn: 'span 3', fontSize: '6px' }}>⌄ &nbsp; .-.-.-.-.-</div>
-                  <GridCell />
-                  <GridCell />
-                  <GridCell />
-                </div>
-              </LayoutRadioButton>
-            );
-          case 'tabs-layout':
-            return (
-              <LayoutRadioButton
-                item={opt}
-                isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={onChangeLayout}
-                key={opt.id}
-              >
-                <Stack direction="column" gap={0.5} height={'100%'}>
-                  <div className={styles.tabsBar}>
-                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                    <div className={cx(styles.tab, styles.tabActive)}>-.-.-</div>
-                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                    <div className={styles.tab}>-.-.-</div>
-                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-                    <div className={styles.tab}>-.-.-</div>
-                  </div>
-                  <div className={styles.tabsVizTabContent}>
-                    <GridCell />
-                    <GridCell />
-                  </div>
-                </Stack>
-              </LayoutRadioButton>
-            );
-          case 'responsive-grid':
-            return (
-              <LayoutRadioButton
-                item={opt}
-                isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={onChangeLayout}
-                key={opt.id}
-              >
-                <div className={styles.autoGridViz}>
-                  <GridCell />
-                  <GridCell />
-                  <GridCell />
-                  <GridCell />
-                </div>
-              </LayoutRadioButton>
-            );
-          case 'custom-grid':
-          default:
-            return (
-              <LayoutRadioButton
-                item={opt}
-                isSelected={layoutManager.descriptor.id === opt.id}
-                onSelect={onChangeLayout}
-                key={opt.id}
-              >
-                <div className={styles.customGridViz}>
-                  <GridCell colSpan={2} />
-                  <div className={styles.customGridVizInner}>
-                    <GridCell />
-                    <GridCell />
-                  </div>
-                  <GridCell />
-                  <GridCell colSpan={2} />
-                </div>
-              </LayoutRadioButton>
-            );
-        }
-      })}
-    </div>
-  );
-}
+  const onConfirmNewLayout = useCallback(() => {
+    if (!newLayout) {
+      return;
+    }
 
-interface LayoutRadioButtonProps {
-  item: LayoutRegistryItem;
-  isSelected: boolean;
-  onSelect: (item: LayoutRegistryItem) => void;
-  children: React.ReactNode;
-}
+    switchLayout(newLayout);
+    setNewLayout(undefined);
+  }, [newLayout, switchLayout]);
 
-function LayoutRadioButton({ item, isSelected, children, onSelect }: LayoutRadioButtonProps) {
-  const styles = useStyles2(getStyles);
+  const onDismissNewLayout = useCallback(() => setNewLayout(undefined), []);
+
+  const disabledOptions: LayoutRegistryItem[] = [];
+
+  const radioOptions = options.map((opt) => {
+    let description = opt.description;
+    if (disableTabsReason && opt.id === TabsLayoutManager.descriptor.id) {
+      if (disableTabsReason === 'parent') {
+        description = t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
+      } else {
+        description = t(
+          'dashboard.canvas-actions.disabled-child-contains-tabs',
+          'Cannot change to tabs because a row already contains tabs'
+        );
+      }
+      disabledOptions.push(opt);
+    }
+
+    return {
+      value: opt,
+      label: opt.name,
+      icon: opt.icon,
+      description,
+      ariaLabel: `layout-selection-option-${opt.name}`,
+    };
+  });
 
   return (
-    // This outer div is just so that the radio dot can be outside the
-    // label (as the RadioButtonDot has a label element and they can't nest)
-    <div className={styles.radioButtonOuter}>
-      <label
-        htmlFor={`layout-${item.id}`}
-        tabIndex={0}
-        className={cx(styles.radioButton, isSelected && styles.radioButtonActive)}
-      >
-        {children}
-        <Stack direction="column" gap={1} justifyContent="space-between" grow={1}>
-          <Text weight="medium">{item.name}</Text>
-          <Text variant="bodySmall" color="secondary">
-            {item.description!}
-          </Text>
-        </Stack>
-      </label>
-      <div className={styles.radioDot}>
-        <RadioButtonDot
-          id={`layout-${item.id}`}
-          name={'layout'}
-          label={<></>}
-          onChange={() => onSelect(item)}
-          checked={isSelected}
+    <>
+      <Box paddingBottom={2} display="flex" grow={1} alignItems="stretch" gap={2} direction={'column'}>
+        <RadioButtonGroup
+          fullWidth
+          value={layoutManager.descriptor}
+          options={radioOptions}
+          onChange={!isGridLayout ? switchLayout : promptLayoutChange}
+          disabledOptions={disabledOptions}
         />
-      </div>
-    </div>
+      </Box>
+      {isGridLayout && (
+        <ConfirmModal
+          isOpen={!!newLayout}
+          title={t('dashboard.layout.panel.modal.title', 'Change layout')}
+          body={t('dashboard.layout.panel.modal.body', 'Changing the layout will reset all panel positions and sizes.')}
+          confirmText={t('dashboard.layout.panel.modal.confirm', 'Change layout')}
+          dismissText={t('dashboard.layout.panel.modal.dismiss', 'Cancel')}
+          confirmButtonVariant="primary"
+          onConfirm={onConfirmNewLayout}
+          onDismiss={onDismissNewLayout}
+        />
+      )}
+    </>
   );
 }
-
-function GridCell({ colSpan = 1 }: { colSpan?: number }) {
-  const styles = useStyles2(getStyles);
-
-  return <div className={styles.gridCell} style={{ gridColumn: `span ${colSpan}` }}></div>;
-}
-
 export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
-    const categoryName = layoutManager.descriptor.isGridLayout
-      ? t('dashboard.layout.common.grid', 'Grid')
-      : t('dashboard.layout.common.layout', 'Layout');
-
-    const layoutCategory = new OptionsPaneCategoryDescriptor({
-      title: categoryName,
-      id: 'layout-options',
+    const layout = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.layout.common.layout', 'Layout'),
+      id: 'layout',
       isOpenDefault: true,
     });
 
-    layoutCategory.addItem(
+    layout.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
+        id: 'dash-grid-layout-option',
         skipField: true,
         render: () => <DashboardLayoutSelector layoutManager={layoutManager} />,
       })
@@ -193,107 +139,10 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
 
     if (layoutManager.getOptions) {
       for (const option of layoutManager.getOptions()) {
-        layoutCategory.addItem(option);
+        layout.addItem(option);
       }
     }
 
-    return layoutCategory;
+    return [layout];
   }, [layoutManager]);
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    radioButtonOuter: css({
-      position: 'relative',
-    }),
-    radioDot: css({
-      position: 'absolute',
-      top: theme.spacing(0.5),
-      right: theme.spacing(0),
-    }),
-    radioGroup: css({
-      backgroundColor: theme.colors.background.primary,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(2),
-      marginBottom: theme.spacing(2),
-    }),
-    radioButton: css({
-      alignItems: 'flex-start',
-      gap: theme.spacing(1.5),
-      padding: theme.spacing(1),
-      border: `1px solid ${theme.colors.border.weak}`,
-      cursor: 'pointer',
-      borderRadius: theme.shape.radius.default,
-      display: 'grid',
-      gridTemplateColumns: `80px 1fr`,
-      gridTemplateRows: '70px',
-    }),
-    radioButtonActive: css({
-      border: `1px solid ${theme.colors.primary.border}`,
-    }),
-    gridCell: css({
-      backgroundColor: theme.colors.background.secondary,
-      border: `1px solid ${theme.colors.border.medium}`,
-    }),
-    tab: css({
-      width: theme.spacing(2),
-      height: theme.spacing(1),
-      fontSize: '5px',
-      display: 'flex',
-      alignItems: 'center',
-      position: 'relative',
-      justifyContent: 'center',
-    }),
-    tabActive: css({
-      '&:before': {
-        content: '" "',
-        position: 'absolute',
-        height: 1,
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: theme.colors.gradients.brandHorizontal,
-      },
-    }),
-    tabsBar: css({
-      display: 'flex',
-      gap: theme.spacing(0.5),
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
-    }),
-    rowsLayoutViz: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gridTemplateRows: '10px 1fr 10px 1fr',
-      gap: '4px',
-      height: '100%',
-    }),
-    tabsVizTabContent: css({
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gridTemplateRows: '1fr',
-      gap: '4px',
-      flexGrow: 1,
-    }),
-    autoGridViz: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, 1fr)',
-      gridTemplateRows: 'repeat(2, 1fr)',
-      gap: '4px',
-      height: '100%',
-    }),
-    customGridViz: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gridTemplateRows: 'repeat(2, 1fr)',
-      gap: '4px',
-      height: '100%',
-    }),
-    customGridVizInner: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(1, 1fr)',
-      gridTemplateRows: 'repeat(2, 1fr)',
-      gap: '4px',
-    }),
-  };
-};

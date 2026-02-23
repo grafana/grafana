@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
-import { Trans } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { Button } from '../../Button/Button';
 import { Modal } from '../../Modal/Modal';
 import { DataLinkEditor } from '../DataLinkEditor';
 

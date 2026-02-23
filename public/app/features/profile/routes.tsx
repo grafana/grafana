@@ -1,7 +1,7 @@
 import { uniq } from 'lodash';
 
+import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
 
 const profileRoutes: RouteDescriptor[] = [

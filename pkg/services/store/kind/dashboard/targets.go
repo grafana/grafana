@@ -27,7 +27,11 @@ func (s *targetInfo) GetDatasourceInfo() []DataSourceRef {
 }
 
 // the node will either be string (name|uid) OR ref
-func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
+func (s *targetInfo) addDatasource(iter *jsoniter.Iterator, jsonPath string, lc map[string]any) {
+	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.StringValue, jsoniter.NilValue, jsoniter.ObjectValue) {
+		return
+	}
+
 	switch iter.WhatIsNext() {
 	case jsoniter.StringValue:
 		key := iter.ReadString()
@@ -55,8 +59,7 @@ func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
 		}
 
 	default:
-		v := iter.Read()
-		logf("[Panel.datasource.unknown] %v\n", v)
+		iter.Skip()
 	}
 }
 
@@ -66,18 +69,21 @@ func (s *targetInfo) addRef(ref *DataSourceRef) {
 	}
 }
 
-func (s *targetInfo) addTarget(iter *jsoniter.Iterator) {
-	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
-		switch l1Field {
+func (s *targetInfo) addTarget(iter *jsoniter.Iterator, jsonPath string, lc map[string]any) {
+	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.ObjectValue) {
+		return
+	}
+
+	for f := iter.ReadObject(); f != ""; f = iter.ReadObject() {
+		switch f {
 		case "datasource":
-			s.addDatasource(iter)
+			s.addDatasource(iter, jsonPath+".datasource", lc)
 
 		case "refId":
 			iter.Skip()
 
 		default:
-			v := iter.Read()
-			logf("[Panel.TARGET] %s=%v\n", l1Field, v)
+			iter.Skip()
 		}
 	}
 }

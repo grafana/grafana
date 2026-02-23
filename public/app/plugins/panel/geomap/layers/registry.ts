@@ -1,4 +1,4 @@
-import { Map as OpenLayersMap } from 'ol';
+import OpenLayersMap from 'ol/Map';
 
 import {
   MapLayerRegistryItem,
@@ -9,7 +9,8 @@ import {
   SelectableValue,
   PluginState,
 } from '@grafana/data';
-import { config, hasAlphaPanels } from 'app/core/config';
+import { config } from '@grafana/runtime';
+import { hasAlphaPanels } from 'app/core/config';
 
 import { basemapLayers } from './basemaps';
 import { carto } from './basemaps/carto';

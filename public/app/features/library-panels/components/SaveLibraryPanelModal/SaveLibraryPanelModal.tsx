@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getConnectedDashboards } from '../../state/api';
 import { getModalStyles } from '../../styles';
@@ -29,8 +29,8 @@ export const SaveLibraryPanelModal = ({
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(panel.libraryPanel.uid);
-    if (searchHits.length > 0) {
-      return searchHits.map((dash) => dash.title);
+    if (searchHits && searchHits.length > 0) {
+      return searchHits.map((dash) => dash.name);
     }
 
     return [];
@@ -63,12 +63,15 @@ export const SaveLibraryPanelModal = ({
     <Modal title={title} icon="save" onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
-          {'This update will affect '}
-          <strong>
-            {panel.libraryPanel.meta?.connectedDashboards}{' '}
-            {panel.libraryPanel.meta?.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}.
-          </strong>
-          The following dashboards using the panel will be affected:
+          <Trans
+            i18nKey="library-panels.save-library-panel-modal.num-affected"
+            count={panel.libraryPanel.meta?.connectedDashboards}
+          >
+            This update will affect <strong>{'{{count}}'} dashboards.</strong>
+          </Trans>
+          <Trans i18nKey="library-panels.save-library-panel-modal.affected-dashboards">
+            The following dashboards using the panel will be affected:
+          </Trans>
         </p>
         <Input
           className={styles.dashboardSearch}

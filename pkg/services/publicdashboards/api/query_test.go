@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,32 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/infra/log"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/dashboards/service"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/guardian"
-	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/search/sort"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -193,7 +169,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
     }
 }`
 
-	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
+	setup := func(_ bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
 		testServer := setupTestServer(t, nil, service, anonymousUser)
 
@@ -253,124 +229,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 func getValidQueryPath(accessToken string) string {
 	return fmt.Sprintf("/api/public/dashboards/%s/panels/2/query", accessToken)
-}
-
-func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	db, cfg := db.InitTestDBWithCfg(t)
-
-	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db, guardian.ProvideGuardian())
-	qds := buildQueryDataService(t, cacheService, nil, db)
-	dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
-	_, _ = dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-		UID:      "ds1",
-		OrgID:    1,
-		Name:     "laban",
-		Type:     datasources.DS_MYSQL,
-		Access:   datasources.DS_ACCESS_DIRECT,
-		URL:      "http://test",
-		Database: "site",
-		ReadOnly: true,
-	})
-
-	// Create Dashboard
-	saveDashboardCmd := dashboards.SaveDashboardCommand{
-		OrgID:     1,
-		FolderUID: "1",
-		IsFolder:  false,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"id":    nil,
-			"title": "test",
-			"panels": []map[string]any{
-				{
-					"id": 1,
-					"targets": []map[string]any{
-						{
-							"datasource": map[string]string{
-								"type": "mysql",
-								"uid":  "ds1",
-							},
-							"refId": "A",
-						},
-					},
-				},
-			},
-		}),
-	}
-
-	// create dashboard
-	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
-	require.NoError(t, err)
-	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
-	require.NoError(t, err)
-
-	// Create public dashboard
-	isEnabled := true
-	savePubDashboardCmd := &SavePublicDashboardDTO{
-		DashboardUid: dashboard.UID,
-		OrgID:        dashboard.OrgID,
-		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled: &isEnabled,
-		},
-	}
-
-	annotationsService := annotationstest.NewFakeAnnotationsRepo()
-
-	// create public dashboard
-	store := publicdashboardsStore.ProvideStore(db, cfg, featuremgmt.WithFeatures())
-	cfg.PublicDashboardsEnabled = true
-	ac := acmock.New()
-	ws := publicdashboardsService.ProvideServiceWrapper(store)
-	folderStore := folderimpl.ProvideDashboardFolderStore(db)
-	dashPermissionService := acmock.NewMockedPermissionsService()
-	dashService, err := service.ProvideDashboardServiceImpl(
-		cfg, dashboardStoreService, folderStore,
-		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), ac,
-		foldertest.NewFakeService(), folder.NewFakeStore(), nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil,
-		nil, dualwrite.ProvideTestService(), sort.ProvideService(),
-	)
-	require.NoError(t, err)
-	dashService.RegisterDashboardPermissions(dashPermissionService)
-
-	license := licensingtest.NewFakeLicensing()
-	license.On("FeatureEnabled", FeaturePublicDashboardsEmailSharing).Return(false)
-	pds := publicdashboardsService.ProvideService(cfg, featuremgmt.WithFeatures(), store, qds, annotationsService, ac, ws, dashService, license)
-	pubdash, err := pds.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
-	require.NoError(t, err)
-
-	// setup test server
-	server := setupTestServer(t, cfg, pds, anonymousUser)
-
-	resp := callAPI(server, http.MethodPost,
-		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.AccessToken),
-		strings.NewReader(`{}`),
-		t,
-	)
-	require.Equal(t, http.StatusOK, resp.Code)
-	require.NoError(t, err)
-	require.JSONEq(
-		t,
-		`{
-        "results": {
-          "A": {
-			"status": 200,
-            "frames": [
-              {
-                "data": {
-                  "values": []
-                },
-                "schema": {
-                  "fields": []
-                }
-              }
-            ]
-          }
-        }
-      }`,
-		resp.Body.String(),
-	)
 }
 
 func TestAPIGetAnnotations(t *testing.T) {

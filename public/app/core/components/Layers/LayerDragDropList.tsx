@@ -1,7 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import type { JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 import { LayerName } from './LayerName';
@@ -65,7 +67,13 @@ export const LayerDragDropList = <T extends LayerElement>({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        onMouseDown={() => onSelect(element)}
+                        onClick={() => onSelect(element)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onSelect(element);
+                          }
+                        }}
                         role="button"
                         tabIndex={0}
                       >
@@ -81,7 +89,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                             {onDuplicate ? (
                               <IconButton
                                 name="copy"
-                                tooltip="Duplicate"
+                                tooltip={t('layers.layer-drag-drop-list.duplicate-tooltip', 'Duplicate')}
                                 className={style.actionIcon}
                                 onClick={() => onDuplicate(element)}
                               />
@@ -89,7 +97,7 @@ export const LayerDragDropList = <T extends LayerElement>({
 
                             <IconButton
                               name="trash-alt"
-                              tooltip="Remove"
+                              tooltip={t('layers.layer-drag-drop-list.remove-tooltip', 'Remove')}
                               className={cx(style.actionIcon, style.dragIcon)}
                               onClick={() => onDelete(element)}
                             />
@@ -97,8 +105,10 @@ export const LayerDragDropList = <T extends LayerElement>({
                         )}
                         {layers.length > shouldRenderDragIconLengthThreshold && (
                           <Icon
-                            aria-label="Drag and drop icon"
-                            title="Drag and drop to reorder"
+                            aria-label={t(
+                              'layers.layer-drag-drop-list.draggable-aria-label',
+                              'Drag and drop to reorder'
+                            )}
                             name="draggabledots"
                             size="lg"
                             className={style.dragIcon}

@@ -1,0 +1,123 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "table"
+//  }
+//  Name: traces
+//  Dimensions: 4 Fields by 2 Rows
+//  +----------------+-----------------+--------------------------------------+----------------+
+//  | Name: traceID  | Name: traceName | Name: startTime                      | Name: duration |
+//  | Labels:        | Labels:         | Labels:                              | Labels:        |
+//  | Type: []string | Type: []string  | Type: []time.Time                    | Type: []int64  |
+//  +----------------+-----------------+--------------------------------------+----------------+
+//  | trace-1        | service-1: op1  | 2020-11-20 12:04:54.680409 +0000 GMT | 1000           |
+//  | trace-2        | service-2: op2  | 2020-11-20 12:04:54.680409 +0000 GMT | 2000           |
+//  +----------------+-----------------+--------------------------------------+----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "traces",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "table"
+        },
+        "fields": [
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            },
+            "config": {
+              "displayName": "Trace ID",
+              "links": [
+                {
+                  "title": "Trace: ${__value.raw}",
+                  "internal": {
+                    "query": {
+                      "query": "${__value.raw}"
+                    },
+                    "datasourceUid": "test-uid",
+                    "datasourceName": "test-name"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "traceName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            },
+            "config": {
+              "displayName": "Trace name"
+            }
+          },
+          {
+            "name": "startTime",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "displayName": "Start time"
+            }
+          },
+          {
+            "name": "duration",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64"
+            },
+            "config": {
+              "displayName": "Duration",
+              "unit": "µs"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "trace-1",
+            "trace-2"
+          ],
+          [
+            "service-1: op1",
+            "service-2: op2"
+          ],
+          [
+            1605873894680,
+            1605873894680
+          ],
+          [
+            1000,
+            2000
+          ]
+        ],
+        "nanos": [
+          null,
+          null,
+          [
+            409000,
+            409000
+          ],
+          null
+        ]
+      }
+    }
+  ]
+}

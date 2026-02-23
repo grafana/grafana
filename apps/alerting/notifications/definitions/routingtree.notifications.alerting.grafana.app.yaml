@@ -1,0 +1,138 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: routingtrees.notifications.alerting.grafana.app
+spec:
+  group: notifications.alerting.grafana.app
+  names:
+    kind: RoutingTree
+    plural: routingtrees
+  scope: Namespaced
+  versions:
+  - name: v0alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            properties:
+              defaults:
+                properties:
+                  group_by:
+                    items:
+                      type: string
+                    type: array
+                  group_interval:
+                    type: string
+                  group_wait:
+                    type: string
+                  receiver:
+                    type: string
+                  repeat_interval:
+                    type: string
+                required:
+                - receiver
+                type: object
+              routes:
+                items:
+                  properties:
+                    active_time_intervals:
+                      items:
+                        type: string
+                      type: array
+                    continue:
+                      type: boolean
+                    group_by:
+                      items:
+                        type: string
+                      type: array
+                    group_interval:
+                      type: string
+                    group_wait:
+                      type: string
+                    matchers:
+                      items:
+                        properties:
+                          label:
+                            type: string
+                          type:
+                            enum:
+                            - =
+                            - '!='
+                            - =~
+                            - '!~'
+                            type: string
+                          value:
+                            type: string
+                        required:
+                        - type
+                        - label
+                        - value
+                        type: object
+                      type: array
+                    mute_time_intervals:
+                      items:
+                        type: string
+                      type: array
+                    receiver:
+                      type: string
+                    repeat_interval:
+                      type: string
+                    routes:
+                      items:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      type: array
+                  required:
+                  - continue
+                  type: object
+                type: array
+            required:
+            - defaults
+            - routes
+            type: object
+          status:
+            properties:
+              additionalFields:
+                description: additionalFields is reserved for future use
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              operatorStates:
+                additionalProperties:
+                  properties:
+                    descriptiveState:
+                      description: descriptiveState is an optional more descriptive
+                        state field which has no requirements on format
+                      type: string
+                    details:
+                      description: details contains any extra information that is
+                        operator-specific
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    lastEvaluation:
+                      description: lastEvaluation is the ResourceVersion last evaluated
+                      type: string
+                    state:
+                      description: |-
+                        state describes the state of the lastEvaluation.
+                        It is limited to three possible states for machine evaluation.
+                      enum:
+                      - success
+                      - in_progress
+                      - failed
+                      type: string
+                  required:
+                  - lastEvaluation
+                  - state
+                  type: object
+                description: |-
+                  operatorStates is a map of operator ID to operator state evaluations.
+                  Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

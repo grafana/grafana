@@ -26,8 +26,14 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
+	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
@@ -41,24 +47,46 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 const (
 	Org1 = "Org1"
 	Org2 = "OrgB"
+
+	DefaultNamespace = "default"
+)
+
+var (
+	sharedHTTPClient = &http.Client{
+		Timeout: 30 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Transport: &http.Transport{
+			MaxIdleConns:        1000,
+			MaxIdleConnsPerHost: 500,
+			MaxConnsPerHost:     500,
+			IdleConnTimeout:     90 * time.Second,
+			DisableKeepAlives:   false,
+			DisableCompression:  true,
+			ForceAttemptHTTP2:   false,
+		},
+	}
 )
 
 type K8sTestHelper struct {
-	t          *testing.T
-	env        server.TestEnv
-	Namespacer request.NamespaceMapper
+	t               *testing.T
+	listenerAddress string
+	env             server.TestEnv
+	Namespacer      request.NamespaceMapper
 
 	Org1 OrgUsers // default
 	OrgB OrgUsers // some other id
@@ -71,7 +99,18 @@ type K8sTestHelper struct {
 	userSvc user.Service
 }
 
+type K8sTestHelperOpts struct {
+	testinfra.GrafanaOpts
+	// If provided, these users will be used instead of creating new ones
+	Org1Users *OrgUsers
+	OrgBUsers *OrgUsers
+}
+
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
+	return NewK8sTestHelperWithOpts(t, K8sTestHelperOpts{GrafanaOpts: opts})
+}
+
+func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelper {
 	t.Helper()
 
 	// Use GRPC server when not configured
@@ -84,16 +123,28 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
-	dir, path := testinfra.CreateGrafDir(t, opts)
-	_, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	c := &K8sTestHelper{
-		env:        *env,
-		t:          t,
-		Namespacer: request.GetNamespaceMapper(nil),
+	var (
+		dir  = opts.Dir
+		path = opts.DirPath
+	)
+	if opts.Dir == "" && opts.DirPath == "" {
+		dir, path = testinfra.CreateGrafDir(t, opts.GrafanaOpts)
+	}
+	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, dir, path)
+	if !opts.DisableDBCleanup {
+		t.Cleanup(testDB.Cleanup)
 	}
 
-	quotaService := quotaimpl.ProvideService(c.env.SQLStore, c.env.Cfg)
+	c := &K8sTestHelper{
+		env:             *env,
+		listenerAddress: listenerAddress,
+		t:               t,
+		Namespacer:      request.GetNamespaceMapper(nil),
+	}
+
+	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
+	require.NoError(c.t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), c.env.SQLStore, cfgProvider)
 	orgSvc, err := orgimpl.ProvideService(c.env.SQLStore, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
@@ -112,16 +163,32 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	_ = c.CreateOrg(Org1)
 	_ = c.CreateOrg(Org2)
 
-	c.Org1 = c.createTestUsers(Org1)
-	c.OrgB = c.createTestUsers(Org2)
+	if opts.Org1Users != nil {
+		c.Org1 = *opts.Org1Users
+		c.Org1.Admin.baseURL = listenerAddress
+		c.Org1.Editor.baseURL = listenerAddress
+		c.Org1.Viewer.baseURL = listenerAddress
+		c.Org1.None.baseURL = listenerAddress
+	} else {
+		c.Org1 = c.createTestUsers(Org1)
+	}
+	if opts.OrgBUsers != nil {
+		c.OrgB = *opts.OrgBUsers
+		c.OrgB.Admin.baseURL = listenerAddress
+		c.OrgB.Editor.baseURL = listenerAddress
+		c.OrgB.Viewer.baseURL = listenerAddress
+		c.OrgB.None.baseURL = listenerAddress
+	} else {
+		c.OrgB = c.createTestUsers(Org2)
+	}
 
 	c.loadAPIGroups()
 
 	// ensure unified storage is alive and running
 	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
-	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resource.HealthCheckRequest{})
+	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 	require.NoError(t, err, "unable to read resource client health check")
-	require.Equal(t, resource.HealthCheckResponse_SERVING, rsp.Status)
+	require.Equal(t, resourcepb.HealthCheckResponse_SERVING, rsp.Status)
 
 	return c
 }
@@ -131,7 +198,6 @@ func (c *K8sTestHelper) loadAPIGroups() {
 		rsp := DoRequest(c, RequestParams{
 			User: c.Org1.Viewer,
 			Path: "/apis",
-			// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
 		}, &metav1.APIGroupList{})
 
 		if rsp.Response.StatusCode == http.StatusOK {
@@ -147,15 +213,40 @@ func (c *K8sTestHelper) GetEnv() server.TestEnv {
 	return c.env
 }
 
+func (c *K8sTestHelper) SetGithubConnectionFactory(f githubConnection.GithubFactory) {
+	c.env.GithubConnectionFactory = f
+}
+
+func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) {
+	c.env.GithubRepoFactory = f
+}
+
+func (c *K8sTestHelper) GetListenerAddress() string {
+	return c.listenerAddress
+}
+
 func (c *K8sTestHelper) Shutdown() {
 	err := c.env.Server.Shutdown(context.Background(), "done")
 	require.NoError(c.t, err)
 }
 
 type ResourceClientArgs struct {
-	User      User
-	Namespace string
-	GVR       schema.GroupVersionResource
+	// Provide either a user or a service account token
+	User                User
+	ServiceAccountToken string
+	Namespace           string
+	GVR                 schema.GroupVersionResource
+}
+
+// Validate ensures that either User or ServiceAccountToken is provided, but not both
+func (args ResourceClientArgs) Validate() error {
+	if (args.User != User{}) && args.ServiceAccountToken != "" {
+		return fmt.Errorf("cannot provide both User and ServiceAccountToken")
+	}
+	if (args.User == User{}) && args.ServiceAccountToken == "" {
+		return fmt.Errorf("must provide either User or ServiceAccountToken")
+	}
+	return nil
 }
 
 type K8sResourceClient struct {
@@ -164,16 +255,53 @@ type K8sResourceClient struct {
 	Resource dynamic.ResourceInterface
 }
 
+// newOptimizedRestConfig creates a base rest.Config optimized for integration tests.
+// It disables client-side rate limiting and uses an optimized HTTP transport.
+func newOptimizedRestConfig(host string) *rest.Config {
+	return &rest.Config{
+		Host: host,
+		// For integration tests against a local server, client-side rate-limiting
+		// is too low and can cause requests to be throttled.
+		QPS:   10,
+		Burst: 20,
+		// Use a shared transport optimized for high-concurrency testing
+		// against a single host.
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 50, // Default is 2, which is too low for test concurrency.
+		},
+	}
+}
+
 // This will set the expected Group/Version/Resource and return the discovery info if found
 func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceClient {
 	c.t.Helper()
 
+	// Validate that either User or ServiceAccountToken is provided, but not both
+	err := args.Validate()
+	require.NoError(c.t, err)
+
 	if args.Namespace == "" {
-		args.Namespace = c.Namespacer(args.User.Identity.GetOrgID())
+		if args.User != (User{}) {
+			args.Namespace = c.Namespacer(args.User.Identity.GetOrgID())
+		} else {
+			// For service account token, we need to pass the namespace directly
+			require.NotEmpty(c.t, args.Namespace, "Namespace must be provided when using ServiceAccountToken")
+		}
 	}
 
-	client, err := dynamic.NewForConfig(args.User.NewRestConfig())
-	require.NoError(c.t, err)
+	var client dynamic.Interface
+	var clientErr error
+
+	if args.User != (User{}) {
+		client, clientErr = dynamic.NewForConfig(args.User.NewRestConfig())
+	} else {
+		// Use service account token for authentication
+		cfg := newOptimizedRestConfig(fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr()))
+		cfg.BearerToken = args.ServiceAccountToken
+		client, clientErr = dynamic.NewForConfig(cfg)
+	}
+	require.NoError(c.t, clientErr)
 
 	return &K8sResourceClient{
 		t:        c.t,
@@ -196,6 +324,15 @@ func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
 	return statusError
 }
 
+func (c *K8sTestHelper) EnsureStatusError(err error, expectedHttpStatus int, expectedMessage string) {
+	statusError := c.AsStatusError(err)
+	require.NotNil(c.t, statusError)
+	require.Equal(c.t, int32(expectedHttpStatus), statusError.ErrStatus.Code)
+	if expectedMessage != "" {
+		require.Equal(c.t, expectedMessage, statusError.ErrStatus.Message)
+	}
+}
+
 func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, replaceMeta ...string) string {
 	c.t.Helper()
 
@@ -213,7 +350,7 @@ func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, r
 func (c *K8sResourceClient) SpecJSON(v *unstructured.UnstructuredList) string {
 	c.t.Helper()
 
-	clean := []any{}
+	clean := make([]any, 0, len(v.Items))
 	for _, item := range v.Items {
 		clean = append(clean, item.Object["spec"])
 	}
@@ -268,6 +405,17 @@ type OrgUsers struct {
 	Admin  User
 	Editor User
 	Viewer User
+	None   User
+
+	OrgID int64
+
+	// Separate standalone service accounts with different roles
+	AdminServiceAccount       serviceaccounts.ServiceAccountDTO
+	AdminServiceAccountToken  string
+	EditorServiceAccount      serviceaccounts.ServiceAccountDTO
+	EditorServiceAccountToken string
+	ViewerServiceAccount      serviceaccounts.ServiceAccountDTO
+	ViewerServiceAccountToken string
 
 	// The team with admin+editor in it (but not viewer)
 	Staff team.Team
@@ -280,11 +428,15 @@ type User struct {
 }
 
 func (c *User) NewRestConfig() *rest.Config {
-	return &rest.Config{
-		Host:     c.baseURL,
-		Username: c.Identity.GetLogin(),
-		Password: c.password,
-	}
+	cfg := newOptimizedRestConfig(c.baseURL)
+	cfg.Username = c.Identity.GetLogin()
+	cfg.Password = c.password
+	return cfg
+}
+
+// Implements: apiserver.RestConfigProvider
+func (c *User) GetRestConfig(context.Context) (*rest.Config, error) {
+	return c.NewRestConfig(), nil
 }
 
 func (c *User) ResourceClient(t *testing.T, gvr schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
@@ -302,6 +454,11 @@ func (c *User) RESTClient(t *testing.T, gv *schema.GroupVersion) *rest.RESTClien
 	return client
 }
 
+func (c *User) GetClientRegistry() *appsdk_k8s.ClientRegistry {
+	restConfig := c.NewRestConfig()
+	return appsdk_k8s.NewClientRegistry(*restConfig, appsdk_k8s.DefaultClientConfig())
+}
+
 type RequestParams struct {
 	User        User
 	Method      string // GET, POST, PATCH, etc
@@ -309,6 +466,7 @@ type RequestParams struct {
 	Body        []byte
 	ContentType string
 	Accept      string
+	Headers     map[string]string
 }
 
 type K8sResponse[T any] struct {
@@ -318,8 +476,10 @@ type K8sResponse[T any] struct {
 	Status   *metav1.Status
 }
 
-type AnyResourceResponse = K8sResponse[AnyResource]
-type AnyResourceListResponse = K8sResponse[AnyResourceList]
+type (
+	AnyResourceResponse     = K8sResponse[AnyResource]
+	AnyResourceListResponse = K8sResponse[AnyResourceList]
+)
 
 func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyResource) AnyResourceResponse {
 	c.t.Helper()
@@ -412,12 +572,11 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	if params.Accept != "" {
 		req.Header.Set("Accept", params.Accept)
 	}
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
+	for k, v := range params.Headers {
+		req.Header.Set(k, v)
 	}
-	rsp, err := client.Do(req)
+
+	rsp, err := sharedHTTPClient.Do(req)
 	require.NoError(c.t, err)
 
 	r := K8sResponse[T]{
@@ -478,12 +637,24 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 	users := OrgUsers{
-		Admin:  c.CreateUser("admin", orgName, org.RoleAdmin, nil),
+		Admin:  c.CreateUser("admin2", orgName, org.RoleAdmin, nil),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
+		None:   c.CreateUser("none", orgName, org.RoleNone, nil),
 	}
+	users.OrgID = users.Admin.Identity.GetOrgID()
 
-	users.Staff = c.CreateTeam("staff", "staff@"+orgName, users.Admin.Identity.GetOrgID())
+	// Create service accounts
+	users.AdminServiceAccount = c.CreateServiceAccount(users.Admin, "admin-sa", users.OrgID, org.RoleAdmin)
+	users.AdminServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.AdminServiceAccount.Id, users.OrgID, "admin-token", 0)
+
+	users.EditorServiceAccount = c.CreateServiceAccount(users.Admin, "editor-sa", users.OrgID, org.RoleEditor)
+	users.EditorServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.EditorServiceAccount.Id, users.OrgID, "editor-token", 0)
+
+	users.ViewerServiceAccount = c.CreateServiceAccount(users.Admin, "viewer-sa", users.OrgID, org.RoleViewer)
+	users.ViewerServiceAccountToken = c.CreateServiceAccountToken(users.Admin, users.ViewerServiceAccount.Id, users.OrgID, "viewer-token", 0)
+
+	users.Staff = c.CreateTeam("staff", "staff@"+orgName, users.OrgID)
 
 	// Add Admin and Editor to Staff team as Admin and Member, respectively.
 	c.AddOrUpdateTeamMember(users.Admin, users.Staff.ID, team.PermissionTypeAdmin)
@@ -525,13 +696,20 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 
 	// make org1 admins grafana admins
 	isGrafanaAdmin := basicRole == identity.RoleAdmin && orgId == 1
+	login := name
+	if isGrafanaAdmin {
+		login = "grafana-admin"
+	} else if orgId > 1 {
+		login = fmt.Sprintf("%s-%s", login, c.Namespacer(orgId))
+	}
 
 	u, err := c.userSvc.Create(context.Background(), &user.CreateUserCommand{
 		DefaultOrgRole: string(basicRole),
 		Password:       user.Password(name),
-		Login:          fmt.Sprintf("%s-%d", name, orgId),
+		Login:          login,
 		OrgID:          orgId,
 		IsAdmin:        isGrafanaAdmin,
+		Name:           name,
 	})
 
 	// for tests to work we need to add grafana admins to every org
@@ -566,6 +744,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	require.NoError(c.t, err)
 	s.IDToken = idToken
 	s.IDTokenClaims = idClaims
+	s.Namespace = c.Namespacer(orgId)
 
 	usr := User{
 		Identity: s,
@@ -619,27 +798,30 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 	require.NoError(c.t, err)
 }
 
-func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+func (c *K8sTestHelper) NewAdminRestConfig() *rest.Config {
 	c.t.Helper()
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
-	conf := &rest.Config{
-		Host:     baseUrl,
-		Username: c.Org1.Admin.Identity.GetLogin(),
-		Password: c.Org1.Admin.password,
-	}
-	client, err := discovery.NewDiscoveryClientForConfig(conf)
+	cfg := newOptimizedRestConfig(baseUrl)
+	cfg.Username = c.Org1.Admin.Identity.GetLogin()
+	cfg.Password = c.Org1.Admin.password
+	return cfg
+}
+
+func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+	c.t.Helper()
+	client, err := discovery.NewDiscoveryClientForConfig(c.NewAdminRestConfig())
 	require.NoError(c.t, err)
 	return client
 }
 
-func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
+func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) (string, error) {
 	c.t.Helper()
 
 	disco := c.NewDiscoveryClient()
 	req := disco.RESTClient().Get().
 		Prefix("apis").
-		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json")
+		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList,application/json")
 
 	result := req.Do(context.Background())
 	require.NoError(c.t, result.Error())
@@ -664,26 +846,34 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 		if item.Metadata.Name == group {
 			v, err := json.MarshalIndent(item.Versions, "", "  ")
 			require.NoError(c.t, err)
-			return string(v)
+			return string(v), nil
 		}
 	}
 
-	require.Fail(c.t, "could not find discovery info for: ", group)
-	return ""
+	return "", goerrors.New("could not find discovery info for: " + group)
 }
 
 func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
+	require.NotZero(c.t, cmd.OrgID, "requires a non zero orgId")
 	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
 	require.NoError(c.t, err)
+	if cmd.UID != "" {
+		require.Equal(c.t, cmd.UID, dataSource.UID)
+	}
 	return dataSource
 }
 
 func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	c.t.Helper()
 
-	team, err := c.teamSvc.CreateTeam(context.Background(), name, email, orgID)
+	teamCmd := team.CreateTeamCommand{
+		Name:  name,
+		Email: email,
+		OrgID: orgID,
+	}
+	team, err := c.teamSvc.CreateTeam(context.Background(), &teamCmd)
 	require.NoError(c.t, err)
 	return team
 }
@@ -694,18 +884,34 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		return // skip invalid groups
 	}
 	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
-	t.Run(path, func(t *testing.T) {
+	t.Run(path[1:], func(t *testing.T) {
 		rsp := DoRequest(h, RequestParams{
 			Method: http.MethodGet,
 			Path:   path,
 			User:   h.Org1.Admin,
-		}, &AnyResource{})
+		}, &spec3.OpenAPI{})
 
 		require.NotNil(t, rsp.Response)
-		require.Equal(t, 200, rsp.Response.StatusCode, path)
+		if rsp.Response.StatusCode != 200 {
+			require.Failf(t, "Not OK", "Code[%d] %s", rsp.Response.StatusCode, string(rsp.Body))
+		}
+
+		var err error
+		body := rsp.Body
+
+		// Clear the plugin version and build stamp from snapshot
+		if v, ok := rsp.Result.Info.Extensions["x-grafana-plugin"]; ok && v != nil {
+			if pluginInfo, ok := v.(map[string]any); ok {
+				delete(pluginInfo, "version")
+				delete(pluginInfo, "build")
+
+				body, err = rsp.Result.MarshalJSON()
+				require.NoError(t, err)
+			}
+		}
 
 		var prettyJSON bytes.Buffer
-		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")
+		err = json.Indent(&prettyJSON, body, "", "  ")
 		require.NoError(t, err)
 		pretty := prettyJSON.String()
 
@@ -714,7 +920,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 
 		// nolint:gosec
 		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
-		body, err := os.ReadFile(fpath)
+		body, err = os.ReadFile(fpath)
 		if err == nil {
 			if !assert.JSONEq(t, string(body), pretty) {
 				t.Logf("openapi spec has changed: %s", path)
@@ -727,10 +933,161 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}
 
 		if write {
-			e2 := os.WriteFile(fpath, []byte(pretty), 0644)
+			e2 := os.WriteFile(fpath, []byte(pretty), 0o644)
 			if e2 != nil {
 				t.Errorf("error writing file: %s", e2.Error())
 			}
 		}
 	})
+}
+
+// CreateServiceAccount creates a service account with the specified name, organization, and role using the HTTP API
+func (c *K8sTestHelper) CreateServiceAccount(executingUser User, name string, orgID int64, role org.RoleType) serviceaccounts.ServiceAccountDTO {
+	c.t.Helper()
+
+	saForm := struct {
+		Name       string       `json:"name"`
+		Role       org.RoleType `json:"role"`
+		IsDisabled bool         `json:"isDisabled"`
+	}{
+		Name:       name,
+		Role:       role,
+		IsDisabled: false,
+	}
+
+	body, err := json.Marshal(saForm)
+	require.NoError(c.t, err)
+
+	resp := DoRequest(c, RequestParams{
+		User:   executingUser,
+		Method: http.MethodPost,
+		Path:   "/api/serviceaccounts/",
+		Body:   body,
+	}, &serviceaccounts.ServiceAccountDTO{})
+
+	require.Equal(c.t, http.StatusCreated, resp.Response.StatusCode, "failed to create service account, body: %s", string(resp.Body))
+	require.NotNil(c.t, resp.Result, "failed to parse response body: %s", string(resp.Body))
+
+	return *resp.Result
+}
+
+// CreateServiceAccountToken creates a token for the specified service account using the HTTP API
+func (c *K8sTestHelper) CreateServiceAccountToken(user User, saID int64, orgID int64, tokenName string, secondsToLive int64) string {
+	c.t.Helper()
+
+	tokenCmd := struct {
+		Name          string `json:"name"`
+		SecondsToLive int64  `json:"secondsToLive"`
+	}{
+		Name:          tokenName,
+		SecondsToLive: secondsToLive,
+	}
+
+	body, err := json.Marshal(tokenCmd)
+	require.NoError(c.t, err)
+
+	resp := DoRequest(c, RequestParams{
+		User:   user,
+		Method: http.MethodPost,
+		Path:   fmt.Sprintf("/api/serviceaccounts/%d/tokens", saID),
+		Body:   body,
+	}, &struct {
+		ID   int64  `json:"id"`
+		Name string `json:"name"`
+		Key  string `json:"key"`
+	}{})
+
+	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to create token, body: %s", string(resp.Body))
+	require.NotNil(c.t, resp.Result, "failed to parse response body: %s", string(resp.Body))
+
+	return resp.Result.Key
+}
+
+// DeleteServiceAccountToken deletes a token for the specified service account using the HTTP API
+func (c *K8sTestHelper) DeleteServiceAccountToken(user User, orgID int64, saID int64, tokenID int64) {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/serviceaccounts/%d/tokens/%d", saID, tokenID),
+	}, &struct{}{})
+
+	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to delete token, body: %s", string(resp.Body))
+}
+
+// DeleteServiceAccount deletes a service account for the specified organization and ID using the HTTP API
+func (c *K8sTestHelper) DeleteServiceAccount(user User, orgID int64, saID int64) {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/serviceaccounts/%d", saID),
+	}, &struct{}{})
+
+	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to delete service account, body: %s", string(resp.Body))
+}
+
+func (c *K8sTestHelper) DeleteFolder(user User, folderUID string) error {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/folders/%s", folderUID),
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK && resp.Response.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("failed to delete folder %s: status %d, body: %s", folderUID, resp.Response.StatusCode, string(resp.Body))
+	}
+	return nil
+}
+
+func (c *K8sTestHelper) DeleteUser(adminUser User, userID int64) error {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   adminUser,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/admin/users/%d", userID),
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK && resp.Response.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("failed to delete user %d: status %d, body: %s", userID, resp.Response.StatusCode, string(resp.Body))
+	}
+	return nil
+}
+
+func (c *K8sTestHelper) CleanupTestResources(folderUIDs []string, userIDs []int64) func() {
+	return func() {
+		c.t.Helper()
+		// Delete folders first (they may have dependencies)
+		for _, uid := range folderUIDs {
+			_ = c.DeleteFolder(c.Org1.Admin, uid)
+		}
+		// Then delete users
+		for _, id := range userIDs {
+			_ = c.DeleteUser(c.Org1.Admin, id)
+		}
+	}
+}
+
+// Ensures that the passed error is an APIStatus error and fails the test if it is not.
+func (c *K8sTestHelper) RequireApiErrorStatus(err error, reason metav1.StatusReason, httpCode int) metav1.Status {
+	require.Error(c.t, err)
+	status, ok := utils.ExtractApiErrorStatus(err)
+	if !ok {
+		c.t.Fatalf("Expected error to be an APIStatus, but got %T", err)
+	}
+
+	if reason != metav1.StatusReasonUnknown {
+		require.Equal(c.t, status.Reason, reason)
+	}
+
+	if httpCode != 0 {
+		require.Equal(c.t, status.Code, int32(httpCode))
+	}
+
+	return status
 }

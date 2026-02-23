@@ -8,8 +8,7 @@ import { CustomVariable, SceneFlexLayout, SceneVariableSet } from '@grafana/scen
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
-import { MIXED_DATASOURCE_NAME } from './MixedDataSource';
-import { MixedDatasource } from './module';
+import { MixedDatasource, MIXED_DATASOURCE_NAME } from './MixedDataSource';
 
 const defaultDS = new MockObservableDataSourceApi('DefaultDS', [{ data: ['DDD'] }]);
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {

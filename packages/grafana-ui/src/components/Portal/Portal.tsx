@@ -6,11 +6,13 @@ import ReactDOM from 'react-dom';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 
 interface Props {
   className?: string;
   root?: HTMLElement;
+  // the zIndex of the node; defaults to theme.zIndex.portal
+  zIndex?: number;
   forwardedRef?: React.ForwardedRef<HTMLDivElement>;
 }
 
@@ -26,7 +28,7 @@ export function Portal(props: PropsWithChildren<Props>) {
       node.current.className = className;
     }
     node.current.style.position = 'relative';
-    node.current.style.zIndex = `${theme.zIndex.portal}`;
+    node.current.style.zIndex = `${props.zIndex ?? theme.zIndex.portal}`;
   }
 
   useLayoutEffect(() => {

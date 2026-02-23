@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getChildId } from '../../utils/reactUtils';
 
 import { FieldValidationMessage } from './FieldValidationMessage';
@@ -12,7 +12,7 @@ import { Label } from './Label';
 
 export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
   /** Label for the field */
   label?: React.ReactNode;
   /** Description of the field */
@@ -39,8 +39,15 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
    *  https://developer.mozilla.org/en-US/docs/Web/HTML/Element/label#attr-for
    */
   htmlFor?: string;
+  /** Remove the bottom margin */
+  noMargin?: boolean;
 }
 
+/**
+ * Field is the basic component for rendering form elements together with labels and description.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-field--docs
+ */
 export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
   (
     {
@@ -56,11 +63,12 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       className,
       validationMessageHorizontalOverflow,
       htmlFor,
+      noMargin,
       ...otherProps
     }: FieldProps,
     ref
   ) => {
-    const styles = useStyles2(getFieldStyles);
+    const styles = useStyles2(getFieldStyles, noMargin);
     const inputId = htmlFor ?? getChildId(children);
 
     const labelElement =
@@ -77,7 +85,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
         {labelElement}
         <div>
-          <div ref={ref}>{React.cloneElement(children, childProps)}</div>
+          <div ref={ref}>{React.cloneElement(children, children.type !== React.Fragment ? childProps : undefined)}</div>
           {invalid && error && !horizontal && (
             <div
               className={cx(styles.fieldValidationWrapper, {
@@ -115,11 +123,11 @@ function deleteUndefinedProps<T extends Object>(obj: T): Partial<T> {
   return obj;
 }
 
-export const getFieldStyles = (theme: GrafanaTheme2) => ({
+export const getFieldStyles = (theme: GrafanaTheme2, noMargin?: boolean) => ({
   field: css({
     display: 'flex',
     flexDirection: 'column',
-    marginBottom: theme.spacing(2),
+    marginBottom: theme.spacing(noMargin ? 0 : 2),
   }),
   fieldHorizontal: css({
     flexDirection: 'row',

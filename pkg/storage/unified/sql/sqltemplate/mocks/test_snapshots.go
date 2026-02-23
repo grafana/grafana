@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	reflect "reflect"
@@ -10,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sqltemplate "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -82,6 +84,10 @@ type TemplateTestSetup struct {
 
 	// Check a set of templates against example inputs
 	Templates map[*template.Template][]TemplateTestCase
+
+	// The (embedded) filesystem containing the SQL query templates
+	// If not nil, a test will be run to ensure all templates in that folder have a test-case
+	SQLTemplatesFS fs.FS
 }
 
 func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
@@ -94,6 +100,10 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 			sqltemplate.SQLite,
 			sqltemplate.PostgreSQL,
 		}
+	}
+
+	if setup.SQLTemplatesFS != nil {
+		ensureAllTemplatesHaveTestCases(t, setup)
 	}
 
 	for tmpl, cases := range setup.Templates {
@@ -144,5 +154,42 @@ func CheckQuerySnapshots(t *testing.T, setup TemplateTestSetup) {
 				})
 			}
 		})
+	}
+}
+
+func ensureAllTemplatesHaveTestCases(t *testing.T, setup TemplateTestSetup) {
+	t.Helper()
+
+	// Folder containing SQL query templates
+	sqlFiles := make([]string, 0, len(setup.Templates))
+	err := fs.WalkDir(setup.SQLTemplatesFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if name := d.Name(); strings.HasSuffix(name, ".sql") {
+			sqlFiles = append(sqlFiles, name)
+		}
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	// Makes sure all SQL files in the folder have a test-case
+	for _, file := range sqlFiles {
+		found := false
+
+		for template := range setup.Templates {
+			if template.Name() == file {
+				found = true
+				break
+			}
+		}
+
+		assert.True(t, found, "File '%s' does not have a test case", file)
 	}
 }

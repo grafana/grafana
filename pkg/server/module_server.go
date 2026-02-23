@@ -9,22 +9,50 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/gorilla/mux"
+	"github.com/grafana/dskit/kv"
+	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/frontend"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics, promGatherer prometheus.Gatherer) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, promGatherer)
+func NewModule(opts Options,
+	apiOpts api.ServerOptions,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
+	reg prometheus.Registerer,
+	promGatherer prometheus.Gatherer,
+	tracer tracing.Tracer, // Ensures tracing is initialized
+	license licensing.Licensing,
+	moduleRegisterer ModuleRegisterer,
+	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
+	hooksService *hooks.HooksService,
+) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService)
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +64,26 @@ func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.Fea
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics, promGatherer prometheus.Gatherer) (*ModuleServer, error) {
+func newModuleServer(opts Options,
+	apiOpts api.ServerOptions,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
+	reg prometheus.Registerer,
+	promGatherer prometheus.Gatherer,
+	license licensing.Licensing,
+	moduleRegisterer ModuleRegisterer,
+	storageBackend resource.StorageBackend,
+	hooksService *hooks.HooksService,
+) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
+
+	searchClient, err := unified.NewStorageApiSearchClient(cfg, features)
+	if err != nil {
+		shutdownFn()
+		return nil, fmt.Errorf("failed to create storage api search client: %w", err)
+	}
 
 	s := &ModuleServer{
 		opts:             opts,
@@ -55,6 +101,12 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremg
 		storageMetrics:   storageMetrics,
 		indexMetrics:     indexMetrics,
 		promGatherer:     promGatherer,
+		registerer:       reg,
+		license:          license,
+		moduleRegisterer: moduleRegisterer,
+		storageBackend:   storageBackend,
+		hooksService:     hooksService,
+		searchClient:     searchClient,
 	}
 
 	return s, nil
@@ -76,8 +128,11 @@ type ModuleServer struct {
 	shutdownFinished chan struct{}
 	isInitialized    bool
 	mtx              sync.Mutex
+	storageBackend   resource.StorageBackend
+	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
+	license          licensing.Licensing
 
 	pidFile     string
 	version     string
@@ -85,6 +140,23 @@ type ModuleServer struct {
 	buildBranch string
 
 	promGatherer prometheus.Gatherer
+	registerer   prometheus.Registerer
+
+	MemberlistKVConfig         kv.Config
+	httpServerRouter           *mux.Router
+	searchServerRing           *ring.Ring
+	searchServerRingClientPool *ringclient.Pool
+
+	// grpcService a shared gRPC service/server used by modules to register their gRPC endpoints.
+	grpcService *grpcserver.DSKitService
+
+	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
+	moduleRegisterer ModuleRegisterer
+	hooksService     *hooks.HooksService
+
+	// StorageServiceOptions allows injecting extra sql.ServiceOption values into the
+	// StorageServer and SearchServer module registrations. This is intended for tests.
+	StorageServiceOptions []sql.ServiceOption
 }
 
 // init initializes the server and its services.
@@ -116,14 +188,45 @@ func (s *ModuleServer) Run() error {
 	s.notifySystemd("READY=1")
 	s.log.Debug("Waiting on services...")
 
-	m := modules.New(s.cfg.Target)
+	m := modules.New(s.log, s.cfg.Target)
 
 	// only run the instrumentation server module if were not running a module that already contains an http server
 	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) {
-		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) {
+		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) || m.IsModuleEnabled(modules.FrontendServer) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
-		return NewInstrumentationService(s.log, s.cfg, s.promGatherer)
+		return s.initInstrumentationServer()
+	})
+
+	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
+		var err error
+		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, s.features, otel.Tracer("grpc-server"), s.registerer, modules.GRPCServer)
+		if err != nil {
+			return nil, err
+		}
+		return s.grpcService, nil
+	})
+
+	m.RegisterInvisibleModule(modules.UnifiedBackend, func() (services.Service, error) {
+		var err error
+		if s.storageBackend == nil {
+			// If storage server not being used, disable GC, pruner, and RV manager
+			disableStorageServices := !m.IsModuleEnabled(modules.StorageServer)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, otel.Tracer("unified-backend"), disableStorageServices)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if backendService, ok := s.storageBackend.(services.Service); ok {
+			return backendService, nil
+		}
+		return services.NewIdleService(nil, nil).WithName(modules.UnifiedBackend), nil
+	})
+
+	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
+	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
+	m.RegisterModule(modules.SearchServerDistributor, func() (services.Service, error) {
+		return resource.ProvideSearchDistributorServer(otel.Tracer("index-server-distributor"), s.cfg, s.searchServerRing, s.searchServerRingClientPool, s.grpcService)
 	})
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
@@ -140,20 +243,78 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
+		// Only set docBuilders and indexMetrics if enable_search is true
+		var docBuilders resource.DocumentBuilderSupplier
+		var indexMetrics *resource.BleveIndexMetrics
+		if s.cfg.EnableSearch {
+			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
+			var err error
+			docBuilders, err = InitializeDocumentBuilders(s.cfg)
+			if err != nil {
+				return nil, err
+			}
+			indexMetrics = s.indexMetrics
+		}
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
+	})
+
+	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
 		docBuilders, err := InitializeDocumentBuilders(s.cfg)
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil, docBuilders, s.storageMetrics, s.indexMetrics)
+		return sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService, s.StorageServiceOptions...)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer)
 	})
+
+	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
+		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.hooksService)
+	})
+
+	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
 
 	m.RegisterModule(modules.All, nil)
 
+	// Register modules provided by other builds (e.g. enterprise).
+	s.moduleRegisterer.RegisterModules(m)
+
 	return m.Run(s.context)
+}
+
+func (s *ModuleServer) initOperatorServer() (services.Service, error) {
+	operatorName := os.Getenv("GF_OPERATOR_NAME")
+	if operatorName == "" {
+		s.log.Debug("GF_OPERATOR_NAME environment variable empty or unset, can't start operator")
+		return nil, nil
+	}
+
+	for _, op := range GetRegisteredOperators() {
+		if op.Name == operatorName {
+			return services.NewBasicService(
+				nil,
+				func(ctx context.Context) error {
+					cliContext := cli.NewContext(&cli.App{}, nil, nil)
+					deps := OperatorDependencies{
+						BuildInfo: standalone.BuildInfo{
+							Version:     s.version,
+							Commit:      s.commit,
+							BuildBranch: s.buildBranch,
+						},
+						CLIContext: cliContext,
+						Config:     s.cfg,
+						Registerer: s.registerer,
+					}
+					return op.RunFunc(deps)
+				},
+				nil,
+			).WithName("operator"), nil
+		}
+	}
+
+	return nil, fmt.Errorf("unknown operator: %s. available operators: %v", operatorName, GetRegisteredOperatorNames())
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all

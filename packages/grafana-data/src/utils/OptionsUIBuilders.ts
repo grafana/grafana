@@ -1,4 +1,5 @@
 import { set, cloneDeep } from 'lodash';
+import type { JSX } from 'react';
 
 import {
   FieldNamePickerConfigSettings,

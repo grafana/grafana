@@ -25,6 +25,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 )
 
@@ -77,6 +78,14 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectRevokeTokenCalled:     false,
 			expectToken:                 &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
 		},
+		{
+			desc:                        "should not invalidate session if token refresh fails with no refresh token",
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			expectedTryRefreshErr:       oauthtoken.ErrNoRefreshTokenFound,
+			expectTryRefreshTokenCalled: true,
+			expectRevokeTokenCalled:     true,
+			expectedErr:                 oauthtoken.ErrNoRefreshTokenFound,
+		},
 
 		// TODO: address coverage of oauthtoken sync
 	}
@@ -89,7 +98,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester, _ *auth.UserToken) (*oauth2.Token, error) {
+				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester, _ *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error) {
 					tryRefreshCalled = true
 					return nil, tt.expectedTryRefreshErr
 				},

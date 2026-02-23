@@ -10,12 +10,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	setup := func() *testContext {
 		ctx := createTestContext(t)
@@ -82,9 +81,7 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 }
 
 func TestIntegrationOrphanedExternalSessionsCleanup(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	setup := func() *testContext {
 		ctx := createTestContext(t)

@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { historySrv } from 'app/features/dashboard-scene/settings/version-history';
-import { useSelector } from 'app/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { useSelector } from 'app/types/store';
 
 import { dashboardWatcher } from '../../../live/dashboard/dashboardWatcher';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -13,16 +13,12 @@ import { DashboardModel } from '../../state/DashboardModel';
 const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
   // Skip the watcher logic for this save since it's handled by the hook
   dashboardWatcher.ignoreNextSave();
-  return await historySrv.restoreDashboard(dashboard.uid, version);
+  return await getDashboardAPI().restoreDashboardVersion(dashboard.uid, version);
 };
 
 export const useDashboardRestore = (id: number, version: number) => {
   const dashboard = useSelector((state) => state.dashboard.getModel());
-  const [state, onRestoreDashboard] = useAsyncFn(
-    async () =>
-      await restoreDashboard(config.featureToggles.kubernetesClientDashboardsFolders ? id : version, dashboard!),
-    []
-  );
+  const [state, onRestoreDashboard] = useAsyncFn(async () => await restoreDashboard(id, dashboard!), []);
   const notifyApp = useAppNotification();
 
   useEffect(() => {

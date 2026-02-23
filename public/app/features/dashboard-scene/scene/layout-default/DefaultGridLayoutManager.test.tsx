@@ -210,22 +210,6 @@ describe('DefaultGridLayoutManager', () => {
 
       expect(gridRow.state.children.length).toBe(3);
     });
-
-    it('Should clone the layout correctly', () => {
-      const { manager } = setup();
-      const clone = manager.cloneLayout('foo', true) as DefaultGridLayoutManager;
-      const panelA = findVizPanelByKey(clone, 'foo/grid-item-0/panel-0');
-      expect(panelA?.state.title).toBe('Panel A');
-
-      const panelB = findVizPanelByKey(clone, 'foo/grid-item-1/panel-1');
-      expect(panelB?.state.title).toBe('Panel B');
-
-      const panelC = findVizPanelByKey(clone, 'foo/panel-2/grid-item-3/panel-3');
-      expect(panelC?.state.title).toBe('Panel C');
-
-      const panelD = findVizPanelByKey(clone, 'foo/panel-2/grid-item-4/panel-4');
-      expect(panelD?.state.title).toBe('Panel D');
-    });
   });
 });
 

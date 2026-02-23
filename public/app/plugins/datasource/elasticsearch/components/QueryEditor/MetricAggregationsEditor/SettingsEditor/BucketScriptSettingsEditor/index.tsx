@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { Fragment, useEffect } from 'react';
 
-import { Input, InlineLabel } from '@grafana/ui';
+import { InlineLabel, Input } from '@grafana/ui';
 
-import { useStatelessReducer, useDispatch } from '../../../../../hooks/useStatelessReducer';
-import { BucketScript, MetricAggregation } from '../../../../../types';
+import { BucketScript, MetricAggregation } from '../../../../../dataquery.gen';
+import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
 import { AddRemove } from '../../../../AddRemove';
 import { MetricPicker } from '../../../../MetricPicker';
 import { changeMetricAttribute } from '../../state/actions';
@@ -13,9 +13,9 @@ import { SettingField } from '../SettingField';
 
 import {
   addPipelineVariable,
+  changePipelineVariableMetric,
   removePipelineVariable,
   renamePipelineVariable,
-  changePipelineVariableMetric,
 } from './state/actions';
 import { reducer } from './state/reducer';
 
@@ -101,6 +101,7 @@ export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) =>
       <SettingField
         label="Script"
         metric={value}
+        inputType="textarea"
         settingName="script"
         tooltip="Elasticsearch v5.0 and above: Scripting language is Painless. Use params.<var> to reference a variable. Elasticsearch pre-v5.0: Scripting language is per default Groovy if not changed. For Groovy use <var> to reference a variable."
         placeholder="params.var1 / params.var2"

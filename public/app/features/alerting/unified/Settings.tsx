@@ -1,3 +1,4 @@
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -6,31 +7,35 @@ import { useEditConfigurationDrawer } from './components/settings/ConfigurationD
 import { ExternalAlertmanagers } from './components/settings/ExternalAlertmanagers';
 import InternalAlertmanager from './components/settings/InternalAlertmanager';
 import { SettingsProvider, useSettings } from './components/settings/SettingsContext';
+import { useSettingsPageNav } from './settings/navigation';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
-function SettingsPage() {
+function AlertmanagerSettingsPage() {
   return (
     <SettingsProvider>
-      <SettingsContent />
+      <AlertmanagerSettingsContent />
     </SettingsProvider>
   );
 }
 
-function SettingsContent() {
+function AlertmanagerSettingsContent() {
   const [configurationDrawer, showConfiguration] = useEditConfigurationDrawer();
   const { isLoading } = useSettings();
 
+  const { navId, pageNav } = useSettingsPageNav();
+
   return (
     <AlertingPageWrapper
-      navId="alerting-admin"
+      navId={navId}
       isLoading={isLoading}
+      pageNav={pageNav}
       actions={[
         <WithReturnButton
           key="add-alertmanager"
-          title="Alerting settings"
+          title={t('alerting.settings-content.title-alerting-settings', 'Alerting settings')}
           component={
             <LinkButton href="/connections/datasources/alertmanager" icon="plus" variant="primary">
-              Add new Alertmanager
+              <Trans i18nKey="alerting.settings-content.add-new-alertmanager">Add new Alertmanager</Trans>
             </LinkButton>
           }
         />,
@@ -38,10 +43,14 @@ function SettingsContent() {
     >
       <Stack direction="column" gap={2}>
         {/* Grafana built-in Alertmanager */}
-        <Text variant="h5">Built-in Alertmanager</Text>
+        <Text variant="h5">
+          <Trans i18nKey="alerting.settings-content.builtin-alertmanager">Built-in Alertmanager</Trans>
+        </Text>
         <InternalAlertmanager onEditConfiguration={showConfiguration} />
         {/* other (external Alertmanager data sources we have added to Grafana such as vanilla, Mimir, Cortex) */}
-        <Text variant="h5">Other Alertmanagers</Text>
+        <Text variant="h5">
+          <Trans i18nKey="alerting.settings-content.other-alertmanagers">Other Alertmanagers</Trans>
+        </Text>
         <ExternalAlertmanagers onEditConfiguration={showConfiguration} />
       </Stack>
       {configurationDrawer}
@@ -49,4 +58,4 @@ function SettingsContent() {
   );
 }
 
-export default withPageErrorBoundary(SettingsPage);
+export default withPageErrorBoundary(AlertmanagerSettingsPage);

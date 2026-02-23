@@ -1,6 +1,6 @@
 import { AppEvents, textUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 import { createAbsoluteUrl, RelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -27,7 +27,8 @@ export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoa
         updateLoadingStateCallback && updateLoadingStateCallback(false);
       },
       complete: () => {
-        appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+        const message = api.successMessage || 'API call was successful';
+        appEvents.emit(AppEvents.alertSuccess, [message]);
         updateLoadingStateCallback && updateLoadingStateCallback(false);
       },
     });

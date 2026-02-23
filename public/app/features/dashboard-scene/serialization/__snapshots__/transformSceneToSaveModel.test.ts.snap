@@ -66,7 +66,6 @@ exports[`Given a scene with custom quick ranges should save quick ranges to save
   "editable": true,
   "fiscalYearStartMonth": 1,
   "graphTooltip": 1,
-  "id": 1351,
   "links": [],
   "panels": [
     {
@@ -196,7 +195,7 @@ exports[`Given a scene with custom quick ranges should save quick ranges to save
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "tags": [
     "gdev",
     "graph-ng",
@@ -294,6 +293,7 @@ exports[`Given a scene with custom quick ranges should save quick ranges to save
         "options": [],
         "query": "a, b, c",
         "type": "custom",
+        "valuesFormat": "csv",
       },
       {
         "current": {
@@ -323,6 +323,7 @@ exports[`Given a scene with custom quick ranges should save quick ranges to save
         },
         "refresh": 1,
         "regex": "",
+        "regexApplyTo": "value",
         "type": "query",
       },
       {
@@ -655,7 +656,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "tags": [
     "templating",
     "gdev",
@@ -679,6 +680,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "options": [],
         "query": "A,B,C,D,E,F,E,G,H,I,J,K,L",
         "type": "custom",
+        "valuesFormat": "csv",
       },
       {
         "current": {
@@ -697,6 +699,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "options": [],
         "query": "Bob : 1, Rob : 2,Sod : 3, Hod : 4, Cod : 5",
         "type": "custom",
+        "valuesFormat": "csv",
       },
     ],
   },
@@ -705,10 +708,11 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
     "to": "now",
   },
   "timepicker": {},
-  "timezone": "",
+  "timezone": "browser",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
   "version": 1,
+  "weekStart": "",
 }
 `;
 
@@ -779,7 +783,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "editable": false,
   "fiscalYearStartMonth": 1,
   "graphTooltip": 1,
-  "id": 1351,
   "links": [
     {
       "asDropdown": false,
@@ -922,7 +925,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   ],
   "preload": false,
   "refresh": "5m",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "tags": [
     "tag1",
     "tag2",
@@ -1019,6 +1022,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "options": [],
         "query": "a, b, c",
         "type": "custom",
+        "valuesFormat": "csv",
       },
       {
         "current": {
@@ -1048,6 +1052,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         },
         "refresh": 1,
         "regex": "",
+        "regexApplyTo": "value",
         "type": "query",
       },
       {
@@ -1150,7 +1155,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   "editable": true,
   "fiscalYearStartMonth": 1,
   "graphTooltip": 1,
-  "id": 1351,
   "links": [],
   "panels": [
     {
@@ -1280,7 +1284,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "tags": [
     "gdev",
     "graph-ng",
@@ -1378,6 +1382,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "options": [],
         "query": "a, b, c",
         "type": "custom",
+        "valuesFormat": "csv",
       },
       {
         "current": {
@@ -1407,6 +1412,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         },
         "refresh": 1,
         "regex": "",
+        "regexApplyTo": "value",
         "type": "query",
       },
       {

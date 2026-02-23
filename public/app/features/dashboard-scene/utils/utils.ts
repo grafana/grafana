@@ -1,5 +1,6 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
   CustomVariable,
@@ -12,31 +13,37 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
-import { useElementSelection, UseElementSelectionResult } from '@grafana/ui';
+import { Dashboard, Panel, RowPanel } from '@grafana/schema';
+import { createLogger } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
+import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
+import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { RowItem } from '../scene/layout-rows/RowItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
-import { containsCloneKey, getLastKeyFromClone, getOriginalKey, isInCloneChain } from './clone';
-
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
+
+const V1_PANEL_PROPERTIES = {
+  LIBRARY_PANEL: 'libraryPanel',
+  COLLAPSED: 'collapsed',
+} as const;
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(getOriginalKey(panel.state.key!).replace('panel-', ''), 10);
+  return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
 /**
@@ -91,99 +98,14 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   return null;
 }
 
-export function findOriginalVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
-  if (!key) {
-    return null;
-  }
-
-  let panel: VizPanel | null = findOriginalVizPanelInternal(scene, key);
-
-  if (panel) {
-    return panel;
-  }
-
-  // Also try to find by panel id
-  const id = parseInt(key, 10);
-  if (isNaN(id)) {
-    return null;
-  }
-
-  const panelId = getVizPanelKeyForPanelId(id);
-  panel = findVizPanelInternal(scene, panelId);
-
-  if (panel) {
-    return panel;
-  }
-
-  panel = findOriginalVizPanelInternal(scene, panelId);
-
-  return panel;
-}
-
-function findOriginalVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
-  if (!key) {
-    return null;
-  }
-
-  const panel = sceneGraph.findObject(scene, (obj) => {
-    const objKey = obj.state.key!;
-
-    // Compare the original keys
-    if (objKey === key || (!isInCloneChain(objKey) && getOriginalKey(objKey) === getOriginalKey(key))) {
-      return true;
-    }
-
-    if (!(obj instanceof VizPanel)) {
-      return false;
-    }
-
-    return false;
-  });
-
-  if (panel) {
-    if (panel instanceof VizPanel) {
-      return panel;
-    } else {
-      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
-    }
-  }
-
-  return null;
-}
-
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
     return null;
   }
 
-  // First we try to find the non-cloned panel
-  // This means it is either in not in a repeat chain or every item in the chain is not a clone
-  let panel: SceneObject | null = findOriginalVizPanelByKey(scene, key);
+  let panel: SceneObject | null = findVizPanelByKey(scene, key);
   if (!panel || !panel.state.key) {
     return null;
-  }
-
-  // Get the actual panel key, without any of the ancestors
-  const panelKey = getLastKeyFromClone(panel.state.key);
-
-  // If the panel contains clone in the key, this means it's a repeated panel, and we need to find the original panel
-  if (containsCloneKey(panelKey)) {
-    // Get the original key of the panel that we are looking for
-    const originalPanelKey = getOriginalKey(panelKey);
-    // Start the search from the parent to avoid unnecessary checks
-    // The parent usually is the grid item where the referenced panel is also located
-    panel = sceneGraph.findObject(panel.parent ?? scene, (sceneObject) => {
-      if (!sceneObject.state.key || isInCloneChain(sceneObject.state.key)) {
-        return false;
-      }
-
-      const currentLastKey = getLastKeyFromClone(sceneObject.state.key);
-      if (containsCloneKey(currentLastKey)) {
-        return false;
-      }
-
-      return getOriginalKey(currentLastKey) === originalPanelKey;
-    });
   }
 
   if (!(panel instanceof VizPanel)) {
@@ -230,7 +152,11 @@ export function getMultiVariableValues(variable: MultiValueVariable | CustomVari
 }
 
 // used to transform old interval model to new interval model from scenes
-export function getIntervalsFromQueryString(query: string): string[] {
+export function getIntervalsFromQueryString(query: string | undefined): string[] {
+  if (!query) {
+    return initialIntervalVariableModelState.query?.split(',') ?? [];
+  }
+
   // separate intervals by quotes either single or double
   const matchIntervals = query.match(/(["'])(.*?)\1|\w+/g);
 
@@ -265,7 +191,19 @@ export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): stri
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableModel, intervals: string[]): string {
-  const selectedInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
+  // Handle missing current object or value
+  const currentValue = variable.current?.value;
+  const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
+
+  // If no intervals are available, return empty string (will use default from IntervalVariable)
+  if (intervals.length === 0) {
+    return '';
+  }
+
+  // If no selected interval, return the first valid interval
+  if (!selectedInterval) {
+    return intervals[0];
+  }
 
   // If the interval is the old auto format, return the new auto interval from scenes.
   if (selectedInterval.startsWith('$__auto_interval_') || selectedInterval === '$__auto') {
@@ -321,25 +259,49 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
+export function getDefaultPluginId(): string {
+  return config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
+    ? UNCONFIGURED_PANEL_PLUGIN_ID
+    : 'timeseries';
+}
+
 export function getDefaultVizPanel(): VizPanel {
+  const defaultPluginId = getDefaultPluginId();
+
+  const newPanelTitle =
+    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
+      ? ''
+      : t('dashboard.new-panel-title', 'New panel');
+
+  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
+
   return new VizPanel({
-    title: 'Panel Title',
-    pluginId: 'timeseries',
+    title: newPanelTitle,
+    pluginId: defaultPluginId,
+    seriesLimit: config.panelSeriesLimit,
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
     $behaviors: [],
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     extendPanelContext: setDashboardPanelContext,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    $data: new SceneDataTransformer({
-      $data: new SceneQueryRunner({
-        queries: [{ refId: 'A' }],
-        datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
-        $behaviors: [new DashboardDatasourceBehaviour({})],
-      }),
-      transformations: [],
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
     }),
+    $data: datasourceSettings
+      ? new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            queries: [{ refId: 'A' }],
+            datasource: getDataSourceRef(datasourceSettings),
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+          transformations: [],
+        })
+      : undefined,
   });
 }
 
@@ -358,8 +320,8 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
 }
 
 export function calculateGridItemDimensions(repeater: DashboardGridItem) {
-  const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
-  const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
+  const rowCount = Math.ceil(repeater.getChildCount() / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.getChildCount() / rowCount);
   const w = 24 / columnCount;
   const h = repeater.state.itemHeight ?? 10;
   return { h, w, columnCount };
@@ -446,29 +408,9 @@ export function useDashboard(scene: SceneObject): DashboardScene {
   return getDashboardSceneFor(scene);
 }
 
-export function useDashboardState(
-  scene: SceneObject
-): DashboardSceneState & { isEditing: boolean; showHiddenElements: boolean } {
+export function useDashboardState(scene: SceneObject): DashboardSceneState {
   const dashboard = useDashboard(scene);
-  const state = dashboard.useState();
-
-  return {
-    ...state,
-    isEditing: !!state.isEditing,
-    showHiddenElements: !!(state.isEditing && state.showHiddenElements),
-  };
-}
-
-export function useIsConditionallyHidden(scene: RowItem | ResponsiveGridItem): boolean {
-  const { conditionalRendering } = scene.useState();
-
-  return !(conditionalRendering?.evaluate() ?? true);
-}
-
-export function useElementSelectionScene(scene: SceneObject): UseElementSelectionResult {
-  const { key } = scene.useState();
-
-  return useElementSelection(key);
+  return dashboard.useState();
 }
 
 export function useInterpolatedTitle<T extends SceneObjectState & { title?: string }>(scene: SceneObject<T>): string {
@@ -479,4 +421,64 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
   }
 
   return sceneGraph.interpolate(scene, title, undefined, 'text');
+}
+
+export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
+  return getDashboardSceneFor(scene).state.layoutOrchestrator;
+}
+
+// @returns true if the panel is a valid library panel reference
+// a valid library panel reference is a panel with this
+// property: `libraryPanel: {name: string, uid: string}`
+
+export function isValidLibraryPanelRef(panel: Panel): boolean {
+  return (
+    (V1_PANEL_PROPERTIES.LIBRARY_PANEL in panel &&
+      panel.libraryPanel &&
+      Boolean(panel.libraryPanel?.uid && panel.libraryPanel?.name)) ||
+    false
+  );
+}
+
+/**
+ * Checks if a V1 dashboard contains library panels
+ * @returns true if the dashboard contains library panels
+ */
+export function hasLibraryPanelsInV1Dashboard(dashboard: Dashboard | undefined): boolean {
+  if (!dashboard?.panels) {
+    return false;
+  }
+
+  return dashboard.panels.some((panel: Panel | RowPanel) => {
+    if (isValidLibraryPanelRef(panel)) {
+      return true;
+    }
+    // Check if this is a collapsed row containing library panels
+    const isCollapsedRow =
+      V1_PANEL_PROPERTIES.COLLAPSED in panel && panel.collapsed && 'panels' in panel && panel.panels;
+
+    if (!isCollapsedRow) {
+      return false;
+    }
+
+    return panel.panels.some(isValidLibraryPanelRef);
+  });
+}
+
+export const dashboardLog = createLogger('Dashboard');
+
+/**
+ * Checks if there are save changes but not counting time range, refresh rate and default variable value change
+ */
+export function hasActualSaveChanges(dashboard: DashboardScene) {
+  const changes = dashboard.getDashboardChanges();
+  return !!changes.diffCount;
+}
+
+export function isDashboardSceneEnabled(): boolean {
+  return !!(config.featureToggles.dashboardScene || config.featureToggles.dashboardNewLayouts);
+}
+
+export function isPublicDashboardsSceneEnabled(): boolean {
+  return !!(config.featureToggles.publicDashboardsScene || config.featureToggles.dashboardNewLayouts);
 }

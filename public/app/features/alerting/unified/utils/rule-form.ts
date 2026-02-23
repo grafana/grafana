@@ -1,3 +1,5 @@
+import { produce } from 'immer';
+
 import {
   DataSourceInstanceSettings,
   IntervalValues,
@@ -10,7 +12,7 @@ import {
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { VizPanel, sceneGraph } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -21,6 +23,7 @@ import {
   getQueryRunnerFor,
 } from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -32,6 +35,7 @@ import {
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
@@ -50,10 +54,11 @@ import {
 
 import { Annotation } from './constants';
 import {
-  DataSourceType,
   GRAFANA_RULES_SOURCE_NAME,
   getDefaultOrFirstCompatibleDataSource,
   isGrafanaRulesSource,
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
@@ -110,6 +115,7 @@ export function getNotificationSettingsForDTO(
     return {
       receiver: contactPoints?.grafana?.selectedContactPoint,
       mute_time_intervals: contactPoints?.grafana?.muteTimeIntervals,
+      active_time_intervals: contactPoints?.grafana?.activeTimeIntervals,
       group_by: contactPoints?.grafana?.overrideGrouping ? contactPoints?.grafana?.groupBy : undefined,
       group_wait:
         contactPoints?.grafana?.overrideTimings && contactPoints?.grafana?.groupWaitValue
@@ -127,12 +133,14 @@ export function getNotificationSettingsForDTO(
   }
   return undefined;
 }
+
 function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
   return {
     simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
     simplified_notifications_section: simplifiedEditor.simplifiedNotificationEditor,
   };
 }
+
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const {
     name,
@@ -140,6 +148,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     noDataState,
     execErrState,
     evaluateFor,
+    keepFiringFor,
     queries,
     isPaused,
     contactPoints,
@@ -147,6 +156,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     type,
     metric,
     targetDatasourceUid,
+    missingSeriesEvalsToResolve,
   } = values;
   if (!condition) {
     throw new Error('You cannot create an alert rule without specifying the alert condition');
@@ -176,12 +186,17 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         exec_err_state: execErrState,
         notification_settings: notificationSettings,
         metadata,
+        missing_series_evals_to_resolve: missingSeriesEvalsToResolve
+          ? Number(missingSeriesEvalsToResolve)
+          : // API uses 0 value to reset, as `missing_series_evals_to_resolve` cannot be 0
+            0,
       },
       annotations,
       labels,
 
       // Alerting rule specific
       for: evaluateFor,
+      keep_firing_for: keepFiringFor,
     };
   } else if (wantsRecordingRule) {
     return {
@@ -222,6 +237,7 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
     ? {
         selectedContactPoint: ga.notification_settings.receiver,
         muteTimeIntervals: ga.notification_settings.mute_time_intervals ?? [],
+        activeTimeIntervals: ga.notification_settings.active_time_intervals ?? [],
         overrideGrouping:
           Array.isArray(ga.notification_settings.group_by) && ga.notification_settings.group_by.length > 0,
         overrideTimings: [
@@ -264,13 +280,16 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
 
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
+  const normalizedRule = fixMissingRefIdsInExpressionModel(rule);
 
-  const defaultFormValues = getDefaultFormValues();
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(normalizedRule);
+
+  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
-    if (rulerRuleType.grafana.recordingRule(rule)) {
+    if (isGrafanaRecordingRule) {
       // grafana recording rule
-      const ga = rule.grafana_alert;
+      const ga = normalizedRule.grafana_alert;
       return {
         ...defaultFormValues,
         name: ga.title,
@@ -279,16 +298,16 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         queries: ga.data,
         condition: ga.condition,
-        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
-        labels: listifyLabelsOrAnnotations(rule.labels, true),
+        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(normalizedRule.annotations, false)),
+        labels: listifyLabelsOrAnnotations(normalizedRule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
-        targetDatasourceUid: ga.record?.target_datasource_uid,
+        targetDatasourceUid: ga.record?.target_datasource_uid || defaultFormValues.targetDatasourceUid,
       };
-    } else if (rulerRuleType.grafana.rule(rule)) {
+    } else if (rulerRuleType.grafana.rule(normalizedRule)) {
       // grafana alerting rule
-      const ga = rule.grafana_alert;
+      const ga = normalizedRule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
       if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
         return {
@@ -297,13 +316,14 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           type: RuleFormType.grafana,
           group: group.name,
           evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
-          evaluateFor: rule.for || '0',
+          evaluateFor: normalizedRule.for || '0',
+          keepFiringFor: normalizedRule.keep_firing_for || '0',
           noDataState: ga.no_data_state,
           execErrState: ga.exec_err_state,
           queries: ga.data,
           condition: ga.condition,
-          annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
-          labels: listifyLabelsOrAnnotations(rule.labels, true),
+          annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(normalizedRule.annotations, false)),
+          labels: listifyLabelsOrAnnotations(normalizedRule.labels, true),
           folder: { title: namespace, uid: ga.namespace_uid },
           isPaused: ga.is_paused,
 
@@ -311,6 +331,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           manualRouting: Boolean(routingSettings),
 
           editorSettings: getEditorSettingsFromDTO(ga),
+
+          missingSeriesEvalsToResolve: ga.missing_series_evals_to_resolve,
         };
       } else {
         throw new Error('Unexpected type of rule for grafana rules source');
@@ -320,7 +342,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     // DATASOURCE-MANAGED RULES
-    if (rulerRuleType.dataSource.alertingRule(rule)) {
+    if (rulerRuleType.dataSource.alertingRule(normalizedRule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 
       const defaultQuery = {
@@ -328,32 +350,48 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         datasourceUid,
         queryType: '',
         relativeTimeRange: getDefaultRelativeTimeRange(),
-        expr: rule.expr,
+        expr: normalizedRule.expr,
         model: {
           refId: 'A',
           hide: false,
-          expr: rule.expr,
+          expr: normalizedRule.expr,
         },
       };
 
-      const alertingRuleValues = alertingRulerRuleToRuleForm(rule);
+      const alertingRuleValues = alertingRulerRuleToRuleForm(normalizedRule);
 
       return {
         ...defaultFormValues,
         ...alertingRuleValues,
         queries: [defaultQuery],
-        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
+        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(normalizedRule.annotations, false)),
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
         group: group.name,
       };
-    } else if (rulerRuleType.dataSource.recordingRule(rule)) {
-      const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
+    } else if (rulerRuleType.dataSource.recordingRule(normalizedRule)) {
+      const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
+
+      const defaultQuery = {
+        refId: 'A',
+        datasourceUid,
+        queryType: '',
+        relativeTimeRange: getDefaultRelativeTimeRange(),
+        expr: normalizedRule.expr,
+        model: {
+          refId: 'A',
+          hide: false,
+          expr: normalizedRule.expr,
+        },
+      };
+
+      const recordingRuleValues = recordingRulerRuleToRuleForm(normalizedRule);
 
       return {
         ...defaultFormValues,
         ...recordingRuleValues,
+        queries: [defaultQuery],
         type: RuleFormType.cloudRecording,
         dataSourceName: ruleSourceName,
         namespace,
@@ -362,6 +400,76 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     } else {
       throw new Error('Unexpected type of rule for cloud rules source');
     }
+  }
+}
+
+/**
+ * This function isn't supposed to be needed, but we've noticed some customers are creating rules via Provisioning or
+ * other interfaces where they aren't including the RefId in the "model" of the expression so copy the refId from the query definition.
+ */
+export function fixMissingRefIdsInExpressionModel<T extends RulerRuleDTO>(rule: T): T {
+  // non-Grafana managed rules don't use expression nodes so we return the rule as-is
+  if (!rulerRuleType.grafana.rule(rule)) {
+    return rule;
+  }
+
+  return produce(rule, (draft) => {
+    draft.grafana_alert.data.forEach((query) => {
+      query.model.refId = query.model.refId ?? query.refId;
+    });
+  });
+}
+
+export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace: string): RuleFormValues {
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
+  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
+
+  const ga = rule.grafana_alert;
+  const duration = rule.for;
+  const keepFiringFor = rule.keep_firing_for;
+  const annotations = rule.annotations;
+  const labels = rule.labels;
+
+  const commonProperties = {
+    ...defaultFormValues,
+    name: ga.title,
+    queries: ga.data,
+    condition: ga.condition,
+    annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(annotations, false)),
+    labels: listifyLabelsOrAnnotations(labels, true),
+    folder: { title: namespace, uid: ga.namespace_uid },
+    isPaused: ga.is_paused,
+  };
+
+  if (rulerRuleType.grafana.recordingRule(rule)) {
+    // grafana recording rule
+    return {
+      ...commonProperties,
+      type: RuleFormType.grafanaRecording,
+      group: ga.rule_group,
+      metric: ga.record?.metric,
+    };
+  }
+
+  // grafana alerting rule
+  const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+  if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
+    return {
+      ...commonProperties,
+      type: RuleFormType.grafana,
+      group: ga.rule_group,
+      evaluateFor: duration || '0',
+      keepFiringFor: keepFiringFor || '0',
+      noDataState: ga.no_data_state,
+      execErrState: ga.exec_err_state,
+
+      contactPoints: routingSettings,
+      manualRouting: Boolean(routingSettings),
+
+      editorSettings: getEditorSettingsFromDTO(ga),
+    };
+  } else {
+    throw new Error('Unexpected type of rule for grafana rules source');
   }
 }
 
@@ -417,7 +525,7 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
   const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
-  const isLokiOrPrometheus = dataSource?.type === DataSourceType.Prometheus || dataSource?.type === DataSourceType.Loki;
+  const isLokiOrPrometheus = dataSource ? isSupportedExternalRulesSourceType(dataSource.type) : false;
   return [
     {
       refId: 'A',
@@ -450,85 +558,18 @@ export const getDefaultRecordingRulesQueries = (
     },
   ];
 };
-const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
+
+export const getDefaultExpressions = (...refIds: [string, string]) => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
 
-  const reduceExpression: ExpressionQuery = {
-    refId: refIds[0],
-    type: ExpressionQueryType.reduce,
-    datasource: {
-      uid: ExpressionDatasourceUID,
-      type: ExpressionDatasourceRef.type,
-    },
-    conditions: [
-      {
-        type: 'query',
-        evaluator: {
-          params: [],
-          type: EvalFunction.IsAbove,
-        },
-        operator: {
-          type: 'and',
-        },
-        query: {
-          params: [refOne],
-        },
-        reducer: {
-          params: [],
-          type: 'last',
-        },
-      },
-    ],
-    reducer: 'last',
-    expression: 'A',
-  };
+  const reduceQuery = getDefaultReduceExpression({ inputRefId: 'A', reduceRefId: refOne });
+  const thresholdQuery = getDefaultThresholdExpression({ inputRefId: refOne, thresholdRefId: refTwo });
 
-  const thresholdExpression: ExpressionQuery = {
-    refId: refTwo,
-    type: ExpressionQueryType.threshold,
-    datasource: {
-      uid: ExpressionDatasourceUID,
-      type: ExpressionDatasourceRef.type,
-    },
-    conditions: [
-      {
-        type: 'query',
-        evaluator: {
-          params: [0],
-          type: EvalFunction.IsAbove,
-        },
-        operator: {
-          type: 'and',
-        },
-        query: {
-          params: [refTwo],
-        },
-        reducer: {
-          params: [],
-          type: 'last',
-        },
-      },
-    ],
-    expression: refOne,
-  };
-
-  return [
-    {
-      refId: refOne,
-      datasourceUid: ExpressionDatasourceUID,
-      queryType: '',
-      model: reduceExpression,
-    },
-    {
-      refId: refTwo,
-      datasourceUid: ExpressionDatasourceUID,
-      queryType: '',
-      model: thresholdExpression,
-    },
-  ];
+  return [reduceQuery, thresholdQuery] as const;
 };
-const getDefaultExpressionsForRecording = (refOne: string): AlertQuery[] => {
+
+const getDefaultExpressionsForRecording = (refOne: string): Array<AlertQuery<ExpressionQuery>> => {
   const reduceExpression: ExpressionQuery = {
     refId: refOne,
     type: ExpressionQueryType.reduce,
@@ -547,7 +588,7 @@ const getDefaultExpressionsForRecording = (refOne: string): AlertQuery[] => {
           type: 'and',
         },
         query: {
-          params: [refOne],
+          params: [],
         },
         reducer: {
           params: [],
@@ -569,7 +610,96 @@ const getDefaultExpressionsForRecording = (refOne: string): AlertQuery[] => {
   ];
 };
 
-const dataQueriesToGrafanaQueries = async (
+export function getDefaultReduceExpression({
+  inputRefId,
+  reduceRefId,
+}: {
+  inputRefId: string;
+  reduceRefId: string;
+}): AlertQuery<ExpressionQuery> {
+  const reduceExpression: ExpressionQuery = {
+    refId: reduceRefId,
+    type: ExpressionQueryType.reduce,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    reducer: 'last',
+    expression: inputRefId,
+  };
+
+  return {
+    refId: reduceRefId,
+    datasourceUid: ExpressionDatasourceUID,
+    queryType: '',
+    model: reduceExpression,
+  };
+}
+
+export function getDefaultThresholdExpression({
+  inputRefId,
+  thresholdRefId,
+}: {
+  inputRefId: string;
+  thresholdRefId: string;
+}): AlertQuery<ExpressionQuery> {
+  const thresholdExpression: ExpressionQuery = {
+    refId: thresholdRefId,
+    type: ExpressionQueryType.threshold,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [0],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    expression: inputRefId,
+  };
+
+  return {
+    refId: thresholdRefId,
+    datasourceUid: ExpressionDatasourceUID,
+    queryType: '',
+    model: thresholdExpression,
+  };
+}
+
+export const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
   scopedVars: ScopedVars | {},
@@ -636,6 +766,9 @@ export const panelToRuleFormValues = async (
     return undefined;
   }
 
+  // Interpolate interval to replace dashboard variables
+  const interpolatedInterval = panel.interval ? panel.replaceVariables(panel.interval, undefined) : undefined;
+
   const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
   const queries = await dataQueriesToGrafanaQueries(
     targets,
@@ -643,21 +776,30 @@ export const panelToRuleFormValues = async (
     panel.scopedVars || {},
     panel.datasource ?? undefined,
     panel.maxDataPoints ?? undefined,
-    panel.interval ?? undefined
+    interpolatedInterval
   );
   // if no alerting capable queries are found, can't create a rule
   if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
     return undefined;
   }
 
+  const lastQuery = queries.at(-1);
+  if (!lastQuery) {
+    return undefined;
+  }
+
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(queries), '-');
+    const reduceExpression = getDefaultReduceExpression({
+      inputRefId: lastQuery.refId,
+      reduceRefId: getNextRefId(queries),
+    });
     queries.push(reduceExpression);
 
-    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
-      reduceExpression.refId,
-      getNextRefId(queries)
-    );
+    const thresholdExpression = getDefaultThresholdExpression({
+      inputRefId: reduceExpression.refId,
+      thresholdRefId: getNextRefId(queries),
+    });
+
     queries.push(thresholdExpression);
   }
 
@@ -708,13 +850,19 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
     return undefined;
   }
 
+  const scopedVars: ScopedVars = { __sceneObject: { value: vizPanel } };
+
+  // Interpolate minInterval to replace dashboard variables
+  // timeRange.state.value.raw is already interpolated with dashboard variables
+  const interpolatedMinInterval = minInterval ? getTemplateSrv().replace(minInterval, scopedVars) : undefined;
+
   const grafanaQueries = await dataQueriesToGrafanaQueries(
     queries,
     rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(timeRange.state.value.raw)),
-    { __sceneObject: { value: vizPanel } },
+    scopedVars,
     datasource,
     maxDataPoints,
-    minInterval
+    interpolatedMinInterval
   );
 
   // if no alerting capable queries are found, can't create a rule
@@ -722,14 +870,23 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
     return undefined;
   }
 
+  const lastQuery = grafanaQueries.at(-1);
+  if (!lastQuery) {
+    return undefined;
+  }
+
   if (!grafanaQueries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(grafanaQueries), '-');
+    const reduceExpression = getDefaultReduceExpression({
+      inputRefId: lastQuery.refId,
+      reduceRefId: getNextRefId(grafanaQueries),
+    });
     grafanaQueries.push(reduceExpression);
 
-    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
-      reduceExpression.refId,
-      getNextRefId(grafanaQueries)
-    );
+    const thresholdExpression = getDefaultThresholdExpression({
+      inputRefId: reduceExpression.refId,
+      thresholdRefId: getNextRefId(grafanaQueries),
+    });
+
     grafanaQueries.push(thresholdExpression);
   }
 
@@ -811,9 +968,12 @@ export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): bool
 
   // find the datasource type from the UID
   const type = getDataSourceSrv().getInstanceSettings(dataSourceUID)?.type;
+  if (!type) {
+    return undefined;
+  }
 
-  // if the datasource is not prometheus or loki, return "undefined"
-  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
+  // if the datasource is not a supported prometheus flavor or loki, return "undefined"
+  if (!isSupportedExternalRulesSourceType(type)) {
     return undefined;
   }
 
@@ -823,6 +983,7 @@ export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): bool
   const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
   const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;
 
-  const isInstant = type === DataSourceType.Prometheus ? isInstantForPrometheus : isInstantForLoki;
+  const isPrometheusFlavoredDataSourceType = isSupportedExternalPrometheusFlavoredRulesSourceType(type);
+  const isInstant = isPrometheusFlavoredDataSourceType ? isInstantForPrometheus : isInstantForLoki;
   return isInstant;
 }

@@ -1,29 +1,39 @@
-import { css } from '@emotion/css';
-
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Menu, Stack, Text, useStyles2, ConfirmButton, Dropdown, Icon } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
+import { Button, Menu, Stack, Dropdown, Icon, Sidebar } from '@grafana/ui';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { DashboardInteractions } from '../utils/interactions';
+
+import { DashboardEditPane } from './DashboardEditPane';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
+  editPane: DashboardEditPane;
 }
 
-export function EditPaneHeader({ element }: EditPaneHeaderProps) {
+export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
-  const styles = useStyles2(getStyles);
 
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
+  const onConfirmDelete = element.onConfirmDelete?.bind(element);
+
+  const onDeleteElement = () => {
+    if (onConfirmDelete) {
+      onConfirmDelete();
+    } else if (onDelete) {
+      onDelete();
+    }
+    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
+  };
 
   return (
-    <div className={styles.wrapper}>
-      <Text variant="h5">{elementInfo.typeName}</Text>
+    <Sidebar.PaneHeader title={elementInfo.typeName}>
       <Stack direction="row" gap={1}>
         {element.renderActions && element.renderActions()}
-        {(onCopy || onDelete) && (
+        {(onCopy || onDuplicate) && (
           <Dropdown
             overlay={
               <Menu>
@@ -46,42 +56,25 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
               variant="secondary"
               size="sm"
               icon="copy"
+              data-testid={selectors.components.EditPaneHeader.copyDropdown}
             >
               <Icon name="angle-down" />
             </Button>
           </Dropdown>
         )}
 
-        {onDelete && (
-          <ConfirmButton
-            onConfirm={onDelete}
-            confirmText="Confirm"
-            confirmVariant="destructive"
+        {(onDelete || onConfirmDelete) && (
+          <Button
+            onClick={onDeleteElement}
             size="sm"
-            closeOnConfirm={true}
-          >
-            <Button
-              size="sm"
-              variant="destructive"
-              fill="outline"
-              icon="trash-alt"
-              tooltip={t('dashboard.layout.common.delete', 'Delete')}
-            />
-          </ConfirmButton>
+            variant="destructive"
+            fill="outline"
+            icon="trash-alt"
+            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            data-testid={selectors.components.EditPaneHeader.deleteButton}
+          />
         )}
       </Stack>
-    </div>
+    </Sidebar.PaneHeader>
   );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    wrapper: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: theme.spacing(2),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
-  };
 }

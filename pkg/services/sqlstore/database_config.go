@@ -39,9 +39,11 @@ type DatabaseConfig struct {
 	WALEnabled                  bool
 	UrlQueryParams              map[string][]string
 	SkipMigrations              bool
+	EnsureDefaultOrgAndUser     bool
 	MigrationLock               bool
 	MigrationLockAttemptTimeout int
 	LogQueries                  bool
+	DeleteAutoGenIDs            bool
 	// SQLite only
 	QueryRetries int
 	// SQLite only
@@ -92,6 +94,9 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	} else {
 		dbCfg.Type = sec.Key("type").String()
 		dbCfg.Host = sec.Key("host").String()
+		if port := sec.Key("port").String(); port != "" {
+			dbCfg.Host = dbCfg.Host + ":" + port
+		}
 		dbCfg.Name = sec.Key("name").String()
 		dbCfg.User = sec.Key("user").String()
 		dbCfg.ConnectionString = sec.Key("connection_string").String()
@@ -114,6 +119,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
 	dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
+	dbCfg.EnsureDefaultOrgAndUser = sec.Key("ensure_default_org_and_user").MustBool(true)
 	dbCfg.MigrationLock = sec.Key("migration_locking").MustBool(true)
 	dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
 
@@ -121,6 +127,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 
 	dbCfg.LogQueries = sec.Key("log_queries").MustBool(false)
+	dbCfg.DeleteAutoGenIDs = sec.Key("delete_auto_gen_ids").MustBool(false)
 
 	return nil
 }
@@ -139,7 +146,7 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			protocol = "unix"
 		}
 
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
+		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true",
 			dbCfg.User, dbCfg.Pwd, protocol, dbCfg.Host, dbCfg.Name)
 
 		if dbCfg.SslMode == "true" || dbCfg.SslMode == "skip-verify" {
@@ -159,10 +166,7 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
 		}
 
-		if features != nil && features.IsEnabledGlobally(featuremgmt.FlagMysqlAnsiQuotes) {
-			cnnstr += "&sql_mode='ANSI_QUOTES'"
-		}
-
+		cnnstr += "&sql_mode=ANSI_QUOTES"
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
 	case migrator.Postgres:
 		addr, err := util.SplitHostPortDefault(dbCfg.Host, "127.0.0.1", "5432")
@@ -203,8 +207,6 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 		}
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
-	case migrator.Spanner:
-		cnnstr = dbCfg.Name
 	default:
 		return fmt.Errorf("unknown database type: %s", dbCfg.Type)
 	}

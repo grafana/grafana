@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { FormDTO, getSupportedTransTypeDetails, getTransformOptions } from './types';
 type Props = {
@@ -138,7 +138,8 @@ const TransformationEditorRow = (props: Props) => {
             <Label htmlFor={`config.transformations.${defaultValue.id}.expression`}>
               <Trans i18nKey="correlations.transform-row.expression-label">Expression</Trans>
               {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.required
-                ? ' *'
+                ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                  ' *'
                 : ''}
             </Label>
             <Tooltip

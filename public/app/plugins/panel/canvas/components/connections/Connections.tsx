@@ -43,6 +43,8 @@ export class Connections {
   connectionVertex?: SVGCircleElement;
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
+  // for back compatibility with Connections2
+  connectionsSVG?: SVGElement;
   isDrawingConnection?: boolean;
   selectedVertexIndex?: number;
   didConnectionLeaveHighlight?: boolean;
@@ -677,7 +679,7 @@ export class Connections {
     return isConnectionSource(element) || isConnectionTarget(element, this.scene.byName);
   };
 
-  render() {
+  renderElement() {
     return (
       <>
         <ConnectionAnchors

@@ -1,8 +1,8 @@
 import { HistoryItem, dateTime } from '@grafana/data';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
-import { createLokiDatasource } from '../../../__mocks__/datasource';
 import { LokiDatasource } from '../../../datasource';
+import { createLokiDatasource } from '../../../mocks/datasource';
 import { LokiQuery } from '../../../types';
 
 import { CompletionDataProvider } from './CompletionDataProvider';

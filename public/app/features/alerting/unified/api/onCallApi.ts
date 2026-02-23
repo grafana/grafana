@@ -1,7 +1,6 @@
 import { FetchError, isFetchError } from '@grafana/runtime';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
-import { getIrmIfPresentOrOnCallPluginId } from '../utils/config';
 
 import { alertingApi } from './alertingApi';
 
@@ -38,15 +37,15 @@ export interface OnCallConfigChecks {
   is_integration_chatops_connected: boolean;
 }
 
-export function getProxyApiUrl(path: string) {
-  return `/api/plugins/${getIrmIfPresentOrOnCallPluginId()}/resources${path}`;
+export function getProxyApiUrl(path: string, pluginId: string) {
+  return `/api/plugins/${pluginId}/resources${path}`;
 }
 
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], void>({
-      query: () => ({
-        url: getProxyApiUrl('/alert_receive_channels/'),
+    grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], { pluginId: string }>({
+      query: ({ pluginId }) => ({
+        url: getProxyApiUrl('/alert_receive_channels/', pluginId),
         // legacy_grafana_alerting is necessary for OnCall.
         // We do NOT need to differentiate between these two on our side
         params: {
@@ -64,31 +63,31 @@ export const onCallApi = alertingApi.injectEndpoints({
       },
       providesTags: ['OnCallIntegrations'],
     }),
-    validateIntegrationName: build.query<boolean, string>({
-      query: (name) => ({
-        url: getProxyApiUrl('/alert_receive_channels/validate_name/'),
+    validateIntegrationName: build.query<boolean, { name: string; pluginId: string }>({
+      query: ({ name, pluginId }) => ({
+        url: getProxyApiUrl('/alert_receive_channels/validate_name/', pluginId),
         params: { verbal_name: name },
         showErrorAlert: false,
       }),
     }),
-    createIntegration: build.mutation<NewOnCallIntegrationDTO, CreateIntegrationDTO>({
-      query: (integration) => ({
-        url: getProxyApiUrl('/alert_receive_channels/'),
+    createIntegration: build.mutation<NewOnCallIntegrationDTO, CreateIntegrationDTO & { pluginId: string }>({
+      query: ({ pluginId, ...integration }) => ({
+        url: getProxyApiUrl('/alert_receive_channels/', pluginId),
         data: integration,
         method: 'POST',
         showErrorAlert: true,
       }),
       invalidatesTags: ['OnCallIntegrations'],
     }),
-    features: build.query<OnCallFeature[], void>({
-      query: () => ({
-        url: getProxyApiUrl('/features/'),
+    features: build.query<OnCallFeature[], { pluginId: string }>({
+      query: ({ pluginId }) => ({
+        url: getProxyApiUrl('/features/', pluginId),
         showErrorAlert: false,
       }),
     }),
-    onCallConfigChecks: build.query<OnCallConfigChecks, void>({
-      query: () => ({
-        url: getProxyApiUrl('/organization/config-checks/'),
+    onCallConfigChecks: build.query<OnCallConfigChecks, { pluginId: string }>({
+      query: ({ pluginId }) => ({
+        url: getProxyApiUrl('/organization/config-checks/', pluginId),
         showErrorAlert: false,
       }),
     }),

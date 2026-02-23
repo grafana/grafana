@@ -12,7 +12,7 @@ jest.mock('@grafana/faro-web-sdk', () => ({
   },
 }));
 
-jest.mock('app/core/config', () => ({
+jest.mock('@grafana/runtime', () => ({
   config: {
     grafanaJavascriptAgent: {
       enabled: true,

@@ -2,7 +2,7 @@
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 categories:
   - alerting
-description: Learn to use alert instances and route notifications by labels to contacts, building on your alerting skills in Grafana for more advanced workflows — Part 2.
+description: Learn to use alert instances and route notifications by labels to contacts.
 labels:
   products:
     - enterprise
@@ -10,22 +10,22 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Part 2
-weight: 50
+title: Get started with Grafana Alerting - Multi-dimensional alerts and how to route them
+weight: 63
 killercoda:
-  title: Get started with Grafana Alerting - Part 2
-  description: Learn to use alert instances and route notifications by labels to contacts, building on your alerting skills in Grafana for more advanced workflows — Part 2.
+  title: Get started with Grafana Alerting - Multi-dimensional alerts and how to route them
+  description: Learn to use alert instances and route notifications by labels to contacts.
   backend:
     imageid: ubuntu
 ---
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 2
-
-The Get started with Grafana Alerting tutorial Part 2 is a continuation of [Get started with Grafana Alerting tutorial Part 1](http://www.grafana.com/tutorials/alerting-get-started/).
+This tutorial is a continuation of the [Grafana Alerting - Create and receive your first alert](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
 
 In this guide, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
+
+{{< youtube id="nI-_MEnFBQs" >}}
 
 After introducing each component, you will learn how to:
 
@@ -51,17 +51,14 @@ Learning about alert instances and notification policies is useful if you have m
 There are different ways you can follow along with this tutorial.
 
 - **Grafana Cloud**
-
   - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://www.grafana.com/auth/sign-up/create-user).
 
   Continue to [Alert instances](#alert-instances).
 
 - **Interactive learning environment**
-
-  - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Part 2](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt2/). It's a fully configured environment with all the dependencies already installed.
+  - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Alert routing](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt2/). It's a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
-
   - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
   - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
@@ -184,6 +181,10 @@ Create a notification policy if you want to handle metrics returned by alert rul
    {{< admonition type="note" >}}
    If you don’t have any contact points, add a [Contact point](https://grafana.com/tutorials/alerting-get-started/#create-a-contact-point).
    {{</ admonition >}}
+1. Enable Continue matching:
+
+   Turn on **Continue matching subsequent sibling nodes** so the evaluation continues even after one or more labels (i.e. `device` label) match.
+
 1. Click **Save Policy**.
 
    This new child policy routes alerts that match the label `device=desktop` to the Webhook contact point.
@@ -223,7 +224,7 @@ The alert rule that you are about to create is meant to monitor web traffic page
 ### Create an alert rule
 
 1. Navigate to **Alerts & IRM > Alerting > Alert rules**.
-1. Click **New alert rule**.
+1. Click **+ New alert rule**.
 
 ### Enter an alert rule name
 
@@ -248,8 +249,7 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
    The above CSV data simulates a data source returning multiple time series, each leading to the creation of an alert instance for that specific time series. Note that the data returned matches the example in the [Alert instance](#alert-instances) section.
 
 1. In the **Alert condition** section:
-
-   - Keep `Last` as the value for the reducer function (`WHEN`), and `1000` as the threshold value. This is the value above which the alert rule should trigger.
+   - Keep `Last` as the value for the reducer function (`WHEN`), and `IS ABOVE 1000` as the threshold value. This is the value above which the alert rule should trigger.
 
 1. Click **Preview alert rule condition** to run the queries.
 
@@ -270,15 +270,16 @@ In the [life cycle](http://grafana.com/docs/grafana/next/alerting/fundamentals/a
 
 To set up evaluation behavior:
 
-1. In **Evaluation group and interval**, repeat the above step to create a new evaluation group. Name it `1m` (referring to “1 minute”).
+1. In the **Evaluation group and interval**, enter a name. For example:  `1m-evaluation`.
 1. Choose an **Evaluation interval** (how often the alert will be evaluated). Choose `1m`.
 1. Set the **pending period** to `0s` (zero seconds), so the alert rule fires the moment the condition is met.
+1. Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true.
 
 ### Configure notifications
 
 In this section, you can select how you want to route your alert instances. Since we want to route by notification policy, we need to ensure that the labels match the alert instance.
 
-1. Choose **Use notification policy**.
+1. Toggle the **Advanced options** button to display matching Notification policies.
 1. Click **Preview routing**. Based on the existing labels, you should see a preview of what policies are matching with the alerts. There should be two alert instances matching the labels that were previously setup in each notification policy: `device=desktop`, `device=mobile`.
 
    These [types of labels](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#label-types) are generated by the data source query and they can be leveraged to match our notification policies without needing to manually add them to the alert rule.
@@ -322,13 +323,13 @@ In this tutorial, you have learned how Grafana Alerting can route individual ale
 
 If you run into any problems, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
 
-## Learn more in [Grafana Alerting Part 3](http://www.grafana.com/tutorials/alerting-get-started-pt3/)
+## Learn more in [Grafana Alerting: Group alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Part 3](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
+In [Get started with Grafana Alerting: Group alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
 
 {{< /admonition >}}
 
@@ -336,7 +337,7 @@ In [Get started with Grafana Alerting - Part 3](http://www.grafana.com/tutorials
 
 {{< docs/ignore >}}
 
-In [Get started with Grafana Alerting - Part 3](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
+In [Get started with Grafana Alerting: Group alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
 
 {{< /docs/ignore >}}
 

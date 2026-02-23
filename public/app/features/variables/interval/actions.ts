@@ -1,6 +1,6 @@
 import { rangeUtil } from '@grafana/data';
+import { ThunkResult } from 'app/types/store';
 
-import { ThunkResult } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { validateVariableSelectionState } from '../state/actions';

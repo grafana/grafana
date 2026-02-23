@@ -55,9 +55,9 @@ a global role, the default `admin` user has this role.
 - **Editor -** Create and edit dashboards.
 - **Viewer -** View dashboards.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can also configure Grafana to allow [anonymous access](/docs/grafana/latest/auth/overview/#anonymous-authentication), to make dashboards available even to those who don't have a Grafana user account. That's how Grafana Labs made https://play.grafana.org publicly available.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Exercise
 

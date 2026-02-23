@@ -17,6 +17,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { Explore, Props } from './Explore';
+import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
 import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
@@ -108,28 +109,34 @@ const dummyProps: Props = {
     dsToExplore: [],
   },
   changeDatasource: jest.fn(),
+  compact: false,
+  changeCompactMode: jest.fn(),
+  queryLibraryRef: undefined,
+  queriesChangedIndexAtRun: 0,
 };
-
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve({}),
-      getList: () => [],
-      getInstanceSettings: () => {},
-    }),
-  };
-});
-
-jest.mock('app/core/core', () => ({
-  contextSrv: {
-    hasPermission: () => true,
-    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
-  },
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      savedQueriesRBAC: false,
+    },
+  },
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({}),
+    getList: () => [],
+    getInstanceSettings: () => {},
+  }),
   usePluginLinks: jest.fn(() => ({ links: [] })),
+}));
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
+    hasPermission: () => true,
+    isSignedIn: true,
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
+  },
 }));
 
 // for the AutoSizer component to have a width
@@ -242,6 +249,59 @@ describe('Explore', () => {
       const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
       expect(showContentOutlineButton).not.toBeInTheDocument();
       getBoolMock.mockRestore();
+    });
+  });
+
+  describe('Saved Queries Integration', () => {
+    it('should enable add query buttons when queryLibraryRef is undefined', async () => {
+      setup({ queryLibraryRef: undefined });
+
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
+      expect(addQueryButton).toBeEnabled();
+    });
+
+    it('should disable add query buttons when queryLibraryRef is set (editing from library)', async () => {
+      setup({ queryLibraryRef: 'library-query-123' });
+
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
+      expect(addQueryButton).toBeDisabled();
+    });
+
+    it('should disable both add query and add from library buttons when editing from library', async () => {
+      const store = configureStore({
+        explore: {
+          ...initialExploreState,
+          panes: {
+            left: makeExplorePaneState(),
+          },
+        },
+      });
+      const exploreProps = { ...dummyProps, queryLibraryRef: 'library-query-123' };
+
+      render(
+        <TestProvider store={store}>
+          <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+            <ContentOutlineContextProvider>
+              <Explore {...exploreProps} />
+            </ContentOutlineContextProvider>
+          </QueryLibraryContextProviderMock>
+        </TestProvider>
+      );
+
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
+      const addFromLibraryButton = screen.getByRole('button', { name: /Add from saved queries/i });
+
+      expect(addQueryButton).toBeDisabled();
+      expect(addFromLibraryButton).toBeDisabled();
     });
   });
 });

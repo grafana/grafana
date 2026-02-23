@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/loki/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
 export enum QueryEditorMode {
@@ -48,6 +50,14 @@ export interface LokiDataQuery extends common.DataQuery {
    * Used to override the name of the series.
    */
   legendFormat?: string;
+  /**
+   * The full query plan for split/shard queries. Encoded and sent to Loki via `X-Loki-Query-Limits-Context` header. Requires "lokiQueryLimitsContext" feature flag
+   */
+  limitsContext?: {
+    expr: string;
+    from: number;
+    to: number;
+  };
   /**
    * Used to limit the number of log rows returned.
    */

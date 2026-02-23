@@ -5,18 +5,19 @@ description: Describes provisioning settings for Grafana using configuration fil
 keywords:
   - grafana
   - provisioning
+  - provision
 labels:
   products:
     - enterprise
     - oss
 title: Provision Grafana
-weight: 600
+menuTitle: Provision Grafana
+weight: 4100
 ---
 
 # Provision Grafana
 
-Grafana has an active provisioning system that uses configuration files.
-This makes GitOps more natural since data sources and dashboards can be defined using files that can be version controlled.
+Grafana has an active provisioning system that uses configuration files. You can define data sources and dashboards using files that can be version controlled, making GitOps more natural.
 
 ## Configuration file
 
@@ -25,22 +26,22 @@ Refer to [Configuration](../../setup-grafana/configure-grafana/) for more inform
 ### Configuration file locations
 
 Grafana reads its default configuration from `<WORKING DIRECTORY>/conf/defaults.ini`.
-By default, Grafana reads custom configuration from `<WORKING DIRECTORY>/conf/custom.ini`.
-You can override the custom configuration path with the `--config` option.
+
+Grafana reads custom configuration from `<WORKING DIRECTORY>/conf/custom.ini`. You can override the custom configuration path with the `--config` option.
 
 {{< admonition type="note" >}}
 The Deb and RPM packages install the configuration file at `/etc/grafana/grafana.ini`.
 The Grafana init.d script sets the `--config` option to that path.
 {{< /admonition >}}
 
-### Use environment variables
+## Use environment variables
 
-You can use environment variable lookups in all provisioning configuration.
-The syntax for an environment variable is `$ENV_VAR_NAME` or `${ENV_VAR_NAME}`.
-If the environment variable value has a `$` in it (for example, `Pa$sw0rd`), use the `$ENV_VAR_NAME` syntax to avoid double expansion.
-You can only use environment variables for configuration values and not for keys or bigger parts of the configuration file structure.
+You can use environment variable lookups in all provisioning configuration. The syntax for an environment variable is `$ENV_VAR_NAME` or `${ENV_VAR_NAME}`.
 
-You can use environment variables in dashboard provisioning configuration but not the dashboard definition files themselves.
+The following applies:
+
+- Only use environment variables for configuration values. Do not use it for keys or bigger parts of the configuration file structure.
+- Use environment variables in dashboard provisioning configuration, but not in the dashboard definition files themselves.
 
 The following example looks up the data source URL port, user, and password using environment variables:
 
@@ -53,7 +54,30 @@ datasources:
       password: $PASSWORD
 ```
 
-To escape a literal `$` in your provisioning file values, use `$$`.
+### Use of the special character `$`
+
+Grafana's provisioning system considers any set of characters after an `$` a variable name.
+
+During the replacement process, Grafana:
+
+1. Replaces the variables that use the syntax `${ENV_VAR_NAME}`.
+1. Next, it replaces the variables that use the syntax `$ENV_VAR_NAME`.
+
+If your data contains the character `$`, for example `Pa$sw0rd`, and you're using an environment variable, use the `$ENV_VAR_NAME` syntax to avoid double expansion. If you use the `${ENV_VAR_NAME}` syntax, the value will be first replaced as `Pa$sw0rd` and then again as `Pa` since `$sw0rd` will be considered another variable.
+
+If you want to use the literal value `Pa$sw0rd`, you need to escape the character `$` using a double `$$`: `Pa$$sw0rd`.
+
+The following example shows how variables are replaced, assuming `PASSWORD=Pa$sw0rd`:
+
+```yaml
+datasources:
+  - name: Graphite
+    secureJsonData:
+      password1: $PASSWORD # Resolved as Pa$sw0rd
+      password2: ${PASSWORD} # Resolved as Pa
+      password3: 'Pa$$sw0rd' # Resolved as Pa$sw0rd
+      password4: 'Pa$sw0rd' # Resolved as Pa
+```
 
 ## Configuration management tools
 
@@ -230,6 +254,7 @@ Common settings in the [built-in core data sources](../../datasources/#built-in-
 | `incrementalQuerying`           | string  | Prometheus                                                       | Experimental: Turn on incremental querying to enhance dashboard reload performance with slow data sources                                                                                                                                                                                     |
 | `incrementalQueryOverlapWindow` | string  | Prometheus                                                       | Experimental: Configure incremental query overlap window. Requires a valid duration string, for example, `180s` or `15m` Default value is `10m` (10 minutes).                                                                                                                                 |
 | `disableRecordingRules`         | boolean | Prometheus                                                       | Experimental: Turn off Prometheus recording rules                                                                                                                                                                                                                                             |
+| `seriesEndpoint`                | boolean | Prometheus                                                       | Using Prometheus `/api/v1/series` endpoint                                                                                                                                                                                                                                                    |
 | `implementation`                | string  | Alertmanager                                                     | The implementation of the Alertmanager data source, such as `prometheus`, `cortex` or `mimir`                                                                                                                                                                                                 |
 | `handleGrafanaManagedAlerts`    | boolean | Alertmanager                                                     | When enabled, Grafana-managed alerts are sent to this Alertmanager                                                                                                                                                                                                                            |
 
@@ -351,10 +376,75 @@ providers:
 ```
 
 When Grafana starts, it updates or creates all dashboards found in the configured path.
-It later polls that path every `updateIntervalSeconds` for updates to the dashboard files and updates its database.
+These files can define the dashboard using the dashboard JSON:
+
+```json
+{
+  "dashboard": {
+    "id": null,
+    "uid": "example-dashboard",
+    "title": "Production Overview",
+    "tags": ["production", "monitoring"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "30s"
+  },
+  "folderUid": "monitoring-folder",
+  "overwrite": true
+}
+```
+
+Or using a Kubernetes format, for example `kubernetes-dashboard.json`:
+
+```json
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "dashboard-uid"
+  },
+  "spec": {
+    "title": "Dashboard title",
+    "panels": [
+      {
+        "gridPos": {
+          "h": 13,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "options": {
+          "content": "<div><h1>Example panel</h1></div>",
+          "mode": "html"
+        },
+        "transparent": true,
+        "type": "text"
+      }
+    ]
+  }
+}
+```
+
+You _must_ use the Kubernetes resource format to provision dashboards v2 / dynamic dashboards.
 
 {{< admonition type="note" >}}
 Grafana installs dashboards at the root level if you don't set the `folder` field.
+{{< /admonition >}}
+
+#### Detect updates to provisioned dashboards files
+
+After Grafana provisions your dashboards, it checks the filesystem for changes and updates dashboards as needed.
+
+The mechanism Grafana uses to do this depends on your `updateIntervalSeconds` value:
+
+- **More than 10 seconds**: Grafana polls the path at that interval.
+- **10 seconds or less**: Grafana watches the filesystem for changes and updates dashboards when it detects them.
+
+{{< admonition type="note" >}}
+When `updateIntervalSeconds` is 10 or less, Grafana relies on filesystem watch events to detect changes.
+Depending on your filesystem and how you mount or sync dashboard files (for example, Docker bind mounts or some network filesystems), those events might not reach Grafana.
+To work around this, set `updateIntervalSeconds` to more than 10 to force polling, or update your setup so filesystem watch events are propagated.
 {{< /admonition >}}
 
 #### Make changes to a provisioned dashboard
@@ -580,14 +670,6 @@ Grafana encrypts secure settings in the database.
 | ------------- | -------------- |
 | `singleEmail` |                |
 | `addresses`   |                |
-
-#### Alert notification `hipchat`
-
-| Name     | Secure setting |
-| -------- | -------------- |
-| `url`    |                |
-| `apikey` |                |
-| `roomid` |                |
 
 #### Alert notification `opsgenie`
 

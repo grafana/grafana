@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 
 import { rangeUtil } from '@grafana/data';
 
+import { AzureMonitorResource } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import TimegrainConverter from '../../time_grain_converter';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureMonitorResource } from '../../types';
+import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
 import { toOption } from '../../utils/common';
 import { useAsyncState } from '../../utils/useAsyncState';
 

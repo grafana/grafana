@@ -13,6 +13,8 @@ var (
 	folderDSL string
 	//go:embed schema_resource.fga
 	resourceDSL string
+	//go:embed schema_subresource.fga
+	subresourceDSL string
 )
 
 var SchemaModules = []transformer.ModuleFile{
@@ -27,5 +29,9 @@ var SchemaModules = []transformer.ModuleFile{
 	{
 		Name:     "schema_resource.fga",
 		Contents: resourceDSL,
+	},
+	{
+		Name:     "schema_subresource.fga",
+		Contents: subresourceDSL,
 	},
 }

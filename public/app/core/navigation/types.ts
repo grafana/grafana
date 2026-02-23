@@ -1,5 +1,6 @@
 import { Location } from 'history';
 import { ComponentType } from 'react';
+import { Params } from 'react-router-dom-v5-compat';
 
 import { UrlQueryMap } from '@grafana/data';
 
@@ -20,4 +21,10 @@ export interface RouteDescriptor {
   routeName?: string;
   chromeless?: boolean;
   sensitive?: boolean;
+
+  /**
+   * Allow the route to be access by anonymous users.
+   * Currently only used when using the frontend-service.
+   */
+  allowAnonymous?: boolean | ((params: Readonly<Params<string>>) => boolean);
 }

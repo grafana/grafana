@@ -4,10 +4,10 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
-import { t } from 'app/core/internationalization';
 
 import { PasswordlessConfirmationFormModel } from './LoginCtrl';
 
@@ -80,13 +80,17 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
         </Field>
         {signup && (
           <>
-            <Field label={'Username'} invalid={!!errors.code} error={errors.code?.message} hidden={true}>
+            <Field
+              label={t('login.form.passwordless-username-label', 'Username')}
+              invalid={!!errors.code}
+              error={errors.code?.message}
+              hidden={true}
+            >
               <Input
                 {...register('username')}
                 id={usernameId}
                 autoFocus
                 autoCapitalize="none"
-                placeholder={'username'}
                 data-testid={selectors.pages.PasswordlessLogin.email}
                 hidden={true}
               />
@@ -97,7 +101,6 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
                 id={nameId}
                 autoFocus
                 autoCapitalize="none"
-                placeholder={t('login.form.name-placeholder', 'name')}
                 data-testid={selectors.pages.PasswordlessLogin.email}
               />
             </Field>

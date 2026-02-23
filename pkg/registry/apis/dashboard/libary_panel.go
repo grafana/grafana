@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"strconv"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 )
 
 var (
@@ -20,12 +23,16 @@ var (
 	_ rest.SingularNameProvider = (*LibraryPanelStore)(nil)
 	_ rest.Getter               = (*LibraryPanelStore)(nil)
 	_ rest.Lister               = (*LibraryPanelStore)(nil)
+	_ rest.Creater              = (*LibraryPanelStore)(nil)
+	_ rest.GracefulDeleter      = (*LibraryPanelStore)(nil)
+	_ rest.Updater              = (*LibraryPanelStore)(nil)
 	_ rest.Storage              = (*LibraryPanelStore)(nil)
 )
 
 type LibraryPanelStore struct {
-	Access       legacy.DashboardAccess
+	Access       legacy.DashboardAccessor
 	ResourceInfo utils.ResourceInfo
+	service      libraryelements.Service
 }
 
 func (s *LibraryPanelStore) New() runtime.Object {
@@ -50,7 +57,81 @@ func (s *LibraryPanelStore) ConvertToTable(ctx context.Context, object runtime.O
 	return s.ResourceInfo.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
+func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cmd, err := libraryelements.ToCreateLibraryElementCommand(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	// NOTE: this includes all access control checks
+	out, err := s.service.CreateElement(ctx, user, *cmd)
+	if err != nil {
+		return nil, err
+	}
+	if out.UID == "" {
+		return nil, fmt.Errorf("created library panel has empty UID")
+	}
+	return s.Get(ctx, out.UID, &metav1.GetOptions{})
+}
+
+func (s *LibraryPanelStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	old, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+
+	// NOTE: this includes all access control checks
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, false, err
+	}
+
+	cmd, err := libraryelements.ToPatchLibraryElementCommand(obj)
+	if err != nil {
+		return nil, false, err
+	}
+
+	out, err := s.service.PatchLibraryElement(ctx, user, *cmd, name)
+	if err != nil {
+		return nil, false, err
+	}
+	if out.UID == "" {
+		return nil, false, fmt.Errorf("created library panel has empty UID")
+	}
+	obj, err = s.Get(ctx, out.UID, &metav1.GetOptions{})
+	return obj, false, err
+}
+
+func (s *LibraryPanelStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// NOTE: this includes all access control checks
+	_, err = s.service.DeleteLibraryElement(ctx, user, name)
+	if err != nil {
+		return nil, false, err
+	}
+	return nil, true, nil
+}
+
+func (s *LibraryPanelStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(s.ResourceInfo.GroupResource(), "deletecollection")
+}
+
 func (s *LibraryPanelStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	if options.ResourceVersion != "" {
+		return nil, apierrors.NewBadRequest("List with explicit resourceVersion is not supported with this storage backend")
+	}
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err

@@ -3,9 +3,10 @@ import { PureComponent } from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
+import { MetricFindQueryTypes } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
 import { extractServicesFromMetricDescriptors, getLabelKeys, getMetricTypes } from '../functions';
-import { CloudMonitoringQuery, MetricFindQueryTypes } from '../types/query';
+import { CloudMonitoringQuery } from '../types/query';
 import {
   CloudMonitoringOptions,
   CloudMonitoringVariableQuery,
@@ -13,7 +14,7 @@ import {
   VariableQueryData,
 } from '../types/types';
 
-import { VariableQueryField } from './';
+import { VariableQueryField } from './Fields';
 
 export type Props = QueryEditorProps<
   CloudMonitoringDatasource,
