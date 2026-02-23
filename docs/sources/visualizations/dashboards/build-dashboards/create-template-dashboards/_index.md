@@ -39,7 +39,8 @@ To create a dashboard from a template, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-sample-data-dashboard-v12.3.png" max-width="750px" alt="Dashboard with sample data" >}}
 
-1. Click **Save dashboard** in the top-right corner.
+1. Click **Save** in the top-right corner
+1. Enter an optional description, and click **Save**.
 1. Click **Edit**.
 1. Update the data source for each panel to add your own data and configure the queries you need.
 
