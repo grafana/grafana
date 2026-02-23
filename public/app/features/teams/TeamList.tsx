@@ -225,15 +225,19 @@ const TeamList = () => {
                 limit: 1,
               });
 
-              const { data: foldersData, isError } = await foldersQueryRef.current;
+              const { data: foldersData, isError, error } = await foldersQueryRef.current;
 
               if (isError) {
+                if (error && error.name === 'AbortError') {
+                  return;
+                }
                 notifyApp.error(
                   t(
                     'teams.team-list.failed-to-check-folders',
                     'Failed to check if the team owns folders. Please try again.'
                   )
                 );
+                console.error(error);
                 return;
               }
 
