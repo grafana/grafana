@@ -63,7 +63,7 @@ const (
 
 	// JobActionFixFolderMetadata is a placeholder job that will eventually regenerate folder metadata files.
 	// Currently a no-op to unblock frontend development.
-	JobActionFixFolderMetadata JobAction = "fix-folder-metadata"
+	JobActionFixFolderMetadata JobAction = "fixFolderMetadata"
 )
 
 // +enum

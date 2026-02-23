@@ -23,10 +23,10 @@ func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
 
 func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	logger.Info("fix-folder-metadata job is a no-op placeholder — will be replaced by full implementation")
+	logger.Info("fixFolderMetadata job is a no-op placeholder — will be replaced by full implementation")
 
-	progress.SetMessage(ctx, "fix-folder-metadata (no-op)")
-	progress.SetFinalMessage(ctx, "fix-folder-metadata completed (no-op placeholder)")
+	progress.SetMessage(ctx, "fixFolderMetadata (no-op)")
+	progress.SetFinalMessage(ctx, "fixFolderMetadata completed (no-op placeholder)")
 
 	return nil
 }

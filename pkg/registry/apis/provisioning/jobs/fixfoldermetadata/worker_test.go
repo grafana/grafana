@@ -40,8 +40,8 @@ func TestWorker_Process(t *testing.T) {
 	ctx := context.Background()
 	progress := jobs.NewMockJobProgressRecorder(t)
 
-	progress.EXPECT().SetMessage(ctx, "fix-folder-metadata (no-op)").Return()
-	progress.EXPECT().SetFinalMessage(ctx, "fix-folder-metadata completed (no-op placeholder)").Return()
+	progress.EXPECT().SetMessage(ctx, "fixFolderMetadata (no-op)").Return()
+	progress.EXPECT().SetFinalMessage(ctx, "fixFolderMetadata completed (no-op placeholder)").Return()
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
