@@ -9,8 +9,7 @@
     "isolatedModules": true,
     "allowJs": true,
     "rootDirs": ["."],
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true
+    "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
   "include": [
@@ -18,6 +17,6 @@
     "../../public/app/types/jquery/*.ts",
     "../../public/app/types/*.d.ts",
     "../grafana-ui/src/types/*.d.ts",
-    "src/**/*.*ts*"
+    "src/**/*.ts*"
   ]
 }
