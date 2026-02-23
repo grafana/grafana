@@ -60,6 +60,7 @@ export function QueryEditorContextWrapper({
     [datasource, dsSettings, dsError]
   );
 
+  // TODO: this doesn't seem to be working, when i click one erroring card then all the cards show the error based on how i render it in QueryCard.tsx
   const queryError = useMemo(() => {
     return queryRunnerState?.data?.errors?.find(({ refId }) => refId === selectedQueryRefId);
   }, [queryRunnerState?.data?.errors, selectedQueryRefId]);
