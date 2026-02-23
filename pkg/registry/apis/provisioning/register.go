@@ -49,6 +49,7 @@ import (
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixmetadata"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -829,9 +830,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
+			fixMetadataWorker := fixmetadata.NewWorker()
 			workers := []jobs.Worker{ //nolint:prealloc
 				deleteWorker,
 				exportWorker,
+				fixMetadataWorker,
 				migrationWorker,
 				moveWorker,
 				syncWorker,
