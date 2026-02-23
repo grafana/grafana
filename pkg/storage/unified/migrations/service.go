@@ -101,9 +101,9 @@ func RegisterMigrations(
 	sec := cfg.Raw.Section("database")
 	db := mg.DBEngine.DB().DB
 	maxOpenConns := db.Stats().MaxOpenConnections
-	if maxOpenConns <= 2 {
-		// migrations require at least 3 connections due to extra GRPC connections
-		db.SetMaxOpenConns(3)
+	if maxOpenConns <= 3 {
+		// migrations require at least 4 connections due to extra GRPC connections and DB lock
+		db.SetMaxOpenConns(4)
 		defer db.SetMaxOpenConns(maxOpenConns)
 	}
 	err := mg.RunMigrations(ctx,

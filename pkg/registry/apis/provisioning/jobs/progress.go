@@ -312,7 +312,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	jobStatus.Errors = r.errors
 
 	// Extract warnings from summaries
-	warnings := make([]string, 0)
+	warnings := make([]string, 0) //nolint:prealloc
 	for _, summary := range summaries {
 		warnings = append(warnings, summary.Warnings...)
 	}

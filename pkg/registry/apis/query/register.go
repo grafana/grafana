@@ -308,6 +308,8 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		return nil, fmt.Errorf("expected name parameter in query service")
 	}
 	query.Parameters = []*spec3.Parameter{query.Parameters[1]}
+	query.Post.OperationId = "queryDatasources"
+	query.Post.Tags = []string{"Query"}
 
 	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
 	if ok && sqlschemas.Post != nil {

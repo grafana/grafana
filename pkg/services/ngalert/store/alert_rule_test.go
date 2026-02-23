@@ -1139,7 +1139,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 
 			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName, alwaysFalse, false)
 
-			var expected []models.AlertRuleKey
+			expected := make([]models.AlertRuleKey, 0, len(receiveRules))
 			for _, rule := range receiveRules {
 				expected = append(expected, rule.GetKey())
 			}
@@ -1227,7 +1227,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 
 			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, alwaysFalse, false)
 
-			var expected []models.AlertRuleKey
+			expected := make([]models.AlertRuleKey, 0, len(timeIntervalRules))
 			for _, rule := range timeIntervalRules {
 				expected = append(expected, rule.GetKey())
 			}

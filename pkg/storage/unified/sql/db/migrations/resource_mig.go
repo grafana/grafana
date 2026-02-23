@@ -65,7 +65,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	}
 
-	tables := []migrator.Table{resource_table, resource_history_table}
+	tables := []migrator.Table{resource_table, resource_history_table} //nolint:prealloc
 
 	// tables = append(tables, migrator.Table{
 	// 	Name: "resource_label_set",

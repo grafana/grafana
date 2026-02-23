@@ -15,6 +15,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 
@@ -485,6 +486,7 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, routeService)
+	inhibitionRuleService := inhibition_rules.NewService(configStore, ng.Log, ng.FeatureToggles)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
@@ -514,6 +516,7 @@ func (ng *AlertNG) init() error {
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
 		MuteTimings:          muteTimingService,
+		InhibitionRules:      inhibitionRuleService,
 		AlertRules:           alertRuleService,
 		AlertsRouter:         alertsRouter,
 		EvaluatorFactory:     evalFactory,

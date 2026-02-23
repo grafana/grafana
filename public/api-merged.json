@@ -5004,6 +5004,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -5030,6 +5035,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           },
           {
             "name": "body",
@@ -5097,6 +5107,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -5125,6 +5140,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
