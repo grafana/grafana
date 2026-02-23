@@ -432,6 +432,8 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		"dashboard3 should now be managed by second repo")
 }
 
+
+
 func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -455,11 +457,21 @@ func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 		},
 	}
 	
-	job := helper.TriggerJob(t, repo, spec)
-	
-	// Wait for job and expect it to fail
-	job = helper.WaitForJobError(t, job.GetName())
+	// Trigger job and wait for it to complete (will fail)
+	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
 	
 	// Check that job failed with the expected error message
-	require.Contains(t, job.Status.Message, "export functionality is disabled by configuration")
+	status, found, err := unstructured.NestedMap(job.Object, "status")
+	require.NoError(t, err)
+	require.True(t, found, "job should have status")
+	
+	result, found, err := unstructured.NestedString(status, "result")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "error", result, "job should have error result")
+	
+	message, found, err := unstructured.NestedString(status, "message")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Contains(t, message, "export functionality is disabled by configuration")
 }

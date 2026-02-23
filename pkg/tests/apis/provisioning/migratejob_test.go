@@ -3,9 +3,11 @@ package provisioning
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
@@ -30,11 +32,21 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 		},
 	}
 	
-	job := helper.TriggerJob(t, repo, spec)
-	
-	// Wait for job and expect it to fail
-	job = helper.WaitForJobError(t, job.GetName())
+	// Trigger job and wait for it to complete (will fail)
+	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
 	
 	// Check that job failed with the expected error message
-	require.Contains(t, job.Status.Message, "migrate functionality is disabled by configuration")
+	status, found, err := unstructured.NestedMap(job.Object, "status")
+	require.NoError(t, err)
+	require.True(t, found, "job should have status")
+	
+	result, found, err := unstructured.NestedString(status, "result")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "error", result, "job should have error result")
+	
+	message, found, err := unstructured.NestedString(status, "message")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Contains(t, message, "migrate functionality is disabled by configuration")
 }
