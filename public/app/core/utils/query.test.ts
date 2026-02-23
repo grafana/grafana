@@ -34,8 +34,13 @@ describe('isDataQuery', () => {
     expect(isDataQuery(url)).toEqual(true);
   });
 
-  it('should return true if URL starts with /api/ds/query', () => {
+  it('should return true if URL starts with /api/datasources/proxy', () => {
     const url = '/api/datasources/proxy/a/b/c';
+    expect(isDataQuery(url)).toEqual(true);
+  });
+
+  it('should return true for query-service-style URLs', () => {
+    const url = '/apis/query.grafana.app/v0alpha1/namespaces/something/query?ds_type=prometheus';
     expect(isDataQuery(url)).toEqual(true);
   });
 
