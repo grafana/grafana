@@ -33,9 +33,11 @@ import { groups as alertingGroups } from '../../utils/navigation';
 import { createRelativeUrl } from '../../utils/url';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
+import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
 import { QueryVisualization } from './QueryVisualization';
+import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
 import { useInstanceAlertState } from './instanceStateUtils';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 
@@ -93,6 +95,13 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   const instanceState = useInstanceAlertState(ruleUID, instanceLabels);
 
+  const showDrawerTimeRangeBanner = useMemo(() => {
+    if (!rule?.grafana_alert) {
+      return false;
+    }
+    return isDrawerRangeShorterThanQuery(rule.grafana_alert, timeRange);
+  }, [rule, timeRange]);
+
   if (error) {
     return (
       <Drawer
@@ -127,6 +136,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
         <Stack justifyContent="flex-end">
           <TimeRangePicker />
         </Stack>
+        {showDrawerTimeRangeBanner && !instanceState && <DrawerTimeRangeInfoBanner />}
         {instanceState && <InstanceStateInfoBanner state={instanceState} />}
         {dataQueries.length > 0 && (
           <Box>
