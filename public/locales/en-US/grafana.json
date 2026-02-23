@@ -3172,6 +3172,12 @@
     "silences": {
       "affected-instances": "Affected alert instances",
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
+      "operator": {
+        "equals": "Equals",
+        "matches-regex": "Matches regex",
+        "not-equal": "Not equal",
+        "not-matches-regex": "Does not match regex"
+      },
       "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
     "silences-editor": {

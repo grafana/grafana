@@ -204,10 +204,36 @@ describe('Silences', () => {
   it(
     'filters silences by matchers',
     async () => {
+      // foo="bar" matches all silences with a foo matcher whose value is "bar",
+      // regardless of the silence matcher's operator (both foo=bar and foo!=bar match)
       renderSilences('/alerting/silences?queryString=foo%3D%22bar%22');
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
-      expect(ui.silenceRow.getAll()).toHaveLength(1);
+      expect(ui.silenceRow.getAll()).toHaveLength(2);
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'filters silences by regex matchers',
+    async () => {
+      // foo=~"b.*" should match silences with foo=bar and foo!=bar (both have value "bar" matching "b.*")
+      renderSilences(`/alerting/silences?queryString=${encodeURIComponent('foo=~"b.*"')}`);
+
+      expect(await ui.notExpiredTable.find()).toBeInTheDocument();
+      expect(ui.silenceRow.getAll()).toHaveLength(2);
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'filters silences by negative regex matchers',
+    async () => {
+      // foo!~"b.*" requires a foo matcher whose value does NOT match "b.*"
+      // All foo matchers have value "bar" which matches "b.*", so none pass
+      renderSilences(`/alerting/silences?queryString=${encodeURIComponent('foo!~"b.*"')}`);
+
+      expect(await screen.findByText(/no matching silences found/i)).toBeInTheDocument();
     },
     TEST_TIMEOUT
   );
@@ -218,7 +244,7 @@ describe('Silences', () => {
       const { user } = renderSilences('/alerting/silences?queryString=foo%3D%22bar%22');
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
-      expect(ui.silenceRow.getAll()).toHaveLength(1);
+      expect(ui.silenceRow.getAll()).toHaveLength(2);
 
       await user.click(ui.clearFiltersButton.get());
 
