@@ -87,7 +87,7 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
       adjustedSize += MENU_OPTION_HEIGHT - MENU_ITEM_PADDING;
     }
 
-    return adjustedSize;
+    return adjustedSize + MENU_ITEM_PADDING * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);
 
   const floatStyles = {
