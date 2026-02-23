@@ -5027,7 +5027,7 @@
           }
         }
       },
-      "name": "Auto grid",
+      "name": "Auto",
       "options": {
         "custom-min-height": {
           "clear": "Clear"
@@ -6272,11 +6272,12 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
+      "customize-with-assistant-button": "Customize with Assistant",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available",
       "use-dashboard-button": "Use dashboard",
-      "use-template-button": "Use template"
+      "view-template-button": "View template"
     },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
@@ -6386,10 +6387,12 @@
         "new-panel": "New panel"
       }
     },
+    "add-variable": {
+      "label-variable": "Variable"
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "Add event data to graphs",
-      "label-annotation-query": "Annotation query",
-      "tooltip-add-new-annotation-query": "Add new annotation query"
+      "label-annotation-query": "Annotation query"
     },
     "annotation-edit-actions": {
       "description": {

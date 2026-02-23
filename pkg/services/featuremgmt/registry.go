@@ -1017,6 +1017,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingTriageSavedSearches",
+			Description:  "Enables saved searches for the Alert Activity page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingDisableSendAlertsExternal",
 			Description:  "Disables the ability to send alerts to an external Alertmanager datasource.",
 			Stage:        FeatureStageExperimental,
