@@ -143,7 +143,7 @@ func NewTenantWatcher(ctx context.Context, kv KV, writeEvent EventAppender, cfg 
 
 	resync := cfg.ResyncInterval
 	if resync <= 0 {
-		resync = 5 * time.Minute
+		resync = 60 * time.Minute
 	}
 
 	client, err := dynamic.NewForConfig(restCfg)
