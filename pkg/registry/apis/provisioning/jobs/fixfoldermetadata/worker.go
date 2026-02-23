@@ -1,4 +1,4 @@
-package fixmetadata
+package fixfoldermetadata
 
 import (
 	"context"

@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixmetadata"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
@@ -276,7 +276,7 @@ func setupWorkers(
 	workers = append(workers, moveWorker)
 
 	// Fix Metadata (no-op placeholder)
-	fixMetadataWorker := fixmetadata.NewWorker()
+	fixMetadataWorker := fixfoldermetadata.NewWorker()
 	workers = append(workers, fixMetadataWorker)
 
 	// PullRequest
