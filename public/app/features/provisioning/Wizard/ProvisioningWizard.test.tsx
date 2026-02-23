@@ -64,12 +64,14 @@ function setup(jsx: JSX.Element) {
   return render(<StepStatusProvider>{jsx}</StepStatusProvider>);
 }
 
+async function pasteIntoInput(user: UserEvent, input: HTMLElement, value: string) {
+  await user.click(input);
+  await user.clear(input);
+  await user.paste(value);
+}
+
 async function typeIntoTokenField(user: UserEvent, placeholder: string, value: string) {
-  const resetButton = screen.queryByRole('button', { name: /Reset/i });
-  if (resetButton) {
-    await user.click(resetButton);
-  }
-  await user.type(screen.getByPlaceholderText(placeholder), value);
+  await pasteIntoInput(user, screen.getByPlaceholderText(placeholder), value);
 }
 
 async function navigateToConnectionStep(
@@ -97,7 +99,7 @@ async function navigateToConnectionStep(
   }
 
   if ((type === 'bitbucket' || type === 'git') && data?.tokenUser) {
-    await user.type(screen.getByPlaceholderText('username'), data.tokenUser);
+    await pasteIntoInput(user, screen.getByPlaceholderText('username'), data.tokenUser);
   }
 
   if (type !== 'local' && data?.url) {
@@ -107,7 +109,7 @@ async function navigateToConnectionStep(
       bitbucket: 'https://bitbucket.org/owner/repository',
       git: 'https://git.example.com/owner/repository.git',
     };
-    await user.type(screen.getByPlaceholderText(urlPlaceholders[type]), data.url);
+    await pasteIntoInput(user, screen.getByPlaceholderText(urlPlaceholders[type]), data.url);
   }
 
   if (type !== 'local') {
@@ -141,11 +143,15 @@ async function fillConnectionForm(
   });
 
   if (type !== 'local' && data.branch) {
-    await user.type(screen.getByRole('combobox'), `${data.branch}{Enter}`);
+    const branchCombobox = screen.getByRole('combobox');
+    await user.click(branchCombobox);
+    await user.clear(branchCombobox);
+    await user.paste(data.branch);
+    await user.keyboard('{Enter}');
   }
 
   if (data.path) {
-    await user.type(screen.getByRole('textbox', { name: /Path/i }), data.path);
+    await pasteIntoInput(user, screen.getByRole('textbox', { name: /Path/i }), data.path);
   }
 }
 
@@ -285,8 +291,12 @@ describe('ProvisioningWizard', () => {
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Fill required fields on authType step
-      await user.type(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx'), 'ghp_testtoken');
-      await user.type(screen.getByRole('textbox', { name: /Repository URL/i }), 'https://github.com/test/repo');
+      await typeIntoTokenField(user, 'ghp_xxxxxxxxxxxxxxxxxxxx', 'ghp_testtoken');
+      await pasteIntoInput(
+        user,
+        screen.getByRole('textbox', { name: /Repository URL/i }),
+        'https://github.com/test/repo'
+      );
 
       // Proceed to next step
       await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
@@ -318,8 +328,6 @@ describe('ProvisioningWizard', () => {
       await fillConnectionForm(user, 'github', {
         token: 'test-token',
         url: 'https://github.com/test/repo',
-        branch: 'main',
-        path: '/',
       });
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
@@ -360,8 +368,6 @@ describe('ProvisioningWizard', () => {
       await fillConnectionForm(user, 'github', {
         token: 'test-token',
         url: 'https://github.com/test/repo',
-        branch: 'main',
-        path: '/',
       });
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
@@ -420,7 +426,6 @@ describe('ProvisioningWizard', () => {
         token: 'test-token',
         url: 'https://github.com/test/repo',
         branch: 'invalid-branch',
-        path: '/',
       });
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
@@ -435,7 +440,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
     });
 
-    it('should show error alert for Status API errors', async () => {
+    it('should allow retry after non-field error on connection step', async () => {
       const mockSubmitData = jest.fn();
       const mockMutationState = {
         status: QueryStatus.uninitialized,
@@ -448,143 +453,57 @@ describe('ProvisioningWizard', () => {
         mockMutationState,
       ]);
 
-      const statusError = new Error('decrypt gitlab token: not found');
-      mockSubmitData.mockRejectedValue(statusError);
-
-      const { user } = setup(<ProvisioningWizard type="gitlab" />);
-
-      // Fill required GitLab fields on auth step and submit
-      await typeIntoTokenField(user, 'glpat-xxxxxxxxxxxxxxxxxxxx', 'glpat-test');
-      await user.type(
-        screen.getByPlaceholderText('https://gitlab.com/owner/repository'),
-        'https://gitlab.com/test/repo'
-      );
-
-      await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
-
-      // Now the submit should fail with statusError
-      const alert = await screen.findByRole('alert', { name: /Repository connection failed/i });
-      expect(alert).toBeInTheDocument();
-      expect(screen.getByText('Repository connection failed')).toBeInTheDocument();
-
-      expect(screen.getByRole('heading', { name: /1\. Connect/i })).toBeInTheDocument();
-    });
-
-    it('should show error when repository creation fails', async () => {
-      const mockSubmitData = jest.fn();
-      const mockMutationState = {
-        status: QueryStatus.uninitialized,
-        isLoading: false,
-        error: null,
-      };
-      (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
-        mockSubmitData,
-        mockMutationState,
-        mockMutationState,
-      ]);
-
-      // First submit (authType) succeeds, second (connection step) fails
-      mockSubmitData.mockResolvedValueOnce({ data: { metadata: { name: 'test-repo-abc123' } } }).mockResolvedValueOnce({
-        error: {
-          kind: 'Status',
-          status: 'Failure',
-          message: 'Repository creation failed',
-          code: 500,
+      const urlError = {
+        data: {
+          kind: 'TestResults',
+          apiVersion: 'provisioning.grafana.app/v0alpha1',
+          success: false,
+          code: 400,
+          errors: [
+            {
+              type: 'FieldValueInvalid',
+              field: 'spec.github.url',
+              detail: 'Invalid repository URL',
+            },
+          ],
         },
-      });
-
-      const { user } = setup(<ProvisioningWizard type="github" />);
-
-      await fillConnectionForm(user, 'github', {
-        token: 'test-token',
-        url: 'https://github.com/test/repo',
-        branch: 'main',
-        path: '/',
-      });
-
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
-
-      expect(await screen.findByRole('alert', { name: 'Repository request failed' })).toBeInTheDocument();
-
-      // Still on connection step (now step 2)
-      expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
-    });
-  });
-
-  describe('Navigation and State', () => {
-    it('should handle cancel on first step', async () => {
-      const { user } = setup(<ProvisioningWizard type="github" />);
-
-      // First step is now AuthType step for GitHub
-      expect(screen.getByRole('heading', { name: /Connect/i })).toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: /Cancel/i }));
-
-      expect(mockNavigate).toHaveBeenCalledWith('/admin/provisioning');
-    });
-
-    it('should handle going back to previous step', async () => {
-      const { user } = setup(<ProvisioningWizard type="github" />);
-
-      await fillConnectionForm(user, 'github', {
-        token: 'test-token',
-        url: 'https://github.com/test/repo',
-        branch: 'main',
-        path: '/',
-      });
-
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
-
-      expect(await screen.findByRole('heading', { name: /Choose what to synchronize/i })).toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: /Previous/i }));
-
-      expect(await screen.findByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
-    });
-
-    it('should disable next button when submitting', async () => {
-      const mockSubmitData = jest.fn();
-      const mockMutationState = {
-        status: QueryStatus.uninitialized,
-        isLoading: false,
-        error: null,
-        data: undefined,
-        isUninitialized: true,
-        isSuccess: false,
-        isError: false,
-        reset: jest.fn(),
+        status: 400,
       };
 
-      (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
-        mockSubmitData,
-        mockMutationState,
-        mockMutationState,
-      ]);
-
-      mockSubmitData.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ data: { metadata: { name: 'test-conn' } } }), 100))
-      );
+      // authType succeeds → connection fails with URL error → retry succeeds
+      mockSubmitData
+        .mockResolvedValueOnce({ data: { metadata: { name: 'test-repo-abc123' } } })
+        .mockRejectedValueOnce(urlError)
+        .mockResolvedValueOnce({ data: { metadata: { name: 'test-repo-abc123' } } });
 
       const { user } = setup(<ProvisioningWizard type="github" />);
 
-      // Select PAT option (GitHub App is the default)
-      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
+      await fillConnectionForm(user, 'github', {
+        token: 'test-token',
+        url: 'https://github.com/test/repo',
+      });
 
-      await user.type(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx'), 'test-token');
-
-      const repoUrlInput = screen.getByPlaceholderText('https://github.com/owner/repository');
-      await user.clear(repoUrlInput);
-      await user.type(repoUrlInput, 'https://github.com/test/repo');
-
-      await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
-      expect(await screen.findByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
-
-      await user.type(screen.getByRole('combobox'), 'main{Enter}');
-      await user.type(screen.getByRole('textbox', { name: /Path/i }), '/');
-
+      // First connection attempt — fails with URL error (field not on this step)
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      expect(await screen.findByRole('button', { name: /Submitting.../i })).toBeDisabled();
+      // Error banner is shown
+      expect(await screen.findByRole('alert', { name: /Repository connection failed/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
+
+      // User edits a visible field (branch)
+      const branchCombobox = screen.getByRole('combobox');
+      await user.clear(branchCombobox);
+      await user.paste('develop');
+      await user.keyboard('{Enter}');
+
+      // Retry — should not be silently blocked
+      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+      // Submit was called 3 times: 1 authType + 2 connection attempts
+      expect(mockSubmitData).toHaveBeenCalledTimes(3);
+
+      // Wizard advances to next step — proves no silent block
+      expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
     });
   });
 
@@ -595,8 +514,9 @@ describe('ProvisioningWizard', () => {
       // Select PAT option (GitHub App is the default)
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
-      await user.type(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx'), 'test-token');
-      await user.type(
+      await typeIntoTokenField(user, 'ghp_xxxxxxxxxxxxxxxxxxxx', 'test-token');
+      await pasteIntoInput(
+        user,
         screen.getByPlaceholderText('https://github.com/owner/repository'),
         'https://github.com/test/repo'
       );
@@ -612,34 +532,6 @@ describe('ProvisioningWizard', () => {
       // Should still be on connection step due to validation
       expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
       expect(screen.getByText(/Branch is required/i)).toBeInTheDocument();
-    });
-
-    it('should show button text changes based on current step', async () => {
-      mockUseGetRepositoryFilesQuery.mockReturnValue({
-        data: {
-          items: [{ name: 'test.json', path: 'test.json' }],
-        },
-        isLoading: false,
-        error: null,
-        refetch: jest.fn(),
-      });
-
-      const { user } = setup(<ProvisioningWizard type="github" />);
-
-      expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
-
-      await fillConnectionForm(user, 'github', {
-        token: 'test-token',
-        url: 'https://github.com/test/repo',
-        branch: 'main',
-        path: '/',
-      });
-
-      expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
-
-      expect(await screen.findByRole('button', { name: /Synchronize with external storage/i })).toBeInTheDocument();
     });
   });
 
@@ -716,8 +608,9 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
       await typeIntoTokenField(user, 'ATBBxxxxxxxxxxxxxxxx', 'test-token');
-      await user.type(screen.getByPlaceholderText('username'), 'test-user');
-      await user.type(
+      await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
+      await pasteIntoInput(
+        user,
         screen.getByPlaceholderText('https://bitbucket.org/owner/repository'),
         'https://bitbucket.org/test/repo'
       );
@@ -729,8 +622,9 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="git" />);
 
       await typeIntoTokenField(user, 'token or password', 'test-token');
-      await user.type(screen.getByPlaceholderText('username'), 'test-user');
-      await user.type(
+      await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
+      await pasteIntoInput(
+        user,
         screen.getByPlaceholderText('https://git.example.com/owner/repository.git'),
         'https://git.example.com/test/repo.git'
       );

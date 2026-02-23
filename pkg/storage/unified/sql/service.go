@@ -13,9 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
@@ -24,7 +22,6 @@ import (
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -33,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	resourcegrpc "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -56,7 +52,6 @@ type service struct {
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
-	db            infraDB.DB
 	log           log.Logger
 	reg           prometheus.Registerer
 	tracing       trace.Tracer
@@ -77,9 +72,19 @@ type service struct {
 }
 
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
+// ServiceOption allows customizing service behavior
+type ServiceOption func(*service)
+
+// WithAuthenticator sets a custom authenticator for the service
+// This is primarily intended for testing scenarios
+func WithAuthenticator(authn func(ctx context.Context) (context.Context, error)) ServiceOption {
+	return func(s *service) {
+		s.authenticator = authn
+	}
+}
+
 func ProvideSearchGRPCService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
@@ -89,8 +94,12 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 	provider grpcserver.Provider,
+	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
+	for _, opt := range opts {
+		opt(s)
+	}
 	s.searchStandalone = true
 	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
@@ -113,7 +122,6 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 
 func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
@@ -125,8 +133,12 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
+	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
+	for _, opt := range opts {
+		opt(s)
+	}
 
 	// TODO: move to standalone search once we only use sharding in search servers
 	if cfg.EnableSharding {
@@ -171,7 +183,6 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 func newService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	log log.Logger,
 	reg prometheus.Registerer,
 	tracer trace.Tracer,
@@ -182,12 +193,7 @@ func newService(
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
-	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
-	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn := NewAuthenticatorWithFallback(cfg, reg, tracer, func(ctx context.Context) (context.Context, error) {
-		auth := resourcegrpc.Authenticator{Tracer: tracer}
-		return auth.Authenticate(ctx)
-	})
+	authn := grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
 
 	return &service{
 		backend:            backend,
@@ -195,7 +201,6 @@ func newService(
 		features:           features,
 		authenticator:      authn,
 		tracing:            tracer,
-		db:                 db,
 		log:                log,
 		reg:                reg,
 		docBuilders:        docBuilders,
@@ -346,7 +351,6 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 
 	serverOptions := ServerOptions{
 		Backend:        s.backend,
-		DB:             s.db,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
 		Reg:            s.reg,
@@ -402,50 +406,6 @@ func (s *service) stopping(_ error) error {
 	return nil
 }
 
-type authenticatorWithFallback struct {
-	authenticator func(ctx context.Context) (context.Context, error)
-	fallback      func(ctx context.Context) (context.Context, error)
-	metrics       *metrics
-	tracer        trace.Tracer
-}
-
-type metrics struct {
-	requestsTotal *prometheus.CounterVec
-}
-
-func (f *authenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
-	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
-	defer span.End()
-
-	// Try to authenticate with the new authenticator first
-	span.SetAttributes(attribute.Bool("fallback_used", false))
-	newCtx, err := f.authenticator(ctx)
-	if err == nil {
-		// fallback not used, authentication successful
-		f.metrics.requestsTotal.WithLabelValues("false", "true").Inc()
-		return newCtx, nil
-	}
-
-	// In case of error, fallback to the legacy authenticator
-	span.SetAttributes(attribute.Bool("fallback_used", true))
-	newCtx, err = f.fallback(ctx)
-	if newCtx != nil {
-		newCtx = resource.WithFallback(newCtx)
-	}
-	f.metrics.requestsTotal.WithLabelValues("true", fmt.Sprintf("%t", err == nil)).Inc()
-	return newCtx, err
-}
-
-func newMetrics(reg prometheus.Registerer) *metrics {
-	return &metrics{
-		requestsTotal: promauto.With(reg).NewCounterVec(
-			prometheus.CounterOpts{
-				Name: "grafana_grpc_authenticator_with_fallback_requests_total",
-				Help: "Number requests using the authenticator with fallback",
-			}, []string{"fallback_used", "result"}),
-	}
-}
-
 func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 
@@ -453,21 +413,6 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 		SigningKeysURL:   section.Key("signing_keys_url").MustString(""),
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 		AllowInsecure:    cfg.Env == setting.Dev,
-	}
-}
-
-func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer trace.Tracer, fallback func(context.Context) (context.Context, error)) func(context.Context) (context.Context, error) {
-	authCfg := ReadGrpcServerConfig(cfg)
-	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
-	metrics := newMetrics(reg)
-	return func(ctx context.Context) (context.Context, error) {
-		a := &authenticatorWithFallback{
-			authenticator: authenticator,
-			fallback:      fallback,
-			tracer:        tracer,
-			metrics:       metrics,
-		}
-		return a.Authenticate(ctx)
 	}
 }
 

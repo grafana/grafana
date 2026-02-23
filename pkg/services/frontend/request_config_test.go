@@ -56,6 +56,25 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		assert.Equal(t, "10.3.0", config.BuildInfo.Version)
 	})
 
+	t.Run("should override FSFrontendSettings fields from settings service", func(t *testing.T) {
+		config := FSRequestConfig{
+			FSFrontendSettings: FSFrontendSettings{
+				RudderstackWriteKey:     "base-write-key",
+				RudderstackDataPlaneUrl: "https://base-dataplane.example.com",
+			},
+		}
+
+		iniFile := ini.Empty()
+		analyticsSection, _ := iniFile.NewSection("analytics")
+		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
+		_, _ = analyticsSection.NewKey("rudderstack_data_plane_url", "https://tenant-dataplane.example.com")
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, "tenant-write-key", config.RudderstackWriteKey)
+		assert.Equal(t, "https://tenant-dataplane.example.com", config.RudderstackDataPlaneUrl)
+	})
+
 	t.Run("should apply multiple CSP overrides at once", func(t *testing.T) {
 		config := FSRequestConfig{
 			FSFrontendSettings: FSFrontendSettings{

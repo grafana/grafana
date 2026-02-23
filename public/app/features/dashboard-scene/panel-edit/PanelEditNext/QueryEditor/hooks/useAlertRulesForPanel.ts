@@ -51,6 +51,7 @@ export function useAlertRulesForPanel(dataPane: PanelDataPaneNext, panel: VizPan
     return {
       alertRules,
       loading: loading ?? false,
+      isDashboardSaved: !!dashboardUID,
     };
-  }, [rules, loading]);
+  }, [rules, loading, dashboardUID]);
 }

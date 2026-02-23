@@ -420,8 +420,13 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
+	// Go 1.26's httptest.ResponseRecorder.Write returns http.ErrBodyNotAllowed
+	// for status codes that disallow a body (204, 304). The error is expected
+	// because HTTPResponseSender unconditionally calls Write on the response.
+	//require.ErrorContains(t, err, "request method or response status code does not allow body")
+	// Uncomment when we finally upgrade and delete the one below
+	//require.Zero(t, resp.Header().Get("Content-Type"))
 	require.NoError(t, err)
-
 	require.True(t, resp.Flushed, "response should be flushed after request is processed")
 	require.Zero(t, resp.Header().Get("Content-Type"))
 }
@@ -567,22 +572,29 @@ type fakePluginClient struct {
 
 func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	c.req = req
-	bytes, err := json.Marshal(map[string]any{
-		"message": "hello",
-	})
-	if err != nil {
-		return err
-	}
 
 	statusCode := http.StatusOK
 	if c.statusCode != 0 {
 		statusCode = c.statusCode
 	}
 
+	// Go 1.26.0 follows RFC 7230 more strictly:
+	// https://github.com/golang/go/blame/master/src/net/http/httptest/recorder.go#L113-L115
+	var body []byte
+	if statusCode != http.StatusNoContent && statusCode != http.StatusNotModified {
+		var err error
+		body, err = json.Marshal(map[string]any{
+			"message": "hello",
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return sender.Send(&backend.CallResourceResponse{
 		Status:  statusCode,
 		Headers: c.headers,
-		Body:    bytes,
+		Body:    body,
 	})
 }
 

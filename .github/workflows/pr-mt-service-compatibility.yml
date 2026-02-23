@@ -51,7 +51,6 @@ jobs:
               - 'build.go'
               - 'apiserver/**'
               - 'pkg-gen/**'
-              - 'devenv/**'
               - 'scripts/drone/**'
               - 'scripts/go/**'
               - '.air.toml'

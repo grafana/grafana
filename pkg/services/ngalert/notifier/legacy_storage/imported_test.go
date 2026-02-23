@@ -263,6 +263,111 @@ mute_time_intervals:
 	})
 }
 
+func TestConfigRevisionImported_GetInhibitRules(t *testing.T) {
+	const configWithoutRules = `
+route:
+  receiver: imported-receiver-1
+receivers:
+  - name: imported-receiver-1
+`
+
+	t.Run("should return empty list if no imported configuration", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		assert.Nil(t, imported.importedConfig)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+
+	t.Run("should return empty list if no inhibition rules in imported config", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(configWithoutRules)))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+
+	t.Run("should return imported inhibition rules with managed route matchers added", func(t *testing.T) {
+		rev := getConfigRevisionForTest(
+			withExtraConfig(extraConfig(extraConfigurationYaml)),
+		)
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		require.Equal(t, definitions.ManagedInhibitionRules{
+			"test-imported-inhibition-rule-00000000000": {
+				Name:       "test-imported-inhibition-rule-00000000000",
+				Provenance: "converted_prometheus",
+				InhibitRule: definitions.InhibitRule{
+					SourceMatchers: []*labels.Matcher{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "__grafana_managed_route__",
+							Value: "test",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "alertname",
+							Value: "SourceAlert",
+						},
+					},
+					TargetMatchers: []*labels.Matcher{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "__grafana_managed_route__",
+							Value: "test",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "alertname",
+							Value: "TargetAlert",
+						},
+					},
+					Equal: []string{"cluster"},
+				},
+			},
+			"test-imported-inhibition-rule-00000000001": {
+				Name:       "test-imported-inhibition-rule-00000000001",
+				Provenance: "converted_prometheus",
+				InhibitRule: definitions.InhibitRule{
+					SourceMatchers: []*labels.Matcher{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "__grafana_managed_route__",
+							Value: "test",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "severity",
+							Value: "critical",
+						},
+					},
+					TargetMatchers: []*labels.Matcher{
+						{
+							Type:  labels.MatchEqual,
+							Name:  "__grafana_managed_route__",
+							Value: "test",
+						},
+						{
+							Type:  labels.MatchEqual,
+							Name:  "severity",
+							Value: "warning",
+						},
+					},
+					Equal: []string{"instance"},
+				},
+			},
+		}, result)
+	})
+}
+
 func extraConfig(yamlString string) definitions.ExtraConfiguration {
 	return definitions.ExtraConfiguration{
 		Identifier: "test",
@@ -310,4 +415,17 @@ receivers:
   - name: imported-receiver-2
     webhook_configs:
       - url: "http://localhost/"
+inhibit_rules:
+  - source_matchers:
+      - alertname = SourceAlert
+    target_matchers:
+      - alertname = TargetAlert
+    equal:
+      - cluster
+  - source_matchers:
+      - severity = critical
+    target_matchers:
+      - severity = warning
+    equal:
+      - instance
 `

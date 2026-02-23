@@ -548,48 +548,6 @@
     "alert-warning": {
       "to-rule-list": "到规则列表"
     },
-    "alertVersionHistory": {
-      "alerting": "警报",
-      "alerting-change-description": "此更新由提醒系统根据其他更改进行。例如，当重命名用于简化路由的联络点时，将更新受影响的规则",
-      "annotations": "注释",
-      "compare": "比较",
-      "compare-with-latest": "与最新版本比较",
-      "compareVersions": "比较版本",
-      "comparing-versions": "比较版本",
-      "condition": "提醒条件",
-      "contactPointRouting": "联络点路由",
-      "description": "每次编辑提醒规则时，都会创建一个新版本。在下方选择两个版本，并比较它们的差异。",
-      "errorloading": "加载提醒规则版本失败",
-      "execErrorState": "执行错误时的提醒状态",
-      "intervalSeconds": "评估间隔",
-      "labels": "标签",
-      "latest": "最近",
-      "name": "名称",
-      "namespace_uid": "文件夹 UID",
-      "noDataState": "无数据时的提醒状态",
-      "noVersionsFound": "未找到此规则的版本",
-      "paused": "暂停状态",
-      "pendingPeriod": "待处理时段",
-      "provisioning": "配置",
-      "provisioning-change-description": "版本更新是通过配置进行的",
-      "queryAndAlertCondition": "查询和提醒条件",
-      "restore": "还原",
-      "restore-manually": "您的提醒规则无法还原。这可能是由于其他实体（如联络点、数据源等）的更改。请手动还原规则版本",
-      "restore-modal": {
-        "body": "您确定要将提醒规则定义还原到此版本吗？所有未保存的更改都将丢失。",
-        "confirm": "是，还原配置",
-        "error": "无法还原提醒规则版本",
-        "summary": "要应用的更改摘要：",
-        "title": "恢复版本"
-      },
-      "restore-version": "恢复到版本 {{version}}",
-      "rule_group": "规则组",
-      "unknown": "未知",
-      "unknown-change-description": "此更新是在实施提醒规则版本历史记录之前进行的。系统未跟踪进行更改的用户，但将来的更改将包括用户",
-      "user-id": "用户 ID {{uid}}",
-      "warning-restore-manually": "您正在手动恢复此提醒规则的旧版本。在保存规则定义之前，请仔细查看更改。",
-      "warning-restore-manually-title": "手动恢复规则"
-    },
     "alertform": {
       "labels": {
         "alerting": "向您的规则添加标签，以用于搜索、静音或路由到通知策略。",
@@ -638,12 +596,60 @@
       "title-restore-version": "恢复版本",
       "title-restoring-alertmanager-configuration": "恢复 Alertmanager 配置"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "排序",
       "label-filter-placeholder-search-alerts-by-labels": "按标签搜索警报",
       "name-filter-placeholder-search-alert-rules-by-name": "按名称搜索警报规则",
       "no-alert-rules-found": "找不到警报规则",
       "placeholder-sort-default-az": "排序（默认 A-Z）"
+    },
+    "alertVersionHistory": {
+      "alerting": "警报",
+      "alerting-change-description": "此更新由提醒系统根据其他更改进行。例如，当重命名用于简化路由的联络点时，将更新受影响的规则",
+      "annotations": "注释",
+      "compare": "比较",
+      "compare-with-latest": "与最新版本比较",
+      "compareVersions": "比较版本",
+      "comparing-versions": "比较版本",
+      "condition": "提醒条件",
+      "contactPointRouting": "联络点路由",
+      "description": "每次编辑提醒规则时，都会创建一个新版本。在下方选择两个版本，并比较它们的差异。",
+      "errorloading": "加载提醒规则版本失败",
+      "execErrorState": "执行错误时的提醒状态",
+      "intervalSeconds": "评估间隔",
+      "labels": "标签",
+      "latest": "最近",
+      "name": "名称",
+      "namespace_uid": "文件夹 UID",
+      "noDataState": "无数据时的提醒状态",
+      "noVersionsFound": "未找到此规则的版本",
+      "paused": "暂停状态",
+      "pendingPeriod": "待处理时段",
+      "provisioning": "配置",
+      "provisioning-change-description": "版本更新是通过配置进行的",
+      "queryAndAlertCondition": "查询和提醒条件",
+      "restore": "还原",
+      "restore-manually": "您的提醒规则无法还原。这可能是由于其他实体（如联络点、数据源等）的更改。请手动还原规则版本",
+      "restore-modal": {
+        "body": "您确定要将提醒规则定义还原到此版本吗？所有未保存的更改都将丢失。",
+        "confirm": "是，还原配置",
+        "error": "无法还原提醒规则版本",
+        "summary": "要应用的更改摘要：",
+        "title": "恢复版本"
+      },
+      "restore-version": "恢复到版本 {{version}}",
+      "rule_group": "规则组",
+      "unknown": "未知",
+      "unknown-change-description": "此更新是在实施提醒规则版本历史记录之前进行的。系统未跟踪进行更改的用户，但将来的更改将包括用户",
+      "user-id": "用户 ID {{uid}}",
+      "warning-restore-manually": "您正在手动恢复此提醒规则的旧版本。在保存规则定义之前，请仔细查看更改。",
+      "warning-restore-manually-title": "手动恢复规则"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "此策略匹配所有标签"
@@ -1677,8 +1683,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_other": ""
       },
       "routing-tree": {
@@ -1692,8 +1696,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1703,6 +1705,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1721,10 +1724,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1735,8 +1735,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1762,7 +1767,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1791,7 +1798,9 @@
         "target-datasource-description": "选择将由导入的规则查询的数据源。确保导入规则中使用的指标在此数据源中可用。",
         "target-datasource-required": "请选择一个目标数据源"
       },
-      "yaml-error": "解析 YAML 文件失败：{{error}}"
+      "yaml-error": "解析 YAML 文件失败：{{error}}",
+      "renamed-intervals_other": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2293,6 +2302,9 @@
       "recipient": "接收方",
       "recipient-notification-fires": "选择警报规则触发时应向谁发送通知。"
     },
+    "open-drawer-icon-button": {
+      "details": ""
+    },
     "option-customfield": {
       "label-custom-template": "自定义模板",
       "placeholder": "输入纯文本或引用模板，例如 {{template \"default.message\" .}}",
@@ -2629,6 +2641,13 @@
       "resample-to": "重新采样为",
       "upsample": "升高采样"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "路由"
     },
@@ -2857,8 +2876,8 @@
       },
       "rulerrule-loading-error": "加载规则失败",
       "toggle": {
-        "go-back-to-old-look": "恢复旧外观",
-        "try-out-the-new-look": "试试新外观！"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "未知规则类型"
     },
@@ -3107,6 +3126,17 @@
     "silence-period": {
       "label-silence-start-and-end": "静默开始和结束",
       "placeholder-select-time-range": "选择时间范围"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "时长为 {{duration}}"
@@ -3416,7 +3446,8 @@
       },
       "title-edit": "编辑",
       "title-recreate": "重新创建",
-      "title-unsilence": "取消静默"
+      "title-unsilence": "取消静默",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -3644,9 +3675,6 @@
       "trace-id": "跟踪 ID：{{traceId}}"
     }
   },
-  "auth-config-auth-config-page-unconnected": {
-    "subtitle": "管理身份验证设置并配置单点登录。不妨在我们的<2>文档</2>中了解更多信息。"
-  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "身份验证设置"
@@ -3837,6 +3865,9 @@
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "IdP 的 .well-known/openid-configuration 端点",
       "title-open-id-connect-discovery-url": "OpenID Connect 发现 URL"
     }
+  },
+  "auth-config-auth-config-page-unconnected": {
+    "subtitle": "管理身份验证设置并配置单点登录。不妨在我们的<2>文档</2>中了解更多信息。"
   },
   "bar-chart": {
     "warn": {
@@ -4906,6 +4937,1290 @@
       "run-query": "运行查询"
     }
   },
+  "dashboard": {
+    "actions": {
+      "open-settings": "设置"
+    },
+    "add": {
+      "new-panel": {
+        "button": "添加新面板按钮",
+        "description": "拖动或单击以添加面板",
+        "title": "面板"
+      },
+      "pane-header": "添加"
+    },
+    "add-library-panel-widget": {
+      "aria-label-close-add-panel-widget": "关闭“添加面板”小部件",
+      "tooltip-close-widget": "关闭小部件"
+    },
+    "add-menu": {
+      "import": "从库导入",
+      "paste-panel": "粘贴面板",
+      "row": "行",
+      "visualization": "可视化"
+    },
+    "alert-rules-drawer": {
+      "redirect-link": "Grafana Alerting 中的列表",
+      "subtitle": "与此仪表板相关的警报规则"
+    },
+    "annotation-settings-edit": {
+      "apply": "应用",
+      "delete": "删除",
+      "description-color-annotation-event-markers": "用于注释事件标记的颜色",
+      "description-enabled-annotation-query-issued-every-dashboard": "启用后，每次数据面板刷新时都会发出注释查询",
+      "description-hidden": "可在数据面板顶部打开或关闭注释查询。选中此选项后，此切换开关将被隐藏。",
+      "label-color": "颜色",
+      "label-data-source": "数据源",
+      "label-enabled": "已启用",
+      "label-hidden": "隐藏",
+      "label-name": "名称",
+      "label-show-in": "显示于",
+      "placeholder-choose-panels": "选择面板",
+      "preview-in-dashboard": "在数据面板中预览",
+      "query": "查询",
+      "title-annotation-support-source": "此数据源不支持注释"
+    },
+    "annotation-settings-list": {
+      "aria-label-delete": "删除标题为“{{title}}”的查询",
+      "built-in": "{{name}}（内置）",
+      "data-source": "数据源",
+      "disabled": "（已禁用）{{name}}",
+      "new-query": "新建查询",
+      "query-name": "查询名称",
+      "tooltip-move-down": "下移",
+      "tooltip-move-up": "上移"
+    },
+    "auto-grid": {
+      "description": "调整面板大小以适应并形成统一的网格",
+      "item-options": {
+        "repeat": {
+          "title": "重复选项",
+          "variable": {
+            "description": "对于所选变量中的每个值，重复此面板。在编辑模式下，此内容不可见。您需要返回数据面板，然后更新变量或重新加载数据面板。",
+            "title": "按变量重复"
+          }
+        }
+      },
+      "name": "自动网格",
+      "options": {
+        "custom-min-height": {
+          "clear": "清除"
+        },
+        "custom-min-width": {
+          "clear": "清除"
+        },
+        "height-fill": "填充屏幕",
+        "max-columns": "最大列数",
+        "min-height": "行高",
+        "min-height-custom": "自定义行高",
+        "min-height-error": "需要介于 50 和 2000 之间的数字",
+        "min-width": "最小列宽",
+        "min-width-custom": "自定义最小宽度",
+        "min-width-custom-clear": "恢复为标准的最小列宽",
+        "min-width-error": "需要介于 50 和 2000 之间的数字"
+      }
+    },
+    "canvas-actions": {
+      "add-panel": "添加面板",
+      "disabled-child-contains-tabs": "无法更改为选项卡，因为行已包含选项卡",
+      "disabled-nested-grouping": "分组限制为 2 级",
+      "disabled-nested-tabs": "选项卡不能嵌套在其他选项卡中",
+      "group-into-row": "分组成行",
+      "group-into-tab": "分组成标签页",
+      "group-panels": "分组面板",
+      "new-row": "新行",
+      "new-tab": "新建标签页",
+      "paste-panel": "粘贴面板",
+      "paste-row": "粘贴行",
+      "paste-tab": "粘贴选项卡",
+      "ungroup-rows": "取消行分组",
+      "ungroup-tabs": "取消选项卡分组"
+    },
+    "conditional-rendering": {
+      "conditions": {
+        "data": {
+          "disable": "没有数据",
+          "enable": "有数据",
+          "info": "根据查询结果显示或隐藏{{type}}。",
+          "label": "查询结果"
+        },
+        "group": {
+          "add": {
+            "button": "添加规则",
+            "data": "查询结果",
+            "time-range-size": "时间范围小于",
+            "variable": "模板变量"
+          },
+          "condition": {
+            "all": "完全匹配",
+            "any": "任意匹配",
+            "label": "匹配规则"
+          },
+          "visibility": {
+            "hide": "隐藏",
+            "label": "{{type}}可见性",
+            "show": "显示"
+          }
+        },
+        "time-range-size": {
+          "info": "如果数据面板时间范围短于所选时间范围，则显示或隐藏{{type}}。",
+          "invalid-message": "无效的间隔",
+          "label": "时间范围小于",
+          "values": {
+            "days": "{{value}} 天",
+            "hour": "{{value}} 小时",
+            "hours": "{{value}} 小时",
+            "minutes": "{{value}} 分钟",
+            "months": "{{value}} 个月",
+            "year": "{{value}} 年",
+            "years": "{{value}} 年"
+          }
+        },
+        "variable": {
+          "error": {
+            "invalid-regex": "无效的正则表达式"
+          },
+          "info": "根据变量值动态地显示或隐藏{{type}}。",
+          "label": "模板变量",
+          "name": "名称",
+          "operator": {
+            "equals": "等于",
+            "matches": "匹配",
+            "not-equals": "不等于",
+            "not-matches": "不匹配"
+          },
+          "value": "值"
+        },
+        "wrapper": {
+          "delete-condition": "删除条件",
+          "unsupported-object-type": "此条件不受元素支持，因此将被忽略。"
+        }
+      },
+      "editor": {
+        "info": "设置规则以通过匹配任何或所有规则来控制{{type}}可见性。",
+        "learn-more": "了解更多",
+        "not-supported-for-custom-grid": "自定义面板布局中的面板不支持显示/隐藏规则。将面板布局更改为自动网格以启用此功能。",
+        "unsupported-object-type": "此项目类型不支持条件渲染"
+      },
+      "overlay": {
+        "tooltip": "元素被显示/隐藏规则隐藏。"
+      },
+      "root": {
+        "title": "显示/隐藏规则"
+      }
+    },
+    "confirm-plugin-dashboard-save-modal": {
+      "body-plugin-dashboard": "更新插件时，您的更改将丢失。<br /><2>使用“<strong>另存为</strong>”创建自定义版本。</2>",
+      "cancel": "取消",
+      "overwrite": "覆盖",
+      "title-plugin-dashboard": "插件数据面板"
+    },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
+    "dash-nav": {
+      "on-open-snapshot-original": {
+        "confirmText": {
+          "proceed": "继续"
+        },
+        "title": {
+          "proceed-to-external-site": "继续前往外部网站？"
+        }
+      },
+      "render-left-actions": {
+        "tooltip-view-as-scene": "作为场景查看"
+      }
+    },
+    "dashboard-links-menu": {
+      "aria-label-dashboard-name": "{{dashboardName}} 数据面板",
+      "label-no-dashboards-found": "未找到数据面板"
+    },
+    "dashboard-loading": {
+      "cancel-loading-dashboard": "取消加载数据面板"
+    },
+    "dashboard-page-error": {
+      "text": {
+        "not-found": "未找到"
+      }
+    },
+    "dashboard-settings": {
+      "actions": {
+        "close": "关闭"
+      }
+    },
+    "dashboard-slice": {
+      "title": {
+        "dashboard-init-failed": "数据面板初始化失败"
+      }
+    },
+    "dashboard-srv": {
+      "message": {
+        "edit-dashboard-json": "编辑数据面板 JSON"
+      }
+    },
+    "default-layout": {
+      "description": "单独放置每个面板并调整大小",
+      "item-options": {
+        "repeat": {
+          "direction": {
+            "horizontal": "水平",
+            "title": "重复方向",
+            "vertical": "垂直"
+          },
+          "max": "每行最大值",
+          "title": "重复选项",
+          "variable": {
+            "description": "对于所选变量中的每个值，重复此面板。在编辑模式下，此内容不可见。您需要返回数据面板，然后更新变量或重新加载数据面板。",
+            "title": "按变量重复"
+          }
+        }
+      },
+      "name": "自定义",
+      "row-actions": {
+        "delete": "刪除行",
+        "modal": {
+          "alt-action": "仅删除行",
+          "text": "您确定要移除此行及其所有面板吗？",
+          "title": "刪除行"
+        }
+      },
+      "row-options": {
+        "button": {
+          "label": "行选项"
+        },
+        "form": {
+          "cancel": "取消",
+          "repeat-for": {
+            "label": "重复条件",
+            "learn-more": "了解更多",
+            "warning": {
+              "text": "此行中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始行中的面板，而不是重复行中的面板。"
+            }
+          },
+          "title": "标题",
+          "update": "更新"
+        },
+        "modal": {
+          "title": "行选项"
+        },
+        "repeat": {
+          "title": "重复选项",
+          "variable": {
+            "title": "变量"
+          }
+        },
+        "title": "行选项"
+      }
+    },
+    "description": {
+      "action": "更改数据面板描述"
+    },
+    "dynamic-config-value-editor": {
+      "render-label": {
+        "tooltip-remove-property": "移除属性"
+      }
+    },
+    "edit-actions": {
+      "add": "添加{{typeName}}",
+      "add-conditional-rule": "添加 {{ruleDescription}} 规则",
+      "duplicate-panel": "复制面板",
+      "edit-query-result-rule": "更改查询结果规则",
+      "edit-template-variable-rule": "更改模板变量规则",
+      "edit-time-range-rule": "更改时间范围规则",
+      "move": "移动{{typeName}}",
+      "panel-background": "更改面板背景",
+      "panel-description": "更改面板描述",
+      "panel-edit": "面板更改",
+      "panel-max-repeats-per-row": "每行最大重复次数",
+      "panel-repeat-direction": "重复方向",
+      "panel-repeat-variable": "面板重复方式",
+      "panel-title": "更改面板标题",
+      "paste-panel": "粘贴面板",
+      "remove": "移除{{typeName}}",
+      "row-title": "更改行标题",
+      "switch-layout": "切换布局",
+      "switch-layout-row": "切换布局",
+      "switch-layout-tab": "切换布局",
+      "tab-title": "更改选项卡标题"
+    },
+    "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
+      "elements": {
+        "annotation": "",
+        "annotation-set": "",
+        "dashboard": "仪表板",
+        "element": "元素",
+        "local-variable": "局部变量",
+        "multiple-elements": "多个元素",
+        "multiple-elements-delete-text": "您确定要删除这些元素吗？",
+        "multiple-panels": "多个面板",
+        "multiple-panels-delete-text": "您确定要删除这些面板吗？所有查询都将被移除。",
+        "objects": "对象",
+        "panel": "面板",
+        "panels": "面板",
+        "row": "行",
+        "rows": "行",
+        "tab": "标签页",
+        "tabs": "标签页",
+        "variable": "{{type}} 变量",
+        "variable-set": "变量"
+      },
+      "row": {
+        "header": {
+          "hide": "隐藏",
+          "title": "行标题"
+        }
+      },
+      "variable": {
+        "custom-options": {
+          "apply": "应用",
+          "change-value": "更改变量值",
+          "discard": "丢弃",
+          "modal-title": "",
+          "values": "以逗号分隔的值"
+        },
+        "datasource-options": {
+          "name-filter": "名称筛选器",
+          "name-filter-description": "正则表达式筛选器，用于选择要包含的数据源实例。保留所有为空。",
+          "name-filter-placeholder": "示例：/^prod/",
+          "type": "类型",
+          "type-placeholder": "选择数据源类型"
+        },
+        "description": "描述",
+        "description-placeholder": "描述性文本",
+        "label": "标签",
+        "label-description": "可选显示名称",
+        "name": "名称",
+        "open-editor": "打开变量编辑器",
+        "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
+        "query-options": {
+          "close": "关闭",
+          "modal-title": "查询变量",
+          "preview": "预览"
+        },
+        "selection-options": {
+          "allow-custom-values": "允许自定义值",
+          "allow-custom-values-description": "允许用户输入值",
+          "category": "选择内容选项",
+          "custom-all-value": "自定义所有值",
+          "custom-all-value-description": "用于表示“全部”的通配符正则表达式或其他值",
+          "include-all": "包含“全部”值",
+          "include-all-description": "启用代表所有值的单个选项",
+          "multi-value": "多值"
+        },
+        "type-category": "{{type}} 选项"
+      },
+      "variables": {
+        "add-variable": "添加变量",
+        "reorder": "",
+        "select-type": "选择变量类型",
+        "select-type-card-tooltip": "点击以选择类型",
+        "select-variable": "选择"
+      }
+    },
+    "empty": {
+      "add-library-panel-body": "添加与其他仪表板共享的可视化。",
+      "add-library-panel-button": "添加库面板",
+      "add-library-panel-header": "导入面板",
+      "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
+      "add-visualization-button": "添加可视化",
+      "add-visualization-header": "通过添加可视化开始您的新仪表板",
+      "description": "添加面板以可视化您的数据",
+      "import-a-dashboard-body": "从文件或 <2>grafana.com</2> 导入数据面板。",
+      "import-a-dashboard-header": "导入仪表板",
+      "import-dashboard-button": "导入仪表板",
+      "show-less-dashboards": "收起",
+      "show-more-dashboards": "展开",
+      "start-with-suggested-dashboards": "从数据源的预制数据面板开始",
+      "title": "新建数据面板",
+      "use-template-button": "使用此数据面板"
+    },
+    "errors": {
+      "failed-to-load": "加载数据面板失败"
+    },
+    "export": {
+      "button": {
+        "label": "导出数据面板"
+      },
+      "menu": {
+        "label": "导出数据面板菜单"
+      }
+    },
+    "fetch-dashboard": {
+      "message": {
+        "failed-to-fetch-dashboard": "获取数据面板失败"
+      }
+    },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
+    "gen-aihistory": {
+      "aria-label-send-custom-feedback": "发送自定义反馈",
+      "footer-text": "此内容使用 <2>Grafana LLM 插件</2>通过 AI 生成",
+      "placeholder-tell-ai-what-to-do-next": "告诉 AI 下一步该做什么..."
+    },
+    "general-settings-unconnected": {
+      "editable-options": {
+        "label": {
+          "editable": "可编辑",
+          "readonly": "只读"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "默认",
+          "shared-crosshair": "共享十字线",
+          "shared-tooltip": "共享工具提示"
+        }
+      }
+    },
+    "get-debug-dashboard": {
+      "title": {
+        "annotations": "注释"
+      }
+    },
+    "get-errors": {
+      "message": {
+        "error-loading-data": "加载数据时出错"
+      }
+    },
+    "get-field-override-categories": {
+      "label-add-field-override": "添加字段覆盖",
+      "label-add-override-property": "添加覆盖属性",
+      "override-name": "覆盖 {{overrideNum}}",
+      "title": {
+        "add-button": "添加按钮"
+      }
+    },
+    "get-library-panel-options-category": {
+      "descriptor": {
+        "title": {
+          "library-panel-options": "库面板选项"
+        }
+      },
+      "title": {
+        "information": "信息",
+        "name": "名称"
+      }
+    },
+    "get-library-viz-panel-options-category": {
+      "descriptor": {
+        "title": {
+          "library-panel-options": "库面板选项"
+        }
+      },
+      "title": {
+        "information": "信息",
+        "name": "名称"
+      }
+    },
+    "get-panel-editor-tabs": {
+      "text": {
+        "alert": "警报",
+        "query": "查询",
+        "transform-data": "转换数据"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "不要将注释数据发送到以下面板",
+        "annotation-panels-support-annotations": "将注释数据发送到支持注释的所有面板",
+        "annotations-explicitly-listed-panels": "将注释发送到明确列出的面板"
+      },
+      "label": {
+        "all-panels": "所有面板",
+        "all-panels-except": "所有面板，以下除外",
+        "selected-panels": "所选面板"
+      }
+    },
+    "get-panel-frame-category": {
+      "descriptor": {
+        "title": {
+          "panel-options": "面板选项"
+        }
+      },
+      "direction-options": {
+        "label": {
+          "horizontal": "水平",
+          "vertical": "垂直"
+        }
+      },
+      "title": {
+        "description": "描述",
+        "max-per-row": "每行最大值",
+        "panel-links": "面板关联",
+        "repeat-by-variable": "按变量重复",
+        "repeat-direction": "重复方向",
+        "repeat-options": "重复选项",
+        "title": "标题",
+        "transparent-background": "透明背景"
+      }
+    },
+    "get-panel-menu": {
+      "text": {
+        "extensions": "扩展程序"
+      }
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "复制到剪贴板",
+      "description-obfuscate-data": "修改原始数据以隐藏敏感信息。 请注意，长度将保持不变，重复值将相等。",
+      "description-support-snapshot": "面板：{{panelTitle}}",
+      "download-snapshot": "下载 ({{snapshotSize}})",
+      "label-obfuscate-data": "混淆数据",
+      "label-support-snapshot": "支持快照",
+      "label-template": "模板",
+      "randomize-field-names-label-field-names": "字段名称",
+      "randomize-labels-label-labels": "标签",
+      "randomize-string-values-label-string-values": "字符串值",
+      "tabs": {
+        "label": {
+          "data": "数据",
+          "snapshot": "快照"
+        }
+      },
+      "title-complete-git-hub-comment-clipboard": "将完整的 GitHub 评论复制到剪贴板",
+      "title-get-help-with-this-panel": "获取此面板的帮助",
+      "troubleshooting-docs": "故障排除文档"
+    },
+    "init-dashboard": {
+      "message": {
+        "failed-create-dashboard-model": "创建数据面板模型失败"
+      }
+    },
+    "inspect": {
+      "data-tab": "数据",
+      "error-tab": "错误",
+      "json-tab": "JSON",
+      "meta-tab": "元数据",
+      "query-tab": "查询",
+      "stats-tab": "统计信息",
+      "subtitle": " {{queryCount}} 次查询，总查询时间为 {{formatted}}",
+      "title": "检查：{{panelTitle}}"
+    },
+    "inspect-data": {
+      "data-options": "数据选项",
+      "dataframe-aria-label": "选择 dataframe",
+      "dataframe-label": "显示数据框",
+      "download-csv": "下载 CSV",
+      "download-logs": "下载日志",
+      "download-service": "下载服务图表",
+      "download-traces": "下载跟踪",
+      "excel-compatibility-mode-description": "生成与大多数 Excel 版本兼容的 CSV 文件",
+      "excel-compatibility-mode-label": "下载用于 Excel",
+      "formatted": "格式化数据",
+      "formatted-data-description": "按照\"字段\"和\"覆盖\"选项卡中定义的选项将表格数据格式化。",
+      "formatted-data-label": "格式化数据",
+      "panel-transforms": "面板转换",
+      "series-to-columns": "按时间拼接的系列",
+      "transformation": "按时间拼接的系列",
+      "transformations-description": "显示的表格数据包含在面板转换选项卡中定义的转换。",
+      "transformations-label": "应用面板转换"
+    },
+    "inspect-json": {
+      "dataframe-description": "未应用转换和字段配置的原始数据。",
+      "dataframe-label": "DataFrame JSON （来自查询）",
+      "panel-data-description": "发送至面板可视化的原始模型",
+      "panel-data-label": "面板数据",
+      "panel-json-description": "保存在仪表板 JSON 中的模型，用于配置整体运作方式。",
+      "panel-json-label": "面板 JSON",
+      "panel-layout-description": "数据面板中面板的网格位置和大小。",
+      "panel-layout-label": "面板布局",
+      "panel-spec-label": "面板规格",
+      "select-source": "选择源",
+      "unknown": "未知对象：{{show}}"
+    },
+    "inspect-meta": {
+      "no-inspector": "没有元数据检查器"
+    },
+    "inspect-stats": {
+      "data-title": "数据源统计信息",
+      "data-traceids": "轨迹 ID",
+      "processing-time": "数据处理时间",
+      "queries": "查询数",
+      "request-time": "总请求时间",
+      "rows": "总行数",
+      "table-title": "统计信息"
+    },
+    "k8s-dashboard-api": {
+      "title": {
+        "deleted": "已删除"
+      }
+    },
+    "k8s-dashboard-v2api": {
+      "title": {
+        "deleted": "已删除"
+      }
+    },
+    "kiosk": {
+      "footerPoweredBy": "技术支持："
+    },
+    "layout": {
+      "cancel": "取消",
+      "common": {
+        "copy": "复制",
+        "copy-or-duplicate": "复制或拷贝",
+        "delete": "删除",
+        "duplicate": "复制",
+        "layout": "布局"
+      },
+      "continue": "继续",
+      "panel": {
+        "modal": {
+          "body": "更改布局将重置所有面板位置和大小。",
+          "confirm": "更改布局",
+          "dismiss": "取消",
+          "title": "更改布局"
+        }
+      },
+      "ungroup-nested-text": "这将取消所有嵌套组的分组。",
+      "ungroup-nested-title": "取消嵌套组的分组？"
+    },
+    "legacy-dashboard-api": {
+      "fetch-error": {
+        "message": {
+          "dashboard-not-found": "找不到数据面板"
+        }
+      }
+    },
+    "make-editable": {
+      "dashboard-not-editable": "数据面板不可编辑",
+      "make-editable": "设为可编辑"
+    },
+    "minimalistic-pagination": {
+      "page-count": "{{currentPage}}/{{numberOfPages}}",
+      "tooltip-next": "下一步",
+      "tooltip-previous": "上一个"
+    },
+    "new-dashboard-with-ds": {
+      "not-found": "未找到 UID 为“{{datasourceUid}}”的数据源。"
+    },
+    "new-panel": {
+      "configure-button": "配置",
+      "configure-button-menu": "切换菜单",
+      "empty-state-message": "运行查询以在此处可视化，或转到所有可视化以添加其他面板类型",
+      "menu-open-panel-editor": "配置",
+      "menu-use-library-panel": "使用库面板",
+      "missing-config": "缺少面板配置",
+      "suggestions": {
+        "empty-state-message": "运行查询以开始查看建议的可视化"
+      }
+    },
+    "new-panel-title": "新面板",
+    "on-create-new-row": {
+      "new-row": {
+        "title": {
+          "row-title": "行标题"
+        }
+      }
+    },
+    "on-create-new-widget-panel": {
+      "new-panel": {
+        "title": {
+          "widget-title": "小部件标题"
+        }
+      }
+    },
+    "options": {
+      "description": "描述",
+      "title-option": "标题"
+    },
+    "options-pane-category": {
+      "aria-label-collapse": "收起 {{title}} 类别",
+      "aria-label-expand": "展开 {{title}} 类别"
+    },
+    "options-pane-options": {
+      "placeholder-search-options": "搜索选项",
+      "Recent options-title-recent-options": "最近的选项",
+      "title-matched_other": "匹配了 {{count}}/{{totalCount}} 个选项"
+    },
+    "outline": {
+      "pane-header": "内容大纲",
+      "repeated-item": "重复",
+      "tree-item": {
+        "empty": "（空缺）",
+        "no-title": "< 无标题 >"
+      }
+    },
+    "override-category-title": {
+      "aria-label-remove-override": "移除覆盖",
+      "tooltip-remove-override": "移除覆盖"
+    },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "隐藏面板时间范围",
+        "hide-time-info-description": "不在面板标题中显示面板时间范围",
+        "time-from": "面板时间范围",
+        "time-from-description": "覆盖数据面板时间范围。使用其中一个预设值或输入自定义值，如 5m 或 2h。",
+        "time-shift": "时间偏移",
+        "time-shift-description": "添加相对于数据面板或面板时间范围的时间偏移。使用其中一个预设值或输入自定义值，如 5m 或 2h。",
+        "time-window-compare": "时间比较",
+        "time-window-compare-description": "比较两个时间范围之间的数据",
+        "title": "面板时间设置"
+      }
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "必须先保存数据面板，然后才能添加提醒。",
+        "no-rules": "没有与此面板相关联的提醒规则。"
+      },
+      "only-overrides-button-tooltip": "仅显示覆盖",
+      "placeholder-search-options": "搜索选项",
+      "visualization-button-tooltip": "搜索选项"
+    },
+    "panel-editor-table-view": {
+      "title-raw-data": "原始数据"
+    },
+    "panel-editor-unconnected": {
+      "editor-actions": {
+        "apply": "应用",
+        "discard": "丢弃",
+        "save": "保存",
+        "save-library-panel": "保存库面板",
+        "title-apply-changes-and-save-dashboard": "应用更改并保存数据面板",
+        "title-apply-changes-and-save-library-panel": "应用更改并保存库面板",
+        "title-apply-changes-dashboard": "应用更改并回到数据面板",
+        "title-undo-all-changes": "撤销所有更改"
+      },
+      "table-view-label-table-view": "表视图",
+      "title-unlink": "将此面板与库面板断开连接，以便您可以定期编辑它。",
+      "unlink": "取消关联"
+    },
+    "panel-links": {
+      "aria-label-panel-links": "面板关联"
+    },
+    "panel-not-supported": {
+      "go-back-to-queries": "返回查询"
+    },
+    "public-dashboard-not-available": {
+      "does-not-exist": "您尝试访问的数据面板不存在",
+      "paused": "此数据面板已被管理员暂停",
+      "try-again-later": "请稍后再试"
+    },
+    "remove-panel": {
+      "text": {
+        "remove-panel": "您确定要移除此面板吗？"
+      },
+      "title": {
+        "remove-panel": "移除面板"
+      }
+    },
+    "repeat-row-select": {
+      "variable-options": {
+        "label": {
+          "disable-repeating": "禁用重复",
+          "no-template-variables-found": "未找到模板变量"
+        }
+      }
+    },
+    "repeat-row-select2": {
+      "placeholder": "选择",
+      "variable-options": {
+        "label": {
+          "disable-repeating": "禁用重复",
+          "no-template-variables-found": "未找到模板变量"
+        }
+      }
+    },
+    "revert-dashboard-modal": {
+      "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
+      "confirmText-restore-version": "是，恢复到版本 {{version}}",
+      "title-restore-version": "恢复版本"
+    },
+    "row-options-button": {
+      "aria-label-row-options": "行选项"
+    },
+    "row-options-form": {
+      "cancel": "取消",
+      "label-repeat-for": "重复条件",
+      "label-title": "标题",
+      "update": "更新"
+    },
+    "row-options-modal": {
+      "title-row-options": "行选项"
+    },
+    "rows-layout": {
+      "cancel": "取消",
+      "convert-to": "转换为 {{name}}",
+      "delete-row-text": "删除此行也将移除所有面板。您确认要继续吗？",
+      "delete-row-title": "刪除行？",
+      "delete-row-yes": "删除",
+      "description": "带标题的可收起面板组",
+      "edit": {
+        "ungroup-rows": "取消行分组"
+      },
+      "header-hidden-tooltip": "行标题仅在编辑模式下可见",
+      "name": "行",
+      "new-row-title": "新行",
+      "row": {
+        "collapse": "折叠行",
+        "expand": "展开行",
+        "new": "新行",
+        "repeat": {
+          "learn-more": "了解更多",
+          "warning": "此行中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始行中的面板，而不是重复行中的面板。"
+        }
+      },
+      "row-options": {
+        "repeat": {
+          "title": "重复选项",
+          "variable": {
+            "description": "对于所选变量中的每个值，重复此行。",
+            "title": "按变量重复"
+          }
+        },
+        "row": {
+          "fill-screen": "填充屏幕",
+          "hide-header": "隐藏行标题",
+          "title": "标题"
+        },
+        "title-not-unique": "标题应该是唯一的",
+        "title-option": "标题"
+      },
+      "row-warning": {
+        "title-not-unique": "此标题并不唯一"
+      },
+      "ungroup-convert-text": "所有网格必须转换为相同的类型，并且位置将丢失。",
+      "ungroup-convert-title": "转换混合网格？"
+    },
+    "save-dashboard": {
+      "message-dashboard-saved": "数据面板已保存"
+    },
+    "save-dashboard-as-button": {
+      "save-as": "另存为"
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-button": "保存数据面板按钮",
+      "aria-label-save-dashboard-description-field": "保存数据面板描述字段",
+      "aria-label-save-dashboard-title-field": "保存数据面板标题字段",
+      "cancel": "取消",
+      "description": "描述",
+      "label-copy-tags": "复制标记",
+      "label-folder": "文件夹",
+      "save": "保存",
+      "saving": "正在保存...",
+      "title": "标题"
+    },
+    "save-dashboard-button": {
+      "save-dashboard": "保存仪表板"
+    },
+    "save-dashboard-diff": {
+      "full-json-diff": "完整 JSON 差异",
+      "no-changes-in-the-dashboard-json": "数据面板 JSON 中没有变化",
+      "title-because-dashboard-migrated-grafana-format": "由于数据面板已迁移到新的 Grafana 数据面板格式，因此难以读取差异信息",
+      "title-folder": "文件夹"
+    },
+    "save-dashboard-drawer": {
+      "label-changes": "变更",
+      "label-details": "详情",
+      "title": "保存仪表板",
+      "title-copy": "保存数据面板副本",
+      "title-provisioned": "已预置的数据面板"
+    },
+    "save-dashboard-error-proxy": {
+      "body-name-exists": "所选文件夹中已存在具有相同名称的数据面板。<br /><2>您仍然要保存此数据面板吗？</2>",
+      "body-version-mismatch": "其他人已更新此数据面板<br /><2>您仍然要保存此数据面板吗？</2>",
+      "confirmText-save-and-overwrite": "保存并覆盖",
+      "title-name-exists": "冲突",
+      "title-version-mismatch": "冲突"
+    },
+    "save-dashboard-form": {
+      "cancel": "取消",
+      "label-current-range-dashboard-default": "将当前时间范围保存为数据面板默认值",
+      "label-current-variable-values-dashboard-default": "将当前变量值保存为数据面板默认值",
+      "no-changes-to-save": "没有要保存的更改",
+      "placeholder-describe-changes": "添加备注以描述您的更改。",
+      "save": "保存",
+      "saving": "正在保存..."
+    },
+    "save-provisioned-dashboard-form": {
+      "cancel": "取消",
+      "cannot-be-saved": "此数据面板无法从 Grafana 用户界面保存，因为它已从其他来源预配。复制 JSON 或将其保存到下面的文件中，然后您可以在预配源中更新您的数据面板。",
+      "copy-json-to-clipboard": "将 JSON 复制到剪贴板",
+      "file-path": "<strong>文件路径：</strong>{{filePath}}",
+      "save-json-to-file": "将 JSON 保存到文件",
+      "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。"
+    },
+    "search-panel": {
+      "no-match": ""
+    },
+    "share-public-dashboard-loader": {
+      "loading-configuration": "载入配置"
+    },
+    "sidebar": {
+      "add": {
+        "title": "添加",
+        "tooltip": "添加新元素"
+      },
+      "dashboard-options": {
+        "title": "选项",
+        "tooltip": "数据面板选项"
+      },
+      "export": {
+        "title": "导出"
+      },
+      "outline": {
+        "title": "大纲",
+        "tooltip": "内容大纲"
+      },
+      "redo": "重做",
+      "snapshot": {
+        "tooltip": "打开原始数据面板"
+      },
+      "undo": "撤销"
+    },
+    "solo-panel": {
+      "loading-initializing-dashboard": "正在加载和初始化数据面板",
+      "title-not-found": "未找到 ID 为 {{panelId}} 的面板"
+    },
+    "source-link": {
+      "title": "来源 ({{provider}})",
+      "tooltip": "查看存储库中的源文件"
+    },
+    "sub-menu-un-connected": {
+      "aria-label-template-variables": "模板变量"
+    },
+    "support-snapshot-service": {
+      "description": {
+        "dashboard-troubleshoot-visualization-issues": "用于帮助解决可视化问题的数据面板 JSON"
+      },
+      "label": {
+        "git-hub-comment": "Github 评论",
+        "panel-support-snapshot": "面板支持快照"
+      },
+      "title": {
+        "copy-to-clipboard-failed": "复制到剪贴板失败"
+      }
+    },
+    "tabs-layout": {
+      "delete-tab-text": "删除此选项卡也将移除所有面板。您确认要继续吗？",
+      "delete-tab-title": "删除选项卡？",
+      "delete-tab-yes": "删除",
+      "description": "将面板组织成水平标签页",
+      "edit": {
+        "ungroup-tabs": "取消选项卡分组"
+      },
+      "name": "标签页",
+      "tab": {
+        "new": "新建标签页",
+        "repeat": {
+          "learn-more": "了解更多",
+          "loading": "正在加载选项卡重复",
+          "warning": "此选项卡中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始选项卡中的面板，而不是重复选项卡中的面板。"
+        }
+      },
+      "tab-options": {
+        "repeat": {
+          "title": "重复选项",
+          "variable": {
+            "description": "对于所选变量中的每个值，重复此选项卡。",
+            "title": "按变量重复"
+          }
+        },
+        "title-not-unique": "标题应该是唯一的",
+        "title-option": "标题"
+      },
+      "tab-warning": {
+        "title-not-unique": "此标题并不唯一"
+      }
+    },
+    "title": {
+      "action": "更改数据面板标题"
+    },
+    "toolbar": {
+      "add": "添加",
+      "alert-rules": "警报规则",
+      "back-to-dashboard": "回到数据面板",
+      "dashboard-settings": {
+        "label": "设置",
+        "tooltip": "仪表板设置"
+      },
+      "discard-library-panel-changes": "丢弃库面板更改",
+      "discard-panel": "丢弃面板更改",
+      "discard-panel-new": "丢弃面板",
+      "edit": {
+        "label": "编辑",
+        "tooltip": "进入编辑模式"
+      },
+      "edit-button": {
+        "enter": "编辑",
+        "enter-tooltip": "进入编辑模式",
+        "exit": "退出编辑",
+        "exit-tooltip": "退出编辑模式"
+      },
+      "enter-edit-mode": {
+        "label": "设为可编辑",
+        "tooltip": "此数据面板已被标记为只读"
+      },
+      "exit-edit-mode": {
+        "label": "退出编辑",
+        "tooltip": "退出编辑模式并丢弃未保存的更改"
+      },
+      "mark-favorite": "标记为收藏",
+      "more-save-options": "更多保存选项",
+      "new": {
+        "back-to-dashboard": "回到数据面板",
+        "dashboard-settings": {
+          "tooltip": "仪表板设置"
+        },
+        "discard-library-panel-changes": "丢弃库面板更改",
+        "discard-panel": "丢弃面板更改",
+        "discard-panel-new": "丢弃面板",
+        "edit-dashboard-v2-schema": {
+          "tooltip": "编辑数据面板 v2 架构"
+        },
+        "enter-edit-mode": {
+          "label": "设为可编辑",
+          "tooltip": "此数据面板已被标记为只读"
+        },
+        "export": {
+          "tooltip": {
+            "as-code": "导出为代码"
+          }
+        },
+        "more-save-options": "更多保存选项",
+        "playlist-next": "前往下一个仪表板",
+        "playlist-previous": "前往上一个仪表板",
+        "playlist-stop": "停止播放列表",
+        "public-dashboard": "公开",
+        "save-dashboard": {
+          "label": "保存",
+          "tooltip": "保存更改"
+        },
+        "save-dashboard-copy": {
+          "label": "另存为副本",
+          "tooltip": "另存为副本"
+        },
+        "save-dashboard-short": "保存",
+        "save-library-panel": "保存库面板",
+        "share": {
+          "arrow": "分享",
+          "title": "分享",
+          "tooltip": "复制链接"
+        },
+        "unlink-library-panel": "取消链接库面板"
+      },
+      "open-original": "打开原始仪表板",
+      "playlist-next": "前往下一个仪表板",
+      "playlist-previous": "前往上一个仪表板",
+      "playlist-stop": "停止播放列表",
+      "read-only": "只读",
+      "refresh": "刷新仪表板",
+      "save": "保存仪表板",
+      "save-dashboard": {
+        "label": "保存仪表板",
+        "tooltip": "保存更改"
+      },
+      "save-dashboard-copy": {
+        "label": "另存为副本",
+        "tooltip": "另存为副本"
+      },
+      "save-dashboard-short": "保存",
+      "save-library-panel": "保存库面板",
+      "settings": "仪表板设置",
+      "share-button": "分享",
+      "snapshot": {
+        "title": "来源"
+      },
+      "star-add-error": "添加到星标失败",
+      "star-added": "已添加到星标",
+      "star-remove-error": "从星标中移除失败",
+      "star-removed": "已从星标中移除",
+      "unlink-library-panel": "取消链接库面板",
+      "unmark-favorite": "取消标记为收藏"
+    },
+    "transformation-editor": {
+      "input-data": "输入数据",
+      "output-data": "输出数据",
+      "title-debug-transformation": "调试转换"
+    },
+    "transformation-filter": {
+      "label-apply-transformation-to": "将转换应用于"
+    },
+    "transformation-operation-row": {
+      "body-delete": "请注意，移除一个转换可能会破坏其他转换。如果只有一个转换，您将返回主选择屏幕。",
+      "render-actions": {
+        "confirmText-delete": "删除",
+        "title-debug": "调试",
+        "title-disable-transformation": "禁用转换",
+        "title-filter": "筛选条件",
+        "title-remove": "删除",
+        "title-show-transform-help": "显示转换帮助"
+      },
+      "title-delete": "要删除 {{name}} 吗？"
+    },
+    "transformation-picker": {
+      "info": "通过转换，您可以在查询结果可视化之前对其进行合并、计算、重新排序、隐藏和重命名。",
+      "info-graph-not-suitable": "如果使用图形可视化，很多转换都不适合，因为它目前只支持时间序列数据。",
+      "info-switch-to-table": "它可以帮助切换到表格可视化，以了解转换的作用。",
+      "placeholder-search-for-transformation": "搜索转换",
+      "read-more": "阅读更多",
+      "title-transformations": "转换"
+    },
+    "transformation-picker-ng": {
+      "placeholder-search-for-transformation": "搜索转换",
+      "show-images": "显示图像",
+      "sql-expressions-message-description": "一种使用类 MySQL 语法来操作和转换数据源查询结果的新方法。",
+      "sql-expressions-message-link": "了解更多",
+      "sql-expressions-title": "SQL 表达式",
+      "title-add-another-transformation": "添加其他转换",
+      "view-all": "查看全部"
+    },
+    "un-theme-transformations-editor": {
+      "body-delete-all-transformations": "删除所有转换后，您将返回主选择屏幕。"
+    },
+    "un-themed-transformations-editor": {
+      "actions": {
+        "add-another-transformation": "添加其他转换"
+      },
+      "confirmText-delete-all": "删除全部",
+      "delete-all-transformations": "删除所有转换",
+      "title-delete-all-transformations": "删除所有转换？",
+      "tooltip-clear-search": "清除搜索",
+      "tooltip-close-picker": "关闭选取器"
+    },
+    "unsaved-changes-modal": {
+      "cancel": "取消",
+      "changes": "是否保存更改？",
+      "discard": "丢弃",
+      "title-unsaved-changes": "未保存的更改"
+    },
+    "untheme-dashboard-row": {
+      "dashboard-datasource": "此行中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始行中的面板，而不是重复行中的面板。"
+    },
+    "unthemed-dashboard-row": {
+      "aria-label-delete-row": "刪除行",
+      "learn-more": "了解更多",
+      "title": {
+        "delete-row": "刪除行"
+      }
+    },
+    "validation": {
+      "invalid-dashboard-id": "找不到有效的 Grafana.com ID",
+      "invalid-json": "无有效的 JSON",
+      "tag-too-long": "数据面板标签太长，最多 50 个字符",
+      "tags-expected-array": "标签预期数组",
+      "tags-expected-strings": "标签预期字符串数组"
+    },
+    "variable": {
+      "description": {
+        "action": "更改变量描述"
+      },
+      "hide": {
+        "action": "更改变量隐藏选项"
+      },
+      "label": {
+        "action": "更改变量标签"
+      },
+      "name": {
+        "action": "更改变量名称"
+      }
+    },
+    "version-history-comparison": {
+      "button-restore": "恢复到版本 {{version}}",
+      "label-view-json-diff": "查看 JSON 差异",
+      "new-updated-by": "<strong>版本 {{version}}</strong> 更新者：{{editor}} {{timeAgo}}",
+      "old-updated-by": "<strong>版本 {{version}}</strong> 更新者：{{editor}} {{timeAgo}}"
+    },
+    "version-history-table": {
+      "aria-label-toggle-selection": "切换版本 {{version}} 的选择",
+      "date": "日期",
+      "name-latest": "最近",
+      "notes": "备注",
+      "restore": "还原",
+      "updated-by": "更新人",
+      "version": "版本"
+    },
+    "view-json-modal": {
+      "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "更改可视化",
+      "aria-label-close": "关闭选项窗格",
+      "aria-label-show": "显示选项窗格",
+      "tooltip-click-to-change-visualization": "点击可更改可视化",
+      "tooltip-close": "关闭选项窗格",
+      "tooltip-show": "显示选项窗格"
+    },
+    "visualization-select-pane": {
+      "placeholder-search-for": "搜索...",
+      "radio-options": {
+        "description": {
+          "reusable-panels-share-between-multiple-dashboards": "您可以在多个数据面板之间共享的可重复使用面板。"
+        },
+        "label": {
+          "library-panels": "库面板",
+          "suggestions": "建议",
+          "visualizations": "可视化"
+        }
+      },
+      "title-close": "关闭"
+    },
+    "viz-panel": {
+      "delete-panel-text": "删除此面板也将移除所有查询。您确认要继续吗？",
+      "delete-panel-title": "要删除面板吗？",
+      "delete-panel-yes": "删除",
+      "options": {
+        "configure-button-tooltip": "编辑查询和可视化选项",
+        "description": "描述",
+        "title-option": "标题",
+        "transparent-background": "透明背景"
+      }
+    }
+  },
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "上传仪表板 JSON 文件",
@@ -4952,6 +6267,19 @@
     "community-mapping-select-datasource": "选择数据源",
     "community-search-placeholder": "搜索社区数据面板...",
     "community-search-placeholder-with-datasource": "搜索  {{datasourceType}} 社区数据面板...",
+    "compatibility-auto-map-failed": "",
+    "compatibility-badge": {
+      "check": "",
+      "check-tooltip": "",
+      "checking": "",
+      "error-text": "",
+      "error-tooltip": "",
+      "not-supported-tooltip": "",
+      "score-text": "",
+      "tooltip-green": "",
+      "tooltip-orange": "",
+      "tooltip-red": ""
+    },
     "dashboard-card": {
       "details": {
         "datasource": "数据源",
@@ -4991,9 +6319,6 @@
       "info-box-content": "通过数据面板链接，您可以将其他数据面板和网站的链接直接放在数据面板标题下方。<2>了解更多</2>",
       "title": "尚未添加数据面板链接"
     }
-  },
-  "dashboard-scene-help-wizard": {
-    "support-bundle": "您还可以在<1>支持包部分</1>中检索包含有关 Grafana 实例和已配置数据源信息的支持包。"
   },
   "dashboard-scene": {
     "ad-hoc-variable-form": {
@@ -5178,8 +6503,6 @@
       "type": "类型"
     },
     "dashboard-preview-banner": {
-      "not-yet-saved": "该值未保存在 Grafana 数据库中",
-      "title-dashboard-loaded-external-repository": "此数据面板从外部存储库加载",
       "title-error-loading-dashboard": "加载数据面板时出错"
     },
     "dashboard-scene": {
@@ -5889,6 +7212,9 @@
       "aria-label-panel-links": "面板关联"
     }
   },
+  "dashboard-scene-help-wizard": {
+    "support-bundle": "您还可以在<1>支持包部分</1>中检索包含有关 Grafana 实例和已配置数据源信息的支持包。"
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "注释"
@@ -5957,1276 +7283,14 @@
       "title": "版本"
     }
   },
-  "dashboard": {
-    "actions": {
-      "open-settings": "设置"
-    },
-    "add": {
-      "new-panel": {
-        "button": "添加新面板按钮",
-        "description": "拖动或单击以添加面板",
-        "title": "面板"
-      },
-      "pane-header": "添加"
-    },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "关闭“添加面板”小部件",
-      "tooltip-close-widget": "关闭小部件"
-    },
-    "add-menu": {
-      "import": "从库导入",
-      "paste-panel": "粘贴面板",
-      "row": "行",
-      "visualization": "可视化"
-    },
-    "alert-rules-drawer": {
-      "redirect-link": "Grafana Alerting 中的列表",
-      "subtitle": "与此仪表板相关的警报规则"
-    },
-    "annotation-settings-edit": {
-      "apply": "应用",
-      "delete": "删除",
-      "description-color-annotation-event-markers": "用于注释事件标记的颜色",
-      "description-enabled-annotation-query-issued-every-dashboard": "启用后，每次数据面板刷新时都会发出注释查询",
-      "description-hidden": "可在数据面板顶部打开或关闭注释查询。选中此选项后，此切换开关将被隐藏。",
-      "label-color": "颜色",
-      "label-data-source": "数据源",
-      "label-enabled": "已启用",
-      "label-hidden": "隐藏",
-      "label-name": "名称",
-      "label-show-in": "显示于",
-      "placeholder-choose-panels": "选择面板",
-      "preview-in-dashboard": "在数据面板中预览",
-      "query": "查询",
-      "title-annotation-support-source": "此数据源不支持注释"
-    },
-    "annotation-settings-list": {
-      "aria-label-delete": "删除标题为“{{title}}”的查询",
-      "built-in": "{{name}}（内置）",
-      "data-source": "数据源",
-      "disabled": "（已禁用）{{name}}",
-      "new-query": "新建查询",
-      "query-name": "查询名称",
-      "tooltip-move-down": "下移",
-      "tooltip-move-up": "上移"
-    },
-    "auto-grid": {
-      "description": "调整面板大小以适应并形成统一的网格",
-      "item-options": {
-        "repeat": {
-          "title": "重复选项",
-          "variable": {
-            "description": "对于所选变量中的每个值，重复此面板。在编辑模式下，此内容不可见。您需要返回数据面板，然后更新变量或重新加载数据面板。",
-            "title": "按变量重复"
-          }
-        }
-      },
-      "name": "自动网格",
-      "options": {
-        "custom-min-height": {
-          "clear": "清除"
-        },
-        "custom-min-width": {
-          "clear": "清除"
-        },
-        "height-fill": "填充屏幕",
-        "max-columns": "最大列数",
-        "min-height": "行高",
-        "min-height-custom": "自定义行高",
-        "min-height-error": "需要介于 50 和 2000 之间的数字",
-        "min-width": "最小列宽",
-        "min-width-custom": "自定义最小宽度",
-        "min-width-custom-clear": "恢复为标准的最小列宽",
-        "min-width-error": "需要介于 50 和 2000 之间的数字"
-      }
-    },
-    "canvas-actions": {
-      "add-panel": "添加面板",
-      "disabled-child-contains-tabs": "无法更改为选项卡，因为行已包含选项卡",
-      "disabled-nested-grouping": "分组限制为 2 级",
-      "disabled-nested-tabs": "选项卡不能嵌套在其他选项卡中",
-      "group-into-row": "分组成行",
-      "group-into-tab": "分组成标签页",
-      "group-panels": "分组面板",
-      "new-row": "新行",
-      "new-tab": "新建标签页",
-      "paste-panel": "粘贴面板",
-      "paste-row": "粘贴行",
-      "paste-tab": "粘贴选项卡",
-      "ungroup-rows": "取消行分组",
-      "ungroup-tabs": "取消选项卡分组"
-    },
-    "conditional-rendering": {
-      "conditions": {
-        "data": {
-          "disable": "没有数据",
-          "enable": "有数据",
-          "info": "根据查询结果显示或隐藏{{type}}。",
-          "label": "查询结果"
-        },
-        "group": {
-          "add": {
-            "button": "添加规则",
-            "data": "查询结果",
-            "time-range-size": "时间范围小于",
-            "variable": "模板变量"
-          },
-          "condition": {
-            "all": "完全匹配",
-            "any": "任意匹配",
-            "label": "匹配规则"
-          },
-          "visibility": {
-            "hide": "隐藏",
-            "label": "{{type}}可见性",
-            "show": "显示"
-          }
-        },
-        "time-range-size": {
-          "info": "如果数据面板时间范围短于所选时间范围，则显示或隐藏{{type}}。",
-          "invalid-message": "无效的间隔",
-          "label": "时间范围小于",
-          "values": {
-            "days": "{{value}} 天",
-            "hour": "{{value}} 小时",
-            "hours": "{{value}} 小时",
-            "minutes": "{{value}} 分钟",
-            "months": "{{value}} 个月",
-            "year": "{{value}} 年",
-            "years": "{{value}} 年"
-          }
-        },
-        "variable": {
-          "error": {
-            "invalid-regex": "无效的正则表达式"
-          },
-          "info": "根据变量值动态地显示或隐藏{{type}}。",
-          "label": "模板变量",
-          "name": "名称",
-          "operator": {
-            "equals": "等于",
-            "matches": "匹配",
-            "not-equals": "不等于",
-            "not-matches": "不匹配"
-          },
-          "value": "值"
-        },
-        "wrapper": {
-          "delete-condition": "删除条件",
-          "unsupported-object-type": "此条件不受元素支持，因此将被忽略。"
-        }
-      },
-      "editor": {
-        "info": "设置规则以通过匹配任何或所有规则来控制{{type}}可见性。",
-        "learn-more": "了解更多",
-        "not-supported-for-custom-grid": "自定义面板布局中的面板不支持显示/隐藏规则。将面板布局更改为自动网格以启用此功能。",
-        "unsupported-object-type": "此项目类型不支持条件渲染"
-      },
-      "overlay": {
-        "tooltip": "元素被显示/隐藏规则隐藏。"
-      },
-      "root": {
-        "title": "显示/隐藏规则"
-      }
-    },
-    "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "更新插件时，您的更改将丢失。<br /><2>使用“<strong>另存为</strong>”创建自定义版本。</2>",
-      "cancel": "取消",
-      "overwrite": "覆盖",
-      "title-plugin-dashboard": "插件数据面板"
-    },
-    "controls": {
-      "menu": {
-        "aria-label": "",
-        "title": ""
-      }
-    },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "继续"
-        },
-        "title": {
-          "proceed-to-external-site": "继续前往外部网站？"
-        }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "作为场景查看"
-      }
-    },
-    "dashboard-links-menu": {
-      "aria-label-dashboard-name": "{{dashboardName}} 数据面板",
-      "label-no-dashboards-found": "未找到数据面板"
-    },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "取消加载数据面板"
-    },
-    "dashboard-page-error": {
-      "text": {
-        "not-found": "未找到"
-      }
-    },
-    "dashboard-settings": {
-      "actions": {
-        "close": "关闭"
-      }
-    },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "数据面板初始化失败"
-      }
-    },
-    "dashboard-srv": {
-      "message": {
-        "edit-dashboard-json": "编辑数据面板 JSON"
-      }
-    },
-    "default-layout": {
-      "description": "单独放置每个面板并调整大小",
-      "item-options": {
-        "repeat": {
-          "direction": {
-            "horizontal": "水平",
-            "title": "重复方向",
-            "vertical": "垂直"
-          },
-          "max": "每行最大值",
-          "title": "重复选项",
-          "variable": {
-            "description": "对于所选变量中的每个值，重复此面板。在编辑模式下，此内容不可见。您需要返回数据面板，然后更新变量或重新加载数据面板。",
-            "title": "按变量重复"
-          }
-        }
-      },
-      "name": "自定义",
-      "row-actions": {
-        "delete": "刪除行",
-        "modal": {
-          "alt-action": "仅删除行",
-          "text": "您确定要移除此行及其所有面板吗？",
-          "title": "刪除行"
-        }
-      },
-      "row-options": {
-        "button": {
-          "label": "行选项"
-        },
-        "form": {
-          "cancel": "取消",
-          "repeat-for": {
-            "label": "重复条件",
-            "learn-more": "了解更多",
-            "warning": {
-              "text": "此行中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始行中的面板，而不是重复行中的面板。"
-            }
-          },
-          "title": "标题",
-          "update": "更新"
-        },
-        "modal": {
-          "title": "行选项"
-        },
-        "repeat": {
-          "title": "重复选项",
-          "variable": {
-            "title": "变量"
-          }
-        },
-        "title": "行选项"
-      }
-    },
-    "description": {
-      "action": "更改数据面板描述"
-    },
-    "dynamic-config-value-editor": {
-      "render-label": {
-        "tooltip-remove-property": "移除属性"
-      }
-    },
-    "edit-actions": {
-      "add": "添加{{typeName}}",
-      "add-conditional-rule": "添加 {{ruleDescription}} 规则",
-      "duplicate-panel": "复制面板",
-      "edit-query-result-rule": "更改查询结果规则",
-      "edit-template-variable-rule": "更改模板变量规则",
-      "edit-time-range-rule": "更改时间范围规则",
-      "move": "移动{{typeName}}",
-      "panel-background": "更改面板背景",
-      "panel-description": "更改面板描述",
-      "panel-edit": "面板更改",
-      "panel-max-repeats-per-row": "每行最大重复次数",
-      "panel-repeat-direction": "重复方向",
-      "panel-repeat-variable": "面板重复方式",
-      "panel-title": "更改面板标题",
-      "paste-panel": "粘贴面板",
-      "remove": "移除{{typeName}}",
-      "row-title": "更改行标题",
-      "switch-layout": "切换布局",
-      "switch-layout-row": "切换布局",
-      "switch-layout-tab": "切换布局",
-      "tab-title": "更改选项卡标题"
-    },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "",
-        "choose-panels": "",
-        "color": "",
-        "color-description": "",
-        "data-source": "",
-        "display": "",
-        "display-options": {
-          "above-dashboard": "",
-          "controls-menu": "",
-          "controls-menu-description": "",
-          "hidden": "",
-          "hidden-description": ""
-        },
-        "enabled": "",
-        "enabled-description": "",
-        "name": "",
-        "open-query-editor": "",
-        "open-query-editor-tooltip": "",
-        "panel-filter": {
-          "all-panels": "",
-          "all-panels-description": "",
-          "all-panels-except": "",
-          "all-panels-except-description": "",
-          "selected-panels": "",
-          "selected-panels-description": ""
-        },
-        "query": "",
-        "query-editor-close": "",
-        "query-editor-modal-title": "",
-        "show-in": ""
-      },
-      "annotations": {
-        "add-annotation": "",
-        "reorder": "",
-        "select-annotation": ""
-      },
-      "elements": {
-        "annotation": "",
-        "annotation-set": "",
-        "dashboard": "仪表板",
-        "element": "元素",
-        "local-variable": "局部变量",
-        "multiple-elements": "多个元素",
-        "multiple-elements-delete-text": "您确定要删除这些元素吗？",
-        "multiple-panels": "多个面板",
-        "multiple-panels-delete-text": "您确定要删除这些面板吗？所有查询都将被移除。",
-        "objects": "对象",
-        "panel": "面板",
-        "panels": "面板",
-        "row": "行",
-        "rows": "行",
-        "tab": "标签页",
-        "tabs": "标签页",
-        "variable": "{{type}} 变量",
-        "variable-set": "变量"
-      },
-      "row": {
-        "header": {
-          "hide": "隐藏",
-          "title": "行标题"
-        }
-      },
-      "variable": {
-        "custom-options": {
-          "apply": "应用",
-          "change-value": "更改变量值",
-          "discard": "丢弃",
-          "modal-title": "",
-          "values": "以逗号分隔的值"
-        },
-        "datasource-options": {
-          "name-filter": "名称筛选器",
-          "name-filter-description": "正则表达式筛选器，用于选择要包含的数据源实例。保留所有为空。",
-          "name-filter-placeholder": "示例：/^prod/",
-          "type": "类型",
-          "type-placeholder": "选择数据源类型"
-        },
-        "description": "描述",
-        "description-placeholder": "描述性文本",
-        "label": "标签",
-        "label-description": "可选显示名称",
-        "name": "名称",
-        "open-editor": "打开变量编辑器",
-        "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
-        "query-options": {
-          "close": "关闭",
-          "modal-title": "查询变量",
-          "preview": "预览"
-        },
-        "selection-options": {
-          "allow-custom-values": "允许自定义值",
-          "allow-custom-values-description": "允许用户输入值",
-          "category": "选择内容选项",
-          "custom-all-value": "自定义所有值",
-          "custom-all-value-description": "用于表示“全部”的通配符正则表达式或其他值",
-          "include-all": "包含“全部”值",
-          "include-all-description": "启用代表所有值的单个选项",
-          "multi-value": "多值"
-        },
-        "type-category": "{{type}} 选项"
-      },
-      "variables": {
-        "add-variable": "添加变量",
-        "reorder": "",
-        "select-type": "选择变量类型",
-        "select-type-card-tooltip": "点击以选择类型",
-        "select-variable": "选择"
-      }
-    },
-    "empty": {
-      "add-library-panel-body": "添加与其他仪表板共享的可视化。",
-      "add-library-panel-button": "添加库面板",
-      "add-library-panel-header": "导入面板",
-      "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
-      "add-visualization-button": "添加可视化",
-      "add-visualization-header": "通过添加可视化开始您的新仪表板",
-      "description": "添加面板以可视化您的数据",
-      "import-a-dashboard-body": "从文件或 <2>grafana.com</2> 导入数据面板。",
-      "import-a-dashboard-header": "导入仪表板",
-      "import-dashboard-button": "导入仪表板",
-      "show-less-dashboards": "收起",
-      "show-more-dashboards": "展开",
-      "start-with-suggested-dashboards": "从数据源的预制数据面板开始",
-      "title": "新建数据面板",
-      "use-template-button": "使用此数据面板"
-    },
-    "errors": {
-      "failed-to-load": "加载数据面板失败"
-    },
-    "export": {
-      "button": {
-        "label": "导出数据面板"
-      },
-      "menu": {
-        "label": "导出数据面板菜单"
-      }
-    },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "获取数据面板失败"
-      }
-    },
-    "gen-aihistory": {
-      "aria-label-send-custom-feedback": "发送自定义反馈",
-      "footer-text": "此内容使用 <2>Grafana LLM 插件</2>通过 AI 生成",
-      "placeholder-tell-ai-what-to-do-next": "告诉 AI 下一步该做什么..."
-    },
-    "general-settings-unconnected": {
-      "editable-options": {
-        "label": {
-          "editable": "可编辑",
-          "readonly": "只读"
-        }
-      },
-      "graph_tooltip_options": {
-        "label": {
-          "default": "默认",
-          "shared-crosshair": "共享十字线",
-          "shared-tooltip": "共享工具提示"
-        }
-      }
-    },
-    "get-debug-dashboard": {
-      "title": {
-        "annotations": "注释"
-      }
-    },
-    "get-errors": {
-      "message": {
-        "error-loading-data": "加载数据时出错"
-      }
-    },
-    "get-field-override-categories": {
-      "label-add-field-override": "添加字段覆盖",
-      "label-add-override-property": "添加覆盖属性",
-      "override-name": "覆盖 {{overrideNum}}",
-      "title": {
-        "add-button": "添加按钮"
-      }
-    },
-    "get-library-panel-options-category": {
-      "descriptor": {
-        "title": {
-          "library-panel-options": "库面板选项"
-        }
-      },
-      "title": {
-        "information": "信息",
-        "name": "名称"
-      }
-    },
-    "get-library-viz-panel-options-category": {
-      "descriptor": {
-        "title": {
-          "library-panel-options": "库面板选项"
-        }
-      },
-      "title": {
-        "information": "信息",
-        "name": "名称"
-      }
-    },
-    "get-panel-editor-tabs": {
-      "text": {
-        "alert": "警报",
-        "query": "查询",
-        "transform-data": "转换数据"
-      }
-    },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "不要将注释数据发送到以下面板",
-        "annotation-panels-support-annotations": "将注释数据发送到支持注释的所有面板",
-        "annotations-explicitly-listed-panels": "将注释发送到明确列出的面板"
-      },
-      "label": {
-        "all-panels": "所有面板",
-        "all-panels-except": "所有面板，以下除外",
-        "selected-panels": "所选面板"
-      }
-    },
-    "get-panel-frame-category": {
-      "descriptor": {
-        "title": {
-          "panel-options": "面板选项"
-        }
-      },
-      "direction-options": {
-        "label": {
-          "horizontal": "水平",
-          "vertical": "垂直"
-        }
-      },
-      "title": {
-        "description": "描述",
-        "max-per-row": "每行最大值",
-        "panel-links": "面板关联",
-        "repeat-by-variable": "按变量重复",
-        "repeat-direction": "重复方向",
-        "repeat-options": "重复选项",
-        "title": "标题",
-        "transparent-background": "透明背景"
-      }
-    },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "扩展程序"
-      }
-    },
-    "help-wizard": {
-      "copy-to-clipboard": "复制到剪贴板",
-      "description-obfuscate-data": "修改原始数据以隐藏敏感信息。 请注意，长度将保持不变，重复值将相等。",
-      "description-support-snapshot": "面板：{{panelTitle}}",
-      "download-snapshot": "下载 ({{snapshotSize}})",
-      "label-obfuscate-data": "混淆数据",
-      "label-support-snapshot": "支持快照",
-      "label-template": "模板",
-      "randomize-field-names-label-field-names": "字段名称",
-      "randomize-labels-label-labels": "标签",
-      "randomize-string-values-label-string-values": "字符串值",
-      "tabs": {
-        "label": {
-          "data": "数据",
-          "snapshot": "快照"
-        }
-      },
-      "title-complete-git-hub-comment-clipboard": "将完整的 GitHub 评论复制到剪贴板",
-      "title-get-help-with-this-panel": "获取此面板的帮助",
-      "troubleshooting-docs": "故障排除文档"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "创建数据面板模型失败"
-      }
-    },
-    "inspect": {
-      "data-tab": "数据",
-      "error-tab": "错误",
-      "json-tab": "JSON",
-      "meta-tab": "元数据",
-      "query-tab": "查询",
-      "stats-tab": "统计信息",
-      "subtitle": " {{queryCount}} 次查询，总查询时间为 {{formatted}}",
-      "title": "检查：{{panelTitle}}"
-    },
-    "inspect-data": {
-      "data-options": "数据选项",
-      "dataframe-aria-label": "选择 dataframe",
-      "dataframe-label": "显示数据框",
-      "download-csv": "下载 CSV",
-      "download-logs": "下载日志",
-      "download-service": "下载服务图表",
-      "download-traces": "下载跟踪",
-      "excel-compatibility-mode-description": "生成与大多数 Excel 版本兼容的 CSV 文件",
-      "excel-compatibility-mode-label": "下载用于 Excel",
-      "formatted": "格式化数据",
-      "formatted-data-description": "按照\"字段\"和\"覆盖\"选项卡中定义的选项将表格数据格式化。",
-      "formatted-data-label": "格式化数据",
-      "panel-transforms": "面板转换",
-      "series-to-columns": "按时间拼接的系列",
-      "transformation": "按时间拼接的系列",
-      "transformations-description": "显示的表格数据包含在面板转换选项卡中定义的转换。",
-      "transformations-label": "应用面板转换"
-    },
-    "inspect-json": {
-      "dataframe-description": "未应用转换和字段配置的原始数据。",
-      "dataframe-label": "DataFrame JSON （来自查询）",
-      "panel-data-description": "发送至面板可视化的原始模型",
-      "panel-data-label": "面板数据",
-      "panel-json-description": "保存在仪表板 JSON 中的模型，用于配置整体运作方式。",
-      "panel-json-label": "面板 JSON",
-      "panel-layout-description": "数据面板中面板的网格位置和大小。",
-      "panel-layout-label": "面板布局",
-      "panel-spec-label": "面板规格",
-      "select-source": "选择源",
-      "unknown": "未知对象：{{show}}"
-    },
-    "inspect-meta": {
-      "no-inspector": "没有元数据检查器"
-    },
-    "inspect-stats": {
-      "data-title": "数据源统计信息",
-      "data-traceids": "轨迹 ID",
-      "processing-time": "数据处理时间",
-      "queries": "查询数",
-      "request-time": "总请求时间",
-      "rows": "总行数",
-      "table-title": "统计信息"
-    },
-    "k8s-dashboard-api": {
-      "title": {
-        "deleted": "已删除"
-      }
-    },
-    "k8s-dashboard-v2api": {
-      "title": {
-        "deleted": "已删除"
-      }
-    },
-    "kiosk": {
-      "footerPoweredBy": "技术支持："
-    },
-    "layout": {
-      "cancel": "取消",
-      "common": {
-        "copy": "复制",
-        "copy-or-duplicate": "复制或拷贝",
-        "delete": "删除",
-        "duplicate": "复制",
-        "layout": "布局"
-      },
-      "continue": "继续",
-      "panel": {
-        "modal": {
-          "body": "更改布局将重置所有面板位置和大小。",
-          "confirm": "更改布局",
-          "dismiss": "取消",
-          "title": "更改布局"
-        }
-      },
-      "ungroup-nested-text": "这将取消所有嵌套组的分组。",
-      "ungroup-nested-title": "取消嵌套组的分组？"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "找不到数据面板"
-        }
-      }
-    },
-    "make-editable": {
-      "dashboard-not-editable": "数据面板不可编辑",
-      "make-editable": "设为可编辑"
-    },
-    "minimalistic-pagination": {
-      "page-count": "{{currentPage}}/{{numberOfPages}}",
-      "tooltip-next": "下一步",
-      "tooltip-previous": "上一个"
-    },
-    "new-dashboard-with-ds": {
-      "not-found": "未找到 UID 为“{{datasourceUid}}”的数据源。"
-    },
-    "new-panel": {
-      "configure-button": "配置",
-      "configure-button-menu": "切换菜单",
-      "empty-state-message": "运行查询以在此处可视化，或转到所有可视化以添加其他面板类型",
-      "menu-open-panel-editor": "配置",
-      "menu-use-library-panel": "使用库面板",
-      "missing-config": "缺少面板配置",
-      "suggestions": {
-        "empty-state-message": "运行查询以开始查看建议的可视化"
-      }
-    },
-    "new-panel-title": "新面板",
-    "on-create-new-row": {
-      "new-row": {
-        "title": {
-          "row-title": "行标题"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "小部件标题"
-        }
-      }
-    },
-    "options": {
-      "description": "描述",
-      "title-option": "标题"
-    },
-    "options-pane-category": {
-      "aria-label-collapse": "收起 {{title}} 类别",
-      "aria-label-expand": "展开 {{title}} 类别"
-    },
-    "options-pane-options": {
-      "Recent options-title-recent-options": "最近的选项",
-      "placeholder-search-options": "搜索选项",
-      "title-matched_other": "匹配了 {{count}}/{{totalCount}} 个选项"
-    },
-    "outline": {
-      "pane-header": "内容大纲",
-      "repeated-item": "重复",
-      "tree-item": {
-        "empty": "（空缺）",
-        "no-title": "< 无标题 >"
-      }
-    },
-    "override-category-title": {
-      "aria-label-remove-override": "移除覆盖",
-      "tooltip-remove-override": "移除覆盖"
-    },
-    "panel": {
-      "time-range-settings": {
-        "hide-time-info": "隐藏面板时间范围",
-        "hide-time-info-description": "不在面板标题中显示面板时间范围",
-        "time-from": "面板时间范围",
-        "time-from-description": "覆盖数据面板时间范围。使用其中一个预设值或输入自定义值，如 5m 或 2h。",
-        "time-shift": "时间偏移",
-        "time-shift-description": "添加相对于数据面板或面板时间范围的时间偏移。使用其中一个预设值或输入自定义值，如 5m 或 2h。",
-        "time-window-compare": "时间比较",
-        "time-window-compare-description": "比较两个时间范围之间的数据",
-        "title": "面板时间设置"
-      }
-    },
-    "panel-edit": {
-      "alerting-tab": {
-        "dashboard-not-saved": "必须先保存数据面板，然后才能添加提醒。",
-        "no-rules": "没有与此面板相关联的提醒规则。"
-      },
-      "only-overrides-button-tooltip": "仅显示覆盖",
-      "placeholder-search-options": "搜索选项",
-      "visualization-button-tooltip": "搜索选项"
-    },
-    "panel-editor-table-view": {
-      "title-raw-data": "原始数据"
-    },
-    "panel-editor-unconnected": {
-      "editor-actions": {
-        "apply": "应用",
-        "discard": "丢弃",
-        "save": "保存",
-        "save-library-panel": "保存库面板",
-        "title-apply-changes-and-save-dashboard": "应用更改并保存数据面板",
-        "title-apply-changes-and-save-library-panel": "应用更改并保存库面板",
-        "title-apply-changes-dashboard": "应用更改并回到数据面板",
-        "title-undo-all-changes": "撤销所有更改"
-      },
-      "table-view-label-table-view": "表视图",
-      "title-unlink": "将此面板与库面板断开连接，以便您可以定期编辑它。",
-      "unlink": "取消关联"
-    },
-    "panel-links": {
-      "aria-label-panel-links": "面板关联"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "返回查询"
-    },
-    "public-dashboard-not-available": {
-      "does-not-exist": "您尝试访问的数据面板不存在",
-      "paused": "此数据面板已被管理员暂停",
-      "try-again-later": "请稍后再试"
-    },
-    "remove-panel": {
-      "text": {
-        "remove-panel": "您确定要移除此面板吗？"
-      },
-      "title": {
-        "remove-panel": "移除面板"
-      }
-    },
-    "repeat-row-select": {
-      "variable-options": {
-        "label": {
-          "disable-repeating": "禁用重复",
-          "no-template-variables-found": "未找到模板变量"
-        }
-      }
-    },
-    "repeat-row-select2": {
-      "placeholder": "选择",
-      "variable-options": {
-        "label": {
-          "disable-repeating": "禁用重复",
-          "no-template-variables-found": "未找到模板变量"
-        }
-      }
-    },
-    "revert-dashboard-modal": {
-      "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
-      "confirmText-restore-version": "是，恢复到版本 {{version}}",
-      "title-restore-version": "恢复版本"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "行选项"
-    },
-    "row-options-form": {
-      "cancel": "取消",
-      "label-repeat-for": "重复条件",
-      "label-title": "标题",
-      "update": "更新"
-    },
-    "row-options-modal": {
-      "title-row-options": "行选项"
-    },
-    "rows-layout": {
-      "cancel": "取消",
-      "convert-to": "转换为 {{name}}",
-      "delete-row-text": "删除此行也将移除所有面板。您确认要继续吗？",
-      "delete-row-title": "刪除行？",
-      "delete-row-yes": "删除",
-      "description": "带标题的可收起面板组",
-      "edit": {
-        "ungroup-rows": "取消行分组"
-      },
-      "header-hidden-tooltip": "行标题仅在编辑模式下可见",
-      "name": "行",
-      "new-row-title": "新行",
-      "row": {
-        "collapse": "折叠行",
-        "expand": "展开行",
-        "new": "新行",
-        "repeat": {
-          "learn-more": "了解更多",
-          "warning": "此行中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始行中的面板，而不是重复行中的面板。"
-        }
-      },
-      "row-options": {
-        "repeat": {
-          "title": "重复选项",
-          "variable": {
-            "description": "对于所选变量中的每个值，重复此行。",
-            "title": "按变量重复"
-          }
-        },
-        "row": {
-          "fill-screen": "填充屏幕",
-          "hide-header": "隐藏行标题",
-          "title": "标题"
-        },
-        "title-not-unique": "标题应该是唯一的",
-        "title-option": "标题"
-      },
-      "row-warning": {
-        "title-not-unique": "此标题并不唯一"
-      },
-      "ungroup-convert-text": "所有网格必须转换为相同的类型，并且位置将丢失。",
-      "ungroup-convert-title": "转换混合网格？"
-    },
-    "save-dashboard": {
-      "message-dashboard-saved": "数据面板已保存"
-    },
-    "save-dashboard-as-button": {
-      "save-as": "另存为"
-    },
-    "save-dashboard-as-form": {
-      "aria-label-save-dashboard-button": "保存数据面板按钮",
-      "aria-label-save-dashboard-description-field": "保存数据面板描述字段",
-      "aria-label-save-dashboard-title-field": "保存数据面板标题字段",
-      "cancel": "取消",
-      "description": "描述",
-      "label-copy-tags": "复制标记",
-      "label-folder": "文件夹",
-      "save": "保存",
-      "saving": "正在保存...",
-      "title": "标题"
-    },
-    "save-dashboard-button": {
-      "save-dashboard": "保存仪表板"
-    },
-    "save-dashboard-diff": {
-      "full-json-diff": "完整 JSON 差异",
-      "no-changes-in-the-dashboard-json": "数据面板 JSON 中没有变化",
-      "title-because-dashboard-migrated-grafana-format": "由于数据面板已迁移到新的 Grafana 数据面板格式，因此难以读取差异信息",
-      "title-folder": "文件夹"
-    },
-    "save-dashboard-drawer": {
-      "label-changes": "变更",
-      "label-details": "详情",
-      "title": "保存仪表板",
-      "title-copy": "保存数据面板副本",
-      "title-provisioned": "已预置的数据面板"
-    },
-    "save-dashboard-error-proxy": {
-      "body-name-exists": "所选文件夹中已存在具有相同名称的数据面板。<br /><2>您仍然要保存此数据面板吗？</2>",
-      "body-version-mismatch": "其他人已更新此数据面板<br /><2>您仍然要保存此数据面板吗？</2>",
-      "confirmText-save-and-overwrite": "保存并覆盖",
-      "title-name-exists": "冲突",
-      "title-version-mismatch": "冲突"
-    },
-    "save-dashboard-form": {
-      "cancel": "取消",
-      "label-current-range-dashboard-default": "将当前时间范围保存为数据面板默认值",
-      "label-current-variable-values-dashboard-default": "将当前变量值保存为数据面板默认值",
-      "no-changes-to-save": "没有要保存的更改",
-      "placeholder-describe-changes": "添加备注以描述您的更改。",
-      "save": "保存",
-      "saving": "正在保存..."
-    },
-    "save-provisioned-dashboard-form": {
-      "cancel": "取消",
-      "cannot-be-saved": "此数据面板无法从 Grafana 用户界面保存，因为它已从其他来源预配。复制 JSON 或将其保存到下面的文件中，然后您可以在预配源中更新您的数据面板。",
-      "copy-json-to-clipboard": "将 JSON 复制到剪贴板",
-      "file-path": "<strong>文件路径：</strong>{{filePath}}",
-      "save-json-to-file": "将 JSON 保存到文件",
-      "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。"
-    },
-    "search-panel": {
-      "no-match": ""
-    },
-    "share-public-dashboard-loader": {
-      "loading-configuration": "载入配置"
-    },
-    "sidebar": {
-      "add": {
-        "title": "添加",
-        "tooltip": "添加新元素"
-      },
-      "dashboard-options": {
-        "title": "选项",
-        "tooltip": "数据面板选项"
-      },
-      "export": {
-        "title": "导出"
-      },
-      "outline": {
-        "title": "大纲",
-        "tooltip": "内容大纲"
-      },
-      "redo": "重做",
-      "snapshot": {
-        "tooltip": "打开原始数据面板"
-      },
-      "undo": "撤销"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "正在加载和初始化数据面板",
-      "title-not-found": "未找到 ID 为 {{panelId}} 的面板"
-    },
-    "source-link": {
-      "title": "来源 ({{provider}})",
-      "tooltip": "查看存储库中的源文件"
-    },
-    "sub-menu-un-connected": {
-      "aria-label-template-variables": "模板变量"
-    },
-    "support-snapshot-service": {
-      "description": {
-        "dashboard-troubleshoot-visualization-issues": "用于帮助解决可视化问题的数据面板 JSON"
-      },
-      "label": {
-        "git-hub-comment": "Github 评论",
-        "panel-support-snapshot": "面板支持快照"
-      },
-      "title": {
-        "copy-to-clipboard-failed": "复制到剪贴板失败"
-      }
-    },
-    "tabs-layout": {
-      "delete-tab-text": "删除此选项卡也将移除所有面板。您确认要继续吗？",
-      "delete-tab-title": "删除选项卡？",
-      "delete-tab-yes": "删除",
-      "description": "将面板组织成水平标签页",
-      "edit": {
-        "ungroup-tabs": "取消选项卡分组"
-      },
-      "name": "标签页",
-      "tab": {
-        "new": "新建标签页",
-        "repeat": {
-          "learn-more": "了解更多",
-          "loading": "正在加载选项卡重复",
-          "warning": "此选项卡中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始选项卡中的面板，而不是重复选项卡中的面板。"
-        }
-      },
-      "tab-options": {
-        "repeat": {
-          "title": "重复选项",
-          "variable": {
-            "description": "对于所选变量中的每个值，重复此选项卡。",
-            "title": "按变量重复"
-          }
-        },
-        "title-not-unique": "标题应该是唯一的",
-        "title-option": "标题"
-      },
-      "tab-warning": {
-        "title-not-unique": "此标题并不唯一"
-      }
-    },
-    "title": {
-      "action": "更改数据面板标题"
-    },
-    "toolbar": {
-      "add": "添加",
-      "alert-rules": "警报规则",
-      "back-to-dashboard": "回到数据面板",
-      "dashboard-settings": {
-        "label": "设置",
-        "tooltip": "仪表板设置"
-      },
-      "discard-library-panel-changes": "丢弃库面板更改",
-      "discard-panel": "丢弃面板更改",
-      "discard-panel-new": "丢弃面板",
-      "edit": {
-        "label": "编辑",
-        "tooltip": "进入编辑模式"
-      },
-      "edit-button": {
-        "enter": "编辑",
-        "enter-tooltip": "进入编辑模式",
-        "exit": "退出编辑",
-        "exit-tooltip": "退出编辑模式"
-      },
-      "enter-edit-mode": {
-        "label": "设为可编辑",
-        "tooltip": "此数据面板已被标记为只读"
-      },
-      "exit-edit-mode": {
-        "label": "退出编辑",
-        "tooltip": "退出编辑模式并丢弃未保存的更改"
-      },
-      "mark-favorite": "标记为收藏",
-      "more-save-options": "更多保存选项",
-      "new": {
-        "back-to-dashboard": "回到数据面板",
-        "dashboard-settings": {
-          "tooltip": "仪表板设置"
-        },
-        "discard-library-panel-changes": "丢弃库面板更改",
-        "discard-panel": "丢弃面板更改",
-        "discard-panel-new": "丢弃面板",
-        "edit-dashboard-v2-schema": {
-          "tooltip": "编辑数据面板 v2 架构"
-        },
-        "enter-edit-mode": {
-          "label": "设为可编辑",
-          "tooltip": "此数据面板已被标记为只读"
-        },
-        "export": {
-          "tooltip": {
-            "as-code": "导出为代码"
-          }
-        },
-        "more-save-options": "更多保存选项",
-        "playlist-next": "前往下一个仪表板",
-        "playlist-previous": "前往上一个仪表板",
-        "playlist-stop": "停止播放列表",
-        "public-dashboard": "公开",
-        "save-dashboard": {
-          "label": "保存",
-          "tooltip": "保存更改"
-        },
-        "save-dashboard-copy": {
-          "label": "另存为副本",
-          "tooltip": "另存为副本"
-        },
-        "save-dashboard-short": "保存",
-        "save-library-panel": "保存库面板",
-        "share": {
-          "arrow": "分享",
-          "title": "分享",
-          "tooltip": "复制链接"
-        },
-        "unlink-library-panel": "取消链接库面板"
-      },
-      "open-original": "打开原始仪表板",
-      "playlist-next": "前往下一个仪表板",
-      "playlist-previous": "前往上一个仪表板",
-      "playlist-stop": "停止播放列表",
-      "read-only": "只读",
-      "refresh": "刷新仪表板",
-      "save": "保存仪表板",
-      "save-dashboard": {
-        "label": "保存仪表板",
-        "tooltip": "保存更改"
-      },
-      "save-dashboard-copy": {
-        "label": "另存为副本",
-        "tooltip": "另存为副本"
-      },
-      "save-dashboard-short": "保存",
-      "save-library-panel": "保存库面板",
-      "settings": "仪表板设置",
-      "share-button": "分享",
-      "snapshot": {
-        "title": "来源"
-      },
-      "star-add-error": "添加到星标失败",
-      "star-added": "已添加到星标",
-      "star-remove-error": "从星标中移除失败",
-      "star-removed": "已从星标中移除",
-      "unlink-library-panel": "取消链接库面板",
-      "unmark-favorite": "取消标记为收藏"
-    },
-    "transformation-editor": {
-      "input-data": "输入数据",
-      "output-data": "输出数据",
-      "title-debug-transformation": "调试转换"
-    },
-    "transformation-filter": {
-      "label-apply-transformation-to": "将转换应用于"
-    },
-    "transformation-operation-row": {
-      "body-delete": "请注意，移除一个转换可能会破坏其他转换。如果只有一个转换，您将返回主选择屏幕。",
-      "render-actions": {
-        "confirmText-delete": "删除",
-        "title-debug": "调试",
-        "title-disable-transformation": "禁用转换",
-        "title-filter": "筛选条件",
-        "title-remove": "删除",
-        "title-show-transform-help": "显示转换帮助"
-      },
-      "title-delete": "要删除 {{name}} 吗？"
-    },
-    "transformation-picker": {
-      "info": "通过转换，您可以在查询结果可视化之前对其进行合并、计算、重新排序、隐藏和重命名。",
-      "info-graph-not-suitable": "如果使用图形可视化，很多转换都不适合，因为它目前只支持时间序列数据。",
-      "info-switch-to-table": "它可以帮助切换到表格可视化，以了解转换的作用。",
-      "placeholder-search-for-transformation": "搜索转换",
-      "read-more": "阅读更多",
-      "title-transformations": "转换"
-    },
-    "transformation-picker-ng": {
-      "placeholder-search-for-transformation": "搜索转换",
-      "show-images": "显示图像",
-      "sql-expressions-message-description": "一种使用类 MySQL 语法来操作和转换数据源查询结果的新方法。",
-      "sql-expressions-message-link": "了解更多",
-      "sql-expressions-title": "SQL 表达式",
-      "title-add-another-transformation": "添加其他转换",
-      "view-all": "查看全部"
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "删除所有转换后，您将返回主选择屏幕。"
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "添加其他转换"
-      },
-      "confirmText-delete-all": "删除全部",
-      "delete-all-transformations": "删除所有转换",
-      "title-delete-all-transformations": "删除所有转换？",
-      "tooltip-clear-search": "清除搜索",
-      "tooltip-close-picker": "关闭选取器"
-    },
-    "unsaved-changes-modal": {
-      "cancel": "取消",
-      "changes": "是否保存更改？",
-      "discard": "丢弃",
-      "title-unsaved-changes": "未保存的更改"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "此行中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始行中的面板，而不是重复行中的面板。"
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "刪除行",
-      "learn-more": "了解更多",
-      "title": {
-        "delete-row": "刪除行"
-      }
-    },
-    "validation": {
-      "invalid-dashboard-id": "找不到有效的 Grafana.com ID",
-      "invalid-json": "无有效的 JSON",
-      "tag-too-long": "数据面板标签太长，最多 50 个字符",
-      "tags-expected-array": "标签预期数组",
-      "tags-expected-strings": "标签预期字符串数组"
-    },
-    "variable": {
-      "description": {
-        "action": "更改变量描述"
-      },
-      "hide": {
-        "action": "更改变量隐藏选项"
-      },
-      "label": {
-        "action": "更改变量标签"
-      },
-      "name": {
-        "action": "更改变量名称"
-      }
-    },
-    "version-history-comparison": {
-      "button-restore": "恢复到版本 {{version}}",
-      "label-view-json-diff": "查看 JSON 差异",
-      "new-updated-by": "<strong>版本 {{version}}</strong> 更新者：{{editor}} {{timeAgo}}",
-      "old-updated-by": "<strong>版本 {{version}}</strong> 更新者：{{editor}} {{timeAgo}}"
-    },
-    "version-history-table": {
-      "aria-label-toggle-selection": "切换版本 {{version}} 的选择",
-      "date": "日期",
-      "name-latest": "最近",
-      "notes": "备注",
-      "restore": "还原",
-      "updated-by": "更新人",
-      "version": "版本"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
-    "view-panel": {
-      "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "更改可视化",
-      "aria-label-close": "关闭选项窗格",
-      "aria-label-show": "显示选项窗格",
-      "tooltip-click-to-change-visualization": "点击可更改可视化",
-      "tooltip-close": "关闭选项窗格",
-      "tooltip-show": "显示选项窗格"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "搜索...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "您可以在多个数据面板之间共享的可重复使用面板。"
-        },
-        "label": {
-          "library-panels": "库面板",
-          "suggestions": "建议",
-          "visualizations": "可视化"
-        }
-      },
-      "title-close": "关闭"
-    },
-    "viz-panel": {
-      "delete-panel-text": "删除此面板也将移除所有查询。您确认要继续吗？",
-      "delete-panel-title": "要删除面板吗？",
-      "delete-panel-yes": "删除",
-      "options": {
-        "configure-button-tooltip": "编辑查询和可视化选项",
-        "description": "描述",
-        "title-option": "标题",
-        "transparent-background": "透明背景"
-      }
-    }
-  },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8560,6 +8624,8 @@
     "description-show-measure": "在地图上显示用于测量的工具",
     "description-show-scale": "标注地图比例",
     "description-show-zoom": "在左上角显示缩放控制按钮",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "图层"
@@ -8621,7 +8687,9 @@
     "name-show-measure": "显示测量工具",
     "name-show-scale": "显示比例",
     "name-show-zoom": "显示缩放控制",
+    "name-sync-view-variable": "",
     "name-tooltip": "工具提示",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "未找到字符串字段"
     },
@@ -8674,6 +8742,9 @@
     },
     "utils": {
       "get-next-layer-name": "图层{{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9745,12 +9816,16 @@
       },
       "inspect-drawer-title": "检查值",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "无数据"
       },
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
       "sparkline": {
         "no-data": "无数据"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -10222,17 +10297,17 @@
       "description": "您的 LDAP 配置无效，因为基本登录表单当前已禁用。请启用登录表单以使用 LDAP 身份验证。您可以在“身份验证”页面上的“身份验证设置”下启用此选项。",
       "title": "基本登录已禁用"
     },
-    "search-base-dns": {
-      "description": "要搜索的基本专有名称数组。",
-      "error": "搜索基本专有名称是必填字段",
-      "label": "搜索基本专有名称",
-      "placeholder": "示例：dc=grafana,dc=org"
-    },
     "search_filter": {
       "description": "LDAP 搜索筛选器用于在目录中定位特定条目。",
       "error": "搜索筛选器是必填字段",
       "label": "搜索筛选器",
       "placeholder": "示例：cn=%s"
+    },
+    "search-base-dns": {
+      "description": "要搜索的基本专有名称数组。",
+      "error": "搜索基本专有名称是必填字段",
+      "label": "搜索基本专有名称",
+      "placeholder": "示例：dc=grafana,dc=org"
     },
     "subtitle": "Grafana 中的 LDAP 集成允许您的 Grafana 用户使用其 LDAP 凭证登录。在我们的<2><1>文档</1></2>中了解更多信息。",
     "title": "基本设置"
@@ -10414,6 +10489,7 @@
       "label-numbers": "数字",
       "label-signature": "签名"
     },
+    "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
     "description-enable-logs-highlighting": "使用预定义的着色方案来突出显示日志行的相关部分",
     "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
@@ -10703,6 +10779,7 @@
       "label-inline": "内联",
       "label-sidebar": "侧边栏"
     },
+    "name-enable-field-selector": "",
     "name-enable-infinite-scrolling": "启用无限滚动",
     "name-enable-log-details": "启用日志详情",
     "name-enable-logs-highlighting": "启用日志突出显示",
@@ -11451,6 +11528,7 @@
     },
     "megamenu": {
       "close": "关闭菜单",
+      "dialog-label": "",
       "dock": "停靠菜单",
       "list-label": "导航",
       "open": "打开菜单",
@@ -11623,10 +11701,6 @@
       "clear-tooltip": "清除单位选择"
     }
   },
-  "org-picker": {
-    "noOptionsMessage-no-organizations-found": "未找到组织",
-    "select-placeholder": "选择组织"
-  },
   "org": {
     "new-org-page": {
       "create": "创建",
@@ -11649,6 +11723,8 @@
     },
     "user-invite-form": {
       "back": "上一步",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "电子邮箱或用户名",
       "label-name": "名称",
       "label-send-invite-email": "发送邀请电子邮件",
@@ -11664,22 +11740,14 @@
       }
     }
   },
+  "org-picker": {
+    "noOptionsMessage-no-organizations-found": "未找到组织",
+    "select-placeholder": "选择组织"
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "编辑标题"
     }
-  },
-  "panel-group-by": {
-    "button": "分组方式",
-    "loading": "正在加载选项",
-    "no-options": "未找到选项",
-    "search-placeholder": "搜索"
-  },
-  "panel-type-filter": {
-    "clear-button": "清除类型",
-    "select-aria-label": "面板类型筛选器",
-    "select-no-options": "未找到面板类型",
-    "select-placeholder": "按类型筛选"
   },
   "panel": {
     "dashlist": {
@@ -11792,6 +11860,18 @@
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
     }
   },
+  "panel-group-by": {
+    "button": "分组方式",
+    "loading": "正在加载选项",
+    "no-options": "未找到选项",
+    "search-placeholder": "搜索"
+  },
+  "panel-type-filter": {
+    "clear-button": "清除类型",
+    "select-aria-label": "面板类型筛选器",
+    "select-no-options": "未找到面板类型",
+    "select-placeholder": "按类型筛选"
+  },
   "piechart": {
     "category-legend": "图例",
     "category-pie-chart": "饼图",
@@ -11816,6 +11896,39 @@
     "suggestions": {
       "donut": "圆环图",
       "pie": "饼图"
+    }
+  },
+  "playlist": {
+    "playlist-new-page": {
+      "page-nav": {
+        "text": {
+          "new-playlist": "新建播放列表"
+        }
+      }
+    },
+    "playlist-table-rows": {
+      "aria-label-playlist-item": "播放列表项目，{{itemType}}，{{itemValue}}",
+      "multiple-dashboards-found": "找到多个项目：{{items}}",
+      "no-dashboards-found": "未找到仪表板",
+      "not-found": "未找到：{{items}}"
+    },
+    "start-modal": {
+      "button-start": "开始 {{title}}",
+      "description-customize-dashboard-elements-visibility": "自定义数据面板元素可见性",
+      "description-panel-heights-adjusted-screen": "将调整面板高度以适应屏幕大小",
+      "label-autofit": "自动调整",
+      "label-dashboard-links": "数据面板链接",
+      "label-display-dashboard-controls": "显示数据面板控件",
+      "label-mode": "模式",
+      "label-time-and-refresh": "时间和刷新",
+      "label-variables": "变量",
+      "modes": {
+        "label": {
+          "kiosk": "Kiosk",
+          "normal": "正常"
+        }
+      },
+      "title-start-playlist": "启动播放列表"
     }
   },
   "playlist-edit": {
@@ -11859,39 +11972,6 @@
       "button": "创建播放列表",
       "pro-tip": "您可以使用播放列表在没有用户控制的情况下在电视上自动循环显示数据面板。<2>了解更多</2>",
       "title": "尚未创建播放列表"
-    }
-  },
-  "playlist": {
-    "playlist-new-page": {
-      "page-nav": {
-        "text": {
-          "new-playlist": "新建播放列表"
-        }
-      }
-    },
-    "playlist-table-rows": {
-      "aria-label-playlist-item": "播放列表项目，{{itemType}}，{{itemValue}}",
-      "multiple-dashboards-found": "找到多个项目：{{items}}",
-      "no-dashboards-found": "未找到仪表板",
-      "not-found": "未找到：{{items}}"
-    },
-    "start-modal": {
-      "button-start": "开始 {{title}}",
-      "description-customize-dashboard-elements-visibility": "自定义数据面板元素可见性",
-      "description-panel-heights-adjusted-screen": "将调整面板高度以适应屏幕大小",
-      "label-autofit": "自动调整",
-      "label-dashboard-links": "数据面板链接",
-      "label-display-dashboard-controls": "显示数据面板控件",
-      "label-mode": "模式",
-      "label-time-and-refresh": "时间和刷新",
-      "label-variables": "变量",
-      "modes": {
-        "label": {
-          "kiosk": "Kiosk",
-          "normal": "正常"
-        }
-      },
-      "title-start-playlist": "启动播放列表"
     }
   },
   "playlists": {
@@ -12590,6 +12670,7 @@
       "loading-finished-job": "正在加载已完成的作业...",
       "no-job-found": "未找到作业",
       "no-job-found-message": "作业可能已被删除或无法检索。取消当前进程，然后重新开始。",
+      "retry-action": "",
       "starting": "正在启动...",
       "status": {
         "title-error-running-job": "运行作业时出错",
@@ -12660,6 +12741,7 @@
       "source-code": "源代码"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "只读",
       "settings": "设置",
       "view": "查看"
@@ -12788,8 +12870,9 @@
       "label-pending-step": "待处理步骤"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "自动拉取已禁用",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "正在删除",
+      "disabled": "",
       "error": "错误",
       "pending": "待处理",
       "pulling": "正在拉取",
@@ -12811,12 +12894,15 @@
       "tooltip-unhealthy-repository": "无法拉取状态不良的存储库"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "实例同步要求所有资源均处于受管状态。现有资源将自动迁移。",
       "migrate-resources-description": "",
       "options": "选项",
       "repository-error": "存储库错误",
       "repository-error-message": "无法检查存储库状态。请验证存储库配置，然后重试。",
       "repository-unhealthy": "存储库无法同步。取消预置，并在问题解决后重试。请参阅下面的详细信息。",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -12896,38 +12982,6 @@
       "button-submitting": "正在提交...",
       "error-instance-repository-exists": "实例存储库已存在",
       "error-save-repository-setting": "保存存储库设置失败"
-    }
-  },
-  "public-dashboard-users-access-list": {
-    "dashboard-modal": {
-      "external-link": "外部链接",
-      "loading-text": "加载中...",
-      "open-dashboard-list-text": "打开仪表板列表",
-      "sharing-setting": "共享设置"
-    },
-    "delete-user-modal": {
-      "delete-user-button-text": "删除用户",
-      "delete-user-cancel-button": "取消",
-      "delete-user-revoke-access-button": "注销访问权限",
-      "revoke-access-title": "注销访问权限",
-      "revoke-user-access-modal-desc-line1": "您确定要注销对 {{email}} 的访问权限吗？"
-    },
-    "delete-user-shared-dashboards-modal": {
-      "revoke-user-access-modal-desc-line2": "此操作将立即撤销 {{email}} 对所有共享数据面板的访问权限。"
-    },
-    "modal": {
-      "shared-dashboard-modal-title": "共享的数据面板"
-    },
-    "table-body": {
-      "dashboard-count_other": "{{count}} 个仪表板"
-    },
-    "table-header": {
-      "activated-label": "已激活",
-      "activated-tooltip": "最早时间用户已是仪表板的活动用户",
-      "email-label": "电子邮箱",
-      "last-active-label": "上次处于活动状态",
-      "origin-label": "原始",
-      "role-label": "角色"
     }
   },
   "public-dashboard": {
@@ -13053,6 +13107,89 @@
       "unsupported-data-source-alert-desc": "此数据面板中有不支持共享数据面板的数据源。使用这些数据源的面板可能无法正常工作：{{unsupportedDataSources}}。"
     }
   },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "external-link": "外部链接",
+      "loading-text": "加载中...",
+      "open-dashboard-list-text": "打开仪表板列表",
+      "sharing-setting": "共享设置"
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "删除用户",
+      "delete-user-cancel-button": "取消",
+      "delete-user-revoke-access-button": "注销访问权限",
+      "revoke-access-title": "注销访问权限",
+      "revoke-user-access-modal-desc-line1": "您确定要注销对 {{email}} 的访问权限吗？"
+    },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": "此操作将立即撤销 {{email}} 对所有共享数据面板的访问权限。"
+    },
+    "modal": {
+      "shared-dashboard-modal-title": "共享的数据面板"
+    },
+    "table-body": {
+      "dashboard-count_other": "{{count}} 个仪表板"
+    },
+    "table-header": {
+      "activated-label": "已激活",
+      "activated-tooltip": "最早时间用户已是仪表板的活动用户",
+      "email-label": "电子邮箱",
+      "last-active-label": "上次处于活动状态",
+      "origin-label": "原始",
+      "role-label": "角色"
+    }
+  },
+  "query": {
+    "query-editor-row-header": {
+      "hidden": "隐藏",
+      "query-name-div-title-edit-query-name": "编辑查询名称"
+    },
+    "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
+      "trace-id": "（跟踪 ID：{{traceId}}）"
+    },
+    "query-group": {
+      "add-query": "添加查询",
+      "expression": "表达式",
+      "title-data-source-help": "数据源帮助"
+    },
+    "query-group-options-editor": {
+      "collapsed-interval": "间隔 = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
+      "hide-time-info": "隐藏时间信息",
+      "Query options-title-query-options": "查询选项",
+      "relative-time": "相对时间",
+      "relative-time-tooltip": "覆盖单个面板的相对时间范围，这会导致它们与数据面板右上角的数据面板时间选择器中选择的时间范围不同。例如，要配置最近 5 分钟，相对时间应为 <1>{{relativeFrom}}</1> 和 <4>{{relativeTo}}</4>，或者像 <6>{{variable}}</6> 这样的变量。",
+      "render-cache-timeout-option": {
+        "cache-timeout": "缓存超时"
+      },
+      "render-interval-option": {
+        "interval": "间隔",
+        "interval-tooltip": "已计算的间隔被发送到数据源，并用于 <1>$__interval</1> 和 <4>$__interval_ms</4>。此值不完全等于<6>时间范围/最大数据点</6>，它将近似一个序列的特定数值。",
+        "min-interval": "最小间隔",
+        "min-interval-tooltip": "间隔的下限。建议设置为写入频率，例如，如果您的数据每分钟写入一次，则设置为 <1>1m</1>。对于大多数数据源，可以在数据源设置中设置默认值。",
+        "time-range-max-data-points": "时间范围/最大数据点"
+      },
+      "render-max-data-points-option": {
+        "max-data-points": "最大数据点",
+        "max-data-points-tooltip": "每个序列的最大数据点。由某些数据源直接使用，并用于计算自动间隔。对于流数据，此值用于滚动缓冲区。",
+        "width-of-panel": "面板宽度"
+      },
+      "render-query-caching-ttloption": {
+        "cache-ttl": "缓存 TTL"
+      },
+      "time-shift": "时移",
+      "time-shift-tooltip": "通过相对于时间选择器移动开始和结束时间，覆盖单个面板的时间范围。例如，要配置最近 1 小时，时间偏移应为 <1>{{relativeFrom}}</1> 和 <4>{{relativeTo}}</4>，或者像 <6>{{variable}}</6> 这样的变量。"
+    },
+    "query-group-top-section": {
+      "data-source": "数据源",
+      "query-inspector": "查询检查器",
+      "query-tab-help-button-title-open-data-source-help": "打开数据源帮助",
+      "title-data-source-help": "数据源帮助"
+    }
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
@@ -13068,6 +13205,10 @@
       "show-help": "",
       "show-transformation-help": "",
       "transformation-debug": ""
+    },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
     },
     "delete-modal": {
       "body-query": "",
@@ -13110,9 +13251,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13129,17 +13273,22 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "选择卡片 {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "查询和表达式",
       "toggle-size": "切换侧边栏大小",
-      "transformations": "转换"
+      "transformations": "转换",
+      "alerts_other": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13191,57 +13340,6 @@
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
   },
-  "query": {
-    "query-editor-row-header": {
-      "hidden": "隐藏",
-      "query-name-div-title-edit-query-name": "编辑查询名称"
-    },
-    "query-error-alert": {
-      "error-details": "",
-      "fix-with-assistant": "",
-      "original-query": "",
-      "trace-id": "（跟踪 ID：{{traceId}}）"
-    },
-    "query-group": {
-      "add-query": "添加查询",
-      "expression": "表达式",
-      "title-data-source-help": "数据源帮助"
-    },
-    "query-group-options-editor": {
-      "Query options-title-query-options": "查询选项",
-      "collapsed-interval": "间隔 = {{intervalDesc}}",
-      "collapsed-max-data-points": "MD = {{mdDesc}}",
-      "hide-time-info": "隐藏时间信息",
-      "relative-time": "相对时间",
-      "relative-time-tooltip": "覆盖单个面板的相对时间范围，这会导致它们与数据面板右上角的数据面板时间选择器中选择的时间范围不同。例如，要配置最近 5 分钟，相对时间应为 <1>{{relativeFrom}}</1> 和 <4>{{relativeTo}}</4>，或者像 <6>{{variable}}</6> 这样的变量。",
-      "render-cache-timeout-option": {
-        "cache-timeout": "缓存超时"
-      },
-      "render-interval-option": {
-        "interval": "间隔",
-        "interval-tooltip": "已计算的间隔被发送到数据源，并用于 <1>$__interval</1> 和 <4>$__interval_ms</4>。此值不完全等于<6>时间范围/最大数据点</6>，它将近似一个序列的特定数值。",
-        "min-interval": "最小间隔",
-        "min-interval-tooltip": "间隔的下限。建议设置为写入频率，例如，如果您的数据每分钟写入一次，则设置为 <1>1m</1>。对于大多数数据源，可以在数据源设置中设置默认值。",
-        "time-range-max-data-points": "时间范围/最大数据点"
-      },
-      "render-max-data-points-option": {
-        "max-data-points": "最大数据点",
-        "max-data-points-tooltip": "每个序列的最大数据点。由某些数据源直接使用，并用于计算自动间隔。对于流数据，此值用于滚动缓冲区。",
-        "width-of-panel": "面板宽度"
-      },
-      "render-query-caching-ttloption": {
-        "cache-ttl": "缓存 TTL"
-      },
-      "time-shift": "时移",
-      "time-shift-tooltip": "通过相对于时间选择器移动开始和结束时间，覆盖单个面板的时间范围。例如，要配置最近 1 小时，时间偏移应为 <1>{{relativeFrom}}</1> 和 <4>{{relativeTo}}</4>，或者像 <6>{{variable}}</6> 这样的变量。"
-    },
-    "query-group-top-section": {
-      "data-source": "数据源",
-      "query-inspector": "查询检查器",
-      "query-tab-help-button-title-open-data-source-help": "打开数据源帮助",
-      "title-data-source-help": "数据源帮助"
-    }
-  },
   "recently-deleted": {
     "buttons": {
       "restore": "还原"
@@ -13276,15 +13374,12 @@
       "duration-selected": "以当前所选间隔 {{durationAriaLabel}} 选择刷新时间间隔"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "开启直播流",
       "label": "直播"
     },
     "off-option": {
-      "aria-label": "关闭自动刷新",
       "label": "关"
     },
     "tooltip": {
@@ -13297,12 +13392,6 @@
       "label": "返回到 {{title}}"
     },
     "dismissable-button": "关闭"
-  },
-  "role-picker-drawer": {
-    "basic-roles": {
-      "label": "基本角色"
-    },
-    "user-count": "+{{numUsers}}"
   },
   "role-picker": {
     "built-in": {
@@ -13326,6 +13415,12 @@
     "title": {
       "description": "向用户分配角色，确保对 Grafana 各项功能和资源实现精细化的访问控制。在我们的<2>文档</2>中了解更多信息。"
     }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "基本角色"
+    },
+    "user-count": "+{{numUsers}}"
   },
   "route-error": {
     "description": "Grafana 可能已更新。请尝试重新加载页面。",
@@ -13672,6 +13767,23 @@
       "copy-button": "复制到剪贴板"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "new-library-panel-title": "新的库面板",
+      "share-embed-title": "共享嵌入",
+      "share-link-title": "链接设置"
+    },
+    "menu": {
+      "new-library-panel-title": "新的库面板",
+      "share-embed-title": "共享嵌入",
+      "share-link-title": "共享链接",
+      "share-snapshot-title": "共享快照"
+    },
+    "new-library-panel": {
+      "cancel-button": "取消",
+      "create-button": "创建库面板"
+    }
+  },
   "share-panel-image": {
     "disabled-help": "保存数据面板以启用图像生成",
     "download-disabled-help": "首先生成图像以启用下载",
@@ -13699,23 +13811,6 @@
       "width-required": "宽度为必填项"
     }
   },
-  "share-panel": {
-    "drawer": {
-      "new-library-panel-title": "新的库面板",
-      "share-embed-title": "共享嵌入",
-      "share-link-title": "链接设置"
-    },
-    "menu": {
-      "new-library-panel-title": "新的库面板",
-      "share-embed-title": "共享嵌入",
-      "share-link-title": "共享链接",
-      "share-snapshot-title": "共享快照"
-    },
-    "new-library-panel": {
-      "cancel-button": "取消",
-      "create-button": "创建库面板"
-    }
-  },
   "share-playlist": {
     "checkbox-description": "将调整面板高度以适应屏幕大小",
     "checkbox-label": "自动调整",
@@ -13725,6 +13820,24 @@
     "mode-kiosk": "Kiosk",
     "mode-normal": "正常",
     "title": "共享播放列表"
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "深色",
+        "light-label": "浅色",
+        "system-label": "系统首选项"
+      }
+    }
+  },
+  "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "您确定要撤销此访问权限吗？数据面板不再可共享。",
+      "revoke-title": "注销访问权限"
+    },
+    "fields": {
+      "timezone-label": "时区"
+    }
   },
   "shared-dashboard-list": {
     "button": {
@@ -13739,15 +13852,6 @@
     },
     "toggle": {
       "pause-sharing-toggle-text": "暂停访问"
-    }
-  },
-  "shared-dashboard": {
-    "delete-modal": {
-      "revoke-body-text": "您确定要撤销此访问权限吗？数据面板不再可共享。",
-      "revoke-title": "注销访问权限"
-    },
-    "fields": {
-      "timezone-label": "时区"
     }
   },
   "shared-preferences": {
@@ -13770,15 +13874,6 @@
     },
     "title": "首选项"
   },
-  "shared": {
-    "preferences": {
-      "theme": {
-        "dark-label": "深色",
-        "light-label": "浅色",
-        "system-label": "系统首选项"
-      }
-    }
-  },
   "sign-up": {
     "back-button": "返回登录",
     "confirm-password-label": "确认密码",
@@ -13799,12 +13894,6 @@
       "send-button": "发送验证电子邮件"
     }
   },
-  "silences-table": {
-    "header": {
-      "alert-name": "提醒名称",
-      "state": "状态"
-    }
-  },
   "silences": {
     "empty-state": {
       "button-title": "创建静默",
@@ -13817,7 +13906,14 @@
       "no-matching-silences": "未找到匹配的静默；",
       "noConfig": "创建一个新的联络点以使用默认值创建配置，或联系您的管理员以设置 Alertmanager。",
       "recreate-button": "重新创建",
-      "unsilence-button": "取消静默"
+      "unsilence-button": "取消静默",
+      "view-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "提醒名称",
+      "state": "状态"
     }
   },
   "snapshot": {
@@ -14225,9 +14321,9 @@
     }
   },
   "time-period": {
-    "12_hours": "12 小时",
     "1_day": "1 天",
     "1_hour": "1 小时",
+    "12_hours": "12 小时",
     "30_days": "30 天",
     "6_hours": "6 小时",
     "7_days": "7 天"
@@ -15289,11 +15385,6 @@
   "user-sessions": {
     "loading": "正在加载会话..."
   },
-  "users-access-list": {
-    "tabs": {
-      "shared-dashboard-users-tab-title": "共享数据面板的用户"
-    }
-  },
   "users": {
     "empty-state": {
       "message": "找不到用户"
@@ -15312,6 +15403,11 @@
         }
       },
       "placeholder-search-login-email": "按登录名、电子邮件或姓名搜索用户"
+    }
+  },
+  "users-access-list": {
+    "tabs": {
+      "shared-dashboard-users-tab-title": "共享数据面板的用户"
     }
   },
   "variabels": {
@@ -15493,8 +15589,8 @@
       "title-dependencies": "依赖关系"
     },
     "variables-unknown-button": {
-      "VariablesUnknownButton-tooltip-show-usages": "显示使用情况",
-      "usage-title": "显示使用情况：{{variableId}}"
+      "usage-title": "显示使用情况：{{variableId}}",
+      "VariablesUnknownButton-tooltip-show-usages": "显示使用情况"
     },
     "variables-unknown-table": {
       "collapse-label": "重命名或缺失的变量",

@@ -417,6 +417,12 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 	if err != nil {
 		return err
 	}
+
+	// Enable field selectors for ExternalGroupMapping
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, ExternalGroupMappingKind())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

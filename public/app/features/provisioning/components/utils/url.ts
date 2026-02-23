@@ -15,6 +15,10 @@ export const getBranchUrl = (baseUrl: string, branch: string, repoType?: string)
       return `${cleanBaseUrl}/-/tree/${branch}`;
     case 'bitbucket':
       return `${cleanBaseUrl}/src/${branch}`;
+    case 'git':
+      // Generic git repositories don't have a standard URL pattern for branches
+      // Just return the base URL without branch segment
+      return cleanBaseUrl;
     default:
       return '';
   }

@@ -1637,6 +1637,7 @@ var termFields = []string{
 // exactTermFields fields to use termQuery for filtering without any extra queries
 var exactTermFields = []string{
 	resource.SEARCH_FIELD_OWNER_REFERENCES,
+	resource.SEARCH_FIELD_CREATED_BY,
 	// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
 	// This should be fixed by using the info from the schema
 	"login",

@@ -551,48 +551,6 @@
     "alert-warning": {
       "to-rule-list": "All'elenco delle regole"
     },
-    "alertVersionHistory": {
-      "alerting": "Avvisi",
-      "alerting-change-description": "Questo aggiornamento è stato effettuato dal sistema di allarme a causa di altre modifiche. Ad esempio, quando si rinomina un punto di contatto utilizzato per il routing semplificato, verranno aggiornate le regole interessate",
-      "annotations": "Annotazioni",
-      "compare": "Confronta",
-      "compare-with-latest": "Confronta con la versione più recente",
-      "compareVersions": "Confronta versioni",
-      "comparing-versions": "Confronto delle versioni",
-      "condition": "Condizione di avviso",
-      "contactPointRouting": "Routing del punto di contatto",
-      "description": "Ogni volta che modifichi la regola di avviso, viene creata una nuova versione. Seleziona due versioni qui sotto e confronta le differenze.",
-      "errorloading": "Impossibile caricare le versioni delle regole di avviso",
-      "execErrorState": "Stato di avviso in caso di errore di esecuzione",
-      "intervalSeconds": "Intervallo di valutazione",
-      "labels": "Etichette",
-      "latest": "Più recente",
-      "name": "Nome",
-      "namespace_uid": "Cartella UID",
-      "noDataState": "Stato di avviso in assenza di dati",
-      "noVersionsFound": "Nessuna versione trovata per questa regola",
-      "paused": "Stato in pausa",
-      "pendingPeriod": "Periodo di attesa",
-      "provisioning": "Provisioning",
-      "provisioning-change-description": "L'aggiornamento della versione è stato effettuato tramite provisioning",
-      "queryAndAlertCondition": "Query e condizione di avviso",
-      "restore": "Ripristina",
-      "restore-manually": "Non è stato possibile ripristinare la regola di avviso. Ciò potrebbe essere dovuto a modifiche ad altre entità come punti di contatto, origini dati, ecc. Ripristina manualmente la versione della regola",
-      "restore-modal": {
-        "body": "Vuoi davvero ripristinare la definizione della regola di avviso a questa versione? Tutte le modifiche non salvate andranno perse.",
-        "confirm": "Ripristina configurazione",
-        "error": "Impossibile ripristinare la versione della regola di avviso ",
-        "summary": "Riepilogo delle modifiche da applicare:",
-        "title": "Ripristina versione"
-      },
-      "restore-version": "Ripristina alla versione {{version}} ",
-      "rule_group": "Gruppo di regole",
-      "unknown": "Sconosciuto",
-      "unknown-change-description": "Questo aggiornamento è stato effettuato prima dell'implementazione della cronologia delle versioni delle regole di allarme. L'utente che ha apportato la modifica non viene tracciato, ma le modifiche future includeranno l'utente",
-      "user-id": "ID utente {{uid}}",
-      "warning-restore-manually": "Stai ripristinando manualmente una vecchia versione di questa regola di avviso. Rivedi attentamente le modifiche prima di salvare la definizione della regola.",
-      "warning-restore-manually-title": "Ripristino manuale della regola"
-    },
     "alertform": {
       "labels": {
         "alerting": "Aggiungi etichette alla regola per cercare, silenziare o instradare a una politica di notifica.",
@@ -641,12 +599,60 @@
       "title-restore-version": "Ripristina versione",
       "title-restoring-alertmanager-configuration": "Ripristino della configurazione di Alertmanager"
     },
+    "alerts-activity-banner": {
+      "description": "",
+      "open-button": "",
+      "open-button-aria": "",
+      "title": ""
+    },
     "alerts-folder-view": {
       "aria-label-sort": "Ordina",
       "label-filter-placeholder-search-alerts-by-labels": "Cerca avvisi per etichette",
       "name-filter-placeholder-search-alert-rules-by-name": "Cerca regole di avviso per nome",
       "no-alert-rules-found": "Nessuna regola di avviso trovata",
       "placeholder-sort-default-az": "Ordina (impostazione predefinita: A-Z)"
+    },
+    "alertVersionHistory": {
+      "alerting": "Avvisi",
+      "alerting-change-description": "Questo aggiornamento è stato effettuato dal sistema di allarme a causa di altre modifiche. Ad esempio, quando si rinomina un punto di contatto utilizzato per il routing semplificato, verranno aggiornate le regole interessate",
+      "annotations": "Annotazioni",
+      "compare": "Confronta",
+      "compare-with-latest": "Confronta con la versione più recente",
+      "compareVersions": "Confronta versioni",
+      "comparing-versions": "Confronto delle versioni",
+      "condition": "Condizione di avviso",
+      "contactPointRouting": "Routing del punto di contatto",
+      "description": "Ogni volta che modifichi la regola di avviso, viene creata una nuova versione. Seleziona due versioni qui sotto e confronta le differenze.",
+      "errorloading": "Impossibile caricare le versioni delle regole di avviso",
+      "execErrorState": "Stato di avviso in caso di errore di esecuzione",
+      "intervalSeconds": "Intervallo di valutazione",
+      "labels": "Etichette",
+      "latest": "Più recente",
+      "name": "Nome",
+      "namespace_uid": "Cartella UID",
+      "noDataState": "Stato di avviso in assenza di dati",
+      "noVersionsFound": "Nessuna versione trovata per questa regola",
+      "paused": "Stato in pausa",
+      "pendingPeriod": "Periodo di attesa",
+      "provisioning": "Provisioning",
+      "provisioning-change-description": "L'aggiornamento della versione è stato effettuato tramite provisioning",
+      "queryAndAlertCondition": "Query e condizione di avviso",
+      "restore": "Ripristina",
+      "restore-manually": "Non è stato possibile ripristinare la regola di avviso. Ciò potrebbe essere dovuto a modifiche ad altre entità come punti di contatto, origini dati, ecc. Ripristina manualmente la versione della regola",
+      "restore-modal": {
+        "body": "Vuoi davvero ripristinare la definizione della regola di avviso a questa versione? Tutte le modifiche non salvate andranno perse.",
+        "confirm": "Ripristina configurazione",
+        "error": "Impossibile ripristinare la versione della regola di avviso ",
+        "summary": "Riepilogo delle modifiche da applicare:",
+        "title": "Ripristina versione"
+      },
+      "restore-version": "Ripristina alla versione {{version}} ",
+      "rule_group": "Gruppo di regole",
+      "unknown": "Sconosciuto",
+      "unknown-change-description": "Questo aggiornamento è stato effettuato prima dell'implementazione della cronologia delle versioni delle regole di allarme. L'utente che ha apportato la modifica non viene tracciato, ma le modifiche future includeranno l'utente",
+      "user-id": "ID utente {{uid}}",
+      "warning-restore-manually": "Stai ripristinando manualmente una vecchia versione di questa regola di avviso. Rivedi attentamente le modifiche prima di salvare la definizione della regola.",
+      "warning-restore-manually-title": "Ripristino manuale della regola"
     },
     "all-matches-indicator": {
       "content-this-policy-matches-all-labels": "Questo criterio corrisponde a tutte le etichette"
@@ -1682,10 +1688,6 @@
         "validation-warning": "",
         "will-import-config": "",
         "will-import-rules": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": "",
         "will-import-rules-count_one": "",
         "will-import-rules-count_other": ""
       },
@@ -1700,8 +1702,6 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-conflict-desc": "",
-        "extra-config-conflict-title": "",
         "extra-config-overwrite-desc": "",
         "extra-config-overwrite-title": "",
         "heading": "",
@@ -1711,6 +1711,7 @@
         "policy-tree-desc": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
+        "policy-tree-required": "",
         "policy-tree-title": "",
         "select-datasource": "",
         "skip": "",
@@ -1729,12 +1730,7 @@
         "validation-success": "",
         "validation-success-desc": "",
         "validation-warning": "",
-        "validation-warning-desc": "",
-        "yaml-file": "",
-        "renamed-intervals_one": "",
-        "renamed-intervals_other": "",
-        "renamed-receivers_one": "",
-        "renamed-receivers_other": ""
+        "yaml-file": ""
       },
       "step2": {
         "datasource": "",
@@ -1745,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1772,7 +1773,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1801,7 +1804,11 @@
         "target-datasource-description": "Seleziona l'origine dati che verrà interrogata dalle regole importate. Assicurati che le metriche utilizzate nelle regole importate siano disponibili in questa origine dati.",
         "target-datasource-required": "Seleziona un'origine dei dati di destinazione"
       },
-      "yaml-error": "Impossibile analizzare il file YAML: {{error}}"
+      "yaml-error": "Impossibile analizzare il file YAML: {{error}}",
+      "renamed-intervals_one": "",
+      "renamed-intervals_other": "",
+      "renamed-receivers_one": "",
+      "renamed-receivers_other": ""
     },
     "import-to-gma-tool": {
       "pageTitle": ""
@@ -2308,6 +2315,9 @@
       "recipient": "Destinatario",
       "recipient-notification-fires": "Seleziona chi deve ricevere una notifica quando viene attivata una regola di avviso."
     },
+    "open-drawer-icon-button": {
+      "details": ""
+    },
     "option-customfield": {
       "label-custom-template": "Modello personalizzato",
       "placeholder": "Inserisci testo normale o fai riferimento a un modello, ad esempio {{template \"default.message\" .}}",
@@ -2646,6 +2656,13 @@
       "resample-to": "Ricampiona a",
       "upsample": "Aumenta campionamento"
     },
+    "revert-experience-modal": {
+      "description-line1": "",
+      "description-line2": "",
+      "revert-button": "",
+      "see-activity-button": "",
+      "title": ""
+    },
     "routing": {
       "routing": "Instradamento"
     },
@@ -2874,8 +2891,8 @@
       },
       "rulerrule-loading-error": "Impossibile caricare la regola",
       "toggle": {
-        "go-back-to-old-look": "Torna al vecchio design",
-        "try-out-the-new-look": "Prova il nuovo design!"
+        "use-new-experience": "",
+        "view-previous-experience": ""
       },
       "unknown-rule-type": "Tipo di regola sconosciuto"
     },
@@ -3127,6 +3144,17 @@
     "silence-period": {
       "label-silence-start-and-end": "Disattiva audio all'inizio e alla fine",
       "placeholder-select-time-range": "Seleziona l'intervallo di tempo"
+    },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
     },
     "silenced-alerts-table-row": {
       "silenced-for": "per {{duration}}"
@@ -3436,7 +3464,8 @@
       },
       "title-edit": "Modifica",
       "title-recreate": "Ricrea",
-      "title-unsilence": "Riattiva audio"
+      "title-unsilence": "Riattiva audio",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -3664,9 +3693,6 @@
       "trace-id": "ID traccia: {{traceId}}"
     }
   },
-  "auth-config-auth-config-page-unconnected": {
-    "subtitle": "Gestisci le impostazioni di autenticazione e configura il Single Sign-On. Scopri di più nella nostra <2>documentazione</2>."
-  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Impostazioni di autenticazione"
@@ -3857,6 +3883,9 @@
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "L'endpoint .well-known/openid-configuration per il tuo IdP",
       "title-open-id-connect-discovery-url": "URL di OpenID Connect Discovery"
     }
+  },
+  "auth-config-auth-config-page-unconnected": {
+    "subtitle": "Gestisci le impostazioni di autenticazione e configura il Single Sign-On. Scopri di più nella nostra <2>documentazione</2>."
   },
   "bar-chart": {
     "warn": {
@@ -4934,6 +4963,1291 @@
       "run-query": "Esegui query"
     }
   },
+  "dashboard": {
+    "actions": {
+      "open-settings": "Impostazioni"
+    },
+    "add": {
+      "new-panel": {
+        "button": "Pulsante Aggiungi nuovo pannello",
+        "description": "Trascina o fai clic per aggiungere un pannello",
+        "title": "Pannello"
+      },
+      "pane-header": "Aggiungi"
+    },
+    "add-library-panel-widget": {
+      "aria-label-close-add-panel-widget": "Chiudi il widget \"Aggiungi pannello\"",
+      "tooltip-close-widget": "Chiudi widget"
+    },
+    "add-menu": {
+      "import": "Importa dalla libreria",
+      "paste-panel": "Incolla pannello",
+      "row": "Riga",
+      "visualization": "Visualizzazione"
+    },
+    "alert-rules-drawer": {
+      "redirect-link": "Elenco in Grafana Alerting",
+      "subtitle": "Regole di avviso relative a questo dashboard"
+    },
+    "annotation-settings-edit": {
+      "apply": "Applica",
+      "delete": "Elimina",
+      "description-color-annotation-event-markers": "Colore da utilizzare per gli indicatori degli eventi di annotazione",
+      "description-enabled-annotation-query-issued-every-dashboard": "Se abilitata, la query di annotazione viene emessa a ogni aggiornamento della dashboard",
+      "description-hidden": "Le query di annotazione possono essere attivate o disattivate nella parte superiore della dashboard. Se questa opzione è selezionata, il toggle verrà nascosto.",
+      "label-color": "Colore",
+      "label-data-source": "Sorgente dati",
+      "label-enabled": "Abilitato",
+      "label-hidden": "Nascosto",
+      "label-name": "Nome",
+      "label-show-in": "Mostra in",
+      "placeholder-choose-panels": "Scegli i pannelli",
+      "preview-in-dashboard": "Anteprima nella dashboard",
+      "query": "Query",
+      "title-annotation-support-source": "Nessun supporto per le annotazioni per questa origine di dati"
+    },
+    "annotation-settings-list": {
+      "aria-label-delete": "Elimina la query con il titolo \"{{title}}\"",
+      "built-in": "{{name}} (Integrato)",
+      "data-source": "Sorgente dati",
+      "disabled": "{{name}} (Disabilitato)",
+      "new-query": "Nuova query",
+      "query-name": "Nome query",
+      "tooltip-move-down": "Sposta in basso",
+      "tooltip-move-up": "Sposta in alto"
+    },
+    "auto-grid": {
+      "description": "I pannelli si ridimensionano per adattarsi e formare griglie uniformi",
+      "item-options": {
+        "repeat": {
+          "title": "Ripeti le opzioni",
+          "variable": {
+            "description": "Ripeti questo pannello per ogni valore nella variabile selezionata. Questo non è visibile in modalità di modifica. È necessario tornare al dashboard e quindi aggiornare la variabile o ricaricare il dashboard.",
+            "title": "Ripeti per variabile"
+          }
+        }
+      },
+      "name": "Griglia automatica",
+      "options": {
+        "custom-min-height": {
+          "clear": "Cancella"
+        },
+        "custom-min-width": {
+          "clear": "Cancella"
+        },
+        "height-fill": "Riempi schermo",
+        "max-columns": "Colonne massime",
+        "min-height": "Altezza riga",
+        "min-height-custom": "Altezza riga personalizzata",
+        "min-height-error": "È richiesto un numero compreso tra 50 e 2.000",
+        "min-width": "Larghezza minima colonna",
+        "min-width-custom": "Larghezza minima personalizzata",
+        "min-width-custom-clear": "Torna alla larghezza minima standard della colonna",
+        "min-width-error": "È richiesto un numero compreso tra 50 e 2.000"
+      }
+    },
+    "canvas-actions": {
+      "add-panel": "Aggiungi pannello",
+      "disabled-child-contains-tabs": "Impossibile passare alle schede perché una riga contiene già schede",
+      "disabled-nested-grouping": "Il raggruppamento è limitato a 2 livelli",
+      "disabled-nested-tabs": "Le schede non possono essere nidificate all'interno di altre schede",
+      "group-into-row": "Raggruppa in riga",
+      "group-into-tab": "Raggruppa in scheda",
+      "group-panels": "Raggruppa pannelli",
+      "new-row": "Nuova riga",
+      "new-tab": "Nuova scheda",
+      "paste-panel": "Incolla pannello",
+      "paste-row": "Incolla riga",
+      "paste-tab": "Incolla scheda",
+      "ungroup-rows": "Annulla raggruppamento righe",
+      "ungroup-tabs": "Annulla raggruppamento schede"
+    },
+    "conditional-rendering": {
+      "conditions": {
+        "data": {
+          "disable": "Nessun dato",
+          "enable": "Dati disponibili",
+          "info": "Mostra o nascondi {{type}} in base ai risultati della query.",
+          "label": "Risultato query"
+        },
+        "group": {
+          "add": {
+            "button": "Aggiungi regola",
+            "data": "Risultato query",
+            "time-range-size": "Intervallo di tempo inferiore a",
+            "variable": "Variabile del modello"
+          },
+          "condition": {
+            "all": "Abbina tutto",
+            "any": "Abbina qualsiasi",
+            "label": "Regole di corrispondenza"
+          },
+          "visibility": {
+            "hide": "Nascondi",
+            "label": "{{type}} visibilità",
+            "show": "Mostra"
+          }
+        },
+        "time-range-size": {
+          "info": "Mostra o nascondi {{type}} se l'intervallo di tempo della dashboard è inferiore al fotogramma orario selezionato.",
+          "invalid-message": "Intervallo non valido",
+          "label": "Intervallo di tempo inferiore a",
+          "values": {
+            "days": "{{value}} giorni",
+            "hour": "{{value}} ora",
+            "hours": "{{value}} ore",
+            "minutes": "{{value}} minuti",
+            "months": "{{value}} mesi",
+            "year": "{{value}} anno",
+            "years": "{{value}} anni"
+          }
+        },
+        "variable": {
+          "error": {
+            "invalid-regex": "Regex non valida"
+          },
+          "info": "Mostra o nascondi {{type}} dinamicamente in base al valore della variabile.",
+          "label": "Variabile del modello",
+          "name": "Nome",
+          "operator": {
+            "equals": "Uguale",
+            "matches": "Corrispondenze",
+            "not-equals": "Non uguale",
+            "not-matches": "Nessuna corrispondenza"
+          },
+          "value": "Valore"
+        },
+        "wrapper": {
+          "delete-condition": "Elimina condizione",
+          "unsupported-object-type": "Questa condizione non è supportata dall'elemento, quindi verrà ignorata."
+        }
+      },
+      "editor": {
+        "info": "Imposta le regole per controllare la visibilità del {{type}} abbinando una o tutte le regole.",
+        "learn-more": "Scopri di più",
+        "not-supported-for-custom-grid": "Le regole Mostra/Nascondi non sono supportate per i pannelli nel layout del pannello Personalizzato. Modifica il layout del pannello in Griglia automatica per abilitare questa funzione.",
+        "unsupported-object-type": "Rendering condizionale non supportato per questo tipo di elemento"
+      },
+      "overlay": {
+        "tooltip": "L'elemento è nascosto dalle regole Mostra/Nascondi."
+      },
+      "root": {
+        "title": "Mostra/nascondi regole"
+      }
+    },
+    "confirm-plugin-dashboard-save-modal": {
+      "body-plugin-dashboard": "Le modifiche andranno perse quando aggiornerai il plug-in.<br /><2>Utilizza <strong>Salva con nome</strong> per creare una versione personalizzata.</2>",
+      "cancel": "Annulla",
+      "overwrite": "Sovrascrivi",
+      "title-plugin-dashboard": "Dashboard del componente aggiuntivo"
+    },
+    "controls": {
+      "menu": {
+        "aria-label": "",
+        "title": ""
+      }
+    },
+    "dash-nav": {
+      "on-open-snapshot-original": {
+        "confirmText": {
+          "proceed": "Procedi"
+        },
+        "title": {
+          "proceed-to-external-site": "Procedere al sito esterno?"
+        }
+      },
+      "render-left-actions": {
+        "tooltip-view-as-scene": "Visualizza come Scena"
+      }
+    },
+    "dashboard-links-menu": {
+      "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
+      "label-no-dashboards-found": "Nessuna dashboard trovata"
+    },
+    "dashboard-loading": {
+      "cancel-loading-dashboard": "Annulla caricamento della dashboard"
+    },
+    "dashboard-page-error": {
+      "text": {
+        "not-found": "Non trovato"
+      }
+    },
+    "dashboard-settings": {
+      "actions": {
+        "close": "Chiudi"
+      }
+    },
+    "dashboard-slice": {
+      "title": {
+        "dashboard-init-failed": "Inizializzazione dashboard non riuscita"
+      }
+    },
+    "dashboard-srv": {
+      "message": {
+        "edit-dashboard-json": "Modifica JSON dashboard"
+      }
+    },
+    "default-layout": {
+      "description": "Posiziona e ridimensiona ogni pannello singolarmente",
+      "item-options": {
+        "repeat": {
+          "direction": {
+            "horizontal": "Orizzontale",
+            "title": "Ripeti la direzione",
+            "vertical": "Verticale"
+          },
+          "max": "Max per riga",
+          "title": "Ripeti le opzioni",
+          "variable": {
+            "description": "Ripeti questo pannello per ogni valore nella variabile selezionata. Questo non è visibile in modalità di modifica. È necessario tornare al dashboard e quindi aggiornare la variabile o ricaricare il dashboard.",
+            "title": "Ripeti per variabile"
+          }
+        }
+      },
+      "name": "Personalizzazione",
+      "row-actions": {
+        "delete": "Elimina riga",
+        "modal": {
+          "alt-action": "Elimina solo la riga",
+          "text": "Vuoi davvero rimuovere questa riga e tutti i suoi pannelli?",
+          "title": "Elimina riga"
+        }
+      },
+      "row-options": {
+        "button": {
+          "label": "Opzioni riga"
+        },
+        "form": {
+          "cancel": "Annulla",
+          "repeat-for": {
+            "label": "Ripeti per",
+            "learn-more": "Scopri di più",
+            "warning": {
+              "text": "I pannelli in questa riga utilizzano l'origine dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella riga originale, non a quelli nelle righe ripetute."
+            }
+          },
+          "title": "Titolo",
+          "update": "Aggiorna"
+        },
+        "modal": {
+          "title": "Opzioni riga"
+        },
+        "repeat": {
+          "title": "Ripeti le opzioni",
+          "variable": {
+            "title": "Variabile"
+          }
+        },
+        "title": "Opzioni riga"
+      }
+    },
+    "description": {
+      "action": "Modifica la descrizione della dashboard"
+    },
+    "dynamic-config-value-editor": {
+      "render-label": {
+        "tooltip-remove-property": "Rimuovi proprietà"
+      }
+    },
+    "edit-actions": {
+      "add": "Aggiungi {{typeName}}",
+      "add-conditional-rule": "Aggiungi regola {{ruleDescription}}",
+      "duplicate-panel": "Duplica pannello",
+      "edit-query-result-rule": "Modifica regola del risultato della query",
+      "edit-template-variable-rule": "Modifica la regola della variabile del modello",
+      "edit-time-range-rule": "Modifica regola intervallo di tempo",
+      "move": "Sposta {{typeName}}",
+      "panel-background": "Modifica lo sfondo del pannello",
+      "panel-description": "Modifica la descrizione del pannello",
+      "panel-edit": "Modifiche al pannello",
+      "panel-max-repeats-per-row": "Ripetizioni massime per riga",
+      "panel-repeat-direction": "Ripeti la direzione",
+      "panel-repeat-variable": "Ripetizione del pannello per",
+      "panel-title": "Modifica il titolo del pannello",
+      "paste-panel": "Incolla pannello",
+      "remove": "Rimuovi {{typeName}}",
+      "row-title": "Modifica il titolo riga",
+      "switch-layout": "Cambia layout",
+      "switch-layout-row": "Cambia layout",
+      "switch-layout-tab": "Cambia layout",
+      "tab-title": "Modifica il titolo della scheda"
+    },
+    "edit-pane": {
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation": "",
+        "reorder": "",
+        "select-annotation": ""
+      },
+      "elements": {
+        "annotation": "",
+        "annotation-set": "",
+        "dashboard": "Dashboard",
+        "element": "Elemento",
+        "local-variable": "Variabile locale",
+        "multiple-elements": "Elementi multipli",
+        "multiple-elements-delete-text": "Desideri davvero eliminare questi elementi?",
+        "multiple-panels": "Pannelli multipli",
+        "multiple-panels-delete-text": "Desideri davvero eliminare questi pannelli? Tutte le query saranno rimosse.",
+        "objects": "Oggetti",
+        "panel": "Pannello",
+        "panels": "Pannelli",
+        "row": "Riga",
+        "rows": "Righe",
+        "tab": "Scheda",
+        "tabs": "Schede",
+        "variable": "{{type}} variabile",
+        "variable-set": "Variabili"
+      },
+      "row": {
+        "header": {
+          "hide": "Nascondi",
+          "title": "Intestazione di riga"
+        }
+      },
+      "variable": {
+        "custom-options": {
+          "apply": "Applica",
+          "change-value": "Modifica il valore variabile",
+          "discard": "Annulla",
+          "modal-title": "",
+          "values": "Valori separati da virgola"
+        },
+        "datasource-options": {
+          "name-filter": "Filtro nome",
+          "name-filter-description": "Filtro Regex per le istanze dell'origine dei dati da includere. Lascia vuoto per tutti.",
+          "name-filter-placeholder": "Esempio: /^prod/",
+          "type": "Tipo",
+          "type-placeholder": "Scegli un tipo di sorgente dati"
+        },
+        "description": "Descrizione",
+        "description-placeholder": "Testo descrittivo",
+        "label": "Etichetta",
+        "label-description": "Nome visualizzato facoltativo",
+        "name": "Nome",
+        "open-editor": "Apri l'editor delle variabili",
+        "open-editor-tooltip": "Per ulteriori opzioni sulle variabili, apri l'editor delle variabili",
+        "query-options": {
+          "close": "Chiudi",
+          "modal-title": "Query variabile",
+          "preview": "Anteprima"
+        },
+        "selection-options": {
+          "allow-custom-values": "Consenti valori personalizzati",
+          "allow-custom-values-description": "Consente agli utenti di inserire valori",
+          "category": "Seleziona opzioni",
+          "custom-all-value": "Personalizza tutti i valori",
+          "custom-all-value-description": "Un'espressione regolare con carattere jolly o un altro valore che sta per Tutti",
+          "include-all": "Includi tutti i valori",
+          "include-all-description": "Abilita una singola opzione che rappresenta tutti i valori",
+          "multi-value": "Valori multipli"
+        },
+        "type-category": "Opzioni di {{type}}"
+      },
+      "variables": {
+        "add-variable": "Aggiungi variabile",
+        "reorder": "",
+        "select-type": "Scegli il tipo di variabile",
+        "select-type-card-tooltip": "Fai clic per selezionare il tipo",
+        "select-variable": "Seleziona"
+      }
+    },
+    "empty": {
+      "add-library-panel-body": "Aggiungi visualizzazioni condivise con altri dashboard.",
+      "add-library-panel-button": "Aggiungi pannello della libreria",
+      "add-library-panel-header": "Importa pannello",
+      "add-visualization-body": "Seleziona un'origine dati, quindi esegui query e visualizza i dati con grafici, statistiche e tabelle o crea elenchi, markdown e altri widget.",
+      "add-visualization-button": "Aggiungi visualizzazione",
+      "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
+      "description": "Aggiungi un pannello per visualizzare i tuoi dati",
+      "import-a-dashboard-body": "Importa dashboard da file o <2>grafana.com</2>.",
+      "import-a-dashboard-header": "Importa un dashboard",
+      "import-dashboard-button": "Importa dashboard",
+      "show-less-dashboards": "Mostra meno",
+      "show-more-dashboards": "Mostra di più",
+      "start-with-suggested-dashboards": "Inizia con una dashboard predefinita dalla tua origine dei dati",
+      "title": "Nuova dashboard",
+      "use-template-button": "Usa questa dashboard"
+    },
+    "errors": {
+      "failed-to-load": "Impossibile caricare il dashboard"
+    },
+    "export": {
+      "button": {
+        "label": "Esporta dashboard"
+      },
+      "menu": {
+        "label": "Esporta menu dashboard"
+      }
+    },
+    "fetch-dashboard": {
+      "message": {
+        "failed-to-fetch-dashboard": "Impossibile recuperare la dashboard"
+      }
+    },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
+    "gen-aihistory": {
+      "aria-label-send-custom-feedback": "Invia feedback personalizzato",
+      "footer-text": "Questo contenuto è generato dall'IA utilizzando il <2>componente aggiuntivo Grafana LLM</2>",
+      "placeholder-tell-ai-what-to-do-next": "Di' all'IA cosa fare dopo..."
+    },
+    "general-settings-unconnected": {
+      "editable-options": {
+        "label": {
+          "editable": "Modificabile",
+          "readonly": "Sola lettura"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "Predefinito",
+          "shared-crosshair": "Mirino condiviso",
+          "shared-tooltip": "Suggerimento condiviso"
+        }
+      }
+    },
+    "get-debug-dashboard": {
+      "title": {
+        "annotations": "Annotazioni"
+      }
+    },
+    "get-errors": {
+      "message": {
+        "error-loading-data": "Errore durante il caricamento dei dati"
+      }
+    },
+    "get-field-override-categories": {
+      "label-add-field-override": "Aggiungi sovrascrittura campo",
+      "label-add-override-property": "Aggiungi proprietà di sovrascrittura",
+      "override-name": "Sovrascrivi {{overrideNum}}",
+      "title": {
+        "add-button": "aggiungi pulsante"
+      }
+    },
+    "get-library-panel-options-category": {
+      "descriptor": {
+        "title": {
+          "library-panel-options": "Opzioni del pannello della libreria"
+        }
+      },
+      "title": {
+        "information": "Informazioni",
+        "name": "Nome"
+      }
+    },
+    "get-library-viz-panel-options-category": {
+      "descriptor": {
+        "title": {
+          "library-panel-options": "Opzioni del pannello della libreria"
+        }
+      },
+      "title": {
+        "information": "Informazioni",
+        "name": "Nome"
+      }
+    },
+    "get-panel-editor-tabs": {
+      "text": {
+        "alert": "Avviso",
+        "query": "Query",
+        "transform-data": "Trasforma dati"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Non inviare dati di annotazione ai seguenti pannelli",
+        "annotation-panels-support-annotations": "Invia i dati di annotazione a tutti i pannelli che supportano le annotazioni",
+        "annotations-explicitly-listed-panels": "Invia le annotazioni ai pannelli elencati esplicitamente"
+      },
+      "label": {
+        "all-panels": "Tutti i pannelli",
+        "all-panels-except": "Tutti i pannelli tranne",
+        "selected-panels": "Pannelli selezionati"
+      }
+    },
+    "get-panel-frame-category": {
+      "descriptor": {
+        "title": {
+          "panel-options": "Opzioni pannello"
+        }
+      },
+      "direction-options": {
+        "label": {
+          "horizontal": "Orizzontale",
+          "vertical": "Verticale"
+        }
+      },
+      "title": {
+        "description": "Descrizione",
+        "max-per-row": "Max per riga",
+        "panel-links": "Collegamenti del pannello",
+        "repeat-by-variable": "Ripeti per variabile",
+        "repeat-direction": "Ripeti la direzione",
+        "repeat-options": "Ripeti le opzioni",
+        "title": "Titolo",
+        "transparent-background": "Sfondo trasparente"
+      }
+    },
+    "get-panel-menu": {
+      "text": {
+        "extensions": "Estensioni"
+      }
+    },
+    "help-wizard": {
+      "copy-to-clipboard": "Copia negli appunti",
+      "description-obfuscate-data": "Modifica i dati originali per nascondere le informazioni sensibili.  Nota che le lunghezze rimarranno le stesse e i valori duplicati saranno uguali.",
+      "description-support-snapshot": "Pannello: {{panelTitle}}",
+      "download-snapshot": "Download ({{snapshotSize}})",
+      "label-obfuscate-data": "Offusca dati",
+      "label-support-snapshot": "Snapshot di supporto",
+      "label-template": "Modello",
+      "randomize-field-names-label-field-names": "Nomi campi",
+      "randomize-labels-label-labels": "Etichette",
+      "randomize-string-values-label-string-values": "Valori stringa",
+      "tabs": {
+        "label": {
+          "data": "Data",
+          "snapshot": "Istantanea"
+        }
+      },
+      "title-complete-git-hub-comment-clipboard": "Copia un commento completo di GitHub negli appunti",
+      "title-get-help-with-this-panel": "Ottieni assistenza per questo pannello",
+      "troubleshooting-docs": "Documenti per la risoluzione dei problemi"
+    },
+    "init-dashboard": {
+      "message": {
+        "failed-create-dashboard-model": "Creazione del modello di dashboard non riuscita"
+      }
+    },
+    "inspect": {
+      "data-tab": "Data",
+      "error-tab": "Errore",
+      "json-tab": "JSON",
+      "meta-tab": "Meta dati",
+      "query-tab": "Query",
+      "stats-tab": "Statistiche",
+      "subtitle": "{{queryCount}} query con tempo totale di query di {{formatted}}",
+      "title": "Ispeziona: {{panelTitle}}"
+    },
+    "inspect-data": {
+      "data-options": "Opzioni dati",
+      "dataframe-aria-label": "Seleziona dataframe",
+      "dataframe-label": "Mostra dataframe",
+      "download-csv": "Scarica CSV",
+      "download-logs": "Scarica i registri",
+      "download-service": "Scarica il grafico del servizio",
+      "download-traces": "Scarica le tracce",
+      "excel-compatibility-mode-description": "Genera un file CSV compatibile con la maggior parte delle versioni di Excel",
+      "excel-compatibility-mode-label": "Scarica per Excel",
+      "formatted": "Dati formattati",
+      "formatted-data-description": "I dati della tabella sono formattati con le opzioni definite nelle schede Campo e Sovrascrivi.",
+      "formatted-data-label": "Dati formattati",
+      "panel-transforms": "Trasformazioni del pannello",
+      "series-to-columns": "Serie unite per tempo",
+      "transformation": "Serie unite per tempo",
+      "transformations-description": "I dati della tabella vengono visualizzati con le trasformazioni definite nella scheda Trasforma del pannello.",
+      "transformations-label": "Applica trasformazioni del pannello"
+    },
+    "inspect-json": {
+      "dataframe-description": "Dati non elaborati senza trasformazioni e configurazione del campo applicata. ",
+      "dataframe-label": "JSON del DataFrame (da Query)",
+      "panel-data-description": "Il modello non elaborato è passato alla visualizzazione del pannello",
+      "panel-data-label": "Dati del pannello",
+      "panel-json-description": "Il modello salvato nel dashboard JSON che configura il funzionamento di tutto.",
+      "panel-json-label": "JSON del pannello",
+      "panel-layout-description": "La posizione nella griglia e le dimensioni del pannello nella dashboard.",
+      "panel-layout-label": "Layout del pannello",
+      "panel-spec-label": "Specifiche del pannello",
+      "select-source": "Seleziona origine",
+      "unknown": "Oggetto sconosciuto: {{show}}"
+    },
+    "inspect-meta": {
+      "no-inspector": "Nessun ispettore di metadati"
+    },
+    "inspect-stats": {
+      "data-title": "Statistiche sull'origine dei dati",
+      "data-traceids": "ID traccia",
+      "processing-time": "Tempo di elaborazione dati",
+      "queries": "Numero di query",
+      "request-time": "Tempo totale della richiesta",
+      "rows": "Numero totale di righe",
+      "table-title": "Statistiche"
+    },
+    "k8s-dashboard-api": {
+      "title": {
+        "deleted": "eliminato"
+      }
+    },
+    "k8s-dashboard-v2api": {
+      "title": {
+        "deleted": "eliminato"
+      }
+    },
+    "kiosk": {
+      "footerPoweredBy": "Supportato da"
+    },
+    "layout": {
+      "cancel": "Annulla",
+      "common": {
+        "copy": "Copia",
+        "copy-or-duplicate": "Copia o duplica",
+        "delete": "Elimina",
+        "duplicate": "Duplica",
+        "layout": "Layout"
+      },
+      "continue": "Continua",
+      "panel": {
+        "modal": {
+          "body": "La modifica del layout reimposterà tutte le posizioni e le dimensioni dei pannelli.",
+          "confirm": "Cambia layout",
+          "dismiss": "Annulla",
+          "title": "Cambia layout"
+        }
+      },
+      "ungroup-nested-text": "Questa operazione separerà tutti i gruppi nidificati.",
+      "ungroup-nested-title": "Separare i gruppi nidificati?"
+    },
+    "legacy-dashboard-api": {
+      "fetch-error": {
+        "message": {
+          "dashboard-not-found": "Dashboard non trovata"
+        }
+      }
+    },
+    "make-editable": {
+      "dashboard-not-editable": "Dashboard non modificabile",
+      "make-editable": "Rendi modificabile"
+    },
+    "minimalistic-pagination": {
+      "page-count": "{{currentPage}} di {{numberOfPages}}",
+      "tooltip-next": "Avanti",
+      "tooltip-previous": "Precedente"
+    },
+    "new-dashboard-with-ds": {
+      "not-found": "Origine dei dati con UID \"{{datasourceUid}}\" non trovata."
+    },
+    "new-panel": {
+      "configure-button": "Configura",
+      "configure-button-menu": "Attiva/disattiva menu",
+      "empty-state-message": "Esegui una query per visualizzarlo qui o vai a tutte le visualizzazioni per aggiungere altri tipi di pannello",
+      "menu-open-panel-editor": "Configura",
+      "menu-use-library-panel": "Usa il pannello della libreria",
+      "missing-config": "Configurazione del pannello mancante",
+      "suggestions": {
+        "empty-state-message": "Esegui una query per iniziare a vedere le visualizzazioni suggerite"
+      }
+    },
+    "new-panel-title": "Nuovo pannello",
+    "on-create-new-row": {
+      "new-row": {
+        "title": {
+          "row-title": "Titolo riga"
+        }
+      }
+    },
+    "on-create-new-widget-panel": {
+      "new-panel": {
+        "title": {
+          "widget-title": "Titolo del widget"
+        }
+      }
+    },
+    "options": {
+      "description": "Descrizione",
+      "title-option": "Titolo"
+    },
+    "options-pane-category": {
+      "aria-label-collapse": "Comprimi categoria {{title}}",
+      "aria-label-expand": "Espandi categoria {{title}}"
+    },
+    "options-pane-options": {
+      "placeholder-search-options": "Opzioni di ricerca",
+      "Recent options-title-recent-options": "Opzioni recenti",
+      "title-matched_one": "{{count}} corrispondente/{{totalCount}} opzioni",
+      "title-matched_other": "{{count}} corrispondente/{{totalCount}} opzioni"
+    },
+    "outline": {
+      "pane-header": "Schema dei contenuti",
+      "repeated-item": "Ripeti",
+      "tree-item": {
+        "empty": "(vuoto)",
+        "no-title": "<nessun titolo>"
+      }
+    },
+    "override-category-title": {
+      "aria-label-remove-override": "Rimuovi sovrascrittura",
+      "tooltip-remove-override": "Rimuovi sovrascrittura"
+    },
+    "panel": {
+      "time-range-settings": {
+        "hide-time-info": "Nascondi intervallo di tempo del pannello",
+        "hide-time-info-description": "Non mostrare l'intervallo di tempo del pannello nell'intestazione del pannello",
+        "time-from": "Intervallo di tempo del pannello",
+        "time-from-description": "Sostituisce l'intervallo di tempo della dashboard. Utilizza uno dei valori preimpostati o inserisci un valore personalizzato come 5 m o 2 h.",
+        "time-shift": "Spostamento temporale",
+        "time-shift-description": "Aggiunge uno spostamento temporale relativo all'intervallo di tempo della dashboard o del pannello. Utilizza uno dei valori preimpostati o inserisci un valore personalizzato come 5 m o 2 h.",
+        "time-window-compare": "Comparazione del tempo",
+        "time-window-compare-description": "Confronta i dati tra due intervalli di tempo",
+        "title": "Impostazioni dell'ora del pannello"
+      }
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Il dashboard deve essere salvato prima di poter aggiungere avvisi.",
+        "no-rules": "Non ci sono regole di avviso collegate a questo pannello."
+      },
+      "only-overrides-button-tooltip": "Mostra solo sovrascritture",
+      "placeholder-search-options": "Opzioni di ricerca",
+      "visualization-button-tooltip": "Opzioni di ricerca"
+    },
+    "panel-editor-table-view": {
+      "title-raw-data": "Dati grezzi"
+    },
+    "panel-editor-unconnected": {
+      "editor-actions": {
+        "apply": "Applica",
+        "discard": "Rimuovi’",
+        "save": "Salva",
+        "save-library-panel": "Salva pannello della libreria",
+        "title-apply-changes-and-save-dashboard": "Applica le modifiche e salva la dashboard",
+        "title-apply-changes-and-save-library-panel": "Applica le modifiche e salva il pannello della libreria",
+        "title-apply-changes-dashboard": "Applica le modifiche e torna alla dashboard",
+        "title-undo-all-changes": "Annulla tutte le modifiche"
+      },
+      "table-view-label-table-view": "Vista tabella",
+      "title-unlink": "Scollega questo pannello da quello della libreria in modo da poterlo modificare regolarmente.",
+      "unlink": "Scollega"
+    },
+    "panel-links": {
+      "aria-label-panel-links": "Collegamenti del pannello"
+    },
+    "panel-not-supported": {
+      "go-back-to-queries": "Torna alle Query"
+    },
+    "public-dashboard-not-available": {
+      "does-not-exist": "La dashboard a cui stai tentando di accedere non esiste",
+      "paused": "Questa dashboard è stata sospesa dall'amministratore",
+      "try-again-later": "Riprova più tardi"
+    },
+    "remove-panel": {
+      "text": {
+        "remove-panel": "Vuoi davvero rimuovere questo pannello?"
+      },
+      "title": {
+        "remove-panel": "Rimuovi pannello"
+      }
+    },
+    "repeat-row-select": {
+      "variable-options": {
+        "label": {
+          "disable-repeating": "Disabilita ripetizione",
+          "no-template-variables-found": "Nessuna variabile del modello trovata"
+        }
+      }
+    },
+    "repeat-row-select2": {
+      "placeholder": "Scegli",
+      "variable-options": {
+        "label": {
+          "disable-repeating": "Disabilita ripetizione",
+          "no-template-variables-found": "Nessuna variabile del modello trovata"
+        }
+      }
+    },
+    "revert-dashboard-modal": {
+      "body-restore-version": "Desideri davvero ripristinare la dashboard alla versione {{version}}? Tutte le modifiche non salvate andranno perse.",
+      "confirmText-restore-version": "Sì, ripristina alla versione {{version}}",
+      "title-restore-version": "Ripristina versione"
+    },
+    "row-options-button": {
+      "aria-label-row-options": "Opzioni riga"
+    },
+    "row-options-form": {
+      "cancel": "Annulla",
+      "label-repeat-for": "Ripeti per",
+      "label-title": "Titolo",
+      "update": "Aggiorna"
+    },
+    "row-options-modal": {
+      "title-row-options": "Opzioni riga"
+    },
+    "rows-layout": {
+      "cancel": "Annulla",
+      "convert-to": "Converti in {{name}}",
+      "delete-row-text": "L'eliminazione di questa riga rimuoverà anche tutti i pannelli. Desideri continuare?",
+      "delete-row-title": "Elimina riga?",
+      "delete-row-yes": "Elimina",
+      "description": "Gruppi di pannelli comprimibili con intestazioni",
+      "edit": {
+        "ungroup-rows": "Annulla raggruppamento righe"
+      },
+      "header-hidden-tooltip": "Intestazione di riga visibile solo in modalità di modifica",
+      "name": "Righe",
+      "new-row-title": "Nuova riga",
+      "row": {
+        "collapse": "Riduci riga",
+        "expand": "Espandi riga",
+        "new": "Nuova riga",
+        "repeat": {
+          "learn-more": "Scopri di più",
+          "warning": "I pannelli in questa riga utilizzano l'origine dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella riga originale, non a quelli nelle righe ripetute."
+        }
+      },
+      "row-options": {
+        "repeat": {
+          "title": "Ripeti le opzioni",
+          "variable": {
+            "description": "Ripeti questa riga per ogni valore nella variabile selezionata.",
+            "title": "Ripeti per variabile"
+          }
+        },
+        "row": {
+          "fill-screen": "Riempi schermo",
+          "hide-header": "Nascondi intestazione riga",
+          "title": "Titolo"
+        },
+        "title-not-unique": "Il titolo deve essere univoco",
+        "title-option": "Titolo"
+      },
+      "row-warning": {
+        "title-not-unique": "Questo titolo non è univoco"
+      },
+      "ungroup-convert-text": "Tutte le griglie devono essere convertite nello stesso tipo e le posizioni andranno perse.",
+      "ungroup-convert-title": "Convertire le griglie miste?"
+    },
+    "save-dashboard": {
+      "message-dashboard-saved": "Dashboard salvata"
+    },
+    "save-dashboard-as-button": {
+      "save-as": "Salva con nome"
+    },
+    "save-dashboard-as-form": {
+      "aria-label-save-dashboard-button": "Pulsante Salva dashboard",
+      "aria-label-save-dashboard-description-field": "Campo descrizione Salva dashboard",
+      "aria-label-save-dashboard-title-field": "Campo titolo Salva dashboard",
+      "cancel": "Annulla",
+      "description": "Descrizione",
+      "label-copy-tags": "Copia tag",
+      "label-folder": "Cartella",
+      "save": "Salva",
+      "saving": "Salvataggio in corso...",
+      "title": "Titolo"
+    },
+    "save-dashboard-button": {
+      "save-dashboard": "Salva dashboard"
+    },
+    "save-dashboard-diff": {
+      "full-json-diff": "Differenza JSON completa",
+      "no-changes-in-the-dashboard-json": "Nessuna modifica nel JSON della dashboard",
+      "title-because-dashboard-migrated-grafana-format": "La differenza è difficile da leggere perché la dashboard è stata migrata al nuovo formato di Grafana",
+      "title-folder": "cartella"
+    },
+    "save-dashboard-drawer": {
+      "label-changes": "Modifiche",
+      "label-details": "Dettagli",
+      "title": "Salva dashboard",
+      "title-copy": "Salva copia dalla dashboard",
+      "title-provisioned": "Dashboard configurata"
+    },
+    "save-dashboard-error-proxy": {
+      "body-name-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata.<br /><2>Salvare comunque questa dashboard?</2>",
+      "body-version-mismatch": "Qualcun altro ha aggiornato questa dashboard<br /><2>Salvare comunque questa dashboard?</2>",
+      "confirmText-save-and-overwrite": "Salva e sovrascrivi",
+      "title-name-exists": "Conflitto",
+      "title-version-mismatch": "Conflitto"
+    },
+    "save-dashboard-form": {
+      "cancel": "Annulla",
+      "label-current-range-dashboard-default": "Salva l'intervallo di tempo corrente come predefinito della dashboard",
+      "label-current-variable-values-dashboard-default": "Salva i valori delle variabili correnti come predefiniti della dashboard",
+      "no-changes-to-save": "Nessuna modifica da salvare",
+      "placeholder-describe-changes": "Aggiungi una nota per descrivere le modifiche.",
+      "save": "Salva",
+      "saving": "Salvataggio in corso..."
+    },
+    "save-provisioned-dashboard-form": {
+      "cancel": "Annulla",
+      "cannot-be-saved": "Questa dashboard non può essere salvata dall'interfaccia utente di Grafana perché è stata fornita da un'altra fonte. Copia il JSON o salvalo in un file qui sotto, dopodiché potrai aggiornare la dashboard nella fonte di provisioning.",
+      "copy-json-to-clipboard": "Copia JSON negli appunti",
+      "file-path": "<strong>Percorso file:</strong> {{filePath}}",
+      "save-json-to-file": "Salva JSON nel file",
+      "see-docs": "Consulta la <2>documentazione</2> per ulteriori informazioni sul provisioning."
+    },
+    "search-panel": {
+      "no-match": ""
+    },
+    "share-public-dashboard-loader": {
+      "loading-configuration": "Caricamento configurazione"
+    },
+    "sidebar": {
+      "add": {
+        "title": "Aggiungi",
+        "tooltip": "Aggiungi nuovo elemento"
+      },
+      "dashboard-options": {
+        "title": "Opzioni",
+        "tooltip": "Opzioni della dashboard"
+      },
+      "export": {
+        "title": "Esporta"
+      },
+      "outline": {
+        "title": "Schema",
+        "tooltip": "Schema dei contenuti"
+      },
+      "redo": "Ripeti",
+      "snapshot": {
+        "tooltip": "Apri la dashboard originale"
+      },
+      "undo": "Annulla"
+    },
+    "solo-panel": {
+      "loading-initializing-dashboard": "Caricamento e inizializzazione della dashboard",
+      "title-not-found": "Pannello con ID {{panelId}} non trovato"
+    },
+    "source-link": {
+      "title": "Origine ({{provider}})",
+      "tooltip": "Visualizza il file sorgente nel repository"
+    },
+    "sub-menu-un-connected": {
+      "aria-label-template-variables": "Variabili del modello"
+    },
+    "support-snapshot-service": {
+      "description": {
+        "dashboard-troubleshoot-visualization-issues": "JSON dashboard utilizzato per risolvere i problemi di visualizzazione"
+      },
+      "label": {
+        "git-hub-comment": "Commento GitHub",
+        "panel-support-snapshot": "Snapshot di supporto del pannello"
+      },
+      "title": {
+        "copy-to-clipboard-failed": "Copia negli appunti non riuscita"
+      }
+    },
+    "tabs-layout": {
+      "delete-tab-text": "L'eliminazione di questa scheda rimuoverà anche tutti i pannelli. Desideri continuare?",
+      "delete-tab-title": "Eliminare la scheda?",
+      "delete-tab-yes": "Elimina",
+      "description": "Organizza i pannelli in schede orizzontali",
+      "edit": {
+        "ungroup-tabs": "Annulla raggruppamento schede"
+      },
+      "name": "Schede",
+      "tab": {
+        "new": "Nuova scheda",
+        "repeat": {
+          "learn-more": "Scopri di più",
+          "loading": "Caricamento ripetizioni scheda",
+          "warning": "I pannelli in questa scheda utilizzano l'origine dei dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella scheda originale, non a quelli nelle schede ripetute."
+        }
+      },
+      "tab-options": {
+        "repeat": {
+          "title": "Ripeti le opzioni",
+          "variable": {
+            "description": "Ripeti questa scheda per ogni valore nella variabile selezionata.",
+            "title": "Ripeti per variabile"
+          }
+        },
+        "title-not-unique": "Il titolo deve essere univoco",
+        "title-option": "Titolo"
+      },
+      "tab-warning": {
+        "title-not-unique": "Questo titolo non è univoco"
+      }
+    },
+    "title": {
+      "action": "Modifica il titolo della dashboard"
+    },
+    "toolbar": {
+      "add": "Aggiungi",
+      "alert-rules": "Regole di avviso",
+      "back-to-dashboard": "Torna al dashboard",
+      "dashboard-settings": {
+        "label": "Impostazioni",
+        "tooltip": "Impostazioni dashboard"
+      },
+      "discard-library-panel-changes": "Annulla le modifiche al pannello della libreria",
+      "discard-panel": "Annulla le modifiche al pannello",
+      "discard-panel-new": "Annulla il pannello",
+      "edit": {
+        "label": "Modifica",
+        "tooltip": "Entra in modalità di modifica"
+      },
+      "edit-button": {
+        "enter": "Modifica",
+        "enter-tooltip": "Entra in modalità di modifica",
+        "exit": "Esci dalla modifica",
+        "exit-tooltip": "Esci dalla modalità di modifica"
+      },
+      "enter-edit-mode": {
+        "label": "Rendi modificabile",
+        "tooltip": "Questo dashboard è stato contrassegnato come di sola lettura"
+      },
+      "exit-edit-mode": {
+        "label": "Esci dalla modifica",
+        "tooltip": "Esce dalla modalità di modifica e annulla le modifiche non salvate"
+      },
+      "mark-favorite": "Contrassegna come preferito",
+      "more-save-options": "Altre opzioni di salvataggio",
+      "new": {
+        "back-to-dashboard": "Torna alla dashboard",
+        "dashboard-settings": {
+          "tooltip": "Impostazioni dashboard"
+        },
+        "discard-library-panel-changes": "Annulla le modifiche al pannello della libreria",
+        "discard-panel": "Annulla le modifiche del pannello",
+        "discard-panel-new": "Annulla il pannello",
+        "edit-dashboard-v2-schema": {
+          "tooltip": "Modifica lo schema v2 della dashboard"
+        },
+        "enter-edit-mode": {
+          "label": "Rendi modificabile",
+          "tooltip": "Questa dashboard è stata contrassegnata come di sola lettura"
+        },
+        "export": {
+          "tooltip": {
+            "as-code": "Esporta come codice"
+          }
+        },
+        "more-save-options": "Altre opzioni di salvataggio",
+        "playlist-next": "Vai alla dashboard successiva",
+        "playlist-previous": "Vai alla dashboard precedente",
+        "playlist-stop": "Interrompi playlist",
+        "public-dashboard": "Pubblico",
+        "save-dashboard": {
+          "label": "Salva",
+          "tooltip": "Salva modifiche"
+        },
+        "save-dashboard-copy": {
+          "label": "Salva come copia",
+          "tooltip": "Salva come copia"
+        },
+        "save-dashboard-short": "Salva",
+        "save-library-panel": "Salva pannello della libreria",
+        "share": {
+          "arrow": "Condividi",
+          "title": "Condividi",
+          "tooltip": "Copia link"
+        },
+        "unlink-library-panel": "Scollega pannello della libreria"
+      },
+      "open-original": "Apri il originale",
+      "playlist-next": "Vai al dashboard successivo",
+      "playlist-previous": "Vai al dashboard precedente",
+      "playlist-stop": "Interrompi playlist",
+      "read-only": "Solo lettura",
+      "refresh": "Aggiorna dashboard",
+      "save": "Salva dashboard",
+      "save-dashboard": {
+        "label": "Salva dashboard",
+        "tooltip": "Salva modifiche"
+      },
+      "save-dashboard-copy": {
+        "label": "Salva come copia",
+        "tooltip": "Salva come copia"
+      },
+      "save-dashboard-short": "Salva",
+      "save-library-panel": "Salva pannello della libreria",
+      "settings": "Impostazioni dashboard",
+      "share-button": "Condividi",
+      "snapshot": {
+        "title": "Origine"
+      },
+      "star-add-error": "Impossibile aggiungere ai preferiti",
+      "star-added": "Elemento aggiunto ai preferiti",
+      "star-remove-error": "Impossibile rimuovere dai preferiti",
+      "star-removed": "Elemento rimosso dai preferiti",
+      "unlink-library-panel": "Scollega pannello della libreria",
+      "unmark-favorite": "Rimuovi dai preferiti"
+    },
+    "transformation-editor": {
+      "input-data": "Dati di input",
+      "output-data": "Dati di uscita",
+      "title-debug-transformation": "Esegui il debug della trasformazione"
+    },
+    "transformation-filter": {
+      "label-apply-transformation-to": "Applica la trasformazione a"
+    },
+    "transformation-operation-row": {
+      "body-delete": "Tieni presente che la rimozione di una trasformazione può interromperne altre. Se è presente una sola trasformazione, tornerai alla schermata di selezione principale.",
+      "render-actions": {
+        "confirmText-delete": "Elimina",
+        "title-debug": "Esegui il debug",
+        "title-disable-transformation": "Disabilita trasformazione",
+        "title-filter": "Filtro",
+        "title-remove": "Rimuovi",
+        "title-show-transform-help": "Mostra la guida della trasformazione"
+      },
+      "title-delete": "Eliminare {{name}}?"
+    },
+    "transformation-picker": {
+      "info": "Le trasformazioni ti consentono di unire, calcolare, riordinare, nascondere e rinominare i risultati della query prima che vengano visualizzati.",
+      "info-graph-not-suitable": "Molte trasformazioni non sono adatte se si utilizza la visualizzazione Grafico, poiché attualmente questa supporta solo i dati delle serie temporali.",
+      "info-switch-to-table": "Può essere utile passare alla visualizzazione Tabella per saperne di più su una trasformazione.",
+      "placeholder-search-for-transformation": "Cerca trasformazione",
+      "read-more": "Scopri di più",
+      "title-transformations": "Trasformazioni"
+    },
+    "transformation-picker-ng": {
+      "placeholder-search-for-transformation": "Cerca trasformazione",
+      "show-images": "Mostra immagini",
+      "sql-expressions-message-description": "Un nuovo modo per manipolare e trasformare i risultati delle query sull'origine dati utilizzando una sintassi simile a MySQL.",
+      "sql-expressions-message-link": "Scopri di più",
+      "sql-expressions-title": "Espressioni SQL",
+      "title-add-another-transformation": "Aggiungi un'altra trasformazione",
+      "view-all": "Visualizza tutto"
+    },
+    "un-theme-transformations-editor": {
+      "body-delete-all-transformations": "Eliminando tutte le trasformazioni, tornerai alla schermata di selezione principale."
+    },
+    "un-themed-transformations-editor": {
+      "actions": {
+        "add-another-transformation": "Aggiungi un'altra trasformazione"
+      },
+      "confirmText-delete-all": "Elimina tutto",
+      "delete-all-transformations": "Elimina tutte le trasformazioni",
+      "title-delete-all-transformations": "Eliminare tutte le trasformazioni?",
+      "tooltip-clear-search": "Azzera ricerca",
+      "tooltip-close-picker": "Chiudi il selettore"
+    },
+    "unsaved-changes-modal": {
+      "cancel": "Annulla",
+      "changes": "Desideri salvare le modifiche?",
+      "discard": "Rimuovi’",
+      "title-unsaved-changes": "Modifiche non salvate"
+    },
+    "untheme-dashboard-row": {
+      "dashboard-datasource": "I pannelli in questa riga utilizzano l'origine dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella riga originale, non a quelli nelle righe ripetute."
+    },
+    "unthemed-dashboard-row": {
+      "aria-label-delete-row": "Elimina riga",
+      "learn-more": "Scopri di più",
+      "title": {
+        "delete-row": "Elimina riga"
+      }
+    },
+    "validation": {
+      "invalid-dashboard-id": "Impossibile trovare un ID Grafana.com valido",
+      "invalid-json": "JSON non valido",
+      "tag-too-long": "Tag della dashboard troppo lungo, massimo 50 caratteri",
+      "tags-expected-array": "array con tag previsti",
+      "tags-expected-strings": "array di stringhe con tag previsti"
+    },
+    "variable": {
+      "description": {
+        "action": "Modifica descrizione variabile"
+      },
+      "hide": {
+        "action": "Modifica l'opzione di occultamento della variabile"
+      },
+      "label": {
+        "action": "Modifica etichetta variabile"
+      },
+      "name": {
+        "action": "Modifica nome variabile"
+      }
+    },
+    "version-history-comparison": {
+      "button-restore": "Ripristina alla versione {{version}} ",
+      "label-view-json-diff": "Visualizza differenza JSON",
+      "new-updated-by": "<strong>Versione {{version}}</strong> aggiornata da {{editor}} {{timeAgo}}",
+      "old-updated-by": "<strong>Versione {{version}}</strong> aggiornata da {{editor}} {{timeAgo}}"
+    },
+    "version-history-table": {
+      "aria-label-toggle-selection": "Toggle di selezione della versione {{version}}",
+      "date": "Data",
+      "name-latest": "Più recente",
+      "notes": "Note",
+      "restore": "Ripristina",
+      "updated-by": "Aggiornato da",
+      "version": "Versione"
+    },
+    "view-json-modal": {
+      "title-json": "JSON"
+    },
+    "view-panel": {
+      "not-found": ""
+    },
+    "visualization-button": {
+      "aria-label-change-visualization": "Cambia visualizzazione",
+      "aria-label-close": "Chiudi il riquadro delle opzioni",
+      "aria-label-show": "Mostra il riquadro delle opzioni",
+      "tooltip-click-to-change-visualization": "Fai clic per cambiare la visualizzazione",
+      "tooltip-close": "Chiudi il riquadro delle opzioni",
+      "tooltip-show": "Mostra il riquadro delle opzioni"
+    },
+    "visualization-select-pane": {
+      "placeholder-search-for": "Cerca...",
+      "radio-options": {
+        "description": {
+          "reusable-panels-share-between-multiple-dashboards": "Pannelli riutilizzabili che puoi condividere tra più dashboard."
+        },
+        "label": {
+          "library-panels": "Pannelli della libreria",
+          "suggestions": "Suggerimenti",
+          "visualizations": "Visualizzazioni"
+        }
+      },
+      "title-close": "Chiudi"
+    },
+    "viz-panel": {
+      "delete-panel-text": "L'eliminazione di questo pannello rimuoverà anche tutte le query. Desideri continuare?",
+      "delete-panel-title": "Eliminare il pannello?",
+      "delete-panel-yes": "Elimina",
+      "options": {
+        "configure-button-tooltip": "Modifica le query e le opzioni di visualizzazione",
+        "description": "Descrizione",
+        "title-option": "Titolo",
+        "transparent-background": "Sfondo trasparente"
+      }
+    }
+  },
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Carica il file JSON del dashboard",
@@ -4981,6 +6295,19 @@
     "community-mapping-select-datasource": "Seleziona un'origine dati",
     "community-search-placeholder": "Cerca dashboard della community...",
     "community-search-placeholder-with-datasource": "Cerca dashboard della community {{datasourceType}}...",
+    "compatibility-auto-map-failed": "",
+    "compatibility-badge": {
+      "check": "",
+      "check-tooltip": "",
+      "checking": "",
+      "error-text": "",
+      "error-tooltip": "",
+      "not-supported-tooltip": "",
+      "score-text": "",
+      "tooltip-green": "",
+      "tooltip-orange": "",
+      "tooltip-red": ""
+    },
     "dashboard-card": {
       "details": {
         "datasource": "Origine dati",
@@ -5020,9 +6347,6 @@
       "info-box-content": "I link del dashboard ti consentono di inserire link ad altri dashboard e siti web direttamente sotto l'intestazione del dashboard. <2>Ulteriori informazioni</2>",
       "title": "Non sono ancora stati aggiunti link al dashboard"
     }
-  },
-  "dashboard-scene-help-wizard": {
-    "support-bundle": "Puoi anche recuperare un pacchetto di supporto contenente informazioni sulla tua istanza di Grafana e sulle origini dati configurate nella <1>sezione dei pacchetti di supporto</1>."
   },
   "dashboard-scene": {
     "ad-hoc-variable-form": {
@@ -5207,8 +6531,6 @@
       "type": "Tipo"
     },
     "dashboard-preview-banner": {
-      "not-yet-saved": "Il valore non è stato salvato nel database di Grafana",
-      "title-dashboard-loaded-external-repository": "Questo dashboard viene caricato da un repository esterno",
       "title-error-loading-dashboard": "Errore durante il caricamento del dashboard"
     },
     "dashboard-scene": {
@@ -5921,6 +7243,9 @@
       "aria-label-panel-links": "Collegamenti del pannello"
     }
   },
+  "dashboard-scene-help-wizard": {
+    "support-bundle": "Puoi anche recuperare un pacchetto di supporto contenente informazioni sulla tua istanza di Grafana e sulle origini dati configurate nella <1>sezione dei pacchetti di supporto</1>."
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotazioni"
@@ -5989,1277 +7314,14 @@
       "title": "Versioni"
     }
   },
-  "dashboard": {
-    "actions": {
-      "open-settings": "Impostazioni"
-    },
-    "add": {
-      "new-panel": {
-        "button": "Pulsante Aggiungi nuovo pannello",
-        "description": "Trascina o fai clic per aggiungere un pannello",
-        "title": "Pannello"
-      },
-      "pane-header": "Aggiungi"
-    },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Chiudi il widget \"Aggiungi pannello\"",
-      "tooltip-close-widget": "Chiudi widget"
-    },
-    "add-menu": {
-      "import": "Importa dalla libreria",
-      "paste-panel": "Incolla pannello",
-      "row": "Riga",
-      "visualization": "Visualizzazione"
-    },
-    "alert-rules-drawer": {
-      "redirect-link": "Elenco in Grafana Alerting",
-      "subtitle": "Regole di avviso relative a questo dashboard"
-    },
-    "annotation-settings-edit": {
-      "apply": "Applica",
-      "delete": "Elimina",
-      "description-color-annotation-event-markers": "Colore da utilizzare per gli indicatori degli eventi di annotazione",
-      "description-enabled-annotation-query-issued-every-dashboard": "Se abilitata, la query di annotazione viene emessa a ogni aggiornamento della dashboard",
-      "description-hidden": "Le query di annotazione possono essere attivate o disattivate nella parte superiore della dashboard. Se questa opzione è selezionata, il toggle verrà nascosto.",
-      "label-color": "Colore",
-      "label-data-source": "Sorgente dati",
-      "label-enabled": "Abilitato",
-      "label-hidden": "Nascosto",
-      "label-name": "Nome",
-      "label-show-in": "Mostra in",
-      "placeholder-choose-panels": "Scegli i pannelli",
-      "preview-in-dashboard": "Anteprima nella dashboard",
-      "query": "Query",
-      "title-annotation-support-source": "Nessun supporto per le annotazioni per questa origine di dati"
-    },
-    "annotation-settings-list": {
-      "aria-label-delete": "Elimina la query con il titolo \"{{title}}\"",
-      "built-in": "{{name}} (Integrato)",
-      "data-source": "Sorgente dati",
-      "disabled": "{{name}} (Disabilitato)",
-      "new-query": "Nuova query",
-      "query-name": "Nome query",
-      "tooltip-move-down": "Sposta in basso",
-      "tooltip-move-up": "Sposta in alto"
-    },
-    "auto-grid": {
-      "description": "I pannelli si ridimensionano per adattarsi e formare griglie uniformi",
-      "item-options": {
-        "repeat": {
-          "title": "Ripeti le opzioni",
-          "variable": {
-            "description": "Ripeti questo pannello per ogni valore nella variabile selezionata. Questo non è visibile in modalità di modifica. È necessario tornare al dashboard e quindi aggiornare la variabile o ricaricare il dashboard.",
-            "title": "Ripeti per variabile"
-          }
-        }
-      },
-      "name": "Griglia automatica",
-      "options": {
-        "custom-min-height": {
-          "clear": "Cancella"
-        },
-        "custom-min-width": {
-          "clear": "Cancella"
-        },
-        "height-fill": "Riempi schermo",
-        "max-columns": "Colonne massime",
-        "min-height": "Altezza riga",
-        "min-height-custom": "Altezza riga personalizzata",
-        "min-height-error": "È richiesto un numero compreso tra 50 e 2.000",
-        "min-width": "Larghezza minima colonna",
-        "min-width-custom": "Larghezza minima personalizzata",
-        "min-width-custom-clear": "Torna alla larghezza minima standard della colonna",
-        "min-width-error": "È richiesto un numero compreso tra 50 e 2.000"
-      }
-    },
-    "canvas-actions": {
-      "add-panel": "Aggiungi pannello",
-      "disabled-child-contains-tabs": "Impossibile passare alle schede perché una riga contiene già schede",
-      "disabled-nested-grouping": "Il raggruppamento è limitato a 2 livelli",
-      "disabled-nested-tabs": "Le schede non possono essere nidificate all'interno di altre schede",
-      "group-into-row": "Raggruppa in riga",
-      "group-into-tab": "Raggruppa in scheda",
-      "group-panels": "Raggruppa pannelli",
-      "new-row": "Nuova riga",
-      "new-tab": "Nuova scheda",
-      "paste-panel": "Incolla pannello",
-      "paste-row": "Incolla riga",
-      "paste-tab": "Incolla scheda",
-      "ungroup-rows": "Annulla raggruppamento righe",
-      "ungroup-tabs": "Annulla raggruppamento schede"
-    },
-    "conditional-rendering": {
-      "conditions": {
-        "data": {
-          "disable": "Nessun dato",
-          "enable": "Dati disponibili",
-          "info": "Mostra o nascondi {{type}} in base ai risultati della query.",
-          "label": "Risultato query"
-        },
-        "group": {
-          "add": {
-            "button": "Aggiungi regola",
-            "data": "Risultato query",
-            "time-range-size": "Intervallo di tempo inferiore a",
-            "variable": "Variabile del modello"
-          },
-          "condition": {
-            "all": "Abbina tutto",
-            "any": "Abbina qualsiasi",
-            "label": "Regole di corrispondenza"
-          },
-          "visibility": {
-            "hide": "Nascondi",
-            "label": "{{type}} visibilità",
-            "show": "Mostra"
-          }
-        },
-        "time-range-size": {
-          "info": "Mostra o nascondi {{type}} se l'intervallo di tempo della dashboard è inferiore al fotogramma orario selezionato.",
-          "invalid-message": "Intervallo non valido",
-          "label": "Intervallo di tempo inferiore a",
-          "values": {
-            "days": "{{value}} giorni",
-            "hour": "{{value}} ora",
-            "hours": "{{value}} ore",
-            "minutes": "{{value}} minuti",
-            "months": "{{value}} mesi",
-            "year": "{{value}} anno",
-            "years": "{{value}} anni"
-          }
-        },
-        "variable": {
-          "error": {
-            "invalid-regex": "Regex non valida"
-          },
-          "info": "Mostra o nascondi {{type}} dinamicamente in base al valore della variabile.",
-          "label": "Variabile del modello",
-          "name": "Nome",
-          "operator": {
-            "equals": "Uguale",
-            "matches": "Corrispondenze",
-            "not-equals": "Non uguale",
-            "not-matches": "Nessuna corrispondenza"
-          },
-          "value": "Valore"
-        },
-        "wrapper": {
-          "delete-condition": "Elimina condizione",
-          "unsupported-object-type": "Questa condizione non è supportata dall'elemento, quindi verrà ignorata."
-        }
-      },
-      "editor": {
-        "info": "Imposta le regole per controllare la visibilità del {{type}} abbinando una o tutte le regole.",
-        "learn-more": "Scopri di più",
-        "not-supported-for-custom-grid": "Le regole Mostra/Nascondi non sono supportate per i pannelli nel layout del pannello Personalizzato. Modifica il layout del pannello in Griglia automatica per abilitare questa funzione.",
-        "unsupported-object-type": "Rendering condizionale non supportato per questo tipo di elemento"
-      },
-      "overlay": {
-        "tooltip": "L'elemento è nascosto dalle regole Mostra/Nascondi."
-      },
-      "root": {
-        "title": "Mostra/nascondi regole"
-      }
-    },
-    "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "Le modifiche andranno perse quando aggiornerai il plug-in.<br /><2>Utilizza <strong>Salva con nome</strong> per creare una versione personalizzata.</2>",
-      "cancel": "Annulla",
-      "overwrite": "Sovrascrivi",
-      "title-plugin-dashboard": "Dashboard del componente aggiuntivo"
-    },
-    "controls": {
-      "menu": {
-        "aria-label": "",
-        "title": ""
-      }
-    },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Procedi"
-        },
-        "title": {
-          "proceed-to-external-site": "Procedere al sito esterno?"
-        }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Visualizza come Scena"
-      }
-    },
-    "dashboard-links-menu": {
-      "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
-      "label-no-dashboards-found": "Nessuna dashboard trovata"
-    },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Annulla caricamento della dashboard"
-    },
-    "dashboard-page-error": {
-      "text": {
-        "not-found": "Non trovato"
-      }
-    },
-    "dashboard-settings": {
-      "actions": {
-        "close": "Chiudi"
-      }
-    },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "Inizializzazione dashboard non riuscita"
-      }
-    },
-    "dashboard-srv": {
-      "message": {
-        "edit-dashboard-json": "Modifica JSON dashboard"
-      }
-    },
-    "default-layout": {
-      "description": "Posiziona e ridimensiona ogni pannello singolarmente",
-      "item-options": {
-        "repeat": {
-          "direction": {
-            "horizontal": "Orizzontale",
-            "title": "Ripeti la direzione",
-            "vertical": "Verticale"
-          },
-          "max": "Max per riga",
-          "title": "Ripeti le opzioni",
-          "variable": {
-            "description": "Ripeti questo pannello per ogni valore nella variabile selezionata. Questo non è visibile in modalità di modifica. È necessario tornare al dashboard e quindi aggiornare la variabile o ricaricare il dashboard.",
-            "title": "Ripeti per variabile"
-          }
-        }
-      },
-      "name": "Personalizzazione",
-      "row-actions": {
-        "delete": "Elimina riga",
-        "modal": {
-          "alt-action": "Elimina solo la riga",
-          "text": "Vuoi davvero rimuovere questa riga e tutti i suoi pannelli?",
-          "title": "Elimina riga"
-        }
-      },
-      "row-options": {
-        "button": {
-          "label": "Opzioni riga"
-        },
-        "form": {
-          "cancel": "Annulla",
-          "repeat-for": {
-            "label": "Ripeti per",
-            "learn-more": "Scopri di più",
-            "warning": {
-              "text": "I pannelli in questa riga utilizzano l'origine dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella riga originale, non a quelli nelle righe ripetute."
-            }
-          },
-          "title": "Titolo",
-          "update": "Aggiorna"
-        },
-        "modal": {
-          "title": "Opzioni riga"
-        },
-        "repeat": {
-          "title": "Ripeti le opzioni",
-          "variable": {
-            "title": "Variabile"
-          }
-        },
-        "title": "Opzioni riga"
-      }
-    },
-    "description": {
-      "action": "Modifica la descrizione della dashboard"
-    },
-    "dynamic-config-value-editor": {
-      "render-label": {
-        "tooltip-remove-property": "Rimuovi proprietà"
-      }
-    },
-    "edit-actions": {
-      "add": "Aggiungi {{typeName}}",
-      "add-conditional-rule": "Aggiungi regola {{ruleDescription}}",
-      "duplicate-panel": "Duplica pannello",
-      "edit-query-result-rule": "Modifica regola del risultato della query",
-      "edit-template-variable-rule": "Modifica la regola della variabile del modello",
-      "edit-time-range-rule": "Modifica regola intervallo di tempo",
-      "move": "Sposta {{typeName}}",
-      "panel-background": "Modifica lo sfondo del pannello",
-      "panel-description": "Modifica la descrizione del pannello",
-      "panel-edit": "Modifiche al pannello",
-      "panel-max-repeats-per-row": "Ripetizioni massime per riga",
-      "panel-repeat-direction": "Ripeti la direzione",
-      "panel-repeat-variable": "Ripetizione del pannello per",
-      "panel-title": "Modifica il titolo del pannello",
-      "paste-panel": "Incolla pannello",
-      "remove": "Rimuovi {{typeName}}",
-      "row-title": "Modifica il titolo riga",
-      "switch-layout": "Cambia layout",
-      "switch-layout-row": "Cambia layout",
-      "switch-layout-tab": "Cambia layout",
-      "tab-title": "Modifica il titolo della scheda"
-    },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "",
-        "choose-panels": "",
-        "color": "",
-        "color-description": "",
-        "data-source": "",
-        "display": "",
-        "display-options": {
-          "above-dashboard": "",
-          "controls-menu": "",
-          "controls-menu-description": "",
-          "hidden": "",
-          "hidden-description": ""
-        },
-        "enabled": "",
-        "enabled-description": "",
-        "name": "",
-        "open-query-editor": "",
-        "open-query-editor-tooltip": "",
-        "panel-filter": {
-          "all-panels": "",
-          "all-panels-description": "",
-          "all-panels-except": "",
-          "all-panels-except-description": "",
-          "selected-panels": "",
-          "selected-panels-description": ""
-        },
-        "query": "",
-        "query-editor-close": "",
-        "query-editor-modal-title": "",
-        "show-in": ""
-      },
-      "annotations": {
-        "add-annotation": "",
-        "reorder": "",
-        "select-annotation": ""
-      },
-      "elements": {
-        "annotation": "",
-        "annotation-set": "",
-        "dashboard": "Dashboard",
-        "element": "Elemento",
-        "local-variable": "Variabile locale",
-        "multiple-elements": "Elementi multipli",
-        "multiple-elements-delete-text": "Desideri davvero eliminare questi elementi?",
-        "multiple-panels": "Pannelli multipli",
-        "multiple-panels-delete-text": "Desideri davvero eliminare questi pannelli? Tutte le query saranno rimosse.",
-        "objects": "Oggetti",
-        "panel": "Pannello",
-        "panels": "Pannelli",
-        "row": "Riga",
-        "rows": "Righe",
-        "tab": "Scheda",
-        "tabs": "Schede",
-        "variable": "{{type}} variabile",
-        "variable-set": "Variabili"
-      },
-      "row": {
-        "header": {
-          "hide": "Nascondi",
-          "title": "Intestazione di riga"
-        }
-      },
-      "variable": {
-        "custom-options": {
-          "apply": "Applica",
-          "change-value": "Modifica il valore variabile",
-          "discard": "Annulla",
-          "modal-title": "",
-          "values": "Valori separati da virgola"
-        },
-        "datasource-options": {
-          "name-filter": "Filtro nome",
-          "name-filter-description": "Filtro Regex per le istanze dell'origine dei dati da includere. Lascia vuoto per tutti.",
-          "name-filter-placeholder": "Esempio: /^prod/",
-          "type": "Tipo",
-          "type-placeholder": "Scegli un tipo di sorgente dati"
-        },
-        "description": "Descrizione",
-        "description-placeholder": "Testo descrittivo",
-        "label": "Etichetta",
-        "label-description": "Nome visualizzato facoltativo",
-        "name": "Nome",
-        "open-editor": "Apri l'editor delle variabili",
-        "open-editor-tooltip": "Per ulteriori opzioni sulle variabili, apri l'editor delle variabili",
-        "query-options": {
-          "close": "Chiudi",
-          "modal-title": "Query variabile",
-          "preview": "Anteprima"
-        },
-        "selection-options": {
-          "allow-custom-values": "Consenti valori personalizzati",
-          "allow-custom-values-description": "Consente agli utenti di inserire valori",
-          "category": "Seleziona opzioni",
-          "custom-all-value": "Personalizza tutti i valori",
-          "custom-all-value-description": "Un'espressione regolare con carattere jolly o un altro valore che sta per Tutti",
-          "include-all": "Includi tutti i valori",
-          "include-all-description": "Abilita una singola opzione che rappresenta tutti i valori",
-          "multi-value": "Valori multipli"
-        },
-        "type-category": "Opzioni di {{type}}"
-      },
-      "variables": {
-        "add-variable": "Aggiungi variabile",
-        "reorder": "",
-        "select-type": "Scegli il tipo di variabile",
-        "select-type-card-tooltip": "Fai clic per selezionare il tipo",
-        "select-variable": "Seleziona"
-      }
-    },
-    "empty": {
-      "add-library-panel-body": "Aggiungi visualizzazioni condivise con altri dashboard.",
-      "add-library-panel-button": "Aggiungi pannello della libreria",
-      "add-library-panel-header": "Importa pannello",
-      "add-visualization-body": "Seleziona un'origine dati, quindi esegui query e visualizza i dati con grafici, statistiche e tabelle o crea elenchi, markdown e altri widget.",
-      "add-visualization-button": "Aggiungi visualizzazione",
-      "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
-      "description": "Aggiungi un pannello per visualizzare i tuoi dati",
-      "import-a-dashboard-body": "Importa dashboard da file o <2>grafana.com</2>.",
-      "import-a-dashboard-header": "Importa un dashboard",
-      "import-dashboard-button": "Importa dashboard",
-      "show-less-dashboards": "Mostra meno",
-      "show-more-dashboards": "Mostra di più",
-      "start-with-suggested-dashboards": "Inizia con una dashboard predefinita dalla tua origine dei dati",
-      "title": "Nuova dashboard",
-      "use-template-button": "Usa questa dashboard"
-    },
-    "errors": {
-      "failed-to-load": "Impossibile caricare il dashboard"
-    },
-    "export": {
-      "button": {
-        "label": "Esporta dashboard"
-      },
-      "menu": {
-        "label": "Esporta menu dashboard"
-      }
-    },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Impossibile recuperare la dashboard"
-      }
-    },
-    "gen-aihistory": {
-      "aria-label-send-custom-feedback": "Invia feedback personalizzato",
-      "footer-text": "Questo contenuto è generato dall'IA utilizzando il <2>componente aggiuntivo Grafana LLM</2>",
-      "placeholder-tell-ai-what-to-do-next": "Di' all'IA cosa fare dopo..."
-    },
-    "general-settings-unconnected": {
-      "editable-options": {
-        "label": {
-          "editable": "Modificabile",
-          "readonly": "Sola lettura"
-        }
-      },
-      "graph_tooltip_options": {
-        "label": {
-          "default": "Predefinito",
-          "shared-crosshair": "Mirino condiviso",
-          "shared-tooltip": "Suggerimento condiviso"
-        }
-      }
-    },
-    "get-debug-dashboard": {
-      "title": {
-        "annotations": "Annotazioni"
-      }
-    },
-    "get-errors": {
-      "message": {
-        "error-loading-data": "Errore durante il caricamento dei dati"
-      }
-    },
-    "get-field-override-categories": {
-      "label-add-field-override": "Aggiungi sovrascrittura campo",
-      "label-add-override-property": "Aggiungi proprietà di sovrascrittura",
-      "override-name": "Sovrascrivi {{overrideNum}}",
-      "title": {
-        "add-button": "aggiungi pulsante"
-      }
-    },
-    "get-library-panel-options-category": {
-      "descriptor": {
-        "title": {
-          "library-panel-options": "Opzioni del pannello della libreria"
-        }
-      },
-      "title": {
-        "information": "Informazioni",
-        "name": "Nome"
-      }
-    },
-    "get-library-viz-panel-options-category": {
-      "descriptor": {
-        "title": {
-          "library-panel-options": "Opzioni del pannello della libreria"
-        }
-      },
-      "title": {
-        "information": "Informazioni",
-        "name": "Nome"
-      }
-    },
-    "get-panel-editor-tabs": {
-      "text": {
-        "alert": "Avviso",
-        "query": "Query",
-        "transform-data": "Trasforma dati"
-      }
-    },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "Non inviare dati di annotazione ai seguenti pannelli",
-        "annotation-panels-support-annotations": "Invia i dati di annotazione a tutti i pannelli che supportano le annotazioni",
-        "annotations-explicitly-listed-panels": "Invia le annotazioni ai pannelli elencati esplicitamente"
-      },
-      "label": {
-        "all-panels": "Tutti i pannelli",
-        "all-panels-except": "Tutti i pannelli tranne",
-        "selected-panels": "Pannelli selezionati"
-      }
-    },
-    "get-panel-frame-category": {
-      "descriptor": {
-        "title": {
-          "panel-options": "Opzioni pannello"
-        }
-      },
-      "direction-options": {
-        "label": {
-          "horizontal": "Orizzontale",
-          "vertical": "Verticale"
-        }
-      },
-      "title": {
-        "description": "Descrizione",
-        "max-per-row": "Max per riga",
-        "panel-links": "Collegamenti del pannello",
-        "repeat-by-variable": "Ripeti per variabile",
-        "repeat-direction": "Ripeti la direzione",
-        "repeat-options": "Ripeti le opzioni",
-        "title": "Titolo",
-        "transparent-background": "Sfondo trasparente"
-      }
-    },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "Estensioni"
-      }
-    },
-    "help-wizard": {
-      "copy-to-clipboard": "Copia negli appunti",
-      "description-obfuscate-data": "Modifica i dati originali per nascondere le informazioni sensibili.  Nota che le lunghezze rimarranno le stesse e i valori duplicati saranno uguali.",
-      "description-support-snapshot": "Pannello: {{panelTitle}}",
-      "download-snapshot": "Download ({{snapshotSize}})",
-      "label-obfuscate-data": "Offusca dati",
-      "label-support-snapshot": "Snapshot di supporto",
-      "label-template": "Modello",
-      "randomize-field-names-label-field-names": "Nomi campi",
-      "randomize-labels-label-labels": "Etichette",
-      "randomize-string-values-label-string-values": "Valori stringa",
-      "tabs": {
-        "label": {
-          "data": "Data",
-          "snapshot": "Istantanea"
-        }
-      },
-      "title-complete-git-hub-comment-clipboard": "Copia un commento completo di GitHub negli appunti",
-      "title-get-help-with-this-panel": "Ottieni assistenza per questo pannello",
-      "troubleshooting-docs": "Documenti per la risoluzione dei problemi"
-    },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Creazione del modello di dashboard non riuscita"
-      }
-    },
-    "inspect": {
-      "data-tab": "Data",
-      "error-tab": "Errore",
-      "json-tab": "JSON",
-      "meta-tab": "Meta dati",
-      "query-tab": "Query",
-      "stats-tab": "Statistiche",
-      "subtitle": "{{queryCount}} query con tempo totale di query di {{formatted}}",
-      "title": "Ispeziona: {{panelTitle}}"
-    },
-    "inspect-data": {
-      "data-options": "Opzioni dati",
-      "dataframe-aria-label": "Seleziona dataframe",
-      "dataframe-label": "Mostra dataframe",
-      "download-csv": "Scarica CSV",
-      "download-logs": "Scarica i registri",
-      "download-service": "Scarica il grafico del servizio",
-      "download-traces": "Scarica le tracce",
-      "excel-compatibility-mode-description": "Genera un file CSV compatibile con la maggior parte delle versioni di Excel",
-      "excel-compatibility-mode-label": "Scarica per Excel",
-      "formatted": "Dati formattati",
-      "formatted-data-description": "I dati della tabella sono formattati con le opzioni definite nelle schede Campo e Sovrascrivi.",
-      "formatted-data-label": "Dati formattati",
-      "panel-transforms": "Trasformazioni del pannello",
-      "series-to-columns": "Serie unite per tempo",
-      "transformation": "Serie unite per tempo",
-      "transformations-description": "I dati della tabella vengono visualizzati con le trasformazioni definite nella scheda Trasforma del pannello.",
-      "transformations-label": "Applica trasformazioni del pannello"
-    },
-    "inspect-json": {
-      "dataframe-description": "Dati non elaborati senza trasformazioni e configurazione del campo applicata. ",
-      "dataframe-label": "JSON del DataFrame (da Query)",
-      "panel-data-description": "Il modello non elaborato è passato alla visualizzazione del pannello",
-      "panel-data-label": "Dati del pannello",
-      "panel-json-description": "Il modello salvato nel dashboard JSON che configura il funzionamento di tutto.",
-      "panel-json-label": "JSON del pannello",
-      "panel-layout-description": "La posizione nella griglia e le dimensioni del pannello nella dashboard.",
-      "panel-layout-label": "Layout del pannello",
-      "panel-spec-label": "Specifiche del pannello",
-      "select-source": "Seleziona origine",
-      "unknown": "Oggetto sconosciuto: {{show}}"
-    },
-    "inspect-meta": {
-      "no-inspector": "Nessun ispettore di metadati"
-    },
-    "inspect-stats": {
-      "data-title": "Statistiche sull'origine dei dati",
-      "data-traceids": "ID traccia",
-      "processing-time": "Tempo di elaborazione dati",
-      "queries": "Numero di query",
-      "request-time": "Tempo totale della richiesta",
-      "rows": "Numero totale di righe",
-      "table-title": "Statistiche"
-    },
-    "k8s-dashboard-api": {
-      "title": {
-        "deleted": "eliminato"
-      }
-    },
-    "k8s-dashboard-v2api": {
-      "title": {
-        "deleted": "eliminato"
-      }
-    },
-    "kiosk": {
-      "footerPoweredBy": "Supportato da"
-    },
-    "layout": {
-      "cancel": "Annulla",
-      "common": {
-        "copy": "Copia",
-        "copy-or-duplicate": "Copia o duplica",
-        "delete": "Elimina",
-        "duplicate": "Duplica",
-        "layout": "Layout"
-      },
-      "continue": "Continua",
-      "panel": {
-        "modal": {
-          "body": "La modifica del layout reimposterà tutte le posizioni e le dimensioni dei pannelli.",
-          "confirm": "Cambia layout",
-          "dismiss": "Annulla",
-          "title": "Cambia layout"
-        }
-      },
-      "ungroup-nested-text": "Questa operazione separerà tutti i gruppi nidificati.",
-      "ungroup-nested-title": "Separare i gruppi nidificati?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard non trovata"
-        }
-      }
-    },
-    "make-editable": {
-      "dashboard-not-editable": "Dashboard non modificabile",
-      "make-editable": "Rendi modificabile"
-    },
-    "minimalistic-pagination": {
-      "page-count": "{{currentPage}} di {{numberOfPages}}",
-      "tooltip-next": "Avanti",
-      "tooltip-previous": "Precedente"
-    },
-    "new-dashboard-with-ds": {
-      "not-found": "Origine dei dati con UID \"{{datasourceUid}}\" non trovata."
-    },
-    "new-panel": {
-      "configure-button": "Configura",
-      "configure-button-menu": "Attiva/disattiva menu",
-      "empty-state-message": "Esegui una query per visualizzarlo qui o vai a tutte le visualizzazioni per aggiungere altri tipi di pannello",
-      "menu-open-panel-editor": "Configura",
-      "menu-use-library-panel": "Usa il pannello della libreria",
-      "missing-config": "Configurazione del pannello mancante",
-      "suggestions": {
-        "empty-state-message": "Esegui una query per iniziare a vedere le visualizzazioni suggerite"
-      }
-    },
-    "new-panel-title": "Nuovo pannello",
-    "on-create-new-row": {
-      "new-row": {
-        "title": {
-          "row-title": "Titolo riga"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Titolo del widget"
-        }
-      }
-    },
-    "options": {
-      "description": "Descrizione",
-      "title-option": "Titolo"
-    },
-    "options-pane-category": {
-      "aria-label-collapse": "Comprimi categoria {{title}}",
-      "aria-label-expand": "Espandi categoria {{title}}"
-    },
-    "options-pane-options": {
-      "Recent options-title-recent-options": "Opzioni recenti",
-      "placeholder-search-options": "Opzioni di ricerca",
-      "title-matched_one": "{{count}} corrispondente/{{totalCount}} opzioni",
-      "title-matched_other": "{{count}} corrispondente/{{totalCount}} opzioni"
-    },
-    "outline": {
-      "pane-header": "Schema dei contenuti",
-      "repeated-item": "Ripeti",
-      "tree-item": {
-        "empty": "(vuoto)",
-        "no-title": "<nessun titolo>"
-      }
-    },
-    "override-category-title": {
-      "aria-label-remove-override": "Rimuovi sovrascrittura",
-      "tooltip-remove-override": "Rimuovi sovrascrittura"
-    },
-    "panel": {
-      "time-range-settings": {
-        "hide-time-info": "Nascondi intervallo di tempo del pannello",
-        "hide-time-info-description": "Non mostrare l'intervallo di tempo del pannello nell'intestazione del pannello",
-        "time-from": "Intervallo di tempo del pannello",
-        "time-from-description": "Sostituisce l'intervallo di tempo della dashboard. Utilizza uno dei valori preimpostati o inserisci un valore personalizzato come 5 m o 2 h.",
-        "time-shift": "Spostamento temporale",
-        "time-shift-description": "Aggiunge uno spostamento temporale relativo all'intervallo di tempo della dashboard o del pannello. Utilizza uno dei valori preimpostati o inserisci un valore personalizzato come 5 m o 2 h.",
-        "time-window-compare": "Comparazione del tempo",
-        "time-window-compare-description": "Confronta i dati tra due intervalli di tempo",
-        "title": "Impostazioni dell'ora del pannello"
-      }
-    },
-    "panel-edit": {
-      "alerting-tab": {
-        "dashboard-not-saved": "Il dashboard deve essere salvato prima di poter aggiungere avvisi.",
-        "no-rules": "Non ci sono regole di avviso collegate a questo pannello."
-      },
-      "only-overrides-button-tooltip": "Mostra solo sovrascritture",
-      "placeholder-search-options": "Opzioni di ricerca",
-      "visualization-button-tooltip": "Opzioni di ricerca"
-    },
-    "panel-editor-table-view": {
-      "title-raw-data": "Dati grezzi"
-    },
-    "panel-editor-unconnected": {
-      "editor-actions": {
-        "apply": "Applica",
-        "discard": "Rimuovi’",
-        "save": "Salva",
-        "save-library-panel": "Salva pannello della libreria",
-        "title-apply-changes-and-save-dashboard": "Applica le modifiche e salva la dashboard",
-        "title-apply-changes-and-save-library-panel": "Applica le modifiche e salva il pannello della libreria",
-        "title-apply-changes-dashboard": "Applica le modifiche e torna alla dashboard",
-        "title-undo-all-changes": "Annulla tutte le modifiche"
-      },
-      "table-view-label-table-view": "Vista tabella",
-      "title-unlink": "Scollega questo pannello da quello della libreria in modo da poterlo modificare regolarmente.",
-      "unlink": "Scollega"
-    },
-    "panel-links": {
-      "aria-label-panel-links": "Collegamenti del pannello"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Torna alle Query"
-    },
-    "public-dashboard-not-available": {
-      "does-not-exist": "La dashboard a cui stai tentando di accedere non esiste",
-      "paused": "Questa dashboard è stata sospesa dall'amministratore",
-      "try-again-later": "Riprova più tardi"
-    },
-    "remove-panel": {
-      "text": {
-        "remove-panel": "Vuoi davvero rimuovere questo pannello?"
-      },
-      "title": {
-        "remove-panel": "Rimuovi pannello"
-      }
-    },
-    "repeat-row-select": {
-      "variable-options": {
-        "label": {
-          "disable-repeating": "Disabilita ripetizione",
-          "no-template-variables-found": "Nessuna variabile del modello trovata"
-        }
-      }
-    },
-    "repeat-row-select2": {
-      "placeholder": "Scegli",
-      "variable-options": {
-        "label": {
-          "disable-repeating": "Disabilita ripetizione",
-          "no-template-variables-found": "Nessuna variabile del modello trovata"
-        }
-      }
-    },
-    "revert-dashboard-modal": {
-      "body-restore-version": "Desideri davvero ripristinare la dashboard alla versione {{version}}? Tutte le modifiche non salvate andranno perse.",
-      "confirmText-restore-version": "Sì, ripristina alla versione {{version}}",
-      "title-restore-version": "Ripristina versione"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Opzioni riga"
-    },
-    "row-options-form": {
-      "cancel": "Annulla",
-      "label-repeat-for": "Ripeti per",
-      "label-title": "Titolo",
-      "update": "Aggiorna"
-    },
-    "row-options-modal": {
-      "title-row-options": "Opzioni riga"
-    },
-    "rows-layout": {
-      "cancel": "Annulla",
-      "convert-to": "Converti in {{name}}",
-      "delete-row-text": "L'eliminazione di questa riga rimuoverà anche tutti i pannelli. Desideri continuare?",
-      "delete-row-title": "Elimina riga?",
-      "delete-row-yes": "Elimina",
-      "description": "Gruppi di pannelli comprimibili con intestazioni",
-      "edit": {
-        "ungroup-rows": "Annulla raggruppamento righe"
-      },
-      "header-hidden-tooltip": "Intestazione di riga visibile solo in modalità di modifica",
-      "name": "Righe",
-      "new-row-title": "Nuova riga",
-      "row": {
-        "collapse": "Riduci riga",
-        "expand": "Espandi riga",
-        "new": "Nuova riga",
-        "repeat": {
-          "learn-more": "Scopri di più",
-          "warning": "I pannelli in questa riga utilizzano l'origine dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella riga originale, non a quelli nelle righe ripetute."
-        }
-      },
-      "row-options": {
-        "repeat": {
-          "title": "Ripeti le opzioni",
-          "variable": {
-            "description": "Ripeti questa riga per ogni valore nella variabile selezionata.",
-            "title": "Ripeti per variabile"
-          }
-        },
-        "row": {
-          "fill-screen": "Riempi schermo",
-          "hide-header": "Nascondi intestazione riga",
-          "title": "Titolo"
-        },
-        "title-not-unique": "Il titolo deve essere univoco",
-        "title-option": "Titolo"
-      },
-      "row-warning": {
-        "title-not-unique": "Questo titolo non è univoco"
-      },
-      "ungroup-convert-text": "Tutte le griglie devono essere convertite nello stesso tipo e le posizioni andranno perse.",
-      "ungroup-convert-title": "Convertire le griglie miste?"
-    },
-    "save-dashboard": {
-      "message-dashboard-saved": "Dashboard salvata"
-    },
-    "save-dashboard-as-button": {
-      "save-as": "Salva con nome"
-    },
-    "save-dashboard-as-form": {
-      "aria-label-save-dashboard-button": "Pulsante Salva dashboard",
-      "aria-label-save-dashboard-description-field": "Campo descrizione Salva dashboard",
-      "aria-label-save-dashboard-title-field": "Campo titolo Salva dashboard",
-      "cancel": "Annulla",
-      "description": "Descrizione",
-      "label-copy-tags": "Copia tag",
-      "label-folder": "Cartella",
-      "save": "Salva",
-      "saving": "Salvataggio in corso...",
-      "title": "Titolo"
-    },
-    "save-dashboard-button": {
-      "save-dashboard": "Salva dashboard"
-    },
-    "save-dashboard-diff": {
-      "full-json-diff": "Differenza JSON completa",
-      "no-changes-in-the-dashboard-json": "Nessuna modifica nel JSON della dashboard",
-      "title-because-dashboard-migrated-grafana-format": "La differenza è difficile da leggere perché la dashboard è stata migrata al nuovo formato di Grafana",
-      "title-folder": "cartella"
-    },
-    "save-dashboard-drawer": {
-      "label-changes": "Modifiche",
-      "label-details": "Dettagli",
-      "title": "Salva dashboard",
-      "title-copy": "Salva copia dalla dashboard",
-      "title-provisioned": "Dashboard configurata"
-    },
-    "save-dashboard-error-proxy": {
-      "body-name-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata.<br /><2>Salvare comunque questa dashboard?</2>",
-      "body-version-mismatch": "Qualcun altro ha aggiornato questa dashboard<br /><2>Salvare comunque questa dashboard?</2>",
-      "confirmText-save-and-overwrite": "Salva e sovrascrivi",
-      "title-name-exists": "Conflitto",
-      "title-version-mismatch": "Conflitto"
-    },
-    "save-dashboard-form": {
-      "cancel": "Annulla",
-      "label-current-range-dashboard-default": "Salva l'intervallo di tempo corrente come predefinito della dashboard",
-      "label-current-variable-values-dashboard-default": "Salva i valori delle variabili correnti come predefiniti della dashboard",
-      "no-changes-to-save": "Nessuna modifica da salvare",
-      "placeholder-describe-changes": "Aggiungi una nota per descrivere le modifiche.",
-      "save": "Salva",
-      "saving": "Salvataggio in corso..."
-    },
-    "save-provisioned-dashboard-form": {
-      "cancel": "Annulla",
-      "cannot-be-saved": "Questa dashboard non può essere salvata dall'interfaccia utente di Grafana perché è stata fornita da un'altra fonte. Copia il JSON o salvalo in un file qui sotto, dopodiché potrai aggiornare la dashboard nella fonte di provisioning.",
-      "copy-json-to-clipboard": "Copia JSON negli appunti",
-      "file-path": "<strong>Percorso file:</strong> {{filePath}}",
-      "save-json-to-file": "Salva JSON nel file",
-      "see-docs": "Consulta la <2>documentazione</2> per ulteriori informazioni sul provisioning."
-    },
-    "search-panel": {
-      "no-match": ""
-    },
-    "share-public-dashboard-loader": {
-      "loading-configuration": "Caricamento configurazione"
-    },
-    "sidebar": {
-      "add": {
-        "title": "Aggiungi",
-        "tooltip": "Aggiungi nuovo elemento"
-      },
-      "dashboard-options": {
-        "title": "Opzioni",
-        "tooltip": "Opzioni della dashboard"
-      },
-      "export": {
-        "title": "Esporta"
-      },
-      "outline": {
-        "title": "Schema",
-        "tooltip": "Schema dei contenuti"
-      },
-      "redo": "Ripeti",
-      "snapshot": {
-        "tooltip": "Apri la dashboard originale"
-      },
-      "undo": "Annulla"
-    },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Caricamento e inizializzazione della dashboard",
-      "title-not-found": "Pannello con ID {{panelId}} non trovato"
-    },
-    "source-link": {
-      "title": "Origine ({{provider}})",
-      "tooltip": "Visualizza il file sorgente nel repository"
-    },
-    "sub-menu-un-connected": {
-      "aria-label-template-variables": "Variabili del modello"
-    },
-    "support-snapshot-service": {
-      "description": {
-        "dashboard-troubleshoot-visualization-issues": "JSON dashboard utilizzato per risolvere i problemi di visualizzazione"
-      },
-      "label": {
-        "git-hub-comment": "Commento GitHub",
-        "panel-support-snapshot": "Snapshot di supporto del pannello"
-      },
-      "title": {
-        "copy-to-clipboard-failed": "Copia negli appunti non riuscita"
-      }
-    },
-    "tabs-layout": {
-      "delete-tab-text": "L'eliminazione di questa scheda rimuoverà anche tutti i pannelli. Desideri continuare?",
-      "delete-tab-title": "Eliminare la scheda?",
-      "delete-tab-yes": "Elimina",
-      "description": "Organizza i pannelli in schede orizzontali",
-      "edit": {
-        "ungroup-tabs": "Annulla raggruppamento schede"
-      },
-      "name": "Schede",
-      "tab": {
-        "new": "Nuova scheda",
-        "repeat": {
-          "learn-more": "Scopri di più",
-          "loading": "Caricamento ripetizioni scheda",
-          "warning": "I pannelli in questa scheda utilizzano l'origine dei dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella scheda originale, non a quelli nelle schede ripetute."
-        }
-      },
-      "tab-options": {
-        "repeat": {
-          "title": "Ripeti le opzioni",
-          "variable": {
-            "description": "Ripeti questa scheda per ogni valore nella variabile selezionata.",
-            "title": "Ripeti per variabile"
-          }
-        },
-        "title-not-unique": "Il titolo deve essere univoco",
-        "title-option": "Titolo"
-      },
-      "tab-warning": {
-        "title-not-unique": "Questo titolo non è univoco"
-      }
-    },
-    "title": {
-      "action": "Modifica il titolo della dashboard"
-    },
-    "toolbar": {
-      "add": "Aggiungi",
-      "alert-rules": "Regole di avviso",
-      "back-to-dashboard": "Torna al dashboard",
-      "dashboard-settings": {
-        "label": "Impostazioni",
-        "tooltip": "Impostazioni dashboard"
-      },
-      "discard-library-panel-changes": "Annulla le modifiche al pannello della libreria",
-      "discard-panel": "Annulla le modifiche al pannello",
-      "discard-panel-new": "Annulla il pannello",
-      "edit": {
-        "label": "Modifica",
-        "tooltip": "Entra in modalità di modifica"
-      },
-      "edit-button": {
-        "enter": "Modifica",
-        "enter-tooltip": "Entra in modalità di modifica",
-        "exit": "Esci dalla modifica",
-        "exit-tooltip": "Esci dalla modalità di modifica"
-      },
-      "enter-edit-mode": {
-        "label": "Rendi modificabile",
-        "tooltip": "Questo dashboard è stato contrassegnato come di sola lettura"
-      },
-      "exit-edit-mode": {
-        "label": "Esci dalla modifica",
-        "tooltip": "Esce dalla modalità di modifica e annulla le modifiche non salvate"
-      },
-      "mark-favorite": "Contrassegna come preferito",
-      "more-save-options": "Altre opzioni di salvataggio",
-      "new": {
-        "back-to-dashboard": "Torna alla dashboard",
-        "dashboard-settings": {
-          "tooltip": "Impostazioni dashboard"
-        },
-        "discard-library-panel-changes": "Annulla le modifiche al pannello della libreria",
-        "discard-panel": "Annulla le modifiche del pannello",
-        "discard-panel-new": "Annulla il pannello",
-        "edit-dashboard-v2-schema": {
-          "tooltip": "Modifica lo schema v2 della dashboard"
-        },
-        "enter-edit-mode": {
-          "label": "Rendi modificabile",
-          "tooltip": "Questa dashboard è stata contrassegnata come di sola lettura"
-        },
-        "export": {
-          "tooltip": {
-            "as-code": "Esporta come codice"
-          }
-        },
-        "more-save-options": "Altre opzioni di salvataggio",
-        "playlist-next": "Vai alla dashboard successiva",
-        "playlist-previous": "Vai alla dashboard precedente",
-        "playlist-stop": "Interrompi playlist",
-        "public-dashboard": "Pubblico",
-        "save-dashboard": {
-          "label": "Salva",
-          "tooltip": "Salva modifiche"
-        },
-        "save-dashboard-copy": {
-          "label": "Salva come copia",
-          "tooltip": "Salva come copia"
-        },
-        "save-dashboard-short": "Salva",
-        "save-library-panel": "Salva pannello della libreria",
-        "share": {
-          "arrow": "Condividi",
-          "title": "Condividi",
-          "tooltip": "Copia link"
-        },
-        "unlink-library-panel": "Scollega pannello della libreria"
-      },
-      "open-original": "Apri il originale",
-      "playlist-next": "Vai al dashboard successivo",
-      "playlist-previous": "Vai al dashboard precedente",
-      "playlist-stop": "Interrompi playlist",
-      "read-only": "Solo lettura",
-      "refresh": "Aggiorna dashboard",
-      "save": "Salva dashboard",
-      "save-dashboard": {
-        "label": "Salva dashboard",
-        "tooltip": "Salva modifiche"
-      },
-      "save-dashboard-copy": {
-        "label": "Salva come copia",
-        "tooltip": "Salva come copia"
-      },
-      "save-dashboard-short": "Salva",
-      "save-library-panel": "Salva pannello della libreria",
-      "settings": "Impostazioni dashboard",
-      "share-button": "Condividi",
-      "snapshot": {
-        "title": "Origine"
-      },
-      "star-add-error": "Impossibile aggiungere ai preferiti",
-      "star-added": "Elemento aggiunto ai preferiti",
-      "star-remove-error": "Impossibile rimuovere dai preferiti",
-      "star-removed": "Elemento rimosso dai preferiti",
-      "unlink-library-panel": "Scollega pannello della libreria",
-      "unmark-favorite": "Rimuovi dai preferiti"
-    },
-    "transformation-editor": {
-      "input-data": "Dati di input",
-      "output-data": "Dati di uscita",
-      "title-debug-transformation": "Esegui il debug della trasformazione"
-    },
-    "transformation-filter": {
-      "label-apply-transformation-to": "Applica la trasformazione a"
-    },
-    "transformation-operation-row": {
-      "body-delete": "Tieni presente che la rimozione di una trasformazione può interromperne altre. Se è presente una sola trasformazione, tornerai alla schermata di selezione principale.",
-      "render-actions": {
-        "confirmText-delete": "Elimina",
-        "title-debug": "Esegui il debug",
-        "title-disable-transformation": "Disabilita trasformazione",
-        "title-filter": "Filtro",
-        "title-remove": "Rimuovi",
-        "title-show-transform-help": "Mostra la guida della trasformazione"
-      },
-      "title-delete": "Eliminare {{name}}?"
-    },
-    "transformation-picker": {
-      "info": "Le trasformazioni ti consentono di unire, calcolare, riordinare, nascondere e rinominare i risultati della query prima che vengano visualizzati.",
-      "info-graph-not-suitable": "Molte trasformazioni non sono adatte se si utilizza la visualizzazione Grafico, poiché attualmente questa supporta solo i dati delle serie temporali.",
-      "info-switch-to-table": "Può essere utile passare alla visualizzazione Tabella per saperne di più su una trasformazione.",
-      "placeholder-search-for-transformation": "Cerca trasformazione",
-      "read-more": "Scopri di più",
-      "title-transformations": "Trasformazioni"
-    },
-    "transformation-picker-ng": {
-      "placeholder-search-for-transformation": "Cerca trasformazione",
-      "show-images": "Mostra immagini",
-      "sql-expressions-message-description": "Un nuovo modo per manipolare e trasformare i risultati delle query sull'origine dati utilizzando una sintassi simile a MySQL.",
-      "sql-expressions-message-link": "Scopri di più",
-      "sql-expressions-title": "Espressioni SQL",
-      "title-add-another-transformation": "Aggiungi un'altra trasformazione",
-      "view-all": "Visualizza tutto"
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Eliminando tutte le trasformazioni, tornerai alla schermata di selezione principale."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Aggiungi un'altra trasformazione"
-      },
-      "confirmText-delete-all": "Elimina tutto",
-      "delete-all-transformations": "Elimina tutte le trasformazioni",
-      "title-delete-all-transformations": "Eliminare tutte le trasformazioni?",
-      "tooltip-clear-search": "Azzera ricerca",
-      "tooltip-close-picker": "Chiudi il selettore"
-    },
-    "unsaved-changes-modal": {
-      "cancel": "Annulla",
-      "changes": "Desideri salvare le modifiche?",
-      "discard": "Rimuovi’",
-      "title-unsaved-changes": "Modifiche non salvate"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "I pannelli in questa riga utilizzano l'origine dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella riga originale, non a quelli nelle righe ripetute."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Elimina riga",
-      "learn-more": "Scopri di più",
-      "title": {
-        "delete-row": "Elimina riga"
-      }
-    },
-    "validation": {
-      "invalid-dashboard-id": "Impossibile trovare un ID Grafana.com valido",
-      "invalid-json": "JSON non valido",
-      "tag-too-long": "Tag della dashboard troppo lungo, massimo 50 caratteri",
-      "tags-expected-array": "array con tag previsti",
-      "tags-expected-strings": "array di stringhe con tag previsti"
-    },
-    "variable": {
-      "description": {
-        "action": "Modifica descrizione variabile"
-      },
-      "hide": {
-        "action": "Modifica l'opzione di occultamento della variabile"
-      },
-      "label": {
-        "action": "Modifica etichetta variabile"
-      },
-      "name": {
-        "action": "Modifica nome variabile"
-      }
-    },
-    "version-history-comparison": {
-      "button-restore": "Ripristina alla versione {{version}} ",
-      "label-view-json-diff": "Visualizza differenza JSON",
-      "new-updated-by": "<strong>Versione {{version}}</strong> aggiornata da {{editor}} {{timeAgo}}",
-      "old-updated-by": "<strong>Versione {{version}}</strong> aggiornata da {{editor}} {{timeAgo}}"
-    },
-    "version-history-table": {
-      "aria-label-toggle-selection": "Toggle di selezione della versione {{version}}",
-      "date": "Data",
-      "name-latest": "Più recente",
-      "notes": "Note",
-      "restore": "Ripristina",
-      "updated-by": "Aggiornato da",
-      "version": "Versione"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
-    },
-    "view-panel": {
-      "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Cambia visualizzazione",
-      "aria-label-close": "Chiudi il riquadro delle opzioni",
-      "aria-label-show": "Mostra il riquadro delle opzioni",
-      "tooltip-click-to-change-visualization": "Fai clic per cambiare la visualizzazione",
-      "tooltip-close": "Chiudi il riquadro delle opzioni",
-      "tooltip-show": "Mostra il riquadro delle opzioni"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Cerca...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Pannelli riutilizzabili che puoi condividere tra più dashboard."
-        },
-        "label": {
-          "library-panels": "Pannelli della libreria",
-          "suggestions": "Suggerimenti",
-          "visualizations": "Visualizzazioni"
-        }
-      },
-      "title-close": "Chiudi"
-    },
-    "viz-panel": {
-      "delete-panel-text": "L'eliminazione di questo pannello rimuoverà anche tutte le query. Desideri continuare?",
-      "delete-panel-title": "Eliminare il pannello?",
-      "delete-panel-yes": "Elimina",
-      "options": {
-        "configure-button-tooltip": "Modifica le query e le opzioni di visualizzazione",
-        "description": "Descrizione",
-        "title-option": "Titolo",
-        "transparent-background": "Sfondo trasparente"
-      }
-    }
-  },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8595,6 +8657,8 @@
     "description-show-measure": "Mostra gli strumenti per effettuare misurazioni sulla mappa",
     "description-show-scale": "Indica la scala della mappa",
     "description-show-zoom": "Mostra i pulsanti di controllo dello zoom nell'angolo in alto a sinistra",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Livelli"
@@ -8656,7 +8720,9 @@
     "name-show-measure": "Mostra strumenti di misurazione",
     "name-show-scale": "Mostra scala",
     "name-show-zoom": "Mostra controllo zoom",
+    "name-sync-view-variable": "",
     "name-tooltip": "Suggerimento",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Nessun campo stringa trovato"
     },
@@ -8709,6 +8775,9 @@
     },
     "utils": {
       "get-next-layer-name": "Livello {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9790,12 +9859,16 @@
       },
       "inspect-drawer-title": "Ispeziona valore",
       "nested-table": {
+        "expander-column-name": "",
         "no-data": "Nessun dato"
       },
       "no-values-label": "Nessun valore",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe",
       "sparkline": {
         "no-data": "nessun dato disponibile"
+      },
+      "tooltip": {
+        "trigger": ""
       }
     },
     "tags": {
@@ -10269,17 +10342,17 @@
       "description": "La configurazione LDAP non funziona perché il modulo di accesso di base è attualmente disabilitato. Abilita il modulo di accesso per utilizzare l'autenticazione LDAP. Puoi abilitarlo nella pagina Autenticazione in \"Impostazioni di autenticazione\".",
       "title": "Accesso di base disabilitato"
     },
-    "search-base-dns": {
-      "description": "Un array di dns di base in cui cercare.",
-      "error": "Il DNS di base per la ricerca è un campo obbligatorio",
-      "label": "DNS di base per la ricerca",
-      "placeholder": "esempio: dc=grafana,dc=org"
-    },
     "search_filter": {
       "description": "Filtro di ricerca LDAP utilizzato per individuare voci specifiche all'interno della directory.",
       "error": "Il filtro di ricerca è un campo obbligatorio",
       "label": "Filtro di ricerca",
       "placeholder": "esempio: cn=%s"
+    },
+    "search-base-dns": {
+      "description": "Un array di dns di base in cui cercare.",
+      "error": "Il DNS di base per la ricerca è un campo obbligatorio",
+      "label": "DNS di base per la ricerca",
+      "placeholder": "esempio: dc=grafana,dc=org"
     },
     "subtitle": "L'integrazione LDAP in Grafana consente agli utenti di Grafana di accedere con le proprie credenziali LDAP. Scopri di più nella nostra <2><1>documentazione</1></2>.",
     "title": "Impostazioni di base"
@@ -10464,6 +10537,7 @@
       "label-numbers": "Numeri",
       "label-signature": "Firma"
     },
+    "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Sperimentale. Richiedi più risultati scorrendo fino alla fine dell'elenco dei registri.",
     "description-enable-logs-highlighting": "Utilizza uno schema di colorazione predefinito per evidenziare le parti rilevanti delle righe del registro",
     "description-show-controls": "Visualizza i controlli per passare all'ultima o alla prima riga del registro e filtra per livello di registro",
@@ -10756,6 +10830,7 @@
       "label-inline": "In linea",
       "label-sidebar": "Barra laterale"
     },
+    "name-enable-field-selector": "",
     "name-enable-infinite-scrolling": "Abilita lo scorrimento infinito",
     "name-enable-log-details": "Abilita i dettagli del registro",
     "name-enable-logs-highlighting": "Abilita evidenziazione dei registri",
@@ -11504,6 +11579,7 @@
     },
     "megamenu": {
       "close": "Chiudi il menu",
+      "dialog-label": "",
       "dock": "Ancora menu",
       "list-label": "Navigazione",
       "open": "Apri menu",
@@ -11679,10 +11755,6 @@
       "clear-tooltip": "Cancella selezione unità"
     }
   },
-  "org-picker": {
-    "noOptionsMessage-no-organizations-found": "Nessuna organizzazione trovata",
-    "select-placeholder": "Seleziona organizzazione"
-  },
   "org": {
     "new-org-page": {
       "create": "Crea",
@@ -11705,6 +11777,8 @@
     },
     "user-invite-form": {
       "back": "Indietro",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "E-mail o nome utente",
       "label-name": "Nome",
       "label-send-invite-email": "Invia email di invito",
@@ -11720,22 +11794,14 @@
       }
     }
   },
+  "org-picker": {
+    "noOptionsMessage-no-organizations-found": "Nessuna organizzazione trovata",
+    "select-placeholder": "Seleziona organizzazione"
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Modifica titolo"
     }
-  },
-  "panel-group-by": {
-    "button": "Raggruppa per",
-    "loading": "Caricamento opzioni in corso",
-    "no-options": "Nessuna opzione trovata",
-    "search-placeholder": "Cerca"
-  },
-  "panel-type-filter": {
-    "clear-button": "Cancella tipi",
-    "select-aria-label": "Filtro del tipo di pannello",
-    "select-no-options": "Nessun tipo di pannello trovato",
-    "select-placeholder": "Filtra per tipo"
   },
   "panel": {
     "dashlist": {
@@ -11848,6 +11914,18 @@
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
     }
   },
+  "panel-group-by": {
+    "button": "Raggruppa per",
+    "loading": "Caricamento opzioni in corso",
+    "no-options": "Nessuna opzione trovata",
+    "search-placeholder": "Cerca"
+  },
+  "panel-type-filter": {
+    "clear-button": "Cancella tipi",
+    "select-aria-label": "Filtro del tipo di pannello",
+    "select-no-options": "Nessun tipo di pannello trovato",
+    "select-placeholder": "Filtra per tipo"
+  },
   "piechart": {
     "category-legend": "Legenda",
     "category-pie-chart": "Grafico a torta",
@@ -11872,6 +11950,39 @@
     "suggestions": {
       "donut": "Grafico ad anello",
       "pie": "Grafico a torta"
+    }
+  },
+  "playlist": {
+    "playlist-new-page": {
+      "page-nav": {
+        "text": {
+          "new-playlist": "Nuova playlist"
+        }
+      }
+    },
+    "playlist-table-rows": {
+      "aria-label-playlist-item": "Elemento playlist, {{itemType}}, {{itemValue}}",
+      "multiple-dashboards-found": "Più elementi trovati: {{items}}",
+      "no-dashboards-found": "Nessun dashboard trovato",
+      "not-found": "Non trovato: {{items}}"
+    },
+    "start-modal": {
+      "button-start": "Avvia {{title}}",
+      "description-customize-dashboard-elements-visibility": "Personalizza la visibilità degli elementi della dashboard",
+      "description-panel-heights-adjusted-screen": "Le altezze dei pannelli verranno regolate per adattarsi alle dimensioni dello schermo",
+      "label-autofit": "Adatta automaticamente",
+      "label-dashboard-links": "Collegamenti della dashboard",
+      "label-display-dashboard-controls": "Visualizza i controlli della dashboard",
+      "label-mode": "Modalità",
+      "label-time-and-refresh": "Ora e aggiornamento",
+      "label-variables": "Variabili",
+      "modes": {
+        "label": {
+          "kiosk": "Kiosk ",
+          "normal": "Normale"
+        }
+      },
+      "title-start-playlist": "Avvia playlist"
     }
   },
   "playlist-edit": {
@@ -11915,39 +12026,6 @@
       "button": "Crea playlist",
       "pro-tip": "È possibile utilizzare le playlist per scorrere i dashboard sui televisori senza il controllo dell'utente. <2>Ulteriori informazioni</2>",
       "title": "Non sono ancora state create playlist"
-    }
-  },
-  "playlist": {
-    "playlist-new-page": {
-      "page-nav": {
-        "text": {
-          "new-playlist": "Nuova playlist"
-        }
-      }
-    },
-    "playlist-table-rows": {
-      "aria-label-playlist-item": "Elemento playlist, {{itemType}}, {{itemValue}}",
-      "multiple-dashboards-found": "Più elementi trovati: {{items}}",
-      "no-dashboards-found": "Nessun dashboard trovato",
-      "not-found": "Non trovato: {{items}}"
-    },
-    "start-modal": {
-      "button-start": "Avvia {{title}}",
-      "description-customize-dashboard-elements-visibility": "Personalizza la visibilità degli elementi della dashboard",
-      "description-panel-heights-adjusted-screen": "Le altezze dei pannelli verranno regolate per adattarsi alle dimensioni dello schermo",
-      "label-autofit": "Adatta automaticamente",
-      "label-dashboard-links": "Collegamenti della dashboard",
-      "label-display-dashboard-controls": "Visualizza i controlli della dashboard",
-      "label-mode": "Modalità",
-      "label-time-and-refresh": "Ora e aggiornamento",
-      "label-variables": "Variabili",
-      "modes": {
-        "label": {
-          "kiosk": "Kiosk ",
-          "normal": "Normale"
-        }
-      },
-      "title-start-playlist": "Avvia playlist"
     }
   },
   "playlists": {
@@ -12652,6 +12730,7 @@
       "loading-finished-job": "Caricamento attività terminata in corso...",
       "no-job-found": "Nessuna attività trovata",
       "no-job-found-message": "L'attività potrebbe essere stata eliminata o non è stato possibile recuperarla. Annulla il processo corrente e ricomincia.",
+      "retry-action": "",
       "starting": "Avvio in corso...",
       "status": {
         "title-error-running-job": "Errore durante l'esecuzione dell'attività",
@@ -12722,6 +12801,7 @@
       "source-code": "Codice sorgente"
     },
     "repository-card": {
+      "last-sync": "",
       "read-only-badge": "Solo lettura",
       "settings": "Impostazioni",
       "view": "Visualizza"
@@ -12850,8 +12930,9 @@
       "label-pending-step": "Passaggio in sospeso"
     },
     "status-badge": {
-      "automatic-pulling-disabled": "Pull automatico disabilitato",
+      "automatic-pulling-disabled-tooltip": "",
       "deleting": "Eliminazione in corso",
+      "disabled": "",
       "error": "Errore",
       "pending": "In sospeso",
       "pulling": "Pull in corso",
@@ -12873,12 +12954,15 @@
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "La sincronizzazione delle istanze richiede che tutte le risorse siano gestite. Le risorse esistenti verranno migrate automaticamente.",
       "migrate-resources-description": "",
       "options": "Opzioni",
       "repository-error": "Errore del repository",
       "repository-error-message": "Impossibile verificare lo stato del repository. Verifica la configurazione del repository e riprova.",
       "repository-unhealthy": "Impossibile sincronizzare il repository. Annulla il provisioning e riprova una volta risolto il problema. Visualizza i dettagli sottostanti.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -12958,39 +13042,6 @@
       "button-submitting": "Invio in corso...",
       "error-instance-repository-exists": "Il repository delle istanze esiste già",
       "error-save-repository-setting": "Impossibile salvare le impostazioni del repository"
-    }
-  },
-  "public-dashboard-users-access-list": {
-    "dashboard-modal": {
-      "external-link": "Collegamento esterno",
-      "loading-text": "Caricamento in corso...",
-      "open-dashboard-list-text": "Apri l'elenco dei dashboard",
-      "sharing-setting": "Impostazioni di condivisione"
-    },
-    "delete-user-modal": {
-      "delete-user-button-text": "Elimina utente",
-      "delete-user-cancel-button": "Annulla",
-      "delete-user-revoke-access-button": "Revoca accesso",
-      "revoke-access-title": "Revoca accesso",
-      "revoke-user-access-modal-desc-line1": "Vuoi davvero revocare l'accesso a {{email}}?"
-    },
-    "delete-user-shared-dashboards-modal": {
-      "revoke-user-access-modal-desc-line2": "Questa azione revoca immediatamente l'accesso di {{email}} a tutte le dashboard condivise."
-    },
-    "modal": {
-      "shared-dashboard-modal-title": "Dashboard condivisi"
-    },
-    "table-body": {
-      "dashboard-count_one": "{{count}} dashboard",
-      "dashboard-count_other": "{{count}} dashboard"
-    },
-    "table-header": {
-      "activated-label": "Attivato/a",
-      "activated-tooltip": "L'utente è stato un utente attivo per un dashboard per la prima volta",
-      "email-label": "Email",
-      "last-active-label": "Ultima attività",
-      "origin-label": "Origine",
-      "role-label": "Ruolo"
     }
   },
   "public-dashboard": {
@@ -13116,6 +13167,90 @@
       "unsupported-data-source-alert-desc": "In questo dashboard sono presenti origini dati non supportate per i dashboard condivisi. I pannelli che utilizzano queste origini dati potrebbero non funzionare correttamente: {{unsupportedDataSources}}."
     }
   },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "external-link": "Collegamento esterno",
+      "loading-text": "Caricamento in corso...",
+      "open-dashboard-list-text": "Apri l'elenco dei dashboard",
+      "sharing-setting": "Impostazioni di condivisione"
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "Elimina utente",
+      "delete-user-cancel-button": "Annulla",
+      "delete-user-revoke-access-button": "Revoca accesso",
+      "revoke-access-title": "Revoca accesso",
+      "revoke-user-access-modal-desc-line1": "Vuoi davvero revocare l'accesso a {{email}}?"
+    },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": "Questa azione revoca immediatamente l'accesso di {{email}} a tutte le dashboard condivise."
+    },
+    "modal": {
+      "shared-dashboard-modal-title": "Dashboard condivisi"
+    },
+    "table-body": {
+      "dashboard-count_one": "{{count}} dashboard",
+      "dashboard-count_other": "{{count}} dashboard"
+    },
+    "table-header": {
+      "activated-label": "Attivato/a",
+      "activated-tooltip": "L'utente è stato un utente attivo per un dashboard per la prima volta",
+      "email-label": "Email",
+      "last-active-label": "Ultima attività",
+      "origin-label": "Origine",
+      "role-label": "Ruolo"
+    }
+  },
+  "query": {
+    "query-editor-row-header": {
+      "hidden": "Nascosto",
+      "query-name-div-title-edit-query-name": "Modifica il nome della query"
+    },
+    "query-error-alert": {
+      "error-details": "",
+      "fix-with-assistant": "",
+      "original-query": "",
+      "trace-id": "(ID traccia: {{traceId}})"
+    },
+    "query-group": {
+      "add-query": "Aggiungi query",
+      "expression": "Espressione",
+      "title-data-source-help": "Guida dell'origine dei dati"
+    },
+    "query-group-options-editor": {
+      "collapsed-interval": "Intervallo = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
+      "hide-time-info": "Nascondi informazioni sull'ora",
+      "Query options-title-query-options": "Opzioni query",
+      "relative-time": "Tempo relativo",
+      "relative-time-tooltip": "Sostituisce l'intervallo di tempo relativo per i singoli pannelli, il che li rende diversi da quelli selezionati nel selettore dell'ora della dashboard nell'angolo in alto a destra della dashboard. Ad esempio, per configurare gli Ultimi 5 minuti, il tempo relativo deve essere <1>{{relativeFrom}}</1> e <4>{{relativeTo}}</4>, o con variabili come <6>{{variable}}</6>.",
+      "render-cache-timeout-option": {
+        "cache-timeout": "Timeout cache"
+      },
+      "render-interval-option": {
+        "interval": "Intervallo",
+        "interval-tooltip": "L'intervallo valutato che viene inviato all'origine dei dati e utilizzato in <1>$__interval</1> e <4>$__interval_ms</4>. Questo valore non è esattamente uguale a <6>Intervallo di tempo/punti dati massimi</6>, si avvicinerà a una serie di numeri magici.",
+        "min-interval": "Intervallo minimo",
+        "min-interval-tooltip": "Un limite inferiore per l'intervallo. Si consiglia di impostare la frequenza di scrittura, ad esempio <1>1 m</1> se i dati vengono scritti ogni minuto. Il valore predefinito può essere configurato nelle impostazioni dell'origine dei dati per la maggior parte di queste ultime.",
+        "time-range-max-data-points": "Intervallo di tempo/punti dati massimi"
+      },
+      "render-max-data-points-option": {
+        "max-data-points": "Punti dati massimi",
+        "max-data-points-tooltip": "Il numero massimo di punti dati per serie. Utilizzato direttamente da alcune origini dei dati e nel calcolo dell'intervallo automatico. Con i dati in streaming questo valore viene utilizzato per il buffer circolare.",
+        "width-of-panel": "Larghezza del pannello"
+      },
+      "render-query-caching-ttloption": {
+        "cache-ttl": "TTL cache"
+      },
+      "time-shift": "Spostamento temporale",
+      "time-shift-tooltip": "Sovrascrive l'intervallo di tempo per i singoli pannelli spostando l'inizio e la fine rispetto al selettore dell'ora. Ad esempio, per configurare l'Ultima ora, lo spostamento temporale deve essere <1>{{relativeFrom}}</1> e <4>{{relativeTo}}</4>, o con variabili come <6>{{variable}}</6>."
+    },
+    "query-group-top-section": {
+      "data-source": "Sorgente dati",
+      "query-inspector": "Ispettore query",
+      "query-tab-help-button-title-open-data-source-help": "Apri la guida dell'origine dei dati",
+      "title-data-source-help": "Guida dell'origine dei dati"
+    }
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
@@ -13131,6 +13266,10 @@
       "show-help": "",
       "show-transformation-help": "",
       "transformation-debug": ""
+    },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
     },
     "delete-modal": {
       "body-query": "",
@@ -13173,9 +13312,12 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
+      "pending-transformation": "",
+      "pending-transformation-cancel": "",
       "transformation": ""
     },
     "help": {
@@ -13192,17 +13334,24 @@
       "add-below": "",
       "add-expression": "",
       "add-query": "",
+      "add-query-or-expression": "",
       "add-saved-query": "",
+      "add-transformation": "",
+      "add-transformation-below": "",
       "alert-indicator": {
         "button-label": "",
-        "tooltip": ""
+        "button-label-hide": "",
+        "close": ""
       },
       "card-click": "Seleziona scheda {{id}}",
       "data": "",
-      "data-mode": "",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
-      "transformations": "Trasformazioni"
+      "transformations": "Trasformazioni",
+      "alerts_one": "",
+      "alerts_other": "",
+      "footer-items_one": "",
+      "footer-items_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13254,57 +13403,6 @@
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
   },
-  "query": {
-    "query-editor-row-header": {
-      "hidden": "Nascosto",
-      "query-name-div-title-edit-query-name": "Modifica il nome della query"
-    },
-    "query-error-alert": {
-      "error-details": "",
-      "fix-with-assistant": "",
-      "original-query": "",
-      "trace-id": "(ID traccia: {{traceId}})"
-    },
-    "query-group": {
-      "add-query": "Aggiungi query",
-      "expression": "Espressione",
-      "title-data-source-help": "Guida dell'origine dei dati"
-    },
-    "query-group-options-editor": {
-      "Query options-title-query-options": "Opzioni query",
-      "collapsed-interval": "Intervallo = {{intervalDesc}}",
-      "collapsed-max-data-points": "MD = {{mdDesc}}",
-      "hide-time-info": "Nascondi informazioni sull'ora",
-      "relative-time": "Tempo relativo",
-      "relative-time-tooltip": "Sostituisce l'intervallo di tempo relativo per i singoli pannelli, il che li rende diversi da quelli selezionati nel selettore dell'ora della dashboard nell'angolo in alto a destra della dashboard. Ad esempio, per configurare gli Ultimi 5 minuti, il tempo relativo deve essere <1>{{relativeFrom}}</1> e <4>{{relativeTo}}</4>, o con variabili come <6>{{variable}}</6>.",
-      "render-cache-timeout-option": {
-        "cache-timeout": "Timeout cache"
-      },
-      "render-interval-option": {
-        "interval": "Intervallo",
-        "interval-tooltip": "L'intervallo valutato che viene inviato all'origine dei dati e utilizzato in <1>$__interval</1> e <4>$__interval_ms</4>. Questo valore non è esattamente uguale a <6>Intervallo di tempo/punti dati massimi</6>, si avvicinerà a una serie di numeri magici.",
-        "min-interval": "Intervallo minimo",
-        "min-interval-tooltip": "Un limite inferiore per l'intervallo. Si consiglia di impostare la frequenza di scrittura, ad esempio <1>1 m</1> se i dati vengono scritti ogni minuto. Il valore predefinito può essere configurato nelle impostazioni dell'origine dei dati per la maggior parte di queste ultime.",
-        "time-range-max-data-points": "Intervallo di tempo/punti dati massimi"
-      },
-      "render-max-data-points-option": {
-        "max-data-points": "Punti dati massimi",
-        "max-data-points-tooltip": "Il numero massimo di punti dati per serie. Utilizzato direttamente da alcune origini dei dati e nel calcolo dell'intervallo automatico. Con i dati in streaming questo valore viene utilizzato per il buffer circolare.",
-        "width-of-panel": "Larghezza del pannello"
-      },
-      "render-query-caching-ttloption": {
-        "cache-ttl": "TTL cache"
-      },
-      "time-shift": "Spostamento temporale",
-      "time-shift-tooltip": "Sovrascrive l'intervallo di tempo per i singoli pannelli spostando l'inizio e la fine rispetto al selettore dell'ora. Ad esempio, per configurare l'Ultima ora, lo spostamento temporale deve essere <1>{{relativeFrom}}</1> e <4>{{relativeTo}}</4>, o con variabili come <6>{{variable}}</6>."
-    },
-    "query-group-top-section": {
-      "data-source": "Sorgente dati",
-      "query-inspector": "Ispettore query",
-      "query-tab-help-button-title-open-data-source-help": "Apri la guida dell'origine dei dati",
-      "title-data-source-help": "Guida dell'origine dei dati"
-    }
-  },
   "recently-deleted": {
     "buttons": {
       "restore": "Ripristina"
@@ -13341,15 +13439,12 @@
       "duration-selected": "Scegli l'intervallo di tempo di aggiornamento con l'intervallo corrente {{durationAriaLabel}} selezionato"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Attiva lo streaming in tempo reale",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Disattiva l'aggiornamento automatico",
       "label": "Off"
     },
     "tooltip": {
@@ -13362,12 +13457,6 @@
       "label": "Torna a {{title}} "
     },
     "dismissable-button": "Chiudi"
-  },
-  "role-picker-drawer": {
-    "basic-roles": {
-      "label": "Ruoli di base"
-    },
-    "user-count": "+{{numUsers}}"
   },
   "role-picker": {
     "built-in": {
@@ -13391,6 +13480,12 @@
     "title": {
       "description": "Assegna ruoli agli utenti per garantire un controllo granulare sull'accesso alle funzionalità e alle risorse di Grafana. Scopri di più nella nostra <2>documentazione</2>."
     }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "Ruoli di base"
+    },
+    "user-count": "+{{numUsers}}"
   },
   "route-error": {
     "description": "Grafana è stato probabilmente aggiornato. Prova a ricaricare la pagina.",
@@ -13738,6 +13833,23 @@
       "copy-button": "Copia negli appunti"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "new-library-panel-title": "Nuovo pannello della libreria",
+      "share-embed-title": "Condividi incorporato",
+      "share-link-title": "Impostazioni link"
+    },
+    "menu": {
+      "new-library-panel-title": "Nuovo pannello della libreria",
+      "share-embed-title": "Condividi incorporato",
+      "share-link-title": "Condividi link",
+      "share-snapshot-title": "Condividi istantanea"
+    },
+    "new-library-panel": {
+      "cancel-button": "Annulla",
+      "create-button": "Crea pannello della libreria"
+    }
+  },
   "share-panel-image": {
     "disabled-help": "Salva la dashboard per abilitare la generazione di immagini",
     "download-disabled-help": "Genera prima un'immagine per abilitare il download",
@@ -13765,23 +13877,6 @@
       "width-required": "La larghezza è obbligatoria."
     }
   },
-  "share-panel": {
-    "drawer": {
-      "new-library-panel-title": "Nuovo pannello della libreria",
-      "share-embed-title": "Condividi incorporato",
-      "share-link-title": "Impostazioni link"
-    },
-    "menu": {
-      "new-library-panel-title": "Nuovo pannello della libreria",
-      "share-embed-title": "Condividi incorporato",
-      "share-link-title": "Condividi link",
-      "share-snapshot-title": "Condividi istantanea"
-    },
-    "new-library-panel": {
-      "cancel-button": "Annulla",
-      "create-button": "Crea pannello della libreria"
-    }
-  },
   "share-playlist": {
     "checkbox-description": "Le altezze dei pannelli verranno regolate per adattarsi alle dimensioni dello schermo",
     "checkbox-label": "Adatta automaticamente",
@@ -13791,6 +13886,24 @@
     "mode-kiosk": "Kiosk ",
     "mode-normal": "Normale",
     "title": "Condividi playlist"
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "Scuro",
+        "light-label": "Chiaro",
+        "system-label": "Preferenze di sistema"
+      }
+    }
+  },
+  "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "Vuoi davvero revocare questo accesso? Il dashboard non può più essere condiviso.",
+      "revoke-title": "Revoca accesso"
+    },
+    "fields": {
+      "timezone-label": "Fuso orario"
+    }
   },
   "shared-dashboard-list": {
     "button": {
@@ -13805,15 +13918,6 @@
     },
     "toggle": {
       "pause-sharing-toggle-text": "Sospendi l'accesso"
-    }
-  },
-  "shared-dashboard": {
-    "delete-modal": {
-      "revoke-body-text": "Vuoi davvero revocare questo accesso? Il dashboard non può più essere condiviso.",
-      "revoke-title": "Revoca accesso"
-    },
-    "fields": {
-      "timezone-label": "Fuso orario"
     }
   },
   "shared-preferences": {
@@ -13836,15 +13940,6 @@
     },
     "title": "Preferenze"
   },
-  "shared": {
-    "preferences": {
-      "theme": {
-        "dark-label": "Scuro",
-        "light-label": "Chiaro",
-        "system-label": "Preferenze di sistema"
-      }
-    }
-  },
   "sign-up": {
     "back-button": "Torna all'accesso",
     "confirm-password-label": "Conferma password",
@@ -13865,12 +13960,6 @@
       "send-button": "Invia un'email di verifica"
     }
   },
-  "silences-table": {
-    "header": {
-      "alert-name": "Nome avviso",
-      "state": "Stato"
-    }
-  },
   "silences": {
     "empty-state": {
       "button-title": "Crea silenzio",
@@ -13883,7 +13972,14 @@
       "no-matching-silences": "Nessuna disattivazione audio corrispondente trovata;",
       "noConfig": "Crea un nuovo punto di contatto per creare una configurazione utilizzando i valori predefiniti o contatta l'amministratore per impostare Alertmanager.",
       "recreate-button": "Ricrea",
-      "unsilence-button": "Riattiva audio"
+      "unsilence-button": "Riattiva audio",
+      "view-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Nome avviso",
+      "state": "Stato"
     }
   },
   "snapshot": {
@@ -14292,9 +14388,9 @@
     }
   },
   "time-period": {
-    "12_hours": "12 ore",
     "1_day": "1 giorno",
     "1_hour": "1 ora",
+    "12_hours": "12 ore",
     "30_days": "30 giorni",
     "6_hours": "6 ore",
     "7_days": "7 giorni"
@@ -15356,11 +15452,6 @@
   "user-sessions": {
     "loading": "Caricamento in corso delle sessioni..."
   },
-  "users-access-list": {
-    "tabs": {
-      "shared-dashboard-users-tab-title": "Utenti con dashboard condiviso"
-    }
-  },
   "users": {
     "empty-state": {
       "message": "Nessun utente trovato"
@@ -15379,6 +15470,11 @@
         }
       },
       "placeholder-search-login-email": "Cerca un utente usando i dati di accesso, l'email o il nome"
+    }
+  },
+  "users-access-list": {
+    "tabs": {
+      "shared-dashboard-users-tab-title": "Utenti con dashboard condiviso"
     }
   },
   "variabels": {
@@ -15560,8 +15656,8 @@
       "title-dependencies": "Dipendenze"
     },
     "variables-unknown-button": {
-      "VariablesUnknownButton-tooltip-show-usages": "Mostra utilizzi",
-      "usage-title": "Mostra utilizzi per: {{variableId}}"
+      "usage-title": "Mostra utilizzi per: {{variableId}}",
+      "VariablesUnknownButton-tooltip-show-usages": "Mostra utilizzi"
     },
     "variables-unknown-table": {
       "collapse-label": "Variabili rinominate o mancanti",

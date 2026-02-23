@@ -10,7 +10,6 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
-	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -210,7 +209,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 
 	if !receiverFound {
 		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &apimodels.PostableApiReceiver{
-			Receiver: config.Receiver{
+			Receiver: apimodels.Receiver{
 				Name: grafanaReceiver.Name,
 			},
 			PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
@@ -501,7 +500,7 @@ groupLoop:
 
 				// Doesn't exist? Create a new group just for the receiver.
 				newGroup := &apimodels.PostableApiReceiver{
-					Receiver: config.Receiver{
+					Receiver: apimodels.Receiver{
 						Name: target.Name,
 					},
 					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{

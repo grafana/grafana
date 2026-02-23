@@ -1,19 +1,91 @@
+import { load } from 'js-yaml';
 import { useCallback, useState } from 'react';
 
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { stringifyErrorLike } from '../../utils/misc';
 
-import type { DryRunValidationResult } from './types';
+import type { ConvertAlertmanagerResponse, DryRunValidationResult } from './types';
 
-interface MigrateNotificationsParams {
+interface ParsedAlertmanagerYaml {
+  alertmanagerConfig: string;
+  templateFiles: Record<string, string>;
+}
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  return Object.values(value).every((v) => typeof v === 'string');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Parse an Alertmanager YAML file and separate template_files from the alertmanager config.
+ *
+ * YAML files may contain `template_files` at the top level alongside the config fields
+ * (route, receivers, templates, time_intervals, etc.). The backend API expects them
+ * as two separate fields in the request body:
+ *   { alertmanager_config: "<config string>", template_files: { ... } }
+ *
+ * This function extracts `template_files` and re-serializes the remaining config as JSON.
+ */
+export function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
+  let parsed: unknown;
+  try {
+    parsed = load(yamlContent);
+  } catch {
+    return { alertmanagerConfig: yamlContent, templateFiles: {} };
+  }
+
+  if (!isRecord(parsed)) {
+    return { alertmanagerConfig: yamlContent, templateFiles: {} };
+  }
+
+  const { template_files, ...configWithoutTemplates } = parsed;
+  const templateFiles = isStringRecord(template_files) ? template_files : {};
+
+  return {
+    alertmanagerConfig: JSON.stringify(configWithoutTemplates),
+    templateFiles,
+  };
+}
+
+interface NotificationsSourceParams {
   source: 'datasource' | 'yaml';
   /** Datasource name (not UID) - required when source is 'datasource' */
   datasourceName?: string;
   yamlFile: File | null;
   /** Configuration identifier - the name of the extra config (policy tree name) */
   configIdentifier: string;
+}
+
+/**
+ * Resolve the alertmanager config and template files from a YAML file or datasource.
+ * Shared between import and dry-run flows.
+ */
+async function resolveAlertmanagerConfig(params: NotificationsSourceParams): Promise<ParsedAlertmanagerYaml> {
+  const { source, datasourceName, yamlFile } = params;
+
+  if (source === 'yaml' && yamlFile) {
+    const yamlContent = await yamlFile.text();
+    return parseAlertmanagerYaml(yamlContent);
+  }
+
+  if (source === 'datasource' && datasourceName) {
+    const config = await fetchAlertManagerConfig(datasourceName);
+    return {
+      alertmanagerConfig: JSON.stringify(config.alertmanager_config),
+      templateFiles: config.template_files ?? {},
+    };
+  }
+
+  throw new Error('Invalid import source configuration');
 }
 
 interface MigrateRulesParams {
@@ -35,30 +107,14 @@ export function useImportNotifications() {
   const [convertAlertmanagerConfig] = convertToGMAApi.useConvertAlertmanagerConfigMutation();
 
   return useCallback(
-    async (params: MigrateNotificationsParams) => {
-      const { source, datasourceName, yamlFile, configIdentifier } = params;
+    async (params: NotificationsSourceParams) => {
+      const { alertmanagerConfig, templateFiles } = await resolveAlertmanagerConfig(params);
 
-      let alertmanagerConfig: string;
-      let templateFiles: Record<string, string> = {};
-
-      if (source === 'yaml' && yamlFile) {
-        // For YAML files, we expect the full alertmanager_config format
-        alertmanagerConfig = await yamlFile.text();
-      } else if (source === 'datasource' && datasourceName) {
-        // Fetch the Alertmanager config from the datasource
-        const config = await fetchAlertManagerConfig(datasourceName);
-        // Serialize the config to JSON string (backend accepts JSON or YAML)
-        alertmanagerConfig = JSON.stringify(config.alertmanager_config);
-        templateFiles = config.template_files ?? {};
-      } else {
-        throw new Error('Invalid import source configuration');
-      }
-
-      // Call the convert API for notifications using RTK Query
       await convertAlertmanagerConfig({
         alertmanagerConfig,
         templateFiles,
-        configIdentifier,
+        configIdentifier: params.configIdentifier,
+        forceReplace: true,
       }).unwrap();
     },
     [convertAlertmanagerConfig]
@@ -168,137 +224,54 @@ function isRuleManagedByExternalSystem(rule: { labels?: Record<string, string> }
   return false;
 }
 
-interface DryRunNotificationsParams {
-  source: 'datasource' | 'yaml';
-  /** Datasource name (not UID) - required when source is 'datasource' */
-  datasourceName?: string;
-  yamlFile: File | null;
-  /** Configuration identifier - the name of the extra config (policy tree name) */
-  configIdentifier: string;
+/**
+ * Parse the backend ConvertAlertmanagerResponse into a UI-friendly DryRunValidationResult.
+ */
+function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryRunValidationResult {
+  const renamedReceivers = Object.entries(response.rename_resources?.receivers ?? {}).map(
+    ([originalName, newName]) => ({ originalName, newName })
+  );
+  const renamedTimeIntervals = Object.entries(response.rename_resources?.time_intervals ?? {}).map(
+    ([originalName, newName]) => ({ originalName, newName })
+  );
+
+  return {
+    valid: response.status === 'success',
+    error: response.error,
+    renamedReceivers,
+    renamedTimeIntervals,
+  };
 }
 
 /**
  * Hook to perform dry-run validation for Alertmanager config import.
- * This validates the config and checks for conflicts before actually importing.
- *
- * TODO: The backend endpoint doesn't exist yet. See https://github.com/grafana/alerting-squad/issues/1378
- * For now, this hook provides a way to:
- * 1. Skip validation entirely (when skipValidation=true or endpoint not available)
- * 2. Mock the response for UI development/testing
- *
- * When the endpoint is ready:
- * - Remove the mock logic
- * - Remove the skipValidation option (or keep it for testing)
- * - The endpoint should return: { valid: boolean, error?: string, renamedReceivers: [], renamedTimeIntervals: [] }
+ * Uses POST /api/convert/api/v1/alerts with X-Grafana-Alerting-Dry-Run: true.
+ * Validates the config and checks for conflicts without saving.
  */
 export function useDryRunNotifications() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<DryRunValidationResult | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-
-  // TODO: Uncomment when the backend endpoint is implemented
-  // const [dryRunAlertmanagerConfig] = convertToGMAApi.useDryRunAlertmanagerConfigMutation();
+  const [dryRunAlertmanagerConfig, { isLoading, data, error: mutationError }] =
+    convertToGMAApi.useDryRunAlertmanagerConfigMutation();
+  const [preRunError, setPreRunError] = useState<string>();
 
   const runDryRun = useCallback(
-    async (
-      params: DryRunNotificationsParams,
-      options: { skipValidation?: boolean } = {}
-    ): Promise<DryRunValidationResult> => {
-      const { source, datasourceName, yamlFile, configIdentifier } = params;
-      const { skipValidation = false } = options;
-
-      // If skipValidation is true, return a success result immediately
-      // This allows the UI to proceed without validation when the endpoint doesn't exist
-      if (skipValidation) {
-        const successResult: DryRunValidationResult = {
-          valid: true,
-          renamedReceivers: [],
-          renamedTimeIntervals: [],
-        };
-        setResult(successResult);
-        return successResult;
-      }
-
-      setIsLoading(true);
-      setError(null);
-      setResult(null);
-
+    async (params: NotificationsSourceParams): Promise<void> => {
+      setPreRunError(undefined);
       try {
-        let alertmanagerConfig: string;
-        let templateFiles: Record<string, string> = {};
-
-        if (source === 'yaml' && yamlFile) {
-          alertmanagerConfig = await yamlFile.text();
-        } else if (source === 'datasource' && datasourceName) {
-          const config = await fetchAlertManagerConfig(datasourceName);
-          alertmanagerConfig = JSON.stringify(config.alertmanager_config);
-          templateFiles = config.template_files ?? {};
-        } else {
-          throw new Error('Invalid import source configuration');
-        }
-
-        // TODO: Uncomment when the backend endpoint is implemented
-        // const response = await dryRunAlertmanagerConfig({
-        //   alertmanagerConfig,
-        //   templateFiles,
-        //   configIdentifier,
-        // }).unwrap();
-        // setResult(response);
-        // return response;
-
-        // MOCK: For now, simulate a successful dry-run
-        // This allows UI development to continue while waiting for the backend
-        // Remove this mock once the endpoint is ready
-        console.warn('[useDryRunNotifications] Backend endpoint not implemented yet. Using mock response.', {
-          alertmanagerConfig: alertmanagerConfig.substring(0, 100) + '...',
+        const { alertmanagerConfig, templateFiles } = await resolveAlertmanagerConfig(params);
+        await dryRunAlertmanagerConfig({
+          alertmanagerConfig,
           templateFiles,
-          configIdentifier,
+          configIdentifier: params.configIdentifier,
         });
-
-        // Simulate a small delay to show loading state
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Mock response - always returns success with no renames
-        // In real implementation, the backend would analyze the config and return actual renames
-        const mockResult: DryRunValidationResult = {
-          valid: true,
-          renamedReceivers: [],
-          renamedTimeIntervals: [],
-        };
-
-        setResult(mockResult);
-        return mockResult;
       } catch (err) {
-        const errorObj = err instanceof Error ? err : new Error(String(err));
-        setError(errorObj);
-
-        // Return an error result
-        const errorResult: DryRunValidationResult = {
-          valid: false,
-          error: errorObj.message,
-          renamedReceivers: [],
-          renamedTimeIntervals: [],
-        };
-        setResult(errorResult);
-        return errorResult;
-      } finally {
-        setIsLoading(false);
+        setPreRunError(stringifyErrorLike(err));
       }
     },
-    []
+    [dryRunAlertmanagerConfig]
   );
 
-  const reset = useCallback(() => {
-    setIsLoading(false);
-    setResult(null);
-    setError(null);
-  }, []);
+  const result = data ? parseDryRunResponse(data) : undefined;
+  const error = mutationError ? stringifyErrorLike(mutationError) : preRunError;
 
-  return {
-    runDryRun,
-    isLoading,
-    result,
-    error,
-    reset,
-  };
+  return { runDryRun, isLoading, result, error };
 }

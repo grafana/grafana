@@ -140,7 +140,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		},
 	}
 
-	instances := make([]models.AlertInstance, 0)
+	instances := make([]models.AlertInstance, 0, 6)
 
 	labels := models.InstanceLabels{"test1": "testValue1"}
 	_, hash, _ := labels.StringAndHash()
@@ -353,7 +353,7 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - B=42.000000, C=1.000000"}
 	sort.Strings(expected)
 	require.Eventuallyf(t, func() bool {
-		var actual []string
+		var actual []string //nolint:prealloc
 		for _, next := range fakeAnnoRepo.Items() {
 			actual = append(actual, next.Text)
 		}

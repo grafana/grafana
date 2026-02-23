@@ -9,6 +9,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	serverconfig "github.com/openfga/openfga/pkg/server/config"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	grpccodes "google.golang.org/grpc/codes"
@@ -464,7 +465,8 @@ func (s *Server) addTypedResourceDirectChecks(
 	return checks
 }
 
-// doBatchCheck executes a batch check against OpenFGA
+// doBatchCheck executes a batch check against OpenFGA, splitting into
+// sub-batches if the number of checks exceeds the configured MaxChecksPerBatchCheck limit.
 func (s *Server) doBatchCheck(
 	ctx context.Context,
 	store *storeInfo,
@@ -474,6 +476,38 @@ func (s *Server) doBatchCheck(
 		return nil, nil
 	}
 
+	maxChecks := s.getMaxChecksPerBatchCheck()
+
+	// If within limit, send a single batch
+	if len(checks) <= maxChecks {
+		return s.executeBatchCheck(ctx, store, checks)
+	}
+
+	// Split into sub-batches
+	allResults := make(map[string]*openfgav1.BatchCheckSingleResult, len(checks))
+	for i := 0; i < len(checks); i += maxChecks {
+		end := i + maxChecks
+		if end > len(checks) {
+			end = len(checks)
+		}
+		results, err := s.executeBatchCheck(ctx, store, checks[i:end])
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range results {
+			allResults[k] = v
+		}
+	}
+
+	return allResults, nil
+}
+
+// executeBatchCheck sends a single OpenFGA BatchCheck request.
+func (s *Server) executeBatchCheck(
+	ctx context.Context,
+	store *storeInfo,
+	checks []*openfgav1.BatchCheckItem,
+) (map[string]*openfgav1.BatchCheckSingleResult, error) {
 	openfgaReq := &openfgav1.BatchCheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
@@ -486,4 +520,13 @@ func (s *Server) doBatchCheck(
 	}
 
 	return openfgaRes.GetResult(), nil
+}
+
+// getMaxChecksPerBatchCheck returns the configured maximum checks per batch,
+// falling back to the default if not explicitly set.
+func (s *Server) getMaxChecksPerBatchCheck() int {
+	if s.cfg.OpenFgaServerSettings.MaxChecksPerBatchCheck > 0 {
+		return int(s.cfg.OpenFgaServerSettings.MaxChecksPerBatchCheck)
+	}
+	return serverconfig.DefaultMaxChecksPerBatchCheck
 }
