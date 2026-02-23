@@ -149,7 +149,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 
 	var dialOps []grpc.DialOption
 
-    // Default max gRPC receive size is 4MB. Tempo responses can exceed this, so we should increase it.
+	// Default max gRPC receive size is 4MB. Tempo responses can exceed this, so we should increase it.
 	// Prefer `GF_LIVE_CLIENT_QUEUE_MAX_SIZE` (set by Grafana for the Tempo plugin) when it's present and valid.
 	const defaultMaxCallRecvMsgSizeBytes = 4 * 1024 * 1024
 	maxCallRecvMsgSizeBytes := defaultMaxCallRecvMsgSizeBytes
