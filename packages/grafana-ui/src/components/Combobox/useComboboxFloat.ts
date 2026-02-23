@@ -9,7 +9,6 @@ import {
   MENU_ITEM_FONT_WEIGHT,
   MENU_ITEM_PADDING,
   MENU_OPTION_HEIGHT,
-  MENU_OPTION_HEIGHT_DESCRIPTION,
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
 import { ComboboxOption } from './types';
@@ -64,30 +63,17 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
   });
 
   const longestItemWidth = useMemo(() => {
-    const maxItemsLength = Math.min(items.length, WIDTH_CALCULATION_LIMIT_ITEMS);
-    const itemsToLookAt = items.slice(0, maxItemsLength);
-
     let longestItem = '';
-    let withIcon = false;
-    let withDescription = false;
+    const itemsToLookAt = Math.min(items.length, WIDTH_CALCULATION_LIMIT_ITEMS);
 
-    for (const item of itemsToLookAt) {
-      const itemLabel = item.label ?? item.value.toString();
+    for (let i = 0; i < itemsToLookAt; i++) {
+      const itemLabel = items[i].label ?? items[i].value.toString();
       longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
-      withIcon ||= !!item.imgUrl;
-      withDescription ||= !!item.description;
     }
 
-    const textWidth = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
+    const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
 
-    let adjustedSize = SCROLL_CONTAINER_PADDING + textWidth + MENU_ITEM_PADDING * 2 + scrollbarWidth;
-    if (withIcon && withDescription) {
-      adjustedSize += MENU_OPTION_HEIGHT_DESCRIPTION - MENU_ITEM_PADDING;
-    } else if (withIcon) {
-      adjustedSize += MENU_OPTION_HEIGHT - MENU_ITEM_PADDING;
-    }
-
-    return adjustedSize + MENU_ITEM_PADDING * 2 + scrollbarWidth;
+    return size + SCROLL_CONTAINER_PADDING + MENU_ITEM_PADDING * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);
 
   const floatStyles = {

@@ -300,10 +300,11 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         rowVirtualizer.scrollToIndex(highlightedIndex);
       }
     },
-    onStateChange: ({ inputValue: newInputValue = '', type, selectedItem: newSelectedItem }) => {
+    onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
       switch (type) {
         case useCombobox.stateChangeTypes.InputChange:
-          updateOptions(newInputValue);
+          updateOptions(newInputValue ?? '');
+
           break;
         default:
           break;
@@ -311,8 +312,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
     stateReducer(state, actionAndChanges) {
       let { changes } = actionAndChanges;
-      const menuBeingOpened = !state.isOpen && changes.isOpen;
-      const menuBeingClosed = state.isOpen && !changes.isOpen;
+      const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
+      const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
 
       // Reset the input value when the menu is opened. If the menu is opened due to an input change
       // then make sure we keep that.
@@ -374,6 +375,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
     : { Wrapper: React.Fragment };
 
+  const icon = prefixIcon ?? selectedItem?.icon;
   return (
     <Wrapper {...wrapperProps}>
       <InputComponent
@@ -381,7 +383,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
         autoFocus={autoFocus}
         onBlur={onBlur}
-        prefix={prefixIcon && <Icon name={prefixIcon} />}
+        prefix={icon && <Icon name={icon} />}
         disabled={disabled}
         invalid={invalid}
         className={styles.input}

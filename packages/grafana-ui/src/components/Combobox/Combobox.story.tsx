@@ -100,6 +100,19 @@ export const AutoSize: Story = {
   render: BaseCombobox,
 };
 
+export const OptionIcons: Story = {
+  args: {
+    value: 'one',
+    options: [
+      { label: 'One', value: 'one', group: 'Group 1', icon: 'text-fields' },
+      { label: 'Two', value: 'two', group: 'Group 1', icon: 'text-fields' },
+      { label: 'Three', value: 'three', group: 'Group 2', icon: 'keyboard' },
+      { label: 'Four', value: 'four', group: 'Group 2', icon: 'keyboard' },
+    ],
+  },
+  render: BaseCombobox,
+};
+
 export const CustomValue: Story = {
   args: {
     createCustomValue: true,

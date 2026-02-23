@@ -5,15 +5,11 @@ import { useCallback } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Checkbox } from '../Forms/Checkbox';
+import { Icon } from '../Icon/Icon';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
-import {
-  getComboboxStyles,
-  MENU_ITEM_PADDING,
-  MENU_OPTION_HEIGHT,
-  MENU_OPTION_HEIGHT_DESCRIPTION,
-} from './getComboboxStyles';
+import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
@@ -155,16 +151,10 @@ export const ComboboxList = <T extends string | number>({
                 )}
 
                 <div className={styles.optionBody}>
-                  {item.imgUrl && (
-                    <img
-                      alt={''}
-                      className={styles.icon}
-                      height={virtualRow.size - 2 * MENU_ITEM_PADDING}
-                      width={virtualRow.size - 2 * MENU_ITEM_PADDING}
-                      src={item.imgUrl}
-                    />
-                  )}
-                  <div className={styles.optionLabel}>{item.label ?? item.value}</div>
+                  <div className={styles.optionIconWrapper}>
+                    {item.icon && <Icon name={item.icon} className={styles.icon} />}
+                    <div className={styles.optionLabel}>{item.label ?? item.value}</div>
+                  </div>
 
                   {item.description && <div className={styles.optionDescription}>{item.description}</div>}
                 </div>
