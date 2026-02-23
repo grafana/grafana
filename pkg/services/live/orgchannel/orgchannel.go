@@ -2,29 +2,26 @@ package orgchannel
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
+
+	authlib "github.com/grafana/authlib/types"
 )
 
-// PrependOrgID prepends orgID to a channel.
-func PrependOrgID(orgID int64, channel string) string {
-	return strconv.FormatInt(orgID, 10) + "/" + channel
+// Prefix the k8s namespace to the channel.
+func PrependK8sNamespace(ns string, channel string) string {
+	return ns + "/" + channel
 }
 
-// StripOrgID strips organization ID from channel ID.
-// The reason why we strip orgID is because we need to maintain multi-tenancy.
-// Each organization can have the same channels which should not overlap. Due
-// to this every channel in Centrifuge has orgID prefix. Internally in Grafana
-// we strip this prefix since orgID is part of user identity and channel handlers
-// supposed to have the same business logic for all organizations.
-func StripOrgID(channel string) (int64, string, error) {
+// StripK8sNamespace strips k8s namespace from the full channel ID.
+// We use the k8s namespace for multi-tenancy across orgs and stacks
+func StripK8sNamespace(channel string) (authlib.NamespaceInfo, string, error) {
 	parts := strings.SplitN(channel, "/", 2)
 	if len(parts) != 2 {
-		return 0, "", fmt.Errorf("malformed channel: %s", channel)
+		return authlib.NamespaceInfo{}, "", fmt.Errorf("malformed channel: %s", channel)
 	}
-	orgID, err := strconv.ParseInt(parts[0], 10, 64)
-	if err != nil {
-		return 0, "", fmt.Errorf("invalid orgID part: %s", parts[0])
+	ns, err := authlib.ParseNamespace(parts[0])
+	if err == nil && ns.OrgID < 1 {
+		return ns, "", fmt.Errorf("namespace does not reference a valid org ID: %s", parts[0])
 	}
-	return orgID, parts[1], nil
+	return ns, parts[1], err
 }

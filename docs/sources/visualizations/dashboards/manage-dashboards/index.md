@@ -124,9 +124,9 @@ For more information about dashboard permissions, refer to [Dashboard permission
 ## Restore deleted dashboards
 
 {{% admonition type="caution" %}}
-Restoring deleted dashboards is currently in private preview. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+Restoring deleted dashboards is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-The feature is only available in Grafana Cloud.  
+The feature is only available in Grafana Cloud.
 {{% /admonition %}}
 
 When you delete dashboards, they’re stored in the deletion history for up to 12 months, allowing you to restore them if needed.
@@ -136,7 +136,7 @@ After this limit is reached, the oldest deleted dashboards are permanently remov
 You can access the list of deleted dashboards from the **Dashboards** page by clicking the **Recently deleted** button, or by navigating to **Dashboards > Recently deleted**.
 
 {{% admonition type="note" %}}
-Only users with admin rights can access the **Restore dashboards** page.
+You can restore dashboards that you deleted. Users with admin rights can restore any dashboard.
 {{% /admonition %}}
 
 To restore one or more dashboards, follow these steps:

@@ -66,8 +66,8 @@ export { getQueryHints, getInitHints } from './query_hints';
 export { transformV2, transformDFToTable, parseSampleValue, sortSeriesByLabel } from './result_transformer';
 export {
   type PromQuery,
-  type PrometheusCacheLevel,
-  type PromApplication,
+  PrometheusCacheLevel,
+  PromApplication,
   type PromOptions,
   type ExemplarTraceIdDestination,
   type PromQueryRequest,
@@ -76,8 +76,8 @@ export {
   type PromValue,
   type PromMetric,
   type PromBuildInfoResponse,
-  type LegendFormatMode,
-  type PromVariableQueryType,
+  LegendFormatMode,
+  PromVariableQueryType,
   type PromVariableQuery,
   type StandardPromVariableQuery,
 } from './types';

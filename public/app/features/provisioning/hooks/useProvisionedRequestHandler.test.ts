@@ -97,7 +97,7 @@ describe('useProvisionedRequestHandler', () => {
     });
 
     it('should call onBranchSuccess for branch workflow', () => {
-      const { request, handlers } = setup({
+      const { request, handlers, mockPublish } = setup({
         requestOverrides: {
           isError: false,
           isSuccess: true,
@@ -132,6 +132,8 @@ describe('useProvisionedRequestHandler', () => {
         expect.any(Object)
       );
       expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
+      // Branch workflow should not show success alert (PR banner handles it)
+      expect(mockPublish).not.toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertSuccess.name }));
     });
 
     it('should call onWriteSuccess for write workflow', () => {

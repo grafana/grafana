@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash';
 import {
   API_GROUP as DASHBOARD_API_GROUP,
   BASE_URL as v0alphaBaseURL,
+  ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
@@ -44,6 +45,7 @@ export type SearchHit = {
 
   // calculated in the frontend
   url: string;
+  managedBy?: ManagedBy;
 };
 
 export type SearchAPIResponse = {
@@ -151,6 +153,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     } else {
       rsp = await this.fetchResponse(uri);
     }
+
     const first = toDashboardResults(rsp, query.sort ?? '');
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
@@ -309,6 +312,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += '&panelType=' + query.panel_type;
     }
 
+    if (query.panelTitleSearch) {
+      uri += '&panelTitleSearch=true';
+    }
+
     if (query.tags?.length) {
       uri += '&' + query.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
     }
@@ -405,6 +412,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
       kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
+      managedBy: hit.managedBy,
       ...field,
     };
   });

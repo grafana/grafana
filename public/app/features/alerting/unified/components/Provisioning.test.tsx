@@ -1,8 +1,8 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { KnownProvenance } from '../types/knownProvenance';
 
-import { ProvisioningBadge } from './Provisioning';
+import { ImportedResourceAlert, ProvisionedResource, ProvisioningBadge } from './Provisioning';
 
 describe('ProvisioningBadge', () => {
   describe('when the provenance is file', () => {
@@ -63,5 +63,45 @@ describe('ProvisioningBadge', () => {
         screen.getByText('This resource has been provisioned via api and cannot be edited through the UI')
       ).toBeInTheDocument();
     });
+  });
+});
+
+describe('ImportedResourceAlert', () => {
+  it('should render the alert', () => {
+    render(<ImportedResourceAlert resource={ProvisionedResource.ContactPoint} />);
+
+    const alert = screen.getByRole('status');
+
+    expect(alert).toBeInTheDocument();
+  });
+
+  it('should render the alert with the correct title for contact point', () => {
+    render(<ImportedResourceAlert resource={ProvisionedResource.ContactPoint} />);
+
+    const alert = screen.getByRole('status');
+
+    expect(alert).toBeInTheDocument();
+
+    expect(
+      within(alert).getByText('This contact point was imported and cannot be edited through the UI')
+    ).toBeInTheDocument();
+  });
+
+  it('should render the alert with the correct title for template', () => {
+    render(<ImportedResourceAlert resource={ProvisionedResource.Template} />);
+
+    const alert = screen.getByRole('status');
+
+    expect(
+      within(alert).getByText('This template was imported and cannot be edited through the UI')
+    ).toBeInTheDocument();
+  });
+
+  it('should render the alert body with the correct resource name', () => {
+    render(<ImportedResourceAlert resource={ProvisionedResource.ContactPoint} />);
+
+    const alert = screen.getByRole('status');
+
+    expect(within(alert).getByText(/This contact point contains integrations that were imported/)).toBeInTheDocument();
   });
 });

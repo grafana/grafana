@@ -1,12 +1,17 @@
 package jobs
 
 import (
+	"context"
+	"fmt"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/admission"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails
@@ -169,4 +174,89 @@ func validateMoveJobOptions(opts *provisioning.MoveJobOptions) field.ErrorList {
 	}
 
 	return list
+}
+
+// AdmissionValidator handles validation for Job resources during admission
+type AdmissionValidator struct{}
+
+// NewAdmissionValidator creates a new job admission validator
+func NewAdmissionValidator() *AdmissionValidator {
+	return &AdmissionValidator{}
+}
+
+// Validate validates Job resources during admission
+func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+	if obj == nil {
+		return nil
+	}
+
+	// Do not validate objects we are trying to delete
+	meta, _ := utils.MetaAccessor(obj)
+	if meta.GetDeletionTimestamp() != nil {
+		return nil
+	}
+
+	job, ok := obj.(*provisioning.Job)
+	if !ok {
+		return fmt.Errorf("expected job, got %T", obj)
+	}
+
+	return ValidateJob(job)
+}
+
+// HistoricJobAdmissionValidator handles validation for HistoricJob resources during admission.
+// HistoricJobs are read-only records of completed jobs, so validation is minimal.
+type HistoricJobAdmissionValidator struct{}
+
+// NewHistoricJobAdmissionValidator creates a new historic job admission validator
+func NewHistoricJobAdmissionValidator() *HistoricJobAdmissionValidator {
+	return &HistoricJobAdmissionValidator{}
+}
+
+// Validate validates HistoricJob resources during admission.
+// Since HistoricJobs are system-created records of completed jobs,
+// we only perform basic structural validation.
+func (v *HistoricJobAdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+	if obj == nil {
+		return nil
+	}
+
+	// Do not validate objects we are trying to delete
+	meta, _ := utils.MetaAccessor(obj)
+	if meta.GetDeletionTimestamp() != nil {
+		return nil
+	}
+
+	historicJob, ok := obj.(*provisioning.HistoricJob)
+	if !ok {
+		return fmt.Errorf("expected historic job, got %T", obj)
+	}
+
+	// HistoricJobs share the same spec structure as Jobs, so we can reuse validation
+	// This ensures that any historic job stored is well-formed
+	return validateHistoricJob(historicJob)
+}
+
+// validateHistoricJob performs basic validation on historic job records
+func validateHistoricJob(job *provisioning.HistoricJob) error {
+	list := field.ErrorList{}
+
+	// Validate that required fields are present
+	if job.Spec.Action == "" {
+		list = append(list, field.Required(field.NewPath("spec", "action"), "action must be specified"))
+	}
+
+	if job.Spec.Repository == "" {
+		list = append(list, field.Required(field.NewPath("spec", "repository"), "repository must be specified"))
+	}
+
+	if len(list) == 0 {
+		return nil
+	}
+
+	return apierrors.NewInvalid(
+		provisioning.HistoricJobResourceInfo.GroupVersionKind().GroupKind(),
+		job.Name, list)
 }

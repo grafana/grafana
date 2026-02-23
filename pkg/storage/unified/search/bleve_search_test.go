@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
-	index "github.com/blevesearch/bleve_index_api"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -259,7 +260,6 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-		ScoringModel:  index.BM25Scoring,
 	}, nil)
 	require.NoError(t, err)
 
@@ -281,7 +281,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, info.Fields, "test", writer, nil, false)
+	}, size, info.Fields, "test", writer, nil, false, time.Time{})
 	require.NoError(t, err)
 
 	return index
@@ -327,5 +327,102 @@ func debugIndexedTerms(index bleve.Index, field string) {
 		if term != nil {
 			fmt.Println(term.Term)
 		}
+	}
+}
+
+func TestIndexAndSearchSelectableFields(t *testing.T) {
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "test.grafana.app",
+		Resource:  "Item",
+	}
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: threshold, // use in-memory for tests
+		SelectableFieldsForKinds: map[string][]string{
+			strings.ToLower(key.Group + "/" + key.Resource): {"spec.some.field", "spec.some.other.field"},
+		},
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+
+	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}, 10, nil, "test", noop, nil, false, time.Time{})
+	require.NoError(t, err)
+
+	err = index.BulkIndex(&resource.BulkIndexRequest{
+		Items: []*resource.BulkIndexItem{
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "doc1"},
+					Title: "Document 1",
+					Fields: map[string]interface{}{
+						"field1": 1,
+						"field2": "value1",
+					},
+					SelectableFields: map[string]string{
+						"spec.some.field":       "doc1_field_value",
+						"spec.some.other.field": "other_field_value",
+						"unknown.field":         "another_value",
+					},
+				},
+			},
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "doc2"},
+					Title: "Document 2",
+					Tags:  []string{"tag2", "tag3"},
+					Fields: map[string]interface{}{
+						"field1": 2,
+						"field2": "value2",
+					},
+					SelectableFields: map[string]string{
+						"spec.some.field":       "doc2_field_value",
+						"spec.some.other.field": "other_field_value",
+						"unknown.field":         "another_value",
+					},
+				},
+			},
+			{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "doc3"},
+					Title: "Document with field values with token terminating characters",
+					SelectableFields: map[string]string{
+						"spec.some.field":       "doc3-field#value!",
+						"spec.some.other.field": "some other.field>value",
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc1_field_value"), []string{"doc1"})
+	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc2_field_value"), []string{"doc2"})
+	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "other_field_value"), []string{"doc1", "doc2"})
+
+	// tests for doc3 with token-terminating characters
+	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc3-field#value!"), []string{"doc3"})
+	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "some other.field>value"), []string{"doc3"})
+
+	// Only known selectable fields are indexed.
+	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil)
+}
+
+func selectableFieldQuery(key *resourcepb.ResourceKey, field, value string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key:    key,
+			Fields: []*resourcepb.Requirement{{Key: field, Operator: "=", Values: []string{value}}},
+		},
+		Limit: 100000,
 	}
 }

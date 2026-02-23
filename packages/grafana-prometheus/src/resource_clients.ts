@@ -198,7 +198,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
 
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
     const series = await this.querySeries(timeRange, undefined, DEFAULT_SERIES_LIMIT);
-    const { metrics, labelKeys } = processSeries(series, METRIC_LABEL);
+    const { metrics, labelKeys } = processSeries(series, METRIC_LABEL, this.datasource.hasLabelsMatchAPISupport());
     this.metrics = metrics;
     this.histogramMetrics = processHistogramMetrics(this.metrics);
     this.labelKeys = labelKeys;
@@ -216,7 +216,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     }
 
     const series = await this.querySeries(timeRange, effectiveMatch, effectiveLimit);
-    const { labelKeys } = processSeries(series);
+    const { labelKeys } = processSeries(series, undefined, this.datasource.hasLabelsMatchAPISupport(), effectiveMatch);
     this._cache.setLabelKeys(timeRange, effectiveMatch, effectiveLimit, labelKeys);
     return labelKeys;
   };
@@ -252,7 +252,12 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     }
 
     const series = await this.querySeries(timeRange, effectiveMatch, effectiveLimit);
-    const { labelValues } = processSeries(series, removeQuotesIfExist(labelKey));
+    const { labelValues } = processSeries(
+      series,
+      removeQuotesIfExist(labelKey),
+      this.datasource.hasLabelsMatchAPISupport(),
+      effectiveMatch
+    );
     this._cache.setLabelValues(timeRange, effectiveMatch, effectiveLimit, labelValues);
     return labelValues;
   };
@@ -364,13 +369,31 @@ class ResourceClientsCache {
   }
 }
 
-export function processSeries(series: Array<{ [key: string]: string }>, findValuesForKey?: string) {
+export function processSeries(
+  series: Array<{ [key: string]: string }>,
+  findValuesForKey?: string,
+  hasLabelsMatchAPISupport = true,
+  matchSelector = ''
+) {
   const metrics: Set<string> = new Set();
   const labelKeys: Set<string> = new Set();
   const labelValues: Set<string> = new Set();
 
-  // Extract metrics and label keys
-  series.forEach((item) => {
+  let filteredSeries = series;
+  if (!hasLabelsMatchAPISupport) {
+    // The datasource doesn't have match[] parameter support.
+    // Manual filtering is required to avoid returning duplicate metrics.
+    const {
+      query: { labels },
+    } = buildVisualQueryFromString(matchSelector);
+
+    filteredSeries = series.filter((item) => {
+      return labels.every((lbl) => matchesLabelCondition(item[lbl.label], lbl.op, lbl.value));
+    });
+  }
+
+  // Extract metrics, label keys, and label values from the (filtered) series
+  filteredSeries.forEach((item) => {
     // Add the __name__ value to metrics
     if (METRIC_LABEL in item) {
       metrics.add(item.__name__);
@@ -381,6 +404,8 @@ export function processSeries(series: Array<{ [key: string]: string }>, findValu
       if (key !== METRIC_LABEL) {
         labelKeys.add(key);
       }
+
+      // If finding values for a specific key, add those values
       if (findValuesForKey && key === findValuesForKey) {
         labelValues.add(item[key]);
       }
@@ -392,4 +417,47 @@ export function processSeries(series: Array<{ [key: string]: string }>, findValu
     labelKeys: Array.from(labelKeys).sort(),
     labelValues: Array.from(labelValues).sort(),
   };
+}
+
+/**
+ * Evaluates whether a label value matches based on the operator.
+ * Supports Prometheus label matching operators: =, !=, =~, !~
+ *
+ * @param itemValue - The actual value from the series item
+ * @param operator - The comparison operator (=, !=, =~, !~)
+ * @param matchValue - The value to match against
+ * @returns true if the condition is satisfied, false otherwise
+ */
+function matchesLabelCondition(itemValue: string | undefined, operator: string, matchValue: string): boolean {
+  // Handle case where label doesn't exist in the item
+  if (itemValue === undefined) {
+    // For != and !~, missing label is considered a match (it's "not equal" to the value)
+    return operator === '!=' || operator === '!~';
+  }
+
+  switch (operator) {
+    case '=':
+      return itemValue === matchValue;
+    case '!=':
+      return itemValue !== matchValue;
+    case '=~':
+      try {
+        const regex = new RegExp(matchValue);
+        return regex.test(itemValue);
+      } catch {
+        // Invalid regex, treat as no match
+        return false;
+      }
+    case '!~':
+      try {
+        const regex = new RegExp(matchValue);
+        return !regex.test(itemValue);
+      } catch {
+        // Invalid regex, treat as match (doesn't match invalid pattern)
+        return true;
+      }
+    default:
+      // Unknown operator, default to exact match
+      return itemValue === matchValue;
+  }
 }

@@ -7,6 +7,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 type Mutator func(ctx context.Context, obj runtime.Object) error
@@ -16,6 +17,7 @@ type Extra interface {
 	Type() provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
 	Mutate(ctx context.Context, obj runtime.Object) error
+	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
 //go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
@@ -23,6 +25,7 @@ type Factory interface {
 	Types() []provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
 	Mutate(ctx context.Context, obj runtime.Object) error
+	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
 type factory struct {
@@ -76,11 +79,61 @@ func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Reposi
 }
 
 func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
+	repo, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return nil
+	}
+
+	// Find the extra that matches this repository type
 	for _, e := range f.extras {
-		if err := e.Mutate(ctx, obj); err != nil {
-			return err
+		if e.Type() == repo.Spec.Type {
+			return e.Mutate(ctx, obj)
 		}
 	}
 
+	// No matching extra found - this will be caught by Validate
 	return nil
+}
+
+func (f *factory) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	var list field.ErrorList
+
+	repo, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return list
+	}
+
+	// Check if repository type is supported
+	var foundExtra Extra
+	for _, e := range f.extras {
+		if e.Type() == repo.Spec.Type {
+			foundExtra = e
+			break
+		}
+	}
+	if foundExtra == nil {
+		list = append(list, field.Invalid(
+			field.NewPath("spec", "type"),
+			repo.Spec.Type,
+			fmt.Sprintf("repository type %q is not supported", repo.Spec.Type),
+		))
+		// Return early if type is not supported - no point validating further
+		return list
+	}
+
+	// Check if repository type is enabled
+	if _, enabled := f.enabled[repo.Spec.Type]; !enabled {
+		list = append(list, field.Invalid(
+			field.NewPath("spec", "type"),
+			repo.Spec.Type,
+			fmt.Sprintf("repository type %q is not enabled", repo.Spec.Type),
+		))
+		// Return early if type is not enabled - no point validating further
+		return list
+	}
+
+	// Validate using the matching extra
+	list = append(list, foundExtra.Validate(ctx, obj)...)
+
+	return list
 }

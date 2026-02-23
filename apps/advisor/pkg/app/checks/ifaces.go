@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // Check returns metadata about the check being executed and the list of Steps
@@ -44,4 +46,19 @@ type Step interface {
 type PluginInfoGetter interface {
 	// GetPluginsInfo will return a list of plugins from grafana.com/api/plugins.
 	GetPluginsInfo(ctx context.Context, options repo.GetPluginsInfoOptions, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error)
+}
+
+// DataSourceGetter is a minimal interface for retrieving datasource information.
+// It contains only the GetDataSources and GetDataSource methods used by datasourcecheck.
+type DataSourceGetter interface {
+	// GetDataSources gets datasources.
+	GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
+	// GetDataSource gets a datasource.
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+}
+
+// HealthChecker is a generic interface for checking data source health.
+// It receives minimal input (context and datasource) and returns the health check result.
+type HealthChecker interface {
+	CheckHealth(ctx context.Context, ds *datasources.DataSource) (*backend.CheckHealthResult, error)
 }

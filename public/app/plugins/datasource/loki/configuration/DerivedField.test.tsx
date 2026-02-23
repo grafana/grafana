@@ -19,7 +19,6 @@ describe('DerivedField', () => {
       getInstanceSettings: jest.fn(),
       getList: mockList.mockImplementation(() => [
         {
-          id: 1,
           uid: 'metrics',
           name: 'metrics_ds',
           meta: {
@@ -32,7 +31,6 @@ describe('DerivedField', () => {
           } as DataSourcePluginMeta,
         } as DataSourceInstanceSettings,
         {
-          id: 2,
           uid: 'tracing',
           name: 'tracing_ds',
           meta: {

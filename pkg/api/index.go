@@ -11,6 +11,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -60,14 +61,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
-		if !prefs.Cookies("analytics") {
-			settings.GoogleAnalytics4Id = ""
-			settings.GoogleAnalyticsId = ""
-		}
 	}
 
 	// Locale is used for some number and date/time formatting, whereas language is used just for

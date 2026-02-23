@@ -8,7 +8,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError, locationService } from '@grafana/runtime';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -32,11 +32,14 @@ import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { ALERTING_PATHS } from '../../utils/navigation';
 import { EditorColumnHeader } from '../EditorColumnHeader';
-import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import {
   NotificationTemplate,
@@ -125,6 +128,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
   const { provenance } = useNotificationTemplateMetadata(originalTemplate);
   const isProvisioned = isProvisionedResource(provenance);
+  const isImported = provenance === KnownProvenance.ConvertedPrometheus;
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
     : undefined;
@@ -159,9 +163,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   } = formApi;
 
   const submit = async (values: TemplateFormValues) => {
-    const returnLink = makeAMLink('/alerting/notifications', alertmanager, {
-      tab: ContactPointsActiveTabs.NotificationTemplates,
-    });
+    // V2 nav has dedicated templates page, legacy nav uses tab parameter
+    const useV2Nav = config.featureToggles.alertingNavigationV2;
+    const returnLink = useV2Nav
+      ? makeAMLink(ALERTING_PATHS.TEMPLATES, alertmanager)
+      : makeAMLink(ALERTING_PATHS.NOTIFICATIONS, alertmanager, {
+          tab: ContactPointsActiveTabs.NotificationTemplates,
+        });
 
     try {
       if (!originalTemplate) {
@@ -206,7 +214,12 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
             </Alert>
           )}
           {/* warning about provisioned template */}
-          {isProvisioned && (
+          {isProvisioned && isImported && (
+            <Box grow={0}>
+              <ImportedResourceAlert resource={ProvisionedResource.Template} />
+            </Box>
+          )}
+          {isProvisioned && !isImported && (
             <Box grow={0}>
               <ProvisioningAlert resource={ProvisionedResource.Template} />
             </Box>
@@ -286,7 +299,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                             'alerting.template-form.label-examples-documentation',
                                             'Examples documentation'
                                           )}
-                                          url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
+                                          url={DOCS_URL_TEMPLATE_EXAMPLES}
                                           target="_blank"
                                           icon="external-link-alt"
                                         />
@@ -412,7 +425,7 @@ For detailed information about notification templates, refer to our documentatio
           <div style={{ whiteSpace: 'pre' }}>{intro}</div>
           <div>
             <LinkButton
-              href="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
+              href={DOCS_URL_TEMPLATE_NOTIFICATIONS}
               target="_blank"
               icon="external-link-alt"
               variant="secondary"

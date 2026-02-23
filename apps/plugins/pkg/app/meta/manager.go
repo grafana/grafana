@@ -62,8 +62,8 @@ func (pm *ProviderManager) Run(ctx context.Context) error {
 // GetMeta tries each provider in order until one succeeds, using cache when available.
 // Returns ErrMetaNotFound only if all providers return ErrMetaNotFound.
 // Otherwise, returns the last non-ErrMetaNotFound error if all providers fail.
-func (pm *ProviderManager) GetMeta(ctx context.Context, pluginID, version string) (*Result, error) {
-	cacheKey := pm.cacheKey(pluginID, version)
+func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
+	cacheKey := pm.cacheKey(ref)
 
 	// Check cache first
 	pm.cacheMu.RLock()
@@ -80,7 +80,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, pluginID, version string
 	// Try each provider in order until one succeeds
 	var lastErr error
 	for _, provider := range pm.providers {
-		result, err := provider.GetMeta(ctx, pluginID, version)
+		result, err := provider.GetMeta(ctx, ref)
 		if err == nil {
 			// Don't cache results with a zero TTL
 			if result.TTL == 0 {
@@ -126,6 +126,9 @@ func (pm *ProviderManager) cleanupExpired() {
 	}
 }
 
-func (pm *ProviderManager) cacheKey(pluginID, version string) string {
-	return fmt.Sprintf("%s:%s", pluginID, version)
+func (pm *ProviderManager) cacheKey(ref PluginRef) string {
+	if ref.HasParent() {
+		return fmt.Sprintf("%s:%s:%s", ref.ID, ref.Version, ref.GetParentID())
+	}
+	return fmt.Sprintf("%s:%s", ref.ID, ref.Version)
 }

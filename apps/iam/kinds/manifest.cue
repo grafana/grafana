@@ -6,6 +6,7 @@ manifest: {
 	versions: {
 	    "v0alpha1": v0alpha1
 	}
+	roles: {}
 }
 
 v0alpha1: {
@@ -19,6 +20,7 @@ v0alpha1: {
 		userv0alpha1,
 		teamv0alpha1,
 		teambindingv0alpha1,
+		teamlbacrulev0alpha1,
 		serviceaccountv0alpha1,
 		externalGroupMappingv0alpha1
 	]

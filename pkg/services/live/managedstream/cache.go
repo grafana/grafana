@@ -10,9 +10,9 @@ import (
 // FrameCache allows updating frame schema. Returns true is schema not changed.
 type FrameCache interface {
 	// GetActiveChannels returns active managed stream channels with JSON schema.
-	GetActiveChannels(orgID int64) (map[string]json.RawMessage, error)
+	GetActiveChannels(ns string) (map[string]json.RawMessage, error)
 	// GetFrame returns full JSON frame for a channel in org.
-	GetFrame(ctx context.Context, orgID int64, channel string) (json.RawMessage, bool, error)
+	GetFrame(ctx context.Context, ns string, channel string) (json.RawMessage, bool, error)
 	// Update updates frame cache and returns true if schema changed.
-	Update(ctx context.Context, orgID int64, channel string, frameJson data.FrameJSONCache) (bool, error)
+	Update(ctx context.Context, ns string, channel string, frameJson data.FrameJSONCache) (bool, error)
 }

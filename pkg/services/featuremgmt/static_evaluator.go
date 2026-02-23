@@ -56,19 +56,67 @@ type staticEvaluator struct {
 }
 
 func (s *staticEvaluator) EvalFlag(ctx context.Context, flagKey string) (goffmodel.OFREPEvaluateSuccessResponse, error) {
-	result, err := s.client.BooleanValueDetails(ctx, flagKey, false, openfeature.TransactionContext(ctx))
-	if err != nil {
-		return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
-	}
-	resp := goffmodel.OFREPEvaluateSuccessResponse{
-		Key:      flagKey,
-		Value:    result.Value,
-		Reason:   "static provider evaluation result",
-		Variant:  result.Variant,
-		Metadata: result.FlagMetadata,
+	// Get the typed flag
+	flag, exists := s.provider.flags[flagKey]
+	if !exists {
+		return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("flag %s not found", flagKey)
 	}
 
-	return resp, nil
+	evalCtx := openfeature.TransactionContext(ctx)
+
+	// Constructs responde from resolution details
+	buildResponse := func(value any, variant string, metadata map[string]any) goffmodel.OFREPEvaluateSuccessResponse {
+		return goffmodel.OFREPEvaluateSuccessResponse{
+			Key:      flagKey,
+			Value:    value,
+			Reason:   "static provider evaluation result",
+			Variant:  variant,
+			Metadata: metadata,
+		}
+	}
+
+	typedFlag := TypedFlag(flag)
+
+	// Evaluate based on type
+	switch typedFlag.GetFlagType() {
+	case FlagTypeBoolean:
+		result, err := s.client.BooleanValueDetails(ctx, flagKey, false, evalCtx)
+		if err != nil {
+			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
+		}
+		return buildResponse(result.Value, result.Variant, result.FlagMetadata), nil
+
+	case FlagTypeInteger:
+		result, err := s.client.IntValueDetails(ctx, flagKey, 0, evalCtx)
+		if err != nil {
+			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
+		}
+		return buildResponse(result.Value, result.Variant, result.FlagMetadata), nil
+
+	case FlagTypeFloat:
+		result, err := s.client.FloatValueDetails(ctx, flagKey, 0.0, evalCtx)
+		if err != nil {
+			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
+		}
+		return buildResponse(result.Value, result.Variant, result.FlagMetadata), nil
+
+	case FlagTypeString:
+		result, err := s.client.StringValueDetails(ctx, flagKey, "", evalCtx)
+		if err != nil {
+			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
+		}
+		return buildResponse(result.Value, result.Variant, result.FlagMetadata), nil
+
+	case FlagTypeObject:
+		result, err := s.client.ObjectValueDetails(ctx, flagKey, map[string]any{}, evalCtx)
+		if err != nil {
+			return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("failed to evaluate flag %s: %w", flagKey, err)
+		}
+		return buildResponse(result.Value, result.Variant, result.FlagMetadata), nil
+
+	default:
+		return goffmodel.OFREPEvaluateSuccessResponse{}, fmt.Errorf("unsupported flag type for %s", flagKey)
+	}
 }
 
 func (s *staticEvaluator) EvalAllFlags(ctx context.Context) (goffmodel.OFREPBulkEvaluateSuccessResponse, error) {
@@ -79,22 +127,15 @@ func (s *staticEvaluator) EvalAllFlags(ctx context.Context) (goffmodel.OFREPBulk
 
 	allFlags := make([]goffmodel.OFREPFlagBulkEvaluateSuccessResponse, 0, len(flags))
 	for _, flagKey := range flags {
-		result, err := s.client.BooleanValueDetails(ctx, flagKey, false, openfeature.TransactionContext(ctx))
+		// Use EvalFlag which handles type detection
+		result, err := s.EvalFlag(ctx, flagKey)
 		if err != nil {
 			s.log.Error("failed to evaluate flag during bulk evaluation", "flagKey", flagKey, "error", err)
 			continue
 		}
 
 		allFlags = append(allFlags, goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
-			OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{
-				Key:      flagKey,
-				Value:    result.Value,
-				Reason:   "static provider evaluation result",
-				Variant:  result.Variant,
-				Metadata: result.FlagMetadata,
-			},
-			ErrorCode:    string(result.ErrorCode),
-			ErrorDetails: result.ErrorMessage,
+			OFREPEvaluateSuccessResponse: result,
 		})
 	}
 

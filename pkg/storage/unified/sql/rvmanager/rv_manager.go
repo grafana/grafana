@@ -21,19 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-type contextKey string
-
-const txKey contextKey = "rvmanager_db_tx"
-
-func ContextWithTx(ctx context.Context, tx db.Tx) context.Context {
-	return context.WithValue(ctx, txKey, tx)
-}
-
-func TxFromCtx(ctx context.Context) (db.Tx, bool) {
-	tx, ok := ctx.Value(txKey).(db.Tx)
-	return tx, ok
-}
-
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager")
 
 var (
@@ -136,6 +123,12 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*ResourceVersionMan
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
 	}, nil
+}
+
+// DB returns the underlying db.DB for backwards compatibility queries.
+// TODO: remove when backwards compatibility is no longer needed.
+func (m *ResourceVersionManager) DB() db.DB {
+	return m.db
 }
 
 // ExecWithRV executes the given function with an incremented resource version

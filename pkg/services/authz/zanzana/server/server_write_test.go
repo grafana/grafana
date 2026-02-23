@@ -3,20 +3,17 @@ package server
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/stretchr/testify/require"
+
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	"github.com/stretchr/testify/require"
 )
 
 func TestWriteAuthorization(t *testing.T) {
-	cfg := setting.NewCfg()
-	testStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
-	srv := setupOpenFGAServer(t, testStore, cfg)
+	srv := setupOpenFGAServer(t)
 	setup(t, srv)
 
 	req := &authzextv1.WriteRequest{

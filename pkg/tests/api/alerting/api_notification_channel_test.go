@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/receivers"
 	alertingLine "github.com/grafana/alerting/receivers/line/v1"
 	alertingPushover "github.com/grafana/alerting/receivers/pushover/v1"
@@ -927,7 +928,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 		resp = getRequest(t, receiversURL, http.StatusOK) // nolint
 		b = getBody(t, resp.Body)
 
-		var receivers []apimodels.Receiver
+		var receivers []alertingModels.ReceiverStatus
 		err = json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
@@ -976,7 +977,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
 
-	var receivers []apimodels.Receiver
+	var receivers []alertingModels.ReceiverStatus
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
@@ -996,7 +997,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 			}
 
 			// We don't have test alerts for the default notifier, continue iterating.
-			if rcv.Name == "grafana-default-email" {
+			if rcv.Name == "empty" {
 				return
 			}
 
@@ -2438,6 +2439,7 @@ var expEmailNotifications = []*notifications.SendEmailCommandSync{
 						SilenceURL:   "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3DUID_EmailAlert&orgId=1",
 						DashboardURL: "",
 						PanelURL:     "",
+						RuleUID:      "UID_EmailAlert",
 						OrgID:        util.Pointer(int64(1)),
 						Values:       map[string]float64{"A": 1},
 						ValueString:  "[ var='A' labels={} type='math' value=1 ]",
@@ -2603,7 +2605,8 @@ var expNonEmailNotifications = map[string][]string{
 			  "silenceURL": "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%%3DUID_WebhookAlert&orgId=1",
 			  "dashboardURL": "",
 			  "panelURL": "",
-			  "orgId": 1
+			  "orgId": 1,
+			  "ruleUID": "UID_WebhookAlert"
 			}
 		  ],
 		  "groupLabels": {

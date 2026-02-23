@@ -476,6 +476,12 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 		assert.Equal(t, int64(1), getIntValue(gridPos["y"]), "Panel should be at y=1 (after row)")
 		assert.Equal(t, int64(12), getIntValue(gridPos["w"]), "Panel width should be preserved")
 		assert.Equal(t, int64(3), getIntValue(gridPos["h"]), "Panel height should be preserved")
+
+		// Verify panel IDs: panel1 has Id:1, row panel should get Id:2 (maxPanelID + 1)
+		rowID := getIntValue(rowPanel["id"])
+		panelID := getIntValue(panel["id"])
+		assert.Equal(t, int64(1), panelID, "Panel ID should be 1")
+		assert.Equal(t, int64(2), rowID, "Row panel ID should be 2 (maxPanelID + 1)")
 	})
 }
 

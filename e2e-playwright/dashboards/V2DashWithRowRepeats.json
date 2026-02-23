@@ -1,6 +1,6 @@
 {
   "apiVersion": "dashboard.grafana.app/v2beta1",
-  "kind": "Dashboard",
+  "kind": "DashboardWithAccessInfo",
   "metadata": {
     "name": "ad8l8fz",
     "namespace": "default",
@@ -56,8 +56,11 @@
                   "spec": {
                     "hidden": false,
                     "query": {
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "kind": "DataQuery",
+                      "datasource": {
+                        "name": "gdev-testdata"
+                      },
                       "spec": {},
                       "version": "v0"
                     },
@@ -162,7 +165,10 @@
                   "spec": {
                     "hidden": false,
                     "query": {
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "gdev-testdata"
+                      },
                       "kind": "DataQuery",
                       "spec": {},
                       "version": "v0"

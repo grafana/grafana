@@ -68,9 +68,9 @@ Silences stop notifications from being created for a specified time window but d
 Silences are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
 {{< /admonition >}}
 
-## Mute and active timings vs silences
+## Mute timings and active time intervals vs silences
 
-[Mute and active timings](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
+[Mute timings and active time intervals](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
 
 The following table highlights the key differences between mute timings and silences.
 
@@ -168,7 +168,22 @@ To remove a silence, complete the following steps.
 1. Click **Silences** to view the list of existing silences.
 1. Select the silence you want to end, then click **Unsilence**.
 
-> **Note:** You cannot remove a silence manually. Silences that have ended are retained and listed for five days.
+{{< admonition type="note" >}}
+Clicking **Unsilence** ends the silence immediately, which is the only way to end a silence before its configured end time. Silences cannot be permanently deleted manually.
+{{< /admonition >}}
+
+## Silence duration and retention
+
+**Duration limits**
+
+There is no maximum duration for a silence. You can create a silence for any length of time. However, administrators can configure the following limits:
+
+- `alertmanager_max_silences_count`: Maximum number of active and pending silences per tenant (default: 0, no limit), expired silences are also counted.
+- `alertmanager_max_silence_size_bytes`: Maximum size of a silence in bytes (default: 0, no limit).
+
+**Expired silence retention**
+
+Expired silences are automatically deleted after 5 days. This retention period is not configurable. The cleanup process runs automatically every 15 minutes to remove expired silences that are older than the retention period.
 
 ## Rule-specific silences
 

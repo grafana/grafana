@@ -41,7 +41,7 @@ jest.mock('../../../plugins/panel/nodeGraph/createLayoutWorker', () => {
 
 describe('NodeGraphContainer', () => {
   it('is collapsed if shown with traces', () => {
-    const { container } = render(
+    render(
       <UnconnectedNodeGraphContainer
         dataFrames={[emptyFrame]}
         exploreId={'left'}
@@ -52,8 +52,8 @@ describe('NodeGraphContainer', () => {
       />
     );
 
-    // Make sure we only show header and loading bar container from PanelChrome in the collapsible
-    expect(container.firstChild?.childNodes.length).toBe(2);
+    // Make sure it's collapsed
+    expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('shows the graph if not with trace view', async () => {
@@ -67,7 +67,6 @@ describe('NodeGraphContainer', () => {
       />
     );
 
-    expect(container.firstChild?.childNodes.length).toBe(3);
     expect(container.querySelector('svg')).toBeInTheDocument();
     await screen.findByLabelText(/Node: tempo-querier/);
   });

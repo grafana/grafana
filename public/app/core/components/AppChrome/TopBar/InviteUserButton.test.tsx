@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -7,18 +8,30 @@ import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 
 import { InviteUserButton } from './InviteUserButton';
 
-// Mock dependencies
+// Mock the API hook
+const mockUseGetCurrentOrgQuotaQuery = jest.fn(() => ({ data: undefined }));
+
+jest.mock('app/api/clients/legacy', () => {
+  const actual = jest.requireActual('app/api/clients/legacy');
+  return {
+    ...actual,
+    useGetCurrentOrgQuotaQuery: () => mockUseGetCurrentOrgQuotaQuery(),
+  };
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    externalUserMngLinkUrl: 'https://example.com/invite',
-  },
   reportInteraction: jest.fn(),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: jest.fn(),
+    user: {
+      orgId: 1,
+      timezone: 'browser',
+      weekStart: '',
+    },
   },
 }));
 
@@ -27,7 +40,6 @@ jest.mock('app/features/users/utils', () => ({
 }));
 
 const mockContextSrv = jest.mocked(contextSrv);
-const mockConfig = jest.mocked(config);
 const mockReportInteraction = jest.mocked(reportInteraction);
 const mockGetExternalUserMngLinkUrl = jest.mocked(getExternalUserMngLinkUrl);
 
@@ -56,11 +68,14 @@ describe('InviteUserButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetExternalUserMngLinkUrl.mockReturnValue(mockInviteUrl);
+    config.externalUserMngLinkUrl = 'https://example.com/invite';
+    config.externalUserUpgradeLinkUrl = '';
+    config.namespace = 'org-1';
   });
 
   describe('Business Logic - When button should appear', () => {
     it('should not render when user lacks permission', () => {
-      mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
       mockContextSrv.hasPermission.mockReturnValue(false);
       mockMatchMedia(true);
 
@@ -70,7 +85,8 @@ describe('InviteUserButton', () => {
     });
 
     it('should not render when external user management URL is not configured', () => {
-      mockConfig.externalUserMngLinkUrl = '';
+      config.externalUserMngLinkUrl = '';
+      config.externalUserUpgradeLinkUrl = '';
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
 
@@ -82,7 +98,7 @@ describe('InviteUserButton', () => {
 
   describe('User Experience - Responsive behavior', () => {
     beforeEach(() => {
-      mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
       mockContextSrv.hasPermission.mockReturnValue(true);
     });
 
@@ -107,7 +123,7 @@ describe('InviteUserButton', () => {
 
   describe('Core Functionality - Click behavior', () => {
     beforeEach(() => {
-      mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
     });
@@ -130,7 +146,7 @@ describe('InviteUserButton', () => {
 
   describe('Error Handling - Preventing crashes', () => {
     beforeEach(() => {
-      mockConfig.externalUserMngLinkUrl = 'https://example.com/invite';
+      config.externalUserMngLinkUrl = 'https://example.com/invite';
       mockContextSrv.hasPermission.mockReturnValue(true);
       mockMatchMedia(true);
     });
@@ -148,7 +164,7 @@ describe('InviteUserButton', () => {
       // Should not crash when URL generation fails
       await user.click(screen.getByRole('button', { name: /invite user/i }));
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite user click:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite/upgrade user click:', expect.any(Error));
 
       consoleSpy.mockRestore();
     });
@@ -166,7 +182,7 @@ describe('InviteUserButton', () => {
       // Should not crash when popup is blocked
       await user.click(screen.getByRole('button', { name: /invite user/i }));
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite user click:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to handle invite/upgrade user click:', expect.any(Error));
 
       consoleSpy.mockRestore();
     });

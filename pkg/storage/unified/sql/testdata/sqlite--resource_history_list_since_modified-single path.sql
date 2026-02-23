@@ -12,4 +12,4 @@ WHERE "namespace" = 'ns'
   AND "resource" = 'res'
   AND "resource_version" > 10000 
   AND "resource_version" <= 20000 
-ORDER BY "name" ASC, "resource_version" DESC
+ORDER BY "resource_version" DESC

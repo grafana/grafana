@@ -46,10 +46,12 @@ func ProvideProvisioningOSSRepositoryExtras(
 
 func ProvideProvisioningOSSConnectionExtras(
 	_ *setting.Cfg,
+	decryptSvc decrypt.DecryptService,
 	ghFactory ghconnection.GithubFactory,
 ) []connection.Extra {
+	decrypter := connection.ProvideDecrypter(decryptSvc)
 	return []connection.Extra{
-		ghconnection.Extra(ghFactory),
+		ghconnection.Extra(decrypter, ghFactory),
 	}
 }
 

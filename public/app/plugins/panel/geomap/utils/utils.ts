@@ -24,8 +24,9 @@ import { getTextDimension } from 'app/features/dimensions/text';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
 import { GeomapPanel } from '../GeomapPanel';
+import { type Options } from '../panelcfg.gen';
 import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
-import { Options, MapLayerState } from '../types';
+import { MapLayerState } from '../types';
 
 export function getStyleDimension(
   frame: DataFrame | undefined,

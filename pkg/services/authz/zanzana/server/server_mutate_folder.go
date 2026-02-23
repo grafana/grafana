@@ -110,7 +110,7 @@ func (s *Server) listFolderParents(ctx context.Context, store *storeInfo, folder
 	defer span.End()
 
 	object := zanzana.NewFolderIdent(folderUID)
-	resp, err := s.openfga.Read(ctx, &openfgav1.ReadRequest{
+	resp, err := s.openFGAClient.Read(ctx, &openfgav1.ReadRequest{
 		StoreId: store.ID,
 		TupleKey: &openfgav1.ReadRequestTupleKey{
 			Object:   object,

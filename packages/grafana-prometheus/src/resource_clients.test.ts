@@ -297,6 +297,7 @@ describe('SeriesApiClient', () => {
       getAdjustedInterval: mockGetAdjustedInterval,
       getTimeRangeParams: mockGetTimeRangeParams,
       interpolateString: mockInterpolateString,
+      hasLabelsMatchAPISupport: () => true,
     } as unknown as PrometheusDatasource);
   });
 
@@ -820,6 +821,441 @@ describe('processSeries', () => {
 
     const result = processSeries(series, 'non_existent_label');
     expect(result.labelValues).toEqual([]);
+  });
+
+  it("should return a filtered result for a datasource that doesn't have match api support", () => {
+    const series = [
+      {
+        __name__: 'up',
+        instance: 'node_exporter:9101',
+        job: 'node_exporter',
+      },
+      {
+        __name__: 'up',
+        instance: 'fake-prometheus-data:9091',
+        job: 'fake-data-gen',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const matchSelector = `{instance="fake-prometheus-data:9091",__name__="up"}`;
+    const findValuesForKey = 'job';
+
+    const result = processSeries(series, findValuesForKey, hasMatchApiSupport, matchSelector);
+
+    // Should only include data from the filtered series (second entry)
+    expect(result.metrics).toEqual(['up']);
+    expect(result.labelKeys).toEqual(['instance', 'job']);
+    expect(result.labelValues).toEqual(['fake-data-gen']);
+  });
+
+  it('should filter multiple series correctly when match api support is disabled', () => {
+    const series = [
+      {
+        __name__: 'http_requests_total',
+        instance: 'server1:9090',
+        job: 'api',
+        status: '200',
+      },
+      {
+        __name__: 'http_requests_total',
+        instance: 'server2:9090',
+        job: 'api',
+        status: '404',
+      },
+      {
+        __name__: 'http_requests_total',
+        instance: 'server1:9090',
+        job: 'web',
+        status: '200',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const matchSelector = `{job="api",status="200"}`;
+    const findValuesForKey = 'instance';
+
+    const result = processSeries(series, findValuesForKey, hasMatchApiSupport, matchSelector);
+
+    // Should only include the first series entry
+    expect(result.metrics).toEqual(['http_requests_total']);
+    expect(result.labelKeys).toEqual(['instance', 'job', 'status']);
+    expect(result.labelValues).toEqual(['server1:9090']);
+  });
+
+  it('should handle no matches when filtering without match api support', () => {
+    const series = [
+      {
+        __name__: 'metric1',
+        instance: 'host1',
+        job: 'job1',
+      },
+      {
+        __name__: 'metric2',
+        instance: 'host2',
+        job: 'job2',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const matchSelector = `{job="nonexistent"}`;
+    const findValuesForKey = 'instance';
+
+    const result = processSeries(series, findValuesForKey, hasMatchApiSupport, matchSelector);
+
+    // Should return empty arrays since no series match
+    expect(result.metrics).toEqual([]);
+    expect(result.labelKeys).toEqual([]);
+    expect(result.labelValues).toEqual([]);
+  });
+
+  it('should filter by multiple label matchers without match api support', () => {
+    const series = [
+      {
+        __name__: 'disk_usage',
+        instance: 'node1',
+        job: 'monitoring',
+        device: 'sda',
+      },
+      {
+        __name__: 'disk_usage',
+        instance: 'node2',
+        job: 'monitoring',
+        device: 'sdb',
+      },
+      {
+        __name__: 'disk_usage',
+        instance: 'node1',
+        job: 'backup',
+        device: 'sda',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const matchSelector = `{job="monitoring",device="sda"}`;
+    const findValuesForKey = 'instance';
+
+    const result = processSeries(series, findValuesForKey, hasMatchApiSupport, matchSelector);
+
+    // Should only match the first series (job=monitoring AND device=sda)
+    expect(result.metrics).toEqual(['disk_usage']);
+    expect(result.labelKeys).toEqual(['device', 'instance', 'job']);
+    expect(result.labelValues).toEqual(['node1']);
+  });
+
+  it('should extract all data without findValuesForKey when match api support is disabled', () => {
+    const series = [
+      {
+        __name__: 'cpu_usage',
+        instance: 'server1',
+        job: 'monitoring',
+      },
+      {
+        __name__: 'cpu_usage',
+        instance: 'server2',
+        job: 'monitoring',
+      },
+      {
+        __name__: 'cpu_usage',
+        instance: 'server1',
+        job: 'accounting',
+      },
+      {
+        __name__: 'cpu_usage',
+        instance: 'server2',
+        job: 'accounting',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const matchSelector = `{job="monitoring"}`;
+
+    const result = processSeries(series, undefined, hasMatchApiSupport, matchSelector);
+
+    // Should extract metrics and labelKeys from filtered series, but no labelValues
+    expect(result.metrics).toEqual(['cpu_usage']);
+    expect(result.labelKeys).toEqual(['instance', 'job']);
+    expect(result.labelValues).toEqual([]);
+  });
+
+  it('should handle multiple metrics when filtering without match api support', () => {
+    const series = [
+      {
+        __name__: 'up',
+        instance: 'host1',
+        job: 'prometheus',
+      },
+      {
+        __name__: 'alerts',
+        instance: 'host1',
+        job: 'prometheus',
+      },
+      {
+        __name__: 'up',
+        instance: 'host2',
+        job: 'grafana',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const matchSelector = `{job="prometheus"}`;
+    const findValuesForKey = '__name__';
+
+    const result = processSeries(series, findValuesForKey, hasMatchApiSupport, matchSelector);
+
+    // Should include both metrics from series matching job=prometheus
+    expect(result.metrics).toEqual(['alerts', 'up']);
+    expect(result.labelKeys).toEqual(['instance', 'job']);
+    expect(result.labelValues).toEqual(['alerts', 'up']);
+  });
+
+  it('should handle multiple metrics when filtering without match api support and with no match[] selector', () => {
+    const series = [
+      {
+        __name__: 'up',
+        instance: 'host1',
+        job: 'prometheus',
+      },
+      {
+        __name__: 'alerts',
+        instance: 'host3',
+        job: 'prometheus',
+      },
+      {
+        __name__: 'up',
+        instance: 'host2',
+        job: 'grafana',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const findValuesForKey = 'instance';
+
+    const result = processSeries(series, findValuesForKey, hasMatchApiSupport);
+
+    // Should include both metrics from series matching job=prometheus
+    expect(result.metrics).toEqual(['alerts', 'up']);
+    expect(result.labelKeys).toEqual(['instance', 'job']);
+    expect(result.labelValues).toEqual(['host1', 'host2', 'host3']);
+  });
+
+  it('should deduplicate results when filtering without match api support', () => {
+    const series = [
+      {
+        __name__: 'requests',
+        instance: 'host1',
+        job: 'api',
+      },
+      {
+        __name__: 'requests',
+        instance: 'host2',
+        job: 'api',
+      },
+      {
+        __name__: 'requests',
+        instance: 'host3',
+        job: 'api',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const matchSelector = `{job="api"}`;
+    const findValuesForKey = 'job';
+
+    const result = processSeries(series, findValuesForKey, hasMatchApiSupport, matchSelector);
+
+    // Should deduplicate metrics and label values
+    expect(result.metrics).toEqual(['requests']);
+    expect(result.labelKeys).toEqual(['instance', 'job']);
+    expect(result.labelValues).toEqual(['api']);
+  });
+
+  describe('label operator support', () => {
+    it('should filter with = (equals) operator', () => {
+      const series = [
+        { __name__: 'metric1', env: 'prod', region: 'us-east' },
+        { __name__: 'metric1', env: 'dev', region: 'us-west' },
+        { __name__: 'metric1', env: 'prod', region: 'eu-west' },
+      ];
+      const hasMatchApiSupport = false;
+      const matchSelector = `{env="prod"}`;
+
+      const result = processSeries(series, 'region', hasMatchApiSupport, matchSelector);
+
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelKeys).toEqual(['env', 'region']);
+      expect(result.labelValues).toEqual(['eu-west', 'us-east']);
+    });
+
+    it('should filter with != (not equals) operator', () => {
+      const series = [
+        { __name__: 'metric1', env: 'prod', region: 'us-east' },
+        { __name__: 'metric1', env: 'dev', region: 'us-west' },
+        { __name__: 'metric1', env: 'staging', region: 'eu-west' },
+      ];
+      const hasMatchApiSupport = false;
+      const matchSelector = `{env!="prod"}`;
+
+      const result = processSeries(series, 'region', hasMatchApiSupport, matchSelector);
+
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelKeys).toEqual(['env', 'region']);
+      expect(result.labelValues).toEqual(['eu-west', 'us-west']);
+    });
+
+    it('should filter with =~ (regex match) operator', () => {
+      const series = [
+        { __name__: 'metric1', instance: 'server-prod-01', job: 'api' },
+        { __name__: 'metric1', instance: 'server-dev-01', job: 'api' },
+        { __name__: 'metric1', instance: 'server-prod-02', job: 'api' },
+        { __name__: 'metric1', instance: 'worker-prod-01', job: 'worker' },
+      ];
+      const hasMatchApiSupport = false;
+      const matchSelector = `{instance=~"server-prod-.*"}`;
+
+      const result = processSeries(series, 'instance', hasMatchApiSupport, matchSelector);
+
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelKeys).toEqual(['instance', 'job']);
+      expect(result.labelValues).toEqual(['server-prod-01', 'server-prod-02']);
+    });
+
+    it('should filter with !~ (regex not match) operator', () => {
+      const series = [
+        { __name__: 'metric1', instance: 'server-prod-01', job: 'api' },
+        { __name__: 'metric1', instance: 'server-dev-01', job: 'api' },
+        { __name__: 'metric1', instance: 'server-staging-01', job: 'api' },
+      ];
+      const hasMatchApiSupport = false;
+      const matchSelector = `{instance!~".*-prod-.*"}`;
+
+      const result = processSeries(series, 'instance', hasMatchApiSupport, matchSelector);
+
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelKeys).toEqual(['instance', 'job']);
+      expect(result.labelValues).toEqual(['server-dev-01', 'server-staging-01']);
+    });
+
+    it('should handle multiple operators in the same selector', () => {
+      const series = [
+        { __name__: 'http_requests', method: 'GET', status: '200', env: 'prod' },
+        { __name__: 'http_requests', method: 'POST', status: '201', env: 'prod' },
+        { __name__: 'http_requests', method: 'GET', status: '404', env: 'prod' },
+        { __name__: 'http_requests', method: 'GET', status: '200', env: 'dev' },
+      ];
+      const hasMatchApiSupport = false;
+      // Match: method=GET AND status matches 2xx pattern AND env!=dev
+      const matchSelector = `{method="GET",status=~"2.*",env!="dev"}`;
+
+      const result = processSeries(series, 'status', hasMatchApiSupport, matchSelector);
+
+      expect(result.metrics).toEqual(['http_requests']);
+      expect(result.labelKeys).toEqual(['env', 'method', 'status']);
+      expect(result.labelValues).toEqual(['200']);
+    });
+
+    it('should handle != operator when label is missing from series', () => {
+      const series = [
+        { __name__: 'metric1', instance: 'host1', job: 'api' },
+        { __name__: 'metric1', instance: 'host2' }, // Missing 'job' label
+        { __name__: 'metric1', instance: 'host3', job: 'worker' },
+      ] as Array<{ [key: string]: string }>;
+      const hasMatchApiSupport = false;
+      const matchSelector = `{job!="api"}`;
+
+      const result = processSeries(series, 'instance', hasMatchApiSupport, matchSelector);
+
+      // Should match host2 (no job label) and host3 (job=worker)
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelValues).toEqual(['host2', 'host3']);
+    });
+
+    it('should handle !~ operator when label is missing from series', () => {
+      const series = [
+        { __name__: 'metric1', instance: 'host1', env: 'production' },
+        { __name__: 'metric1', instance: 'host2' }, // Missing 'env' label
+        { __name__: 'metric1', instance: 'host3', env: 'development' },
+      ] as Array<{ [key: string]: string }>;
+      const hasMatchApiSupport = false;
+      const matchSelector = `{env!~"prod.*"}`;
+
+      const result = processSeries(series, 'instance', hasMatchApiSupport, matchSelector);
+
+      // Should match host2 (no env label) and host3 (env doesn't match pattern)
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelValues).toEqual(['host2', 'host3']);
+    });
+
+    it('should handle = operator when label is missing from series', () => {
+      const series = [
+        { __name__: 'metric1', instance: 'host1', job: 'api' },
+        { __name__: 'metric1', instance: 'host2' }, // Missing 'job' label
+        { __name__: 'metric1', instance: 'host3', job: 'api' },
+      ] as Array<{ [key: string]: string }>;
+      const hasMatchApiSupport = false;
+      const matchSelector = `{job="api"}`;
+
+      const result = processSeries(series, 'instance', hasMatchApiSupport, matchSelector);
+
+      // Should only match host1 and host3 (have job=api)
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelValues).toEqual(['host1', 'host3']);
+    });
+
+    it('should handle =~ operator when label is missing from series', () => {
+      const series = [
+        { __name__: 'metric1', instance: 'host1', env: 'production' },
+        { __name__: 'metric1', instance: 'host2' }, // Missing 'env' label
+        { __name__: 'metric1', instance: 'host3', env: 'prod-eu' },
+      ] as Array<{ [key: string]: string }>;
+      const hasMatchApiSupport = false;
+      const matchSelector = `{env=~"prod.*"}`;
+
+      const result = processSeries(series, 'instance', hasMatchApiSupport, matchSelector);
+
+      // Should only match host1 and host3 (env matches pattern)
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelValues).toEqual(['host1', 'host3']);
+    });
+
+    it('should handle invalid regex gracefully for =~ operator', () => {
+      const series = [
+        { __name__: 'metric1', instance: 'host1', env: 'prod' },
+        { __name__: 'metric1', instance: 'host2', env: 'dev' },
+      ];
+      const hasMatchApiSupport = false;
+      const matchSelector = `{env=~"[invalid"}`;
+
+      const result = processSeries(series, 'instance', hasMatchApiSupport, matchSelector);
+
+      // Invalid regex should result in no matches
+      expect(result.metrics).toEqual([]);
+      expect(result.labelValues).toEqual([]);
+    });
+
+    it('should handle invalid regex gracefully for !~ operator', () => {
+      const series = [
+        { __name__: 'metric1', instance: 'host1', env: 'prod' },
+        { __name__: 'metric1', instance: 'host2', env: 'dev' },
+      ];
+      const hasMatchApiSupport = false;
+      const matchSelector = `{env!~"[invalid"}`;
+
+      const result = processSeries(series, 'instance', hasMatchApiSupport, matchSelector);
+
+      // Invalid regex for !~ should match all (can't match invalid pattern)
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelValues).toEqual(['host1', 'host2']);
+    });
+
+    it('should handle complex regex patterns', () => {
+      const series = [
+        { __name__: 'metric1', version: 'v1.2.3', env: 'prod' },
+        { __name__: 'metric1', version: 'v2.0.0', env: 'prod' },
+        { __name__: 'metric1', version: 'v1.9.15', env: 'prod' },
+        { __name__: 'metric1', version: 'v3.0.0-beta', env: 'dev' },
+      ];
+      const hasMatchApiSupport = false;
+      // Match versions starting with v1 or v2, followed by dot and numbers
+      const matchSelector = `{version=~"v[12]\\..*",env="prod"}`;
+
+      const result = processSeries(series, 'version', hasMatchApiSupport, matchSelector);
+
+      expect(result.metrics).toEqual(['metric1']);
+      expect(result.labelValues).toEqual(['v1.2.3', 'v1.9.15', 'v2.0.0']);
+    });
   });
 });
 

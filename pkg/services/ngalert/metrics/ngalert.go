@@ -12,13 +12,8 @@ const (
 )
 
 // ProvideService is a Metrics factory.
-func ProvideService() *NGAlert {
-	return NewNGAlert(prometheus.DefaultRegisterer)
-}
-
-// ProvideServiceForTest is a Metrics factory used for test.
-func ProvideServiceForTest() *NGAlert {
-	return NewNGAlert(prometheus.NewRegistry())
+func ProvideService(r prometheus.Registerer) *NGAlert {
+	return NewNGAlert(r)
 }
 
 type NGAlert struct {

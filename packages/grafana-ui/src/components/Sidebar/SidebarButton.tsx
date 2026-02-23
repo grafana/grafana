@@ -5,7 +5,7 @@ import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { getActiveButtonStyles } from '../Button/Button';
+import { ButtonVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -16,10 +16,11 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
   tooltip?: string;
   title: string;
+  variant?: ButtonVariant;
 }
 
 export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ icon, active, onClick, title, tooltip, ...restProps }, ref) => {
+  ({ icon, active, onClick, title, tooltip, variant, ...restProps }, ref) => {
     const styles = useStyles2(getStyles);
     const context = useContext(SidebarContext);
 
@@ -30,7 +31,6 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
     const buttonClass = cx(
       styles.button,
       context.compact && styles.compact,
-      active && styles.active,
       context.position === 'left' && styles.leftButton
     );
 
@@ -44,7 +44,7 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
           onClick={onClick}
           {...restProps}
         >
-          <div className={styles.iconWrapper}>{renderIcon(icon, context.compact)}</div>
+          <div className={cx(styles.iconWrapper, variant, active && styles.iconActive)}>{renderIcon(icon)}</div>
           {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
         </button>
       </Tooltip>
@@ -54,13 +54,13 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
 
 SidebarButton.displayName = 'SidebarButton';
 
-function renderIcon(icon: IconName | React.ReactNode, compact?: boolean) {
+function renderIcon(icon: IconName | React.ReactNode) {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={compact ? `lg` : `lg`} />;
+    return <Icon name={icon} size="lg" />;
   }
 
   return icon;
@@ -73,22 +73,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
-      minHeight: theme.spacing(theme.components.height.md),
+      minHeight: theme.spacing(theme.components.height.sm),
       padding: theme.spacing(0, 1),
       width: '100%',
       overflow: 'hidden',
-      // borderRadius: theme.shape.radius.sm,
-      lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
+      lineHeight: `${theme.components.height.sm * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: `none`,
-
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
 
       '&:focus, &:focus-visible': {
         ...getFocusStyles(theme),
@@ -100,52 +93,58 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
         opacity: theme.colors.action.disabledOpacity,
-        background: theme.colors.action.disabledBackground,
-        boxShadow: 'none',
-
-        '&:hover': {
-          color: theme.colors.text.disabled,
-          background: theme.colors.action.disabledBackground,
-          boxShadow: 'none',
-        },
-      },
-
-      '&:hover, &:focus-visible': {
-        color: theme.colors.text.primary,
-        background: theme.colors.action.hover,
-      },
-
-      '&:active': {
-        ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
       },
     }),
     compact: css({
-      height: theme.spacing(theme.components.height.md),
       padding: theme.spacing(0, 1),
       width: theme.spacing(5),
     }),
-    active: css({
+    iconWrapper: css({
+      padding: 3,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+      position: 'relative',
+      borderRadius: theme.shape.radius.sm,
+      '&:hover, &:focus-visible': {
+        background: theme.colors.action.hover,
+      },
+      '&.primary': {
+        background: theme.colors.primary.main,
+        color: theme.colors.getContrastText(theme.colors.primary.main),
+        '&:hover': {
+          backgroundColor: theme.colors.primary.shade,
+        },
+      },
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        ...getIconTransitionStyles(theme),
+      },
+    }),
+    iconActive: css({
       color: theme.colors.text.primary,
-      background: theme.colors.action.selected,
+      background: theme.colors.secondary.main,
       '&::before': {
         display: 'block',
         content: '" "',
         position: 'absolute',
         right: 0,
-        top: 0,
-        height: '100%',
-        width: '2px',
-        borderRadius: theme.shape.radius.default,
-        backgroundImage: theme.colors.gradients.brandVertical,
+        bottom: 0,
+        width: '100%',
+        height: '2px',
+        borderBottomLeftRadius: theme.shape.radius.sm,
+        borderBottomRightRadius: theme.shape.radius.sm,
+        backgroundImage: theme.colors.gradients.brandHorizontal,
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          ...getIconTransitionStyles(theme),
+        },
+      },
+      svg: {
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          ...getIconTransitionStyles(theme),
+        },
       },
     }),
-    buttonWrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      whiteSpace: 'nowrap',
-    }),
-    iconWrapper: css({}),
     title: css({
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
@@ -167,3 +166,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+function getIconTransitionStyles(theme: GrafanaTheme2) {
+  return {
+    transition: theme.transitions.create(['background-color', 'color'], {
+      duration: theme.transitions.duration.short,
+    }),
+  };
+}

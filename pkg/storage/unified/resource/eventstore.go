@@ -12,10 +12,11 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
-	eventsSection        = "unified/events"
+	eventsSection        = kv.EventsSection
 	deleteEventBatchSize = 50
 )
 
@@ -30,7 +31,7 @@ type EventKey struct {
 	Resource        string
 	Name            string
 	ResourceVersion int64
-	Action          DataAction
+	Action          kv.DataAction
 	Folder          string
 	GUID            string
 }
@@ -81,14 +82,14 @@ func (k EventKey) Validate() error {
 }
 
 type Event struct {
-	Namespace       string     `json:"namespace"`
-	Group           string     `json:"group"`
-	Resource        string     `json:"resource"`
-	Name            string     `json:"name"`
-	ResourceVersion int64      `json:"resource_version"`
-	Action          DataAction `json:"action"`
-	Folder          string     `json:"folder"`
-	PreviousRV      int64      `json:"previous_rv"`
+	Namespace       string        `json:"namespace"`
+	Group           string        `json:"group"`
+	Resource        string        `json:"resource"`
+	Name            string        `json:"name"`
+	ResourceVersion int64         `json:"resource_version"`
+	Action          kv.DataAction `json:"action"`
+	Folder          string        `json:"folder"`
+	PreviousRV      int64         `json:"previous_rv"`
 }
 
 func newEventStore(kv KV) *eventStore {
@@ -115,7 +116,7 @@ func ParseEventKey(key string) (EventKey, error) {
 		Group:           parts[2],
 		Resource:        parts[3],
 		Name:            parts[4],
-		Action:          DataAction(parts[5]),
+		Action:          kv.DataAction(parts[5]),
 		Folder:          parts[6],
 	}, nil
 }
@@ -184,9 +185,9 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 }
 
 // ListSince returns a sequence of events since the given resource version.
-func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64) iter.Seq2[string, error] {
+func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder SortOrder) iter.Seq2[string, error] {
 	opts := ListOptions{
-		Sort:     SortOrderAsc,
+		Sort:     sortOrder,
 		StartKey: fmt.Sprintf("%d", sinceRV),
 	}
 	return func(yield func(string, error) bool) {
@@ -202,9 +203,9 @@ func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64) iter.Seq2
 	}
 }
 
-func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Event, error] {
+func (n *eventStore) ListSince(ctx context.Context, sinceRV int64, sortOrder SortOrder) iter.Seq2[Event, error] {
 	return func(yield func(Event, error) bool) {
-		for evtKey, err := range n.ListKeysSince(ctx, sinceRV) {
+		for evtKey, err := range n.ListKeysSince(ctx, sinceRV, sortOrder) {
 			if err != nil {
 				yield(Event{}, err)
 				return

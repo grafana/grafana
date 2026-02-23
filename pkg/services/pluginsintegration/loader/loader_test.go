@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
@@ -126,6 +127,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:       plugins.SignatureStatusInternal,
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -222,6 +224,7 @@ func TestLoader_Load(t *testing.T) {
 					SignatureOrg:    "Grafana Labs",
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -274,6 +277,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:       "unsigned",
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -339,6 +343,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:       plugins.SignatureStatusUnsigned,
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -461,6 +466,7 @@ func TestLoader_Load(t *testing.T) {
 					BaseURL:         "public/plugins/test-app",
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -553,6 +559,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 				},
 				SkipHostEnvVars: true,
 				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
@@ -656,6 +663,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						SignatureOrg:    "Will Browne",
 						SkipHostEnvVars: true,
 						Translations:    map[string]string{},
+						LoadingStrategy: plugins.LoadingStrategyScript,
 					},
 				},
 				pluginErrors: map[string]*plugins.Error{
@@ -776,6 +784,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 					BaseURL:         "public/plugins/test-app",
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -846,6 +855,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 				Module:          "public/plugins/test-datasource/module.js",
 				BaseURL:         "public/plugins/test-datasource",
 				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
@@ -934,6 +944,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 				BaseURL:         "public/plugins/test-app",
 				SkipHostEnvVars: true,
 				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
@@ -1026,6 +1037,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 				BaseURL:         "public/plugins/test-app",
 				SkipHostEnvVars: true,
 				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
@@ -1189,6 +1201,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		Class:           plugins.ClassExternal,
 		SkipHostEnvVars: true,
 		Translations:    map[string]string{},
+		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 
 	child := &plugins.Plugin{
@@ -1234,6 +1247,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		Class:           plugins.ClassExternal,
 		SkipHostEnvVars: true,
 		Translations:    map[string]string{},
+		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 
 	parent.Children = []*plugins.Plugin{child}
@@ -1385,6 +1399,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			Class:           plugins.ClassExternal,
 			SkipHostEnvVars: true,
 			Translations:    map[string]string{},
+			LoadingStrategy: plugins.LoadingStrategyScript,
 		}
 
 		child := &plugins.Plugin{
@@ -1437,6 +1452,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			Class:           plugins.ClassExternal,
 			SkipHostEnvVars: true,
 			Translations:    map[string]string{},
+			LoadingStrategy: plugins.LoadingStrategyScript,
 		}
 
 		parent.Children = []*plugins.Plugin{child}
@@ -1484,7 +1500,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	require.NoError(t, err)
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginAssetsProvider),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginAssetsProvider, pluginscdn.ProvideService(cfg)),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &pluginfakes.FakeAuthService{}, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), pluginfakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)
@@ -1514,7 +1530,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 	}
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider()),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider(), pluginscdn.ProvideService(cfg)),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), pluginfakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)

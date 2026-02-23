@@ -8,6 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -24,6 +25,7 @@ func newIAMAuthorizer(
 	legacyAccessClient authlib.AccessClient,
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
+	teamLbacApiInstaller TeamLBACApiInstaller,
 ) authorizer.Authorizer {
 	resourceAuthorizer := make(map[string]authorizer.Authorizer)
 
@@ -41,6 +43,22 @@ func newIAMAuthorizer(
 		return authorizer.DecisionAllow, "", nil
 	})
 
+	serviceIdentityAuthorizer := authorizer.AuthorizerFunc(func(
+		ctx context.Context, attr authorizer.Attributes,
+	) (authorized authorizer.Decision, reason string, err error) {
+		if identity.IsServiceIdentity(ctx) {
+			// A Grafana sub-system should have full access. We trust them to make wise decisions.
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		req, err := identity.GetRequester(ctx)
+		if err == nil && req != nil && req.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		return authorizer.DecisionDeny, "", nil
+	})
+
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
 	resourceAuthorizer["display"] = legacyAuthorizer
@@ -49,6 +67,7 @@ func newIAMAuthorizer(
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = roleApiInstaller.GetAuthorizer()
+	resourceAuthorizer[iamv0.TeamLBACRuleInfo.GetName()] = teamLbacApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = allowAuthorizer // Handled by the backend wrapper
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
@@ -58,6 +77,8 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = allowAuthorizer
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
+	// TODO: Implement fine-grained authorization for external group mapping search on the search level
+	resourceAuthorizer["searchExternalGroupMappings"] = serviceIdentityAuthorizer
 
 	resourceAuthorizer[iamv0.GlobalRoleInfo.GetName()] = globalRoleApiInstaller.GetAuthorizer()
 

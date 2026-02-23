@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	utilsOrig "github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -165,18 +166,6 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 			BookmarkUrls: p.Spec.Navbar.BookmarkUrls,
 		}
 	}
-	if p.Spec.CookiePreferences != nil {
-		cmd.CookiePreferences = []pref.CookieType{}
-		if p.Spec.CookiePreferences.Analytics != nil {
-			cmd.CookiePreferences = append(cmd.CookiePreferences, "analytics")
-		}
-		if p.Spec.CookiePreferences.Functional != nil {
-			cmd.CookiePreferences = append(cmd.CookiePreferences, "functional")
-		}
-		if p.Spec.CookiePreferences.Performance != nil {
-			cmd.CookiePreferences = append(cmd.CookiePreferences, "performance")
-		}
-	}
 
 	switch owner.Owner {
 	case utils.NamespaceResourceOwner:
@@ -316,25 +305,6 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 		if p.JSONData.QueryHistory.HomeTab != "" {
 			obj.Spec.QueryHistory = &preferences.PreferencesQueryHistoryPreference{
 				HomeTab: &p.JSONData.QueryHistory.HomeTab,
-			}
-		}
-
-		if len(p.JSONData.CookiePreferences) > 0 {
-			// Analytics   interface{} `json:"analytics,omitempty"`
-			// Performance interface{} `json:"performance,omitempty"`
-			// Functional  interface{} `json:"functional,omitempty"`
-			obj.Spec.CookiePreferences = preferences.NewPreferencesCookiePreferences()
-			v, ok := p.JSONData.CookiePreferences["analytics"]
-			if ok {
-				obj.Spec.CookiePreferences.Analytics = v
-			}
-			v, ok = p.JSONData.CookiePreferences["performance"]
-			if ok {
-				obj.Spec.CookiePreferences.Performance = v
-			}
-			v, ok = p.JSONData.CookiePreferences["functional"]
-			if ok {
-				obj.Spec.CookiePreferences.Functional = v
 			}
 		}
 

@@ -2,6 +2,7 @@ package state
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -15,6 +16,7 @@ import (
 
 	alertingModels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -171,5 +173,78 @@ func attachImageAnnotations(image *ngModels.Image, a data.Labels) {
 	}
 	if image.URL != "" {
 		a[alertingModels.ImageURLAnnotation] = image.URL
+	}
+}
+
+// AlertInstanceToState converts a persisted AlertInstance to an in-memory State.
+func AlertInstanceToState(entry *ngModels.AlertInstance, logger log.Logger) *State {
+	cacheID := entry.Labels.Fingerprint()
+
+	var resultFp data.Fingerprint
+	if entry.ResultFingerprint != "" {
+		fp, err := strconv.ParseUint(entry.ResultFingerprint, 16, 64)
+		if err != nil {
+			logger.Error("Failed to parse result fingerprint of alert instance", "error", err, "rule_uid", entry.RuleUID)
+		}
+		resultFp = data.Fingerprint(fp)
+	}
+
+	var stateError error
+	if entry.LastError != "" {
+		stateError = errors.New(entry.LastError)
+	}
+
+	var values map[string]float64
+	var latestResult *Evaluation
+	if len(entry.LastResult.Values) > 0 || entry.LastResult.Condition != "" {
+		values = entry.LastResult.Values
+		latestResult = &Evaluation{
+			EvaluationTime:  entry.LastEvalTime,
+			EvaluationState: translateInstanceState(entry.CurrentState),
+			Values:          values,
+			Condition:       entry.LastResult.Condition,
+		}
+	}
+
+	return &State{
+		AlertRuleUID:         entry.RuleUID,
+		OrgID:                entry.RuleOrgID,
+		CacheID:              cacheID,
+		Labels:               map[string]string(entry.Labels),
+		State:                translateInstanceState(entry.CurrentState),
+		StateReason:          entry.CurrentReason,
+		LastEvaluationString: "",
+		StartsAt:             entry.CurrentStateSince,
+		EndsAt:               entry.CurrentStateEnd,
+		FiredAt:              entry.FiredAt,
+		LastEvaluationTime:   entry.LastEvalTime,
+		EvaluationDuration:   entry.EvaluationDuration,
+		Annotations:          entry.Annotations,
+		ResultFingerprint:    resultFp,
+		ResolvedAt:           entry.ResolvedAt,
+		LastSentAt:           entry.LastSentAt,
+		Error:                stateError,
+		Values:               values,
+		LatestResult:         latestResult,
+	}
+}
+
+// translateInstanceState converts InstanceStateType to eval.State.
+func translateInstanceState(state ngModels.InstanceStateType) eval.State {
+	switch state {
+	case ngModels.InstanceStateFiring:
+		return eval.Alerting
+	case ngModels.InstanceStateNormal:
+		return eval.Normal
+	case ngModels.InstanceStateError:
+		return eval.Error
+	case ngModels.InstanceStateNoData:
+		return eval.NoData
+	case ngModels.InstanceStatePending:
+		return eval.Pending
+	case ngModels.InstanceStateRecovering:
+		return eval.Recovering
+	default:
+		return eval.Error
 	}
 }

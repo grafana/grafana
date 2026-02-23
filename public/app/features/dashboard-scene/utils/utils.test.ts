@@ -1,6 +1,12 @@
+import { config } from '@grafana/runtime';
 import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 
-import { isValidLibraryPanelRef, hasLibraryPanelsInV1Dashboard } from './utils';
+import {
+  isDashboardSceneEnabled,
+  isPublicDashboardsSceneEnabled,
+  isValidLibraryPanelRef,
+  hasLibraryPanelsInV1Dashboard,
+} from './utils';
 
 describe('utils', () => {
   describe('isValidLibraryPanelRef', () => {
@@ -368,5 +374,41 @@ describe('utils', () => {
 
       expect(hasLibraryPanelsInV1Dashboard(dashboard)).toBe(true);
     });
+  });
+
+  describe('isDashboardSceneEnabled', () => {
+    it.each([
+      { dashboardScene: true, dashboardNewLayouts: false, expected: true },
+      { dashboardScene: false, dashboardNewLayouts: true, expected: true },
+      { dashboardScene: true, dashboardNewLayouts: true, expected: true },
+      { dashboardScene: false, dashboardNewLayouts: false, expected: false },
+    ])(
+      'should return $expected when dashboardScene=$dashboardScene and dashboardNewLayouts=$dashboardNewLayouts',
+      ({ dashboardScene, dashboardNewLayouts, expected }) => {
+        config.featureToggles = {
+          dashboardScene,
+          dashboardNewLayouts,
+        };
+        expect(isDashboardSceneEnabled()).toBe(expected);
+      }
+    );
+  });
+
+  describe('isPublicDashboardsSceneEnabled', () => {
+    it.each([
+      { publicDashboardsScene: true, dashboardNewLayouts: false, expected: true },
+      { publicDashboardsScene: false, dashboardNewLayouts: true, expected: true },
+      { publicDashboardsScene: true, dashboardNewLayouts: true, expected: true },
+      { publicDashboardsScene: false, dashboardNewLayouts: false, expected: false },
+    ])(
+      'should return $expected when publicDashboardsScene=$publicDashboardsScene and dashboardNewLayouts=$dashboardNewLayouts',
+      ({ publicDashboardsScene, dashboardNewLayouts, expected }) => {
+        config.featureToggles = {
+          publicDashboardsScene,
+          dashboardNewLayouts,
+        };
+        expect(isPublicDashboardsSceneEnabled()).toBe(expected);
+      }
+    );
   });
 });

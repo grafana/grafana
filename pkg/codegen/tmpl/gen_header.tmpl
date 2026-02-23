@@ -8,4 +8,6 @@
 {{- end }}
 {{ .Leader }}
 {{ .Leader }} Run 'make gen-cue' from repository root to regenerate.
-
+{{ if .CuePath }}
+{{ .Leader }} Generated from {{ .CuePath }} file.
+{{ end }}

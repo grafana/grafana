@@ -5,6 +5,8 @@ import { useToggle } from 'react-use';
 import { LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';
+
 import { PanelChrome, PanelChromeProps } from './PanelChrome';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
@@ -222,4 +224,58 @@ it('does not render sub-header content when panel is collapsed', () => {
   });
 
   expect(screen.queryByText('This should be a sub-header node')).not.toBeInTheDocument();
+});
+
+it('does not select the panel when clicking interactive content', async () => {
+  const onSelect = jest.fn();
+  const user = userEvent.setup();
+
+  render(
+    <ElementSelectionContext.Provider
+      value={{
+        enabled: true,
+        selected: [],
+        onSelect,
+        onClear: jest.fn(),
+      }}
+    >
+      <PanelChrome width={100} height={100} selectionId="panel-1">
+        {() => (
+          <div>
+            <button type="button">Button text</button>
+            <a href="#">Anchor text</a>
+            <canvas />
+            <svg />
+            <div className="u-over" />
+            <div role="button" />
+            <div>Non-interactive</div>
+          </div>
+        )}
+      </PanelChrome>
+      <div id="grafana-portal-container">
+        <div />
+      </div>
+    </ElementSelectionContext.Provider>
+  );
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('button', { name: 'Button text' }) });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('link', { name: 'Anchor text' }) });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('canvas')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('svg')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('.u-over')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('div[role="button"]')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByText('Non-interactive') });
+  expect(onSelect).toHaveBeenCalledTimes(1);
 });

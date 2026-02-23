@@ -88,10 +88,10 @@ func TestExportResources_Dashboards_Success(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-1" && result.Action == repository.FileActionCreated
+			return result.Name() == "dashboard-1" && result.Action() == repository.FileActionCreated
 		})).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-2" && result.Action == repository.FileActionCreated
+			return result.Name() == "dashboard-2" && result.Action() == repository.FileActionCreated
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 		progress.On("TooManyErrors").Return(nil)
@@ -141,10 +141,10 @@ func TestExportResources_Dashboards_WithErrors(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "writing resource file for dashboard-1: failed to export dashboard"
+			return result.Name() == "dashboard-1" && result.Action() == repository.FileActionIgnored && result.Error() != nil && result.Error().Error() == "writing resource file for dashboard-1: failed to export dashboard"
 		})).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-2" && result.Action == repository.FileActionCreated
+			return result.Name() == "dashboard-2" && result.Action() == repository.FileActionCreated
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 		progress.On("TooManyErrors").Return(nil)
@@ -179,7 +179,7 @@ func TestExportResources_Dashboards_TooManyErrors(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-1" && result.Action == repository.FileActionIgnored && result.Error != nil && result.Error.Error() == "writing resource file for dashboard-1: failed to export dashboard"
+			return result.Name() == "dashboard-1" && result.Action() == repository.FileActionIgnored && result.Error() != nil && result.Error().Error() == "writing resource file for dashboard-1: failed to export dashboard"
 		})).Return()
 		progress.On("TooManyErrors").Return(fmt.Errorf("too many errors encountered"))
 	}
@@ -209,7 +209,7 @@ func TestExportResources_Dashboards_IgnoresExisting(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "existing-dashboard" && result.Action == repository.FileActionIgnored
+			return result.Name() == "existing-dashboard" && result.Action() == repository.FileActionIgnored
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 	}
@@ -256,7 +256,7 @@ func TestExportResources_Dashboards_SavedVersion(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "existing-dashboard" && result.Action == repository.FileActionIgnored
+			return result.Name() == "existing-dashboard" && result.Action() == repository.FileActionIgnored
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 	}
@@ -320,9 +320,9 @@ func TestExportResources_Dashboards_FailedConversionNoStoredVersion(t *testing.T
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "dashboard-no-stored-version" &&
-				result.Action == repository.FileActionIgnored &&
-				result.Error != nil
+			return result.Name() == "dashboard-no-stored-version" &&
+				result.Action() == repository.FileActionIgnored &&
+				result.Error() != nil
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 	}
@@ -469,20 +469,20 @@ func TestExportResources_Dashboards_Versions(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 				if tt.expectSuccess {
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-						return result.Name == tt.dashboardName && result.Action == repository.FileActionCreated
+						return result.Name() == tt.dashboardName && result.Action() == repository.FileActionCreated
 					})).Return()
 				} else {
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-						if result.Name != tt.dashboardName {
+						if result.Name() != tt.dashboardName {
 							return false
 						}
-						if result.Action != repository.FileActionIgnored {
+						if result.Action() != repository.FileActionIgnored {
 							return false
 						}
-						if result.Error == nil {
+						if result.Error() == nil {
 							return false
 						}
-						return result.Error.Error() == tt.expectedError
+						return result.Error().Error() == tt.expectedError
 					})).Return()
 				}
 				progress.On("TooManyErrors").Return(nil)
@@ -540,7 +540,7 @@ func TestExportResources_Dashboards_SkipsManagedResources(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Name == "managed-dashboard" && result.Action == repository.FileActionIgnored
+			return result.Name() == "managed-dashboard" && result.Action() == repository.FileActionIgnored
 		})).Return()
 		progress.On("TooManyErrors").Return(nil).Maybe()
 	}
@@ -608,8 +608,8 @@ func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
 		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return (result.Name == "v2alpha-dashboard" || result.Name == "v2beta-dashboard" || result.Name == "v3-dashboard") &&
-				result.Action == repository.FileActionCreated
+			return (result.Name() == "v2alpha-dashboard" || result.Name() == "v2beta-dashboard" || result.Name() == "v3-dashboard") &&
+				result.Action() == repository.FileActionCreated
 		})).Return().Times(3)
 		progress.On("TooManyErrors").Return(nil).Times(3)
 	}

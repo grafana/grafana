@@ -37,6 +37,7 @@ type GithubRepository interface {
 	repository.Reader
 	repository.RepositoryWithURLs
 	repository.StageableRepository
+	repository.BranchHandler
 	Owner() string
 	Repo() string
 	Client() Client
@@ -75,30 +76,21 @@ func (r *githubRepository) Client() Client {
 	return r.gh
 }
 
-// Validate implements provisioning.Repository.
-func (r *githubRepository) Validate() (list field.ErrorList) {
-	cfg := r.Config()
-	gh := cfg.Spec.GitHub
-	if gh == nil {
-		list = append(list, field.Required(field.NewPath("spec", "github"), "a github config is required"))
-		return list
+func (r *githubRepository) GetDefaultBranch(ctx context.Context) (string, error) {
+	repo, err := r.gh.GetRepository(ctx, r.owner, r.repo)
+	if err != nil {
+		return "", fmt.Errorf("failed to get repository metadata: %w", err)
 	}
-	if gh.URL == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "url"), "a github url is required"))
-	} else {
-		_, _, err := ParseOwnerRepoGithub(gh.URL)
-		if err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, err.Error()))
-		} else if !strings.HasPrefix(gh.URL, "https://github.com/") {
-			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, "URL must start with https://github.com/"))
-		}
-	}
+	return repo.DefaultBranch, nil
+}
 
-	if len(list) > 0 {
-		return list
-	}
+func (r *githubRepository) GetCurrentBranch() string {
+	return r.config.Spec.GitHub.Branch
+}
 
-	return r.GitRepository.Validate()
+func (r *githubRepository) SetBranch(branch string) {
+	r.config.Spec.GitHub.Branch = branch
+	r.GitRepository.SetBranch(branch)
 }
 
 func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) {
@@ -125,6 +117,16 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 	if err != nil {
 		return repository.FromFieldError(field.Invalid(
 			field.NewPath("spec", "github", "url"), url, err.Error())), nil
+	}
+
+	// For Github repositories, in case the branch is empty, we get the default branch and set it up for testing.
+	if r.GetCurrentBranch() == "" {
+		branch, err := r.GetDefaultBranch(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		r.SetBranch(branch)
 	}
 
 	return r.GitRepository.Test(ctx)

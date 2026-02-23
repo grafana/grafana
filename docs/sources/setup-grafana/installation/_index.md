@@ -64,7 +64,7 @@ Grafana supports the following databases:
 - [MySQL 8.0+](https://www.mysql.com/support/supportedplatforms/database.html)
 - [PostgreSQL 12+](https://www.postgresql.org/support/versioning/)
 
-By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location.
+By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location. If you need to migrate to a different database later, note that database schema and data migrations are customer-managed operations and fall outside the scope of Grafana Support.
 
 {{< admonition type="note" >}}
 SQLite works well if your environment is small, but is not recommended when your environment starts growing. For more information about the limitations of SQLite, refer to [Appropriate Uses For SQLite](https://www.sqlite.org/whentouse.html). If you want [high availability](/docs/grafana/latest/setup-grafana/set-up-for-high-availability), you must use either a MySQL or PostgreSQL database. For information about how to define the database configuration parameters inside the `grafana.ini` file, refer to [[database]](/docs/grafana/latest/setup-grafana/configure-grafana/#database).

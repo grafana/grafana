@@ -127,25 +127,19 @@ export const VizTooltipFooter = ({
               variant="secondary"
               size="sm"
               onClick={filterByGroupedLabels.onFilterForGroupedLabels}
+              data-testid={selectors.components.VizTooltipFooter.buttons.apply}
             >
-              <Trans
-                i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter"
-                data-testid={selectors.components.VizTooltipFooter.buttons.apply}
-              >
-                Apply as filter
-              </Trans>
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter">Filter on this value</Trans>
             </Button>
             <Button
               icon="filter"
               variant="secondary"
               size="sm"
               onClick={filterByGroupedLabels.onFilterOutGroupedLabels}
+              data-testid={selectors.components.VizTooltipFooter.buttons.applyInverse}
             >
-              <Trans
-                i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-inverse-filter"
-                data-testid={selectors.components.VizTooltipFooter.buttons.applyInverse}
-              >
-                Apply as inverse filter
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-inverse-filter">
+                Filter out this value
               </Trans>
             </Button>
           </Stack>

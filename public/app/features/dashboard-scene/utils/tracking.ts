@@ -1,9 +1,11 @@
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { SceneGridItemLike } from '@grafana/scenes';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 
 import { DashboardInteractions } from './interactions';
 
@@ -31,19 +33,6 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 }
 
-export const trackDeleteDashboardElement = (element: EditableDashboardElementInfo) => {
-  switch (element?.typeName) {
-    case 'Row':
-      DashboardInteractions.trackRemoveRowClick();
-      break;
-    case 'Tab':
-      DashboardInteractions.trackRemoveTabClick();
-      break;
-    default:
-      break;
-  }
-};
-
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   DashboardInteractions.editButtonClicked({
     outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', false),
@@ -54,7 +43,12 @@ export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
 export function trackDashboardSceneCreatedOrSaved(
   isNew: boolean,
   dashboard: DashboardScene,
-  initialProperties: { name: string; url: string; expression_types?: string[] }
+  initialProperties: {
+    name: string;
+    url: string;
+    transformation_counts?: Record<string, number>;
+    expression_counts?: Record<string, number>;
+  }
 ) {
   // url values for dashboard library experiment
   const urlParams = new URLSearchParams(window.location.search);
@@ -69,11 +63,20 @@ export function trackDashboardSceneCreatedOrSaved(
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
+  // Extract variable type counts from tracking info
+  const variables = Object.entries(sceneDashboardTrackingInfo ?? {})
+    .filter(([key]) => /^variable_type_.+_count$/.test(key))
+    .reduce<Record<string, number>>((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {});
+
   const dashboardLibraryProperties =
     config.featureToggles.dashboardLibrary ||
     config.featureToggles.dashboardTemplates ||
     config.featureToggles.suggestedDashboards
       ? {
+          isDashboardTemplatesEnabled: config.featureToggles.dashboardTemplates ?? false,
           datasourceTypes,
           sourceEntryPoint,
           libraryItemId,
@@ -93,13 +96,24 @@ export function trackDashboardSceneCreatedOrSaved(
           autoLayoutCount: dynamicDashboardsTrackingInformation.autoLayoutCount,
           customGridLayoutCount: dynamicDashboardsTrackingInformation.customGridLayoutCount,
           panelsByDatasourceType: dynamicDashboardsTrackingInformation.panelsByDatasourceType,
+          ...variables,
           ...dashboardLibraryProperties,
         }
       : {
           uid: dashboard.state.uid || '',
           numPanels: sceneDashboardTrackingInfo?.panels_count || 0,
           numRows: sceneDashboardTrackingInfo?.rowCount || 0,
+          ...variables,
           ...dashboardLibraryProperties,
         }),
   });
+}
+
+export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
+  // only track panels for now
+  if (gridItem instanceof AutoGridItem || gridItem instanceof DashboardGridItem) {
+    DashboardInteractions.trackMoveItem('panel', 'drop', {
+      isCrossLayout: true,
+    });
+  }
 }

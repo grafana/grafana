@@ -117,7 +117,6 @@ describe('addNodeGraphFramesToResponse', () => {
 });
 
 const defaultSettings: DataSourceInstanceSettings = {
-  id: 1,
   uid: '1',
   type: 'tracing',
   name: 'zipkin',

@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/infra/log"
 	gocache "github.com/patrickmn/go-cache"
 
 	"time"
@@ -20,16 +21,22 @@ const (
 )
 
 type notifier interface {
+	// Watch returns a channel that will receive events as they happen.
 	Watch(context.Context, watchOptions) <-chan Event
+	// Publish lets callers to inform watchers about events. Some notifiers
+	// (e.g., channel notifier) require callers to provide the events to be published.
+	// Others (e.g., polling notifier) queries events separately, making
+	// publishing a no-op.
+	Publish(Event)
 }
 
 type pollingNotifier struct {
 	eventStore *eventStore
-	log        logging.Logger
+	log        log.Logger
 }
 
 type notifierOptions struct {
-	log                logging.Logger
+	log                log.Logger
 	useChannelNotifier bool
 }
 
@@ -50,21 +57,55 @@ func defaultWatchOptions() watchOptions {
 }
 
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
-	if opts.log == nil {
-		opts.log = &logging.NoOpLogger{}
-	}
-
 	if opts.useChannelNotifier {
-		return &channelNotifier{}
+		return newChannelNotifier(opts.log.New("notifier", "channelNotifier"))
 	}
 
-	return &pollingNotifier{eventStore: eventStore, log: opts.log}
+	return &pollingNotifier{eventStore: eventStore, log: opts.log.New("notifier", "pollingNotifier")}
 }
 
-type channelNotifier struct{}
+type channelNotifier struct {
+	log         log.Logger
+	subscribers map[chan Event]struct{}
+	mu          sync.Mutex
+}
+
+func newChannelNotifier(log log.Logger) *channelNotifier {
+	return &channelNotifier{
+		log:         log,
+		subscribers: make(map[chan Event]struct{}),
+	}
+}
 
 func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
-	return nil
+	cn.log.Info("creating new notifier", "buffer_size", opts.BufferSize)
+	events := make(chan Event, opts.BufferSize)
+
+	cn.mu.Lock()
+	cn.subscribers[events] = struct{}{}
+	cn.mu.Unlock()
+
+	context.AfterFunc(ctx, func() {
+		cn.mu.Lock()
+		delete(cn.subscribers, events)
+		close(events)
+		cn.mu.Unlock()
+	})
+
+	return events
+}
+
+func (cn *channelNotifier) Publish(event Event) {
+	cn.mu.Lock()
+	defer cn.mu.Unlock()
+
+	for ch := range cn.subscribers {
+		select {
+		case ch <- event:
+		default:
+			cn.log.Warn("dropped event notification, channel full")
+		}
+	}
 }
 
 // Return the last resource version from the event store
@@ -87,6 +128,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan E
 	if opts.MaxBackoff <= 0 || opts.MaxBackoff <= opts.MinBackoff {
 		opts.MaxBackoff = defaultMaxBackoff
 	}
+
+	n.log.Info("creating new notifier",
+		"lookback", opts.LookbackPeriod,
+		"buffer_size", opts.BufferSize,
+		"min_backoff", opts.MinBackoff,
+		"max_backoff", opts.MaxBackoff,
+	)
 
 	cacheTTL := opts.LookbackPeriod
 	cacheCleanupInterval := 2 * opts.LookbackPeriod
@@ -119,7 +167,7 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan E
 				return
 			case <-time.After(currentInterval):
 				foundEvents := false
-				for evt, err := range n.eventStore.ListSince(ctx, subtractDurationFromSnowflake(lastRV, opts.LookbackPeriod)) {
+				for evt, err := range n.eventStore.ListSince(ctx, subtractDurationFromSnowflake(lastRV, opts.LookbackPeriod), SortOrderAsc) {
 					if err != nil {
 						n.log.Error("Failed to list events since", "error", err)
 						continue
@@ -159,4 +207,8 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan E
 		}
 	}()
 	return events
+}
+
+func (n *pollingNotifier) Publish(_ Event) {
+	// no-op
 }

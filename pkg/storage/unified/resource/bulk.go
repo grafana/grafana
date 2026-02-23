@@ -22,13 +22,11 @@ import (
 )
 
 const grpcMetaKeyCollection = "x-gf-batch-collection"
-const grpcMetaKeyRebuildCollection = "x-gf-batch-rebuild-collection"
 const grpcMetaKeySkipValidation = "x-gf-batch-skip-validation"
 
 // Logged in trace.
 var metadataKeys = []string{
 	grpcMetaKeyCollection,
-	grpcMetaKeyRebuildCollection,
 	grpcMetaKeySkipValidation,
 }
 
@@ -64,10 +62,6 @@ type BulkSettings struct {
 	// All requests will be within this namespace/group/resource
 	Collection []*resourcepb.ResourceKey
 
-	// The batch will include everything from the collection
-	// - all existing values will be removed/replaced if the batch completes successfully
-	RebuildCollection bool
-
 	// The byte[] payload and folder has already been validated - no need to decode and verify
 	SkipValidation bool
 }
@@ -78,9 +72,6 @@ func (x *BulkSettings) ToMD() metadata.MD {
 		for _, v := range x.Collection {
 			md[grpcMetaKeyCollection] = append(md[grpcMetaKeyCollection], SearchID(v))
 		}
-	}
-	if x.RebuildCollection {
-		md[grpcMetaKeyRebuildCollection] = []string{"true"}
 	}
 	if x.SkipValidation {
 		md[grpcMetaKeySkipValidation] = []string{"true"}
@@ -101,8 +92,6 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 				}
 				settings.Collection = append(settings.Collection, key)
 			}
-		case grpcMetaKeyRebuildCollection:
-			settings.RebuildCollection = grpcMetaValueIsTrue(v)
 		case grpcMetaKeySkipValidation:
 			settings.SkipValidation = grpcMetaValueIsTrue(v)
 		}
@@ -187,47 +176,39 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		}
 	}
 
-	if settings.RebuildCollection {
-		for _, k := range settings.Collection {
-			// Can we delete the whole collection
-			rsp, err := s.access.Check(ctx, user, authlib.CheckRequest{
-				Namespace: k.Namespace,
-				Group:     k.Group,
-				Resource:  k.Resource,
-				Verb:      utils.VerbDeleteCollection,
-			}, "")
-			if err != nil || !rsp.Allowed {
-				return sendAndClose(&resourcepb.BulkResponse{
-					Error: &resourcepb.ErrorResult{
-						Message: fmt.Sprintf("Requester must be able to: %s", utils.VerbDeleteCollection),
-						Code:    http.StatusForbidden,
-					},
-				})
-			}
-
-			// This will be called for each request -- with the folder ID
-			runner.checker[NSGR(k)], _, err = s.access.Compile(ctx, user, authlib.ListRequest{
-				Namespace: k.Namespace,
-				Group:     k.Group,
-				Resource:  k.Resource,
-				Verb:      utils.VerbCreate,
+	for _, k := range settings.Collection {
+		// Can we delete the whole collection
+		rsp, err := s.access.Check(ctx, user, authlib.CheckRequest{
+			Namespace: k.Namespace,
+			Group:     k.Group,
+			Resource:  k.Resource,
+			Verb:      utils.VerbDeleteCollection,
+		}, "")
+		if err != nil || !rsp.Allowed {
+			return sendAndClose(&resourcepb.BulkResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: fmt.Sprintf("Requester must be able to: %s", utils.VerbDeleteCollection),
+					Code:    http.StatusForbidden,
+				},
 			})
-			if err != nil {
-				return sendAndClose(&resourcepb.BulkResponse{
-					Error: &resourcepb.ErrorResult{
-						Message: "Unable to check `create` permission",
-						Code:    http.StatusForbidden,
-					},
-				})
-			}
 		}
-	} else {
-		return sendAndClose(&resourcepb.BulkResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "Bulk currently only supports RebuildCollection",
-				Code:    http.StatusBadRequest,
-			},
+
+		// This will be called for each request -- with the folder ID
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+		runner.checker[NSGR(k)], _, err = s.access.Compile(ctx, user, authlib.ListRequest{
+			Namespace: k.Namespace,
+			Group:     k.Group,
+			Resource:  k.Resource,
+			Verb:      utils.VerbCreate,
 		})
+		if err != nil {
+			return sendAndClose(&resourcepb.BulkResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: "Unable to check `create` permission",
+					Code:    http.StatusForbidden,
+				},
+			})
+		}
 	}
 
 	backend, ok := s.backend.(BulkProcessingBackend)

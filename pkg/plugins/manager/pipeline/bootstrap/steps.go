@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -28,12 +29,13 @@ func DefaultConstructFunc(cfg *config.PluginManagementCfg, signatureCalculator p
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
-func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
+func DefaultDecorateFuncs(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
 		AppChildDecorateFunc(),
 		SkipHostEnvVarsDecorateFunc(cfg),
+		LoadingStrategyDecorateFunc(cfg, cdn),
 	}
 }
 
@@ -142,6 +144,14 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		p.SkipHostEnvVars = !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
+		return p, nil
+	}
+}
+
+// LoadingStrategyDecorateFunc returns a DecorateFunc that calculates and sets the loading strategy for the plugin.
+func LoadingStrategyDecorateFunc(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) DecorateFunc {
+	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		p.LoadingStrategy = pluginassets.CalculateLoadingStrategy(p, cfg, cdn)
 		return p, nil
 	}
 }

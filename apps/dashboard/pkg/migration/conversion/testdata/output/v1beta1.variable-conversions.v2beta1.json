@@ -184,14 +184,16 @@
             {
               "key": "environment",
               "operator": "=",
-              "value": "production"
+              "value": "production",
+              "origin": "dashboard"
             }
           ],
           "filters": [
             {
               "key": "job",
               "operator": "=",
-              "value": "prometheus"
+              "value": "prometheus",
+              "origin": "dashboard"
             }
           ],
           "defaultKeys": [
@@ -285,6 +287,10 @@
         },
         "spec": {
           "name": "groupby_var",
+          "defaultValue": {
+            "text": "defaultGroupBy",
+            "value": "defaultGroupBy"
+          },
           "current": {
             "text": [
               "job",
@@ -412,7 +418,20 @@
           "multi": true,
           "includeAll": true,
           "allValue": "*",
-          "allowCustomValue": true
+          "allowCustomValue": true,
+          "staticOptions": [
+            {
+              "selected": false,
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "selected": false,
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before"
         }
       }
     ]

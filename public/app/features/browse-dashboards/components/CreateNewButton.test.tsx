@@ -72,7 +72,7 @@ describe('NewActionsButton', () => {
     await user.click(newButton);
     await user.click(screen.getByText('New folder'));
 
-    const drawer = screen.getByRole('dialog', { name: 'Drawer title New folder' });
+    const drawer = screen.getByRole('dialog', { name: 'New folder' });
     expect(drawer).toBeInTheDocument();
     expect(within(drawer).getByRole('heading', { name: 'New folder' })).toBeInTheDocument();
     expect(within(drawer).getByText(`Location: ${mockParentFolder.title}`)).toBeInTheDocument();

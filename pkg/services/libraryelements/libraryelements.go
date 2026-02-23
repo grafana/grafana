@@ -29,6 +29,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		features:          features,
 		AccessControl:     ac,
 		k8sHandler:        newLibraryElementsK8sHandler(cfg, clientConfigProvider, folderService, userService, dashboardsService),
+		treeCache:         newFolderTreeCache(folderService),
 	}
 
 	l.registerAPIEndpoints()
@@ -61,13 +62,14 @@ type LibraryElementService struct {
 	features          featuremgmt.FeatureToggles
 	AccessControl     accesscontrol.AccessControl
 	k8sHandler        *libraryElementsK8sHandler
+	treeCache         *folderTreeCache
 }
 
 var _ Service = (*LibraryElementService)(nil)
 
 // GetElement gets an element from a UID.
 func (l *LibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
-	return l.getLibraryElementByUid(c, signedInUser, cmd)
+	return l.getLibraryElementByUid(c, signedInUser, cmd, nil)
 }
 
 // GetElementsForDashboard gets all connected elements for a specific dashboard.

@@ -816,14 +816,17 @@ export class DashboardMigrator {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
 
-    const maxPanelId =
-      max(
-        flattenDeep(
-          map(old.rows, (row) => {
-            return map(row.panels, 'id');
-          })
-        ).filter((id) => id != null)
-      ) || 0;
+    // Find max panel ID from both rows and existing top-level panels
+    // Top-level panels may have been assigned IDs by ensurePanelsHaveUniqueIds
+    const rowPanelIds = flattenDeep(
+      map(old.rows, (row) => {
+        return map(row.panels, 'id');
+      })
+    ).filter((id) => id != null);
+
+    const topLevelPanelIds = map(this.dashboard.panels, 'id').filter((id) => id != null);
+
+    const maxPanelId = max([...rowPanelIds, ...topLevelPanelIds]) || 0;
     let nextRowId = maxPanelId + 1;
 
     if (!old.rows) {

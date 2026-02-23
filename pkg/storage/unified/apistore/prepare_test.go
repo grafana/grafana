@@ -33,9 +33,11 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	node, err := snowflake.NewNode(rand.Int64N(1024))
 	require.NoError(t, err)
 	s := &Storage{
+		gr:        dashv1.DashboardResourceInfo.GroupResource(),
 		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
 		snowflake: node,
 		opts: StorageOptions{
+			Scheme:              rtscheme,
 			EnableFolderSupport: true,
 			LargeObjectSupport:  nil,
 			MaximumNameLength:   100,

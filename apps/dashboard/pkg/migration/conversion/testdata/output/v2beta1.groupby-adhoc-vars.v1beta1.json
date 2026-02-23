@@ -25,6 +25,10 @@
             "type": "prometheus",
             "uid": "gdev-prometheus"
           },
+          "defaultValue": {
+            "text": "defaultText",
+            "value": "defaultValue"
+          },
           "description": "A group by variable",
           "hide": 0,
           "label": "Group By Variable",
@@ -41,6 +45,7 @@
               "condition": "AND",
               "key": "key1",
               "operator": "=",
+              "origin": "dashboard",
               "value": "value1"
             },
             {
@@ -68,6 +73,7 @@
               "condition": "AND",
               "key": "key3",
               "operator": "=",
+              "origin": "dashboard",
               "value": "value3"
             }
           ],

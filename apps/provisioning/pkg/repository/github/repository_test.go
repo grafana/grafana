@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -157,198 +156,6 @@ func TestParseOwnerRepoGithub(t *testing.T) {
 				assert.Equal(t, tt.expectedOwner, owner)
 				assert.Equal(t, tt.expectedRepo, repo)
 			}
-		})
-	}
-}
-
-func TestGitHubRepositoryValidate(t *testing.T) {
-	tests := []struct {
-		name           string
-		config         *provisioning.Repository
-		mockSetup      func(m *git.MockGitRepository)
-		expectedErrors int
-		errorFields    []string
-	}{
-		{
-			name: "valid configuration",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/grafana/grafana",
-						Branch: "main",
-						Path:   "dashboards",
-					},
-				},
-				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
-						Name: "with-name",
-					},
-				},
-			},
-			mockSetup: func(m *git.MockGitRepository) {
-				m.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/grafana/grafana",
-							Branch: "main",
-							Path:   "dashboards",
-						},
-					},
-					Secure: provisioning.SecureValues{
-						Token: common.InlineSecureValue{
-							Name: "with-name",
-						},
-					},
-				})
-				m.On("Validate").Return(field.ErrorList{})
-			},
-			expectedErrors: 0,
-		},
-		{
-			name: "missing GitHub config",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: nil,
-				},
-			},
-			mockSetup: func(m *git.MockGitRepository) {
-				m.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						GitHub: nil,
-					},
-				})
-			},
-			expectedErrors: 1,
-			errorFields:    []string{"spec.github"},
-		},
-		{
-			name: "missing URL",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "",
-						Branch: "main",
-					},
-				},
-				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
-						Name: "with-name",
-					},
-				},
-			},
-			mockSetup: func(m *git.MockGitRepository) {
-				m.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "",
-							Branch: "main",
-						},
-					},
-					Secure: provisioning.SecureValues{
-						Token: common.InlineSecureValue{
-							Name: "with-name",
-						},
-					},
-				})
-			},
-			expectedErrors: 1,
-			errorFields:    []string{"spec.github.url"},
-		},
-		{
-			name: "invalid URL format",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "invalid-url",
-						Branch: "main",
-					},
-				},
-				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
-						Name: "with-name",
-					},
-				},
-			},
-			mockSetup: func(m *git.MockGitRepository) {
-				m.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "invalid-url",
-							Branch: "main",
-						},
-					},
-					Secure: provisioning.SecureValues{
-						Token: common.InlineSecureValue{
-							Name: "with-name",
-						},
-					},
-				})
-			},
-			expectedErrors: 1,
-			errorFields:    []string{"spec.github.url"},
-		},
-		{
-			name: "non-GitHub URL",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://gitlab.com/grafana/grafana",
-						Branch: "main",
-					},
-				},
-				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
-						Name: "with-name",
-					},
-				},
-			},
-			mockSetup: func(m *git.MockGitRepository) {
-				m.On("Config").Return(&provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://gitlab.com/grafana/grafana",
-							Branch: "main",
-						},
-					},
-					Secure: provisioning.SecureValues{
-						Token: common.InlineSecureValue{
-							Name: "with-name",
-						},
-					},
-				})
-			},
-			expectedErrors: 1,
-			errorFields:    []string{"spec.github.url"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockGitRepo := git.NewMockGitRepository(t)
-			if tt.mockSetup != nil {
-				tt.mockSetup(mockGitRepo)
-			}
-
-			repo := &githubRepository{
-				config:        tt.config,
-				GitRepository: mockGitRepo,
-			}
-
-			errors := repo.Validate()
-
-			assert.Equal(t, tt.expectedErrors, len(errors), "Expected %d errors, got %d, errors: %v", tt.expectedErrors, len(errors), errors)
-
-			if tt.expectedErrors > 0 {
-				errorFields := make([]string, 0, len(errors))
-				for _, err := range errors {
-					errorFields = append(errorFields, err.Field)
-				}
-				for _, expectedField := range tt.errorFields {
-					assert.Contains(t, errorFields, expectedField, "Expected error for field %s", expectedField)
-				}
-			}
-
-			mockGitRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -1175,6 +982,141 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 		result := repo.Client()
 		assert.Equal(t, mockClient, result)
 	})
+
+	t.Run("GetCurrentBranch returns branch from config", func(t *testing.T) {
+		repo := &githubRepository{
+			config: config,
+			owner:  "grafana",
+			repo:   "grafana",
+		}
+
+		result := repo.GetCurrentBranch()
+		assert.Equal(t, "main", result)
+	})
+
+	t.Run("GetCurrentBranch returns empty string when branch is empty", func(t *testing.T) {
+		emptyBranchConfig := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				GitHub: &provisioning.GitHubRepositoryConfig{
+					URL:    "https://github.com/grafana/grafana",
+					Branch: "",
+				},
+			},
+		}
+
+		repo := &githubRepository{
+			config: emptyBranchConfig,
+			owner:  "grafana",
+			repo:   "grafana",
+		}
+
+		result := repo.GetCurrentBranch()
+		assert.Equal(t, "", result)
+	})
+
+	t.Run("SetBranch updates config and delegates to git repository", func(t *testing.T) {
+		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo.On("SetBranch", "develop").Once()
+
+		repo := &githubRepository{
+			config:        config,
+			GitRepository: mockGitRepo,
+			owner:         "grafana",
+			repo:          "grafana",
+		}
+
+		repo.SetBranch("develop")
+
+		assert.Equal(t, "develop", config.Spec.GitHub.Branch)
+		mockGitRepo.AssertExpectations(t)
+	})
+}
+
+func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
+	tests := []struct {
+		name           string
+		mockSetup      func(*MockClient)
+		expectedBranch string
+		expectedError  string
+	}{
+		{
+			name: "successfully gets default branch",
+			mockSetup: func(m *MockClient) {
+				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+					Return(Repository{DefaultBranch: "main"}, nil)
+			},
+			expectedBranch: "main",
+		},
+		{
+			name: "gets default branch as develop",
+			mockSetup: func(m *MockClient) {
+				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+					Return(Repository{DefaultBranch: "develop"}, nil)
+			},
+			expectedBranch: "develop",
+		},
+		{
+			name: "gets default branch as master",
+			mockSetup: func(m *MockClient) {
+				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+					Return(Repository{DefaultBranch: "master"}, nil)
+			},
+			expectedBranch: "master",
+		},
+		{
+			name: "handles API error",
+			mockSetup: func(m *MockClient) {
+				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+					Return(Repository{}, errors.New("API rate limit exceeded"))
+			},
+			expectedError: "failed to get repository metadata: API rate limit exceeded",
+		},
+		{
+			name: "handles not found error",
+			mockSetup: func(m *MockClient) {
+				m.On("GetRepository", mock.Anything, "grafana", "grafana").
+					Return(Repository{}, ErrResourceNotFound)
+			},
+			expectedError: "failed to get repository metadata:",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := NewMockClient(t)
+			if tt.mockSetup != nil {
+				tt.mockSetup(mockClient)
+			}
+
+			config := &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "",
+					},
+				},
+			}
+
+			repo := &githubRepository{
+				config: config,
+				gh:     mockClient,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			branch, err := repo.GetDefaultBranch(context.Background())
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedBranch, branch)
+			}
+
+			mockClient.AssertExpectations(t)
+		})
+	}
 }
 
 func TestGithubRepository_Move(t *testing.T) {
@@ -1259,6 +1201,145 @@ func TestGithubRepository_Move(t *testing.T) {
 				assert.Equal(t, tt.expectedErr.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
+	tests := []struct {
+		name           string
+		initialBranch  string
+		defaultBranch  string
+		getRepoError   error
+		gitTestResults *provisioning.TestResults
+		gitTestError   error
+		expectGetRepo  bool
+		expectedBranch string
+		expectedError  bool
+	}{
+		{
+			name:          "empty branch triggers GetDefaultBranch and sets default branch",
+			initialBranch: "",
+			defaultBranch: "develop",
+			gitTestResults: &provisioning.TestResults{
+				Success: true,
+			},
+			expectGetRepo:  true,
+			expectedBranch: "develop",
+			expectedError:  false,
+		},
+		{
+			name:          "non-empty branch does not trigger GetDefaultBranch",
+			initialBranch: "feature-branch",
+			gitTestResults: &provisioning.TestResults{
+				Success: true,
+			},
+			expectGetRepo:  false,
+			expectedBranch: "feature-branch",
+			expectedError:  false,
+		},
+		{
+			name:          "GetDefaultBranch failure returns error",
+			initialBranch: "",
+			getRepoError:  errors.New("API rate limit exceeded"),
+			expectGetRepo: true,
+			expectedError: true, // Error is returned as error, not in TestResults
+		},
+		{
+			name:          "empty branch with git test failure after branch detection",
+			initialBranch: "",
+			defaultBranch: "main",
+			gitTestResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Field:  "spec.github.branch",
+						Detail: "branch not found",
+					},
+				},
+			},
+			expectGetRepo:  true,
+			expectedBranch: "main",
+			expectedError:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockGitRepo := git.NewMockGitRepository(t)
+			mockClient := NewMockClient(t)
+
+			config := &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: tt.initialBranch,
+						Path:   "grafana/",
+					},
+				},
+			}
+
+			githubRepo := &githubRepository{
+				config:        config,
+				GitRepository: mockGitRepo,
+				gh:            mockClient,
+				owner:         "grafana",
+				repo:          "grafana",
+			}
+
+			// Setup expectations
+			if tt.expectGetRepo {
+				if tt.getRepoError != nil {
+					mockClient.EXPECT().
+						GetRepository(mock.Anything, "grafana", "grafana").
+						Return(Repository{}, tt.getRepoError).
+						Once()
+				} else {
+					mockClient.EXPECT().
+						GetRepository(mock.Anything, "grafana", "grafana").
+						Return(Repository{DefaultBranch: tt.defaultBranch}, nil).
+						Once()
+
+					// After GetRepository succeeds, SetBranch should be called
+					mockGitRepo.EXPECT().
+						SetBranch(tt.defaultBranch).
+						Once()
+
+					// Then Test should be called on git repo
+					mockGitRepo.EXPECT().
+						Test(mock.Anything).
+						Return(tt.gitTestResults, tt.gitTestError).
+						Once()
+				}
+			} else {
+				// If GetRepository is not expected, Test should be called directly
+				mockGitRepo.EXPECT().
+					Test(mock.Anything).
+					Return(tt.gitTestResults, tt.gitTestError).
+					Once()
+			}
+
+			// Execute
+			result, err := githubRepo.Test(context.Background())
+
+			// Verify
+			if tt.expectedError {
+				require.Error(t, err)
+				if tt.getRepoError != nil {
+					assert.Contains(t, err.Error(), "failed to get repository metadata")
+				}
+			} else {
+				require.NoError(t, err)
+				if tt.expectedBranch != "" {
+					// Verify branch was updated in config
+					assert.Equal(t, tt.expectedBranch, config.Spec.GitHub.Branch)
+
+					if result != nil {
+						assert.Equal(t, tt.gitTestResults.Success, result.Success)
+					}
+				}
 			}
 		})
 	}

@@ -1,7 +1,7 @@
 import { filter, isArray, isNumber, isString } from 'lodash';
 
+import { store } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import store from 'app/core/store';
 
 import { contextSrv } from './context_srv';
 

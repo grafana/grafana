@@ -27,7 +27,11 @@ export const DEBOUNCE_TIME_MS = 200;
  *  - function to call when user types (to filter, or call async fn)
  *  - loading and error states
  */
-export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T>, createCustomValue: boolean) {
+export function useOptions<T extends string | number>(
+  rawOptions: AsyncOptions<T>,
+  createCustomValue: boolean,
+  customValueDescription?: string
+) {
   const isAsync = typeof rawOptions === 'function';
 
   const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
@@ -76,13 +80,13 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
           currentOptions.unshift({
             label: userTypedSearch,
             value: userTypedSearch as T,
-            description: t('combobox.custom-value.description', 'Use custom value'),
+            description: customValueDescription ?? t('combobox.custom-value.description', 'Use custom value'),
           });
         }
       }
       return currentOptions;
     },
-    [createCustomValue, userTypedSearch]
+    [createCustomValue, customValueDescription, userTypedSearch]
   );
 
   const updateOptions = useCallback(

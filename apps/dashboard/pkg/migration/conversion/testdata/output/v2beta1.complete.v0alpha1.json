@@ -61,7 +61,7 @@
           "x": 0,
           "y": 0
         },
-        "id": -1,
+        "id": 2,
         "title": "Conditional Row",
         "type": "row"
       },
@@ -208,6 +208,17 @@
           "regex": "",
           "skipUrlSync": false,
           "sort": 0,
+          "staticOptions": [
+            {
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before",
           "type": "query"
         },
         {

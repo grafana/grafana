@@ -96,6 +96,17 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		UpdatedBy: 1,
 	}
 
+	notFooFolder := &folder.Folder{
+		ID:        543,
+		Title:     "Foo Folder",
+		OrgID:     orgID,
+		UID:       "not-foo",
+		URL:       "/dashboards/f/not-foo/foo-folder",
+		CreatedBy: 1,
+		UpdatedBy: 1,
+		ParentUID: "test",
+	}
+
 	updateFolder := &folder.Folder{
 		Title: "Folder",
 		OrgID: orgID,
@@ -122,6 +133,15 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		result, err := internalfolders.LegacyFolderToUnstructured(fooFolder, namespacer)
 		require.NoError(t, err)
 
+		err = json.NewEncoder(w).Encode(result)
+		require.NoError(t, err)
+	})
+
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders/not-foo", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		namespacer := func(_ int64) string { return "1" }
+		result, err := internalfolders.LegacyFolderToUnstructured(notFooFolder, namespacer)
+		require.NoError(t, err)
 		err = json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
 	})
@@ -468,8 +488,14 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
 
-			t.Run("When get folder by Title should return folder", func(t *testing.T) {
+			t.Run("When get folder by Title and nil parentID should return top-level folder", func(t *testing.T) {
 				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
+					{ // This result will be ignored, because it has FolderUID set, but we're searching for nil parentID.
+						IsFolder:  true,
+						ID:        notFooFolder.ID, // nolint:staticcheck
+						UID:       notFooFolder.UID,
+						FolderUID: notFooFolder.ParentUID,
+					},
 					{
 						IsFolder: true,
 						ID:       fooFolder.ID, // nolint:staticcheck
@@ -486,6 +512,29 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				actual, err := folderService.Get(context.Background(), query)
 				require.NoError(t, err)
 				compareFoldersNormalizeTime(t, fooFolder, actual)
+			})
+
+			t.Run("When get folder by Title and non-nil parentID should return inner folder", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
+					{ // Not ignored this time, compared to previous test.
+						IsFolder:  true,
+						ID:        notFooFolder.ID, // nolint:staticcheck
+						UID:       notFooFolder.UID,
+						FolderUID: notFooFolder.ParentUID,
+					},
+				}, nil).Twice() // Called twice due to total count call
+				title := "foo"
+				parentUID := "test"
+				query := &folder.GetFolderQuery{
+					Title:        &title,
+					OrgID:        1,
+					SignedInUser: usr,
+					ParentUID:    &parentUID,
+				}
+
+				actual, err := folderService.Get(context.Background(), query)
+				require.NoError(t, err)
+				compareFoldersNormalizeTime(t, notFooFolder, actual)
 			})
 
 			t.Run("When get folder by non existing Title should return not found error", func(t *testing.T) {
@@ -791,7 +840,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
-	t.Run("Get folder by title", func(t *testing.T) {
+	t.Run("Get folder by title with nil parent ID", func(t *testing.T) {
 		// the search here will return a parent, this will be the parent folder returned when we query for it to add to the hit info
 		fakeFolderStore := folder.NewFakeStore()
 		fakeFolderStore.ExpectedFolder = &folder.Folder{
@@ -806,45 +855,92 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: folderkey,
-				Fields: []*resourcepb.Requirement{
-					{
-						Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
-						Operator: string(selection.Equals),
-						Values:   []string{"foo title"},
-					},
-				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
+					Operator: string(selection.Equals),
+					Values:   []string{"foo title"},
+				}},
 				Labels: []*resourcepb.Requirement{},
 			},
 			Limit: folderSearchLimit}).
 			Return(&resourcepb.ResourceSearchResponse{
 				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{
-							Name: "title",
-							Type: resourcepb.ResourceTableColumnDefinition_STRING,
-						},
-						{
-							Name: "folder",
-							Type: resourcepb.ResourceTableColumnDefinition_STRING,
-						},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key: &resourcepb.ResourceKey{
-								Name:     "uid",
-								Resource: "folder",
-							},
-							Cells: [][]byte{
-								[]byte("foouid"),
-								[]byte("parentuid"),
-							},
-						},
+					Columns: []*resourcepb.ResourceTableColumnDefinition{{
+						Name: "title",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					}, {
+						Name: "folder",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					}},
+					Rows: []*resourcepb.ResourceTableRow{{
+						Key: &resourcepb.ResourceKey{Name: "uid", Resource: "folder"},
+						Cells: [][]byte{
+							[]byte("foouid"),
+							[]byte("parentuid"),
+						}},
 					},
 				},
 				TotalHits: 1,
 			}, nil).Once()
 
-		result, err := service.getFolderByTitleFromApiServer(ctx, 1, "foo title", nil)
+		_, err := service.getFolderByTitleFromApiServer(ctx, 1, "foo title", nil)
+		// Since parentUID=nil and there's no top-level folder with the name, we return folder not found error.
+		require.Error(t, err, dashboards.ErrFolderNotFound)
+		fakeK8sClient.AssertExpectations(t)
+	})
+
+	t.Run("Get folder by title with parentID", func(t *testing.T) {
+		// the search here will return a parent, this will be the parent folder returned when we query for it to add to the hit info
+		fakeFolderStore := folder.NewFakeStore()
+		fakeFolderStore.ExpectedFolder = &folder.Folder{
+			UID:       "foouid",
+			ParentUID: "parentuid",
+			ID:        2,
+			OrgID:     1,
+			Title:     "foo title",
+			URL:       "/dashboards/f/foouid/foo-title",
+		}
+		service.unifiedStore = fakeFolderStore
+		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: folderkey,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
+					Operator: string(selection.Equals),
+					Values:   []string{"foo title"},
+				}, {
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: string(selection.In),
+					Values:   []string{"parentuid"},
+				}},
+				Labels: []*resourcepb.Requirement{},
+			},
+			Limit: folderSearchLimit}).
+			Return(&resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{{
+						Name: "title",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					}, {
+						Name: "folder",
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					}},
+					Rows: []*resourcepb.ResourceTableRow{{
+						Key: &resourcepb.ResourceKey{
+							Name:     "uid",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("foouid"),
+							[]byte("parentuid"),
+						}},
+					},
+				},
+				TotalHits: 1,
+			}, nil).Once()
+
+		parentid := "parentuid"
+		result, err := service.getFolderByTitleFromApiServer(ctx, 1, "foo title", &parentid)
 		require.NoError(t, err)
 
 		expectedResult := &folder.Folder{

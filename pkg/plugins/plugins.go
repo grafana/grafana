@@ -48,8 +48,9 @@ type Plugin struct {
 	Error         *Error
 
 	// SystemJS fields
-	Module  string
-	BaseURL string
+	Module          string
+	BaseURL         string
+	LoadingStrategy LoadingStrategy
 
 	Angular AngularMeta
 
@@ -67,13 +68,14 @@ type Plugin struct {
 }
 
 var (
-	_ = backend.CollectMetricsHandler(&Plugin{})
-	_ = backend.CheckHealthHandler(&Plugin{})
-	_ = backend.QueryDataHandler(&Plugin{})
-	_ = backend.CallResourceHandler(&Plugin{})
-	_ = backend.StreamHandler(&Plugin{})
-	_ = backend.AdmissionHandler(&Plugin{})
-	_ = backend.ConversionHandler(&Plugin{})
+	_ backend.CollectMetricsHandler   = (*Plugin)(nil)
+	_ backend.CheckHealthHandler      = (*Plugin)(nil)
+	_ backend.QueryDataHandler        = (*Plugin)(nil)
+	_ backend.QueryChunkedDataHandler = (*Plugin)(nil)
+	_ backend.CallResourceHandler     = (*Plugin)(nil)
+	_ backend.StreamHandler           = (*Plugin)(nil)
+	_ backend.AdmissionHandler        = (*Plugin)(nil)
+	_ backend.ConversionHandler       = (*Plugin)(nil)
 )
 
 type AngularMeta struct {
@@ -336,6 +338,14 @@ func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (
 	return pluginClient.QueryData(ctx, req)
 }
 
+func (p *Plugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return ErrPluginUnavailable
+	}
+	return pluginClient.QueryChunkedData(ctx, req, w)
+}
+
 func (p *Plugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	pluginClient, ok := p.Client()
 	if !ok {
@@ -462,6 +472,7 @@ func (p *Plugin) executablePath(f string) string {
 
 type PluginClient interface {
 	backend.QueryDataHandler
+	backend.QueryChunkedDataHandler
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
