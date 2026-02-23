@@ -1,4 +1,4 @@
-package conversion
+package migration
 
 import (
 	"fmt"

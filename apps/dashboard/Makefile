@@ -1,6 +1,8 @@
 include ../sdk.mk
 
+MIGRATION_PKG = ./pkg/migration/
 CONVERSION_PKG = ./pkg/migration/conversion/
+MIGRATION_TESTS = TestMigrate$$|TestMigrateSingleVersion|TestMigrateDevDashboards
 GOLDEN_TESTS = TestDashboardConversionToAllVersions|TestMigratedDashboardsConversion
 
 .PHONY: generate
@@ -53,9 +55,11 @@ post-generate-cleanup: ## Clean up the generated code
 	@cat ./kinds/v2beta1/dashboard_spec.cue >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
 
 .PHONY: generate-golden-files
-generate-golden-files: ## Generate golden output files for frontend parity tests
+generate-golden-files: ## Generate golden output files (migration first, then conversion)
+	go test -run '$(MIGRATION_TESTS)' $(MIGRATION_PKG) -count=1
 	go test -run '$(GOLDEN_TESTS)' $(CONVERSION_PKG) -count=1
 
 .PHONY: regenerate-golden-checksums
-regenerate-golden-checksums: ## Regenerate golden_checksums.json after conversion changes
+regenerate-golden-checksums: ## Regenerate golden_checksums.json after migration/conversion changes
+	REGENERATE_CHECKSUMS=true go test -run '$(MIGRATION_TESTS)' $(MIGRATION_PKG) -count=1
 	REGENERATE_CHECKSUMS=true go test -run '$(GOLDEN_TESTS)' $(CONVERSION_PKG) -count=1

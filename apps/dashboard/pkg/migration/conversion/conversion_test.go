@@ -432,7 +432,7 @@ func setupTestConversionScheme(t *testing.T) *runtime.Scheme {
 // writeOrCompareOutputFile writes the golden file to disk (always, so the
 // frontend parity test can consume it) and validates or updates its SHA-256
 // checksum in golden_checksums.json.
-func writeOrCompareOutputFile(t *testing.T, obj interface{}, outputPath string, _ string) {
+func writeOrCompareOutputFile(t *testing.T, obj interface{}, outputPath string) {
 	t.Helper()
 
 	outputData, err := json.MarshalIndent(obj, "", "  ")
@@ -446,10 +446,10 @@ func writeOrCompareOutputFile(t *testing.T, obj interface{}, outputPath string, 
 	err = os.WriteFile(outputPath, outputData, 0644)
 	require.NoError(t, err, "Failed to write output file")
 
-	key, err := checksumKey(outputPath)
+	key, err := migrationtestutil.ChecksumKey(outputPath)
 	require.NoError(t, err)
 
-	goldenChecksums.validateOrUpdate(t, key, outputData)
+	goldenChecksums.ValidateOrUpdate(t, key, outputData)
 }
 
 // readInputFile reads and unmarshals a JSON input file into the provided target.
@@ -482,10 +482,10 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 	err = os.WriteFile(outPath, outBytes, 0644)
 	require.NoError(t, err, "failed to write output file %s", outPath)
 
-	key, err := checksumKey(outPath)
+	key, err := migrationtestutil.ChecksumKey(outPath)
 	require.NoError(t, err)
 
-	goldenChecksums.validateOrUpdate(t, key, outBytes)
+	goldenChecksums.ValidateOrUpdate(t, key, outBytes)
 }
 
 // TestConversionMetrics tests that conversion-level metrics are recorded correctly

@@ -55,6 +55,8 @@ jobs:
         name: golden-files
         retention-days: 1
         path: |
+          apps/dashboard/pkg/migration/testdata/output/
+          apps/dashboard/pkg/migration/testdata/dev-dashboards-output/
           apps/dashboard/pkg/migration/conversion/testdata/output/
           apps/dashboard/pkg/migration/conversion/testdata/migrated_dashboards_output/
 
@@ -83,7 +85,6 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: golden-files
-        path: apps/dashboard/pkg/migration/conversion/testdata
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
     - name: Yarn install
@@ -125,7 +126,6 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: golden-files
-        path: apps/dashboard/pkg/migration/conversion/testdata
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
     - name: Yarn install
