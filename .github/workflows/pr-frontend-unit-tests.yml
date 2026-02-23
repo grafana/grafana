@@ -85,6 +85,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: golden-files
+        path: apps/dashboard/pkg/migration
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
     - name: Yarn install
@@ -126,6 +127,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: golden-files
+        path: apps/dashboard/pkg/migration
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
     - name: Yarn install
