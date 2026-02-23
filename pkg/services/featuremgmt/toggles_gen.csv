@@ -246,7 +246,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-18,unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
-2025-07-31,restrictedPluginApis,experimental,@grafana/plugins-platform-backend,false,false,true
+2025-07-31,restrictedPluginApis,GA,@grafana/plugins-platform-backend,false,false,true
 2025-07-31,favoriteDatasources,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-07-31,newLogContext,experimental,@grafana/observability-logs,false,false,true
 2025-07-31,newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
@@ -302,3 +302,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,react19,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-18,frontendServiceUseSettingsService,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-02-22,functionalSharedPreferences,experimental,@grafana/grafana-frontend-platform,false,false,true
