@@ -6,6 +6,7 @@ import { useCallback } from 'react';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Checkbox } from '../Forms/Checkbox';
 import { Icon } from '../Icon/Icon';
+import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
@@ -151,10 +152,10 @@ export const ComboboxList = <T extends string | number>({
                 )}
 
                 <div className={styles.optionBody}>
-                  <div className={styles.optionIconWrapper}>
+                  <Stack direction="row" alignItems="center">
                     {item.icon && <Icon name={item.icon} className={styles.icon} />}
                     <div className={styles.optionLabel}>{item.label ?? item.value}</div>
-                  </div>
+                  </Stack>
 
                   {item.description && <div className={styles.optionDescription}>{item.description}</div>}
                 </div>

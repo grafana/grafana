@@ -90,13 +90,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       height: MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT, // Ensure the accessory doesn't make the option too tall
     }),
 
-    optionIconWrapper: css({
-      label: 'combobox-option-icon-wrap',
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-    }),
-
     optionBody: css({
       label: 'combobox-option-body',
       display: 'flex',
@@ -187,7 +180,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     icon: css({
       gridRow: '1 / 3',
       gridColumn: '1 / 2',
-      marginRight: MENU_ITEM_PADDING,
     }),
   };
 };
