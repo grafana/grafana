@@ -1303,9 +1303,9 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	// Let's create two active alerts and one expired one.
 	// UTF-8 label names should be preserved.
 	utf8LabelName := "test utf-8 label 😳"
-	alert1 := genAlert(true, map[string]string{utf8LabelName: "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1"})
-	alert2 := genAlert(true, map[string]string{utf8LabelName: "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2"})
-	alert3 := genAlert(false, map[string]string{utf8LabelName: "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3"})
+	alert1 := genAlert(true, map[string]string{utf8LabelName: "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1", "": "empty_name"})
+	alert2 := genAlert(true, map[string]string{utf8LabelName: "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2", "": "empty_name"})
+	alert3 := genAlert(false, map[string]string{utf8LabelName: "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3", "": "empty_name"})
 	postableAlerts := apimodels.PostableAlerts{
 		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
 	}
@@ -1323,12 +1323,13 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(alertGroups))
 
-	// Labels with empty values and the namespace UID label should be removed.
+	// Labels with empty values, empty names, and the namespace UID label should be removed.
 	// UTF-8 label names should remain unchanged.
 	for _, a := range alertGroups {
 		require.Len(t, a.Alerts, 2)
 		for _, a := range a.Alerts {
 			require.NotContains(t, a.Labels, "empty")
+			require.NotContains(t, a.Labels, "")
 			require.NotContains(t, a.Labels, alertingModels.NamespaceUIDLabel)
 			require.Contains(t, a.Labels, utf8LabelName)
 		}
