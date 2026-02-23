@@ -102,6 +102,14 @@ describe('MissingFolderMetadataBanner', () => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
+    it('returns null for local repositories', () => {
+      setup({
+        repository: { name: 'my-repo', target: 'folder' as const, title: 'Repo', type: 'local' as const },
+      });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
     it('returns null when file query is loading', () => {
       setup({}, { isLoading: true });
 

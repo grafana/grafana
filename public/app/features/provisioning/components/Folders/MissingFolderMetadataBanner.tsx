@@ -20,7 +20,7 @@ function MissingFolderMetadataBannerContent({ folderUID }: { folderUID: string }
   const sourcePath = annotations?.[AnnoKeySourcePath];
   const repoName = repository?.name;
 
-  const shouldQuery = isProvisioned && repoName;
+  const shouldQuery = isProvisioned && repoName && repository?.type !== 'local';
   const folderJsonPath = shouldQuery ? (sourcePath ? `${sourcePath}/_folder.json` : '_folder.json') : '';
 
   const { error, isLoading } = useGetRepositoryFilesWithPathQuery(
