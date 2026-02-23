@@ -78,7 +78,7 @@ func NewTenantWatcherConfig(cfg *setting.Cfg) *TenantWatcherConfig {
 	}
 
 	if tenantWatcherCfg.TenantAPIServerURL == "" || tenantWatcherCfg.Token == "" || tenantWatcherCfg.TokenExchangeURL == "" {
-		logger.Info("tenant watcher not valid - ensure tenant api address, token, and token exchange url are set")
+		logger.Warn("tenant watcher not valid - ensure tenant api address, token, and token exchange url are set")
 		return nil
 	}
 
@@ -205,6 +205,7 @@ func (tw *TenantWatcher) handleTenant(tenant *unstructured.Unstructured) {
 func (tw *TenantWatcher) markPendingDelete(name string, deleteAfter string) {
 	// TODO
 	// Save a pending delete record to the KV store.
+	tw.log.Info("marking tenant pending delete", "tenant", name, "delete_after", deleteAfter)
 }
 
 func (tw *TenantWatcher) markResourcesPendingDelete() {
@@ -212,10 +213,12 @@ func (tw *TenantWatcher) markResourcesPendingDelete() {
 	// 1. List all resources for the tenant from the kv datastore
 	// 2. For each resource add a pending delete label to it using the write callback function
 	// 3. When completed, store something either in the kv store or write it to the tenant on the tenant apiserver
+	tw.log.Info("marking tenant resources pending delete")
 }
 
 // clearPendingDelete removes the pending-delete record for a tenant from the KV store, if one exists.
 func (tw *TenantWatcher) clearPendingDelete(name string) {
 	// TODO
 	// Remove the pending delete record from the KV store.
+	tw.log.Info("clearing tenant pending delete", "tenant", name)
 }
