@@ -9,6 +9,7 @@ import gloom from './themeDefinitions/gloom.json';
 import mars from './themeDefinitions/mars.json';
 import matrix from './themeDefinitions/matrix.json';
 import sapphiredusk from './themeDefinitions/sapphiredusk.json';
+import sunrise from './themeDefinitions/sunrise.json';
 import synthwave from './themeDefinitions/synthwave.json';
 import tron from './themeDefinitions/tron.json';
 import victorian from './themeDefinitions/victorian.json';
@@ -29,6 +30,7 @@ const extraThemes: { [key: string]: unknown } = {
   mars,
   matrix,
   sapphiredusk,
+  sunrise,
   synthwave,
   tron,
   victorian,
