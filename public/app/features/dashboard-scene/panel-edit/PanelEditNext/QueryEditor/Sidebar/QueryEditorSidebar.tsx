@@ -13,7 +13,7 @@ import {
   useQueryRunnerContext,
 } from '../QueryEditorContext';
 
-import { AlertIndicator } from './AlertIndicator';
+import { AlertIndicator } from './Alerts/AlertIndicator';
 import { AlertsView } from './Alerts/AlertsView';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 import { SidebarFooter } from './SidebarFooter';
