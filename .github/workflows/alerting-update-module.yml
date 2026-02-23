@@ -101,6 +101,11 @@ jobs:
           go get github.com/grafana/alerting@"$PINNED_COMMIT"
           make update-workspace
 
+      - name: Update snapshots
+        run: |
+          go test -v -count=1 -timeout 5m -run TestIntegrationAvailableChannels ./pkg/tests/api/alerting/... || true
+          go test -v -count=1 -timeout 5m -run TestIntegrationTypeSchemaList ./pkg/tests/apis/alerting/notifications/integrationtypeschema/... || true
+
       - id: get-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:

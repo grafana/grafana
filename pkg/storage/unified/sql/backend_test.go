@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -88,9 +89,9 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 	b, err := NewBackend(BackendOptions{DBProvider: dbp})
 	require.NoError(t, err)
 	require.NotNil(t, b)
-
-	err = b.Init(ctx)
-	require.NoError(t, err)
+	svc, ok := b.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	bb, ok := b.(*backend)
 	require.True(t, ok)
@@ -141,21 +142,19 @@ func TestBackend_Init(t *testing.T) {
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
+		dbp.SQLMock.ExpectPing().WillReturnError(nil)
 		b, err := NewBackend(BackendOptions{DBProvider: dbp})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
-		dbp.SQLMock.ExpectPing().WillReturnError(nil)
-		err = b.Init(ctx)
-		require.NoError(t, err)
+		svc, ok := b.(services.Service)
+		require.True(t, ok)
+		require.NoError(t, services.StartAndAwaitRunning(context.Background(), svc))
 
-		// if it isn't idempotent, then it will make a second ping and the
-		// expectation will fail
-		err = b.Init(ctx)
-		require.NoError(t, err, "should be idempotent")
-
-		err = b.Stop(ctx)
-		require.NoError(t, err)
+		// cannot start service twice
+		require.ErrorContains(t, services.StartAndAwaitRunning(ctx, svc), "invalid service state")
+		svc.StopAsync()
+		require.NoError(t, svc.AwaitTerminated(ctx))
 	})
 
 	t.Run("happy path without storage services enabled", func(t *testing.T) {
@@ -163,30 +162,25 @@ func TestBackend_Init(t *testing.T) {
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
+		dbp.SQLMock.ExpectPing().WillReturnError(nil)
 		b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
-		dbp.SQLMock.ExpectPing().WillReturnError(nil)
-		err = b.Init(ctx)
-		require.NoError(t, err)
-
-		err = b.Stop(ctx)
-		require.NoError(t, err)
+		svc, ok := b.(services.Service)
+		require.True(t, ok)
+		require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+		svc.StopAsync()
+		require.NoError(t, svc.AwaitTerminated(ctx))
 	})
 
 	t.Run("no db provider", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.TestDBProvider{
 			Err: errTest,
 		}
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
-		require.NoError(t, err)
-		require.NotNil(t, b)
-
-		err = b.Init(ctx)
+		_, err := NewBackend(BackendOptions{DBProvider: dbp})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "initialize resource DB")
 	})
@@ -194,18 +188,13 @@ func TestBackend_Init(t *testing.T) {
 	t.Run("no dialect for driver", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := testutil.NewDefaultTestContext(t)
 		mockDB, _, err := sqlmock.New()
 		require.NoError(t, err)
 		dbp := test.TestDBProvider{
 			DB: dbimpl.NewDB(mockDB, "juancarlo"),
 		}
 
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
-		require.NoError(t, err)
-		require.NotNil(t, b)
-
-		err = b.Init(ctx)
+		_, err = NewBackend(BackendOptions{DBProvider: dbp})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "no dialect for driver")
 	})
@@ -213,14 +202,9 @@ func TestBackend_Init(t *testing.T) {
 	t.Run("database unreachable", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
-		require.NoError(t, err)
-		require.NotNil(t, dbp.DB)
-
 		dbp.SQLMock.ExpectPing().WillReturnError(errTest)
-		err = b.Init(ctx)
+		_, err := NewBackend(BackendOptions{DBProvider: dbp})
 		require.Error(t, err)
 		require.ErrorIs(t, err, errTest)
 	})
@@ -231,13 +215,14 @@ func TestBackend_IsHealthy(t *testing.T) {
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderWithPing(t)
+	dbp.SQLMock.ExpectPing().WillReturnError(nil) // for Init
 	b, err := NewBackend(BackendOptions{DBProvider: dbp})
 	require.NoError(t, err)
 	require.NotNil(t, dbp.DB)
+	svc, ok := b.(services.Service)
+	require.True(t, ok)
 
-	dbp.SQLMock.ExpectPing().WillReturnError(nil)
-	err = b.Init(ctx)
-	require.NoError(t, err)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	dbp.SQLMock.ExpectPing().WillReturnError(nil)
 	res, err := b.IsHealthy(ctx, nil)
@@ -790,7 +775,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			},
 		}
 
-		var allItems []int64
+		allItems := make([]int64, 0, len(versions)*len(pages))
 		initialRV := rv51
 
 		// Test each page
@@ -955,9 +940,9 @@ func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context
 	b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
 	require.NoError(t, err)
 	require.NotNil(t, b)
-
-	err = b.Init(ctx)
-	require.NoError(t, err)
+	svc, ok := b.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	bb, ok := b.(*backend)
 	require.True(t, ok)

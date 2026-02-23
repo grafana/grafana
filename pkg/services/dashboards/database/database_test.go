@@ -311,7 +311,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		dashs, err := dashboardStore.GetAllDashboardsByOrgId(context.Background(), 3)
 		require.NoError(t, err)
 		require.Equal(t, len(dashs), 2)
-		uids := []string{}
+		uids := make([]string, 0, len(dashs))
 		for _, d := range dashs {
 			uids = append(uids, d.UID)
 		}
@@ -1292,7 +1292,7 @@ func testSearchDashboards(d dashboards.Store, query *dashboards.FindPersistedDas
 }
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
-	hitList := make([]*model.Hit, 0)
+	hitList := make([]*model.Hit, 0, len(res))
 
 	for _, item := range res {
 		hitType := model.DashHitDB

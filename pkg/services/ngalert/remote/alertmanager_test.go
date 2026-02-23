@@ -568,6 +568,9 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 					managed := make(map[string]*definition.Route)
 					managed[r.Identifier] = r.ExtraRoute
 					r.Config.Route = legacy_storage.WithManagedRoutes(r.Config.Route, managed)
+					importedRules, err := legacy_storage.BuildManagedInhibitionRules(r.Identifier, r.ExtraInhibitRules)
+					require.NoError(t, err)
+					r.Config.InhibitRules = legacy_storage.WithManagedInhibitionRules(r.Config.InhibitRules, importedRules)
 					cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
 						TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
 						AlertmanagerConfig: r.Config,
@@ -1359,11 +1362,11 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	// We should start with the default config.
 	rcvs, err := am.GetReceivers(ctx)
 	require.NoError(t, err)
-	require.Equal(t, []apimodels.Receiver{
+	require.Equal(t, []alertingModels.ReceiverStatus{
 		{
 			Active:       true,
 			Name:         "empty-receiver",
-			Integrations: []apimodels.Integration{},
+			Integrations: []alertingModels.IntegrationStatus{},
 		},
 	}, rcvs)
 }

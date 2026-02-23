@@ -342,3 +342,9 @@ var (
 	ErrSessionCreationFailure = errutil.Internal("cloudmigrations.createMigration.sessionCreationFailure", errutil.WithPublicMessage("There was an error creating the migration. Please try again."))
 	ErrMigrationDisabled      = errutil.Internal("cloudmigrations.createMigration.migrationDisabled", errutil.WithPublicMessage("Cloud migrations are disabled on this instance."))
 )
+
+type EncryptionAlgo string
+
+var (
+	EncryptionAlgoNacl EncryptionAlgo = "nacl"
+)

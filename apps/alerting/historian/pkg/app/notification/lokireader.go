@@ -104,6 +104,11 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 		return QueryResult{}, err
 	}
 
+	// Prune entries to the requested limit
+	if int64(len(entries)) > limit {
+		entries = entries[:limit]
+	}
+
 	return QueryResult{
 		Entries: entries,
 	}, nil
@@ -115,7 +120,14 @@ func buildQuery(query Query) (string, error) {
 		fmt.Sprintf(`%s=%q`, historian.LabelFrom, historian.LabelFromValue),
 	}
 
-	logql := fmt.Sprintf(`{%s} | json`, strings.Join(selectors, `,`))
+	logql := fmt.Sprintf(`{%s}`, strings.Join(selectors, `,`))
+
+	// Searching for ruleUID before JSON parsing can dramatically improve performance.
+	if query.RuleUID != nil && *query.RuleUID != "" {
+		logql += fmt.Sprintf(` |= %q`, *query.RuleUID)
+	}
+
+	logql += ` | json`
 
 	// Add ruleUID filter as JSON line filter if specified.
 	if query.RuleUID != nil && *query.RuleUID != "" {
@@ -149,6 +161,23 @@ func buildQuery(query Query) (string, error) {
 		}
 	}
 
+	// Add alert labels filter if specified.
+	if query.Labels != nil {
+		for _, matcher := range *query.Labels {
+			// Validate the matcher close to where it is used to form the query,
+			// to reduce the risk of introducing a query injection bug.
+			if !validLabelKeyRegex.MatchString(matcher.Label) {
+				return "", fmt.Errorf("%w: alert label: %q", ErrInvalidQuery, matcher.Label)
+			}
+			switch matcher.Type {
+			case "=", "!=", "=~", "!~":
+			default:
+				return "", fmt.Errorf("%w: matcher type: %s", ErrInvalidQuery, matcher.Type)
+			}
+			logql += fmt.Sprintf(` | alert_labels_%s %s %q`, matcher.Label, matcher.Type, matcher.Value)
+		}
+	}
+
 	// Add outcome filter if specified.
 	if query.Outcome != nil && *query.Outcome != "" {
 		switch *query.Outcome {
@@ -162,10 +191,13 @@ func buildQuery(query Query) (string, error) {
 	return logql, nil
 }
 
-// runQuery runs the query and collects results.
+// runQuery runs the query and collects results, grouping alerts into notifications.
 func (l *LokiReader) runQuery(ctx context.Context, logql string, from, to time.Time, limit int64) ([]Entry, error) {
+	// Note that we ask Loki for the configured maximum lines (usually 5000).
+	// This means that if some notifications have lots of alerts, then we may not
+	// return enough entries.
 	entries := make([]Entry, 0)
-	r, err := l.client.RangeQuery(ctx, logql, from.UnixNano(), to.UnixNano(), limit)
+	r, err := l.client.RangeQuery(ctx, logql, from.UnixNano(), to.UnixNano(), 5000)
 	if err != nil {
 		return nil, fmt.Errorf("loki range query: %w", err)
 	}
@@ -181,14 +213,51 @@ func (l *LokiReader) runQuery(ctx context.Context, logql string, from, to time.T
 		}
 	}
 
-	// We need to sort as results might be from a combination of streams.
+	// Group individual alerts into notifications
+	entries = groupEntries(entries)
+
+	// Sort entries by timestamp (descending - newest first)
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Timestamp.After(entries[j].Timestamp)
 	})
 
-	l.logger.Debug("Notification history query complete", "entries", len(entries))
+	l.logger.Debug("Notification history query complete", "notifications", len(entries))
 
 	return entries, nil
+}
+
+// groupAlerts combines alerts that belong to the same notification.
+// Alerts are grouped together if they have the same groupKey and pipelineTime.
+func groupEntries(entries []Entry) []Entry {
+	type key struct {
+		groupKey     string
+		pipelineTime int64
+	}
+	groups := make(map[key][]Entry)
+	var orderedKeys []key
+
+	for _, entry := range entries {
+		k := key{
+			groupKey:     entry.GroupKey,
+			pipelineTime: entry.PipelineTime.UnixNano(),
+		}
+		if _, exists := groups[k]; !exists {
+			orderedKeys = append(orderedKeys, k)
+		}
+		groups[k] = append(groups[k], entry)
+	}
+
+	result := make([]Entry, 0, len(groups))
+	for _, k := range orderedKeys {
+		groupEntries := groups[k]
+		entry := groupEntries[0]
+		for _, otherEntry := range groupEntries[1:] {
+			entry.Alerts = append(entry.Alerts, otherEntry.Alerts...)
+		}
+		result = append(result, entry)
+	}
+
+	return result
 }
 
 // parseLokiEntry unmarshals the JSON stored in the entry.

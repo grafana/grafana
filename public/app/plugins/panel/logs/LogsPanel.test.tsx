@@ -15,7 +15,7 @@ import {
   DataFrameType,
   LogSortOrderChangeEvent,
 } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
 import * as grafanaUI from '@grafana/ui';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
@@ -725,6 +725,89 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
     });
   });
 
+  describe('Field selector', () => {
+    const originalFlagState = config.featureToggles.newLogsPanel;
+    const series = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            values: ['logline text'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                app: 'common_app',
+              },
+            ],
+          },
+        ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
+      }),
+    ];
+
+    beforeAll(() => {
+      config.featureToggles.newLogsPanel = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.newLogsPanel = originalFlagState;
+    });
+
+    it('shows field selector when showFieldSelector is enabled', async () => {
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showFieldSelector: true,
+            enableLogDetails: true,
+          },
+        },
+        showControls
+      );
+
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
+
+      expect(screen.queryByPlaceholderText('Search fields by name')).toBeInTheDocument();
+    });
+
+    it('does not show field selector when showFieldSelector is disabled', async () => {
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showFieldSelector: false,
+            enableLogDetails: true,
+          },
+        },
+        showControls
+      );
+
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
+
+      expect(screen.queryByPlaceholderText('Search fields by name')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Show/hide fields', () => {
     const series = [
       createDataFrame({
@@ -895,12 +978,101 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
 
       expect(onClickShowFieldMock).toHaveBeenCalledTimes(1);
     });
+
+    it('calls onOptionsChange with updated displayedFields when showing a field', async () => {
+      const onOptionsChangeMock = jest.fn();
+
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showLabels: false,
+            showTime: false,
+            wrapLogMessage: false,
+            showCommonLabels: false,
+            prettifyLogMessage: false,
+            sortOrder: LogsSortOrder.Descending,
+            dedupStrategy: LogsDedupStrategy.none,
+            enableLogDetails: true,
+            displayedFields: [],
+            onClickHideField: undefined,
+            onClickShowField: undefined,
+          },
+          onOptionsChange: onOptionsChangeMock,
+        },
+        showControls
+      );
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(screen.getByText('logline text')).toBeInTheDocument();
+
+      // Click to open log details
+      await userEvent.click(screen.getByText('logline text'));
+      // Click to show the 'app' field
+      await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+
+      // Verify onOptionsChange was called with the field shown
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayedFields: ['app'],
+        })
+      );
+    });
+
+    it('calls onOptionsChange with updated displayedFields when hiding a field', async () => {
+      const onOptionsChangeMock = jest.fn();
+
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showLabels: false,
+            showTime: false,
+            wrapLogMessage: false,
+            showCommonLabels: false,
+            prettifyLogMessage: false,
+            sortOrder: LogsSortOrder.Descending,
+            dedupStrategy: LogsDedupStrategy.none,
+            enableLogDetails: true,
+            displayedFields: ['app'],
+            onClickHideField: undefined,
+            onClickShowField: undefined,
+          },
+          onOptionsChange: onOptionsChangeMock,
+        },
+        showControls
+      );
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(screen.getByText('app=common_app')).toBeInTheDocument();
+
+      // Click to open log details
+      await userEvent.click(screen.getByText('app=common_app'));
+      // Click to hide the 'app' field
+      await userEvent.click(screen.getByLabelText('Hide this field'));
+
+      // Verify onOptionsChange was called with the field hidden
+      expect(onOptionsChangeMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayedFields: [],
+        })
+      );
+    });
   });
 });
 
 const setup = (propsOverrides?: Partial<LogsPanelProps>, showControls = false) => {
   const props: LogsPanelProps = {
     ...defaultProps,
+    ...propsOverrides,
     data: {
       ...(propsOverrides?.data || defaultProps.data),
     },

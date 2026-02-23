@@ -611,7 +611,7 @@ describe('contact points', () => {
 
       await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
 
-      const permissionsDialog = await screen.findByRole('dialog', { name: /drawer title manage permissions/i });
+      const permissionsDialog = await screen.findByRole('dialog', { name: /manage permissions/i });
 
       expect(permissionsDialog).toBeInTheDocument();
       expect(await screen.findByRole('table')).toBeInTheDocument();

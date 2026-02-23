@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	amconfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
@@ -2334,7 +2333,7 @@ func TestParseMergeMatchersHeader(t *testing.T) {
 		name             string
 		headerValue      string
 		expectedError    bool
-		expectedMatchers amconfig.Matchers
+		expectedMatchers apimodels.Matchers
 	}{
 		{
 			name:          "empty header should not return error",
@@ -2345,7 +2344,7 @@ func TestParseMergeMatchersHeader(t *testing.T) {
 			name:          "single matcher should parse correctly",
 			headerValue:   "env=prod",
 			expectedError: false,
-			expectedMatchers: amconfig.Matchers{
+			expectedMatchers: apimodels.Matchers{
 				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
 			},
 		},
@@ -2353,7 +2352,7 @@ func TestParseMergeMatchersHeader(t *testing.T) {
 			name:          "multiple matchers should be parsed correctly",
 			headerValue:   "env=prod,team=alerting",
 			expectedError: false,
-			expectedMatchers: amconfig.Matchers{
+			expectedMatchers: apimodels.Matchers{
 				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
 				{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
 			},
@@ -2362,7 +2361,7 @@ func TestParseMergeMatchersHeader(t *testing.T) {
 			name:          "matchers with spaces should be parsed correctly",
 			headerValue:   " env = prod , team = alerting ",
 			expectedError: false,
-			expectedMatchers: amconfig.Matchers{
+			expectedMatchers: apimodels.Matchers{
 				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
 				{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
 			},
@@ -2465,7 +2464,7 @@ func TestFormatMergeMatchers(t *testing.T) {
 	})
 
 	t.Run("single matcher should format correctly", func(t *testing.T) {
-		matchers := amconfig.Matchers{
+		matchers := apimodels.Matchers{
 			&labels.Matcher{
 				Type:  labels.MatchEqual,
 				Name:  "env",
@@ -2477,7 +2476,7 @@ func TestFormatMergeMatchers(t *testing.T) {
 	})
 
 	t.Run("multiple matchers should format correctly", func(t *testing.T) {
-		matchers := amconfig.Matchers{
+		matchers := apimodels.Matchers{
 			&labels.Matcher{
 				Type:  labels.MatchEqual,
 				Name:  "env",

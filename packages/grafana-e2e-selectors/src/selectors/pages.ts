@@ -579,6 +579,9 @@ export const versionedPages = {
             applyButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-apply-button',
             },
+            previewTable: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-preview-table',
+            },
           },
           IntervalVariable: {
             intervalsValueInput: {

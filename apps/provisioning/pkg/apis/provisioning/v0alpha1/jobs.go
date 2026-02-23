@@ -60,6 +60,10 @@ const (
 
 	// JobActionMove moves files in the remote repository
 	JobActionMove JobAction = "move"
+
+	// JobActionFixFolderMetadata is a placeholder job that will eventually regenerate folder metadata files.
+	// Currently a no-op to unblock frontend development.
+	JobActionFixFolderMetadata JobAction = "fixFolderMetadata"
 )
 
 // +enum
@@ -110,6 +114,9 @@ type JobSpec struct {
 
 	// Move when the action is `move`
 	Move *MoveJobOptions `json:"move,omitempty"`
+
+	// Options when the action is `fix-folder-metadata`
+	FixFolderMetadata *FixFolderMetadataJobOptions `json:"fixFolderMetadata,omitempty"`
 }
 
 func (JobSpec) OpenAPIModelName() string {
@@ -232,6 +239,12 @@ func (MoveJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "MoveJobOptions"
 }
 
+type FixFolderMetadataJobOptions struct{}
+
+func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FixFolderMetadataJobOptions"
+}
+
 // The job status
 type JobStatus struct {
 	State    JobState `json:"state,omitempty"`
@@ -255,15 +268,22 @@ func (JobStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "JobStatus"
 }
 
-// Convert a JOB to a
+// ToSyncStatus converts a job status to a sync status, which will be put in the repository status.
 func (in JobStatus) ToSyncStatus(jobId string) SyncStatus {
-	return SyncStatus{
+	s := SyncStatus{
 		JobID:    jobId,
 		State:    in.State,
 		Started:  in.Started,
 		Finished: in.Finished,
-		Message:  in.Errors,
 	}
+
+	if len(in.Errors) > 0 {
+		s.Message = in.Errors
+	} else if len(in.Warnings) > 0 {
+		s.Message = in.Warnings
+	}
+
+	return s
 }
 
 type JobResourceSummary struct {

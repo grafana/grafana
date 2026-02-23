@@ -119,7 +119,7 @@ describe('browse-dashboards FolderActionsButton', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
     await userEvent.click(screen.getByRole('menuitem', { name: managePermissionsLabel }));
-    expect(screen.getByRole('dialog', { name: 'Drawer title Manage permissions' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Manage permissions' })).toBeInTheDocument();
   });
 
   it('clicking the "Move" option opens the move modal', async () => {

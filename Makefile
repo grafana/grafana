@@ -136,17 +136,17 @@ i18n-extract-enterprise:
 else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
-	cd public/locales/enterprise && yarn run i18next-cli extract --sync-primary
+	cd public/locales/enterprise && LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	yarn run i18next-cli extract --sync-primary
+	LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
-	yarn run packages:i18n-extract
+	LANG=en_US.UTF-8 yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
-	yarn run plugin:i18n-extract
+	LANG=en_US.UTF-8 yarn run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
@@ -179,7 +179,7 @@ app ?=
 .PHONY: gen-apps
 gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt. Use app=<name> to generate for a specific app.
 ## NOTE: codegen produces some openapi files that result in circular dependencies
-## for now, we revert the zz_openapi_gen.go files before comparison  	  
+## for now, we revert the zz_openapi_gen.go files before comparison
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
 	  git checkout HEAD -- apps/alerting/rules/pkg/apis/alerting/v0alpha1/zz_openapi_gen.go; \
 		git checkout HEAD -- apps/iam/pkg/apis/iam/v0alpha1/zz_openapi_gen.go; \

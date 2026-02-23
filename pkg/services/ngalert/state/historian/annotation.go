@@ -251,7 +251,7 @@ func BuildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state
 		}
 		sort.Strings(keys)
 
-		var values []string
+		values := make([]string, 0, len(keys))
 		for _, k := range keys {
 			values = append(values, fmt.Sprintf("%s=%f", k, currentState.Values[k]))
 		}

@@ -1,6 +1,6 @@
 import { PanelModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
@@ -309,4 +309,53 @@ export async function onUseCommunityDashboard({
     );
     throw err;
   }
+}
+
+/**
+ * Interpolate a community dashboard for compatibility checking.
+ *
+ * This function fetches the dashboard from Grafana.com, auto-maps datasource inputs,
+ * and returns the interpolated dashboard with template variables resolved.
+ *
+ * @throws Error if auto-mapping fails - compatibility check requires all datasource inputs to be resolved
+ * @param dashboardId - The Grafana.com dashboard ID
+ * @param datasourceUid - The UID of the datasource to map to
+ * @returns Promise<DashboardJson> - The interpolated dashboard with resolved template variables
+ */
+export async function interpolateDashboardForCompatibilityCheck(
+  dashboardId: number,
+  datasourceUid: string
+): Promise<DashboardJson> {
+  // 1. Fetch full dashboard JSON from Grafana.com
+  const gnetResponse = await fetchCommunityDashboard(dashboardId);
+  const dashboardJson = gnetResponse.json;
+
+  // 2. Extract datasource inputs from dashboard's __inputs array
+  const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
+
+  // 3. Auto-map datasources using existing utility
+  const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+
+  // 4. Check if auto-mapping was successful
+  // Compatibility check requires all datasource variables to be resolved
+  if (!mappingResult.allMapped) {
+    throw new Error(
+      t(
+        'dashboard-library.compatibility-auto-map-failed',
+        'Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.'
+      )
+    );
+  }
+
+  // 5. Prepare inputs array for interpolation API
+  const inputs: InputMapping[] = mappingResult.mappings;
+
+  // 6. Call interpolation endpoint to replace template variables
+  const interpolatedDashboard = await getBackendSrv().post<DashboardJson>('/api/dashboards/interpolate', {
+    dashboard: dashboardJson,
+    overwrite: true,
+    inputs: inputs,
+  });
+
+  return interpolatedDashboard;
 }

@@ -82,5 +82,35 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		},
 	}
 
+	// For testdata, add an explicit response format
+	if b.pluginJSON.ID == "grafana-testdata-datasource" {
+		query = oas.Paths.Paths[root+"namespaces/{namespace}/datasources/{name}/query"]
+		for query == nil || query.Post == nil {
+			return nil, fmt.Errorf("missing datasources query path")
+		}
+		query.Post.Responses = &spec3.Responses{
+			ResponsesProps: spec3.ResponsesProps{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Description: "OK",
+							Content: map[string]*spec3.MediaType{
+								"application/json": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema: &spec.Schema{
+											SchemaProps: spec.SchemaProps{
+												Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+
 	return oas, nil
 }

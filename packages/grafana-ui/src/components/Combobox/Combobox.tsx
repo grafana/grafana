@@ -261,6 +261,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     items: filteredOptions,
     itemToString,
     selectedItem,
+    isItemDisabled: (item) => !!item?.infoOption,
 
     // Don't change downshift state in the onBlahChange handlers. Instead, use the stateReducer to make changes.
     // Downshift calls change handlers on the render after so you can get sync/flickering issues if you change its state
