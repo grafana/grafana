@@ -3403,6 +3403,23 @@
     },
     {
       "metadata": {
+        "name": "provisioningFolderMetadata",
+        "resourceVersion": "1771843876800",
+        "creationTimestamp": "2026-02-23T10:49:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-23 10:51:16.80095 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Allow setting folder metadata for provisioned folders",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboardsEmailSharing",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-01-03T19:45:15Z"

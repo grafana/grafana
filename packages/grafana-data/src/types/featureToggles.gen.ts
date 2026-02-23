@@ -179,6 +179,11 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Allow setting folder metadata for provisioned folders
+  * @default false
+  */
+  provisioningFolderMetadata?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   * @default false
   */

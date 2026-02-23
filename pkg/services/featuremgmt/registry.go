@@ -265,6 +265,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "provisioningFolderMetadata",
+			Description:     "Allow setting folder metadata for provisioned folders",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
