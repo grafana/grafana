@@ -8,14 +8,7 @@ import { QUERY_EDITOR_COLORS } from '../../constants';
 // Text component doesn't let us use strikethrough so we use a span with the correct style instead
 export const CardTitle = ({ title, isHidden, isError }: { title: string; isHidden: boolean; isError?: boolean }) => {
   const styles = useStyles2(getStyles);
-  return (
-    <span className={cx(styles.title, { [styles.error]: isError, [styles.hidden]: isHidden })}>
-      {title}
-      {/* <Text weight="light" variant="code" color={isError ? 'error' : 'primary'} truncate>
-        {title}
-      </Text> */}
-    </span>
-  );
+  return <span className={cx(styles.title, { [styles.error]: isError, [styles.hidden]: isHidden })}>{title}</span>;
 };
 
 function getStyles(theme: GrafanaTheme2) {

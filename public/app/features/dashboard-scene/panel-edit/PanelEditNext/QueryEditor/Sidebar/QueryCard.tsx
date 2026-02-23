@@ -16,9 +16,9 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const { data } = useQueryRunnerContext();
+
   const isError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
   const isSelected = selectedQuery?.refId === query.refId;
-
   const isHidden = !!query.hide;
 
   const item = {
