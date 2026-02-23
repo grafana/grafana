@@ -8,8 +8,8 @@ import { ActionItem } from '../../../Actions';
 import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
 import { usePanelContext } from '../../QueryEditorContext';
 import { AlertRule } from '../../types';
-
 import { SidebarCard } from '../SidebarCard';
+
 import { AlertCard } from './AlertCard';
 
 interface AlertsViewProps {
