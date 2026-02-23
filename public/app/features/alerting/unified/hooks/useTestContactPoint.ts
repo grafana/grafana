@@ -53,7 +53,7 @@ export function useTestContactPoint({ contactPoint, defaultChannelValues }: UseT
       );
 
       const request: CreateReceiverTestOverrideArg = {
-        name: receiverUid || '-',
+        name: receiverUid,
         body: {
           integration: {
             uid: existingIntegration?.uid,

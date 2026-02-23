@@ -19,12 +19,14 @@ export interface CreateReceiverTestOverrideArg extends CreateReceiverTestApiArg 
   body: TestReceiverIntegrationBody;
 }
 
+const NEW_RECEIVER_PLACEHOLDER = '-';
+
 // We need to enhance the endpoints to add the correct type for the body
 const enhancedApi = generatedAPI.enhanceEndpoints({
   endpoints: {
     createReceiverTest: (endpoint) => {
       endpoint.query = (queryArg: CreateReceiverTestOverrideArg) => ({
-        url: `/receivers/${queryArg.name}/test`,
+        url: `/receivers/${queryArg.name || NEW_RECEIVER_PLACEHOLDER}/test`,
         method: 'POST' as const,
         body: queryArg.body,
       });
