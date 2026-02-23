@@ -161,7 +161,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 		} else {
 			maxCallRecvMsgSizeBytes = parsed
 		}
-    }
+	}
 
 	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxCallRecvMsgSizeBytes)))
   dialOps = append(dialOps, grpc.WithChainStreamInterceptor(
