@@ -94,9 +94,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 	})
 
-	t.Run("out of limit repo blocks new resource creation on subsequent sync", func(t *testing.T) {
+	// Is only possible to set the first sync to exceed quota when the repo is created.
+	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
+	t.Run("on the limit repo blocks new resource creation on subsequent sync", func(t *testing.T) {
 		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 1 // Only allow 1 resource
+			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 1 resource
 		})
 
 		const repo = "quota-blocks-creation-repo"
@@ -131,7 +133,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		err = os.WriteFile(filepath.Join(repoPath, "dashboard3.json"), dashboard3Content, 0o600)
 		require.NoError(t, err, "should be able to write dashboard3.json")
 
-		// Should fail due to quota (net change +1, final count 3 > limit 1)
+		// Should fail due to quota (net change +1, final count 3 > limit 2)
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},
@@ -232,9 +234,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
-	t.Run("out of limit repo allows delete-only sync even when still over quota", func(t *testing.T) {
+	// Is it not possible to set the repo out of limit in this test.
+	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
+	t.Run("out of limit repo allows delete-only sync", func(t *testing.T) {
 		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 2 resource
+			opts.ProvisioningMaxResourcesPerRepository = 3 // Only allow 3 resource
 		})
 
 		const repo = "quota-net-change-repo"
@@ -244,7 +248,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				// Adding 3 dashboards (plus 1 folder) will exceed the limit of 2
+				// Adding 3 dashboards (plus 1 folder) will exceed the limit of 3
 				"testdata/all-panels.json":    "dashboard1.json",
 				"testdata/text-options.json":  "dashboard2.json",
 				"testdata/timeline-demo.json": "dashboard3.json",
@@ -259,7 +263,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Verify 3 dashboards were created by the initial sync
 		helper.RequireRepoDashboardCount(t, repo, 3)
 
-		// Delete one dashboard file - deletion-only syncs are always allowed even when over quota
+		// Delete two dashboard files - deletion-only syncs are always allowed even when over quota
 		err := os.Remove(filepath.Join(repoPath, "dashboard3.json"))
 		require.NoError(t, err, "should be able to delete dashboard3.json")
 
@@ -270,6 +274,6 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Repository is still over quota (2 dashboards + 1 folder = 3 > limit of 2)
-		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
+		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 }
