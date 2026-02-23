@@ -10,6 +10,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashboardV2beta2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta2"
 	commonV0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -48,6 +49,12 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme, threshold int) *apis
 					Description: dash.Spec.Description,
 					Tags:        dash.Spec.Tags,
 				}
+			case *dashboardV2beta2.Dashboard:
+				dash.Spec = dashboardV2beta2.DashboardSpec{
+					Title:       dash.Spec.Title,
+					Description: dash.Spec.Description,
+					Tags:        dash.Spec.Tags,
+				}
 			default:
 				return fmt.Errorf("unsupported dashboard type %T", obj)
 			}
@@ -65,6 +72,8 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme, threshold int) *apis
 			case *dashboardV2alpha1.Dashboard:
 				return json.Unmarshal(blob, &dash.Spec)
 			case *dashboardV2beta1.Dashboard:
+				return json.Unmarshal(blob, &dash.Spec)
+			case *dashboardV2beta2.Dashboard:
 				return json.Unmarshal(blob, &dash.Spec)
 			default:
 				return fmt.Errorf("unsupported dashboard type %T", obj)
