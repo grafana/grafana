@@ -99,6 +99,10 @@ const (
 	// Allow setting folder metadata for provisioned folders
 	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
 
+	// FlagProvisioningExport
+	// Enable export functionality for provisioned resources
+	FlagProvisioningExport = "provisioningExport"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"

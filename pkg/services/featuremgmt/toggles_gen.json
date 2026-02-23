@@ -3404,6 +3404,20 @@
     },
     {
       "metadata": {
+        "name": "provisioningExport",
+        "resourceVersion": "1771845933585",
+        "creationTimestamp": "2026-02-23T11:25:33Z"
+      },
+      "spec": {
+        "description": "Enable export functionality for provisioned resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioningFolderMetadata",
         "resourceVersion": "1771843876800",
         "creationTimestamp": "2026-02-23T10:49:14Z",

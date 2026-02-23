@@ -273,6 +273,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "provisioningExport",
+			Description:     "Enable export functionality for provisioned resources",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
