@@ -399,6 +399,16 @@ type SaveDashboardDTO struct {
 	Dashboard *Dashboard
 }
 
+func IsLikelyV2(data *simplejson.Json) bool {
+	if data.Get("elements") != nil {
+		return true
+	}
+	if data.Get("layout") != nil {
+		return true
+	}
+	return false
+}
+
 type DashboardSearchProjection struct {
 	ID          int64  `xorm:"id"`
 	UID         string `xorm:"uid"`

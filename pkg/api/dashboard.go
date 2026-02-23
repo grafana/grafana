@@ -453,6 +453,11 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		Overwrite: cmd.Overwrite,
 	}
 
+	// Items with v2 schema elements must set v2 properties
+	if dashboards.IsLikelyV2(dash.Data) && strings.HasPrefix(dash.APIVersion, "dashboard.grafana.app/v2") {
+		return response.Error(http.StatusBadRequest, "Dashboard data appears to be in v2 format but apiVersion is not correct. Please set apiVersion to dashboard.grafana.app/v2", nil)
+	}
+
 	dashboard, saveErr := hs.DashboardService.SaveDashboard(ctx, dashItem, allowUiUpdate)
 	if saveErr != nil {
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
