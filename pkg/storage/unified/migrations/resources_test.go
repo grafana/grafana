@@ -135,7 +135,7 @@ func TestRegisterMigrations(t *testing.T) {
 		_ = sqlstoremigrator.CheckExpectedMigrations(sqlstoremigrator.SQLite,
 			[]sqlstoremigrator.ExpectedMigration{},
 			func(mg *sqlstoremigrator.Migrator) {
-				capturedErr = registerMigrations(context.Background(), cfg, mg, nil, nil, nil, registry)
+				capturedErr = registerMigrations(context.Background(), cfg, mg, nil, nil, nil, nil, registry)
 				ids = mg.GetMigrationIDs(false)
 			})
 		return ids, capturedErr
@@ -283,7 +283,14 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 				opts = append(opts, WithAutoMigrate(tt.cfg))
 			}
 
-			m := NewResourceMigration(nil, resources, "test-auto-migrate", nil, opts...)
+			def := MigrationDefinition{
+				ID:        "test-auto-migrate",
+				Resources: make([]ResourceInfo, len(resources)),
+			}
+			for i, gr := range resources {
+				def.Resources[i] = ResourceInfo{GroupResource: gr}
+			}
+			m := NewResourceMigration(nil, nil, def, nil, opts...)
 
 			// Simulate what happens at the end of a successful migration
 			// This is the logic from MigrationRunner.Run() that we're testing
