@@ -9,7 +9,7 @@ import {
 import { FeatureState, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LANGUAGES, PSEUDO_LOCALE, t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Combobox,
@@ -31,8 +31,6 @@ import { changeTheme } from 'app/core/services/theme';
 
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
-
-//TODO add reportInteraction
 
 const getLanguageOptions = (): ComboboxOption[] => {
   const languageOptions = LANGUAGES.map((v) => ({
@@ -177,6 +175,11 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
   const handleSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const confirmationResult = props.onConfirm ? await props.onConfirm() : true;
+    reportInteraction('grafana_preferences_save_button_clicked', {
+      preferenceType: props.preferenceType,
+      theme,
+      language,
+    });
     if (confirmationResult) {
       setIsSubmitting(true);
       await service
@@ -199,6 +202,10 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
 
   const handleThemeChanged = (value: ComboboxOption<string>) => {
     setTheme(value.value);
+    reportInteraction('grafana_preferences_theme_changed', {
+      toTheme: value.value,
+      preferenceType: props.preferenceType,
+    });
     if (value.value) {
       changeTheme(value.value, true);
     }
@@ -221,10 +228,18 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
 
   const handleLanguageChanged = (language: string) => {
     setLanguage(language);
+    reportInteraction('grafana_preferences_language_changed', {
+      toLanguage: language,
+      preferenceType: props.preferenceType,
+    });
   };
 
   const handleRegionalFormatChanged = (regionalFormat: string) => {
     setRegionalFormat(regionalFormat);
+    reportInteraction('grafana_preferences_regional_format_changed', {
+      toRegionalFormat: regionalFormat,
+      preferenceType: props.preferenceType,
+    });
   };
 
   const currentThemeOption = themeOptions.find((x) => x.value === theme) ?? themeOptions[0];
