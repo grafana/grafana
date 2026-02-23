@@ -1928,9 +1928,6 @@
   "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 6
-    },
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/features/dashboard/components/DashExportModal/DashboardExporter.ts": {
@@ -1939,9 +1936,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 7
-    },
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx": {
