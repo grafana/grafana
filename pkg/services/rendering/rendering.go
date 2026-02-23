@@ -44,7 +44,6 @@ type RenderingService struct {
 	capabilities        []Capability
 	pluginAvailable     bool
 	rendererCallbackURL string
-	netTransport        *http.Transport
 	netClient           *http.Client
 
 	perRequestRenderKeyProvider renderKeyProvider
@@ -179,7 +178,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		domain:                domain,
 		pluginAvailable:       exists,
 		rendererCallbackURL:   rendererCallbackURL,
-		netTransport:          netTransport,
 		netClient:             netClient,
 	}
 
