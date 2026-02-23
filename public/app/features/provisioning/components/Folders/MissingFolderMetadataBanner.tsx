@@ -1,37 +1,27 @@
-import { skipToken } from '@reduxjs/toolkit/query/react';
-
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { Folder } from 'app/api/clients/folder/v1beta1';
+import { RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
 
 import { FOLDER_METADATA_FILE } from '../../constants';
-import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 
 interface MissingFolderMetadataBannerProps {
-  folderUID?: string;
+  repository?: RepositoryView;
+  folder?: Folder;
 }
 
-function MissingFolderMetadataBannerContent({ folderUID }: { folderUID: string }) {
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUID });
+function MissingFolderMetadataBannerContent({ repository, folder }: Required<MissingFolderMetadataBannerProps>) {
+  const annotations = folder.metadata?.annotations;
+  const sourcePath = annotations?.[AnnoKeySourcePath]?.replace(/\/+$/, '');
+  const repoName = repository.name;
 
-  const annotations = folder?.metadata?.annotations;
-  const isProvisioned = annotations?.[AnnoKeyManagerKind] === ManagerKind.Repo;
-  const sourcePath = annotations?.[AnnoKeySourcePath];
-  const repoName = repository?.name;
+  const folderJsonPath = sourcePath ? `${sourcePath}/${FOLDER_METADATA_FILE}` : FOLDER_METADATA_FILE;
 
-  const shouldQuery = isProvisioned && repoName && repository?.type !== 'local';
-  const folderJsonPath = shouldQuery
-    ? sourcePath
-      ? `${sourcePath}/${FOLDER_METADATA_FILE}`
-      : FOLDER_METADATA_FILE
-    : '';
+  const { error, isLoading } = useGetRepositoryFilesWithPathQuery({ name: repoName, path: folderJsonPath });
 
-  const { error, isLoading } = useGetRepositoryFilesWithPathQuery(
-    shouldQuery ? { name: repoName, path: folderJsonPath } : skipToken
-  );
-  if (isLoading || !shouldQuery) {
+  if (isLoading) {
     return null;
   }
 
@@ -52,10 +42,15 @@ function MissingFolderMetadataBannerContent({ folderUID }: { folderUID: string }
   return null;
 }
 
-export function MissingFolderMetadataBanner({ folderUID }: MissingFolderMetadataBannerProps) {
-  if (!config.featureToggles.provisioningFolderMetadata || !folderUID) {
+export function MissingFolderMetadataBanner({ repository, folder }: MissingFolderMetadataBannerProps) {
+  if (!config.featureToggles.provisioningFolderMetadata) {
     return null;
   }
 
-  return <MissingFolderMetadataBannerContent folderUID={folderUID} />;
+  const isProvisioned = folder?.metadata?.annotations?.[AnnoKeyManagerKind] === ManagerKind.Repo;
+  if (!isProvisioned || !repository || repository.type === 'local') {
+    return null;
+  }
+
+  return <MissingFolderMetadataBannerContent repository={repository} folder={folder} />;
 }

@@ -1,62 +1,45 @@
 import { render, screen } from '@testing-library/react';
+import { testWithFeatureToggles } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
-import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { Folder } from 'app/api/clients/folder/v1beta1';
+import { RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
 
-import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-
 import { MissingFolderMetadataBanner } from './MissingFolderMetadataBanner';
-
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  return {
-    ...actual,
-    config: {
-      ...actual.config,
-      featureToggles: { provisioningFolderMetadata: true },
-    },
-  };
-});
-
-jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
-  useGetResourceRepositoryView: jest.fn(),
-}));
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
 }));
 
-const mockUseGetResourceRepositoryView = jest.mocked(useGetResourceRepositoryView);
 const mockUseGetRepositoryFilesWithPathQuery = jest.mocked(useGetRepositoryFilesWithPathQuery);
 
-const provisionedFolder = {
+const defaultRepository: RepositoryView = {
+  name: 'my-repo',
+  target: 'folder',
+  title: 'Repo',
+  type: 'github',
+  workflows: ['branch'],
+};
+
+const defaultFolder = {
   metadata: {
     annotations: {
       [AnnoKeyManagerKind]: ManagerKind.Repo,
       [AnnoKeySourcePath]: 'folders/my-folder',
     },
   },
-};
+  spec: { title: 'My Folder' },
+} as Folder;
 
-const defaultRepoView = {
-  repository: { name: 'my-repo', target: 'folder' as const, title: 'Repo', type: 'github' as const },
-  folder: provisionedFolder,
-  isLoading: false,
-  isInstanceManaged: false,
-  isReadOnlyRepo: false,
-};
-
-function setup(
-  repoViewOverrides: Partial<ReturnType<typeof useGetResourceRepositoryView>> = {},
-  fileQueryOverrides: Partial<ReturnType<typeof useGetRepositoryFilesWithPathQuery>> = {},
-  folderUID = 'test-folder'
-) {
-  mockUseGetResourceRepositoryView.mockReturnValue({
-    ...defaultRepoView,
-    ...repoViewOverrides,
-  } as ReturnType<typeof useGetResourceRepositoryView>);
-
+function setup({
+  repository = defaultRepository,
+  folder = defaultFolder,
+  fileQueryOverrides = {},
+}: {
+  repository?: RepositoryView;
+  folder?: Folder;
+  fileQueryOverrides?: Partial<ReturnType<typeof useGetRepositoryFilesWithPathQuery>>;
+} = {}) {
   mockUseGetRepositoryFilesWithPathQuery.mockReturnValue({
     data: undefined,
     error: undefined,
@@ -65,59 +48,65 @@ function setup(
     ...fileQueryOverrides,
   } as ReturnType<typeof useGetRepositoryFilesWithPathQuery>);
 
-  return render(<MissingFolderMetadataBanner folderUID={folderUID} />);
+  return render(<MissingFolderMetadataBanner repository={repository} folder={folder} />);
 }
 
 describe('MissingFolderMetadataBanner', () => {
+  testWithFeatureToggles({ enable: ['provisioningFolderMetadata'] });
+
   beforeEach(() => {
     jest.clearAllMocks();
-    (config.featureToggles as Record<string, boolean>).provisioningFolderMetadata = true;
   });
 
-  describe('when banner should not render', () => {
-    it('returns null when feature flag is off', () => {
-      (config.featureToggles as Record<string, boolean>).provisioningFolderMetadata = false;
+  describe('when feature flag is off', () => {
+    testWithFeatureToggles({ disable: ['provisioningFolderMetadata'] });
+
+    it('returns null', () => {
       setup();
 
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
+  });
 
-    it('returns null when folderUID is undefined', () => {
-      setup({}, {}, undefined);
+  describe('when banner should not render', () => {
+    it('returns null when repository is undefined', () => {
+      setup({ repository: undefined });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('returns null when folder is undefined', () => {
+      setup({ folder: undefined });
 
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('returns null when folder is not provisioned', () => {
       setup({
-        folder: { metadata: { annotations: {} }, spec: { title: 'Test' } },
+        folder: { metadata: { annotations: {} }, spec: { title: 'Test' } } as Folder,
       });
-
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    });
-
-    it('returns null when repository is not available', () => {
-      setup({ repository: undefined });
 
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('returns null for local repositories', () => {
       setup({
-        repository: { name: 'my-repo', target: 'folder' as const, title: 'Repo', type: 'local' as const },
+        repository: { ...defaultRepository, type: 'local' },
       });
 
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('returns null when file query is loading', () => {
-      setup({}, { isLoading: true });
+      setup({ fileQueryOverrides: { isLoading: true } });
 
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('returns null when _folder.json exists', () => {
-      setup({}, { data: { path: 'folders/my-folder/_folder.json' }, error: undefined });
+      setup({
+        fileQueryOverrides: { data: { path: 'folders/my-folder/_folder.json' }, error: undefined },
+      });
 
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
@@ -127,7 +116,7 @@ describe('MissingFolderMetadataBanner', () => {
     it('shows warning banner when _folder.json is missing (404)', () => {
       const error = { status: 404, data: { message: 'not found' } };
 
-      setup({}, { error, isLoading: false });
+      setup({ fileQueryOverrides: { error, isLoading: false } });
 
       const alert = screen.getByRole('alert');
       expect(alert).toBeInTheDocument();
@@ -157,7 +146,7 @@ describe('MissingFolderMetadataBanner', () => {
             },
           },
           spec: { title: 'Root Folder' },
-        },
+        } as Folder,
       });
 
       expect(mockUseGetRepositoryFilesWithPathQuery).toHaveBeenCalledWith({
@@ -166,12 +155,23 @@ describe('MissingFolderMetadataBanner', () => {
       });
     });
 
-    it('uses skipToken when folder is not provisioned', () => {
-      setup({ folder: { metadata: { annotations: {} }, spec: { title: 'Test' } } });
+    it('normalizes trailing slash in source path', () => {
+      setup({
+        folder: {
+          metadata: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+              [AnnoKeySourcePath]: 'folders/my-folder/',
+            },
+          },
+          spec: { title: 'Trailing Slash' },
+        } as Folder,
+      });
 
-      // When skipToken is used, RTK Query receives the symbol
-      const call = mockUseGetRepositoryFilesWithPathQuery.mock.calls[0]?.[0];
-      expect(typeof call).toBe('symbol');
+      expect(mockUseGetRepositoryFilesWithPathQuery).toHaveBeenCalledWith({
+        name: 'my-repo',
+        path: 'folders/my-folder/_folder.json',
+      });
     });
   });
 });
