@@ -104,6 +104,21 @@ describe('Combobox', () => {
     expect(screen.getByTestId('icon-keyboard')).toBeVisible();
   });
 
+  it('renders prefix before option icon', async () => {
+    render(
+      <Combobox
+        prefixIcon={'ai'}
+        options={iconOptions}
+        value={'1'}
+        onChange={onChangeHandler}
+        placeholder="Select an option"
+      />
+    );
+    expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-ai')).toBeVisible();
+    expect(screen.queryByTestId('icon-keyboard')).not.toBeInTheDocument();
+  });
+
   it('icon renders in options', async () => {
     render(<Combobox options={iconOptions} value={'1'} onChange={onChangeHandler} placeholder="Select an option" />);
     await userEvent.click(screen.getByRole('combobox'));
