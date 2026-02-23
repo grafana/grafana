@@ -63,7 +63,7 @@ export class AutoGridLayoutManager
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.auto-grid.name', 'Auto grid');
+      return t('dashboard.auto-grid.name', 'Auto');
     },
     get description() {
       return t('dashboard.auto-grid.description', 'Panels resize to fit and form uniform grids');
@@ -74,8 +74,8 @@ export class AutoGridLayoutManager
     icon: 'apps',
   };
 
-  public serialize(): DashboardV2Spec['layout'] {
-    return serializeAutoGridLayout(this);
+  public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
+    return serializeAutoGridLayout(this, isSnapshot);
   }
 
   public readonly descriptor = AutoGridLayoutManager.descriptor;

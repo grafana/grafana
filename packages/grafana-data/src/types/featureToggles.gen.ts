@@ -179,6 +179,16 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Allow setting folder metadata for provisioned folders
+  * @default false
+  */
+  provisioningFolderMetadata?: boolean;
+  /**
+  * Enable export functionality for provisioned resources
+  * @default false
+  */
+  provisioningExport?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   * @default false
   */
@@ -344,6 +354,11 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
   /**
+  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -423,6 +438,11 @@ export interface FeatureToggles {
   * @default false
   */
   perPanelFiltering?: boolean;
+  /**
+  * Enables the dashboard filters overview pane
+  * @default false
+  */
+  dashboardFiltersOverview?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
@@ -609,6 +629,11 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
+  * Enables the Assistant button in the dashboard templates card
+  * @default false
+  */
+  dashboardTemplatesAssistantButton?: boolean;
+  /**
   * Enables the new alert list view design
   * @default false
   */
@@ -623,6 +648,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSavedSearches?: boolean;
+  /**
+  * Enables saved searches for the Alert Activity page
+  * @default false
+  */
+  alertingTriageSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   * @default false
@@ -699,11 +729,6 @@ export interface FeatureToggles {
   * @default false
   */
   dataplaneAggregator?: boolean;
-  /**
-  * Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
-  * @default true
-  */
-  newFiltersUI?: boolean;
   /**
   * Allows authenticated API calls in actions
   * @default false
@@ -1143,11 +1168,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthnMutation?: boolean;
   /**
-  * Routes external group mapping requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesExternalGroupMapping?: boolean;
-  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1254,7 +1274,7 @@ export interface FeatureToggles {
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
   /**
   * Enables sharing a list of APIs with a list of plugins
-  * @default false
+  * @default true
   */
   restrictedPluginApis?: boolean;
   /**
@@ -1403,11 +1423,6 @@ export interface FeatureToggles {
   */
   elasticsearchRawDSLQuery?: boolean;
   /**
-  * Enables app platform API for annotations
-  * @default false
-  */
-  kubernetesAnnotations?: boolean;
-  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1488,10 +1503,20 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
-  * Redirects the request to teams related endpoints to the app platform API
+  * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
   kubernetesTeamsHandlerRedirect?: boolean;
+  /**
+  * Enables external group mapping APIs in the app platform
+  * @default false
+  */
+  kubernetesExternalGroupMappingsApi?: boolean;
+  /**
+  * Redirects the request of the external group mapping endpoints to the app platform APIs
+  * @default false
+  */
+  kubernetesExternalGroupMappingsRedirect?: boolean;
   /**
   * Use the new APIs for syncing users to teams
   * @default false
@@ -1522,4 +1547,14 @@ export interface FeatureToggles {
   * @default false
   */
   react19?: boolean;
+  /**
+  * Enables the frontend service to fetch tenant-specific settings overrides from the settings service
+  * @default false
+  */
+  frontendServiceUseSettingsService?: boolean;
+  /**
+  * Whether to use the new SharedPreferences functional component
+  * @default false
+  */
+  functionalSharedPreferences?: boolean;
 }

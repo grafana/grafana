@@ -42,7 +42,7 @@ export class DashboardAnnotationsDataLayer extends dataLayers.AnnotationsDataLay
         dataTopic: DataTopic.Annotations,
       };
 
-      stateUpdate.annotations = [df];
+      stateUpdate.series = [df];
 
       return stateUpdate;
     } else {

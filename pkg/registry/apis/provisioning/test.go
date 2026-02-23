@@ -269,7 +269,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					Success: false,
 					Code:    http.StatusPreconditionFailed,
 					Errors: func() []provisioning.ErrorDetails {
-						var errs []provisioning.ErrorDetails
+						var errs []provisioning.ErrorDetails //nolint:prealloc
 						for _, msg := range health.Message {
 							errs = append(errs, provisioning.ErrorDetails{Detail: msg})
 						}

@@ -184,14 +184,16 @@
             {
               "key": "environment",
               "operator": "=",
-              "value": "production"
+              "value": "production",
+              "origin": "dashboard"
             }
           ],
           "filters": [
             {
               "key": "job",
               "operator": "=",
-              "value": "prometheus"
+              "value": "prometheus",
+              "origin": "dashboard"
             }
           ],
           "defaultKeys": [
@@ -285,6 +287,10 @@
         },
         "spec": {
           "name": "groupby_var",
+          "defaultValue": {
+            "text": "defaultGroupBy",
+            "value": "defaultGroupBy"
+          },
           "current": {
             "text": [
               "job",

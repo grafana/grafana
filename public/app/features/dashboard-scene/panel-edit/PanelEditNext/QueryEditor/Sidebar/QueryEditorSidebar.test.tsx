@@ -112,4 +112,26 @@ describe('QueryEditorSidebar', () => {
     // Transformation cards should also have an add button
     expect(screen.getByRole('button', { name: /add transformation below organize/i })).toBeInTheDocument();
   });
+
+  it('should call setSidebarSize with Full when toggling from Mini', async () => {
+    const setSidebarSize = jest.fn();
+    const { user } = renderWithQueryEditorProvider(
+      <QueryEditorSidebar sidebarSize={SidebarSize.Mini} setSidebarSize={setSidebarSize} />
+    );
+
+    await user.click(screen.getByRole('button', { name: /toggle sidebar size/i }));
+
+    expect(setSidebarSize).toHaveBeenCalledWith(SidebarSize.Full);
+  });
+
+  it('should call setSidebarSize with Mini when toggling from Full', async () => {
+    const setSidebarSize = jest.fn();
+    const { user } = renderWithQueryEditorProvider(
+      <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={setSidebarSize} />
+    );
+
+    await user.click(screen.getByRole('button', { name: /toggle sidebar size/i }));
+
+    expect(setSidebarSize).toHaveBeenCalledWith(SidebarSize.Mini);
+  });
 });

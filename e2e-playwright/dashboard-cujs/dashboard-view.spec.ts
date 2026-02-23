@@ -189,7 +189,7 @@ test.describe(
         const refreshedPanelContents = await panelContent.textContent();
 
         await intervalRefreshBtn.click();
-        const offBtn = page.locator('button[aria-label="Turn off auto refresh"]');
+        const offBtn = page.locator('button[aria-label="Off"]');
         await offBtn.click();
 
         await expect(panelContent).toHaveText(refreshedPanelContents!, {

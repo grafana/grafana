@@ -201,10 +201,14 @@ export function Step1Content({
 }
 
 /**
- * Hook to check if Step 1 form is valid
+ * Hook to check if Step 1 form is valid.
+ * Checks both that required fields are filled AND that there are no validation errors.
  */
 export function useStep1Validation(canImport: boolean): boolean {
-  const { watch } = useFormContext<ImportFormValues>();
+  const {
+    watch,
+    formState: { errors },
+  } = useFormContext<ImportFormValues>();
   const [notificationsSource, policyTreeName, notificationsDatasourceUID, notificationsYamlFile] = watch([
     'notificationsSource',
     'policyTreeName',
@@ -212,15 +216,22 @@ export function useStep1Validation(canImport: boolean): boolean {
     'notificationsYamlFile',
   ]);
 
-  return useMemo(() => {
-    return isStep1Valid({
-      canImport,
-      policyTreeName,
-      notificationsSource,
-      notificationsYamlFile,
-      notificationsDatasourceUID,
-    });
-  }, [canImport, policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID]);
+  const hasStep1Errors =
+    !!errors.notificationsSource ||
+    !!errors.policyTreeName ||
+    !!errors.notificationsDatasourceUID ||
+    !!errors.notificationsYamlFile;
+
+  if (!canImport || hasStep1Errors) {
+    return false;
+  }
+
+  return isStep1Valid({
+    policyTreeName,
+    notificationsSource,
+    notificationsYamlFile,
+    notificationsDatasourceUID,
+  });
 }
 
 /**

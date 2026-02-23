@@ -494,6 +494,13 @@ func NewTopMetrics() *TopMetrics {
 	}
 }
 
+type QueryType string
+
+const (
+	QueryTypeLucene QueryType = "lucene"
+	QueryTypeDsl    QueryType = "dsl"
+)
+
 type BaseBucketAggregation struct {
 	Id       string                `json:"id"`
 	Type     BucketAggregationType `json:"type"`
@@ -773,18 +780,8 @@ func NewMovingAverageHoltWintersModelSettings() *MovingAverageHoltWintersModelSe
 type ElasticsearchDataQuery struct {
 	// Alias pattern
 	Alias *string `json:"alias,omitempty"`
-	// Lucene query
+	// Query string (Lucene or DSL depending on queryType)
 	Query *string `json:"query,omitempty"`
-	// Raw DSL query
-	RawDSLQuery *string `json:"rawDSLQuery,omitempty"`
-	// Name of time field
-	TimeField *string `json:"timeField,omitempty"`
-	// Editor type
-	EditorType *string `json:"editorType,omitempty"`
-	// List of bucket aggregations
-	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
-	// List of metric aggregations
-	Metrics []MetricAggregation `json:"metrics,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
@@ -793,7 +790,16 @@ type ElasticsearchDataQuery struct {
 	Hide *bool `json:"hide,omitempty"`
 	// Specify the query flavor
 	// TODO make this required and give it a default
+	// Query type - determines how the query field is interpreted
 	QueryType *string `json:"queryType,omitempty"`
+	// Name of time field
+	TimeField *string `json:"timeField,omitempty"`
+	// Editor type
+	EditorType *string `json:"editorType,omitempty"`
+	// List of bucket aggregations
+	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
+	// List of metric aggregations
+	Metrics []MetricAggregation `json:"metrics,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema

@@ -22,7 +22,7 @@ import (
 )
 
 func LegacyUpdateCommandToUnstructured(cmd playlistsvc.UpdatePlaylistCommand) unstructured.Unstructured {
-	items := []map[string]string{}
+	items := make([]map[string]string, 0, len(cmd.Items))
 	for _, item := range cmd.Items {
 		items = append(items, map[string]string{
 			"type":  item.Type,

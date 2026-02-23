@@ -16,7 +16,7 @@ describe('Sidebar', () => {
 
     // Verify wrapper pushes content when docked
     const wrapper = screen.getByTestId('sidebar-test-wrapper');
-    expect(wrapper).toHaveStyle('padding-right: 352px');
+    expect(wrapper).toHaveStyle('padding-right: 312px');
 
     // Close pane
     act(() => screen.getByLabelText('Close').click());

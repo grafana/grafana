@@ -27,7 +27,7 @@ func CreateISO8601DurationFromIntervalMS(it int64) (string, error) {
 	timeValueString := formatted[0 : len(formatted)-1]
 	timeValue, err := strconv.Atoi(timeValueString)
 	if err != nil {
-		return "", backend.DownstreamError(fmt.Errorf("could not parse interval %q to an ISO 8061 duration: %w", it, err))
+		return "", backend.DownstreamError(fmt.Errorf("could not parse interval %d to an ISO 8601 duration: %w", it, err))
 	}
 
 	unit := formatted[len(formatted)-1:]
