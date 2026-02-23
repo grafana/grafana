@@ -720,6 +720,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	opts := testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagProvisioningExport,
 		},
 		// Provisioning requires resources to be fully migrated to unified storage.
 		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
