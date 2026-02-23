@@ -808,7 +808,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAll,
 				stageIfPossible,
 				metrics,
-				b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport),
+				b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport), //nolint:staticcheck
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics)
@@ -831,20 +831,21 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 			migrationWorker := migrate.NewMigrationWorker(
 				unifiedStorageMigrator,
-				b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport),
+				b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport), //nolint:staticcheck
 			)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 
 			// All workers registered - export/migrate will check feature flag at runtime
-			workers := []jobs.Worker{
+			workers := make([]jobs.Worker, 0, 5+len(b.extraWorkers))
+			workers = append(workers,
 				deleteWorker,
 				exportWorker,
 				migrationWorker,
 				moveWorker,
 				syncWorker,
-			}
+			)
 
 			// Create JobController to handle job create notifications
 			jobController, err := appcontroller.NewJobController(jobInformer)
