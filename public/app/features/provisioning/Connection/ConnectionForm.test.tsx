@@ -125,7 +125,7 @@ describe('ConnectionForm', () => {
 
   describe('Form Submission - Create', () => {
     it('should send correct request body on valid submission', async () => {
-      let capturedBody: unknown;
+      let capturedBody: unknown = null;
       server.use(
         http.post(`${BASE}/connections`, async ({ request }) => {
           capturedBody = await request.json();
@@ -147,7 +147,7 @@ describe('ConnectionForm', () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(capturedBody).toBeDefined();
+        expect(capturedBody).not.toBeNull();
       });
 
       // The hook sends a Connection object with spec and base64-encoded secure field
@@ -166,7 +166,7 @@ describe('ConnectionForm', () => {
 
   describe('Form Submission - Edit', () => {
     it('should allow submission without changing private key', async () => {
-      let capturedBody: unknown;
+      let capturedBody: unknown = null;
       server.use(
         http.put(`${BASE}/connections/:name`, async ({ request }) => {
           capturedBody = await request.json();
@@ -183,7 +183,7 @@ describe('ConnectionForm', () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(capturedBody).toBeDefined();
+        expect(capturedBody).not.toBeNull();
       });
 
       expect(capturedBody).toMatchObject({
