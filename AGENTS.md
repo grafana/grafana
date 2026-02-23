@@ -7,7 +7,7 @@ This file provides guidance to AI agents when working with code in the Grafana r
 **Directory-scoped agent files exist for specialized areas — read them when working in those directories:**
 
 - `docs/AGENTS.md` — Documentation style guide (for work under `docs/`)
-- `public/app/features/alerting/unified/CLAUDE.md` — Alerting squad patterns
+- `public/app/features/alerting/unified/AGENTS.md` — Alerting squad patterns
 
 ## Project Overview
 

@@ -386,20 +386,41 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 	amConfig := mergeResult.Config
 
 	// Add extra route as managed route to the configuration.
+	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
+	// route
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		managed := maps.Clone(cfg.ManagedRoutes)
-		if managed == nil {
-			managed = make(map[string]*apimodels.Route)
+		managedRoutes := maps.Clone(cfg.ManagedRoutes)
+		if managedRoutes == nil {
+			managedRoutes = make(map[string]*apimodels.Route)
 		}
+
+		managedInhibitionRules := maps.Clone(cfg.ManagedInhibitionRules)
+		if managedInhibitionRules == nil {
+			managedInhibitionRules = make(apimodels.ManagedInhibitionRules)
+		}
+
 		if mergeResult.ExtraRoute != nil {
-			if _, ok := managed[mergeResult.Identifier]; ok {
+			if _, ok := managedRoutes[mergeResult.Identifier]; ok {
 				am.logger.Warn("Imported configuration name conflicts with existing managed routes, skipping adding imported config.", "identifier", mergeResult.Identifier)
 			} else {
-				managed[mergeResult.Identifier] = mergeResult.ExtraRoute
+				managedRoutes[mergeResult.Identifier] = mergeResult.ExtraRoute
+
+				importedRules, err := legacy_storage.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
+				if err != nil {
+					am.logger.Warn("failed to build managed inhibition rules for imported configuration", "identifier", mergeResult.Identifier, "err", err)
+				} else {
+					maps.Copy(managedInhibitionRules, importedRules)
+				}
 			}
 		}
-		amConfig.Route = legacy_storage.WithManagedRoutes(amConfig.Route, managed)
+
+		amConfig.Route = legacy_storage.WithManagedRoutes(amConfig.Route, managedRoutes)
+
+		amConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(
+			amConfig.InhibitRules,
+			managedInhibitionRules,
+		)
 	}
 
 	templates := alertingNotify.PostableAPITemplatesToTemplateDefinitions(cfg.GetMergedTemplateDefinitions())

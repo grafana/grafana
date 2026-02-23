@@ -1735,8 +1735,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -3122,6 +3127,17 @@
       "label-silence-start-and-end": "サイレンスの開始と終了",
       "placeholder-select-time-range": "時間範囲を選択"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "{{duration}}間"
     },
@@ -3430,7 +3446,8 @@
       },
       "title-edit": "編集",
       "title-recreate": "再作成",
-      "title-unsilence": "サイレント解除"
+      "title-unsilence": "サイレント解除",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5373,6 +5390,21 @@
         "failed-to-fetch-dashboard": "ダッシュボードの取得に失敗しました"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "カスタムフィードバックを送信",
       "footer-text": "このコンテンツは<2>Grafana LLMプラグイン</2>を使用して、AIによって生成されています",
@@ -7251,7 +7283,14 @@
       "title": "バージョン"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -8585,6 +8624,8 @@
     "description-show-measure": "マップ上で測定を行うためのツールを表示",
     "description-show-scale": "マップの縮尺を示す",
     "description-show-zoom": "左上隅にズームコントロールボタンを表示",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "レイヤー"
@@ -8646,7 +8687,9 @@
     "name-show-measure": "測定ツールを表示",
     "name-show-scale": "スケール表示",
     "name-show-zoom": "ズームコントロールを表示",
+    "name-sync-view-variable": "",
     "name-tooltip": "ツールチップ",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "文字列フィールドが見つかりません"
     },
@@ -8699,6 +8742,9 @@
     },
     "utils": {
       "get-next-layer-name": "レイヤー、{{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12848,12 +12894,15 @@
       "tooltip-unhealthy-repository": "問題のあるリポジトリをプルできません"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "インスタンス同期では、すべてのリソースを管理する必要があります。既存のリソースは自動的に移行されます。",
       "migrate-resources-description": "",
       "options": "オプション",
       "repository-error": "リポジトリエラー",
       "repository-error-message": "リポジトリの状態を確認できません。リポジトリの設定を確認して、もう一度お試しください。",
       "repository-unhealthy": "リポジトリを同期できません。プロビジョニングをキャンセルし、問題が解決したら再試行してください。以下の詳細をご覧ください。",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
@@ -13325,15 +13374,12 @@
       "duration-selected": "現在の間隔が{{durationAriaLabel}}に選択されている更新間隔を 選択します"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "ライブストリーミングをオンにする",
       "label": "ライブ"
     },
     "off-option": {
-      "aria-label": "自動更新をオフにする",
       "label": "オフ"
     },
     "tooltip": {
@@ -13860,7 +13906,8 @@
       "no-matching-silences": "一致するサイレンスが見つかりませんでした。",
       "noConfig": "新しいコンタクトポイントを作成して、デフォルト値を使用して構成を作成するか、管理者に連絡してAlertmanagerを設定してください。",
       "recreate-button": "再作成",
-      "unsilence-button": "サイレント解除"
+      "unsilence-button": "サイレント解除",
+      "view-button": ""
     }
   },
   "silences-table": {
