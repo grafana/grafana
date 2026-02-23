@@ -6,6 +6,7 @@ import { Alert } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
 
+import { FOLDER_METADATA_FILE } from '../../constants';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 
 interface MissingFolderMetadataBannerProps {
@@ -21,7 +22,11 @@ function MissingFolderMetadataBannerContent({ folderUID }: { folderUID: string }
   const repoName = repository?.name;
 
   const shouldQuery = isProvisioned && repoName && repository?.type !== 'local';
-  const folderJsonPath = shouldQuery ? (sourcePath ? `${sourcePath}/_folder.json` : '_folder.json') : '';
+  const folderJsonPath = shouldQuery
+    ? sourcePath
+      ? `${sourcePath}/${FOLDER_METADATA_FILE}`
+      : FOLDER_METADATA_FILE
+    : '';
 
   const { error, isLoading } = useGetRepositoryFilesWithPathQuery(
     shouldQuery ? { name: repoName, path: folderJsonPath } : skipToken
