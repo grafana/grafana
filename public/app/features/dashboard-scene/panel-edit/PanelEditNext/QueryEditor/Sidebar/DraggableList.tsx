@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { SIDEBAR_CARD_HEIGHT } from '../../constants';
+import { SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../constants';
 
 import { useDropIndicator } from './useDropIndicator';
 
@@ -32,7 +32,7 @@ export function DraggableList<T>({
   const { indicator, containerRef, handleBeforeCapture, handleDragStart, handleDragUpdate, handleDragEnd } =
     useDropIndicator({
       itemHeight: SIDEBAR_CARD_HEIGHT,
-      itemSpacing: theme.spacing.gridSize,
+      itemSpacing: theme.spacing.gridSize * SIDEBAR_CARD_SPACING,
       onDragStart,
       onDragEnd,
     });
@@ -90,11 +90,11 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
     }),
     draggableItem: css({
-      marginBottom: theme.spacing(1),
+      marginBottom: theme.spacing(SIDEBAR_CARD_SPACING),
     }),
     dropIndicator: css({
       position: 'absolute',
-      left: theme.spacing(2),
+      left: theme.spacing(SIDEBAR_CARD_INDENT),
       right: 0,
       background: theme.colors.primary.transparent,
       borderLeft: `1px solid ${theme.colors.primary.border}`,

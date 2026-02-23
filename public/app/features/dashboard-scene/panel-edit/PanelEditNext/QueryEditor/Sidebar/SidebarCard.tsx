@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { ActionItem, Actions } from '../../Actions';
-import { QUERY_EDITOR_COLORS, QueryEditorType, SIDEBAR_CARD_HEIGHT } from '../../constants';
+import { QUERY_EDITOR_COLORS, QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT } from '../../constants';
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
@@ -155,7 +155,7 @@ function getStyles(
   return {
     wrapper: css({
       position: 'relative',
-      marginInlineStart: theme.spacing(2),
+      marginInlineStart: theme.spacing(SIDEBAR_CARD_INDENT),
 
       // Two slim pseudo-element strips extend the hover zone to the left and
       // below the card, covering the path to the "+" button without overlapping
