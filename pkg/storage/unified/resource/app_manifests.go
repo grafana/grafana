@@ -56,7 +56,7 @@ func AppManifests() []app.Manifest {
 		shorturl.LocalManifest(),
 	}
 
-	// Exclude manifests with no kinds in any version.
+	// Include manifests with kinds in any version.
 	filtered := make([]app.Manifest, 0, len(all))
 	for _, m := range all {
 		if m.ManifestData == nil {
