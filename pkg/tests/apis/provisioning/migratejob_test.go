@@ -1,14 +1,11 @@
 package provisioning
 
 import (
-	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
@@ -16,7 +13,6 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 
 	// Run Grafana WITHOUT the export feature flag enabled
 	helper := runGrafana(t, withoutExportFeatureFlag)
-	ctx := context.Background()
 
 	// Create a repository
 	const repo = "test-repository"
@@ -24,47 +20,21 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 		Name:   repo,
 		Target: "instance",
 	}
+	helper.CreateRepo(t, testRepo)
 
-	repository := helper.CreateRepository(ctx, t, testRepo)
-	require.NotNil(t, repository)
-
-	// Try to create a migrate job
-	job := &unstructured.Unstructured{}
-	job.SetUnstructuredContent(map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Job",
-		"metadata": map[string]interface{}{
-			"name":      "test-migrate-job",
-			"namespace": "default",
+	// Try to trigger a migrate job (it should fail)
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionMigrate,
+		Migrate: &provisioning.MigrateJobOptions{
+			Message: "Test migration",
 		},
-		"spec": map[string]interface{}{
-			"action":     "migrate",
-			"repository": repo,
-			"migrate": map[string]interface{}{
-				"message": "Test migration",
-			},
-		},
-	})
-
-	createdJob, err := helper.Jobs.Create(ctx, job, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create job")
-
-	// Wait for job to complete (it should fail)
-	job, err = helper.WaitForJob(ctx, createdJob.GetName(), waitTimeoutDefault, waitIntervalDefault)
-	require.NoError(t, err, "should be able to get job status")
-
-	// Check that job failed with the expected error
-	status, found, err := unstructured.NestedMap(job.Object, "status")
-	require.NoError(t, err)
-	require.True(t, found, "job should have status")
-
-	result, found, err := unstructured.NestedString(status, "result")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, "error", result, "job should have failed")
-
-	message, found, err := unstructured.NestedString(status, "message")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Contains(t, message, "migrate functionality is disabled by configuration", "should have configuration disabled error")
+	}
+	
+	job := helper.TriggerJob(t, repo, spec)
+	
+	// Wait for job and expect it to fail
+	job = helper.WaitForJobError(t, job.GetName())
+	
+	// Check that job failed with the expected error message
+	require.Contains(t, job.Status.Message, "migrate functionality is disabled by configuration")
 }
