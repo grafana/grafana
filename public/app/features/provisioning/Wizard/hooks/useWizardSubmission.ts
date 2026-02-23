@@ -128,6 +128,7 @@ export function useWizardSubmission({
                 setError(field, errorMessage);
               }
             }
+
             const combinedMessage = errors.map(([, err]) => err.message).join('\n');
             setStepStatusInfo({
               status: 'error',

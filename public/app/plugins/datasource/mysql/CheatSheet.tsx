@@ -52,15 +52,26 @@ export function CheatSheet() {
         <li>$__unixEpochGroup(column,&apos;5m&apos;) -&gt; column DIV 300 * 300</li>
         <li>$__unixEpochGroupAlias(column,&apos;5m&apos;) -&gt; column DIV 300 * 300 AS &quot;time&quot;</li>
       </ul>
-      <p>Example of group by and order by with $__timeGroup:</p>
+      <p>Example of group by and order by with $__timeGroupAlias:</p>
       <pre>
         <code>
-          $__timeGroupAlias(timestamp_col, &apos;1h&apos;), sum(value_double) as value
+          SELECT
           <br />
-          FROM yourtable
+          $__timeGroupAlias(time_date_time,&apos;5m&apos;),
           <br />
-          GROUP BY 1<br />
-          ORDER BY 1
+          min(value_double),
+          <br />
+          &apos;min&apos; as metric
+          <br />
+          FROM my_data
+          <br />
+          WHERE
+          <br />
+          $__timeFilter(time_date_time)
+          <br />
+          GROUP BY time
+          <br />
+          ORDER BY time
           <br />
         </code>
       </pre>
