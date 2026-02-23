@@ -1839,10 +1839,18 @@
       "apply": "Apply"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "The selected time range is shorter than the rule's query evaluation window so a graph may not be available.",
+        "title": "Time range shorter than evaluation window"
+      },
       "history-error": "Failed to load state history",
       "history-error-desc": "Unable to fetch state transition history for this instance.",
       "no-history": "No recent state changes",
-      "state-history": "Recent State Changes"
+      "state-error-description": "This instance is in <strong>Error</strong> state. An evaluation error occurred, so a graph may not be available.",
+      "state-history": "Recent State Changes",
+      "state-nodata": {
+        "description": "This instance is in <strong>No data</strong> state. The alert fired because the query returned no data in the evaluation window, so a graph may not be available."
+      }
     },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
@@ -5027,7 +5035,7 @@
           }
         }
       },
-      "name": "Auto grid",
+      "name": "Auto",
       "options": {
         "custom-min-height": {
           "clear": "Clear"
@@ -6272,11 +6280,12 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
+      "customize-with-assistant-button": "Customize with Assistant",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available",
       "use-dashboard-button": "Use dashboard",
-      "use-template-button": "Use template"
+      "view-template-button": "View template"
     },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
@@ -6386,10 +6395,12 @@
         "new-panel": "New panel"
       }
     },
+    "add-variable": {
+      "label-variable": "Variable"
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "Add event data to graphs",
-      "label-annotation-query": "Annotation query",
-      "tooltip-add-new-annotation-query": "Add new annotation query"
+      "label-annotation-query": "Annotation query"
     },
     "annotation-edit-actions": {
       "description": {
@@ -12438,9 +12449,6 @@
       "unmanaged-resources-label": "Unmanaged resources",
       "upgrade-action": "Upgrade account"
     },
-    "check-repository": {
-      "check": "Check"
-    },
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
     },
@@ -12827,6 +12835,7 @@
       "no-repositories": "No repositories configured"
     },
     "repository-overview": {
+      "branch": "Branch:",
       "checked": "Checked:",
       "connection-status": "Connection status:",
       "finished": "Last successful pull:",
@@ -12836,7 +12845,9 @@
       "last-ref": "Last Ref:",
       "messages": "Messages:",
       "not-available": "N/A",
+      "path": "Path:",
       "pull-status": "Pull status",
+      "repo-url": "Repository URL:",
       "resources": "Resources",
       "status": "Status:",
       "unhealthy": "Unhealthy",
@@ -14345,9 +14356,18 @@
       "columns": {
         "aria-label-delete-button": "Delete team {{teamName}}",
         "aria-label-edit-team": "Edit team {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "Delete",
+          "title": "Delete"
+        },
+        "delete-modal-invalid-text": "This team is the owner of one or more folders. Remove ownership first in order to proceed.",
+        "delete-modal-invalid-title": "Cannot delete team",
+        "delete-modal-text": "This action will delete the team \"<1>{{ teamName }}</1> \".",
         "title-edit-team": "Edit team",
+        "tooltip-delete-button": "Delete {{teamName}}",
         "tooltip-edit-team": "Edit team"
       },
+      "failed-to-check-folders": "Failed to check if the team owns folders. Please try again.",
       "loading-teams": "Loading teams...",
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"
