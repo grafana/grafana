@@ -120,9 +120,9 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 }
 
 func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	// Excluded groups have no Versions.Kinds[] in its app manifest, so we cant index anything for search.
+	// Excluding enterprise apps for now.
+	// TODO have a way of including enterprise manifests
 	excludedGroups := []string{
-		"provisioning.grafana.app",
 		"scope.grafana.app",
 	}
 	if slices.Contains(excludedGroups, req.Options.Key.Group) {
