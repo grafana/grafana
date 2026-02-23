@@ -1489,12 +1489,13 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			err := json.NewEncoder(w).Encode(map[string]interface{}{
 				"access_token":  "new-access-token",
 				"token_type":    "Bearer",
 				"refresh_token": "new-refresh-token",
 				"expires_in":    3600,
 			})
+			require.NoError(t, err)
 		}))
 		defer server.Close()
 
