@@ -226,12 +226,13 @@ export const SynchronizeStep = memo(function SynchronizeStep({
               description={
                 syncTarget === 'instance' ? (
                   <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
-                    Instance sync requires all resources to be managed. Existing resources will be migrated automatically.
+                    Instance sync requires all resources to be managed. Existing resources will be migrated
+                    automatically.
                   </Trans>
                 ) : (
                   <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
-                    Import existing dashboards from connected external storage into the provisioning folder created in the
-                    previous step
+                    Import existing dashboards from connected external storage into the provisioning folder created in
+                    the previous step
                   </Trans>
                 )
               }
