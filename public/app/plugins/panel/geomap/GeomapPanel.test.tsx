@@ -7,7 +7,7 @@ import { dateTime, EventBusSrv, LoadingState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { GeomapPanel } from './GeomapPanel';
-import { TooltipMode } from './types';
+import { TooltipMode } from './panelcfg.gen';
 
 // Mock React components
 jest.mock('./GeomapTooltip', () => ({
