@@ -1710,6 +1710,11 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 		MaxRetries: s.queueConfig.MaxRetries,
 	})
 
+	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
+	if tenantID == "" {
+		tenantID = clusterScopeNamespace
+	}
+
 	for {
 		err := s.queue.Enqueue(queueCtx, tenantID, wrappedRunnable)
 		if err == nil {
