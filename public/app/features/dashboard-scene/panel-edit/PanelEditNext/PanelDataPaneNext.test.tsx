@@ -934,7 +934,6 @@ describe('PanelDataPaneNext', () => {
       expect(mockGet).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' });
       expect(testDataPane.state.datasource).toBe(promDatasource);
     });
-
   });
 
   /**
