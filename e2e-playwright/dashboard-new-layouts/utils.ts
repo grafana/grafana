@@ -352,7 +352,9 @@ export async function toggleRow(dashboardPage: DashboardPage, selectors: E2ESele
 }
 
 export function getPanelByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle)).getByTestId(selectors.components.Panels.Panel.headerContainer);
+  return dashboardPage
+    .getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle))
+    .getByTestId(selectors.components.Panels.Panel.headerContainer);
 }
 
 export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
