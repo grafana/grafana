@@ -213,12 +213,17 @@ func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
 				return
 			}
 
-			// Read the expected v1beta1 output file
 			// ignore gosec G304 as this function is only used in the test process
 			//nolint:gosec
 			expectedOutputData, err := os.ReadFile(expectedOutputPath)
 			if err != nil {
-				t.Skipf("Skipping test: expected output file %s not found", expectedOutputFile)
+				if isCI() {
+					t.Fatalf("Golden file missing: %s\n"+
+						"Golden files must be committed to the repository.\n"+
+						"Run the tests locally to generate them, then commit the result:\n\n"+
+						"  go test -count=1 ./apps/dashboard/pkg/migration/conversion/\n", expectedOutputPath)
+				}
+				writeOrCompareOutputFile(t, convertedV1beta1, expectedOutputPath, expectedOutputFile)
 				return
 			}
 

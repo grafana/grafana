@@ -75,13 +75,16 @@ func fetchAvailableMetrics(ctx context.Context, metricsCache *cache.MetricsCache
 // parseQueries parses all queries to extract metrics.
 // Returns per-query parse results, a deduplicated list of all metrics, and
 // the count of successfully parsed queries.
+// Template variables are interpolated before parsing so queries like
+// rate(m[$__rate_interval]) can be parsed successfully.
 func parseQueries(queries []validator.Query, parser validator.MetricExtractor) ([]parseQueryResult, []string, int) {
 	parseResults := make([]parseQueryResult, len(queries))
 	allMetrics := make(map[string]bool)
 	checkedCount := 0
 
 	for i, query := range queries {
-		metrics, err := parser.ExtractMetrics(query.QueryText)
+		interpolated := interpolateForParsing(query.QueryText)
+		metrics, err := parser.ExtractMetrics(interpolated)
 
 		parseResults[i] = parseQueryResult{
 			metrics:    metrics,

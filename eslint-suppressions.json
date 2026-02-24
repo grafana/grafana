@@ -1834,11 +1834,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsEdit.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4
@@ -1909,15 +1904,12 @@
   },
   "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx": {
     "no-restricted-syntax": {
-      "count": 9
+      "count": 7
     }
   },
   "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 6
-    },
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/features/dashboard/components/DashExportModal/DashboardExporter.ts": {
@@ -1926,9 +1918,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 7
-    },
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx": {
@@ -2669,11 +2658,6 @@
       "count": 1
     }
   },
-  "public/app/features/panel/suggestions/getAllSuggestions.test.ts": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/features/playlist/PlaylistForm.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 2
@@ -2736,11 +2720,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/features/plugins/importPanelPlugin.ts": {
-    "no-restricted-syntax": {
-      "count": 2
     }
   },
   "public/app/features/plugins/sandbox/distortions.ts": {
@@ -2848,16 +2827,8 @@
       "count": 3
     }
   },
-  "public/app/features/scopes/tests/utils/render.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/search/page/components/columns.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -3776,11 +3747,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/mixed/module.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 2
-    }
-  },
   "public/app/plugins/datasource/mssql/azureauth/AzureCredentialsForm.tsx": {
     "no-restricted-syntax": {
       "count": 10
@@ -4067,11 +4033,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/panel/geomap/types.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/geomap/utils/tooltip.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -4097,9 +4058,6 @@
   },
   "public/app/plugins/panel/heatmap/types.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -4146,11 +4104,6 @@
   },
   "public/app/plugins/panel/nodeGraph/layout.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/nodeGraph/types.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },

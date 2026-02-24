@@ -27,6 +27,8 @@ export enum SidebarSize {
   Full = 'full',
 }
 
+export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
+
 export const QUERY_EDITOR_COLORS = {
   footerBackground: '#1e2939',
   sidebarFooterBackground: '#141820',
@@ -105,6 +107,10 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
  * This is a common example value shown when no value is set.
  */
 export const TIME_OPTION_PLACEHOLDER = '1h';
+
+export const SIDEBAR_CARD_HEIGHT = 30;
+export const SIDEBAR_CARD_SPACING = 1;
+export const SIDEBAR_CARD_INDENT = 2;
 
 export const CONTENT_SIDE_BAR = {
   width: 300,
