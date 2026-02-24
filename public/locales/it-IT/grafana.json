@@ -1839,10 +1839,18 @@
       "apply": "Applica"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Impossibile caricare la cronologia dello stato",
       "history-error-desc": "Impossibile recuperare la cronologia delle transizioni di stato per questa istanza.",
       "no-history": "Nessuna modifica recente dello stato",
-      "state-history": "Modifiche recenti dello stato"
+      "state-error-description": "",
+      "state-history": "Modifiche recenti dello stato",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Etichette non corrispondenti",
@@ -5027,7 +5035,7 @@
           }
         }
       },
-      "name": "Griglia automatica",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Cancella"
@@ -6135,6 +6143,8 @@
       "title-transformations": "Trasformazioni"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Cerca trasformazione",
       "show-images": "Mostra immagini",
       "sql-expressions-message-description": "Un nuovo modo per manipolare e trasformare i risultati delle query sull'origine dati utilizzando una sintassi simile a MySQL.",
@@ -6272,11 +6282,12 @@
     "browse-grafana-com": "Scopri Grafana.com",
     "browse-plugins": "Scopri i plug-in",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Origine dei dati fornita",
       "details-tooltip": "Dettagli",
       "no-preview": "Nessuna anteprima disponibile",
       "use-dashboard-button": "Usa dashboard",
-      "use-template-button": "Usa modello"
+      "view-template-button": ""
     },
     "community-empty-title": "Nessuna dashboard della community trovata",
     "community-empty-title-with-datasource": "Nessuna dashboard della community {{datasourceType}} trovata",
@@ -6386,10 +6397,12 @@
         "new-panel": "Nuovo pannello"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7875,6 +7888,11 @@
       "continue-without-saving": "Continua senza salvare",
       "save-correlation": "Salva correlazione",
       "title-unsaved-changes-to-correlation": "Modifiche non salvate alla correlazione"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Fai clic e trascina il divisore grigio nell'area colorata qui sotto.",
@@ -12367,6 +12385,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Ultimo ramo",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Ramo richiesta pull",
       "suffix-read-only-branch": ""
     }
@@ -12403,10 +12422,10 @@
       },
       "pr-workflow-description": "Consente agli utenti di scegliere se aprire una richiesta di pull durante il salvataggio delle modifiche. Se il repository non consente modifiche dirette al ramo principale, potrebbe essere comunque necessaria una richiesta di pull.",
       "pr-workflow-label": "Abilita l'opzione di richiesta di pull durante il salvataggio",
-      "token-description": "Password dell'app Bitbucket con autorizzazioni del repository",
-      "token-label": "Password app",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Il token Bitbucket è obbligatorio",
-      "token-user-description": "Il nome utente che verrà utilizzato per accedere al repository con la password dell'app",
+      "token-user-description": "",
       "token-user-required": "Il nome utente è obbligatorio",
       "url-description": "L'URL del repository Bitbucket",
       "url-required": "L'URL del repository è obbligatorio"
@@ -12432,9 +12451,6 @@
       "files-count_other": "{{count}} file",
       "folders-count_one": "{{count}} cartella",
       "folders-count_other": "{{count}} cartella"
-    },
-    "check-repository": {
-      "check": "Verifica"
     },
     "code-block": {
       "aria-label-copy": "Copia codice negli appunti"
@@ -12822,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Verificato:",
       "connection-status": "Stato della connessione:",
       "finished": "Ultimo pull riuscito:",
@@ -12831,7 +12848,9 @@
       "last-ref": "Ultimo rif.:",
       "messages": "Messaggi:",
       "not-available": "N/D",
+      "path": "",
       "pull-status": "Stato del pull",
+      "repo-url": "",
       "resources": "Risorse",
       "status": "Stato:",
       "unhealthy": "Malfunzionante",
@@ -12968,8 +12987,8 @@
     "token-permissions-info": {
       "and-click": "e fare clic",
       "bitbucket": {
-        "create-token-button": "Crea password app",
-        "token-text": "Token di accesso personale Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Aggiungi nuovo token",
@@ -14340,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "Elimina team {{teamName}}",
         "aria-label-edit-team": "Modifica team {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Modifica team",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Modifica team"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Caricamento team in corso...",
       "new-team": "Nuovo team",
       "placeholder-search-teams": "Cerca team"

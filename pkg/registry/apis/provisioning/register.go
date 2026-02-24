@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
@@ -799,6 +800,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			metrics := jobs.RegisterJobMetrics(b.registry)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
+
+			// Export worker wrapped with feature flag check
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
@@ -806,6 +809,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAll,
 				stageIfPossible,
 				metrics,
+				b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport), //nolint:staticcheck
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics)
@@ -819,23 +823,32 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				10,
 			)
 
+			// Migration worker with feature flag check
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
 				cleaner,
 				exportWorker,
 				syncWorker,
 			)
-			migrationWorker := migrate.NewMigrationWorker(unifiedStorageMigrator)
+			migrationWorker := migrate.NewMigrationWorker(
+				unifiedStorageMigrator,
+				b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport), //nolint:staticcheck
+			)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			workers := []jobs.Worker{ //nolint:prealloc
+			fixMetadataWorker := fixfoldermetadata.NewWorker()
+
+			// All workers registered - export/migrate will check feature flag at runtime
+			workers := make([]jobs.Worker, 0, 6+len(b.extraWorkers))
+			workers = append(workers,
 				deleteWorker,
 				exportWorker,
+				fixMetadataWorker,
 				migrationWorker,
 				moveWorker,
 				syncWorker,
-			}
+			)
 
 			// Create JobController to handle job create notifications
 			jobController, err := appcontroller.NewJobController(jobInformer)
@@ -915,7 +928,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {})
 
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
@@ -932,7 +945,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
-			go connController.Run(postStartHookCtx.Context, repoControllerWorkers)
+			go connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {})
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
