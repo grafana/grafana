@@ -4,77 +4,76 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
 
 func TestMaxDeptFolderSettings(t *testing.T) {
-	t.Run("returns default when ini file is nil", func(t *testing.T) {
-		assert.Equal(t, defaultMaxNestedFolderDepth, maxDeptFolderSettings(nil))
-	})
+	tests := []struct {
+		name     string
+		iniValue *string // nil means no key set
+		noFile   bool
+		expected int
+	}{
+		{
+			name:     "returns default when ini file is nil",
+			noFile:   true,
+			expected: defaultMaxNestedFolderDepth,
+		},
+		{
+			name:     "returns default when key is absent",
+			expected: defaultMaxNestedFolderDepth,
+		},
+		{
+			name:     "returns default when value is not a valid integer",
+			iniValue: strp("notanint"),
+			expected: defaultMaxNestedFolderDepth,
+		},
+		{
+			name:     "returns default when value is zero",
+			iniValue: strp("0"),
+			expected: defaultMaxNestedFolderDepth,
+		},
+		{
+			name:     "returns default when value is negative",
+			iniValue: strp("-1"),
+			expected: defaultMaxNestedFolderDepth,
+		},
+		{
+			name:     "returns default when value is below max",
+			iniValue: strp("3"),
+			expected: defaultMaxNestedFolderDepth,
+		},
+		{
+			name:     "returns max when value equals max",
+			iniValue: strp("7"),
+			expected: maxNestedFolderDepth,
+		},
+		{
+			name:     "clamps to max when value exceeds max",
+			iniValue: strp("100"),
+			expected: maxNestedFolderDepth,
+		},
+	}
 
-	t.Run("returns default when folder section is absent", func(t *testing.T) {
-		f := ini.Empty()
-		assert.Equal(t, defaultMaxNestedFolderDepth, maxDeptFolderSettings(f))
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.noFile {
+				assert.Equal(t, tt.expected, maxDeptFolderSettings(nil))
+				return
+			}
 
-	t.Run("returns default when key is missing from folder section", func(t *testing.T) {
-		f := ini.Empty()
-		_, err := f.NewSection("folder")
-		assert.NoError(t, err)
-		assert.Equal(t, defaultMaxNestedFolderDepth, maxDeptFolderSettings(f))
-	})
+			f := ini.Empty()
+			if tt.iniValue != nil {
+				s, err := f.NewSection("folder")
+				require.NoError(t, err)
+				_, err = s.NewKey("max_nested_folder_depth", *tt.iniValue)
+				require.NoError(t, err)
+			}
 
-	t.Run("returns default when value is not a valid integer", func(t *testing.T) {
-		f := ini.Empty()
-		s, err := f.NewSection("folder")
-		assert.NoError(t, err)
-		_, err = s.NewKey("max_nested_folder_depth", "notanint")
-		assert.NoError(t, err)
-		assert.Equal(t, defaultMaxNestedFolderDepth, maxDeptFolderSettings(f))
-	})
-
-	t.Run("returns max when value equals max", func(t *testing.T) {
-		f := ini.Empty()
-		s, err := f.NewSection("folder")
-		assert.NoError(t, err)
-		_, err = s.NewKey("max_nested_folder_depth", "7")
-		assert.NoError(t, err)
-		assert.Equal(t, maxNestedFolderDepth, maxDeptFolderSettings(f))
-	})
-
-	t.Run("clamps to max when value exceeds max", func(t *testing.T) {
-		f := ini.Empty()
-		s, err := f.NewSection("folder")
-		assert.NoError(t, err)
-		_, err = s.NewKey("max_nested_folder_depth", "100")
-		assert.NoError(t, err)
-		assert.Equal(t, maxNestedFolderDepth, maxDeptFolderSettings(f))
-	})
-
-	t.Run("returns default when value is below max", func(t *testing.T) {
-		f := ini.Empty()
-		s, err := f.NewSection("folder")
-		assert.NoError(t, err)
-		_, err = s.NewKey("max_nested_folder_depth", "3")
-		assert.NoError(t, err)
-		assert.Equal(t, defaultMaxNestedFolderDepth, maxDeptFolderSettings(f))
-	})
-
-	t.Run("returns default when value is zero", func(t *testing.T) {
-		f := ini.Empty()
-		s, err := f.NewSection("folder")
-		assert.NoError(t, err)
-		_, err = s.NewKey("max_nested_folder_depth", "0")
-		assert.NoError(t, err)
-		assert.Equal(t, defaultMaxNestedFolderDepth, maxDeptFolderSettings(f))
-	})
-
-	t.Run("returns default when value is negative", func(t *testing.T) {
-		f := ini.Empty()
-		s, err := f.NewSection("folder")
-		assert.NoError(t, err)
-		_, err = s.NewKey("max_nested_folder_depth", "-1")
-		assert.NoError(t, err)
-		assert.Equal(t, defaultMaxNestedFolderDepth, maxDeptFolderSettings(f))
-	})
+			assert.Equal(t, tt.expected, maxDeptFolderSettings(f))
+		})
+	}
 }
+
+func strp(s string) *string { return &s }
