@@ -412,7 +412,7 @@ func LooksLikeK8sResource(data map[string]any) bool {
 	return false
 }
 
-const LooksLikeV2SpecMessage = "Dashboard appears to be in v2 format. Please use the /apis/dashboard.grafana.app/v2 API"
+const LooksLikeV2SpecMessage = "dashboard appears to be in v2 format. Please use the /apis/dashboard.grafana.app/v2 API"
 
 func LooksLikeV2Spec(data map[string]any) bool {
 	if _, ok := data["elements"]; ok {

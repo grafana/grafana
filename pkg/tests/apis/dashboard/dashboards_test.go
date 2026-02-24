@@ -267,7 +267,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				"elements": []any{},
 				"title":    "V2 dashboard",
 			},
-			expect: "Dashboard appears to be in v2 format",
+			expect: "dashboard appears to be in v2 format",
 			inK8s:  true,
 		}, {
 			name: "with layout",
@@ -275,7 +275,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				"layout": "???",
 				"title":  "V2 dashboard",
 			},
-			expect: "Dashboard appears to be in v2 format",
+			expect: "dashboard appears to be in v2 format",
 			inK8s:  true,
 		}, {
 			name: "missing title",
