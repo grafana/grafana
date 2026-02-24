@@ -677,9 +677,9 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	}
 
 	var userAuth *login.UserAuth
-	// Special case for generic oauth: generic oauth does not store authID,
-	// so we need to find the user first then check for the userAuth connection by module and userID
-	if identity.AuthenticatedBy == login.GenericOAuthModule {
+	// For auth modules that may not store an authID in user_auth (Generic OAuth never stores one;
+	// SAML omits it for SCIM-provisioned users), fall back to a UserId+AuthModule lookup.
+	if identity.AuthenticatedBy == login.GenericOAuthModule || (identity.AuthenticatedBy == login.SAMLAuthModule && usr.IsProvisioned) {
 		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthenticatedBy, UserId: usr.ID}
 		userAuth, err = s.authInfoService.GetAuthInfo(ctx, query)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {

@@ -4,7 +4,7 @@ import { DataSourceLogo } from 'app/features/datasources/components/picker/DataS
 import { useDatasource } from 'app/features/datasources/hooks';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { getEditorType } from '../utils';
 
 import { CardTitle } from './CardTitle';
@@ -15,14 +15,17 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const queryDsSettings = useDatasource(query.datasource);
   const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
-  const isSelected = selectedQuery?.refId === query.refId;
+  const { data } = useQueryRunnerContext();
 
+  const isError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
+  const isSelected = selectedQuery?.refId === query.refId;
   const isHidden = !!query.hide;
 
   const item = {
     name: query.refId,
     type: editorType,
     isHidden,
+    isError,
   };
 
   return (
@@ -43,7 +46,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
           size="sm"
         />
       )}
-      <CardTitle title={query.refId} isHidden={isHidden} />
+      <CardTitle title={query.refId} isHidden={isHidden} isError={isError} />
     </SidebarCard>
   );
 };

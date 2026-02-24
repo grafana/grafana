@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { ActionItem, Actions } from '../../Actions';
 import { QUERY_EDITOR_COLORS, QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT } from '../../constants';
@@ -95,17 +95,24 @@ export const SidebarCard = ({
         aria-pressed={isSelected}
       >
         <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
-        {hasActions && (
-          <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-            <Actions
-              handleResetFocus={handleResetFocus}
-              item={item}
-              onDelete={onDelete}
-              onDuplicate={onDuplicate}
-              onToggleHide={onToggleHide}
-            />
-          </div>
-        )}
+        <div>
+          {item.isError && (
+            <div className={styles.errorIcon}>
+              <Icon name="exclamation-triangle" size="sm" color={QUERY_EDITOR_COLORS.error} />
+            </div>
+          )}
+          {hasActions && (
+            <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+              <Actions
+                handleResetFocus={handleResetFocus}
+                item={item}
+                onDelete={onDelete}
+                onDuplicate={onDuplicate}
+                onToggleHide={onToggleHide}
+              />
+            </div>
+          )}
+        </div>
       </div>
       <AddCardButton variant={addVariant} afterId={id} />
     </div>
@@ -127,7 +134,12 @@ function getStyles(
     item: ActionItem;
   }
 ) {
-  const borderColor = getEditorBorderColor(theme, item.type, item.alertState);
+  const borderColor = getEditorBorderColor({
+    theme,
+    editorType: item.type,
+    alertState: item.alertState,
+    isError: item.isError,
+  });
 
   const backgroundColor = isSelected ? QUERY_EDITOR_COLORS.card.activeBg : QUERY_EDITOR_COLORS.card.hoverBg;
   const hoverActions = css({
@@ -282,6 +294,10 @@ function getStyles(
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${ghostCardPulse} 3s ease-in-out infinite`,
       },
+    }),
+
+    errorIcon: css({
+      paddingRight: theme.spacing(1),
     }),
   };
 }

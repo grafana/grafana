@@ -29,6 +29,12 @@ const numericOptions: Array<ComboboxOption<number>> = [
   { label: 'Option 2', value: 2 },
   { label: 'Option 3', value: 3 },
 ];
+const iconOptions: Array<ComboboxOption<string>> = [
+  { label: 'Option 1', value: '1', icon: 'keyboard' },
+  { label: 'Option 2', value: '2', icon: 'text-fields' },
+  { label: 'Option 3', value: '3', description: 'This is option 3', icon: 'user' },
+  { label: 'Option 4', value: '4', icon: 'add-user' },
+];
 
 describe('Combobox', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -90,6 +96,37 @@ describe('Combobox', () => {
     await userEvent.click(input);
 
     expect(input).toHaveAttribute('placeholder', 'Select an option');
+  });
+
+  it('renders icon for selected option', async () => {
+    render(<Combobox options={iconOptions} value={'1'} onChange={onChangeHandler} placeholder="Select an option" />);
+    expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-keyboard')).toBeVisible();
+  });
+
+  it('renders the option icon over the prefix icon', async () => {
+    render(
+      <Combobox
+        prefixIcon={'ai'}
+        options={iconOptions}
+        value={'1'}
+        onChange={onChangeHandler}
+        placeholder="Select an option"
+      />
+    );
+    expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-keyboard')).toBeInTheDocument();
+    expect(screen.queryByTestId('icon-ai')).not.toBeInTheDocument();
+  });
+
+  it('icon renders in options', async () => {
+    render(<Combobox options={iconOptions} value={'1'} onChange={onChangeHandler} placeholder="Select an option" />);
+    await userEvent.click(screen.getByRole('combobox'));
+    expect(screen.getByText('Option 2')).toBeVisible();
+    expect(screen.getByTestId('icon-text-fields')).toBeVisible();
+    await userEvent.click(screen.getByText('Option 2'));
+    expect(screen.getByDisplayValue('Option 2')).toBeInTheDocument();
+    expect(onChangeHandler).toHaveBeenCalledWith(iconOptions[1]);
   });
 
   it('selects value by clicking that needs scrolling', async () => {
