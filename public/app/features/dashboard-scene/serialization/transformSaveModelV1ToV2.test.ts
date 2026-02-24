@@ -316,7 +316,11 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
     // Calculate output file path for this input
     const relativeDir = path.dirname(relativePath);
     const fileName = path.basename(relativePath);
-    const outputFileName = `v1beta1-mig-${fileName.replace('.json', '')}.${LATEST_API_VERSION.split('/')[1]}.json`;
+    // Strip the ".v{N}" migration target version suffix from the input filename
+    // (e.g. "v10.table_thresholds.v42.json" -> "v10.table_thresholds")
+    // because the backend now uses the raw input name without the version suffix.
+    const baseName = fileName.replace(/\.v\d+\.json$/, '');
+    const outputFileName = `v1beta1-mig-${baseName}.${LATEST_API_VERSION.split('/')[1]}.json`;
     const outputFilePath =
       relativeDir === '.'
         ? path.join(migratedOutput, outputFileName)
