@@ -203,7 +203,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
 		k8sPermissions, err := a.getResourcePermissionsFromK8s(c.Req.Context(), c.Namespace, resourceID)
 		if err == nil {
-			a.logger.Info("Resource permissions fetched from k8s API", "userUID", c.SignedInUser.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "resource", a.service.options.Resource)
+			a.logger.Info("Resource permissions fetched from k8s API", "userUID", c.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "resource", a.service.options.Resource)
 			return response.JSON(http.StatusOK, k8sPermissions)
 		}
 		span.RecordError(err)
@@ -214,7 +214,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	a.logger.Info("Resource permissions fetched from legacy API", "userUID", c.SignedInUser.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "resource", a.service.options.Resource)
+	a.logger.Info("Resource permissions fetched from legacy API", "userUID", c.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "resource", a.service.options.Resource)
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get permissions", err)
@@ -325,7 +325,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	if a.shouldUseK8sAPIs() {
 		err := a.setUserPermissionToK8s(c.Req.Context(), c.Namespace, resourceID, userID, cmd.Permission)
 		if err == nil {
-			a.logger.Info("User permission set via k8s API", "userUID", c.SignedInUser.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "targetUserID", userID, "permission", cmd.Permission, "resource", a.service.options.Resource)
+			a.logger.Info("User permission set via k8s API", "userUID", c.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "targetUserID", userID, "permission", cmd.Permission, "resource", a.service.options.Resource)
 			return permissionSetResponse(cmd)
 		}
 		span.RecordError(err)
@@ -336,7 +336,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	a.logger.Info("User permission set via legacy API", "userUID", c.SignedInUser.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "targetUserID", userID, "permission", cmd.Permission, "resource", a.service.options.Resource)
+	a.logger.Info("User permission set via legacy API", "userUID", c.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "targetUserID", userID, "permission", cmd.Permission, "resource", a.service.options.Resource)
 	_, err = a.service.SetUserPermission(c.Req.Context(), c.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
@@ -397,7 +397,7 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 	if a.shouldUseK8sAPIs() {
 		err := a.setTeamPermissionToK8s(c.Req.Context(), c.Namespace, resourceID, teamID, cmd.Permission)
 		if err == nil {
-			a.logger.Info("Team permission set via k8s API", "userUID", c.SignedInUser.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "targetTeamID", teamID, "permission", cmd.Permission, "resource", a.service.options.Resource)
+			a.logger.Info("Team permission set via k8s API", "userUID", c.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "targetTeamID", teamID, "permission", cmd.Permission, "resource", a.service.options.Resource)
 			return permissionSetResponse(cmd)
 		}
 		span.RecordError(err)
@@ -408,7 +408,7 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	a.logger.Info("Team permission set via legacy API", "userUID", c.SignedInUser.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "targetTeamID", teamID, "permission", cmd.Permission, "resource", a.service.options.Resource)
+	a.logger.Info("Team permission set via legacy API", "userUID", c.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "targetTeamID", teamID, "permission", cmd.Permission, "resource", a.service.options.Resource)
 	_, err = a.service.SetTeamPermission(c.Req.Context(), c.GetOrgID(), teamID, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
@@ -466,7 +466,7 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 	if a.shouldUseK8sAPIs() {
 		err := a.setBuiltInRolePermissionToK8s(c.Req.Context(), c.Namespace, resourceID, builtInRole, cmd.Permission)
 		if err == nil {
-			a.logger.Info("Built-in role permission set via k8s API", "userUID", c.SignedInUser.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "builtInRole", builtInRole, "permission", cmd.Permission, "resource", a.service.options.Resource)
+			a.logger.Info("Built-in role permission set via k8s API", "userUID", c.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "builtInRole", builtInRole, "permission", cmd.Permission, "resource", a.service.options.Resource)
 			return permissionSetResponse(cmd)
 		}
 		span.RecordError(err)
@@ -475,7 +475,7 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 		}
 	}
 
-	a.logger.Info("Built-in role permission set via legacy API", "userUID", c.SignedInUser.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "builtInRole", builtInRole, "permission", cmd.Permission, "resource", a.service.options.Resource)
+	a.logger.Info("Built-in role permission set via legacy API", "userUID", c.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "builtInRole", builtInRole, "permission", cmd.Permission, "resource", a.service.options.Resource)
 	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.GetOrgID(), builtInRole, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
@@ -527,7 +527,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	if a.shouldUseK8sAPIs() {
 		err := a.setResourcePermissionsToK8s(c.Req.Context(), c.Namespace, resourceID, cmd.Permissions)
 		if err == nil {
-			a.logger.Info("Resource permissions set via k8s API", "userUID", c.SignedInUser.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "permissionsCount", len(cmd.Permissions), "resource", a.service.options.Resource)
+			a.logger.Info("Resource permissions set via k8s API", "userUID", c.GetUID(), "namespace", c.Namespace, "resourceID", resourceID, "permissionsCount", len(cmd.Permissions), "resource", a.service.options.Resource)
 			return response.Success("Permissions updated")
 		}
 		span.RecordError(err)
@@ -536,7 +536,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	a.logger.Info("Resource permissions set via legacy API", "userUID", c.SignedInUser.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "permissionsCount", len(cmd.Permissions), "resource", a.service.options.Resource)
+	a.logger.Info("Resource permissions set via legacy API", "userUID", c.GetUID(), "orgID", c.GetOrgID(), "resourceID", resourceID, "permissionsCount", len(cmd.Permissions), "resource", a.service.options.Resource)
 	_, err := a.service.SetPermissions(ctx, c.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
 		return response.Err(err)
