@@ -1,18 +1,15 @@
-import { PanelData } from '@grafana/data';
-import { Dashboard, Panel } from '@grafana/schema';
+import { Panel } from '@grafana/schema';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 
 import { GenAIButton } from './GenAIButton';
-import { useGenerationProvider } from './hooks';
+import { useIsAssistantAvailable } from './hooks';
 import { EventTrackingSrc } from './tracking';
 import { Message, Role, getFilteredPanelString } from './utils';
 
 interface GenAIPanelDescriptionButtonProps {
   onGenerate: (description: string) => void;
   panel: Panel;
-  dashboard?: Dashboard;
-  data?: PanelData;
 }
 
 const PANEL_DESCRIPTION_CHAR_LIMIT = 200;
@@ -26,31 +23,16 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'There should be no numbers in the description except for thresholds.\n' +
   `The description should be, at most, ${PANEL_DESCRIPTION_CHAR_LIMIT} characters.`;
 
-export const GenAIPanelDescriptionButton = ({
-  onGenerate,
-  panel,
-  dashboard: dashboardProp,
-  data,
-}: GenAIPanelDescriptionButtonProps) => {
-  const { provider, isLoading } = useGenerationProvider();
-  const dashboard = dashboardProp ?? getDashboardSrv().getCurrent()?.getSaveModelClone();
+export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
+  const isAssistant = useIsAssistantAvailable();
 
-  if (isLoading || provider === 'none') {
-    return null;
-  }
-
-  if (!dashboard) {
-    return null;
-  }
-
-  // When assistant is available, AITextArea handles generation directly - no addon button needed
-  if (provider === 'assistant') {
+  if (isAssistant) {
     return null;
   }
 
   return (
     <GenAIButton
-      messages={() => getLLMMessages(panel, dashboard)}
+      messages={() => getMessages(panel)}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.panelDescription}
       toggleTipTitle={'Improve your panel description'}
@@ -58,17 +40,9 @@ export const GenAIPanelDescriptionButton = ({
   );
 };
 
-function getLLMMessages(panel: Panel, dashboard: Dashboard): Message[] {
+function getMessages(panel: Panel): Message[] {
+  const dashboard = getDashboardSrv().getCurrent()!;
   const panelString = getFilteredPanelString(panel);
-  const parts: string[] = [];
-
-  if (dashboard.title != null && dashboard.title !== '') {
-    parts.push(`The panel is part of a dashboard with the title: ${dashboard.title}`);
-  }
-  if (dashboard.description != null && dashboard.description !== '') {
-    parts.push(`The panel is part of a dashboard with the description: ${dashboard.description}`);
-  }
-  parts.push(`This is the JSON which defines the panel: ${panelString}`);
 
   return [
     {
@@ -76,7 +50,10 @@ function getLLMMessages(panel: Panel, dashboard: Dashboard): Message[] {
       role: Role.system,
     },
     {
-      content: parts.join('\n'),
+      content:
+        `The panel is part of a dashboard with the title: ${dashboard.title}\n` +
+        `The panel is part of a dashboard with the description: ${dashboard.description}\n` +
+        `This is the JSON which defines the panel: ${panelString}`,
       role: Role.user,
     },
   ];

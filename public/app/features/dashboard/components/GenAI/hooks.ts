@@ -197,28 +197,3 @@ export function useIsAssistantAvailable(): boolean {
 
   return available;
 }
-
-export type GenerationProvider = 'assistant' | 'llm' | 'none';
-
-/**
- * Determine which generation provider to use.
- * Priority: Assistant > LLM Plugin > None
- */
-export function useGenerationProvider(): { provider: GenerationProvider; isLoading: boolean } {
-  const isAssistantEnabled = useIsAssistantAvailable();
-  const { value: isLLMEnabled, loading: isLLMLoading } = useAsync(async () => isLLMPluginEnabled(), []);
-
-  if (isAssistantEnabled) {
-    return { provider: 'assistant', isLoading: false };
-  }
-
-  if (isLLMLoading) {
-    return { provider: 'none', isLoading: true };
-  }
-
-  if (isLLMEnabled) {
-    return { provider: 'llm', isLoading: false };
-  }
-
-  return { provider: 'none', isLoading: false };
-}
