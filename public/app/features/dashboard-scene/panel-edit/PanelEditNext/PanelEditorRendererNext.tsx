@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -15,14 +14,13 @@ import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { usePanelEditorShell } from './hooks';
 
 export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEditor>) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const { dashboard, optionsPane, splitter } = usePanelEditorShell(model);
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } = splitter;
 
   const styles = useStyles2(getWrapperStyles);
 
   return (
-    <div className={styles.container} ref={containerRef}>
+    <div className={styles.container}>
       <NavToolbarActions dashboard={dashboard} />
       <div
         {...containerProps}

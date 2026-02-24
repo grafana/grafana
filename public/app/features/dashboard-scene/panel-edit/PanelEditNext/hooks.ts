@@ -16,6 +16,7 @@ import { QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
 const CONTROLS_ROW_HEIGHT = 'auto';
 const MIN_SIDEBAR_RATIO = 0.1;
 const MAX_SIDEBAR_RATIO = 0.5;
+const vizResizerClassName = css({ height: 2, width: '100%' });
 // Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
 const FALLBACK_SIDEBAR_RATIO = 0.25;
 
@@ -199,7 +200,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObj
     containerRef,
     minRatio: 0.1,
     maxRatio: 0.9,
-    className: css({ height: 2, width: '100%' }),
+    className: vizResizerClassName,
   });
 
   const gridStyles = useMemo(
