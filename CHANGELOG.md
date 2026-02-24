@@ -1,3 +1,12 @@
+<!-- 12.2.6 START -->
+
+# 12.2.6 (2026-02-24)
+
+### Bug fixes
+
+- **Dashboard Export:** Fix datasource variable templating in dashboard export [#118324](https://github.com/grafana/grafana/pull/118324), [@kristinademeshchik](https://github.com/kristinademeshchik)
+
+<!-- 12.2.6 END -->
 <!-- 12.1.8 START -->
 
 # 12.1.8 (2026-02-24)
