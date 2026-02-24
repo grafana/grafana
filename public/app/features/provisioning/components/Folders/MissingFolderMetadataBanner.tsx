@@ -33,7 +33,7 @@ function MissingFolderMetadataBannerContent({ repository, folder }: Required<Mis
         style={{ flex: 0 }}
       >
         <Trans i18nKey="provisioning.missing-folder-metadata-banner.message">
-          Permissions may not persist if the folder is moved or renamed in Git.
+          Permissions may not persist if the folder is moved or renamed.
         </Trans>
       </Alert>
     );
