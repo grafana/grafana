@@ -198,15 +198,13 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       'Backend resolves annotation datasource group differently than frontend',
   };
 
-  const goldenFilesExist = existsSync(outputDir) && existsSync(migratedOutput);
-
-  it('golden files must be generated before running this suite', () => {
-    if (!goldenFilesExist) {
-      const missing = [!existsSync(outputDir) ? outputDir : '', !existsSync(migratedOutput) ? migratedOutput : '']
-        .filter(Boolean)
-        .join(', ');
+  beforeAll(() => {
+    const missing = [!existsSync(outputDir) && outputDir, !existsSync(migratedOutput) && migratedOutput].filter(
+      Boolean
+    );
+    if (missing.length > 0) {
       throw new Error(
-        `Golden files not found. Run "make generate-golden-files" from apps/dashboard/ to generate them.\n  Missing: ${missing}`
+        `Golden files not found. Run "make generate-golden-files" from apps/dashboard/ to generate them.\n  Missing: ${missing.join(', ')}`
       );
     }
   });
