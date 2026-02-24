@@ -27,7 +27,7 @@ import {
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { CellValues, Options } from './types';
+import { CellValues, Options } from './panelcfg.gen';
 import { boundedMinMax, valuesToFills } from './utils';
 
 export interface HeatmapData {

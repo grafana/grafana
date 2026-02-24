@@ -12,7 +12,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { AnnotationPanelFilter } from '@grafana/schema';
 import {
@@ -226,21 +227,23 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
     return -1;
   };
 
+  const { loading, value: panelPluginMetas, error: panelPluginMetasError } = usePanelPluginMetasMap();
+
   const selectablePanels: Array<SelectableValue<number>> = useMemo(
     () =>
       panels
         // Filtering out rows at the moment, revisit to only include panels that support annotations
         // However the information to know if a panel supports annotations requires it to be already loaded
         // panel.plugin?.dataSupport?.annotations
-        .filter((panel) => config.panels[panel.state.pluginId])
+        .filter((panel) => panelPluginMetas?.[panel.state.pluginId])
         .map((panel) => ({
           value: getPanelIdForVizPanel(panel),
           label: panel.state.title ?? `Panel ${getPanelIdForVizPanel(panel)}`,
           description: panel.state.description,
-          imgUrl: config.panels[panel.state.pluginId].info.logos.small,
+          imgUrl: panelPluginMetas?.[panel.state.pluginId].info.logos.small,
         }))
         .sort(sortFn) ?? [],
-    [panels]
+    [panels, panelPluginMetas]
   );
 
   return (
@@ -340,23 +343,40 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           >
             <>
               <Select
+                isLoading={loading}
                 options={getPanelFilters()}
                 value={panelFilter}
                 onChange={onFilterTypeChange}
                 data-testid={selectors.components.Annotations.annotationsTypeInput}
               />
               {panelFilter !== PanelFilterType.AllPanels && (
-                <MultiSelect
-                  options={selectablePanels}
-                  value={selectablePanels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
-                  onChange={onAddFilterPanelID}
-                  isClearable={true}
-                  placeholder={t('dashboard-scene.annotation-settings-edit.placeholder-choose-panels', 'Choose panels')}
-                  width={100}
-                  closeMenuOnSelect={false}
-                  className={styles.select}
-                  data-testid={selectors.components.Annotations.annotationsChoosePanelInput}
-                />
+                <>
+                  {panelPluginMetasError && (
+                    <Alert
+                      title={t(
+                        'dashboard-scene.annotation-settings-edit.error-loading-panels',
+                        'Failed to load panel plugins'
+                      )}
+                      severity="warning"
+                    >
+                      {panelPluginMetasError.message}
+                    </Alert>
+                  )}
+                  <MultiSelect
+                    options={selectablePanels}
+                    value={selectablePanels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
+                    onChange={onAddFilterPanelID}
+                    isClearable={true}
+                    placeholder={t(
+                      'dashboard-scene.annotation-settings-edit.placeholder-choose-panels',
+                      'Choose panels'
+                    )}
+                    width={100}
+                    closeMenuOnSelect={false}
+                    className={styles.select}
+                    data-testid={selectors.components.Annotations.annotationsChoosePanelInput}
+                  />
+                </>
               )}
             </>
           </Field>

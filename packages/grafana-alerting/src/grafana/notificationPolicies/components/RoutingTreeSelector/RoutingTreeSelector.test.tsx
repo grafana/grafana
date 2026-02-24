@@ -150,13 +150,6 @@ describe('clearable behavior', () => {
 describe('error handling', () => {
   beforeEach(() => {
     server.use(...routingTreeWithErrorScenario);
-    // RTK Query logs console.error on failed requests (non-serializable values in state),
-    // which jest-fail-on-console would catch. Suppress them since the error is expected.
-    jest.spyOn(console, 'error').mockImplementation();
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
   });
 
   it('should display an error alert when the API request fails', async () => {

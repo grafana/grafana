@@ -128,8 +128,7 @@ func GetLegacySecureValueName(dsUID string, key string) string {
 	h.Write([]byte(dsUID)) // unique identifier
 	h.Write([]byte("|"))
 	h.Write([]byte(key)) // property name
-	n := hex.EncodeToString(h.Sum(nil))
-	return apistore.LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX + n[0:10] // predictable name for dual writing
+	return apistore.LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX + hex.EncodeToString(h.Sum(nil))
 }
 
 func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddDataSourceCommand, error) {
