@@ -163,6 +163,24 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const useUnifiedDrilldownUI = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
 
   if (!model.hasControls()) {
+    // If dynamic dashboards is enabled, we need to show the edit/share/playlist buttons
+    // However we shouldn't do it if we're in edit panel view
+    // `DashboardControlActions` already check for edit panel view but we need to prevent showing the container as well
+    if (config.featureToggles.dashboardNewLayouts && !editPanel) {
+      return (
+        <div
+          data-testid={selectors.pages.Dashboard.Controls}
+          className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
+        >
+          <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+            <div className={styles.fixedControls}>
+              <DashboardControlActions dashboard={dashboard} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // To still have spacing when no controls are rendered
     return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
