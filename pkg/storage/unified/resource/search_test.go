@@ -7,6 +7,7 @@ import (
 	"iter"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -335,12 +336,10 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
-	// Ensure BuildIndex actually started (and wg.Add happened) before waiting.
-	select {
-	case <-search.started:
-	case <-time.After(1 * time.Second):
-		t.Fatal("BuildIndex never started")
-	}
+	// Ensure BuildIndex actually started before waiting.
+	require.Eventually(t, func() bool {
+		return search.slowBuildCalls.Load() > 0
+	}, 1*time.Second, 100*time.Millisecond, "BuildIndex never started")
 
 	// Wait until indexing is finished.
 	search.wg.Wait()
@@ -360,15 +359,14 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 
 type slowSearchBackendWithCache struct {
 	mockSearchBackend
-	wg      sync.WaitGroup
-	started chan struct{}
-	once    sync.Once
+	wg sync.WaitGroup
+
+	slowBuildCalls atomic.Int64
 }
 
 func newSlowSearchBackendWithCache() *slowSearchBackendWithCache {
 	return &slowSearchBackendWithCache{
 		mockSearchBackend: mockSearchBackend{},
-		started:           make(chan struct{}),
 	}
 }
 
@@ -380,10 +378,7 @@ func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIn
 
 func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	m.wg.Add(1)
-	m.once.Do(
-		func() {
-			close(m.started)
-		})
+	m.slowBuildCalls.Add(1)
 	defer m.wg.Done()
 
 	time.Sleep(1 * time.Second)
