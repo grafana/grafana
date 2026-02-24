@@ -34,7 +34,7 @@ function findExtensionsSubmenu(rootMenu: PanelMenuItem[]): PanelMenuItem | undef
   return findMenuItemByText(rootMenu, 'Extensions') ?? findMenuItemByText(rootMenu, 'Plugin actions');
 }
 
-describe('appenExtensionsToPanelMenu', () => {
+describe('appendExtensionsToPanelMenu', () => {
   it('does nothing when extensions is empty', () => {
     const rootMenu: PanelMenuItem[] = [];
     appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions: [] }));
@@ -172,6 +172,27 @@ describe('appenExtensionsToPanelMenu', () => {
     expect(extSub).toBeDefined();
     expect(extSub.subMenu).toHaveLength(1);
     expect(extSub.subMenu![0]).toMatchObject({ text: 'Fallback link', href: '/fallback/1' });
+  });
+
+  it('falls back to Extensions submenu when root submenu name is reserved (e.g. More...)', () => {
+    const rootMenu: PanelMenuItem[] = [];
+    const reservedNames = new Set<string>(['More...']);
+    const extensions = [
+      createLink({
+        title: 'Plugin action',
+        path: '/plugin/action',
+        group: { name: `${ROOT_CATEGORY}/More...` },
+      }),
+    ];
+
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions, reservedNames }));
+
+    // Should not create a root-level "More..." submenu (would clash with built-in More)
+    expect(rootMenu.find((m) => m.text === 'More...')).toBeUndefined();
+    const extSub = findExtensionsSubmenu(rootMenu)!;
+    expect(extSub).toBeDefined();
+    expect(extSub.subMenu).toHaveLength(1);
+    expect(extSub.subMenu![0]).toMatchObject({ text: 'Plugin action', href: '/plugin/action' });
   });
 
   it('maps extension openInNewTab to target _blank and preserves icon and onClick', () => {

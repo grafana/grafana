@@ -106,8 +106,8 @@ function groupBySubmenu(
       const submenuName = groupName.slice(SUBMENU_CATEGORY_PREFIX.length).trim();
       const truncatedName = truncateTitle(submenuName, 25);
 
-      // group: "${ROOT}/More..."
-      if (!truncatedName && reservedNames.has(truncatedName)) {
+      // group: "${ROOT}/More..." — fall back to Extensions when name is empty or reserved
+      if (!truncatedName || reservedNames.has(truncatedName)) {
         return appendTo(bucket, {
           item,
           createGroup: () => bucket[EXTENSIONS_CATEGORY],
