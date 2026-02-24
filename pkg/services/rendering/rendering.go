@@ -2,10 +2,14 @@ package rendering
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/gob"
 	"errors"
 	"fmt"
 	"math"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -13,6 +17,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -38,6 +44,7 @@ type RenderingService struct {
 	capabilities        []Capability
 	pluginAvailable     bool
 	rendererCallbackURL string
+	netClient           *http.Client
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
@@ -121,6 +128,32 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 
 	_, exists := rm.Renderer(context.Background())
 
+	netTransport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 5 * time.Second,
+	}
+
+	if cfg.RendererCACert != "" {
+		caCert, err := os.ReadFile(cfg.RendererCACert)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read renderer CA cert file: %w", err)
+		}
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to parse renderer CA cert")
+		}
+		netTransport.TLSClientConfig = &tls.Config{
+			RootCAs: caCertPool,
+		}
+	}
+
+	netClient := &http.Client{
+		Transport: otelhttp.NewTransport(netTransport),
+	}
+
 	s := &RenderingService{
 		perRequestRenderKeyProvider: renderKeyProvider,
 		capabilities: []Capability{
@@ -145,6 +178,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		domain:                domain,
 		pluginAvailable:       exists,
 		rendererCallbackURL:   rendererCallbackURL,
+		netClient:             netClient,
 	}
 
 	gob.Register(&RenderUser{})
