@@ -17,6 +17,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/alertmanager_mock"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestBroadcastAlerts(t *testing.T) {
@@ -301,6 +302,15 @@ func TestInitAlertBroadcast(t *testing.T) {
 			expectChannel: true,
 			needsMetrics:  true,
 		},
+		{
+			name: "passes reliable delivery options",
+			setupPeer: func() (alertingNotify.ClusterPeer, *MockBroadcastChannel) {
+				ch := &MockBroadcastChannel{}
+				return &MockClusterPeer{Channel: ch}, ch
+			},
+			expectChannel: true,
+			needsMetrics:  true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -314,6 +324,11 @@ func TestInitAlertBroadcast(t *testing.T) {
 				reg := prometheus.NewRegistry()
 				m := metrics.NewNGAlert(reg)
 				moa.metrics = m.GetMultiOrgAlertmanagerMetrics()
+				moa.settings = &setting.Cfg{
+					UnifiedAlerting: setting.UnifiedAlertingSettings{
+						HASingleEvaluationAlertBroadcastQueueSize: 200,
+					},
+				}
 			}
 
 			moa.initAlertBroadcast()
@@ -323,6 +338,10 @@ func TestInitAlertBroadcast(t *testing.T) {
 				require.Equal(t, expectedChannel, moa.alertsBroadcastChannel)
 			} else {
 				require.Nil(t, moa.alertsBroadcastChannel)
+			}
+
+			if mockPeer, ok := peer.(*MockClusterPeer); ok {
+				require.Len(t, mockPeer.LastOptions, 2, "expected WithReliableDelivery and WithQueueSize options")
 			}
 		})
 	}
