@@ -652,6 +652,42 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	}
 }
 
+// WaitForQuotaReconciliation waits for the repository's quota condition to match the expected reason.
+// It uses the typed Repository object and the quotas package to check conditions.
+func (h *provisioningTestHelper) WaitForQuotaReconciliation(t *testing.T, repoName string, expectedReason string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := h.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := unstructuredToRepository(t, repoObj)
+		condition := findCondition(repo.Status.Conditions, provisioning.ConditionTypeResourceQuota)
+		if !assert.NotNil(collect, condition, "Quota condition not found") {
+			return
+		}
+
+		assert.Equal(collect, expectedReason, condition.Reason, "Quota condition reason mismatch")
+	}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should have reason %s", expectedReason)
+}
+
+// RequireRepoDashboardCount performs a one-off check that the number of dashboards managed by the given repo matches the expected count.
+func (h *provisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
+	t.Helper()
+	dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list dashboards")
+
+	var count int
+	for _, d := range dashboards.Items {
+		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
+		if managerID == repoName {
+			count++
+		}
+	}
+	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+}
+
 // WaitForHealthyRepository waits for a repository to become healthy.
 func (h *provisioningTestHelper) WaitForHealthyRepository(t *testing.T, name string) {
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -684,6 +720,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	opts := testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagProvisioningExport,
 		},
 		// Provisioning requires resources to be fully migrated to unified storage.
 		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
@@ -1016,7 +1053,13 @@ func (h *provisioningTestHelper) CreateGithubConnection(
 		return nil, err
 	}
 
-	return h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+	var res *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		res, err = h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(collect, err)
+	}, waitTimeoutDefault, waitIntervalDefault, "connection should be created")
+
+	return res, nil
 }
 
 func (h *provisioningTestHelper) UpdateGithubConnection(
@@ -1031,7 +1074,13 @@ func (h *provisioningTestHelper) UpdateGithubConnection(
 		return nil, err
 	}
 
-	return h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+	var res *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		res, err = h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+		require.NoError(collect, err)
+	}, waitTimeoutDefault, waitIntervalDefault, "connection should be updated")
+
+	return res, nil
 }
 
 func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstructured.Unstructured) error {
@@ -1080,6 +1129,12 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				app := github.App{
 					ID:   &id,
 					Slug: &appSlug,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(app))
 			}),
@@ -1092,6 +1147,12 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				w.WriteHeader(http.StatusOK)
 				installation := github.Installation{
 					ID: &idInt,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
 			}),
@@ -1178,4 +1239,16 @@ func findCondition(conditions []metav1.Condition, conditionType string) *metav1.
 		}
 	}
 	return nil
+}
+
+// withoutExportFeatureFlag disables the provisioningExport feature flag
+func withoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
+	// Remove provisioningExport from the enabled feature toggles
+	filtered := []string{}
+	for _, flag := range opts.EnableFeatureToggles {
+		if flag != "provisioningExport" {
+			filtered = append(filtered, flag)
+		}
+	}
+	opts.EnableFeatureToggles = filtered
 }

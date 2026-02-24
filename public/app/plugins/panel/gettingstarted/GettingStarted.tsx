@@ -99,7 +99,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
           </div>
         ) : (
           <>
-            <Button variant="secondary" fill="text" className={styles.dismiss} onClick={this.dismiss}>
+            <Button size="sm" fill="text" className={styles.dismiss} onClick={this.dismiss}>
               <Trans i18nKey="gettingstarted.getting-started.remove-this-panel">Remove this panel</Trans>
             </Button>
             {currentStep === steps.length - 1 && (
@@ -202,7 +202,6 @@ const getStyles = stylesFactory(() => {
     }),
     dismiss: css({
       alignSelf: 'flex-end',
-      textDecoration: 'underline',
       marginBottom: theme.spacing(1),
     }),
     loading: css({

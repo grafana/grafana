@@ -495,6 +495,9 @@ func TestRefreshHealth(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockRepo := &mockRepository{
 				config: &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{repository.CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repository",
 						Type:  provisioning.LocalRepositoryType,
@@ -644,6 +647,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 				config: &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Generation: 1,
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repository",

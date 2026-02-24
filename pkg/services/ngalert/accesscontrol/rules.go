@@ -3,7 +3,6 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -28,13 +27,13 @@ type RuleService struct {
 }
 
 type notificationSettingsAuth interface {
-	AuthorizeRead(context.Context, identity.Requester, *models.NotificationSettings) error
+	AuthorizeRead(context.Context, identity.Requester, *models.ContactPointRouting) error
 }
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
 		genericService:           genericService{ac: ac},
-		notificationSettingsAuth: NewReceiverAccess[*models.NotificationSettings](ac, true),
+		notificationSettingsAuth: NewReceiverAccess[*models.ContactPointRouting](ac, true),
 	}
 }
 
@@ -278,9 +277,7 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 			updateAuthorized = true
 		}
 
-		if !slices.EqualFunc(rule.Existing.NotificationSettings, rule.New.NotificationSettings, func(settings models.NotificationSettings, settings2 models.NotificationSettings) bool {
-			return settings.Equals(&settings2)
-		}) {
+		if !rule.Existing.NotificationSettings.Equals(rule.New.NotificationSettings) {
 			if err := r.authorizeNotificationSettings(ctx, user, rule.New); err != nil {
 				return err
 			}
@@ -291,10 +288,11 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 
 // authorizeNotificationSettings checks if the user has access to all receivers that are used by the rule's notification settings.
 func (r *RuleService) authorizeNotificationSettings(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
-	for _, ns := range rule.NotificationSettings {
-		if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, &ns); err != nil {
-			return err
-		}
+	if rule.NotificationSettings == nil || rule.NotificationSettings.ContactPointRouting == nil {
+		return nil
+	}
+	if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, rule.NotificationSettings.ContactPointRouting); err != nil {
+		return err
 	}
 	return nil
 }

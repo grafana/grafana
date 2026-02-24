@@ -21,7 +21,7 @@ type RepoGetter interface {
 type JobProgressRecorder interface {
 	Started() time.Time
 	Record(ctx context.Context, result JobResourceResult)
-	ResetResults()
+	ResetResults(keepWarnings bool)
 	SetFinalMessage(ctx context.Context, msg string)
 	SetMessage(ctx context.Context, msg string)
 	SetTotal(ctx context.Context, total int)

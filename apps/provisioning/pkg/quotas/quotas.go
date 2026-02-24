@@ -71,6 +71,35 @@ func EvaluateCondition(quota provisioning.QuotaStatus, quotaUsage Usage) metav1.
 	}
 }
 
+// IsQuotaExceeded checks if the resource quota condition indicates the quota has been exceeded.
+func IsQuotaExceeded(conditions []metav1.Condition) bool {
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeResourceQuota {
+			return conditions[i].Status == metav1.ConditionFalse &&
+				conditions[i].Reason == provisioning.ReasonQuotaExceeded
+		}
+	}
+	return false
+}
+
+// IsQuotaReached checks if the resource quota condition indicates the quota has been reached (at limit).
+func IsQuotaReached(conditions []metav1.Condition) bool {
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeResourceQuota {
+			return conditions[i].Status == metav1.ConditionTrue &&
+				conditions[i].Reason == provisioning.ReasonQuotaReached
+		}
+	}
+	return false
+}
+
+func WouldStayWithinQuota(quota provisioning.QuotaStatus, usage Usage, netChange int64) bool {
+	if quota.MaxResourcesPerRepository == 0 {
+		return true
+	}
+	return usage.TotalResources+netChange <= quota.MaxResourcesPerRepository
+}
+
 // calculateTotalResources sums up all resource counts from the stats.
 func calculateTotalResources(stats []provisioning.ResourceCount) int64 {
 	var total int64
@@ -85,30 +114,46 @@ type QuotaGetter interface {
 	// GetQuotaStatus returns the quota status to be set on repositories.
 	// It takes a context and namespace to allow for future implementations
 	// that may need to fetch quota information dynamically.
-	GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus
+	GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error)
 }
 
 // FixedQuotaGetter returns fixed quota values from static configuration.
 type FixedQuotaGetter struct {
-	maxRepositories           int64
-	maxResourcesPerRepository int64
+	quotaStatus provisioning.QuotaStatus
 }
 
-// NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaLimits.
-func NewFixedQuotaGetter(limits QuotaLimits) *FixedQuotaGetter {
+// NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaStatus.
+func NewFixedQuotaGetter(quotaStatus provisioning.QuotaStatus) *FixedQuotaGetter {
 	return &FixedQuotaGetter{
-		maxRepositories:           limits.MaxRepositories,
-		maxResourcesPerRepository: limits.MaxResources,
+		quotaStatus: quotaStatus,
 	}
 }
 
 // GetQuotaStatus returns the configured quota limits as a QuotaStatus.
-func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus {
-	return provisioning.QuotaStatus{
-		MaxRepositories:           f.maxRepositories,
-		MaxResourcesPerRepository: f.maxResourcesPerRepository,
-	}
+func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error) {
+	return f.quotaStatus, nil
 }
 
 // Ensure FixedQuotaGetter implements QuotaGetter interface.
 var _ QuotaGetter = (*FixedQuotaGetter)(nil)
+
+func NewQuotaExceededError(err error) *QuotaExceededError {
+	return &QuotaExceededError{Err: err}
+}
+
+type QuotaExceededError struct {
+	Err error
+}
+
+// Error implements the error interface
+func (e *QuotaExceededError) Error() string {
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return "quota exceeded"
+}
+
+// Unwrap implements error unwrapping to support errors.Is and errors.As
+func (e *QuotaExceededError) Unwrap() error {
+	return e.Err
+}

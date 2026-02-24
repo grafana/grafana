@@ -252,6 +252,7 @@ const injectedRtkApi = api
             sort: queryArg.sort,
             limit: queryArg.limit,
             ownerReference: queryArg.ownerReference,
+            createdBy: queryArg.createdBy,
             explain: queryArg.explain,
             panelTitleSearch: queryArg.panelTitleSearch,
           },
@@ -690,19 +691,14 @@ export type SearchDashboardsAndFoldersApiArg = {
   limit?: number;
   /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
   ownerReference?: string[];
+  /** filter by the user who created the resource (format: user:<uid>) */
+  createdBy?: string;
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
   /** [experimental] optionally include matches from panel titles */
   panelTitleSearch?: boolean;
 };
-export type GetSortableFieldsApiResponse = /** status 200 undefined */ {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Sortable fields (depends on backend support) */
-  fields: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-};
+export type GetSortableFieldsApiResponse = /** status 200 undefined */ any;
 export type GetSortableFieldsApiArg = void;
 export type ListSnapshotApiResponse = /** status 200 OK */ SnapshotList;
 export type ListSnapshotApiArg = {
@@ -1040,7 +1036,7 @@ export type GridPos = {
   x: number;
   y: number;
 };
-export type DataQuery = {
+export type DataResponse = {
   /** The datasource */
   datasource?: {
     /** The apiserver version */
@@ -1131,7 +1127,7 @@ export type LibraryPanelSpec = {
   /** The panel type */
   pluginVersion?: string;
   /** The datasource queries */
-  targets?: DataQuery[];
+  targets?: DataResponse[];
   /** The title of the library panel */
   title?: string;
   /** Whether the panel is transparent */

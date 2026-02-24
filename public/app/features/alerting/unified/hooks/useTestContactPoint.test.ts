@@ -2,10 +2,10 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
+import { CreateReceiverIntegrationTestResponse } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { config } from '@grafana/runtime';
 import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 
-import { TestIntegrationResponse } from '../api/testIntegrationApi';
 import { setupMswServer } from '../mockApi';
 import { GrafanaChannelValues } from '../types/receiver-form';
 import { K8sAnnotations } from '../utils/k8s/constants';
@@ -31,7 +31,7 @@ const wrapper = () => getWrapper({ renderWithRouter: true });
 const K8S_TEST_ENDPOINT =
   '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test';
 
-const defaultK8sSuccessResponse: TestIntegrationResponse = {
+const defaultK8sSuccessResponse: CreateReceiverIntegrationTestResponse = {
   apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
   kind: 'CreateReceiverIntegrationTest',
   status: 'success',
@@ -41,7 +41,7 @@ const defaultK8sSuccessResponse: TestIntegrationResponse = {
 interface K8sTestHandlerOptions {
   onRequestBody?: (body: unknown) => void;
   onRequestUrl?: (url: string) => void;
-  response?: Partial<TestIntegrationResponse>;
+  response?: Partial<CreateReceiverIntegrationTestResponse>;
   status?: number;
   waitFor?: Promise<void>;
   networkError?: boolean;
@@ -687,7 +687,7 @@ describe('useTestContactPoint', () => {
     it('should set error after failed API call', async () => {
       server.use(
         createK8sTestHandler({
-          response: { message: 'Internal server error' } as unknown as Partial<TestIntegrationResponse>,
+          response: { message: 'Internal server error' } as unknown as Partial<CreateReceiverIntegrationTestResponse>,
           status: 500,
         })
       );

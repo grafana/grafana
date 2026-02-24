@@ -69,7 +69,6 @@ module.exports = {
     '@kusto/monaco-kusto': '@kusto/monaco-kusto/release/esm/monaco.contribution.js',
     // near-membrane-dom won't work in a nodejs environment.
     '@locker/near-membrane-dom': '<rootDir>/public/test/mocks/nearMembraneDom.ts',
-    '^@grafana/schema/dist/esm/(.*)$': '<rootDir>/packages/grafana-schema/src/$1',
     // prevent systemjs amd extra from breaking tests.
     'systemjs/dist/extras/amd': '<rootDir>/public/test/mocks/systemjsAMDExtra.ts',
     '@bsull/augurs': '<rootDir>/public/test/mocks/augurs.ts',

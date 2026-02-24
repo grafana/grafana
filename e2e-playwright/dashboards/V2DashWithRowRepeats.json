@@ -313,7 +313,23 @@
                 "mode": "variable",
                 "value": "c4"
               },
-              "title": "Repeated row $c4"
+              "title": "Row - $c4"
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "collapse": false,
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "columnWidthMode": "standard",
+                  "items": [],
+                  "maxColumnCount": 3,
+                  "rowHeightMode": "standard"
+                }
+              },
+              "title": "single row"
             }
           }
         ]

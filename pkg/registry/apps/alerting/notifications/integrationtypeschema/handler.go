@@ -9,6 +9,9 @@ import (
 	"slices"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/grafana-app-sdk/app"
@@ -16,8 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // AccessControlService provides access control for receivers.
@@ -79,20 +80,20 @@ func (h *Handler) HandleGetSchemas(ctx context.Context, writer app.CustomRouteRe
 	})
 
 	// Wrap each schema with K8s-style metadata for future-proofing migration
-	items := make([]v0alpha1.IntegrationTypeSchemaResource, 0, len(schemas))
+	items := make([]v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchemaResource, 0, len(schemas))
 	for _, s := range schemas {
 		// Marshal to JSON and unmarshal to spec type for conversion
 		data, err := json.Marshal(s)
 		if err != nil {
 			continue
 		}
-		var spec v0alpha1.IntegrationTypeSchema
+		var spec v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchema
 		if err := json.Unmarshal(data, &spec); err != nil {
 			continue
 		}
 
-		item := v0alpha1.IntegrationTypeSchemaResource{
-			Metadata: v0alpha1.V0alpha1IntegrationTypeSchemaResourceMetadata{
+		item := v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchemaResource{
+			Metadata: v0alpha1.GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata{
 				Name:      string(s.Type),
 				Namespace: req.ResourceIdentifier.Namespace,
 			},

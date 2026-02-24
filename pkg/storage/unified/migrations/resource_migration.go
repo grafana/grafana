@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -80,6 +79,17 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, opts RunO
 			r.log.Error("Failed to get transaction from session", "error", err)
 			return fmt.Errorf("failed to get transaction: %w", err)
 		}
+		// Increase page cache to prevent cache spill during bulk inserts.
+		// When the cache spills, SQLite needs an EXCLUSIVE lock which deadlocks with the
+		// SHARED lock held by the legacy database rows cursor on another connection.
+		// Configurable via [unified_storage] migration_cache_size_kb (default: 50MB).
+		cacheKB := 50000
+		if r.cfg.MigrationCacheSizeKB > 0 {
+			cacheKB = r.cfg.MigrationCacheSizeKB
+		}
+		if _, err := tx.ExecContext(ctx, fmt.Sprintf("PRAGMA cache_size = -%d", cacheKB)); err != nil {
+			r.log.Warn("Failed to set SQLite cache_size for migration", "error", err)
+		}
 		ctx = resource.ContextWithTransaction(ctx, tx.Tx)
 		r.log.Info("Stored migrator transaction in context for bulk operations (SQLite compatibility)")
 	}
@@ -117,7 +127,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, in
 
 	startTime := time.Now()
 
-	migrateOpts := legacy.MigrateOptions{
+	migrateOpts := MigrateOptions{
 		Namespace:   info.Value,
 		Resources:   r.resources,
 		WithHistory: true, // Migrate with full history

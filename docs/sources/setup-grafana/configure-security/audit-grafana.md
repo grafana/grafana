@@ -371,10 +371,10 @@ enabled = false
 loggers = file
 # Keep dashboard content in the logs (request or response fields); this can significantly increase the size of your logs.
 log_dashboard_content = false
-# Whether to record data source queries' request body. This can significantly increase the size of your logs. Enabled by default.
-log_datasource_query_request_body = true
-# Whether to record data source queries' response body. This can significantly increase the size of your logs. Enabled by default.
-log_datasource_query_response_body = true
+# Whether to record data source queries' request body. This can significantly increase the size of your logs. Disabled by default.
+log_datasource_query_request_body = false
+# Whether to record data source queries' response body. This can significantly increase the size of your logs. Disabled by default.
+log_datasource_query_response_body = false
 # Keep requests and responses body; this can significantly increase the size of your logs.
 verbose = false
 # Write an audit log for every status code.
@@ -420,6 +420,18 @@ tls = true
 # Set the tenant ID for Loki communication, which is disabled by default.
 # The tenant ID is required to interact with Loki running in multi-tenant mode.
 tenant_id =
+# Only available for the HTTP client. Disabled by default.
+# How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m
+# Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
+# If the wait duration is very long and the `batch_size_bytes` is very high, events might take a long time to be sent.
+# To enable batching, you must also set the `batch_size_bytes` configuration option.
+batch_wait_duration =
+# Only available for the HTTP client. Disabled by default.
+# How many events, in bytes, to accumulate in a single batch before sending it to Loki.
+# Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
+# If you want to always wait for the `batch_wait_duration`, set `batch_size_bytes` to a very high number.
+#To enable batching, you must also set the `batch_wait_duration` configuration option.
+batch_size_bytes =
 ```
 
 If you have multiple Grafana instances sending logs to the same Loki service or if you are using Loki for non-audit logs, audit logs come with additional labels to help identifying them:

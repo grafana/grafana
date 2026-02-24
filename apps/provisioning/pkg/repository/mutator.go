@@ -39,11 +39,13 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return fmt.Errorf("expected repository configuration, got %T", obj)
 	}
 
-	// This is called on every update, so be careful to only add the finalizer for create
-	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
-		r.Finalizers = []string{
-			RemoveOrphanResourcesFinalizer,
-			CleanFinalizer,
+	// Enforcing the presence of finalizers in resources not marked for deletion.
+	if r.DeletionTimestamp == nil || r.DeletionTimestamp.IsZero() {
+		if len(r.Finalizers) == 0 {
+			r.Finalizers = []string{
+				RemoveOrphanResourcesFinalizer,
+				CleanFinalizer,
+			}
 		}
 	}
 

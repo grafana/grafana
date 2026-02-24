@@ -16,6 +16,7 @@ const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
 	FolderResource    = "folders.folder.grafana.app"
 	DashboardResource = "dashboards.dashboard.grafana.app"
+	ShortURLResource  = "shorturls.shorturl.grafana.app"
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
@@ -23,6 +24,7 @@ var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:  true, // enabled by default
 	FolderResource:    false,
 	DashboardResource: false,
+	ShortURLResource:  false,
 }
 
 // AutoMigratedUnifiedResources maps resources that support auto-migration
@@ -76,6 +78,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
+	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(50000)
 	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs enforced")
@@ -119,6 +122,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 	cfg.EnforceQuotas = section.Key("enforce_quotas").MustBool(false)
 	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
+
+	// tenant watcher
+	cfg.TenantApiServerAddress = section.Key("tenant_api_server_address").String()
+	cfg.TenantWatcherAllowInsecureTLS = section.Key("tenant_watcher_allow_insecure_tls").MustBool(false)
 
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)

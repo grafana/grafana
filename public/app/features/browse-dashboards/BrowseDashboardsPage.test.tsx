@@ -223,7 +223,9 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         await user.click(await screen.findByText(/test team/i));
 
         await user.click(screen.getByRole('button', { name: 'Save owner' }));
-        expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        await waitFor(() => {
+          expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        });
       });
 
       it('allows removing the team that owns the folder', async () => {
@@ -240,7 +242,9 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         await user.click(await screen.findByTitle(/clear value/i));
 
         await user.click(screen.getByRole('button', { name: 'Save owner' }));
-        expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        await waitFor(() => {
+          expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        });
       });
     });
   });

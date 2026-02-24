@@ -1,51 +1,38 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { CardEditorRenderer } from '../CardEditorRenderer';
 import { useQueryEditorUIContext } from '../QueryEditorContext';
 
 import { QueryEditorDetailsSidebar } from './QueryEditorDetailsSidebar';
 
-interface QueryEditorBodyProps {
-  children?: ReactNode;
-}
-
-export function QueryEditorBody({ children }: QueryEditorBodyProps) {
+export function QueryEditorBody() {
   const styles = useStyles2(getStyles);
   const { queryOptions } = useQueryEditorUIContext();
-  const { isQueryOptionsOpen } = queryOptions;
 
   return (
     <div className={styles.container}>
-      <div className={styles.content}>{children}</div>
-      {isQueryOptionsOpen && (
-        <div className={styles.sidebarWrapper}>
-          <QueryEditorDetailsSidebar />
-        </div>
-      )}
+      <div className={styles.scrollableContent}>
+        <CardEditorRenderer />
+      </div>
+      {queryOptions.isQueryOptionsOpen && <QueryEditorDetailsSidebar />}
     </div>
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    container: css({
-      display: 'flex',
-      flex: 1,
-      minHeight: 0,
-      overflow: 'hidden',
-    }),
-    sidebarWrapper: css({
-      flexShrink: 0,
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-    }),
-    content: css({
-      flex: 1,
-      minWidth: 0,
-      overflow: 'auto',
-      padding: theme.spacing(2),
-    }),
-  };
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    position: 'relative',
+    flex: 1,
+    minHeight: 0,
+    display: 'flex',
+  }),
+  scrollableContent: css({
+    flex: 1,
+    minWidth: 0,
+    overflow: 'auto',
+    padding: theme.spacing(2),
+  }),
+});

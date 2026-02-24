@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
 
@@ -142,6 +144,84 @@ func TestMoveOptionsContentHandling(t *testing.T) {
 
 			assert.Equal(t, tt.expectedUseOriginal, useOriginal, "Should correctly determine whether to use original content")
 			assert.Equal(t, tt.expectedContentToUse, destinationData, "Should select correct content for destination")
+		})
+	}
+}
+
+func TestShouldUpdateGrafanaDB(t *testing.T) {
+	tests := []struct {
+		name   string
+		repo   provisioning.RepositorySpec
+		opts   DualWriteOptions
+		parsed *ParsedResource
+		expect bool
+	}{
+		{
+			name: "update when parsed and sync enabled",
+			opts: DualWriteOptions{
+				Ref: "something",
+			},
+			repo: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+				Git: &provisioning.GitRepositoryConfig{
+					Branch: "something",
+				},
+				Sync: provisioning.SyncOptions{
+					Enabled: true,
+				},
+			},
+			parsed: &ParsedResource{
+				Client: &MockDynamicResourceInterface{},
+			},
+			expect: true,
+		}, {
+			name: "do not write when its a different branch",
+			opts: DualWriteOptions{
+				Ref: "something",
+			},
+			repo: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+				Git: &provisioning.GitRepositoryConfig{
+					Branch: "something-else",
+				},
+				Sync: provisioning.SyncOptions{
+					Enabled: true,
+				},
+			},
+			parsed: &ParsedResource{
+				Client: &MockDynamicResourceInterface{},
+			},
+			expect: false,
+		}, {
+			name: "do not write when sync is disabled",
+			opts: DualWriteOptions{
+				Ref: "something",
+			},
+			repo: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+				Git: &provisioning.GitRepositoryConfig{
+					Branch: "something",
+				},
+				Sync: provisioning.SyncOptions{
+					Enabled: false, // <<<<<<
+				},
+			},
+			parsed: &ParsedResource{
+				Client: &MockDynamicResourceInterface{},
+			},
+			expect: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rw := repository.NewMockReaderWriter(t)
+			rw.On("Config").Return(&provisioning.Repository{Spec: tt.repo})
+			dw := &DualReadWriter{repo: rw}
+
+			update := dw.shouldUpdateGrafanaDB(tt.opts, tt.parsed)
+
+			assert.Equal(t, tt.expect, update, "Should correctly determine if we should update")
 		})
 	}
 }

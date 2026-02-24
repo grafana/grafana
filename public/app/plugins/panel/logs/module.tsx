@@ -117,6 +117,19 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       });
     }
 
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'showFieldSelector',
+        name: t('logs.name-enable-field-selector', 'Enable field selector'),
+        category,
+        description: t(
+          'logs.description-enable-field-selector',
+          'Experimental. Show a component to manage the displayed fields from the logs.'
+        ),
+        defaultValue: false,
+      });
+    }
+
     builder.addBooleanSwitch({
       path: 'enableInfiniteScrolling',
       name: t('logs.name-enable-infinite-scrolling', 'Enable infinite scrolling'),

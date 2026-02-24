@@ -27,3 +27,8 @@ func NewSnapshotSpec() *SnapshotSpec {
 		External: (func(input bool) *bool { return &input })(false),
 	}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for SnapshotSpec.
+func (SnapshotSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.SnapshotSpec"
+}

@@ -21,26 +21,15 @@ var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
 var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
 
 type VerifyAgainstExistingRepositoriesValidator struct {
-	lister RepositoryLister
-	limits quotas.QuotaLimits
+	lister      RepositoryLister
+	quotaGetter quotas.QuotaGetter
 }
 
-func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
+func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, quotaGetter quotas.QuotaGetter) Validator {
 	// Default to 10 repositories for backward compatibility when using the old constructor
 	return &VerifyAgainstExistingRepositoriesValidator{
-		lister: lister,
-		limits: quotas.QuotaLimits{MaxRepositories: 10},
-	}
-}
-
-// NewVerifyAgainstExistingRepositoriesValidatorWithQuotas creates a validator with quota limits.
-// HACK: This is a workaround to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature which would require
-// changes in the enterprise repository. This should be merged into NewVerifyAgainstExistingRepositoriesValidator parameters
-// once we can coordinate the change across repositories.
-func NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(lister RepositoryLister, limits quotas.QuotaLimits) Validator {
-	return &VerifyAgainstExistingRepositoriesValidator{
-		lister: lister,
-		limits: limits,
+		lister:      lister,
+		quotaGetter: quotaGetter,
 	}
 }
 
@@ -113,8 +102,14 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
+	// Get quota status for the namespace
+	quotaStatus, err := v.quotaGetter.GetQuotaStatus(ctx, cfg.Namespace)
+	if err != nil {
+		return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+	}
+
 	// Check repository limit (0 = unlimited, > 0 = use value)
-	maxRepos := v.limits.MaxRepositories
+	maxRepos := quotaStatus.MaxRepositories
 	// Early return if unlimited (0) to avoid unnecessary counting.
 	if maxRepos == 0 {
 		return nil

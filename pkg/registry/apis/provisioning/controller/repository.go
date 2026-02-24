@@ -163,7 +163,7 @@ func repoKeyFunc(obj any) (string, error) {
 //
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
 // until shutdown. Individual processing operations already have their own spans.
-func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
+func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func()) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
 
@@ -182,6 +182,8 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
 	}
 
 	logger.Info("Started workers")
+	onStarted()
+
 	<-ctx.Done()
 	logger.Info("Shutting down workers")
 }
@@ -561,7 +563,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
-	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	newQuota, err := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get quota status: %w", err)
+	}
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(ctx, namespace, newQuota)
 	if err != nil {
 		return fmt.Errorf("check repository quota: %w", err)

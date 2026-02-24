@@ -810,6 +810,14 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 
 /**
  * @internal
+ * Returns unique key for each row
+ */
+export function rowKeyGetter(row: TableRow): string {
+  return row.__index + '_' + row.__depth;
+}
+
+/**
+ * @internal
  * Returns true if the DataFrame contains nested frames
  */
 export const getIsNestedTable = (fields: Field[]): boolean =>
