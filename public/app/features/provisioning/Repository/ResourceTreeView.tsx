@@ -100,28 +100,31 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         header: t('provisioning.resource-tree.header-status', 'Status'),
         cell: ({ row: { original } }: TreeCell) => {
           const { status, missingFolderMetadata } = original.item;
-          if (config.featureToggles.provisioningFolderMetadata && missingFolderMetadata) {
-            return (
-              <Tooltip
-                content={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
-              >
-                <Icon name="exclamation-triangle" className={styles.warningIcon} />
-              </Tooltip>
-            );
-          }
-          if (!status) {
+          const showWarning = config.featureToggles.provisioningFolderMetadata && missingFolderMetadata;
+          if (!status && !showWarning) {
             return null;
           }
           return (
-            <Icon
-              name={status === 'synced' ? 'check-circle' : 'sync'}
-              className={status === 'synced' ? styles.syncedIcon : undefined}
-              title={
-                status === 'synced'
-                  ? t('provisioning.resource-tree.status-synced', 'Synced')
-                  : t('provisioning.resource-tree.status-pending', 'Pending')
-              }
-            />
+            <Stack direction="row" gap={1} alignItems="center">
+              {status && (
+                <Icon
+                  name={status === 'synced' ? 'check-circle' : 'sync'}
+                  className={status === 'synced' ? styles.syncedIcon : undefined}
+                  title={
+                    status === 'synced'
+                      ? t('provisioning.resource-tree.status-synced', 'Synced')
+                      : t('provisioning.resource-tree.status-pending', 'Pending')
+                  }
+                />
+              )}
+              {showWarning && (
+                <Tooltip
+                  content={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
+                >
+                  <Icon name="exclamation-triangle" className={styles.warningIcon} />
+                </Tooltip>
+              )}
+            </Stack>
           );
         },
       },
