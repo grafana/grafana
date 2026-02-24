@@ -139,12 +139,20 @@ func TestBuildQuery(t *testing.T) {
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
+			name: "query with receiver filter only",
+			query: Query{
+				Receiver: stringPtr("email-receiver"),
+			},
+			expected: fmt.Sprintf(`{%s=%q} |= "email-receiver" | json | receiver = "email-receiver"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
 			name: "query with receiver filter",
 			query: Query{
 				RuleUID:  stringPtr("test-rule-uid"),
 				Receiver: stringPtr("email-receiver"),
 			},
-			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver"`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" |= "email-receiver" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver"`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{
@@ -182,7 +190,7 @@ func TestBuildQuery(t *testing.T) {
 				Status:   createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusResolved),
 				Outcome:  outcomePtr(v0alpha1.CreateNotificationqueryRequestNotificationOutcomeSuccess),
 			},
-			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver" | status = "resolved" | error = ""`,
+			expected: fmt.Sprintf(`{%s=%q} |= "test-rule-uid" |= "email-receiver" | json | alert_labels___alert_rule_uid__ = "test-rule-uid" | receiver = "email-receiver" | status = "resolved" | error = ""`,
 				historian.LabelFrom, historian.LabelFromValue),
 		},
 		{

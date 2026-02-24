@@ -28,6 +28,7 @@ type ExportWorker struct {
 	exportFn            ExportFn
 	wrapWithStageFn     WrapWithStageFn
 	metrics             jobs.JobMetrics
+	enabled             bool
 }
 
 func NewExportWorker(
@@ -37,6 +38,7 @@ func NewExportWorker(
 	exportFn ExportFn,
 	wrapWithStageFn WrapWithStageFn,
 	metrics jobs.JobMetrics,
+	enabled bool,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
@@ -45,6 +47,7 @@ func NewExportWorker(
 		exportFn:            exportFn,
 		wrapWithStageFn:     wrapWithStageFn,
 		metrics:             metrics,
+		enabled:             enabled,
 	}
 }
 
@@ -54,6 +57,10 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 
 // Process will start a job
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+	if !r.enabled {
+		return fmt.Errorf("export functionality is disabled by configuration")
+	}
+
 	options := job.Spec.Push
 	if options == nil {
 		return errors.New("missing export settings")

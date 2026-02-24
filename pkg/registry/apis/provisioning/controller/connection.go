@@ -102,8 +102,9 @@ func (cc *ConnectionController) enqueue(obj interface{}) {
 	cc.queue.Add(&connectionQueueItem{key: key})
 }
 
-// Run starts the ConnectionController.
-func (cc *ConnectionController) Run(ctx context.Context, workerCount int) {
+// Run starts the ConnectionController. The onStarted callback is invoked once
+// all workers have been launched, before blocking on ctx.Done().
+func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func()) {
 	defer utilruntime.HandleCrash()
 	defer cc.queue.ShutDown()
 
@@ -112,6 +113,8 @@ func (cc *ConnectionController) Run(ctx context.Context, workerCount int) {
 	for i := 0; i < workerCount; i++ {
 		go wait.UntilWithContext(ctx, cc.runWorker, time.Second)
 	}
+
+	onStarted()
 
 	<-ctx.Done()
 	cc.logger.Info("shutting down connection controller")

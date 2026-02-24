@@ -1839,10 +1839,18 @@
       "apply": "Tillämpa"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Det gick inte att läsa in tillståndshistorik",
       "history-error-desc": "Kunde inte hämta tillståndsövergångshistorik för denna instans.",
       "no-history": "Inga senaste tillståndsändringar",
-      "state-history": "Senaste tillståndsändringar"
+      "state-error-description": "",
+      "state-history": "Senaste tillståndsändringar",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Icke-matchande etiketter",
@@ -5027,7 +5035,7 @@
           }
         }
       },
-      "name": "Automatiskt rutnät",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Rensa"
@@ -6135,6 +6143,8 @@
       "title-transformations": "Omvandlingar"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Sök efter transformering",
       "show-images": "Visa bilder",
       "sql-expressions-message-description": "Ett nytt sätt att hantera och omvandla resultaten av datakällfrågor med hjälp av MySQL-liknande syntax.",
@@ -6272,11 +6282,12 @@
     "browse-grafana-com": "Bläddra på Grafana.com",
     "browse-plugins": "Bläddra bland tillägg",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Datakälla tillhandahållen",
       "details-tooltip": "Detaljer",
       "no-preview": "Ingen förhandsgranskning tillgänglig",
       "use-dashboard-button": "Använd instrumentpanel",
-      "use-template-button": "Använd mall"
+      "view-template-button": ""
     },
     "community-empty-title": "Inga community-instrumentpaneler hittades",
     "community-empty-title-with-datasource": "Inga {{datasourceType}} community-instrumentpaneler hittades",
@@ -6386,10 +6397,12 @@
         "new-panel": "Ny panel"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7875,6 +7888,11 @@
       "continue-without-saving": "Fortsätt utan att spara",
       "save-correlation": "Spara korrelation",
       "title-unsaved-changes-to-correlation": "Korrelationsändringar som inte sparats"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Klicka och dra den grå avdelaren i det färgade området nedan.",
@@ -12367,6 +12385,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Sista grenen",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Hämtbegäran för gren",
       "suffix-read-only-branch": ""
     }
@@ -12403,10 +12422,10 @@
       },
       "pr-workflow-description": "Tillåter användare att välja om de vill öppna en pull-begäran när de sparar ändringar. Om lagringsplatsen inte tillåter direkta ändringar i huvudgrenen kan en pull-begäran fortfarande krävas.",
       "pr-workflow-label": "Aktivera alternativ för hämtningsbegäran när du sparar",
-      "token-description": "Bitbucket-applösenord med behörigheter för lagringsplats",
-      "token-label": "App-lösenord",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Bitbucket-token krävs",
-      "token-user-description": "Det användarnamn som kommer att användas för att komma åt lagringsplatsen med appens lösenord",
+      "token-user-description": "",
       "token-user-required": "Användarnamn krävs",
       "url-description": "Webbadress för Bitbucket-lagringsplatsen",
       "url-required": "Webbadress för lagringsplats krävs"
@@ -12432,9 +12451,6 @@
       "files-count_other": "{{count}} filer",
       "folders-count_one": "{{count}} mapp",
       "folders-count_other": "{{count}} mapp"
-    },
-    "check-repository": {
-      "check": "Kolla"
     },
     "code-block": {
       "aria-label-copy": "Kopiera kod till urklippet"
@@ -12822,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Kontrollerad:",
       "connection-status": "Anslutningsstatus:",
       "finished": "Senaste lyckade hämtning:",
@@ -12831,7 +12848,9 @@
       "last-ref": "Senaste ref:",
       "messages": "Meddelanden:",
       "not-available": "Ej tillgängligt",
+      "path": "",
       "pull-status": "Pull-status",
+      "repo-url": "",
       "resources": "Resurser",
       "status": "Status:",
       "unhealthy": "Ohälsosamma",
@@ -12968,8 +12987,8 @@
     "token-permissions-info": {
       "and-click": "och klicka på",
       "bitbucket": {
-        "create-token-button": "Skapa applösenord",
-        "token-text": "Personlig åtkomsttoken för Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Lägg till ny token",
@@ -14340,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "Radera team {{teamName}}",
         "aria-label-edit-team": "Redigera team {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Redigera team",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Redigera team"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Laddar team …",
       "new-team": "Nytt team",
       "placeholder-search-teams": "Sök team"
