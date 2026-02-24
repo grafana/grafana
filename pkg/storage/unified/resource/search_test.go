@@ -379,10 +379,11 @@ func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIn
 }
 
 func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
-	m.once.Do(func() {
-		m.wg.Add(1)
-		close(m.started)
-	})
+	m.wg.Add(1)
+	m.once.Do(
+		func() {
+			close(m.started)
+		})
 	defer m.wg.Done()
 
 	time.Sleep(1 * time.Second)
