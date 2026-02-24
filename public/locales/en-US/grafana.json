@@ -1839,10 +1839,18 @@
       "apply": "Apply"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "The selected time range is shorter than the rule's query evaluation window so a graph may not be available.",
+        "title": "Time range shorter than evaluation window"
+      },
       "history-error": "Failed to load state history",
       "history-error-desc": "Unable to fetch state transition history for this instance.",
       "no-history": "No recent state changes",
-      "state-history": "Recent State Changes"
+      "state-error-description": "This instance is in <strong>Error</strong> state. An evaluation error occurred, so a graph may not be available.",
+      "state-history": "Recent State Changes",
+      "state-nodata": {
+        "description": "This instance is in <strong>No data</strong> state. The alert fired because the query returned no data in the evaluation window, so a graph may not be available."
+      }
     },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
@@ -4995,6 +5003,7 @@
       "description-color-annotation-event-markers": "Color to use for the annotation event markers",
       "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
       "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
+      "error-loading-panels": "Failed to load panel plugins",
       "label-color": "Color",
       "label-data-source": "Data source",
       "label-enabled": "Enabled",
@@ -6135,6 +6144,8 @@
       "title-transformations": "Transformations"
     },
     "transformation-picker-ng": {
+      "clear-search": "Clear search",
+      "no-transformations-found": "No transformations found",
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
       "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
@@ -6434,6 +6445,7 @@
       "delete": "Delete",
       "description-color-annotation-event-markers": "Color to use for the annotation event markers",
       "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
+      "error-loading-panels": "Failed to load panel plugins",
       "label-annotation-controls-display": "Show annotation controls in",
       "label-color": "Color",
       "label-data-source": "Data source",
@@ -12375,6 +12387,7 @@
       "placeholder-branch": "Select or enter branch name",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
+      "suffix-new-branch": "New branch",
       "suffix-pr-branch": "Pull request branch",
       "suffix-read-only-branch": " (read-only)"
     }
@@ -12827,6 +12840,7 @@
       "no-repositories": "No repositories configured"
     },
     "repository-overview": {
+      "branch": "Branch:",
       "checked": "Checked:",
       "connection-status": "Connection status:",
       "finished": "Last successful pull:",
@@ -12836,7 +12850,9 @@
       "last-ref": "Last Ref:",
       "messages": "Messages:",
       "not-available": "N/A",
+      "path": "Path:",
       "pull-status": "Pull status",
+      "repo-url": "Repository URL:",
       "resources": "Resources",
       "status": "Status:",
       "unhealthy": "Unhealthy",

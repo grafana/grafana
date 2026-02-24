@@ -49,6 +49,8 @@ func (c *RedisChannel) handleMessages() {
 	}
 }
 
+func (c *RedisChannel) ReliableDelivery([]byte) bool { return true }
+
 func (c *RedisChannel) Broadcast(b []byte) {
 	b, err := proto.Marshal(&alertingClusterPB.Part{Key: c.key, Data: b})
 	if err != nil {

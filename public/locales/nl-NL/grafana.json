@@ -1839,10 +1839,18 @@
       "apply": "Toepassen"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Kan statusgeschiedenis niet laden",
       "history-error-desc": "Kan de statusovergangsgeschiedenis voor deze instantie niet ophalen.",
       "no-history": "Geen recente statuswijzigingen",
-      "state-history": "Recente statuswijzigingen"
+      "state-error-description": "",
+      "state-history": "Recente statuswijzigingen",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Niet-overeenkomende labels",
@@ -5027,7 +5035,7 @@
           }
         }
       },
-      "name": "Automatisch raster",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Wissen"
@@ -6135,6 +6143,8 @@
       "title-transformations": "Transformaties"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Transformatie zoeken",
       "show-images": "Afbeeldingen weergeven",
       "sql-expressions-message-description": "Een nieuwe manier om de resultaten van gegevensbronquery's te manipuleren en te transformeren met behulp van MySQL-achtige syntaxis.",
@@ -6272,11 +6282,12 @@
     "browse-grafana-com": "Grafana.com doorbladeren",
     "browse-plugins": "Plugins doorbladeren",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Databron verstrekt",
       "details-tooltip": "Details",
       "no-preview": "Geen voorbeeld beschikbaar",
       "use-dashboard-button": "Dashboard gebruiken",
-      "use-template-button": "Sjabloon gebruiken"
+      "view-template-button": ""
     },
     "community-empty-title": "Geen communitydashboards gevonden",
     "community-empty-title-with-datasource": "Geen {{datasourceType}} communitydashboards gevonden",
@@ -6386,10 +6397,12 @@
         "new-panel": "Nieuw paneel"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7875,6 +7888,11 @@
       "continue-without-saving": "Doorgaan zonder opslaan",
       "save-correlation": "Correlatie opslaan",
       "title-unsaved-changes-to-correlation": "Onopgeslagen wijzigingen in correlatie"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Klik en sleep de grijze verdeler in het gekleurde gebied hieronder.",
@@ -12367,6 +12385,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Laatste branch",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Pull request branch",
       "suffix-read-only-branch": ""
     }
@@ -12403,10 +12422,10 @@
       },
       "pr-workflow-description": "Hiermee kunnen gebruikers kiezen of ze een pull-verzoek willen openen bij het opslaan van wijzigingen. Als de repository geen directe wijzigingen in de hoofdtak toestaat, kan er nog steeds een pull-verzoek nodig zijn.",
       "pr-workflow-label": "De optie pull-verzoek inschakelen bij opslaan",
-      "token-description": "Bitbucket-appwachtwoord met repository-toestemmingen",
-      "token-label": "Wachtwoord voor de app",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Bitbucket-token is vereist",
-      "token-user-description": "De gebruikersnaam die zal worden gebruikt om toegang te krijgen tot de repository met het app-wachtwoord",
+      "token-user-description": "",
       "token-user-required": "Gebruikersnaam is vereist",
       "url-description": "De Bitbucket-repository-URL",
       "url-required": "Repository-URL is vereist"
@@ -12432,9 +12451,6 @@
       "files-count_other": "{{count}} bestanden",
       "folders-count_one": "{{count}} map",
       "folders-count_other": "{{count}} map"
-    },
-    "check-repository": {
-      "check": "Controleer"
     },
     "code-block": {
       "aria-label-copy": "Code naar klembord kopiëren"
@@ -12822,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Gecontroleerd:",
       "connection-status": "Verbindingsstatus:",
       "finished": "Laatste succesvolle pull:",
@@ -12831,7 +12848,9 @@
       "last-ref": "Laatste referentie:",
       "messages": "Berichten:",
       "not-available": "N.v.t.",
+      "path": "",
       "pull-status": "Pull-status",
+      "repo-url": "",
       "resources": "Bronnen",
       "status": "Status:",
       "unhealthy": "Ongezond",
@@ -12968,8 +12987,8 @@
     "token-permissions-info": {
       "and-click": "en klik",
       "bitbucket": {
-        "create-token-button": "App-wachtwoorden aanmaken",
-        "token-text": "Bitbucket Personal Access Token"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Nieuw token toevoegen",
@@ -14340,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "Team {{teamName}} verwijderen",
         "aria-label-edit-team": "Team {{teamName}} bewerken",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Team bewerken",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Team bewerken"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Teams laden ...",
       "new-team": "Nieuw team",
       "placeholder-search-teams": "Teams zoeken"

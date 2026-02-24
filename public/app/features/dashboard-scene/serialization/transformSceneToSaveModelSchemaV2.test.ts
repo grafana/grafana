@@ -55,6 +55,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { djb2Hash } from '../utils/djb2Hash';
 
 import {
   getPersistedDSFor,
@@ -64,6 +65,7 @@ import {
   getDataQueryKind,
   getAutoAssignedDSRef,
   getVizPanelQueries,
+  vizPanelToSchemaV2,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
@@ -1329,6 +1331,141 @@ describe('dynamic layouts', () => {
     expect(tabsLayout.tabs.length).toBe(1);
     expect(tabsLayout.tabs[0].kind).toBe('TabsLayoutTab');
     expect(tabsLayout.tabs[0].spec.layout.kind).toBe('GridLayout');
+  });
+});
+
+describe('snapshot mode: repeated panels', () => {
+  it('should include repeated panel clones in elements and expanded grid layout items', () => {
+    const sourcePanel = new VizPanel({
+      key: 'panel-10',
+      pluginId: 'timeseries',
+      title: 'Source',
+    });
+
+    const clone1Key = 'panel-10-clone-1';
+    const clone2Key = 'panel-10-clone-2';
+
+    const clone1 = sourcePanel.clone({ key: clone1Key, repeatSourceKey: sourcePanel.state.key });
+    const clone2 = sourcePanel.clone({ key: clone2Key, repeatSourceKey: sourcePanel.state.key });
+
+    const repeater = new DashboardGridItem({
+      key: 'grid-item-10',
+      x: 2,
+      y: 3,
+      width: 24,
+      height: 21,
+      itemHeight: 7,
+      body: sourcePanel,
+      variableName: 'var',
+      repeatDirection: 'v',
+      maxPerRow: 4,
+      repeatedPanels: [clone1, clone2],
+    });
+
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [repeater],
+          }),
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+
+    // Snapshot mode must include repeat clones in `elements` or layout references break.
+    expect(result.elements[clone1Key]).toBeDefined();
+    expect(result.elements[clone2Key]).toBeDefined();
+
+    expect(result.elements[clone1Key].kind).toBe('Panel');
+    expect(result.elements[clone1Key].spec.id).toBe(djb2Hash(clone1Key));
+    expect(result.elements[clone2Key].spec.id).toBe(djb2Hash(clone2Key));
+
+    expect(result.layout.kind).toBe('GridLayout');
+    const gridLayout = result.layout.spec as GridLayoutSpec;
+
+    // Source + clones expanded into explicit items in snapshot mode.
+    expect(gridLayout.items).toHaveLength(3);
+    expect(gridLayout.items.map((i) => i.spec.element.name)).toEqual(['panel-10', clone1Key, clone2Key]);
+
+    // Snapshot output shouldn't contain a repeater definition; just explicit items.
+    expect(gridLayout.items[0].spec.repeat).toBeUndefined();
+
+    // Repeat positioning should be anchored to the repeater's original x/y.
+    expect(gridLayout.items[0].spec.x).toBe(2);
+    expect(gridLayout.items[0].spec.y).toBe(3);
+    expect(gridLayout.items[1].spec.y).toBe(10);
+    expect(gridLayout.items[2].spec.y).toBe(17);
+  });
+
+  it('should expand auto grid repeaters to explicit items in snapshot mode', () => {
+    const sourcePanel = new VizPanel({
+      key: 'panel-20',
+      pluginId: 'timeseries',
+      title: 'AutoGrid source',
+    });
+
+    const cloneKey = 'panel-20-clone-1';
+    const clone = sourcePanel.clone({ key: cloneKey, repeatSourceKey: sourcePanel.state.key });
+
+    const autoGridRepeater = new AutoGridItem({
+      key: 'auto-grid-item-1',
+      body: sourcePanel,
+      variableName: 'var',
+      repeatedPanels: [clone],
+    });
+
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new AutoGridLayoutManager({
+          columnWidth: 'standard',
+          rowHeight: 'standard',
+          maxColumnCount: 4,
+          fillScreen: false,
+          layout: new AutoGridLayout({
+            children: [autoGridRepeater],
+          }),
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+
+    expect(result.layout.kind).toBe('AutoGridLayout');
+    const layout = result.layout.spec as AutoGridLayoutSpec;
+
+    // Snapshot mode should include explicit panels, not a repeat definition.
+    expect(layout.items).toHaveLength(2);
+    expect(layout.items[0].spec.repeat).toBeUndefined();
+
+    // Base item references the original panel, clone item references clone key.
+    expect(layout.items[0].spec.element.name).toBe('panel-20');
+    expect(layout.items[1].spec.element.name).toBe(cloneKey);
+
+    // Snapshot mode must include repeat clones in `elements`.
+    expect(result.elements[cloneKey]).toBeDefined();
+    expect(result.elements[cloneKey].spec.id).toBe(djb2Hash(cloneKey));
+  });
+});
+
+describe('vizPanelToSchemaV2 snapshot repeat clones', () => {
+  it('should assign a stable unique id per repeat clone in snapshot mode', () => {
+    const sourcePanel = new VizPanel({
+      key: 'panel-30',
+      pluginId: 'timeseries',
+      title: 'Source',
+    });
+
+    const cloneKey = 'panel-30-clone-1';
+    const clone = sourcePanel.clone({ key: cloneKey, repeatSourceKey: sourcePanel.state.key });
+
+    const snapshotElement = vizPanelToSchemaV2(clone, undefined, true);
+    const normalElement = vizPanelToSchemaV2(clone, undefined, false);
+
+    expect(snapshotElement.kind).toBe('Panel');
+    expect(snapshotElement.spec.id).toBe(djb2Hash(cloneKey));
+    expect(snapshotElement.spec.id).not.toBe(normalElement.spec.id);
   });
 });
 

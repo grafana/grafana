@@ -85,7 +85,9 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 	if !cache.WaitForCacheSync(ctx.Done(), connInformer.Informer().HasSynced) {
 		return fmt.Errorf("failed to sync informer cache")
 	}
-
-	connController.Run(ctx, controllerCfg.NumberOfWorkers())
+	connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+		logger.Info("connection operator is ready")
+		deps.HealthNotifier.SetReady()
+	})
 	return nil
 }

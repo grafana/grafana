@@ -1831,10 +1831,18 @@
       "apply": "应用"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "加载状态历史记录失败",
       "history-error-desc": "无法获取此实例的状态转换历史记录。",
       "no-history": "没有最近的状态变更",
-      "state-history": "最近的状态变更"
+      "state-error-description": "",
+      "state-history": "最近的状态变更",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "不匹配的标签",
@@ -5001,7 +5009,7 @@
           }
         }
       },
-      "name": "自动网格",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "清除"
@@ -6108,6 +6116,8 @@
       "title-transformations": "转换"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "搜索转换",
       "show-images": "显示图像",
       "sql-expressions-message-description": "一种使用类 MySQL 语法来操作和转换数据源查询结果的新方法。",
@@ -6245,11 +6255,12 @@
     "browse-grafana-com": "浏览 Grafana.com",
     "browse-plugins": "浏览插件",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "提供的数据源",
       "details-tooltip": "详情",
       "no-preview": "没有可用的预览",
       "use-dashboard-button": "使用数据面板",
-      "use-template-button": "使用模板"
+      "view-template-button": ""
     },
     "community-empty-title": "未找到社区数据面板",
     "community-empty-title-with-datasource": "未找到 {{datasourceType}} 社区数据面板",
@@ -6358,10 +6369,12 @@
         "new-panel": "新面板"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7844,6 +7857,11 @@
       "continue-without-saving": "继续而不保存",
       "save-correlation": "保存相关性",
       "title-unsaved-changes-to-correlation": "未保存的相关性更改"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "在下方彩色区域中点击并拖动灰色分隔线。",
@@ -12313,6 +12331,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "最后一个分支",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "拉取请求分支",
       "suffix-read-only-branch": ""
     }
@@ -12349,10 +12368,10 @@
       },
       "pr-workflow-description": "允许用户选择在保存更改时是否打开拉取请求。如果存储库不允许直接更改主分支，则仍可能需要拉取请求。",
       "pr-workflow-label": "保存时启用拉取请求选项",
-      "token-description": "具有存储库权限的 Bitbucket 应用密码",
-      "token-label": "应用密码",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Bitbucket 令牌为必填项",
-      "token-user-description": "将用于使用应用密码访问存储库的用户名",
+      "token-user-description": "",
       "token-user-required": "用户名为必填项",
       "url-description": "Bitbucket 存储库 URL",
       "url-required": "存储库 URL 为必填项"
@@ -12375,9 +12394,6 @@
       "dashboards-count_other": "{{count}} 个数据面板",
       "files-count_other": "{{count}} 个文件",
       "folders-count_other": "{{count}} 个文件夹"
-    },
-    "check-repository": {
-      "check": "检查"
     },
     "code-block": {
       "aria-label-copy": "复制代码到剪贴板"
@@ -12762,6 +12778,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "已检查：",
       "connection-status": "连接状态：",
       "finished": "上次成功拉取：",
@@ -12771,7 +12788,9 @@
       "last-ref": "上次引用：",
       "messages": "消息：",
       "not-available": "N/A",
+      "path": "",
       "pull-status": "拉取状态",
+      "repo-url": "",
       "resources": "资源",
       "status": "状态：",
       "unhealthy": "状态不良",
@@ -12908,8 +12927,8 @@
     "token-permissions-info": {
       "and-click": "并点击",
       "bitbucket": {
-        "create-token-button": "创建应用密码",
-        "token-text": "Bitbucket 个人访问令牌"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "添加新令牌",
@@ -14273,9 +14292,18 @@
       "columns": {
         "aria-label-delete-button": "删除团队 {{teamName}}",
         "aria-label-edit-team": "编辑团队 {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "编辑团队",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "编辑团队"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "正在加载团队...",
       "new-team": "新建团队",
       "placeholder-search-teams": "搜索团队"
