@@ -186,7 +186,7 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						RestrictedActions: []string{"dashboard.grafana.app/dashboards:get"},
+						K8sRestrictedActions: []string{"dashboard.grafana.app/dashboards:get"},
 					},
 				},
 			},
@@ -201,10 +201,8 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						RestrictedActions: []string{
-							"dashboard.grafana.app/dashboards:get",
-							accesscontrol.ActionUsersRead,
-						},
+						K8sRestrictedActions: []string{"dashboard.grafana.app/dashboards:get"},
+						RestrictedActions:    []string{accesscontrol.ActionUsersRead},
 					},
 				},
 			},
@@ -220,7 +218,7 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						RestrictedActions: []string{"dashboard.grafana.app/dashboards:*"},
+						K8sRestrictedActions: []string{"dashboard.grafana.app/dashboards:*"},
 					},
 				},
 			},

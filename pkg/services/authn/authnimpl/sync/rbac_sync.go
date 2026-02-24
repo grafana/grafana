@@ -67,21 +67,10 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 	grouped := accesscontrol.GroupScopesByActionContext(ctx, permissions)
 
 	// Restrict access to the list of actions
-	actionsLookup := ident.ClientParams.FetchPermissionsParams.RestrictedActions
-	if actionsLookup != nil {
-		allowedActions := make([]string, 0, len(actionsLookup))
-
-		// Split RestrictedActions into K8s and Grafana formats
-		k8sRestrictions := make([]string, 0, len(actionsLookup))
-		grafanaRestrictions := make([]string, 0, len(actionsLookup))
-
-		for _, action := range actionsLookup {
-			if strings.Contains(action, "grafana.app") {
-				k8sRestrictions = append(k8sRestrictions, action)
-			} else {
-				grafanaRestrictions = append(grafanaRestrictions, action)
-			}
-		}
+	grafanaRestrictions := ident.ClientParams.FetchPermissionsParams.RestrictedActions
+	k8sRestrictions := ident.ClientParams.FetchPermissionsParams.K8sRestrictedActions
+	if grafanaRestrictions != nil || k8sRestrictions != nil {
+		allowedActions := make([]string, 0, len(grafanaRestrictions)+len(k8sRestrictions))
 
 		// Translate K8s restrictions to Grafana actions
 		k8sPermissions := s.translateK8sPermissions(ctx, k8sRestrictions)
@@ -90,9 +79,7 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 		}
 
 		// Add Grafana actions directly
-		for _, action := range grafanaRestrictions {
-			allowedActions = append(allowedActions, action)
-		}
+		allowedActions = append(allowedActions, grafanaRestrictions...)
 
 		// Filter permissions
 		filtered := make(map[string][]string, len(allowedActions))
