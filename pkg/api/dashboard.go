@@ -410,7 +410,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	// Items with v2 schema elements must set v2 properties
 	if dashboards.LooksLikeV2Spec(spec) {
-		return response.Error(http.StatusBadRequest, "Dashboard appears to be in v2 format.  Please use the /apis/dashboard.grafana.app/v2 API to manage this resource", nil)
+		return response.Error(http.StatusBadRequest, dashboards.LooksLikeK8sResourceMessage, nil)
 	}
 
 	// Items with metadata, spec, etc

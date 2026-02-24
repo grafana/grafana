@@ -590,7 +590,7 @@ func validateNotV2Object(obj runtime.Object) error {
 	}
 
 	if dashboards.LooksLikeV2Spec(spec) {
-		return fmt.Errorf("Dashboard appears to be in v2 format.  Please use the /apis/dashboard.grafana.app/v2 API to manage this resource")
+		return fmt.Errorf(dashboards.LooksLikeK8sResourceMessage)
 	}
 	return nil
 }

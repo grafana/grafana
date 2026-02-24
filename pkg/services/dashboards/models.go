@@ -399,6 +399,8 @@ type SaveDashboardDTO struct {
 	Dashboard *Dashboard
 }
 
+const LooksLikeK8sResourceMessage = "Dashboard appears to be in Kubernetes format. Please use the /apis/dashboard.grafana.app API to manage this resource"
+
 func LooksLikeK8sResource(data map[string]any) bool {
 	if _, ok := data["apiVersion"]; ok {
 		return true
