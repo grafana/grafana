@@ -15,6 +15,8 @@ export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
   Streaming = 'Streaming',
+  /** @alpha - Indicates partial results are being loaded, expects LoadingState.Done when complete */
+  PartialResult = 'PartialResult',
   Done = 'Done',
   Error = 'Error',
 }

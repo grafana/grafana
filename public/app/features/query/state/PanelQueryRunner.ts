@@ -437,7 +437,9 @@ export class PanelQueryRunner {
     // If we have an old result with loading or streaming state, send it with done state
     if (
       this.lastResult &&
-      (this.lastResult.state === LoadingState.Loading || this.lastResult.state === LoadingState.Streaming)
+      (this.lastResult.state === LoadingState.Loading ||
+        this.lastResult.state === LoadingState.Streaming ||
+        this.lastResult.state === LoadingState.PartialResult)
     ) {
       this.subject.next({
         ...this.lastResult,
