@@ -35,6 +35,8 @@ export interface MutationCommand<T = unknown> {
   payloadSchema: z.ZodType<T>;
   /** Permission check run before execution. Must be a pure predicate (no side effects). */
   permission: PermissionCheck;
+  /** When true, the command only reads state and will not trigger a forceRender. */
+  readOnly?: boolean;
   /** The handler function. */
   handler: (payload: T, context: MutationContext) => Promise<MutationResult>;
 }

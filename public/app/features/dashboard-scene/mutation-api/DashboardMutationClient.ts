@@ -24,6 +24,7 @@ type MutationHandler = (payload: unknown, context: MutationContext) => Promise<M
 interface CommandRegistration {
   handler: MutationHandler;
   canExecute: (scene: DashboardScene) => { allowed: true } | { allowed: false; error: string };
+  readOnly: boolean;
 }
 
 export class DashboardMutationClient implements MutationClient {
@@ -60,7 +61,7 @@ export class DashboardMutationClient implements MutationClient {
     try {
       const result = await registration.handler(validationResult.data, context);
 
-      if (result.success && result.changes.length > 0) {
+      if (result.success && !registration.readOnly) {
         this.scene.forceRender();
       }
 
@@ -79,6 +80,7 @@ export class DashboardMutationClient implements MutationClient {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: client validates with Zod before dispatch
       handler: cmd.handler as MutationHandler,
       canExecute: cmd.permission,
+      readOnly: cmd.readOnly ?? false,
     });
   }
 }

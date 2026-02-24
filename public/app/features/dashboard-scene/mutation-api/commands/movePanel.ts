@@ -9,7 +9,6 @@ import { z } from 'zod';
 
 import type { VizPanel } from '@grafana/scenes';
 
-import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -70,10 +69,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       const { element, toParent, position } = payload;
       const elementName = element.name;
 
-      // Find the panel by element name using the serializer mapping
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: mutation system only runs inside DashboardScene
-      const dashScene = scene as unknown as DashboardScene;
-      const panelId = dashScene.serializer.getPanelIdForElement(elementName);
+      const panelId = scene.serializer.getPanelIdForElement(elementName);
       if (panelId === undefined) {
         throw new Error(`Element "${elementName}" not found in the dashboard`);
       }

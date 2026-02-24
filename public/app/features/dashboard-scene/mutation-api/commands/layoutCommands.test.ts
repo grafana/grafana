@@ -656,6 +656,94 @@ describe('Layout mutation commands', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('out of bounds');
     });
+
+    it('moves a panel from DefaultGridLayout row to AutoGridLayout row', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+
+      const row1 = new RowItem({
+        title: 'Grid Row',
+        layout: DefaultGridLayoutManager.fromVizPanels([panelA]),
+      });
+      const row2 = new RowItem({
+        title: 'AutoGrid Row',
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+
+      const body = new RowsLayoutManager({ rows: [row1, row2] });
+      const state: Record<string, unknown> = { uid: 'test-dash', isEditing: false, body };
+      const scene = {
+        state,
+        serializer: mockSerializer({ 'elem-a': 1 }),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      } as unknown as DashboardScene;
+
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'MOVE_PANEL',
+        payload: {
+          element: { name: 'elem-a' },
+          toParent: '/rows/1',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.warnings).toBeUndefined();
+      expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(0);
+      expect(body.state.rows[1].state.layout.getVizPanels()).toHaveLength(1);
+    });
+
+    it('warns when position is provided for an AutoGridLayout target', async () => {
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+
+      const row1 = new RowItem({
+        title: 'Grid Row',
+        layout: DefaultGridLayoutManager.fromVizPanels([panelA]),
+      });
+      const row2 = new RowItem({
+        title: 'AutoGrid Row',
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+
+      const body = new RowsLayoutManager({ rows: [row1, row2] });
+      const state: Record<string, unknown> = { uid: 'test-dash', isEditing: false, body };
+      const scene = {
+        state,
+        serializer: mockSerializer({ 'elem-a': 1 }),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      } as unknown as DashboardScene;
+
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'MOVE_PANEL',
+        payload: {
+          element: { name: 'elem-a' },
+          toParent: '/rows/1',
+          position: { x: 0, y: 0, width: 12, height: 8 },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.warnings).toContain('Position ignored: target uses AutoGridLayout which auto-arranges panels.');
+      expect(body.state.rows[1].state.layout.getVizPanels()).toHaveLength(1);
+    });
   });
 
   describe('nested layout operations', () => {

@@ -9,7 +9,6 @@ import { z } from 'zod';
 
 import type { Element, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-import type { DashboardScene } from '../../scene/DashboardScene';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 
 import { payloads } from './schemas';
@@ -113,6 +112,7 @@ export const getLayoutCommand: MutationCommand<GetLayoutPayload> = {
 
   payloadSchema: payloads.getLayout,
   permission: requiresNewDashboardLayoutsReadOnly,
+  readOnly: true,
 
   handler: async (_payload, context) => {
     const { scene } = context;
@@ -126,10 +126,7 @@ export const getLayoutCommand: MutationCommand<GetLayoutPayload> = {
       // Inject path annotations on rows and tabs
       injectPaths(layout);
 
-      // Build trimmed elements map
-      // getElements requires DashboardScene; safe to cast since mutation system only runs inside DashboardScene
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: mutation system only runs inside DashboardScene
-      const fullElements = getElements(body, scene as unknown as DashboardScene);
+      const fullElements = getElements(body, scene);
       const elements = trimElements(fullElements);
 
       return {
