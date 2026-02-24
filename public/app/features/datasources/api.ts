@@ -59,6 +59,26 @@ export const getDataSourceK8sGroup = (uid: string): string => {
   return '';
 };
 
+export const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
+  dsSettings: Partial<DataSourceSettings>,
+  version: string
+): Partial<DataSourceSettingsK8s> => {
+  let k8sSpec: DatasourceInstanceK8sSpec = {
+    access: dsSettings.access ? dsSettings.access : '',
+    jsonData: dsSettings.jsonData ? dsSettings.jsonData : {},
+    title: dsSettings.name ? dsSettings.name : '',
+    url: dsSettings.url ? dsSettings.url : '',
+    basicAuth: dsSettings.basicAuth ? dsSettings.basicAuth : false,
+    basicAuthUser: dsSettings.basicAuthUser ? dsSettings.basicAuthUser : '',
+    isDefault: dsSettings.isDefault,
+  };
+  const dsK8sSettings: Partial<DataSourceSettingsK8s> = {
+    spec: k8sSpec,
+    apiVersion: dsSettings.type + '.datasource.grafana.app/' + version,
+  };
+  return dsK8sSettings;
+};
+
 export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
   dsSettings: DataSourceSettings,
   namespace: string,
@@ -206,6 +226,29 @@ export const getDataSourceByUid = async (uid: string) => {
   throw Error(`Could not find data source by UID: "${uid}"`);
 };
 
+export const createDataSourceWithK8sAPI = async (dataSource: Partial<DataSourceSettings>) => {
+  let k8sVersion = 'v0alpha1';
+  let dsK8sSettings = convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings(dataSource, k8sVersion);
+  if (dataSource.secureJsonData) {
+    dsK8sSettings.secure = {};
+    for (let [k, v] of Object.entries(dataSource.secureJsonData)) {
+      if (v !== '') {
+        let value = {
+          create: v,
+          name: k,
+        };
+        if (isRecordOfString(value)) {
+          dsK8sSettings.secure[k] = value;
+        }
+      }
+    }
+  }
+  return getBackendSrv().post(
+    `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources`,
+    dsK8sSettings
+  );
+};
+
 export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
   getBackendSrv().post('/api/datasources', dataSource);
 
@@ -265,4 +308,12 @@ export const updateDataSource = async (dataSource: DataSourceSettings) => {
   });
 };
 
-export const deleteDataSource = (uid: string) => getBackendSrv().delete(`/api/datasources/uid/${uid}`);
+export const deleteDataSource = (uid: string) => {
+  let deleteUrl = `/api/datasources/uid/${uid}`;
+  if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
+    let namespace = config.namespace;
+    let apiVersion = `${getDataSourceK8sGroup(uid)}/v0alpha1`;
+    deleteUrl = `/apis/${apiVersion}/namespaces/${namespace}/datasources/${uid}`;
+  }
+  getBackendSrv().delete(deleteUrl);
+};

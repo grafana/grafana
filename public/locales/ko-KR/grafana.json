@@ -1831,10 +1831,18 @@
       "apply": "적용"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "상태 이력 불러오기 실패",
       "history-error-desc": "해당 인스턴스의 상태 전환 이력을 불러오지 못했습니다.",
       "no-history": "최근 상태 변경 없음",
-      "state-history": "최근 상태 변경"
+      "state-error-description": "",
+      "state-history": "최근 상태 변경",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "일치하지 않는 레이블",
@@ -5001,7 +5009,7 @@
           }
         }
       },
-      "name": "자동 그리드",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "초기화"
@@ -6108,6 +6116,8 @@
       "title-transformations": "변환"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "변환 검색",
       "show-images": "이미지 표시",
       "sql-expressions-message-description": "MySQL과 유사한 구문을 사용하여 데이터 소스 쿼리의 결과를 조작하고 변환하는 새로운 방법입니다.",
@@ -6245,11 +6255,12 @@
     "browse-grafana-com": "Grafana.com에서 찾아보기",
     "browse-plugins": "플러그인 찾아보기",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "데이터 소스 제공됨",
       "details-tooltip": "세부 정보",
       "no-preview": "미리보기 없음",
       "use-dashboard-button": "대시보드 사용",
-      "use-template-button": "템플릿 사용"
+      "view-template-button": ""
     },
     "community-empty-title": "커뮤니티 대시보드를 찾을 수 없습니다",
     "community-empty-title-with-datasource": "{{datasourceType}} 커뮤니티 대시보드를 찾을 수 없습니다",
@@ -6358,10 +6369,12 @@
         "new-panel": "새 패널"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7844,6 +7857,11 @@
       "continue-without-saving": "저장하지 않고 계속하기",
       "save-correlation": "상관 관계 저장",
       "title-unsaved-changes-to-correlation": "상관 관계에 대한 저장되지 않은 변경 사항"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "아래 색상 영역에서 회색 구분선을 클릭한 후 드래그합니다.",
@@ -12313,6 +12331,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "마지막 브랜치",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "풀 요청 브랜치",
       "suffix-read-only-branch": ""
     }
@@ -12349,10 +12368,10 @@
       },
       "pr-workflow-description": "사용자가 변경 사항을 저장할 때 풀 요청을 열 것인지 여부를 선택할 수 있습니다. 리포지토리에서 메인 브랜치에 대한 직접 변경을 허용하지 않는 경우에도 풀 요청이 필요할 수 있습니다.",
       "pr-workflow-label": "저장 시 풀 요청 옵션 활성화",
-      "token-description": "리포지토리 권한이 있는 Bitbucket 앱 비밀번호",
-      "token-label": "앱 비밀번호",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Bitbucket 토큰은 필수 항목입니다",
-      "token-user-description": "앱 비밀번호로 리포지토리에 액세스하는 데 사용할 사용자 이름",
+      "token-user-description": "",
       "token-user-required": "사용자 이름은 필수 항목입니다",
       "url-description": "Bitbucket 리포지토리 URL",
       "url-required": "리포지토리 URL은 필수 항목입니다"
@@ -12375,9 +12394,6 @@
       "dashboards-count_other": "대시보드 {{count}}개",
       "files-count_other": "파일 {{count}}개",
       "folders-count_other": "폴더 {{count}}개"
-    },
-    "check-repository": {
-      "check": "확인"
     },
     "code-block": {
       "aria-label-copy": "클립보드에 코드 복사"
@@ -12762,6 +12778,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "확인됨:",
       "connection-status": "연결 상태:",
       "finished": "마지막으로 성공한 풀:",
@@ -12771,7 +12788,9 @@
       "last-ref": "마지막 참조:",
       "messages": "메시지:",
       "not-available": "해당 없음",
+      "path": "",
       "pull-status": "풀 상태",
+      "repo-url": "",
       "resources": "리소스",
       "status": "상태:",
       "unhealthy": "좋지 않은 상태",
@@ -12908,8 +12927,8 @@
     "token-permissions-info": {
       "and-click": "및 클릭",
       "bitbucket": {
-        "create-token-button": "앱 비밀번호 생성",
-        "token-text": "Bitbucket 개인 액세스 토큰"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "새 토큰 추가",
@@ -14273,9 +14292,18 @@
       "columns": {
         "aria-label-delete-button": "{{teamName}} 팀 삭제",
         "aria-label-edit-team": "{{teamName}} 팀 편집",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "팀 편집",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "팀 편집"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "팀 로딩 중...",
       "new-team": "새 팀",
       "placeholder-search-teams": "팀 검색"

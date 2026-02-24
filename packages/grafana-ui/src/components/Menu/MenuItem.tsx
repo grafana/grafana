@@ -126,6 +126,12 @@ export const MenuItem = React.memo(
 
     const handleKeys = (event: React.KeyboardEvent) => {
       switch (event.key) {
+        case ' ':
+          if (ItemElement === 'a' && url) {
+            event.preventDefault();
+            localRef.current?.click();
+          }
+          break;
         case 'ArrowRight':
           event.preventDefault();
           event.stopPropagation();
@@ -163,10 +169,10 @@ export const MenuItem = React.memo(
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
-        // If there's no URL, then set either the role from the props, or fallback to menuitem
-        // If there IS a URL, then use the role from props - which will result in this either being a
-        // link (default role of an anchor), or whatever the user of this component specified
-        role={!url ? role || 'menuitem' : role}
+        // Default to menuitem for all items (links and buttons) so screen readers announce
+        // position correctly (e.g. "X of Y") and the menu has proper ARIA semantics.
+        // Callers can override via the role prop.
+        role={role ?? 'menuitem'}
         data-role="menuitem" // used to identify menuitem in Menu.tsx
         ref={localRef}
         data-testid={testId}

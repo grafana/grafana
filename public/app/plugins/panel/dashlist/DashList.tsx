@@ -217,7 +217,10 @@ export function DashList(props: PanelProps<Options>) {
             <Box marginBottom={2} paddingTop={0.5} key={`dash-group-${i}`}>
               {showHeadings && (
                 <Box marginRight={1} paddingX={1} paddingY={0.25}>
-                  <Text variant="h6" element="h6">
+                  {/* this testid is only necessary because we cannot determine what heading level to use here without some kind of
+                   top-level way to manage that across the application. these _should_ be headings, we just won't know what level they should be
+                   without something global, so for now we're using a testid to target these in tests. */}
+                  <Text data-testid="dashlist-header" variant="h6">
                     {header}
                   </Text>
                 </Box>

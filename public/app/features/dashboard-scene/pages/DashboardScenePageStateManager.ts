@@ -642,7 +642,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
-  private async loadCommunityTemplateDashboard(gnetId: string): Promise<DashboardDTO> {
+  private async loadCommunityTemplateDashboard(gnetId: number | string): Promise<DashboardDTO> {
     // Extract mappings from URL params
     const location = locationService.getLocation();
     const searchParams = new URLSearchParams(location.search);

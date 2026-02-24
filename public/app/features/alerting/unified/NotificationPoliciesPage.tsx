@@ -2,14 +2,20 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { PoliciesList } from 'app/features/alerting/unified/components/notification-policies/PoliciesList';
 import { PoliciesTree } from 'app/features/alerting/unified/components/notification-policies/PoliciesTree';
+import { CreateModal } from 'app/features/alerting/unified/components/notification-policies/components/Modals';
+import {
+  useCreatePolicyAction,
+  useListNotificationPolicyRoutes,
+} from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
+import { Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
@@ -106,13 +112,73 @@ const PolicyTreeTab = () => {
 
   const useMultiplePoliciesView = config.featureToggles.alertingMultiplePolicies;
 
-  // Render just the single main tree if not Grafana Alertmanager or the multiple policies view is disabled.
   if (!isGrafanaAlertmanager || !useMultiplePoliciesView) {
     return <PoliciesTree />;
   }
 
-  return <PoliciesList />;
+  return <MultiplePoliciesView />;
 };
+
+/**
+ * When multiple policies are enabled, decide whether to show the full list
+ * or the single-tree view with a "New notification policy" button.
+ */
+function MultiplePoliciesView() {
+  const { currentData: allPolicies, isLoading } = useListNotificationPolicyRoutes();
+
+  if (isLoading) {
+    return <LoadingPlaceholder text={t('alerting.policies-list.text-loading', 'Loading....')} />;
+  }
+
+  // allPolicies is undefined on error — PoliciesList handles error UI
+  if (!allPolicies || allPolicies.length > 1) {
+    return <PoliciesList />;
+  }
+
+  return <SinglePolicyView allPolicies={allPolicies} />;
+}
+
+/**
+ * Shows the default policy tree inline with a button to create additional policy trees.
+ * Used when there's only one routing tree so users don't have to click through a list.
+ */
+function SinglePolicyView({ allPolicies }: { allPolicies: Route[] }) {
+  const {
+    isCreateModalOpen,
+    openCreateModal,
+    closeCreateModal,
+    createPoliciesSupported,
+    createPoliciesAllowed,
+    createTrigger,
+    existingPolicyNames,
+  } = useCreatePolicyAction(allPolicies);
+
+  return (
+    <Stack direction="column" gap={2}>
+      {createPoliciesSupported && (
+        <Stack direction="row" justifyContent="flex-end">
+          <Button
+            data-testid="create-policy-button"
+            icon="plus"
+            aria-label={t('alerting.policies-list.create.aria-label', 'add policy')}
+            variant="primary"
+            disabled={!createPoliciesAllowed}
+            onClick={openCreateModal}
+          >
+            <Trans i18nKey="alerting.policies-list.create.text">New notification policy</Trans>
+          </Button>
+        </Stack>
+      )}
+      <PoliciesTree />
+      <CreateModal
+        existingPolicyNames={existingPolicyNames}
+        isOpen={isCreateModalOpen}
+        onConfirm={(route) => createTrigger.execute(route)}
+        onDismiss={closeCreateModal}
+      />
+    </Stack>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
