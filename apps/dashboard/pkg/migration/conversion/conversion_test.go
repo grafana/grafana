@@ -118,7 +118,7 @@ func TestMultiStepConversionPreservesStoredVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Step 1: Convert source to intermediate (if applicable)
-			var current runtime.Object = tt.source
+			current := tt.source
 			if tt.intermediate != nil {
 				err := scheme.Convert(tt.source, tt.intermediate, nil)
 				require.NoError(t, err, "First conversion step should succeed")
@@ -196,8 +196,8 @@ func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
 			output: &dashv0.Dashboard{},
 			verify: func(t *testing.T, in DashboardConversion, out DashboardConversion) {
 				outDash := out.(*dashv0.Dashboard)
-				require.Equal(t, "my-dashboard", outDash.ObjectMeta.Name)
-				require.Equal(t, "default", outDash.ObjectMeta.Namespace)
+				require.Equal(t, "my-dashboard", outDash.Name)
+				require.Equal(t, "default", outDash.Namespace)
 				require.Equal(t, "Dashboard", outDash.Kind)
 				require.Equal(t, dashv0.APIVERSION, outDash.APIVersion)
 			},
@@ -216,8 +216,8 @@ func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
 			output: &dashv2beta1.Dashboard{},
 			verify: func(t *testing.T, in DashboardConversion, out DashboardConversion) {
 				outDash := out.(*dashv2beta1.Dashboard)
-				require.Equal(t, "test-dash", outDash.ObjectMeta.Name)
-				require.Equal(t, "org-1", outDash.ObjectMeta.Namespace)
+				require.Equal(t, "test-dash", outDash.Name)
+				require.Equal(t, "org-1", outDash.Namespace)
 				require.Equal(t, dashv2beta1.APIVERSION, outDash.APIVersion)
 				require.NotNil(t, outDash.Spec.Layout.GridLayoutKind,
 					"EnsureDefaultSpec should set default GridLayout on error for v2beta1")
@@ -237,7 +237,7 @@ func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
 			output: &dashv2alpha1.Dashboard{},
 			verify: func(t *testing.T, in DashboardConversion, out DashboardConversion) {
 				outDash := out.(*dashv2alpha1.Dashboard)
-				require.Equal(t, "another-dashboard", outDash.ObjectMeta.Name)
+				require.Equal(t, "another-dashboard", outDash.Name)
 				require.Equal(t, dashv2alpha1.APIVERSION, outDash.APIVersion)
 				require.NotNil(t, outDash.Spec.Layout.GridLayoutKind,
 					"EnsureDefaultSpec should set default GridLayout on error for v2alpha1")
