@@ -14,6 +14,10 @@ import (
 // ChecksumStore manages SHA-256 checksums for golden test files.
 // Each test package that produces golden output should create its own instance
 // via NewChecksumStore and wire it into TestMain (Load before tests, Save after).
+//
+// During regeneration (REGENERATE_CHECKSUMS=true), the store starts empty so
+// only checksums produced by the current run are kept. Orphan entries from
+// deleted test inputs are pruned automatically.
 type ChecksumStore struct {
 	mu     sync.Mutex
 	path   string
@@ -34,19 +38,22 @@ func (s *ChecksumStore) Load() {
 		return
 	}
 
-	//nolint:gosec
-	raw, err := os.ReadFile(s.path)
-	if err != nil {
-		s.data = make(map[string]string)
-		s.loaded = true
+	s.data = make(map[string]string)
+	s.loaded = true
+
+	if ShouldRegenerateChecksums() {
 		return
 	}
 
-	s.data = make(map[string]string)
+	//nolint:gosec
+	raw, err := os.ReadFile(s.path)
+	if err != nil {
+		return
+	}
+
 	if err := json.Unmarshal(raw, &s.data); err != nil {
 		fmt.Fprintf(os.Stderr, "WARNING: invalid %s: %v\n", s.path, err)
 	}
-	s.loaded = true
 }
 
 func (s *ChecksumStore) Save() error {
@@ -109,10 +116,9 @@ func sha256Hex(data []byte) string {
 	return hex.EncodeToString(h[:])
 }
 
-// ChecksumKey returns a platform-independent key for the given file path
-// relative to the testdata directory.
-func ChecksumKey(outputPath string) (string, error) {
-	rel, err := filepath.Rel("testdata", outputPath)
+// ChecksumKey returns a platform-independent key for outputPath relative to baseDir.
+func ChecksumKey(baseDir, outputPath string) (string, error) {
+	rel, err := filepath.Rel(baseDir, outputPath)
 	if err != nil {
 		return "", fmt.Errorf("computing relative path for %s: %w", outputPath, err)
 	}

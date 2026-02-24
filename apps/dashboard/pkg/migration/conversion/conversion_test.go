@@ -444,7 +444,7 @@ func writeOrCompareOutputFile(t *testing.T, obj interface{}, outputPath string) 
 	err = os.WriteFile(outputPath, outputData, 0644)
 	require.NoError(t, err, "Failed to write output file")
 
-	key, err := migrationtestutil.ChecksumKey(outputPath)
+	key, err := migrationtestutil.ChecksumKey("testdata", outputPath)
 	require.NoError(t, err)
 
 	goldenChecksums.ValidateOrUpdate(t, key, outputData)
@@ -480,7 +480,7 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 	err = os.WriteFile(outPath, outBytes, 0644)
 	require.NoError(t, err, "failed to write output file %s", outPath)
 
-	key, err := migrationtestutil.ChecksumKey(outPath)
+	key, err := migrationtestutil.ChecksumKey("testdata", outPath)
 	require.NoError(t, err)
 
 	goldenChecksums.ValidateOrUpdate(t, key, outBytes)

@@ -176,7 +176,7 @@ func testMigrationUnified(t *testing.T, dash map[string]interface{}, inputFileNa
 	err = os.WriteFile(outPath, outBytes, 0644)
 	require.NoError(t, err, "failed to write output file %s", outPath)
 
-	key, err := migrationtestutil.ChecksumKey(outPath)
+	key, err := migrationtestutil.ChecksumKey("testdata", outPath)
 	require.NoError(t, err)
 
 	goldenChecksums.ValidateOrUpdate(t, key, outBytes)
