@@ -14,6 +14,7 @@ import {
   LinkButton,
   Spinner,
   Stack,
+  Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import {
@@ -101,11 +102,11 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           const { status, missingFolderMetadata } = original.item;
           if (config.featureToggles.provisioningFolderMetadata && missingFolderMetadata) {
             return (
-              <Icon
-                name="exclamation-triangle"
-                className={styles.warningIcon}
-                title={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
-              />
+              <Tooltip
+                content={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
+              >
+                <Icon name="exclamation-triangle" className={styles.warningIcon} />
+              </Tooltip>
             );
           }
           if (!status) {
