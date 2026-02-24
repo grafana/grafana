@@ -134,9 +134,9 @@ grafanactl resources get checks -o json | jq -r '
 ' | column -t -s $'\t'
 ```
 
-## Unhealthy datas ources
+## Unhealthy data sources
 
-To look for unhealty data sources:
+To look for unhealthy data sources:
 
 ```bash
 grafanactl resources get checks -o json | jq -r '

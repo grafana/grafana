@@ -24,6 +24,8 @@ Currently, Grafana Advisor performs regular checks on data sources, plugins, and
 You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
 {{< /admonition >}}
 
+TBD UPDATE?
+
 {{< youtube id="o84EfY-KP-c" >}}
 
 ## Use Grafana Advisor
@@ -34,7 +36,7 @@ You can suggest new checks and provide feedback through this [form](https://docs
 1. Navigate to the Administration section.
 1. Select "Advisor" from the left navigation menu.
 
-### Action needed section
+### Action needed section [TO BE REVIEWED]
 
 This collapsible section displays issues requiring immediate attention:
 
@@ -44,13 +46,13 @@ This collapsible section displays issues requiring immediate attention:
 
 ![Action needed](/media/docs/grafana-advisor/action_needed.png)
 
-### Investigation needed section
+### Investigation needed section [TO BE REVIEWED]
 
 This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the "Action needed" section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
 
 ![Investigation needed](/media/docs/grafana-advisor/investigation-needed.png)
 
-### More info section
+### More info section [TO BE REVIEWED]
 
 This collapsible section provides more details about which checks have been performed and how many items have been analyzed.
 
@@ -62,7 +64,7 @@ Click the cogwheel in this section to access Grafana Advisor settings, where you
 
 ## Address issues detected by Grafana Advisor
 
-To resolve issues flagged by Grafana Advisor and maintain system reliability, follow the best practices below. Regularly check the Advisor to keep your Grafana instance secure and up to date.
+To maintain system reliability and keep your Grafana instance secure and up to date, regularly check the Advisor page to resolve issues flagged by Grafana Advisor:
 
 - **Regular Monitoring:** Check the Advisor page often to identify and address emerging issues
 - **Immediate Action:** Address "Action needed" items promptly to ensure system reliability
@@ -71,7 +73,9 @@ To resolve issues flagged by Grafana Advisor and maintain system reliability, fo
 
 ## Use Grafana Advisor with Grafana Assistant
 
-TBC
+You can also use Advisor with the Grafana Assistant, a purpose-built LLM in Grafana Cloud that allows you to troubleshoot incidents, manage resources, and answer product questions in minutes. The Assistant removes manual operations and speeds up response time. Strong privacy and security controls ensure conversations respect RBAC, route through vetted service providers, and rely on your telemetry to produce action-ready results.
+
+To learn more, refer to the [Grafana Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/).
 
 ### Enable LLM suggestions 
 
