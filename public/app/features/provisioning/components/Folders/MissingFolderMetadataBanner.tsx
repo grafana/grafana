@@ -1,4 +1,5 @@
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 
@@ -39,6 +40,14 @@ interface FolderPermissionsProps {
 }
 
 export function FolderPermissions({ folderUID, canSetPermissions }: FolderPermissionsProps) {
+  if (!config.featureToggles.provisioning || !config.featureToggles.provisioningFolderMetadata) {
+    return <Permissions resource="folders" resourceId={folderUID} canSetPermissions={canSetPermissions} />;
+  }
+
+  return <FolderPermissionsWithMetadataCheck folderUID={folderUID} canSetPermissions={canSetPermissions} />;
+}
+
+function FolderPermissionsWithMetadataCheck({ folderUID, canSetPermissions }: FolderPermissionsProps) {
   const metadataStatus = useFolderMetadataStatus(folderUID);
 
   switch (metadataStatus) {

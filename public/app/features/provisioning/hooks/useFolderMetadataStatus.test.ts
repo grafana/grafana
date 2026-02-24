@@ -1,5 +1,4 @@
 import { renderHook } from '@testing-library/react';
-import { testWithFeatureToggles } from 'test/test-utils';
 
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
@@ -52,31 +51,11 @@ function setupMocks({
 }
 
 describe('useFolderMetadataStatus', () => {
-  testWithFeatureToggles({ enable: ['provisioningFolderMetadata'] });
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('when feature flag is off', () => {
-    testWithFeatureToggles({ disable: ['provisioningFolderMetadata'] });
-
-    it('returns ok', () => {
-      setupMocks();
-
-      const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('ok');
-    });
-  });
-
   describe('returns ok when no metadata check is needed', () => {
-    it('when folderUID is undefined', () => {
-      setupMocks();
-
-      const { result } = renderHook(() => useFolderMetadataStatus(undefined));
-      expect(result.current).toBe('ok');
-    });
-
     it('when folder is not provisioned', () => {
       setupMocks({
         repoViewOverrides: {
