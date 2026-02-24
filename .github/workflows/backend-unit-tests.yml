@@ -62,6 +62,9 @@ jobs:
         uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
+      - name: Generate migration golden files
+        run: make generate-golden-files
+        working-directory: apps/dashboard
       - name: Run unit tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -101,6 +104,9 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           github-app-name: 'grafana-ci-bot'
+      - name: Generate migration golden files
+        run: make generate-golden-files
+        working-directory: apps/dashboard
 
       # Prepare what we need to upload test results
       - run: echo "RESULTS_FILE=$(date --rfc-3339=seconds --utc | sed -s 's/ /-/g')_${SHARD/\//_}.xml" >> "$GITHUB_ENV"
