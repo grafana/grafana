@@ -245,6 +245,33 @@ export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'd
   reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
 };
 
+export function trackImportToGMAWizardStarted() {
+  reportInteraction('grafana_alerting_import_to_gma_wizard_started');
+}
+
+export function trackImportToGMAWizardCancelled(payload: { cancelledAtStep: string; formDirty: boolean }) {
+  reportInteraction('grafana_alerting_import_to_gma_wizard_cancelled', payload);
+}
+
+export function trackImportToGMAWizardStepSkipped(payload: { step: 'notifications' | 'rules' }) {
+  reportInteraction('grafana_alerting_import_to_gma_wizard_step_skipped', payload);
+}
+
+export function trackImportToGMADryrunSuccess() {
+  reportInteraction('grafana_alerting_import_to_gma_dryrun_success');
+}
+
+export function trackImportToGMADryrunWarning(payload: {
+  renamedReceiversCount: number;
+  renamedTimeIntervalsCount: number;
+}) {
+  reportInteraction('grafana_alerting_import_to_gma_dryrun_warning', payload);
+}
+
+export function trackImportToGMADryrunError() {
+  reportInteraction('grafana_alerting_import_to_gma_dryrun_error');
+}
+
 export function trackRulesListViewChange(payload: { view: string }) {
   reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
 }
