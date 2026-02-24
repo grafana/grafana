@@ -709,7 +709,6 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			importTimes, err := s.getLastImportTimes(ctx)
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
-				continue // Skip this cycle - the database may be busy (e.g. during migration)
 			}
 			s.findIndexesToRebuild(importTimes, nil, time.Now())
 		}

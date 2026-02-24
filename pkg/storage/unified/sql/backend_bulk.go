@@ -140,22 +140,9 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 	defer b.bulkLock.Finish(setting.Collection)
 
 	// If provided, reuse the inproc transaction for SQLite
-	clientCtx := inprocgrpc.ClientContext(ctx)
-	b.log.Info("ProcessBulk SQLite tx check", "hasClientCtx", clientCtx != nil, "dialect", b.dialect.DialectName())
-	if clientCtx != nil && b.dialect.DialectName() == "sqlite" {
-		externalTx := resource.TransactionFromContext(clientCtx)
-		b.log.Info("ProcessBulk external tx check", "hasExternalTx", externalTx != nil)
-		if externalTx != nil {
+	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil && b.dialect.DialectName() == "sqlite" {
+		if externalTx := resource.TransactionFromContext(clientCtx); externalTx != nil {
 			b.log.Info("Using SQLite transaction from client context")
-
-			// Increase page cache to prevent cache spill during bulk inserts.
-			// Default cache_size (~2MB) is too small for large resources (e.g. 2.4MB dashboards).
-			// When the cache spills, SQLite needs an EXCLUSIVE lock which deadlocks with the
-			// SHARED lock held by the legacy database rows cursor on another connection.
-			if _, err := externalTx.ExecContext(ctx, "PRAGMA cache_size = -50000"); err != nil {
-				b.log.Warn("failed to increase cache_size for bulk insert", "error", err)
-			}
-
 			rsp := &resourcepb.BulkResponse{}
 			err := b.processBulkWithTx(ctx, dbimpl.NewTx(externalTx), setting, iter, rsp)
 			if err != nil {
@@ -305,8 +292,10 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 		}
 		insertDuration := time.Since(insertStart)
 
-		if rsp.Processed%10 == 0 || insertDuration > 500*time.Millisecond {
-			b.log.Info("bulk insert timing", "processed", rsp.Processed, "recv_wait", insertStart.Sub(iterStart), "insert", insertDuration, "name", req.Key.Name)
+		if insertDuration > 500*time.Millisecond {
+			b.log.Warn("slow bulk insert", "processed", rsp.Processed, "recv_wait", insertStart.Sub(iterStart), "insert", insertDuration, "name", req.Key.Name)
+		} else if rsp.Processed%10 == 0 {
+			b.log.Debug("bulk insert timing", "processed", rsp.Processed, "recv_wait", insertStart.Sub(iterStart), "insert", insertDuration, "name", req.Key.Name)
 		}
 	}
 
