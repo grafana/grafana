@@ -93,7 +93,7 @@ func RegisterMigrations(
 		return err
 	}
 
-	if err := registerMigrations(cfg, mg, migrator, client, registry); err != nil {
+	if err := registerMigrations(ctx, cfg, mg, migrator, client, sqlStore, registry); err != nil {
 		return err
 	}
 
