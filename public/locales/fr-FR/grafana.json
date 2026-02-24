@@ -1741,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1834,10 +1839,18 @@
       "apply": "Appliquer"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Échec du chargement de l’historique des états",
       "history-error-desc": "Impossible de récupérer l’historique des transitions d’état pour cette instance.",
       "no-history": "Aucun changement d’état récent",
-      "state-history": "Changements d’état récents"
+      "state-error-description": "",
+      "state-history": "Changements d’état récents",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Étiquettes non correspondantes",
@@ -3140,6 +3153,17 @@
       "label-silence-start-and-end": "Mise en sourdine au début et à la fin",
       "placeholder-select-time-range": "Sélectionner la plage temporelle"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "pour {{duration}}"
     },
@@ -3448,7 +3472,8 @@
       },
       "title-edit": "Modifier",
       "title-recreate": "Recréer",
-      "title-unsilence": "Réactiver le son"
+      "title-unsilence": "Réactiver le son",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5010,7 +5035,7 @@
           }
         }
       },
-      "name": "Grille automatique",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Effacer"
@@ -5398,6 +5423,21 @@
       "message": {
         "failed-to-fetch-dashboard": "Échec de la récupération du tableau de bord"
       }
+    },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
     },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Envoyer un commentaire personnalisé",
@@ -6103,6 +6143,8 @@
       "title-transformations": "Transformations"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Rechercher une transformation",
       "show-images": "Afficher les images",
       "sql-expressions-message-description": "Manipulez et transformez les résultats de vos requêtes de sources de données via une syntaxe proche de MySQL.",
@@ -6240,11 +6282,12 @@
     "browse-grafana-com": "Parcourir Grafana.com",
     "browse-plugins": "Parcourir les plugins",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Source de données fournie",
       "details-tooltip": "Détails",
       "no-preview": "Aucun aperçu disponible",
       "use-dashboard-button": "Utiliser le tableau de bord",
-      "use-template-button": "Utiliser le modèle"
+      "view-template-button": ""
     },
     "community-empty-title": "Aucun tableau de bord communautaire trouvé",
     "community-empty-title-with-datasource": "Aucun tableau de bord communautaire trouvé pour {{datasourceType}}",
@@ -6354,10 +6397,12 @@
         "new-panel": "Nouveau panneau"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7282,7 +7327,14 @@
       "title": "Versions"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -7836,6 +7888,11 @@
       "continue-without-saving": "Continuer sans enregistrer",
       "save-correlation": "Enregistrer la corrélation",
       "title-unsaved-changes-to-correlation": "Modifications non enregistrées de la corrélation"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Cliquez et faites glisser le séparateur gris dans la zone colorée ci-dessous.",
@@ -8618,6 +8675,8 @@
     "description-show-measure": "Afficher les outils de mesure sur la carte",
     "description-show-scale": "Indiquer l’échelle cartographique",
     "description-show-zoom": "Afficher les boutons de contrôle du zoom dans le coin supérieur gauche",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Couche"
@@ -8679,7 +8738,9 @@
     "name-show-measure": "Afficher les outils de mesure",
     "name-show-scale": "Afficher l’échelle",
     "name-show-zoom": "Afficher le contrôle du zoom",
+    "name-sync-view-variable": "",
     "name-tooltip": "Infobulle",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Aucun champ de type chaîne de caractères trouvé"
     },
@@ -8732,6 +8793,9 @@
     },
     "utils": {
       "get-next-layer-name": "Calque {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12321,6 +12385,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Dernière branche",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Branche de requête de tirage",
       "suffix-read-only-branch": ""
     }
@@ -12357,10 +12422,10 @@
       },
       "pr-workflow-description": "Permet aux utilisateurs de choisir s’ils souhaitent ouvrir une demande de tirage lors de l’enregistrement des modifications. Si le dépôt n’autorise pas les modifications directes sur la branche principale, une demande de tirage peut tout de même être nécessaire.",
       "pr-workflow-label": "Activer l’option de demande de tirage à l’enregistrement",
-      "token-description": "Mot de passe d’application Bitbucket avec autorisations sur le dépôt",
-      "token-label": "Mot de passe d’application",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Le token Bitbucket est requis",
-      "token-user-description": "Le nom d’utilisateur qui sera utilisé pour accéder au dépôt avec le mot de passe d’application",
+      "token-user-description": "",
       "token-user-required": "Le nom d’utilisateur est requis",
       "url-description": "L’URL du dépôt Bitbucket",
       "url-required": "L’URL du dépôt est requise"
@@ -12386,9 +12451,6 @@
       "files-count_other": "{{count}} fichiers",
       "folders-count_one": "{{count}} dossier",
       "folders-count_other": "{{count}} dossier"
-    },
-    "check-repository": {
-      "check": "Vérifier"
     },
     "code-block": {
       "aria-label-copy": "Copier le code dans le presse-papiers"
@@ -12776,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Vérifié :",
       "connection-status": "État de la connexion :",
       "finished": "Dernière récupération réussie :",
@@ -12785,7 +12848,9 @@
       "last-ref": "Dernière réf :",
       "messages": "Messages :",
       "not-available": "S/O",
+      "path": "",
       "pull-status": "Statut de fusion",
+      "repo-url": "",
       "resources": "Ressources",
       "status": "Statut :",
       "unhealthy": "Non sain",
@@ -12908,19 +12973,22 @@
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "La synchronisation de l’instance nécessite que toutes les ressources soient gérées. Les ressources existantes seront migrées automatiquement.",
       "migrate-resources-description": "",
       "options": "Options",
       "repository-error": "Erreur du référentiel",
       "repository-error-message": "Impossible de vérifier l’état du référentiel. Veuillez vérifier la configuration du référentiel et réessayer.",
       "repository-unhealthy": "Le référentiel ne peut pas être synchronisé. Annulez le provisionnement et réessayez une fois le problème résolu. Voir les détails ci-dessous.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "et cliquez",
       "bitbucket": {
-        "create-token-button": "Créer des mots de passe d’application",
-        "token-text": "Jeton d’accès personnel Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Ajouter un nouveau jeton",
@@ -13390,15 +13458,12 @@
       "duration-selected": "Choisir l'intervalle de temps d'actualisation avec l'intervalle actuel {{durationAriaLabel}} sélectionné"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Activer la diffusion en direct",
       "label": "En direct"
     },
     "off-option": {
-      "aria-label": "Désactiver l'actualisation automatique",
       "label": "Désactivé"
     },
     "tooltip": {
@@ -13926,7 +13991,8 @@
       "no-matching-silences": "Aucune mise en sourdine correspondante trouvée ;",
       "noConfig": "Créez un nouveau point de contact pour créer une configuration à l'aide des valeurs par défaut ou contactez votre administrateur pour configurer Alertmanager.",
       "recreate-button": "Recréer",
-      "unsilence-button": "Réactiver le son"
+      "unsilence-button": "Réactiver le son",
+      "view-button": ""
     }
   },
   "silences-table": {
@@ -14293,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "Supprimer l’équipe {{teamName}}",
         "aria-label-edit-team": "Modifier l’équipe {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Modifier l’équipe",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Modifier l’équipe"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Chargement des équipes…",
       "new-team": "Nouvelle équipe",
       "placeholder-search-teams": "Rechercher les équipes"

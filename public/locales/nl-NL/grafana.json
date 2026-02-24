@@ -1741,8 +1741,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1834,10 +1839,18 @@
       "apply": "Toepassen"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Kan statusgeschiedenis niet laden",
       "history-error-desc": "Kan de statusovergangsgeschiedenis voor deze instantie niet ophalen.",
       "no-history": "Geen recente statuswijzigingen",
-      "state-history": "Recente statuswijzigingen"
+      "state-error-description": "",
+      "state-history": "Recente statuswijzigingen",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Niet-overeenkomende labels",
@@ -3140,6 +3153,17 @@
       "label-silence-start-and-end": "Demp het begin en einde",
       "placeholder-select-time-range": "Selecteer een tijdbereik"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "gedurende {{duration}}"
     },
@@ -3448,7 +3472,8 @@
       },
       "title-edit": "Bewerken",
       "title-recreate": "Opnieuw aanmaken",
-      "title-unsilence": "Dempen ongedaan maken"
+      "title-unsilence": "Dempen ongedaan maken",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -5010,7 +5035,7 @@
           }
         }
       },
-      "name": "Automatisch raster",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Wissen"
@@ -5398,6 +5423,21 @@
       "message": {
         "failed-to-fetch-dashboard": "Kan dashboard niet ophalen"
       }
+    },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
     },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Aangepaste feedback verzenden",
@@ -6103,6 +6143,8 @@
       "title-transformations": "Transformaties"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Transformatie zoeken",
       "show-images": "Afbeeldingen weergeven",
       "sql-expressions-message-description": "Een nieuwe manier om de resultaten van gegevensbronquery's te manipuleren en te transformeren met behulp van MySQL-achtige syntaxis.",
@@ -6240,11 +6282,12 @@
     "browse-grafana-com": "Grafana.com doorbladeren",
     "browse-plugins": "Plugins doorbladeren",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Databron verstrekt",
       "details-tooltip": "Details",
       "no-preview": "Geen voorbeeld beschikbaar",
       "use-dashboard-button": "Dashboard gebruiken",
-      "use-template-button": "Sjabloon gebruiken"
+      "view-template-button": ""
     },
     "community-empty-title": "Geen communitydashboards gevonden",
     "community-empty-title-with-datasource": "Geen {{datasourceType}} communitydashboards gevonden",
@@ -6354,10 +6397,12 @@
         "new-panel": "Nieuw paneel"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7282,7 +7327,14 @@
       "title": "Versies"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -7836,6 +7888,11 @@
       "continue-without-saving": "Doorgaan zonder opslaan",
       "save-correlation": "Correlatie opslaan",
       "title-unsaved-changes-to-correlation": "Onopgeslagen wijzigingen in correlatie"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Klik en sleep de grijze verdeler in het gekleurde gebied hieronder.",
@@ -8618,6 +8675,8 @@
     "description-show-measure": "Tools voor het maken van metingen op de kaart weergeven",
     "description-show-scale": "Kaartschaal aangeven",
     "description-show-zoom": "Zoomknoppen in de linkerbovenhoek weergeven",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Laag"
@@ -8679,7 +8738,9 @@
     "name-show-measure": "Meetinstrumenten weergeven",
     "name-show-scale": "Toon schaal",
     "name-show-zoom": "Zoomknop weergeven",
+    "name-sync-view-variable": "",
     "name-tooltip": "Tooltip",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Geen stringvelden gevonden"
     },
@@ -8732,6 +8793,9 @@
     },
     "utils": {
       "get-next-layer-name": "Laag {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12321,6 +12385,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Laatste branch",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Pull request branch",
       "suffix-read-only-branch": ""
     }
@@ -12357,10 +12422,10 @@
       },
       "pr-workflow-description": "Hiermee kunnen gebruikers kiezen of ze een pull-verzoek willen openen bij het opslaan van wijzigingen. Als de repository geen directe wijzigingen in de hoofdtak toestaat, kan er nog steeds een pull-verzoek nodig zijn.",
       "pr-workflow-label": "De optie pull-verzoek inschakelen bij opslaan",
-      "token-description": "Bitbucket-appwachtwoord met repository-toestemmingen",
-      "token-label": "Wachtwoord voor de app",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Bitbucket-token is vereist",
-      "token-user-description": "De gebruikersnaam die zal worden gebruikt om toegang te krijgen tot de repository met het app-wachtwoord",
+      "token-user-description": "",
       "token-user-required": "Gebruikersnaam is vereist",
       "url-description": "De Bitbucket-repository-URL",
       "url-required": "Repository-URL is vereist"
@@ -12386,9 +12451,6 @@
       "files-count_other": "{{count}} bestanden",
       "folders-count_one": "{{count}} map",
       "folders-count_other": "{{count}} map"
-    },
-    "check-repository": {
-      "check": "Controleer"
     },
     "code-block": {
       "aria-label-copy": "Code naar klembord kopiëren"
@@ -12776,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Gecontroleerd:",
       "connection-status": "Verbindingsstatus:",
       "finished": "Laatste succesvolle pull:",
@@ -12785,7 +12848,9 @@
       "last-ref": "Laatste referentie:",
       "messages": "Berichten:",
       "not-available": "N.v.t.",
+      "path": "",
       "pull-status": "Pull-status",
+      "repo-url": "",
       "resources": "Bronnen",
       "status": "Status:",
       "unhealthy": "Ongezond",
@@ -12908,19 +12973,22 @@
       "tooltip-unhealthy-repository": "Kan geen ongezonde repository ophalen"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Voor instantiesynchronisatie moeten alle bronnen worden beheerd. Bestaande bronnen worden automatisch gemigreerd.",
       "migrate-resources-description": "",
       "options": "Opties",
       "repository-error": "Repository-fout",
       "repository-error-message": "Kan de status van de repository niet controleren. Controleer de repository-configuratie en probeer het opnieuw.",
       "repository-unhealthy": "De repository kan niet worden gesynchroniseerd. Annuleer de provisioning en probeer het opnieuw zodra het probleem is opgelost. Zie details hieronder.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "en klik",
       "bitbucket": {
-        "create-token-button": "App-wachtwoorden aanmaken",
-        "token-text": "Bitbucket Personal Access Token"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Nieuw token toevoegen",
@@ -13390,15 +13458,12 @@
       "duration-selected": "Kies een vernieuwingsinterval; momenteel is {{durationAriaLabel}} geselecteerd"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Livestreaming inschakelen",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Automatisch vernieuwen uitschakelen",
       "label": "Uit"
     },
     "tooltip": {
@@ -13926,7 +13991,8 @@
       "no-matching-silences": "Geen overeenkomende dempingen gevonden;",
       "noConfig": "Maak een nieuw contactpunt om een configuratie te maken met behulp van de standaardwaarden of neem contact op met je beheerder om de Alertmanager in te stellen.",
       "recreate-button": "Opnieuw aanmaken",
-      "unsilence-button": "Dempen ongedaan maken"
+      "unsilence-button": "Dempen ongedaan maken",
+      "view-button": ""
     }
   },
   "silences-table": {
@@ -14293,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "Team {{teamName}} verwijderen",
         "aria-label-edit-team": "Team {{teamName}} bewerken",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Team bewerken",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Team bewerken"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Teams laden ...",
       "new-team": "Nieuw team",
       "placeholder-search-teams": "Teams zoeken"

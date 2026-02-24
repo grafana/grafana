@@ -1628,6 +1628,7 @@ export type DeleteJobOptions = {
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
   resources?: ResourceRef[];
 };
+export type FixFolderMetadataJobOptions = object;
 export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit */
   message?: string;
@@ -1669,14 +1670,17 @@ export type ExportJobOptions = {
 export type JobSpec = {
   /** Possible enum values:
      - `"delete"` deletes files in the remote repository
+     - `"fixFolderMetadata"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
      - `"move"` moves files in the remote repository
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+  action?: 'delete' | 'fixFolderMetadata' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
   /** Delete when the action is `delete` */
   delete?: DeleteJobOptions;
+  /** Options when the action is `fix-folder-metadata` */
+  fixFolderMetadata?: FixFolderMetadataJobOptions;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Move when the action is `move` */

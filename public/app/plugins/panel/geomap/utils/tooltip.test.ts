@@ -8,7 +8,7 @@ import { DataFrame, PanelProps } from '@grafana/data';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { GeomapHoverPayload, GeomapLayerHover } from '../event';
-import { Options } from '../types';
+import { type Options } from '../panelcfg.gen';
 
 import { pointerMoveListener } from './tooltip';
 

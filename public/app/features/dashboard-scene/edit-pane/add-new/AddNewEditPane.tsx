@@ -14,6 +14,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
 import { AddNewSection } from './AddNewSection';
+import { AddVariable } from './AddVariable';
 
 interface AddNewEditPaneProps {
   dashboard: SceneObject;
@@ -79,6 +80,7 @@ export function AddNewEditPane({ onAddPanel, dashboard, selectedElement }: AddNe
         </DragDropContext>
       </AddNewSection>
       <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
+        <AddVariable dashboardScene={dashboardScene} />
         <AddAnnotationQuery dashboardScene={dashboardScene} />
       </AddNewSection>
     </>
@@ -91,13 +93,12 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'move',
     }),
     dragContainer: css({
-      height: 150,
+      height: 120,
     }),
     imageContainer: css({
       cursor: 'pointer',
       opacity: 0.8,
       overflow: 'hidden',
-      padding: theme.spacing(2, 0),
       borderRadius: theme.shape.radius.sm,
       width: '100%',
       '&:hover': {

@@ -1762,6 +1762,14 @@
             }
           },
           {
+            "name": "createdBy",
+            "in": "query",
+            "description": "filter by the user who created the resource (format: user:\u003cuid\u003e)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "explain",
             "in": "query",
             "description": "add debugging info that may help explain why the result matched",

@@ -1735,8 +1735,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1826,10 +1831,18 @@
       "apply": "套用"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "無法載入狀態歷史紀錄",
       "history-error-desc": "無法擷取此執行個體的狀態轉換歷史紀錄。",
       "no-history": "沒有最近的狀態變更",
-      "state-history": "最近的狀態變更"
+      "state-error-description": "",
+      "state-history": "最近的狀態變更",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "不相符的標籤",
@@ -3122,6 +3135,17 @@
       "label-silence-start-and-end": "靜音開始和結束",
       "placeholder-select-time-range": "選擇時間範圍"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "用於 {{duration}}"
     },
@@ -3430,7 +3454,8 @@
       },
       "title-edit": "編輯",
       "title-recreate": "重新建立",
-      "title-unsilence": "取消靜音"
+      "title-unsilence": "取消靜音",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -4984,7 +5009,7 @@
           }
         }
       },
-      "name": "自動網格",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "清除"
@@ -5372,6 +5397,21 @@
       "message": {
         "failed-to-fetch-dashboard": "擷取儀表板失敗"
       }
+    },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
     },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "傳送自訂意見回饋",
@@ -6076,6 +6116,8 @@
       "title-transformations": "轉換"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "搜尋轉換",
       "show-images": "顯示圖片",
       "sql-expressions-message-description": "使用類似 MySQL 的語法來操控和轉換資料來源查詢結果的新方法。",
@@ -6213,11 +6255,12 @@
     "browse-grafana-com": "瀏覽 Grafana.com",
     "browse-plugins": "瀏覽外掛程式",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "提供的資料來源",
       "details-tooltip": "詳細資訊",
       "no-preview": "無可用的預覽",
       "use-dashboard-button": "使用儀表板",
-      "use-template-button": "使用範本"
+      "view-template-button": ""
     },
     "community-empty-title": "未找到社群儀表板",
     "community-empty-title-with-datasource": "找不到 {{datasourceType}} 社群儀表板",
@@ -6326,10 +6369,12 @@
         "new-panel": "新的面板"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7251,7 +7296,14 @@
       "title": "版本"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -7805,6 +7857,11 @@
       "continue-without-saving": "不儲存並繼續",
       "save-correlation": "儲存相關性",
       "title-unsaved-changes-to-correlation": "未儲存的相關性變更"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "按一下並拖曳下方彩色區域中的灰色分隔線。",
@@ -8585,6 +8642,8 @@
     "description-show-measure": "顯示在地圖上進行測量的工具",
     "description-show-scale": "註明地圖比例",
     "description-show-zoom": "在左上角顯示縮放控制按鈕",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "層次"
@@ -8646,7 +8705,9 @@
     "name-show-measure": "顯示測量工具",
     "name-show-scale": "顯示比例",
     "name-show-zoom": "顯示縮放控制",
+    "name-sync-view-variable": "",
     "name-tooltip": "工具提示",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "未找到字串欄位"
     },
@@ -8699,6 +8760,9 @@
     },
     "utils": {
       "get-next-layer-name": "圖層 {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12267,6 +12331,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "最後一個分支",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "拉取請求分支",
       "suffix-read-only-branch": ""
     }
@@ -12303,10 +12368,10 @@
       },
       "pr-workflow-description": "允許使用者在儲存變更時選擇是否開啟拉取請求。如果儲存庫不允許直接變更主分支，則可能仍需要拉取請求。",
       "pr-workflow-label": "儲存時啟用拉取請求選項",
-      "token-description": "具有儲存庫權限的 Bitbucket 應用程式密碼",
-      "token-label": "應用程式密碼",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Bitbucket 權杖為必填",
-      "token-user-description": "將用於存取具有應用程式密碼的儲存庫的使用者名稱",
+      "token-user-description": "",
       "token-user-required": "使用者名稱為必填",
       "url-description": "Bitbucket 儲存庫網址",
       "url-required": "儲存庫網址為必填"
@@ -12329,9 +12394,6 @@
       "dashboards-count_other": "{{count}} 個儀表板",
       "files-count_other": "{{count}} 個檔案",
       "folders-count_other": "{{count}} 個資料夾"
-    },
-    "check-repository": {
-      "check": "勾選"
     },
     "code-block": {
       "aria-label-copy": "複製程式碼至剪貼簿"
@@ -12716,6 +12778,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "已選取：",
       "connection-status": "連線狀態：",
       "finished": "上次成功拉取：",
@@ -12725,7 +12788,9 @@
       "last-ref": "上次參考：",
       "messages": "訊息：",
       "not-available": "不適用",
+      "path": "",
       "pull-status": "拉取狀態",
+      "repo-url": "",
       "resources": "資源",
       "status": "狀態：",
       "unhealthy": "狀況不佳",
@@ -12848,19 +12913,22 @@
       "tooltip-unhealthy-repository": "無法拉取狀態不佳的儲存庫"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "執行個體同步需要將所有資源納入管理。現有資源將自動移轉。",
       "migrate-resources-description": "",
       "options": "選項",
       "repository-error": "儲存庫錯誤",
       "repository-error-message": "無法檢查儲存庫狀態。請驗證儲存庫設定，然後再試一次。",
       "repository-unhealthy": "無法同步儲存庫。取消佈建，並在問題解決後再試一次。請參閱下方詳情。",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "然後按一下",
       "bitbucket": {
-        "create-token-button": "建立應用程式密碼",
-        "token-text": "Bitbucket 個人存取權杖"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "新增權杖",
@@ -13325,15 +13393,12 @@
       "duration-selected": "選擇重新整理時間間隔，目前已選取「{{durationAriaLabel}}」間隔"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "開啟即時串流",
       "label": "即時"
     },
     "off-option": {
-      "aria-label": "關閉自動重新整理",
       "label": "關閉"
     },
     "tooltip": {
@@ -13860,7 +13925,8 @@
       "no-matching-silences": "沒有找到匹配的靜音；",
       "noConfig": "建立新的聯絡點，以使用預設值建立設定；或請聯絡您的系統管理員以設定 Alertmanager。",
       "recreate-button": "重新建立",
-      "unsilence-button": "取消靜音"
+      "unsilence-button": "取消靜音",
+      "view-button": ""
     }
   },
   "silences-table": {
@@ -14226,9 +14292,18 @@
       "columns": {
         "aria-label-delete-button": "刪除團隊「{{teamName}}」",
         "aria-label-edit-team": "編輯團隊「{{teamName}}」",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "編輯團隊",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "編輯團隊"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "正在載入團隊…",
       "new-team": "新團隊",
       "placeholder-search-teams": "搜尋團隊"

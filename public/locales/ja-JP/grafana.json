@@ -1735,8 +1735,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1826,10 +1831,18 @@
       "apply": "適用"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "状態履歴の読み込みに失敗しました",
       "history-error-desc": "このインスタンスの状態遷移履歴を取得できません。",
       "no-history": "最近の状態変更はありません",
-      "state-history": "最近の状態変更"
+      "state-error-description": "",
+      "state-history": "最近の状態変更",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "一致しないラベル",
@@ -3122,6 +3135,17 @@
       "label-silence-start-and-end": "サイレンスの開始と終了",
       "placeholder-select-time-range": "時間範囲を選択"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "{{duration}}間"
     },
@@ -3430,7 +3454,8 @@
       },
       "title-edit": "編集",
       "title-recreate": "再作成",
-      "title-unsilence": "サイレント解除"
+      "title-unsilence": "サイレント解除",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -4984,7 +5009,7 @@
           }
         }
       },
-      "name": "自動グリッド",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "消去"
@@ -5372,6 +5397,21 @@
       "message": {
         "failed-to-fetch-dashboard": "ダッシュボードの取得に失敗しました"
       }
+    },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
     },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "カスタムフィードバックを送信",
@@ -6076,6 +6116,8 @@
       "title-transformations": "変換"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "変換を検索",
       "show-images": "画像を表示",
       "sql-expressions-message-description": "MySQLのような構文を使用して、データソースクエリの結果を操作および変換する新しい方法。",
@@ -6213,11 +6255,12 @@
     "browse-grafana-com": "Grafana.comを参照",
     "browse-plugins": "プラグインを参照",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "データソースが提供されました",
       "details-tooltip": "詳細",
       "no-preview": "プレビューは利用できません",
       "use-dashboard-button": "ダッシュボードを使用",
-      "use-template-button": "テンプレートを使用"
+      "view-template-button": ""
     },
     "community-empty-title": "コミュニティダッシュボードが見つかりません",
     "community-empty-title-with-datasource": "{{datasourceType}}コミュニティダッシュボードが見つかりません",
@@ -6326,10 +6369,12 @@
         "new-panel": "新規パネル"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7251,7 +7296,14 @@
       "title": "バージョン"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -7805,6 +7857,11 @@
       "continue-without-saving": "保存せずに続行",
       "save-correlation": "相関を保存",
       "title-unsaved-changes-to-correlation": "相関の未保存の変更"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "下の色付きの領域で灰色の仕切りをクリックしてドラッグしてください。",
@@ -8585,6 +8642,8 @@
     "description-show-measure": "マップ上で測定を行うためのツールを表示",
     "description-show-scale": "マップの縮尺を示す",
     "description-show-zoom": "左上隅にズームコントロールボタンを表示",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "レイヤー"
@@ -8646,7 +8705,9 @@
     "name-show-measure": "測定ツールを表示",
     "name-show-scale": "スケール表示",
     "name-show-zoom": "ズームコントロールを表示",
+    "name-sync-view-variable": "",
     "name-tooltip": "ツールチップ",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "文字列フィールドが見つかりません"
     },
@@ -8699,6 +8760,9 @@
     },
     "utils": {
       "get-next-layer-name": "レイヤー、{{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -12267,6 +12331,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "最新のブランチ",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "プルリクエストブランチ",
       "suffix-read-only-branch": ""
     }
@@ -12303,10 +12368,10 @@
       },
       "pr-workflow-description": "変更保存時にプルリクエストを開くかどうかをユーザーが選択できます。メインブランチへの直接変更が許可されていないリポジトリでは、プルリクエストが必要になる場合があります。",
       "pr-workflow-label": "保存時にプルリクエストオプションを有効にする",
-      "token-description": "リポジトリ権限を持つBitbucketアプリパスワード",
-      "token-label": "アプリパスワード",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Bitbucketトークンが必要です",
-      "token-user-description": "アプリパスワードでリポジトリにアクセスする際に使用するユーザー名",
+      "token-user-description": "",
       "token-user-required": "ユーザー名が必要です",
       "url-description": "BitbucketリポジトリURL",
       "url-required": "リポジトリURLが必要です"
@@ -12329,9 +12394,6 @@
       "dashboards-count_other": "{{count}}個のダッシュボード",
       "files-count_other": "{{count}}個のファイル",
       "folders-count_other": "{{count}}個のフォルダ"
-    },
-    "check-repository": {
-      "check": "確認"
     },
     "code-block": {
       "aria-label-copy": "コードをクリップボードにコピー"
@@ -12716,6 +12778,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "確認済み：",
       "connection-status": "接続状態：",
       "finished": "最後に成功したプル：",
@@ -12725,7 +12788,9 @@
       "last-ref": "最終参照：",
       "messages": "メッセージ：",
       "not-available": "該当なし",
+      "path": "",
       "pull-status": "プル状態",
+      "repo-url": "",
       "resources": "リソース",
       "status": "ステータス：",
       "unhealthy": "異常",
@@ -12848,19 +12913,22 @@
       "tooltip-unhealthy-repository": "問題のあるリポジトリをプルできません"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "インスタンス同期では、すべてのリソースを管理する必要があります。既存のリソースは自動的に移行されます。",
       "migrate-resources-description": "",
       "options": "オプション",
       "repository-error": "リポジトリエラー",
       "repository-error-message": "リポジトリの状態を確認できません。リポジトリの設定を確認して、もう一度お試しください。",
       "repository-unhealthy": "リポジトリを同期できません。プロビジョニングをキャンセルし、問題が解決したら再試行してください。以下の詳細をご覧ください。",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "そしてクリック",
       "bitbucket": {
-        "create-token-button": "アプリのパスワードを作成",
-        "token-text": "Bitbucketパーソナルアクセストークン"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "新しいトークンを追加",
@@ -13325,15 +13393,12 @@
       "duration-selected": "現在の間隔が{{durationAriaLabel}}に選択されている更新間隔を 選択します"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "ライブストリーミングをオンにする",
       "label": "ライブ"
     },
     "off-option": {
-      "aria-label": "自動更新をオフにする",
       "label": "オフ"
     },
     "tooltip": {
@@ -13860,7 +13925,8 @@
       "no-matching-silences": "一致するサイレンスが見つかりませんでした。",
       "noConfig": "新しいコンタクトポイントを作成して、デフォルト値を使用して構成を作成するか、管理者に連絡してAlertmanagerを設定してください。",
       "recreate-button": "再作成",
-      "unsilence-button": "サイレント解除"
+      "unsilence-button": "サイレント解除",
+      "view-button": ""
     }
   },
   "silences-table": {
@@ -14226,9 +14292,18 @@
       "columns": {
         "aria-label-delete-button": "チーム{{teamName}}を削除 ",
         "aria-label-edit-team": "チーム{{teamName}}を編集 ",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "チームを編集",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "チームを編集"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "チームを読み込み中...",
       "new-team": "新しいチーム",
       "placeholder-search-teams": "チームを検索"

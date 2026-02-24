@@ -117,6 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     whiteSpace: 'nowrap',
     alignItems: 'center',
+    gap: theme.spacing(1),
     flexGrow: 1,
   }),
   value: css({

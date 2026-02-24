@@ -493,7 +493,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer)
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -501,7 +502,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
 	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
@@ -886,7 +886,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, server, eventualRestConfigProvider, tracingService)
+	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, server, tracingService)
 	healthService, err := grpcserver.ProvideHealthService(cfg, grpcserverProvider)
 	if err != nil {
 		return nil, err
@@ -1184,7 +1184,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer)
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1192,7 +1193,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
 	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
@@ -1579,7 +1579,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, server, eventualRestConfigProvider, tracingService)
+	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, server, tracingService)
 	healthService, err := grpcserver.ProvideHealthService(cfg, grpcserverProvider)
 	if err != nil {
 		return nil, err
