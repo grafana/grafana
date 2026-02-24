@@ -2222,10 +2222,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 							"spec": {
 								"title": "%s",
 								"schemaVersion": 42,
-								"layout": {
-									"kind": "GridLayout",
-									"items": []
-								}
+								"panels": []
 							}
 						}`, metadata, dashboardTitle)
 
