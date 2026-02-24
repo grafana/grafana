@@ -2074,6 +2074,8 @@ func TestUserSync_SyncUserHook_SCIMUserSAMLLoginUpdatesExistingUserAuth(t *testi
 		return cmd.UserId == 333 && cmd.AuthModule == login.SAMLAuthModule && cmd.AuthId == "saml-generated-auth-id"
 	})).Return(nil).Once()
 
+	provider.UsingFlags(t, defaultFeatureFlags)
+
 	s := ProvideUserSync(
 		userSrv,
 		authinfoimpl.ProvideOSSUserProtectionService(),
@@ -2125,6 +2127,8 @@ func TestUserSync_SyncUserHook_NonProvisionedSAMLUserCreatesNewAuthConnection(t 
 	authInfoSrv.On("SetAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.SetAuthInfoCommand) bool {
 		return cmd.UserId == 444 && cmd.AuthModule == login.SAMLAuthModule && cmd.AuthId == "saml-auth-id"
 	})).Return(nil).Once()
+
+	provider.UsingFlags(t, defaultFeatureFlags)
 
 	s := ProvideUserSync(
 		userSrv,
