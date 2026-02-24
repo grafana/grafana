@@ -91,8 +91,8 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 		Do(t.Context())
 
 	if apierrors.IsAlreadyExists(result.Error()) {
-		job := h.AwaitLatestHistoricJob(t, repo)
-		h.requireSuccessfulJob(t, job)
+		// Wait for all jobs to finish as we don't have the name.
+		h.AwaitJobs(t, repo)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobSuccess(t, t.Context(), unstruct)
+	h.AwaitJobs(t, repo)
 }
 
 func (h *provisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
