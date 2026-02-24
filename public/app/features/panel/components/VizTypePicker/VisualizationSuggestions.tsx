@@ -166,6 +166,12 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       return;
     }
 
+    // Skip auto-selection until real data arrives; `data` is omitted from deps
+    // because suggestions already re-compute when data changes.
+    if (!data || !hasData(data)) {
+      return;
+    }
+
     // if the first suggestion has changed, we're going to change the currently selected suggestion and
     // set the firstCardHash to the new first suggestion's hash. We also choose the first suggestion if
     // the previously selected suggestion is no longer present in the list.
@@ -175,6 +181,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       setFirstCardHash(newFirstCardHash);
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     suggestions,
     suggestionHash,
