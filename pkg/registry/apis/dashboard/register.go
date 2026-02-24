@@ -590,7 +590,7 @@ func validateNotV2Object(obj runtime.Object) error {
 	}
 
 	if dashboards.LooksLikeV2Spec(spec) {
-		//lint:ignore ST1005
+		// nolint:staticcheck ST1005
 		return fmt.Errorf(dashboards.LooksLikeV2SpecMessage)
 	}
 	return nil
