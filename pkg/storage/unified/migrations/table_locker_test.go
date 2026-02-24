@@ -31,6 +31,9 @@ func (m *tableLockerMock) LockMigrationTables(_ context.Context, _ *xorm.Session
 
 func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	if db.IsTestDbSQLite() {
+		t.Skip("SQLite uses no-op locker")
+	}
 
 	dbstore := db.InitTestDB(t)
 	t.Cleanup(db.CleanupTestDB)
@@ -54,6 +57,7 @@ func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
 	mg := migrator.NewMigrator(engine, setting.NewCfg())
 	sess := engine.NewSession()
 	defer sess.Close()
+	require.NoError(t, sess.Begin())
 	_, _ = sess.Exec("INSERT INTO org (id, name, created, updated, version) VALUES (1, 'test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)")
 
 	require.NoError(t, runner.Run(context.Background(), sess, mg, RunOptions{DriverName: engine.DriverName()}))
