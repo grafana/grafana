@@ -145,11 +145,6 @@ func runSingleVersionMigrationTests(t *testing.T, outputDir string) {
 	}
 }
 
-func isCI() bool {
-	_, ok := os.LookupEnv("CI")
-	return ok
-}
-
 // testMigrationUnified is the unified test function that handles both single and full migrations
 func testMigrationUnified(t *testing.T, dash map[string]interface{}, inputFileName string, inputVersion, targetVersion int, outputDir string) {
 	t.Helper()
@@ -173,31 +168,18 @@ func testMigrationUnified(t *testing.T, dash map[string]interface{}, inputFileNa
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
 	require.NoError(t, err, "failed to marshal migrated dashboard")
 
-	// 6. Check if output file already exists
-	if _, err := os.Stat(outPath); os.IsNotExist(err) {
-		if isCI() {
-			t.Fatalf("Golden file missing: %s\n"+
-				"Golden files must be committed to the repository.\n"+
-				"Run the tests locally to generate them, then commit the result:\n\n"+
-				"  go test -count=1 ./apps/dashboard/pkg/migration/\n", outPath)
-		}
-		outDir := filepath.Dir(outPath)
-		err = os.MkdirAll(outDir, 0750)
-		require.NoError(t, err, "failed to create output directory %s", outDir)
-		err = os.WriteFile(outPath, outBytes, 0644)
-		require.NoError(t, err, "failed to write new output file %s", outPath)
-		t.Logf("Created golden file: %s (commit this file to the repository)", outPath)
-		return
-	}
+	outDir := filepath.Dir(outPath)
+	//nolint:gosec
+	err = os.MkdirAll(outDir, 0755)
+	require.NoError(t, err, "failed to create output directory %s", outDir)
 
-	// If existing file exists, compare them and fail if different
-	// We can ignore gosec G304 here since it's a test
-	// nolint:gosec
-	existingBytes, err := os.ReadFile(outPath)
-	require.NoError(t, err, "failed to read existing output file %s", outPath)
-	require.JSONEq(t, string(existingBytes), string(outBytes),
-		"%s did not match.\nIf the diff is expected, regenerate with:\n\n  OUTPUT_OVERRIDE=true go test -count=1 ./apps/dashboard/pkg/migration/\n",
-		outPath)
+	err = os.WriteFile(outPath, outBytes, 0644)
+	require.NoError(t, err, "failed to write output file %s", outPath)
+
+	key, err := migrationtestutil.ChecksumKey("testdata", outPath)
+	require.NoError(t, err)
+
+	goldenChecksums.ValidateOrUpdate(t, key, outBytes)
 }
 
 func getSchemaVersion(t *testing.T, dash map[string]interface{}) int {

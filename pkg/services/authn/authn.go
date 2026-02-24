@@ -69,8 +69,11 @@ type ClientParams struct {
 }
 
 type FetchPermissionsParams struct {
-	// RestrictedActions will restrict the permissions to only these actions
+	// RestrictedActions will restrict the permissions to only these Grafana-style actions
 	RestrictedActions []string
+	// K8sRestrictedActions will restrict the permissions to only the Grafana actions
+	// that the Kubernetes-style permission strings translate to
+	K8sRestrictedActions []string
 	// AllowedActions will be added to the identity permissions
 	AllowedActions []string
 	// Note: Kept for backwards compatibility, use K8s style instead

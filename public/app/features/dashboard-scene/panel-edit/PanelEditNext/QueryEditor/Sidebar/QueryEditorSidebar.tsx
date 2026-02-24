@@ -6,18 +6,12 @@ import { t } from '@grafana/i18n';
 import { IconButton, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QUERY_EDITOR_COLORS, QueryEditorType, SidebarSize } from '../../constants';
-import {
-  useAlertingContext,
-  usePanelContext,
-  useQueryEditorUIContext,
-  useQueryRunnerContext,
-} from '../QueryEditorContext';
+import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-import { AlertIndicator } from './AlertIndicator';
-import { AlertsView } from './AlertsView';
+import { AlertIndicator } from './Alerts/AlertIndicator';
+import { AlertsView } from './Alerts/AlertsView';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 import { SidebarFooter } from './SidebarFooter';
-import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;
@@ -30,11 +24,9 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
 }: QueryEditorSidebarProps) {
   const styles = useStyles2(getStyles);
   const isMini = sidebarSize === SidebarSize.Mini;
-  const { queries } = useQueryRunnerContext();
-  const { transformations } = usePanelContext();
+
   const { alertRules } = useAlertingContext();
   const { cardType } = useQueryEditorUIContext();
-  const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
@@ -67,16 +59,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
       <ScrollContainer overflowX="hidden">
         <div className={styles.content}>
-          {isAlertView ? (
-            <AlertsView alertRules={alertRules} />
-          ) : (
-            <QueriesAndTransformationsView
-              queries={queries}
-              transformations={transformations}
-              onQueryDragEnd={onQueryDragEnd}
-              onTransformationDragEnd={onTransformationDragEnd}
-            />
-          )}
+          {isAlertView ? <AlertsView alertRules={alertRules} /> : <QueriesAndTransformationsView />}
         </div>
       </ScrollContainer>
       <SidebarFooter />

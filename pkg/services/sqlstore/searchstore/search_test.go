@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -260,6 +261,7 @@ func TestIntegrationBuilder_RBAC(t *testing.T) {
 						tc.features,
 						recursiveQueriesAreSupported,
 						store.GetDialect(),
+						setting.NewCfg().MaxNestedFolderDepth,
 					),
 				},
 				Dialect:  store.GetDialect(),

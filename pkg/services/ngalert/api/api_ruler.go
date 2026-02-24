@@ -71,7 +71,7 @@ var (
 )
 
 // ignore fields that are not part of the rule definition
-var ignoreFieldsForValidate = [...]string{"RuleGroupIndex"}
+var ignoreFieldsForValidate = [...]string{"RuleGroupIndex", "FolderFullpath"}
 
 // RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace.
