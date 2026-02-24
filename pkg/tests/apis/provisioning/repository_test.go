@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -389,15 +390,13 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})
-				if testCase.expectedErr == "" {
-					require.NoError(collect, err)
-				} else {
-					require.Error(collect, err)
-					require.ErrorContains(collect, err, testCase.expectedErr)
-				}
-			}, waitTimeoutDefault, waitIntervalDefault)
+			_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})
+			if testCase.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, testCase.expectedErr)
+			}
 		})
 	}
 
@@ -2175,4 +2174,123 @@ func TestIntegrationRepositoryController_EnterpriseWiring(t *testing.T) {
 			})
 		}
 	})
+}
+
+// TestIntegrationProvisioning_ConcurrentRepositoryCreation tests creating multiple repositories
+// concurrently with secure tokens, which triggers secret storage operations.
+// This simulates what happens with 'grafanactl resources push' when pushing multiple
+// repository definitions at once.
+//
+// Before PR #118820, this would frequently fail with:
+//
+//	Error: migration failed (id = add lease_created index to secret_secure_value):
+//	database is locked (5) (SQLITE_BUSY)
+func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	// Number of repositories to create concurrently
+	// This simulates what happens with 'grafanactl resources push' when pushing
+	// multiple repository definitions at once
+	const numRepos = 10
+
+	// Use sync.WaitGroup to ensure all goroutines complete
+	var wg sync.WaitGroup
+	type result struct {
+		name string
+		err  error
+	}
+	results := make(chan result, numRepos)
+
+	// Create repositories concurrently
+	for i := 0; i < numRepos; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			repoName := fmt.Sprintf("concurrent-repo-%d", idx)
+
+			// Create repository with secure token (this triggers secret storage migrations)
+			repo := &unstructured.Unstructured{
+				Object: map[string]any{
+					"apiVersion": "provisioning.grafana.app/v0alpha1",
+					"kind":       "Repository",
+					"metadata": map[string]any{
+						"name":      repoName,
+						"namespace": "default",
+					},
+					"spec": map[string]any{
+						"title":       fmt.Sprintf("Concurrent Test Repo %d", idx),
+						"description": fmt.Sprintf("Test repository for concurrent creation stress test %d", idx),
+						"type":        "github",
+						"github": map[string]any{
+							"url":    "https://github.com/grafana/grafana-git-sync-demo",
+							"branch": "integration-test",
+							"path":   "grafana/",
+						},
+						"sync": map[string]any{
+							"enabled": false,
+						},
+					},
+					"secure": map[string]any{
+						// Include a secure token to trigger secret storage operations
+						"token": map[string]any{
+							"create": fmt.Sprintf("test-token-%d", idx),
+						},
+					},
+				},
+			}
+
+			_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+			results <- result{name: repoName, err: err}
+		}(i)
+	}
+
+	// Close the results channel once all goroutines complete
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// Collect all results
+	var errors []error
+	successCount := 0
+	for res := range results {
+		if res.err != nil {
+			errors = append(errors, fmt.Errorf("%s: %w", res.name, res.err))
+		} else {
+			successCount++
+		}
+	}
+
+	// All repositories should be created successfully without SQLITE_BUSY errors
+	if len(errors) > 0 {
+		t.Errorf("Failed to create %d/%d repositories concurrently:", len(errors), numRepos)
+		for _, err := range errors {
+			t.Logf("  - %v", err)
+			// Check specifically for SQLITE_BUSY errors
+			if strings.Contains(err.Error(), "SQLITE_BUSY") || strings.Contains(err.Error(), "database is locked") {
+				t.Errorf("SQLITE_BUSY deadlock detected! PR #118820 may not have fully resolved the issue.")
+			}
+		}
+		t.FailNow()
+	}
+
+	require.Equal(t, numRepos, successCount, "All repositories should be created successfully")
+
+	// Verify all repositories exist and have their secure tokens
+	for i := 0; i < numRepos; i++ {
+		repoName := fmt.Sprintf("concurrent-repo-%d", i)
+		repo, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err, "Repository %s should exist", repoName)
+
+		// Verify the secure token was created
+		tokenName, found, err := unstructured.NestedString(repo.Object, "secure", "token", "name")
+		require.NoError(t, err, "Should be able to read secure token name")
+		require.True(t, found, "Repository %s should have a secure token", repoName)
+		require.NotEmpty(t, tokenName, "Secure token name should not be empty")
+	}
+
+	t.Logf("Successfully created %d repositories concurrently without deadlocks", numRepos)
 }
