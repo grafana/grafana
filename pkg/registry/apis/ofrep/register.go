@@ -270,7 +270,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
+	if b.providerType == setting.GOFFProviderType || b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		valid, ns := b.validateNamespace(r)
 		b.logger.Debug("validating namespace in oneFlagHandler handler", "namespace", ns, "valid", valid, "flag", flagKey)
 		if !valid {
@@ -297,7 +297,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	isAuthedReq := b.isAuthenticatedRequest(r)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
-	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
+	if b.providerType == setting.GOFFProviderType || b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		valid, ns := b.validateNamespace(r)
 		b.logger.Debug("validating namespace in allFlagsHandler handler", "namespace", ns, "valid", valid)
 
