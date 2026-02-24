@@ -20,13 +20,7 @@ import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
-import {
-  generateUniqueTitle,
-  ungroupLayout,
-  GridLayoutType,
-  mapIdToGridLayoutType,
-  createEmptyLayoutFrom,
-} from '../layouts-shared/utils';
+import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -331,7 +325,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
     const perform = () => {
       if (!tabsAfterRemoval.length) {
-        parent.switchLayout(createEmptyLayoutFrom(tab.getLayout()));
+        parent.switchLayout(AutoGridLayoutManager.createEmpty());
       } else {
         const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
         this.setState({

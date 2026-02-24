@@ -2,10 +2,10 @@ import { VizPanel } from '@grafana/scenes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../DashboardScene';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -180,40 +180,15 @@ describe('TabsLayoutManager', () => {
     });
 
     describe('when the last tab is removed', () => {
-      it('should switch the parent layout to an empty layout of the same type as the removed tab', () => {
+      it('should switch the parent layout to an empty auto grid layout', () => {
         const tabsLayoutManager = buildTabsLayoutManager([]);
-        const tab = tabsLayoutManager.addNewTab(
-          new TabItem({ title: 'Only Tab', layout: RowsLayoutManager.createEmpty() })
-        );
+        const tab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Only Tab' }));
 
         tabsLayoutManager.removeTab(tab);
 
         const parentLayoutManager = (tabsLayoutManager.parent as DashboardScene).state.body;
-        expect(parentLayoutManager).toBeInstanceOf(RowsLayoutManager);
+        expect(parentLayoutManager).toBeInstanceOf(AutoGridLayoutManager);
         expect(parentLayoutManager.getVizPanels()).toHaveLength(0);
-      });
-
-      describe('if the tab layout does not support creating an empty layout', () => {
-        it('should switch the parent scene layout to a default grid layout', () => {
-          const tabsLayoutManager = buildTabsLayoutManager([]);
-          const tab = tabsLayoutManager.addNewTab(
-            new TabItem({
-              title: 'Only Tab',
-              layout: { descriptor: { name: 'TestLayoutManager' } } as DashboardLayoutManager,
-            })
-          );
-          const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-
-          tabsLayoutManager.removeTab(tab);
-
-          const parentLayoutManager = (tabsLayoutManager.parent as DashboardScene).state.body;
-          expect(parentLayoutManager).toBeInstanceOf(DefaultGridLayoutManager);
-          expect(parentLayoutManager.getVizPanels()).toHaveLength(0);
-          expect(warnSpy).toHaveBeenCalledWith(
-            'Layout "TestLayoutManager" does not support creating an empty layout. Falling back to the default grid layout instead.'
-          );
-          warnSpy.mockRestore();
-        });
       });
 
       it('should handle undo action correctly', () => {

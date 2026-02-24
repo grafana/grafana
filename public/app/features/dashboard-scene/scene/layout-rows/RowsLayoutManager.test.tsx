@@ -1,8 +1,6 @@
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../DashboardScene';
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -148,38 +146,13 @@ describe('RowsLayoutManager', () => {
     describe('when the last row is removed', () => {
       it('should switch the parent layout to an empty layout of the same type as the removed row', () => {
         const rowsLayoutManager = buildRowsLayoutManager();
-        const row = rowsLayoutManager.addNewRow(
-          new RowItem({ title: 'Only Row', layout: TabsLayoutManager.createEmpty() })
-        );
+        const row = rowsLayoutManager.addNewRow(new RowItem({ title: 'Only Row' }));
 
         rowsLayoutManager.removeRow(row);
 
         const parentLayoutManager = (rowsLayoutManager.parent as DashboardScene).state.body;
-        expect(parentLayoutManager).toBeInstanceOf(TabsLayoutManager);
+        expect(parentLayoutManager).toBeInstanceOf(AutoGridLayoutManager);
         expect(parentLayoutManager.getVizPanels()).toHaveLength(0);
-      });
-
-      describe('if the row layout does not support creating an empty layout', () => {
-        it('should switch the parent scene layout to a default grid layout', () => {
-          const rowsLayoutManager = buildRowsLayoutManager();
-          const row = rowsLayoutManager.addNewRow(
-            new RowItem({
-              title: 'Only Row',
-              layout: { descriptor: { name: 'TestLayoutManager' } } as DashboardLayoutManager,
-            })
-          );
-          const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-
-          rowsLayoutManager.removeRow(row);
-
-          const parentLayoutManager = (rowsLayoutManager.parent as DashboardScene).state.body;
-          expect(parentLayoutManager).toBeInstanceOf(DefaultGridLayoutManager);
-          expect(parentLayoutManager.getVizPanels()).toHaveLength(0);
-          expect(warnSpy).toHaveBeenCalledWith(
-            'Layout "TestLayoutManager" does not support creating an empty layout. Falling back to the default grid layout instead.'
-          );
-          warnSpy.mockRestore();
-        });
       });
 
       it('should handle undo action correctly', () => {

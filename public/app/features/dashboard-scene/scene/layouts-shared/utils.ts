@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 import { SceneObject } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
@@ -76,17 +75,6 @@ export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: Dashb
     innerLayout.clearParent();
     layoutParent.switchLayout(innerLayout, skipUndo);
   }
-}
-
-export function createEmptyLayoutFrom(layout: DashboardLayoutManager): DashboardLayoutManager {
-  const createFromEmpty = Reflect.get(layout.constructor, 'createEmpty');
-  if (typeof createFromEmpty === 'function') {
-    return createFromEmpty();
-  }
-  console.warn(
-    `Layout "${layout.descriptor.name}" does not support creating an empty layout. Falling back to the default grid layout instead.`
-  );
-  return DefaultGridLayoutManager.createEmpty();
 }
 
 export function getIsLazy(preload: boolean | undefined): boolean {
