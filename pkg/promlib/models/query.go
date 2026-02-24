@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	glog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+
 	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
