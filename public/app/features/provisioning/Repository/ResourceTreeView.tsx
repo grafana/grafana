@@ -105,7 +105,11 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
               <Tooltip
                 content={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
               >
-                <Icon name="exclamation-triangle" className={styles.warningIcon} />
+                <Icon
+                  name="exclamation-triangle"
+                  className={styles.warningIcon}
+                  aria-label={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
+                />
               </Tooltip>
             );
           }
