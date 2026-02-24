@@ -509,26 +509,6 @@
       "count": 2
     }
   },
-  "packages/grafana-sql/src/components/configuration/ConnectionLimits.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "packages/grafana-sql/src/components/configuration/MaxLifetimeField.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-sql/src/components/configuration/MaxOpenConnectionsField.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-sql/src/components/configuration/TLSSecretsConfig.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "packages/grafana-sql/src/components/visual-query-builder/Preview.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -3501,11 +3481,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/grafana-postgresql-datasource/configuration/ConfigurationEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 12
-    }
-  },
   "public/app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/EditorField.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -3804,11 +3779,6 @@
   "public/app/plugins/datasource/mssql/configuration/Kerberos.tsx": {
     "no-restricted-syntax": {
       "count": 8
-    }
-  },
-  "public/app/plugins/datasource/mysql/configuration/ConfigurationEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 10
     }
   },
   "public/app/plugins/datasource/opentsdb/components/OpenTsdbDetails.tsx": {
