@@ -308,9 +308,8 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
 		},
 	}
-	search := &slowSearchBackendWithCache{
-		mockSearchBackend: mockSearchBackend{},
-	}
+	search := newSlowSearchBackendWithCache()
+
 	supplier := &TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"group": "resource",
@@ -336,6 +335,13 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
+	// Ensure BuildIndex actually started (and wg.Add happened) before waiting.
+	select {
+	case <-search.started:
+	case <-time.After(1 * time.Second):
+		t.Fatal("BuildIndex never started")
+	}
+
 	// Wait until indexing is finished.
 	search.wg.Wait()
 
@@ -354,7 +360,16 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 
 type slowSearchBackendWithCache struct {
 	mockSearchBackend
-	wg sync.WaitGroup
+	wg      sync.WaitGroup
+	started chan struct{}
+	once    sync.Once
+}
+
+func newSlowSearchBackendWithCache() *slowSearchBackendWithCache {
+	return &slowSearchBackendWithCache{
+		mockSearchBackend: mockSearchBackend{},
+		started:           make(chan struct{}),
+	}
 }
 
 func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
@@ -364,7 +379,10 @@ func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIn
 }
 
 func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
-	m.wg.Add(1)
+	m.once.Do(func() {
+		m.wg.Add(1)
+		close(m.started)
+	})
 	defer m.wg.Done()
 
 	time.Sleep(1 * time.Second)
