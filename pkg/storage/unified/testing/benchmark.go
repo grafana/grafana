@@ -74,7 +74,7 @@ func (r BenchmarkResult) String() string {
 	var out strings.Builder
 
 	fmt.Fprintf(&out, "Total Duration: %v\n", r.TotalDuration)
-	fmt.Fprintf(&out, "Write Count: %d\n", r.ReqCount)
+	fmt.Fprintf(&out, "Req Count: %d\n", r.ReqCount)
 	fmt.Fprintf(&out, "Throughput: %.2f writes/sec\n", r.Throughput)
 	fmt.Fprintf(&out, "P50 Latency: %v\n", r.P50Latency)
 	fmt.Fprintf(&out, "P90 Latency: %v\n", r.P90Latency)
@@ -230,7 +230,7 @@ func runListBenchmark(t *testing.T, backend resource.StorageBackend, opts *Bench
 		listResource = "bench-list-resource"
 	)
 
-	// --- Seed phase (sequential to avoid OCC conflicts) ---
+	// --- Seed phase (sequential to avoid Optimistic locking conflicts) ---
 	t.Log("List benchmark: seeding resources with history...")
 	seedStart := time.Now()
 
