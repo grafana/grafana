@@ -516,7 +516,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
-			hs.GetAlertNotifiers()),
+			hs.GetAlertNotifiers(hs.Cfg)),
 		)
 
 		apiRoute.Get("/annotations", authorize(ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotations))
