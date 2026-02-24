@@ -14,7 +14,7 @@ import {
   buildDescriptionInputSystemPrompt,
   buildTitleInputSystemPrompt,
 } from 'app/features/dashboard/components/GenAI/assistantContext';
-import { LLMFallbackAddon } from 'app/features/dashboard/components/GenAI/hooks';
+import { LLMFallbackAddon, useIsAssistantAvailable } from 'app/features/dashboard/components/GenAI/hooks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -192,6 +192,7 @@ export function PanelFrameTitleInput({
   id?: string;
 }) {
   const { title } = panel.useState();
+  const isAssistantAvailable = useIsAssistantAvailable();
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
   const [prevTitle, setPrevTitle] = React.useState(panel.state.title);
 
@@ -209,13 +210,13 @@ export function PanelFrameTitleInput({
   return (
     <GenAITextInput
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
-      value={isDefaultTitle ? '' : title}
+      value={isAssistantAvailable && isDefaultTitle ? '' : title}
       onChange={(val) => updatePanelTitleState(panel, val)}
       onComplete={(val) => editPanelTitleAction(panel, val)}
       onFocus={() => setPrevTitle(title)}
       onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
       systemPrompt={systemPrompt}
-      autoGenerate={isDefaultTitle}
+      autoGenerate={isAssistantAvailable && isDefaultTitle}
       id={id}
       inputRef={ref}
     />
