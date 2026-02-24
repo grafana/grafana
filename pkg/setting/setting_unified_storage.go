@@ -78,6 +78,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
+	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(50000)
 	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs enforced")
