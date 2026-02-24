@@ -1,12 +1,7 @@
-import { useMemo } from 'react';
-
 import { AITextInput } from '@grafana/assistant';
-import { PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dashboard, Panel } from '@grafana/schema';
 import { Input } from '@grafana/ui';
 
-import { buildTitleInputSystemPrompt } from './assistantContext';
 import { useIsAssistantAvailable } from './hooks';
 
 export interface GenAITextInputProps {
@@ -15,9 +10,7 @@ export interface GenAITextInputProps {
   onComplete?: (value: string) => void;
   onBlur?: () => void;
   onFocus?: () => void;
-  panel: Panel;
-  dashboard: Dashboard;
-  data?: PanelData;
+  systemPrompt?: string;
   autoGenerate?: boolean;
   id?: string;
   'data-testid'?: string;
@@ -27,7 +20,6 @@ export interface GenAITextInputProps {
 /**
  * A text input that uses the Grafana Assistant for AI generation when available,
  * falling back to a plain Input otherwise.
- * The LLM-plugin addon button is handled separately via GenAIPanelTitleButton.
  */
 export function GenAITextInput({
   value,
@@ -35,22 +27,13 @@ export function GenAITextInput({
   onComplete,
   onBlur,
   onFocus,
-  panel,
-  dashboard,
-  data,
+  systemPrompt,
   autoGenerate = false,
   id,
   'data-testid': dataTestId,
   inputRef,
 }: GenAITextInputProps) {
   const isAssistant = useIsAssistantAvailable();
-
-  const systemPrompt = useMemo(() => {
-    if (!isAssistant) {
-      return undefined;
-    }
-    return buildTitleInputSystemPrompt(panel, dashboard, data);
-  }, [isAssistant, panel, dashboard, data]);
 
   if (isAssistant) {
     return (
