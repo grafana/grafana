@@ -1,19 +1,11 @@
-import { useState } from 'react';
-
-import { PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Dashboard, Panel } from '@grafana/schema';
-import { DataLinksInlineEditor, RadioButtonGroup, Select, Switch } from '@grafana/ui';
+import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from '../GenAI/GenAIPanelTitleButton';
-import { GenAITextArea } from '../GenAI/GenAITextArea';
-import { GenAITextInput } from '../GenAI/GenAITextInput';
-import { LLMFallbackAddon } from '../GenAI/hooks';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -47,9 +39,6 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     }
   };
 
-  const saveModel = panel.getSaveModel();
-  const dashboardModel = dashboard.getSaveModelClone();
-
   return descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
@@ -59,24 +48,20 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         popularRank: 1,
         render: function renderTitle(descriptor) {
           return (
-            <LegacyPanelTitleInput
+            <Input
+              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
               id={descriptor.props.id}
-              panel={saveModel}
-              dashboard={dashboardModel}
-              data={props.data}
               defaultValue={panel.title}
-              onCommit={(title) => onPanelConfigChange('title', title)}
+              onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
             />
           );
         },
         addon: config.featureToggles.dashgpt && (
-          <LLMFallbackAddon>
-            <GenAIPanelTitleButton
-              onGenerate={setPanelTitle}
-              panel={saveModel}
-              dashboard={dashboardModel}
-            />
-          </LLMFallbackAddon>
+          <GenAIPanelTitleButton
+            onGenerate={setPanelTitle}
+            panel={panel.getSaveModel()}
+            dashboard={dashboard.getSaveModelClone()}
+          />
         ),
       })
     )
@@ -88,23 +73,16 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         value: panel.description,
         render: function renderDescription(descriptor) {
           return (
-            <LegacyPanelDescriptionInput
+            <TextArea
+              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
               id={descriptor.props.id}
-              panel={saveModel}
-              dashboard={dashboardModel}
-              data={props.data}
-              defaultValue={panel.description ?? ''}
-              onCommit={(desc) => onPanelConfigChange('description', desc)}
+              defaultValue={panel.description}
+              onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
             />
           );
         },
         addon: config.featureToggles.dashgpt && (
-          <LLMFallbackAddon>
-            <GenAIPanelDescriptionButton
-              onGenerate={setPanelDescription}
-              panel={saveModel}
-            />
-          </LLMFallbackAddon>
+          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel.getSaveModel()} />
         ),
       })
     )
@@ -218,56 +196,4 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           })
         )
     );
-}
-
-interface LegacyPanelInputProps {
-  id: string;
-  panel: Panel;
-  dashboard: Dashboard;
-  data?: PanelData;
-  defaultValue: string;
-  onCommit: (value: string) => void;
-}
-
-function LegacyPanelTitleInput({ id, panel, dashboard, data, defaultValue, onCommit }: LegacyPanelInputProps) {
-  const isDefault = !defaultValue || defaultValue === NEW_PANEL_TITLE;
-  const [value, setValue] = useState(isDefault ? '' : defaultValue);
-
-  return (
-    <GenAITextInput
-      data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
-      value={value}
-      onChange={(val) => {
-        setValue(val);
-        onCommit(val);
-      }}
-      onBlur={() => onCommit(value)}
-      panel={panel}
-      dashboard={dashboard}
-      data={data}
-      autoGenerate={isDefault}
-      id={id}
-    />
-  );
-}
-
-function LegacyPanelDescriptionInput({ id, panel, dashboard, data, defaultValue, onCommit }: LegacyPanelInputProps) {
-  const [value, setValue] = useState(defaultValue);
-
-  return (
-    <GenAITextArea
-      data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
-      value={value}
-      onChange={(val) => {
-        setValue(val);
-        onCommit(val);
-      }}
-      onBlur={() => onCommit(value)}
-      panel={panel}
-      dashboard={dashboard}
-      data={data}
-      autoGenerate={!defaultValue}
-      id={id}
-    />
-  );
 }
