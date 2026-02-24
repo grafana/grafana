@@ -100,4 +100,14 @@ describe('MenuItem', () => {
     expect(screen.getByText('main label')).toBeInTheDocument();
     expect(screen.getByText('extra content')).toBeInTheDocument();
   });
+
+  it('activates link MenuItem with Space key', async () => {
+    const onClick = jest.fn();
+    render(<MenuItem label="Link Item" url="/some-url" onClick={onClick} />);
+  
+    const item = screen.getByRole('menuitem', { name: 'Link Item' });
+    await user.type(item, ' ');
+  
+    expect(onClick).toHaveBeenCalled();
+  });
 });

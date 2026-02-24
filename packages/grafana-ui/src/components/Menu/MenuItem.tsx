@@ -126,6 +126,12 @@ export const MenuItem = React.memo(
 
     const handleKeys = (event: React.KeyboardEvent) => {
       switch (event.key) {
+        case ' ':
+          if (ItemElement === 'a' && url) {
+            event.preventDefault();
+            localRef.current?.click();
+          }
+          break;
         case 'ArrowRight':
           event.preventDefault();
           event.stopPropagation();
