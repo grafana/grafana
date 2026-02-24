@@ -625,6 +625,40 @@ describe('Layout mutation commands', () => {
       expect(gridItem.state.height).toBe(8);
     });
 
+    it('preserves original panel dimensions when moving between rows', async () => {
+      const scene = buildRowsSceneWithPanels();
+      const executor = new DashboardMutationClient(scene);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+
+      // Set custom dimensions on panel A (e.g. a full-width log panel)
+      const panelA = body.state.rows[0].state.layout.getVizPanels()[0];
+      const sourceGridItem = panelA.parent as unknown as {
+        state: { x: number; y: number; width: number; height: number };
+        setState: (s: Record<string, number>) => void;
+      };
+      sourceGridItem.setState({ width: 24, height: 20 });
+
+      const result = await executor.execute({
+        type: 'MOVE_PANEL',
+        payload: {
+          element: { name: 'elem-a' },
+          toParent: '/rows/1',
+        },
+      });
+
+      expect(result.success).toBe(true);
+
+      const movedPanels = body.state.rows[1].state.layout.getVizPanels();
+      expect(movedPanels).toHaveLength(2);
+
+      const movedPanel = movedPanels.find((p) => p.state.title === 'Panel A')!;
+      const newGridItem = movedPanel.parent as unknown as {
+        state: { width: number; height: number };
+      };
+      expect(newGridItem.state.width).toBe(24);
+      expect(newGridItem.state.height).toBe(20);
+    });
+
     it('fails when element is not found', async () => {
       const scene = buildRowsSceneWithPanels();
       const executor = new DashboardMutationClient(scene);

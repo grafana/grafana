@@ -100,6 +100,13 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       const targetResolved = resolveLayoutPath(scene.state.body, toParent);
       const targetLayout = targetResolved.layoutManager;
 
+      // Capture original grid dimensions before the panel is removed
+      const sourceGridItem = vizPanel.parent;
+      const originalSize =
+        sourceGridItem instanceof DashboardGridItem
+          ? { width: sourceGridItem.state.width, height: sourceGridItem.state.height }
+          : undefined;
+
       // Clone the panel, remove from owning layout, add to target
       const panelClone = vizPanel.clone();
 
@@ -113,7 +120,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       // Add to target layout
       targetLayout.addPanel(panelClone);
 
-      // Apply explicit position on the new grid item (skip for AutoGridLayout)
+      // Restore original dimensions when no explicit position is provided
       const warnings: string[] = [];
       if (position) {
         if (targetLayout instanceof AutoGridLayoutManager) {
@@ -121,6 +128,8 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
         } else {
           applyGridPosition(panelClone, position);
         }
+      } else if (originalSize && !(targetLayout instanceof AutoGridLayoutManager)) {
+        applyGridPosition(panelClone, originalSize);
       }
 
       return {
