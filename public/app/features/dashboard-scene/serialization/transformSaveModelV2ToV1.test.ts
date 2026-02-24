@@ -152,6 +152,14 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
     'output'
   );
 
+  beforeAll(() => {
+    if (!existsSync(outputDir)) {
+      throw new Error(
+        `Golden files not found at ${outputDir}. Run "make generate-golden-files" from apps/dashboard/ to generate them.`
+      );
+    }
+  });
+
   // Get v2beta1 input files
   const v2beta1Inputs = getFilesRecursively(inputDir).filter(({ relativePath }) => {
     const fileName = path.basename(relativePath);
