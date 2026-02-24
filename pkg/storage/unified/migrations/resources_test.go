@@ -189,9 +189,3 @@ func TestRegisterMigrations(t *testing.T) {
 		require.Empty(t, ids)
 	})
 }
-
-// TestResourceMigration_SkipMigrationLog verifies migration log writing is always enabled.
-func TestResourceMigration_SkipMigrationLog(t *testing.T) {
-	m := &ResourceMigration{}
-	require.False(t, m.SkipMigrationLog())
-}

@@ -222,10 +222,6 @@ func NewResourceMigration(
 	return m
 }
 
-func (m *ResourceMigration) SkipMigrationLog() bool {
-	return false
-}
-
 var _ migrator.CodeMigration = (*ResourceMigration)(nil)
 
 // SQL implements migrator.Migration interface. Returns a description string.
