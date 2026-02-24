@@ -122,9 +122,12 @@ func buildQuery(query Query) (string, error) {
 
 	logql := fmt.Sprintf(`{%s}`, strings.Join(selectors, `,`))
 
-	// Searching for ruleUID before JSON parsing can dramatically improve performance.
+	// Searching for ruleUID and receiver before JSON parsing can dramatically improve performance.
 	if query.RuleUID != nil && *query.RuleUID != "" {
 		logql += fmt.Sprintf(` |= %q`, *query.RuleUID)
+	}
+	if query.Receiver != nil && *query.Receiver != "" {
+		logql += fmt.Sprintf(` |= %q`, *query.Receiver)
 	}
 
 	logql += ` | json`
@@ -284,12 +287,20 @@ func parseLokiEntry(s lokiclient.Sample) (Entry, error) {
 		groupLabels = make(map[string]string)
 	}
 
+	var enrichments interface{}
+	if len(lokiEntry.Alert.ExtraData) > 0 {
+		if err := json.Unmarshal(lokiEntry.Alert.ExtraData, &enrichments); err != nil {
+			return Entry{}, fmt.Errorf("failed to unmarshal enrichments [%s]: %w", s.T, err)
+		}
+	}
+
 	alerts := []EntryAlert{{
 		Status:      lokiEntry.Alert.Status,
 		Labels:      lokiEntry.Alert.Labels,
 		Annotations: lokiEntry.Alert.Annotations,
 		StartsAt:    lokiEntry.Alert.StartsAt,
 		EndsAt:      lokiEntry.Alert.EndsAt,
+		Enrichments: enrichments,
 	}}
 
 	return Entry{

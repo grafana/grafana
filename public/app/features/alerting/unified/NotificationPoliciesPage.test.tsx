@@ -602,6 +602,10 @@ describe('alertingMultiplePolicies Feature Flag', () => {
     config.featureToggles.alertingMultiplePolicies = originalFeatureToggle;
   });
 
+  afterEach(() => {
+    resetRoutingTreeMap();
+  });
+
   beforeAll(() => {
     setupDataSources(...Object.values(dataSources));
     grantUserPermissions([AccessControlAction.AlertingNotificationsExternalRead, ...PERMISSIONS_NOTIFICATION_POLICIES]);
@@ -638,6 +642,22 @@ describe('alertingMultiplePolicies Feature Flag', () => {
     await getRootRoute();
 
     expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
+  });
+
+  it('Should render tree inline with create button when there is only one policy tree', async () => {
+    config.featureToggles.alertingMultiplePolicies = true;
+
+    resetRoutingTreeMap();
+    deleteRoutingTree('Managed Policy - Empty Provisioned');
+    deleteRoutingTree('Managed Policy - Override + Inherit');
+    deleteRoutingTree('Managed Policy - Many Top-Level');
+    deleteRoutingTree('Managed Policy - Deeply Nested');
+
+    renderNotificationPolicies();
+
+    await getRootRoute();
+    expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
+    expect(screen.getByTestId('create-policy-button')).toBeInTheDocument();
   });
 });
 

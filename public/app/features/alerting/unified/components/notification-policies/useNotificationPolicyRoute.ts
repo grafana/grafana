@@ -1,7 +1,7 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { pick, uniq } from 'lodash';
 import memoize from 'micro-memoize';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
 import {
@@ -16,6 +16,7 @@ import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/t
 import { MatcherOperator, ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
@@ -304,6 +305,33 @@ export function useCreateRoutingTree() {
       routingTree: cleanKubernetesRouteIDs(routeObject),
     }).unwrap();
   });
+}
+
+/**
+ * Shared hook for the "create policy" action used by both PoliciesList and SinglePolicyView.
+ * Encapsulates modal state, RBAC ability checks, the create mutation, and policy-name dedup.
+ */
+export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createPoliciesSupported, createPoliciesAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateNotificationPolicy
+  );
+  const [createTrigger] = useCreateRoutingTree();
+
+  const existingPolicyNames = useMemo(
+    () => (allPolicies ?? []).map((p) => p.name).filter((name): name is string => name !== undefined),
+    [allPolicies]
+  );
+
+  return {
+    isCreateModalOpen,
+    openCreateModal: () => setIsCreateModalOpen(true),
+    closeCreateModal: () => setIsCreateModalOpen(false),
+    createPoliciesSupported,
+    createPoliciesAllowed,
+    createTrigger,
+    existingPolicyNames,
+  };
 }
 
 const fuzzyFinder = new uFuzzy({

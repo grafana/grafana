@@ -5,19 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorType, SidebarSize } from '../../constants';
-import {
-  useAlertingContext,
-  usePanelContext,
-  useQueryEditorUIContext,
-  useQueryRunnerContext,
-} from '../QueryEditorContext';
+import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { EMPTY_ALERT } from '../types';
 
-import { AlertsView } from './AlertsView';
+import { AlertsView } from './Alerts/AlertsView';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
-import { SidebarFooter } from './SidebarFooter';
 import { SidebarHeaderActions } from './SidebarHeaderActions';
-import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;
@@ -29,11 +22,8 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   setSidebarSize,
 }: QueryEditorSidebarProps) {
   const styles = useStyles2(getStyles);
-  const { queries } = useQueryRunnerContext();
-  const { transformations } = usePanelContext();
+  const { setSelectedAlert, cardType } = useQueryEditorUIContext();
   const { alertRules } = useAlertingContext();
-  const { cardType, setSelectedAlert } = useQueryEditorUIContext();
-  const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
   // Made to handle eventual new views (ai mode, etc.)
   // viewInitializers is a map of view types to functions that initialize the view
@@ -63,16 +53,10 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           {cardType === QueryEditorType.Alert ? (
             <AlertsView alertRules={alertRules} />
           ) : (
-            <QueriesAndTransformationsView
-              queries={queries}
-              transformations={transformations}
-              onQueryDragEnd={onQueryDragEnd}
-              onTransformationDragEnd={onTransformationDragEnd}
-            />
+            <QueriesAndTransformationsView />
           )}
         </div>
       </ScrollContainer>
-      <SidebarFooter />
     </div>
   );
 });

@@ -1855,10 +1855,18 @@
       "apply": "Zastosuj"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Nie udało się wczytać historii stanu",
       "history-error-desc": "Nie można pobrać historii zmian stanu dla tej instancji.",
       "no-history": "Brak niedawnych zmian stanu",
-      "state-history": "Niedawne zmiany stanu"
+      "state-error-description": "",
+      "state-history": "Niedawne zmiany stanu",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Niedopasowane etykiety",
@@ -5079,7 +5087,7 @@
           }
         }
       },
-      "name": "Automatyczna siatka",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Wyczyść"
@@ -6189,6 +6197,8 @@
       "title-transformations": "Transformacje"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Szukaj transformacji",
       "show-images": "Pokaż obrazki",
       "sql-expressions-message-description": "Nowy sposób manipulowania wynikami zapytań do źródeł danych i przekształcania ich przy użyciu składni podobnej do stosowanej w MySQL.",
@@ -6326,11 +6336,12 @@
     "browse-grafana-com": "Przeglądaj Grafana.com",
     "browse-plugins": "Przeglądaj wtyczki",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Dostarczono źródło danych",
       "details-tooltip": "Szczegóły",
       "no-preview": "Brak dostępnego podglądu",
       "use-dashboard-button": "Użyj pulpitu",
-      "use-template-button": "Użyj szablonu"
+      "view-template-button": ""
     },
     "community-empty-title": "Nie znaleziono pulpitów społeczności",
     "community-empty-title-with-datasource": "Nie znaleziono pulpitów społeczności {{datasourceType}}",
@@ -6442,10 +6453,12 @@
         "new-panel": "Nowy panel"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7937,6 +7950,11 @@
       "continue-without-saving": "Kontynuuj bez zapisywania",
       "save-correlation": "Zapisz korelację",
       "title-unsaved-changes-to-correlation": "Niezapisane zmiany w korelacji"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Kliknij i przeciągnij szary separator na kolorowym obszarze poniżej.",
@@ -12475,6 +12493,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Ostatnia gałąź",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Gałąź żądania pull",
       "suffix-read-only-branch": ""
     }
@@ -12511,10 +12530,10 @@
       },
       "pr-workflow-description": "Pozwala użytkownikom wybrać, czy otworzyć żądanie pull podczas zapisywania zmian. Jeśli repozytorium nie zezwala na bezpośrednie zmiany w głównej gałęzi, nadal może być wymagane żądanie pull.",
       "pr-workflow-label": "Włącz opcję żądania pull podczas zapisywania",
-      "token-description": "Hasło aplikacji Bitbucket z uprawnieniami do repozytorium",
-      "token-label": "Hasło aplikacji",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Wymagany jest token Bitbucket",
-      "token-user-description": "Nazwa użytkownika, która będzie używana do uzyskiwania dostępu do repozytorium za pomocą hasła aplikacji",
+      "token-user-description": "",
       "token-user-required": "Nazwa użytkownika jest wymagana",
       "url-description": "Adres URL repozytorium Bitbucket",
       "url-required": "Adres URL repozytorium jest wymagany"
@@ -12546,9 +12565,6 @@
       "folders-count_few": "{{count}} folderu",
       "folders-count_many": "{{count}} folderu",
       "folders-count_other": "{{count}} folderu"
-    },
-    "check-repository": {
-      "check": "Sprawdźmy."
     },
     "code-block": {
       "aria-label-copy": "Skopiuj kod klucza do schowka"
@@ -12942,6 +12958,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Sprawdzone:",
       "connection-status": "Status połączenia:",
       "finished": "Ostatnia udana operacja pull:",
@@ -12951,7 +12968,9 @@
       "last-ref": "Ostatnie odniesienie:",
       "messages": "Wiadomości:",
       "not-available": "Niedostępne",
+      "path": "",
       "pull-status": "Status pull",
+      "repo-url": "",
       "resources": "Zasoby",
       "status": "Status:",
       "unhealthy": "Niesprawne",
@@ -13088,8 +13107,8 @@
     "token-permissions-info": {
       "and-click": "i kliknij",
       "bitbucket": {
-        "create-token-button": "Utwórz hasła aplikacji",
-        "token-text": "Osobisty token dostępu Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Dodaj nowy token",
@@ -14474,9 +14493,18 @@
       "columns": {
         "aria-label-delete-button": "Usuń zespół {{teamName}}",
         "aria-label-edit-team": "Edytuj zespół {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Edytuj zespół",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Edytuj zespół"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Wczytywanie zespołów…",
       "new-team": "Nowy zespół",
       "placeholder-search-teams": "Szukaj zespołów"
