@@ -61,20 +61,20 @@ describe('useFolderMetadataStatus', () => {
   describe('when feature flag is off', () => {
     testWithFeatureToggles({ disable: ['provisioningFolderMetadata'] });
 
-    it('returns skip', () => {
+    it('returns ok', () => {
       setupMocks();
 
       const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('skip');
+      expect(result.current).toBe('ok');
     });
   });
 
-  describe('returns skip', () => {
+  describe('returns ok when no metadata check is needed', () => {
     it('when folderUID is undefined', () => {
       setupMocks();
 
       const { result } = renderHook(() => useFolderMetadataStatus(undefined));
-      expect(result.current).toBe('skip');
+      expect(result.current).toBe('ok');
     });
 
     it('when folder is not provisioned', () => {
@@ -88,7 +88,7 @@ describe('useFolderMetadataStatus', () => {
       });
 
       const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('skip');
+      expect(result.current).toBe('ok');
     });
 
     it('when no repository is found', () => {
@@ -97,7 +97,7 @@ describe('useFolderMetadataStatus', () => {
       });
 
       const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('skip');
+      expect(result.current).toBe('ok');
     });
   });
 

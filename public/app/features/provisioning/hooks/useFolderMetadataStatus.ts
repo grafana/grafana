@@ -8,7 +8,7 @@ import { FOLDER_METADATA_FILE } from '../constants';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 
-export type FolderMetadataStatus = 'loading' | 'missing' | 'error' | 'ok' | 'skip';
+export type FolderMetadataStatus = 'loading' | 'missing' | 'error' | 'ok';
 
 export function useFolderMetadataStatus(folderUID?: string): FolderMetadataStatus {
   const shouldCheck = !!config.featureToggles.provisioningFolderMetadata && !!folderUID;
@@ -34,16 +34,22 @@ export function useFolderMetadataStatus(folderUID?: string): FolderMetadataStatu
     shouldQueryFile ? { name: repoName, path: folderJsonPath } : skipToken
   );
 
+  // Feature flag off or no folder — no metadata check needed
   if (!shouldCheck) {
-    return 'skip';
+    return 'ok';
   }
 
-  if (isRepoViewLoading || isFileLoading) {
+  if (isRepoViewLoading) {
     return 'loading';
   }
 
+  // Not provisioned or no repository — folder doesn't need metadata, show permissions normally
   if (!isProvisioned || !repository) {
-    return 'skip';
+    return 'ok';
+  }
+
+  if (isFileLoading) {
+    return 'loading';
   }
 
   if (isFetchError(error) && error.status === 404) {

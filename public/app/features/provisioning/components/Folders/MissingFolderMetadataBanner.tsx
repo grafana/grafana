@@ -49,7 +49,6 @@ export function FolderPermissions({ folderUID, canSetPermissions }: FolderPermis
     case 'error':
       return <MetadataErrorAlert />;
     case 'ok':
-    case 'skip':
       return <Permissions resource="folders" resourceId={folderUID} canSetPermissions={canSetPermissions} />;
   }
 }
