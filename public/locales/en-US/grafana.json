@@ -13301,7 +13301,8 @@
       "cache-timeout-tooltip": "If your time series store has a query cache this option can override the default cache timeout. Specify a numeric value in seconds.",
       "cache-ttl": "Cache TTL",
       "cache-ttl-tooltip": "Cache time-to-live: How long results from the queries in this panel will be cached, in milliseconds.",
-      "collapse": "Collapse query options sidebar",
+      "hide-time-override": "Hide time info",
+      "hide-time-override-tooltip": "Hides the time override displayed in the panel header when relative time or time shift is set.",
       "interval": "Interval",
       "interval-tooltip": "The evaluated interval that is sent to data source and is used in $__interval and $__interval_ms.",
       "max-data-points": "Max data points",
@@ -13311,9 +13312,10 @@
       "no-limit": "No limit",
       "relative-time": "Relative time",
       "relative-time-tooltip": "Overrides the relative time range for individual panels. For example, to configure the Last 5 minutes use now-5m.",
+      "time-range-max-data-points": "Time range / max data points",
       "time-shift": "Time shift",
       "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker.",
-      "title": "Query Options"
+      "width-of-panel": "Width of panel"
     },
     "edit-query-name": "Edit query name",
     "footer": {
