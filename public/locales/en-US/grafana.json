@@ -13367,6 +13367,7 @@
       "data": "Data",
       "footer-items_one": "{{count}} item",
       "footer-items_other": "{{count}} items",
+      "loading-queries-transformations": "Loading queries and transformations",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations"

@@ -3,14 +3,14 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { ScenesNewRuleFromPanelButton } from '../../../PanelDataPane/NewAlertRuleButton';
-import { ActionItem } from '../../Actions';
-import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { usePanelContext } from '../QueryEditorContext';
-import { AlertRule } from '../types';
+import { ScenesNewRuleFromPanelButton } from '../../../../PanelDataPane/NewAlertRuleButton';
+import { ActionItem } from '../../../Actions';
+import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
+import { usePanelContext } from '../../QueryEditorContext';
+import { AlertRule } from '../../types';
+import { SidebarCard } from '../SidebarCard';
 
 import { AlertCard } from './AlertCard';
-import { SidebarCard } from './SidebarCard';
 
 interface AlertsViewProps {
   alertRules: AlertRule[];

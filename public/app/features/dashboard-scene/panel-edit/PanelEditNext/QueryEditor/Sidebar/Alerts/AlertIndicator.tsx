@@ -1,9 +1,9 @@
 import { t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
-import { QueryEditorType } from '../../constants';
-import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
-import { EMPTY_ALERT } from '../types';
+import { QueryEditorType } from '../../../constants';
+import { useAlertingContext, useQueryEditorUIContext } from '../../QueryEditorContext';
+import { EMPTY_ALERT } from '../../types';
 
 export function AlertIndicator() {
   const { alertRules, loading } = useAlertingContext();

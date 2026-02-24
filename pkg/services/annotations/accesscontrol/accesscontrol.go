@@ -33,6 +33,7 @@ type AuthService struct {
 	features                  featuremgmt.FeatureToggles
 	dashSvc                   dashboards.DashboardService
 	searchDashboardsPageLimit int64
+	maxDepth                  int
 }
 
 func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, cfg *setting.Cfg) *AuthService {
@@ -44,6 +45,7 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashb
 		features:                  features,
 		dashSvc:                   dashSvc,
 		searchDashboardsPageLimit: searchDashboardsPageLimit,
+		maxDepth:                  cfg.MaxNestedFolderDepth,
 	}
 }
 
@@ -112,7 +114,7 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 	}
 
 	filters := []any{
-		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, authz.features, recursiveQueriesSupported, authz.db.GetDialect()),
+		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, authz.features, recursiveQueriesSupported, authz.db.GetDialect(), authz.maxDepth),
 		searchstore.OrgFilter{OrgId: query.OrgID},
 	}
 
