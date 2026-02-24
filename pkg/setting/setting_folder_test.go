@@ -40,12 +40,17 @@ func TestMaxDeptFolderSettings(t *testing.T) {
 			expected: defaultMaxNestedFolderDepth,
 		},
 		{
-			name:     "returns default when value is below max",
+			name:     "returns configured value when within range (3)",
 			iniValue: strp("3"),
-			expected: defaultMaxNestedFolderDepth,
+			expected: 3,
 		},
 		{
-			name:     "returns max when value equals max",
+			name:     "returns configured value when within range (6)",
+			iniValue: strp("6"),
+			expected: 6,
+		},
+		{
+			name:     "returns configured value when equals max",
 			iniValue: strp("7"),
 			expected: maxNestedFolderDepth,
 		},

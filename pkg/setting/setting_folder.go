@@ -18,7 +18,7 @@ func maxDeptFolderSettings(iniFile *ini.File) int {
 		cfgMaxNestedFolderDepth = maxNestedFolderDepth
 	}
 
-	if cfgMaxNestedFolderDepth < maxNestedFolderDepth {
+	if cfgMaxNestedFolderDepth <= 0 {
 		cfgMaxNestedFolderDepth = defaultMaxNestedFolderDepth
 	}
 
