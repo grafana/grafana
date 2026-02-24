@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -11,10 +11,11 @@ import { PoliciesList } from 'app/features/alerting/unified/components/notificat
 import { PoliciesTree } from 'app/features/alerting/unified/components/notification-policies/PoliciesTree';
 import { CreateModal } from 'app/features/alerting/unified/components/notification-policies/components/Modals';
 import {
-  useCreateRoutingTree,
+  useCreatePolicyAction,
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
+import { Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
@@ -129,6 +130,7 @@ function MultiplePoliciesView() {
     return <LoadingPlaceholder text={t('alerting.policies-list.text-loading', 'Loading....')} />;
   }
 
+  // allPolicies is undefined on error — PoliciesList handles error UI
   if (!allPolicies || allPolicies.length > 1) {
     return <PoliciesList />;
   }
@@ -140,17 +142,16 @@ function MultiplePoliciesView() {
  * Shows the default policy tree inline with a button to create additional policy trees.
  * Used when there's only one routing tree so users don't have to click through a list.
  */
-function SinglePolicyView({ allPolicies }: { allPolicies: Array<{ name?: string }> }) {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createPoliciesSupported, createPoliciesAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.CreateNotificationPolicy
-  );
-  const [createTrigger] = useCreateRoutingTree();
-
-  const existingPolicyNames = useMemo(
-    () => allPolicies.map((p) => p.name).filter((name): name is string => name !== undefined),
-    [allPolicies]
-  );
+function SinglePolicyView({ allPolicies }: { allPolicies: Route[] }) {
+  const {
+    isCreateModalOpen,
+    openCreateModal,
+    closeCreateModal,
+    createPoliciesSupported,
+    createPoliciesAllowed,
+    createTrigger,
+    existingPolicyNames,
+  } = useCreatePolicyAction(allPolicies);
 
   return (
     <Stack direction="column" gap={2}>
@@ -162,7 +163,7 @@ function SinglePolicyView({ allPolicies }: { allPolicies: Array<{ name?: string 
             aria-label={t('alerting.policies-list.create.aria-label', 'add policy')}
             variant="primary"
             disabled={!createPoliciesAllowed}
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={openCreateModal}
           >
             <Trans i18nKey="alerting.policies-list.create.text">New notification policy</Trans>
           </Button>
@@ -173,7 +174,7 @@ function SinglePolicyView({ allPolicies }: { allPolicies: Array<{ name?: string 
         existingPolicyNames={existingPolicyNames}
         isOpen={isCreateModalOpen}
         onConfirm={(route) => createTrigger.execute(route)}
-        onDismiss={() => setIsCreateModalOpen(false)}
+        onDismiss={closeCreateModal}
       />
     </Stack>
   );
