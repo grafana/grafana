@@ -17,12 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
@@ -171,6 +173,9 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to sync job informer cache")
 	}
 
+	logger.Info("jobs operator is ready")
+	deps.HealthNotifier.SetReady()
+
 	<-ctx.Done()
 	return nil
 }
@@ -207,6 +212,14 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 func setupWorkers(
 	cfg *setting.Cfg, controllerCfg *jobsControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer,
 ) ([]jobs.Worker, error) {
+	// Initialize feature toggles from config
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide feature manager: %w", err)
+	}
+	features := featuremgmt.ProvideToggles(featureManager)
+	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport) //nolint:staticcheck
+
 	clients, err := controllerCfg.Clients()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
@@ -253,6 +266,7 @@ func setupWorkers(
 		export.ExportAll,
 		stageIfPossible,
 		metrics,
+		exportEnabled,
 	)
 	workers = append(workers, exportWorker)
 
@@ -263,7 +277,7 @@ func setupWorkers(
 		exportWorker,
 		syncWorker,
 	)
-	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, exportEnabled)
 	workers = append(workers, migrationWorker)
 
 	// Delete
@@ -273,6 +287,10 @@ func setupWorkers(
 	// Move
 	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 	workers = append(workers, moveWorker)
+
+	// Fix Metadata (no-op placeholder)
+	fixMetadataWorker := fixfoldermetadata.NewWorker()
+	workers = append(workers, fixMetadataWorker)
 
 	// PullRequest
 	urlProvider, err := controllerCfg.URLProvider()

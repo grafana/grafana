@@ -74,7 +74,7 @@ export function useSidebar({
 
   const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
-  const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 280);
+  const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 240);
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);

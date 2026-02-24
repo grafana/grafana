@@ -37,10 +37,11 @@ import (
 type Scheme string
 
 const (
-	HTTPScheme   Scheme = "http"
-	HTTPSScheme  Scheme = "https"
-	HTTP2Scheme  Scheme = "h2"
-	SocketScheme Scheme = "socket"
+	HTTPScheme        Scheme = "http"
+	HTTPSScheme       Scheme = "https"
+	HTTP2Scheme       Scheme = "h2"
+	SocketScheme      Scheme = "socket"
+	SocketHTTP2Scheme Scheme = "socket_h2"
 )
 
 const (
@@ -175,6 +176,7 @@ type Cfg struct {
 	RendererDefaultImageWidth      int
 	RendererDefaultImageHeight     int
 	RendererDefaultImageScale      float64
+	RendererCACert                 string
 
 	// Security
 	DisableInitAdminCreation             bool
@@ -642,7 +644,9 @@ type Cfg struct {
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
 	// SimulatedNetworkLatency is used for testing only
-	SimulatedNetworkLatency time.Duration
+	SimulatedNetworkLatency       time.Duration
+	TenantApiServerAddress        string
+	TenantWatcherAllowInsecureTLS bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -1937,6 +1941,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	cfg.RendererDefaultImageWidth = renderSec.Key("default_image_width").MustInt(1000)
 	cfg.RendererDefaultImageHeight = renderSec.Key("default_image_height").MustInt(500)
 	cfg.RendererDefaultImageScale = renderSec.Key("default_image_scale").MustFloat64(1)
+	cfg.RendererCACert = valueAsString(renderSec, "ca_cert_file_path", "")
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
@@ -1983,23 +1988,31 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	protocolStr := valueAsString(server, "protocol", "http")
 
-	if protocolStr == "https" {
+	switch protocolStr {
+	case "https":
 		cfg.Protocol = HTTPSScheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
 		cfg.CertPassword = server.Key("cert_pass").String()
-	}
-	if protocolStr == "h2" {
+	case "h2":
 		cfg.Protocol = HTTP2Scheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
 		cfg.CertPassword = server.Key("cert_pass").String()
-	}
-	if protocolStr == "socket" {
+	case "socket":
 		cfg.Protocol = SocketScheme
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
 		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
+	case "socket_h2":
+		cfg.Protocol = SocketHTTP2Scheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
+	default:
 	}
 
 	cfg.MinTLSVersion = valueAsString(server, "min_tls_version", "TLS1.2")

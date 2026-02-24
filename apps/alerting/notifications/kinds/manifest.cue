@@ -10,6 +10,7 @@ manifest: {
 				go: {enabled: true}
 			}
 			kinds: [
+				inhibitionRulev0alpha1,
 				receiverv0alpha1,
 				routeTreev0alpha1,
 				templatev0alpha1,

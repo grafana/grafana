@@ -307,7 +307,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RendererDefaultImageWidth:           hs.Cfg.RendererDefaultImageWidth,
 		RendererDefaultImageHeight:          hs.Cfg.RendererDefaultImageHeight,
 		RendererDefaultImageScale:           hs.Cfg.RendererDefaultImageScale,
-		Http2Enabled:                        hs.Cfg.Protocol == setting.HTTP2Scheme,
+		Http2Enabled:                        hs.Cfg.Protocol == setting.HTTP2Scheme || hs.Cfg.Protocol == setting.SocketHTTP2Scheme,
 		GrafanaJavascriptAgent:              hs.Cfg.GrafanaJavascriptAgent,
 		PluginCatalogURL:                    hs.Cfg.PluginCatalogURL,
 		PluginAdminEnabled:                  hs.Cfg.PluginAdminEnabled,
