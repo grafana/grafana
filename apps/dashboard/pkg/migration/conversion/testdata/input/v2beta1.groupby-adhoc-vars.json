@@ -99,11 +99,5 @@
         }
       }
     ]
-  },
-  "status": {
-    "conversion": {
-      "failed": false,
-      "storedVersion": "v2alpha1"
-    }
   }
 }

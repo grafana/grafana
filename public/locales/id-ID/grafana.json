@@ -1831,10 +1831,18 @@
       "apply": "Terapkan"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Gagal memuat riwayat status",
       "history-error-desc": "Tidak dapat mengambil riwayat transisi status untuk instans ini.",
       "no-history": "Tidak ada perubahan status terbaru",
-      "state-history": "Perubahan Status Terbaru"
+      "state-error-description": "",
+      "state-history": "Perubahan Status Terbaru",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Label yang tidak cocok",
@@ -5001,7 +5009,7 @@
           }
         }
       },
-      "name": "Kisi otomatis",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Hapus"
@@ -6108,6 +6116,8 @@
       "title-transformations": "Transformasi"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Cari transformasi",
       "show-images": "Tampilkan gambar",
       "sql-expressions-message-description": "Cara baru untuk memanipulasi dan mengubah hasil kueri sumber data menggunakan sintaksis mirip MySQL.",
@@ -6245,11 +6255,12 @@
     "browse-grafana-com": "Telusuri Grafana.com",
     "browse-plugins": "Telusuri plugin",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Sumber data disediakan",
       "details-tooltip": "Detail",
       "no-preview": "Tidak ada pratinjau yang tersedia",
       "use-dashboard-button": "Gunakan dasbor",
-      "use-template-button": "Gunakan templat"
+      "view-template-button": ""
     },
     "community-empty-title": "Tidak ada dasbor komunitas yang ditemukan",
     "community-empty-title-with-datasource": "Tidak ada dasbor {{datasourceType}} komunitas yang ditemukan",
@@ -6358,10 +6369,12 @@
         "new-panel": "Panel baru"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7844,6 +7857,11 @@
       "continue-without-saving": "Lanjutkan tanpa menyimpan",
       "save-correlation": "Simpan korelasi",
       "title-unsaved-changes-to-correlation": "Perubahan korelasi belum tersimpan"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Klik dan tarik pemisah abu-abu di area berwarna, di bawah ini.",
@@ -12313,6 +12331,7 @@
       "placeholder-branch": "Pilih atau masukkan nama cabang",
       "suffix-configured-branch": "",
       "suffix-last-used": "Cabang terakhir",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Cabang permintaan penarikan",
       "suffix-read-only-branch": ""
     }
@@ -12349,10 +12368,10 @@
       },
       "pr-workflow-description": "Memungkinkan pengguna untuk memilih apakah akan membuka permintaan penarikan saat menyimpan perubahan. Jika repositori tidak mengizinkan perubahan langsung ke cabang utama, permintaan penarikan mungkin tetap diperlukan.",
       "pr-workflow-label": "Aktifkan opsi permintaan penarikan saat menyimpan",
-      "token-description": "Kata Sandi Aplikasi Bitbucket dengan izin repositori",
-      "token-label": "Kata Sandi Aplikasi",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Token Bitbucket diperlukan",
-      "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan kata sandi aplikasi",
+      "token-user-description": "",
       "token-user-required": "Nama Pengguna wajib diisi",
       "url-description": "URL repositori Bitbucket",
       "url-required": "URL repositori wajib diisi"
@@ -12375,9 +12394,6 @@
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
-    },
-    "check-repository": {
-      "check": "Periksa"
     },
     "code-block": {
       "aria-label-copy": "Salin kode ke papan klip"
@@ -12762,6 +12778,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Diperiksa:",
       "connection-status": "Status koneksi:",
       "finished": "Penarikan terakhir yang berhasil:",
@@ -12771,7 +12788,9 @@
       "last-ref": "Ref Terakhir:",
       "messages": "Pesan:",
       "not-available": "N/A",
+      "path": "",
       "pull-status": "Status pull",
+      "repo-url": "",
       "resources": "Sumber Daya",
       "status": "Status:",
       "unhealthy": "Tidak Sehat",
@@ -12908,8 +12927,8 @@
     "token-permissions-info": {
       "and-click": "dan klik",
       "bitbucket": {
-        "create-token-button": "Buat kata sandi Aplikasi",
-        "token-text": "Token Akses Pribadi Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Tambahkan token baru",
@@ -14273,9 +14292,18 @@
       "columns": {
         "aria-label-delete-button": "Hapus tim {{teamName}}",
         "aria-label-edit-team": "Edit tim {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Edit tim",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Edit tim"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Memuat tim...",
       "new-team": "Tim Baru",
       "placeholder-search-teams": "Cari tim"

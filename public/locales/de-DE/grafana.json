@@ -1839,10 +1839,18 @@
       "apply": "Anwenden"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Der Statusverlauf konnte nicht geladen werden",
       "history-error-desc": "Der Statusübergangsverlauf für diese Instanz kann nicht abgerufen werden.",
       "no-history": "Keine aktuellen Statusänderungen",
-      "state-history": "Letzte Statusänderungen"
+      "state-error-description": "",
+      "state-history": "Letzte Statusänderungen",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Nicht übereinstimmende Labels",
@@ -5027,7 +5035,7 @@
           }
         }
       },
-      "name": "Automatisches Raster",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Löschen"
@@ -6135,6 +6143,8 @@
       "title-transformations": "Transformationen"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Nach Transformation suchen",
       "show-images": "Bilder anzeigen",
       "sql-expressions-message-description": "Eine neue Möglichkeit zur Bearbeitung und Transformation der Ergebnisse von Datenquellenabfragen mit MySQL-ähnlicher Syntax.",
@@ -6272,11 +6282,12 @@
     "browse-grafana-com": "Grafana.com durchsuchen",
     "browse-plugins": "Plugins durchsuchen",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Datenquelle bereitgestellt",
       "details-tooltip": "Details",
       "no-preview": "Keine Vorschau verfügbar",
       "use-dashboard-button": "Dashboard verwenden",
-      "use-template-button": "Vorlage verwenden"
+      "view-template-button": ""
     },
     "community-empty-title": "Keine Community-Dashboards gefunden",
     "community-empty-title-with-datasource": "Keine {{datasourceType}} Community-Dashboards gefunden",
@@ -6386,10 +6397,12 @@
         "new-panel": "Neues Panel"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7875,6 +7888,11 @@
       "continue-without-saving": "Ohne Speichern fortfahren",
       "save-correlation": "Korrelation speichern",
       "title-unsaved-changes-to-correlation": "Nicht gespeicherte Änderungen an der Korrelation"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Klicken und ziehen Sie den grauen Teiler unten in den farbigen Bereich.",
@@ -12367,6 +12385,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Letzter Branch",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Pull-Request-Branch",
       "suffix-read-only-branch": ""
     }
@@ -12403,10 +12422,10 @@
       },
       "pr-workflow-description": "Ermöglicht Nutzern die Auswahl, ob beim Speichern von Änderungen ein Pull-Request geöffnet werden soll. Wenn das Repository keine direkten Änderungen am Hauptbranch zulässt, könnte dennoch ein Pull-Request erforderlich sein.",
       "pr-workflow-label": "Pull-Request-Option beim Speichern aktivieren",
-      "token-description": "Bitbucket-App-Passwort mit Repository-Berechtigungen",
-      "token-label": "App-Passwort",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Bitbucket-Token erforderlich",
-      "token-user-description": "Der Benutzername, der für den Zugriff auf das Repository mit dem App-Passwort verwendet wird",
+      "token-user-description": "",
       "token-user-required": "Benutzername erforderlich",
       "url-description": "Die Bitbucket-Repository-URL",
       "url-required": "Repository-URL erforderlich"
@@ -12432,9 +12451,6 @@
       "files-count_other": "{{count}} Dateien",
       "folders-count_one": "{{count}} Ordner",
       "folders-count_other": "{{count}} Ordner"
-    },
-    "check-repository": {
-      "check": "Überprüfen"
     },
     "code-block": {
       "aria-label-copy": "Code in Zwischenablage kopieren"
@@ -12822,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Geprüft:",
       "connection-status": "Verbindungsstatus:",
       "finished": "Letzter erfolgreicher Abruf:",
@@ -12831,7 +12848,9 @@
       "last-ref": "Letzte Ref.:",
       "messages": "Meldungen:",
       "not-available": "N/A",
+      "path": "",
       "pull-status": "Pull-Status",
+      "repo-url": "",
       "resources": "Ressourcen",
       "status": "Status:",
       "unhealthy": "Schlechter Zustand",
@@ -12968,8 +12987,8 @@
     "token-permissions-info": {
       "and-click": "und klicken",
       "bitbucket": {
-        "create-token-button": "App-Passwörter erstellen",
-        "token-text": "Persönliches Bitbucket-Zugriffstoken"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Neues Token hinzufügen",
@@ -14340,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "Team {{teamName}} löschen",
         "aria-label-edit-team": "Team {{teamName}} bearbeiten",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Team bearbeiten",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Team bearbeiten"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Teams werden geladen …",
       "new-team": "Neues Team",
       "placeholder-search-teams": "Teams suchen"

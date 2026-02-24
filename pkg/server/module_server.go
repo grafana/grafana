@@ -107,6 +107,7 @@ func newModuleServer(opts Options,
 		storageBackend:   storageBackend,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
+		healthNotifier:   NewHealthNotifier(),
 	}
 
 	return s, nil
@@ -153,6 +154,10 @@ type ModuleServer struct {
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
+
+	// healthNotifier is shared between the InstrumentationServer and the OperatorServer
+	// so that operators can signal readiness to the /readyz endpoint.
+	healthNotifier *HealthNotifier
 
 	// StorageServiceOptions allows injecting extra sql.ServiceOption values into the
 	// StorageServer and SearchServer module registrations. This is intended for tests.
@@ -303,9 +308,10 @@ func (s *ModuleServer) initOperatorServer() (services.Service, error) {
 							Commit:      s.commit,
 							BuildBranch: s.buildBranch,
 						},
-						CLIContext: cliContext,
-						Config:     s.cfg,
-						Registerer: s.registerer,
+						CLIContext:     cliContext,
+						Config:         s.cfg,
+						Registerer:     s.registerer,
+						HealthNotifier: s.healthNotifier,
 					}
 					return op.RunFunc(deps)
 				},
