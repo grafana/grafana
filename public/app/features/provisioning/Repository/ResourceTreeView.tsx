@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   CellProps,
   Column,
@@ -97,7 +98,16 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'status',
         header: t('provisioning.resource-tree.header-status', 'Status'),
         cell: ({ row: { original } }: TreeCell) => {
-          const { status } = original.item;
+          const { status, missingFolderMetadata } = original.item;
+          if (config.featureToggles.provisioningFolderMetadata && missingFolderMetadata) {
+            return (
+              <Icon
+                name="exclamation-triangle"
+                className={styles.warningIcon}
+                title={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
+              />
+            );
+          }
           if (!status) {
             return null;
           }
@@ -222,5 +232,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   syncedIcon: css({
     color: theme.colors.success.text,
+  }),
+  warningIcon: css({
+    color: theme.colors.warning.text,
   }),
 });
