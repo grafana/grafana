@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { CoreApp, FieldConfigSource, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,6 +10,10 @@ import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/G
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { GenAITextArea } from 'app/features/dashboard/components/GenAI/GenAITextArea';
 import { GenAITextInput } from 'app/features/dashboard/components/GenAI/GenAITextInput';
+import {
+  buildDescriptionInputSystemPrompt,
+  buildTitleInputSystemPrompt,
+} from 'app/features/dashboard/components/GenAI/assistantContext';
 import { LLMFallbackAddon } from 'app/features/dashboard/components/GenAI/hooks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -195,10 +199,12 @@ export function PanelFrameTitleInput({
     autoFocus: notInPanelEdit && isNewElement,
   });
 
-  const dashboard = getDashboardSceneFor(panel);
-  const panelModel = vizPanelToPanel(panel);
-  const dashboardModel = transformSceneToSaveModel(dashboard);
   const isDefaultTitle = !title || title === t('dashboard.new-panel-title', 'New panel');
+
+  const systemPrompt = useMemo(() => {
+    const dashboard = getDashboardSceneFor(panel);
+    return buildTitleInputSystemPrompt(vizPanelToPanel(panel), transformSceneToSaveModel(dashboard));
+  }, [panel]);
 
   return (
     <GenAITextInput
@@ -208,8 +214,7 @@ export function PanelFrameTitleInput({
       onComplete={(val) => editPanelTitleAction(panel, val)}
       onFocus={() => setPrevTitle(title)}
       onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
-      panel={panelModel}
-      dashboard={dashboardModel}
+      systemPrompt={systemPrompt}
       autoGenerate={isDefaultTitle}
       id={id}
       inputRef={ref}
@@ -221,9 +226,10 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   const { description } = panel.useState();
   const [prevDescription, setPrevDescription] = React.useState(panel.state.description);
 
-  const dashboard = getDashboardSceneFor(panel);
-  const panelModel = vizPanelToPanel(panel);
-  const dashboardModel = transformSceneToSaveModel(dashboard);
+  const systemPrompt = useMemo(() => {
+    const dashboard = getDashboardSceneFor(panel);
+    return buildDescriptionInputSystemPrompt(vizPanelToPanel(panel), transformSceneToSaveModel(dashboard));
+  }, [panel]);
 
   return (
     <GenAITextArea
@@ -246,8 +252,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
           undo: () => panel.setState({ description: prevDescription }),
         });
       }}
-      panel={panelModel}
-      dashboard={dashboardModel}
+      systemPrompt={systemPrompt}
       autoGenerate={!description}
       id={id}
     />
