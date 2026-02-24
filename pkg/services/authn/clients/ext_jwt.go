@@ -136,6 +136,11 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
+	restrictedActions := []string{}
+	if len(accessTokenClaims.Rest.DelegatedPermissions) > 0 {
+		restrictedActions = accessTokenClaims.Rest.DelegatedPermissions
+	}
+
 	identity := &authn.Identity{
 		ID:                id,
 		Type:              t,
@@ -148,7 +153,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
-				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
+				RestrictedActions: restrictedActions,
 			},
 			FetchSyncedUser: true,
 		},

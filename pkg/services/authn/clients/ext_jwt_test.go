@@ -412,9 +412,9 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
-					SyncPermissions: true,
-				},
+					FetchSyncedUser:        true,
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}}},
 			},
 		},
 		{
@@ -440,8 +440,9 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
-					SyncPermissions: true,
+					FetchSyncedUser:        true,
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}},
 				},
 			},
 		},
@@ -524,8 +525,9 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
-					SyncPermissions: true,
+					FetchSyncedUser:        true,
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}},
 				},
 			},
 		},
