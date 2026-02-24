@@ -177,9 +177,5 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         maxWidth: '100%',
       },
     }),
-    icon: css({
-      gridRow: '1 / 3',
-      gridColumn: '1 / 2',
-    }),
   };
 };

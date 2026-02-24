@@ -153,7 +153,7 @@ export const ComboboxList = <T extends string | number>({
 
                 <div className={styles.optionBody}>
                   <Stack direction="row" alignItems="center">
-                    {item.icon && <Icon name={item.icon} className={styles.icon} />}
+                    {item.icon && <Icon name={item.icon} />}
                     <div className={styles.optionLabel}>{item.label ?? item.value}</div>
                   </Stack>
 
