@@ -1762,9 +1762,6 @@
   "public/app/features/dashboard-scene/scene/export/exporters.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 6
-    },
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.ts": {
@@ -1773,9 +1770,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 8
-    },
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItemEditor.tsx": {
