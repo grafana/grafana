@@ -1,7 +1,7 @@
-import { DataSourceRef as CommonDataSourceRef, DataSourceRef, DataTopic } from '../common/common.gen';
+import {DataSourceRef as CommonDataSourceRef, DataSourceRef, DataTopic} from '../common/common.gen';
 import * as raw from '../raw/dashboard/x/types.gen';
 
-import { DataQuery } from './common.types';
+import {DataQuery} from './common.types';
 
 export type { CommonDataSourceRef as DataSourceRef };
 
@@ -67,16 +67,16 @@ export interface TimeOption extends raw.TimeOption {}
 
 export interface TimePickerConfig extends raw.TimePickerConfig {}
 
-export const defaultDashboard = raw.defaultDashboard as Dashboard;
+export const defaultDashboard = raw.defaultDashboard() as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
 } as VariableModel;
 export const defaultTimePickerConfig = raw.defaultTimePickerConfig as TimePickerConfig;
-export const defaultPanel: Partial<Panel> = raw.defaultPanel;
-export const defaultRowPanel: Partial<Panel> = raw.defaultRowPanel;
-export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;
-export const defaultFieldConfigSource: Partial<FieldConfigSource> = raw.defaultFieldConfigSource;
-export const defaultMatcherConfig: Partial<MatcherConfig> = raw.defaultMatcherConfig;
-export const defaultAnnotationQuery: Partial<AnnotationQuery> = raw.defaultAnnotationQuery as AnnotationQuery;
+export const defaultPanel: Partial<Panel> = raw.defaultPanel();
+export const defaultRowPanel: Partial<Panel> = raw.defaultRowPanel();
+export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig();
+export const defaultFieldConfigSource: Partial<FieldConfigSource> = raw.defaultFieldConfigSource();
+export const defaultMatcherConfig: Partial<MatcherConfig> = raw.defaultMatcherConfig();
+export const defaultAnnotationQuery: Partial<AnnotationQuery> = raw.defaultAnnotationQuery() as AnnotationQuery;
 export const defaultAnnotationContainer: Partial<AnnotationContainer> =
   raw.defaultAnnotationContainer as AnnotationContainer;
