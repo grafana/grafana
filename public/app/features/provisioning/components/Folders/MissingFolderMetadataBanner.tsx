@@ -29,7 +29,7 @@ function MissingFolderMetadataBannerContent({ repository, folder }: Required<Mis
     return (
       <Alert
         severity="warning"
-        title={t('provisioning.missing-folder-metadata-banner.title', 'This folder is missing stable ID metadata.')}
+        title={t('provisioning.missing-folder-metadata-banner.title', 'This folder is missing metadata file in repository.')}
         style={{ flex: 0 }}
       >
         <Trans i18nKey="provisioning.missing-folder-metadata-banner.message">
