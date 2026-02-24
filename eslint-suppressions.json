@@ -2874,11 +2874,6 @@
       "count": 3
     }
   },
-  "public/app/features/scopes/tests/utils/render.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/search/page/components/columns.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
