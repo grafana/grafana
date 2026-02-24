@@ -104,10 +104,10 @@ describe('MenuItem', () => {
   it('activates link MenuItem with Space key', async () => {
     const onClick = jest.fn((e: React.MouseEvent) => e.preventDefault());
     render(<MenuItem label="Link Item" url="/some-url" onClick={onClick} />);
-  
+
     const item = screen.getByRole('menuitem', { name: 'Link Item' });
     await user.type(item, ' ');
-  
+
     expect(onClick).toHaveBeenCalled();
   });
 });
