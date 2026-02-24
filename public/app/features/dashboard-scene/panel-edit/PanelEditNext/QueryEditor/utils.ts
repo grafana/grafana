@@ -1,4 +1,5 @@
-import { AlertState, DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
+import { AlertState, DataTransformerConfig, GrafanaTheme2, TransformerCategory } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { CustomTransformerDefinition } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -81,4 +82,33 @@ export function getEditorBorderColor(
     return getAlertStateColor(theme, alertState);
   }
   return QUERY_EDITOR_TYPE_CONFIG[editorType].color;
+}
+
+export interface TransformerCategoryOption {
+  slug: TransformerCategory;
+  label: string;
+}
+
+export function getTransformerCategories(): TransformerCategoryOption[] {
+  return [
+    { slug: TransformerCategory.Combine, label: t('transformers.utils.get-categories-labels.combine', 'Combine') },
+    {
+      slug: TransformerCategory.CalculateNewFields,
+      label: t('transformers.utils.get-categories-labels.calculate-new-fields', 'Calculate new fields'),
+    },
+    {
+      slug: TransformerCategory.CreateNewVisualization,
+      label: t('transformers.utils.get-categories-labels.create-new-visualization', 'Create new visualization'),
+    },
+    { slug: TransformerCategory.Filter, label: t('transformers.utils.get-categories-labels.filter', 'Filter') },
+    {
+      slug: TransformerCategory.PerformSpatialOperations,
+      label: t('transformers.utils.get-categories-labels.perform-spatial-operations', 'Perform spatial operations'),
+    },
+    { slug: TransformerCategory.Reformat, label: t('transformers.utils.get-categories-labels.reformat', 'Reformat') },
+    {
+      slug: TransformerCategory.ReorderAndRename,
+      label: t('transformers.utils.get-categories-labels.reorder-and-rename', 'Reorder and rename'),
+    },
+  ];
 }

@@ -22,6 +22,7 @@ export interface PendingExpression {
 
 export interface PendingTransformation {
   insertAfter?: string;
+  showPicker?: boolean;
 }
 
 export interface DatasourceState {

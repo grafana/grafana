@@ -1,7 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import { Subject } from 'rxjs';
 
-import { applyFieldOverrides, createTheme, DataFrame, DataFrameView, FieldType, toDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  createTheme,
+  DataFrame,
+  DataFrameView,
+  FieldType,
+  PanelPluginMeta,
+  toDataFrame,
+} from '@grafana/data';
+import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 
 import { getGrafanaSearcher } from '../../service/searcher';
 import { DashboardQueryResult, QueryResponse } from '../../service/types';
@@ -9,7 +18,22 @@ import { DashboardSearchItemType } from '../../types';
 
 import { SearchResultsTable } from './SearchResultsTable';
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  usePanelPluginMetasMap: jest.fn(),
+}));
+
+const usePanelPluginMetasMapMock = jest.mocked(usePanelPluginMetasMap);
+
 describe('SearchResultsTable', () => {
+  beforeEach(() => {
+    usePanelPluginMetasMapMock.mockReturnValue({
+      loading: false,
+      error: undefined,
+      value: { graph: { id: 'graph', name: 'Graph (old)' } as PanelPluginMeta },
+    });
+  });
+
   const mockOnTagSelected = jest.fn();
   const mockClearSelection = jest.fn();
   const mockSelectionToggle = jest.fn();
@@ -110,6 +134,49 @@ describe('SearchResultsTable', () => {
       expect(screen.getByText('My dashboard 1')).toBeInTheDocument();
       expect(screen.getByText('foo')).toBeInTheDocument();
       expect(screen.getByText('bar')).toBeInTheDocument();
+    });
+  });
+
+  describe('when there is panel data', () => {
+    const panelSearchData = toDataFrame({
+      name: 'B',
+      fields: [
+        { name: 'kind', type: FieldType.string, config: {}, values: ['panel'] },
+        { name: 'uid', type: FieldType.string, config: {}, values: [null] },
+        { name: 'name', type: FieldType.string, config: {}, values: ['My panel'] },
+        { name: 'panel_type', type: FieldType.string, config: {}, values: ['graph'] },
+        { name: 'url', type: FieldType.string, config: {}, values: ['/d/abc/panel-1'] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [[]] },
+        { name: 'ds_uid', type: FieldType.other, config: {}, values: [''] },
+        { name: 'location', type: FieldType.string, config: {}, values: [''] },
+      ],
+    });
+    const panelDataFrames = applyFieldOverrides({
+      data: [panelSearchData],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+    });
+    const mockPanelSearchResult: QueryResponse = {
+      isItemLoaded: jest.fn().mockReturnValue(true),
+      loadMoreItems: jest.fn(),
+      totalRows: panelSearchData.length,
+      view: new DataFrameView<DashboardQueryResult>(panelDataFrames[0]),
+    };
+
+    it('shows resolved panel plugin name in Type column', async () => {
+      render(
+        <SearchResultsTable
+          keyboardEvents={mockKeyboardEvents}
+          response={mockPanelSearchResult}
+          onTagSelected={mockOnTagSelected}
+          clearSelection={mockClearSelection}
+          height={1000}
+          width={1000}
+        />
+      );
+      await screen.findByRole('table');
+      expect(screen.getByTitle('Graph (old)')).toBeInTheDocument();
     });
   });
 
