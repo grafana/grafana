@@ -1,7 +1,7 @@
 ---
-title: Grafana Advisor with CLI
+title: Manage Advisor with Grafana CLI
 description: Manage Grafana Advisor using the Grafana CLI 
-weight: 200
+weight: 100
 labels:
   products:
     - oss
@@ -20,10 +20,11 @@ keywords:
 
 `grafanactl`, the Grafana CLI tool, is a command-line tool for managing Grafana resources as code. To install and configure it, refer to the [Grafana CLI documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/).
 
-You can use `grafnactl` to manage Advisor `checks` and `checktypes`. Navigate the tabs to learn more.
+You can use `grafnactl` to manage Advisor `checks` and `checktypes`. 
 
-{{< tabs >}}
-{{< tab-content name="Get the list of checks" >}}
+## Get the list of checks
+
+To get the list of checks, run:
 
 ```bash
 grafanactl resources get checks -o wide
@@ -51,15 +52,17 @@ grafanactl resources get checks -o json | jq -r '
 ' | column -t -s $'\t'
 ```
 
-{{< /tab-content >}}
-{{< tab-content name="Get the list of check types" >}}
+## Get the list of check types
+
+To obtain the list of check types:
 
 ```bash
 grafanactl resources get checktypes -o wide
 ```
 
-{{< /tab-content >}}
-{{< tab-content name="Show all failures across every check type" >}}
+## Show all failures across every check type
+
+To see all failures in your instance:
 
 ```bash
 grafanactl resources get checks -o json | jq -r '
@@ -82,10 +85,9 @@ grafanactl resources get checks -o json | jq -r '
 ' | column -t -s $'\t'
 ```
 
-{{< /tab-content >}}
-{{< tab-content name="Run checks for a type" >}}
+## Run checks for a type 
 
-Create the check resource and push it:
+To run checks for a specific type, create the check resource and push it:
 
 ```bash
 mkdir -p resources/Check/
@@ -108,14 +110,15 @@ echo '{
 grafanactl push checks/check-manual
 ```
 
-Then wait for the check to run and the results to be available:
+Next, wait for the check to run and the results to be available:
 
 ```bash
 grafanactl resources get checks/check-manual -o json | jq '.status.report'
 ```
 
-{{< /tab-content >}}
-{{< tab-content name="Get plugins that need an update" >}}
+## Get plugins that need an update
+
+To identify the plugins that need an update:
 
 ```bash
 grafanactl resources get checks -o json | jq -r '
@@ -131,8 +134,9 @@ grafanactl resources get checks -o json | jq -r '
 ' | column -t -s $'\t'
 ```
 
-{{< /tab-content >}}
-{{< tab-content name="Unhealthy datasources" >}}
+## Unhealthy datas ources
+
+To look for unhealty data sources:
 
 ```bash
 grafanactl resources get checks -o json | jq -r '
@@ -147,6 +151,3 @@ grafanactl resources get checks -o json | jq -r '
   | @tsv
 ' | column -t -s $'\t'
 ```
-
-{{< /tab-content >}}
-{{< /tabs >}}

@@ -1,7 +1,7 @@
 ---
 title: Create an alert based on Advisor
 description: Create an alert based on the results from Grafana Advisor
-weight: 100
+weight: 200
 labels:
   products:
     - oss
