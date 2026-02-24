@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
+import { QUERY_EDITOR_COLORS } from '../../constants';
+
 import { CardTitle } from './CardTitle';
 
 describe('CardTitle', () => {
@@ -32,5 +34,12 @@ describe('CardTitle', () => {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     });
+  });
+
+  it('applies error style when isError is true', () => {
+    const { container } = render(<CardTitle title="Error Query" isHidden={false} isError={true} />);
+
+    const titleSpan = container.querySelector('span');
+    expect(titleSpan).toHaveStyle({ color: QUERY_EDITOR_COLORS.error });
   });
 });

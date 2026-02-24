@@ -4,7 +4,7 @@ import { CustomTransformerDefinition } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
-import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../constants';
+import { getAlertStateColor, QUERY_EDITOR_COLORS, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../constants';
 
 import { PendingExpression, PendingTransformation } from './QueryEditorContext';
 import { AlertRule, Transformation } from './types';
@@ -73,11 +73,21 @@ export function getTransformId(transformConfigId: string, index: number): string
  * @param alertState - Optional alert state (only used when editorType is Alert)
  * @returns The border color string
  */
-export function getEditorBorderColor(
-  theme: GrafanaTheme2,
-  editorType: QueryEditorType,
-  alertState?: AlertState | null
-): string {
+export function getEditorBorderColor({
+  theme,
+  editorType,
+  alertState,
+  isError,
+}: {
+  theme: GrafanaTheme2;
+  editorType: QueryEditorType;
+  alertState?: AlertState | null;
+  isError?: boolean;
+}): string {
+  if (isError) {
+    return QUERY_EDITOR_COLORS.error;
+  }
+
   if (editorType === QueryEditorType.Alert && alertState) {
     return getAlertStateColor(theme, alertState);
   }
