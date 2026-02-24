@@ -7,7 +7,7 @@
 #
 # To regenerate checksums after changing migrations/conversions:
 #   make regenerate-golden-checksums    (from apps/dashboard/)
-testdata/output/
-testdata/dev-dashboards-output/
-conversion/testdata/output/
-conversion/testdata/migrated_dashboards_output/
+
+testdata/**output/
+conversion/testdata/**output/
+
