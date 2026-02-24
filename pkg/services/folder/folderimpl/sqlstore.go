@@ -208,7 +208,7 @@ func (ss *FolderStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCo
 // A
 // └── B
 //
-//     └── C
+//	└── C
 //
 // The full path of C is "A/B/C".
 // The full path of B is "A/B".
@@ -450,7 +450,7 @@ func (ss *FolderStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID
 // A
 // └── B
 //
-//     └── C
+//	└── C
 //
 // The full path of C is "A/B/C".
 // The full path of B is "A/B".
@@ -469,7 +469,7 @@ func (ss *FolderStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID
 // A (uid: "uid1")
 // └── B (uid: "uid2")
 //
-//     └── C (uid: "uid3")
+//	└── C (uid: "uid3")
 //
 // The full path UIDs of C is "uid1/uid2/uid3".
 // The full path UIDs of B is "uid1/uid2".
