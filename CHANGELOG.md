@@ -1,3 +1,13 @@
+<!-- 12.3.4 START -->
+
+# 12.3.4 (2026-02-24)
+
+### Bug fixes
+
+- **Dashboard Export:** Fix datasource variable templating in dashboard export [#118327](https://github.com/grafana/grafana/pull/118327), [@kristinademeshchik](https://github.com/kristinademeshchik)
+- **Provisioning:** Bump nanogit v0.3.1 with missing objects fixes [#118225](https://github.com/grafana/grafana/pull/118225), [@MissingRoberto](https://github.com/MissingRoberto)
+
+<!-- 12.3.4 END -->
 <!-- 12.3.3 START -->
 
 # 12.3.3 (2026-02-12)
