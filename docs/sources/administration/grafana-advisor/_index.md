@@ -34,8 +34,6 @@ You can suggest new checks and provide feedback through this [form](https://docs
 1. Navigate to the Administration section.
 1. Select "Advisor" from the left navigation menu.
 
-![<Grafana Advisor UI>](/media/docs/grafana-advisor/grafana-advisor-ui.png)
-
 ### Action needed section
 
 This collapsible section displays issues requiring immediate attention:
@@ -62,7 +60,9 @@ This collapsible section provides more details about which checks have been perf
 Click the cogwheel in this section to access Grafana Advisor settings, where you can enable or disable checks according to your preferences.
 {{< /admonition >}}
 
-### Enable LLM suggestions
+### Enable LLM suggestions 
+
+TBD REMOVE?
 
 If the [Grafana LLM app](https://grafana.com/grafana/plugins/grafana-llm-app/) is installed, the Advisor can use it to generate suggestions for issues. Enable the LLM app and click the magic (✨) button to generate a suggestion for an issue.
 
@@ -77,9 +77,13 @@ To resolve issues flagged by Grafana Advisor and maintain system reliability, fo
 - **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass
 - **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet
 
-## Manage Advisor using the Grafana CLI `grafanactl`
+## Use Grafana Advisor with Grafana Assistant
 
-The Grafana CLI `grafanactl` tool is a command-line tool for managing Grafana resources as code. See how to install and configure it in the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) documentation.
+TBC
+
+## Manage Grafana Advisor using the Grafana CLI 
+
+`grafanactl`, the Grafana CLI tool, is a command-line tool for managing Grafana resources as code. To install and configure it, refer to the [Grafana CLI documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/).
 
 You can use `grafnactl` to manage Advisor `checks` and `checktypes`. Navigate the tabs to learn more.
 
