@@ -45,6 +45,9 @@ posts:
   - title: Short URLs
     items:
       - whats-new/2026-01-27-short-urls-are-saved-indefinitely.md
+  - title: Alerting
+    items:
+      - whats-new/2026-02-11-pending-period-added-to-alert-states.md
   - title: Breaking changes
     items:
       - whats-new/2025-12-17-unified-storage-for-playlists.md
@@ -55,7 +58,13 @@ weight: -53
 
 # What’s new in Grafana v12.4
 
-Welcome to Grafana 12.4 ...
+Welcome to Grafana 12.4!
+
+This release doubles down on dashboard automation and Git-powered workflows while delivering a range of polish and usability improvements.
+
+The headline is improved dashboard productivity: Dynamic dashboards and template-driven workflows make it far easier to create, reuse, and operate dashboards at scale. Create dashboards from templates, map one variable to multiple values, apply regex transforms to variable values or display text, and benefit from smarter visualization suggestions and an updated gauge panel that help surface the right view for your data. At the same time, Git Sync is now available in public preview, providing a smooth Git-backed workflow to keep dashboards in source control and enable safer, auditable changes to dashboard content. These two areas together are aimed at speeding up development, improving consistency, and making dashboard CI/CD practical for teams.
+
+Beyond dashboards, this version includes improvements across the product: Logs and Logs Drilldown get better default columns and save/resume log explorations, data sources receive sensible new defaults and expanded support, SCIM provisioning simplifies user and team management, short URLs are now persistent, and a small set of breaking changes and storage migration enhancements help ensure long-term manageability.
 
 {{< youtube id=VidGeu4PRZw >}}
 
