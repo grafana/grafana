@@ -9,13 +9,10 @@ export function MissingFolderMetadataBanner() {
   return (
     <Alert
       severity="warning"
-      title={t(
-        'provisioning.missing-folder-metadata-banner.title',
-        'This folder is missing metadata file in repository.'
-      )}
+      title={t('provisioning.missing-folder-metadata-banner.title', 'This folder is missing metadata.')}
     >
       <Trans i18nKey="provisioning.missing-folder-metadata-banner.message">
-        Permissions may not persist if the folder is moved or renamed.
+        If you move or rename it in Git, permissions may not persist.
       </Trans>
     </Alert>
   );

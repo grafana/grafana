@@ -8,7 +8,7 @@ describe('MissingFolderMetadataBanner', () => {
 
     const alert = screen.getByRole('alert');
     expect(alert).toBeInTheDocument();
-    expect(screen.getByText('This folder is missing metadata file in repository.')).toBeInTheDocument();
-    expect(screen.getByText('Permissions may not persist if the folder is moved or renamed.')).toBeInTheDocument();
+    expect(screen.getByText('This folder is missing metadata.')).toBeInTheDocument();
+    expect(screen.getByText('If you move or rename it in Git, permissions may not persist.')).toBeInTheDocument();
   });
 });

@@ -12774,8 +12774,8 @@
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
       "error-title": "Unable to check folder metadata status.",
-      "message": "Permissions may not persist if the folder is moved or renamed.",
-      "title": "This folder is missing metadata file in repository."
+      "message": "If you move or rename it in Git, permissions may not persist.",
+      "title": "This folder is missing metadata."
     },
     "mode-options": {
       "disabled": {
