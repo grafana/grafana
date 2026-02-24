@@ -9,6 +9,11 @@ import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardF
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  usePanelPluginMetasMap: jest.fn().mockReturnValue({ loading: false, value: {}, error: undefined }),
+}));
+
 function setup(dashboard: DashboardModel, editIndex?: number) {
   const sectionNav = {
     main: { text: 'Dashboard' },

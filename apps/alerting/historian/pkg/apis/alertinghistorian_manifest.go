@@ -374,6 +374,16 @@ var appManifestData = app.ManifestData{
 										Format: "date-time",
 									},
 								},
+								"enrichments": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{},
+											},
+										},
+									},
+								},
 								"labels": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"object"},

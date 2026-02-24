@@ -1,0 +1,770 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v2alpha1",
+  "metadata": {
+    "name": "v1beta1.graph-time-regions.v42"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "",
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Business Hours",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "target": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "timeseries",
+            "spec": {
+              "pluginVersion": "",
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "gray",
+                        "fill": true,
+                        "fillColor": "rgba(255, 255, 255, 0.03)",
+                        "from": "08:30",
+                        "fromDayOfWeek": 1,
+                        "line": false,
+                        "lineColor": "rgba(255, 255, 255, 0.2)",
+                        "op": "time",
+                        "to": "16:45",
+                        "toDayOfWeek": 5
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Each day of week",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "target": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "timeseries",
+            "spec": {
+              "pluginVersion": "",
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {
+                      "A-series": "#d683ce"
+                    },
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 0.5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(255, 0, 0, 0.22)",
+                        "from": "",
+                        "fromDayOfWeek": 1,
+                        "line": true,
+                        "lineColor": "rgba(255, 0, 0, 0.32)",
+                        "op": "time",
+                        "to": "",
+                        "toDayOfWeek": 1
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(255, 127, 0, 0.22)",
+                        "fromDayOfWeek": 2,
+                        "line": true,
+                        "lineColor": "rgba(255, 127, 0, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 2
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(255, 255, 0, 0.22)",
+                        "fromDayOfWeek": 3,
+                        "line": true,
+                        "lineColor": "rgba(255, 255, 0, 0.22)",
+                        "op": "time",
+                        "toDayOfWeek": 3
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(0, 255, 0, 0.22)",
+                        "fromDayOfWeek": 4,
+                        "line": true,
+                        "lineColor": "rgba(0, 255, 0, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 4
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(0, 0, 255, 0.22)",
+                        "fromDayOfWeek": 5,
+                        "line": true,
+                        "lineColor": "rgba(0, 0, 255, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 5
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(75, 0, 130, 0.22)",
+                        "fromDayOfWeek": 6,
+                        "line": true,
+                        "lineColor": "rgba(75, 0, 130, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 6
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(148, 0, 211, 0.22)",
+                        "fromDayOfWeek": 7,
+                        "line": true,
+                        "lineColor": "rgba(148, 0, 211, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 7
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Sunday's 20-23",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "expr": "",
+                        "format": "time_series",
+                        "intervalFactor": 1,
+                        "scenarioId": "random_walk",
+                        "target": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "timeseries",
+            "spec": {
+              "pluginVersion": "",
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "red",
+                        "fill": true,
+                        "fillColor": "rgba(255, 255, 255, 0.03)",
+                        "from": "20:00",
+                        "fromDayOfWeek": 7,
+                        "line": false,
+                        "lineColor": "rgba(255, 255, 255, 0.2)",
+                        "op": "time",
+                        "to": "23:00",
+                        "toDayOfWeek": 7
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "05:00",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "expr": "",
+                        "format": "time_series",
+                        "intervalFactor": 1,
+                        "scenarioId": "random_walk",
+                        "target": ""
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "timeseries",
+            "spec": {
+              "pluginVersion": "",
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "red",
+                        "fill": false,
+                        "from": "05:00",
+                        "line": true,
+                        "op": "time"
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "From 22:00 to 00:30 (crossing midnight)",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "timeseries",
+            "spec": {
+              "pluginVersion": "",
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "gray",
+                        "fill": true,
+                        "fillColor": "rgba(234, 112, 112, 0.12)",
+                        "from": "22:00",
+                        "line": false,
+                        "lineColor": "rgba(237, 46, 24, 0.60)",
+                        "op": "time",
+                        "to": "00:30"
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 8,
+              "width": 24,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 16,
+              "width": 24,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 24,
+              "width": 24,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 32,
+              "width": 24,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "gdev",
+      "panel-tests",
+      "graph"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-30d",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel Tests - Graph Time Regions",
+    "variables": []
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
+}

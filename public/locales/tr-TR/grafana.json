@@ -1839,10 +1839,18 @@
       "apply": "Uygula"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Durum geçmişi yüklenemedi",
       "history-error-desc": "Bu örnek için durum geçiş geçmişi alınamadı.",
       "no-history": "Yakın zamanda bir durum değişikliği yok",
-      "state-history": "Son Durum Değişiklikleri"
+      "state-error-description": "",
+      "state-history": "Son Durum Değişiklikleri",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Eşleşmeyen etiketler",
@@ -5027,7 +5035,7 @@
           }
         }
       },
-      "name": "Otomatik ızgara",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Temizle"
@@ -6135,6 +6143,8 @@
       "title-transformations": "Dönüşümler"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Dönüşüm ara",
       "show-images": "Resimleri göster",
       "sql-expressions-message-description": "MySQL benzeri söz dizimi kullanarak veri kaynağı sorgularının sonuçlarını işleyip dönüştürmenin yeni bir yolu.",
@@ -6272,11 +6282,12 @@
     "browse-grafana-com": "Grafana.com'da göz atın",
     "browse-plugins": "Eklentilere göz atın",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Veri kaynağı sağlandı",
       "details-tooltip": "Ayrıntılar",
       "no-preview": "Ön izleme yok",
       "use-dashboard-button": "Panoyu kullan",
-      "use-template-button": "Şablonu kullan"
+      "view-template-button": ""
     },
     "community-empty-title": "Topluluk panosu bulunamadı",
     "community-empty-title-with-datasource": "{{datasourceType}} topluluk panosu bulunamadı",
@@ -6386,10 +6397,12 @@
         "new-panel": "Yeni panel"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7875,6 +7888,11 @@
       "continue-without-saving": "Kaydetmeden devam et",
       "save-correlation": "İlişkilendirmeyi kaydet",
       "title-unsaved-changes-to-correlation": "İlişkilendirme için kaydedilmemiş değişiklikler"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Aşağıdaki renkli alanda gri bölücüyü tıklayıp sürükleyin.",
@@ -12367,6 +12385,7 @@
       "placeholder-branch": "Dal adını seçin veya girin",
       "suffix-configured-branch": "",
       "suffix-last-used": "Son dal",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Çekme isteği dalı",
       "suffix-read-only-branch": ""
     }
@@ -12403,10 +12422,10 @@
       },
       "pr-workflow-description": "Kullanıcıların değişiklikleri kaydederken bir çekme isteği açıp açmayacağını seçmesine izin verir. Depo ana dala doğrudan değişikliklere izin vermiyorsa bir çekme isteği gerekebilir.",
       "pr-workflow-label": "Kaydederken çekme isteği seçeneğini etkinleştir",
-      "token-description": "Depo izinlerine sahip Bitbucket Uygulama Parolası",
-      "token-label": "Uygulama Parolası",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Bitbucket belirteci gereklidir",
-      "token-user-description": "Uygulama parolasıyla depoya erişmek için kullanılacak kullanıcı adı",
+      "token-user-description": "",
       "token-user-required": "Kullanıcı adı gereklidir",
       "url-description": "Bitbucket depo URL'si",
       "url-required": "Depo URL'si gereklidir"
@@ -12432,9 +12451,6 @@
       "files-count_other": "{{count}} dosya",
       "folders-count_one": "{{count}} klasör",
       "folders-count_other": "{{count}} klasör"
-    },
-    "check-repository": {
-      "check": "Kontrol et"
     },
     "code-block": {
       "aria-label-copy": "Kodu panoya kopyala"
@@ -12822,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Kontrol Eden:",
       "connection-status": "Bağlantı durumu:",
       "finished": "Son başarılı çekme:",
@@ -12831,7 +12848,9 @@
       "last-ref": "Son Başvuru:",
       "messages": "Mesajlar:",
       "not-available": "Geçersiz",
+      "path": "",
       "pull-status": "Çekme durumu",
+      "repo-url": "",
       "resources": "Kaynaklar",
       "status": "Durum:",
       "unhealthy": "İyi durumda değil",
@@ -12968,8 +12987,8 @@
     "token-permissions-info": {
       "and-click": "ve şuna tıklayın:",
       "bitbucket": {
-        "create-token-button": "Uygulama parolaları oluştur",
-        "token-text": "Bitbucket Kişisel Erişim Belirteci"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Yeni belirteç ekle",
@@ -14340,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "{{teamName}} ekibini sil",
         "aria-label-edit-team": "{{teamName}} ekibini düzenle",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Ekibi düzenle",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Ekibi düzenle"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Ekipler yükleniyor...",
       "new-team": "Yeni ekip",
       "placeholder-search-teams": "Ekip ara"
