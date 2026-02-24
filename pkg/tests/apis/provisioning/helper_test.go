@@ -46,6 +46,7 @@ import (
 const (
 	waitTimeoutDefault  = 30 * time.Second
 	waitIntervalDefault = 100 * time.Millisecond
+	debugStateEnvVar    = "GRAFANA_PROVISIONING_DEBUG_STATE"
 )
 
 func TestMain(m *testing.M) {
@@ -90,8 +91,8 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 		Do(t.Context())
 
 	if apierrors.IsAlreadyExists(result.Error()) {
-		// Wait for all jobs to finish as we don't have the name.
-		h.AwaitJobs(t, repo)
+		job := h.AwaitLatestHistoricJob(t, repo)
+		h.requireSuccessfulJob(t, job)
 		return
 	}
 
@@ -103,7 +104,7 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobs(t, repo)
+	h.AwaitJobSuccess(t, t.Context(), unstruct)
 }
 
 func (h *provisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
@@ -120,8 +121,8 @@ func (h *provisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo 
 		Do(t.Context())
 
 	if apierrors.IsAlreadyExists(result.Error()) {
-		// Wait for all jobs to finish as we don't have the name.
-		h.AwaitJobs(t, repo)
+		job := h.AwaitLatestHistoricJob(t, repo)
+		h.requireSuccessfulJob(t, job)
 		return
 	}
 
@@ -206,13 +207,16 @@ func (h *provisioningTestHelper) AwaitLatestHistoricJob(t *testing.T, repo strin
 
 func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
 	t.Helper()
-	job = h.AwaitJob(t, ctx, job)
+	h.requireSuccessfulJob(t, h.AwaitJob(t, ctx, job))
+}
+
+func (h *provisioningTestHelper) requireSuccessfulJob(t *testing.T, job *unstructured.Unstructured) {
+	t.Helper()
+
 	lastErrors := mustNestedStringSlice(job.Object, "status", "errors")
 	lastState := mustNestedString(job.Object, "status", "state")
 
 	repo := job.GetLabels()[jobs.LabelRepository]
-
-	// Debug state if job failed
 	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
 		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
 	}
@@ -262,33 +266,6 @@ func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 		annotations := item.GetLabels()
 		if annotations[jobs.LabelRepository] == repoName {
 			waitUntilComplete[item.GetName()] = false
-		}
-	}
-
-	// if no active jobs for this repo, queue a pull job as a failsafe to try to ensure we are up to date as much as possible
-	if len(waitUntilComplete) == 0 {
-		body := asJSON(&provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
-		})
-
-		h.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repoName).
-			SubResource("jobs").
-			Body(body).
-			SetHeader("Content-Type", "application/json").
-			Do(t.Context())
-
-		j, err = h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
-		require.NoError(t, err, "failed to list active jobs")
-
-		for _, item := range j.Items {
-			annotations := item.GetLabels()
-			if annotations[jobs.LabelRepository] == repoName {
-				waitUntilComplete[item.GetName()] = false
-			}
 		}
 	}
 
@@ -620,8 +597,10 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	if !repo.SkipSync {
 		// Trigger and wait for initial sync to populate resources
 		h.SyncAndWait(t, repo.Name, nil)
-		h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
-	} else {
+		if debugStateEnabled() {
+			h.DebugState(t, repo.Name, "AFTER INITIAL SYNC")
+		}
+	} else if debugStateEnabled() {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
 	}
 
@@ -650,6 +629,11 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 			assert.Len(collect, folders.Items, repo.ExpectedFolders)
 		}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
 	}
+}
+
+func debugStateEnabled() bool {
+	enabled, err := strconv.ParseBool(os.Getenv(debugStateEnvVar))
+	return err == nil && enabled
 }
 
 // WaitForQuotaReconciliation waits for the repository's quota condition to match the expected reason.
