@@ -88,7 +88,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.15.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20260223215711-4271d73d344a // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20260224103610-e1219c0c17ff // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20260218111514-582136a04938 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260218111514-582136a04938 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -720,7 +720,7 @@ replace (
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86
 
 	// Use our fork of the upstream Alertmanager.
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260220111149-e5bb689fb805
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260224102839-50afbe56d9b4
 
 	// Pin OpenTelemetry log packages to v0.12.2 for compatibility with dagger v0.18.8
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc => go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.12.2
