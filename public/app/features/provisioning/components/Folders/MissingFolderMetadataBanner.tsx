@@ -1,59 +1,55 @@
 import { Trans, t } from '@grafana/i18n';
-import { config, isFetchError } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
-import { Folder } from 'app/api/clients/folder/v1beta1';
-import { RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind } from 'app/features/apiserver/types';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Permissions } from 'app/core/components/AccessControl/Permissions';
 
-import { FOLDER_METADATA_FILE } from '../../constants';
+import { useFolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
 
-interface MissingFolderMetadataBannerProps {
-  repository?: RepositoryView;
-  folder?: Folder;
+export function MissingFolderMetadataBanner() {
+  return (
+    <Alert
+      severity="warning"
+      title={t(
+        'provisioning.missing-folder-metadata-banner.title',
+        'This folder is missing metadata file in repository.'
+      )}
+    >
+      <Trans i18nKey="provisioning.missing-folder-metadata-banner.message">
+        Permissions may not persist if the folder is moved or renamed.
+      </Trans>
+    </Alert>
+  );
 }
 
-function MissingFolderMetadataBannerContent({ repository, folder }: Required<MissingFolderMetadataBannerProps>) {
-  const annotations = folder.metadata?.annotations;
-  const sourcePath = annotations?.[AnnoKeySourcePath]?.replace(/\/+$/, '');
-  const repoName = repository.name;
-
-  const folderJsonPath = sourcePath ? `${sourcePath}/${FOLDER_METADATA_FILE}` : FOLDER_METADATA_FILE;
-
-  const { error, isLoading } = useGetRepositoryFilesWithPathQuery({ name: repoName, path: folderJsonPath });
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (isFetchError(error) && error.status === 404) {
-    return (
-      <Alert
-        severity="warning"
-        title={t(
-          'provisioning.missing-folder-metadata-banner.title',
-          'This folder is missing metadata file in repository.'
-        )}
-        style={{ flex: 0 }}
-      >
-        <Trans i18nKey="provisioning.missing-folder-metadata-banner.message">
-          Permissions may not persist if the folder is moved or renamed.
-        </Trans>
-      </Alert>
-    );
-  }
-
-  return null;
+function MetadataErrorAlert() {
+  return (
+    <Alert
+      severity="error"
+      title={t('provisioning.missing-folder-metadata-banner.error-title', 'Unable to check folder metadata status.')}
+    >
+      <Trans i18nKey="provisioning.missing-folder-metadata-banner.error-message">
+        Could not verify whether this folder has a metadata file. Please try again later.
+      </Trans>
+    </Alert>
+  );
 }
 
-export function MissingFolderMetadataBanner({ repository, folder }: MissingFolderMetadataBannerProps) {
-  if (!config.featureToggles.provisioningFolderMetadata) {
-    return null;
-  }
+interface FolderPermissionsProps {
+  folderUID: string;
+  canSetPermissions: boolean;
+}
 
-  const isProvisioned = folder?.metadata?.annotations?.[AnnoKeyManagerKind] === ManagerKind.Repo;
-  if (!isProvisioned || !repository) {
-    return null;
-  }
+export function FolderPermissions({ folderUID, canSetPermissions }: FolderPermissionsProps) {
+  const metadataStatus = useFolderMetadataStatus(folderUID);
 
-  return <MissingFolderMetadataBannerContent repository={repository} folder={folder} />;
+  switch (metadataStatus) {
+    case 'loading':
+      return <LoadingPlaceholder text={t('provisioning.folder-permissions.loading', 'Loading...')} />;
+    case 'missing':
+      return <MissingFolderMetadataBanner />;
+    case 'error':
+      return <MetadataErrorAlert />;
+    case 'ok':
+    case 'skip':
+      return <Permissions resource="folders" resourceId={folderUID} canSetPermissions={canSetPermissions} />;
+  }
 }

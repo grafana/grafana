@@ -15,7 +15,6 @@ import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo'
 import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
-import { MissingFolderMetadataBanner } from '../provisioning/components/Folders/MissingFolderMetadataBanner';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
@@ -41,11 +40,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const {
-    isReadOnlyRepo,
-    repository: provisioningRepository,
-    folder: provisioningFolder,
-  } = useGetResourceRepositoryView({ folderName: folderUID });
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
@@ -165,7 +160,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
-        <MissingFolderMetadataBanner repository={provisioningRepository} folder={provisioningFolder} />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
