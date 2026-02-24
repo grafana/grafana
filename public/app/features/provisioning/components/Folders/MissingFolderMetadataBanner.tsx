@@ -29,7 +29,10 @@ function MissingFolderMetadataBannerContent({ repository, folder }: Required<Mis
     return (
       <Alert
         severity="warning"
-        title={t('provisioning.missing-folder-metadata-banner.title', 'This folder is missing metadata file in repository.')}
+        title={t(
+          'provisioning.missing-folder-metadata-banner.title',
+          'This folder is missing metadata file in repository.'
+        )}
         style={{ flex: 0 }}
       >
         <Trans i18nKey="provisioning.missing-folder-metadata-banner.message">
@@ -48,7 +51,7 @@ export function MissingFolderMetadataBanner({ repository, folder }: MissingFolde
   }
 
   const isProvisioned = folder?.metadata?.annotations?.[AnnoKeyManagerKind] === ManagerKind.Repo;
-  if (!isProvisioned || !repository || repository.type === 'local') {
+  if (!isProvisioned || !repository) {
     return null;
   }
 

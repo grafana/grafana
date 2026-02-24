@@ -89,14 +89,6 @@ describe('MissingFolderMetadataBanner', () => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
-    it('returns null for local repositories', () => {
-      setup({
-        repository: { ...defaultRepository, type: 'local' },
-      });
-
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    });
-
     it('returns null when file query is loading', () => {
       setup({ fileQueryOverrides: { isLoading: true } });
 

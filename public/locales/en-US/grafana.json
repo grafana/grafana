@@ -12769,8 +12769,8 @@
       "truncated": "Message truncated"
     },
     "missing-folder-metadata-banner": {
-      "message": "Permissions may not persist if the folder is moved or renamed in Git.",
-      "title": "This folder is missing stable ID metadata."
+      "message": "Permissions may not persist if the folder is moved or renamed.",
+      "title": "This folder is missing metadata file in repository."
     },
     "mode-options": {
       "disabled": {
