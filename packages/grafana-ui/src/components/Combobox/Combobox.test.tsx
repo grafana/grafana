@@ -104,7 +104,7 @@ describe('Combobox', () => {
     expect(screen.getByTestId('icon-keyboard')).toBeVisible();
   });
 
-  it('renders the prefix icon rather than the option icon for selected option', async () => {
+  it('renders the option icon over the prefix icon', async () => {
     render(
       <Combobox
         prefixIcon={'ai'}
@@ -115,8 +115,8 @@ describe('Combobox', () => {
       />
     );
     expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
-    expect(screen.getByTestId('icon-ai')).toBeVisible();
-    expect(screen.queryByTestId('icon-keyboard')).not.toBeInTheDocument();
+    expect(screen.getByTestId('icon-keyboard')).toBeInTheDocument();
+    expect(screen.queryByTestId('icon-ai')).not.toBeInTheDocument();
   });
 
   it('icon renders in options', async () => {

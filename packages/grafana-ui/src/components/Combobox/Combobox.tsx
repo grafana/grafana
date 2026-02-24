@@ -384,7 +384,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
     : { Wrapper: React.Fragment };
 
-  const icon = prefixIcon ?? selectedItem?.icon;
+  const icon = selectedItem?.icon ?? prefixIcon;
   return (
     <Wrapper {...wrapperProps}>
       <InputComponent
