@@ -147,4 +147,28 @@ export const locationUtil = {
   processUrl: (url: string) => {
     return grafanaConfig.disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   },
+  /**
+   * Process a redirect URI by merging its query parameters with current location's query parameters.
+   * Current query params are preserved, but redirect URI params take precedence.
+   *
+   * @param redirectUri - The redirect URI from the backend (may contain query params)
+   * @param currentLocation - Current location object to preserve query params
+   * @returns Final URL with merged query parameters
+   * @internal
+   */
+  processRedirectUri: (redirectUri: string, currentLocation: Location): string => {
+    const [path, queryString] = redirectUri.split('?');
+    const newUrl = stripBaseFromUrl(path);
+
+    // Parse current location's query params
+    const currentParams = urlUtil.parseKeyValue(
+      currentLocation.search.startsWith('?') ? currentLocation.search.substring(1) : currentLocation.search
+    );
+
+    // Parse redirect URI query params
+    const redirectParams = urlUtil.parseKeyValue(queryString || '');
+
+    // Build final URL with merged params (original redirect params take precedence)
+    return urlUtil.renderUrl(newUrl, { ...currentParams, ...redirectParams });
+  },
 };
