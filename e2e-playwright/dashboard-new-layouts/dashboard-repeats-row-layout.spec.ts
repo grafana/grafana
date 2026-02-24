@@ -267,14 +267,17 @@ test.describe(
       const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}1`);
       expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y || 0);
       // Wait for save button to be active (indicates changes have been applied)
+      // using the drawer button because the toolbar Save button is not responsive in playwright tests due to CSP
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
+        dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton)
       ).toHaveAttribute('data-testactive');
 
       singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
       await page.reload();
+
       for (let i = 1; i <= repeatOptions.length; i++) {
         // verify move by row position
         const repeatedRow = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}${i}`);
