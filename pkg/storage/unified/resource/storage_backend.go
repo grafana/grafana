@@ -397,7 +397,6 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 				"error", err)
 			break
 		}
-
 	}
 }
 
@@ -475,21 +474,20 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
 			if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
-				startKey := k.Prefix()
+				startKeyToDelete := k.Prefix()
 				// end key is exclusive, so we need to add a suffix to make sure we include all the versions we want to delete
-				endKey := PrefixRangeEnd(dk.String())
+				endKeyToDelete := PrefixRangeEnd(dk.String())
 
 				keysToDelete := []string{}
 				for deleteKey, err := range b.kv.Keys(ctx, kv.DataSection, ListOptions{
-					StartKey: startKey,
-					EndKey:   endKey,
+					StartKey: startKeyToDelete,
+					EndKey:   endKeyToDelete,
 					Sort:     kv.SortOrderAsc,
 				}) {
 					if err != nil {
 						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
 					}
 					b.log.Info("garbage collection", "key to delete", deleteKey)
-					endKey = deleteKey
 					keysToDelete = append(keysToDelete, deleteKey)
 				}
 
