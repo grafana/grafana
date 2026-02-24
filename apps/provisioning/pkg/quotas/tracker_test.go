@@ -49,7 +49,7 @@ func TestQuotaTracker_TryAcquire(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tracker := NewQuotaTracker(tt.currentUsage, tt.limit)
+			tracker := NewInMemoryQuotaTracker(tt.currentUsage, tt.limit)
 			got := tracker.TryAcquire()
 			assert.Equal(t, tt.wantResult, got)
 		})
@@ -57,7 +57,7 @@ func TestQuotaTracker_TryAcquire(t *testing.T) {
 }
 
 func TestQuotaTracker_TryAcquireIncrementsCounter(t *testing.T) {
-	tracker := NewQuotaTracker(8, 10)
+	tracker := NewInMemoryQuotaTracker(8, 10)
 
 	require.True(t, tracker.TryAcquire())  // 8 -> 9
 	require.True(t, tracker.TryAcquire())  // 9 -> 10
@@ -66,7 +66,7 @@ func TestQuotaTracker_TryAcquireIncrementsCounter(t *testing.T) {
 }
 
 func TestQuotaTracker_Release(t *testing.T) {
-	tracker := NewQuotaTracker(10, 10)
+	tracker := NewInMemoryQuotaTracker(10, 10)
 
 	// At limit, acquire should fail
 	require.False(t, tracker.TryAcquire())
@@ -82,7 +82,7 @@ func TestQuotaTracker_Release(t *testing.T) {
 }
 
 func TestQuotaTracker_ReleaseUnlimited(t *testing.T) {
-	tracker := NewQuotaTracker(0, 0)
+	tracker := NewInMemoryQuotaTracker(0, 0)
 
 	// Release on unlimited tracker should not panic
 	tracker.Release()
@@ -90,7 +90,7 @@ func TestQuotaTracker_ReleaseUnlimited(t *testing.T) {
 }
 
 func TestQuotaTracker_ReleaseNeverGoesBelowZero(t *testing.T) {
-	tracker := NewQuotaTracker(1, 10)
+	tracker := NewInMemoryQuotaTracker(1, 10)
 
 	// Release more times than the current count
 	tracker.Release() // 1 -> 0
@@ -106,7 +106,7 @@ func TestQuotaTracker_ReleaseNeverGoesBelowZero(t *testing.T) {
 
 func TestQuotaTracker_ConcurrentAccess(t *testing.T) {
 	limit := int64(100)
-	tracker := NewQuotaTracker(0, limit)
+	tracker := NewInMemoryQuotaTracker(0, limit)
 
 	var wg sync.WaitGroup
 	acquired := make(chan bool, 200)
@@ -135,7 +135,7 @@ func TestQuotaTracker_ConcurrentAccess(t *testing.T) {
 }
 
 func TestQuotaTracker_ConcurrentAcquireAndRelease(t *testing.T) {
-	tracker := NewQuotaTracker(50, 50)
+	tracker := NewInMemoryQuotaTracker(50, 50)
 
 	var wg sync.WaitGroup
 

@@ -32,7 +32,7 @@ func FullSync(
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
 	metrics jobs.JobMetrics,
-	quotaTracker *quotas.QuotaTracker,
+	quotaTracker quotas.QuotaTracker,
 ) error {
 	syncStart := time.Now()
 	cfg := repo.Config()
@@ -120,7 +120,7 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 	return false
 }
 
-func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker *quotas.QuotaTracker) {
+func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker quotas.QuotaTracker) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -222,7 +222,7 @@ func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metric
 	return err
 }
 
-func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker *quotas.QuotaTracker) error {
+func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error {
 	progress.SetTotal(ctx, len(changes))
 
 	_, applyChangesSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes",
@@ -301,7 +301,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 	return nil
 }
 
-func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker *quotas.QuotaTracker) error {
+func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker quotas.QuotaTracker) error {
 	for _, folder := range folders {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -319,7 +319,7 @@ func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, cli
 	return nil
 }
 
-func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, quotaTracker *quotas.QuotaTracker) error {
+func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, quotaTracker quotas.QuotaTracker) error {
 	logger := logging.FromContext(ctx)
 	logger.Info("applying resources in parallel test changes 1")
 

@@ -31,7 +31,7 @@ func (_m *MockFullSyncFn) EXPECT() *MockFullSyncFn_Expecter {
 }
 
 // Execute provides a mock function with given fields: ctx, repo, compare, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker
-func (_m *MockFullSyncFn) Execute(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker *quotas.QuotaTracker) error {
+func (_m *MockFullSyncFn) Execute(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error {
 	ret := _m.Called(ctx, repo, compare, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker)
 
 	if len(ret) == 0 {
@@ -39,7 +39,7 @@ func (_m *MockFullSyncFn) Execute(ctx context.Context, repo repository.Reader, c
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, CompareFn, resources.ResourceClients, string, resources.RepositoryResources, jobs.JobProgressRecorder, tracing.Tracer, int, jobs.JobMetrics, *quotas.QuotaTracker) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, CompareFn, resources.ResourceClients, string, resources.RepositoryResources, jobs.JobProgressRecorder, tracing.Tracer, int, jobs.JobMetrics, quotas.QuotaTracker) error); ok {
 		r0 = rf(ctx, repo, compare, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker)
 	} else {
 		r0 = ret.Error(0)
@@ -64,14 +64,14 @@ type MockFullSyncFn_Execute_Call struct {
 //   - tracer tracing.Tracer
 //   - maxSyncWorkers int
 //   - metrics jobs.JobMetrics
-//   - quotaTracker *quotas.QuotaTracker
+//   - quotaTracker quotas.QuotaTracker
 func (_e *MockFullSyncFn_Expecter) Execute(ctx interface{}, repo interface{}, compare interface{}, clients interface{}, currentRef interface{}, repositoryResources interface{}, progress interface{}, tracer interface{}, maxSyncWorkers interface{}, metrics interface{}, quotaTracker interface{}) *MockFullSyncFn_Execute_Call {
 	return &MockFullSyncFn_Execute_Call{Call: _e.mock.On("Execute", ctx, repo, compare, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker)}
 }
 
-func (_c *MockFullSyncFn_Execute_Call) Run(run func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker *quotas.QuotaTracker)) *MockFullSyncFn_Execute_Call {
+func (_c *MockFullSyncFn_Execute_Call) Run(run func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker)) *MockFullSyncFn_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.Reader), args[2].(CompareFn), args[3].(resources.ResourceClients), args[4].(string), args[5].(resources.RepositoryResources), args[6].(jobs.JobProgressRecorder), args[7].(tracing.Tracer), args[8].(int), args[9].(jobs.JobMetrics), args[10].(*quotas.QuotaTracker))
+		run(args[0].(context.Context), args[1].(repository.Reader), args[2].(CompareFn), args[3].(resources.ResourceClients), args[4].(string), args[5].(resources.RepositoryResources), args[6].(jobs.JobProgressRecorder), args[7].(tracing.Tracer), args[8].(int), args[9].(jobs.JobMetrics), args[10].(quotas.QuotaTracker))
 	})
 	return _c
 }
@@ -81,7 +81,7 @@ func (_c *MockFullSyncFn_Execute_Call) Return(_a0 error) *MockFullSyncFn_Execute
 	return _c
 }
 
-func (_c *MockFullSyncFn_Execute_Call) RunAndReturn(run func(context.Context, repository.Reader, CompareFn, resources.ResourceClients, string, resources.RepositoryResources, jobs.JobProgressRecorder, tracing.Tracer, int, jobs.JobMetrics, *quotas.QuotaTracker) error) *MockFullSyncFn_Execute_Call {
+func (_c *MockFullSyncFn_Execute_Call) RunAndReturn(run func(context.Context, repository.Reader, CompareFn, resources.ResourceClients, string, resources.RepositoryResources, jobs.JobProgressRecorder, tracing.Tracer, int, jobs.JobMetrics, quotas.QuotaTracker) error) *MockFullSyncFn_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }
