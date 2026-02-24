@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -2195,7 +2196,8 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	// multiple repository definitions at once
 	const numRepos = 10
 
-	// Use errgroup to run concurrent creates and collect errors
+	// Use sync.WaitGroup to ensure all goroutines complete
+	var wg sync.WaitGroup
 	type result struct {
 		name string
 		err  error
@@ -2204,7 +2206,9 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 
 	// Create repositories concurrently
 	for i := 0; i < numRepos; i++ {
+		wg.Add(1)
 		go func(idx int) {
+			defer wg.Done()
 			repoName := fmt.Sprintf("concurrent-repo-%d", idx)
 
 			// Create repository with secure token (this triggers secret storage migrations)
@@ -2243,11 +2247,16 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 		}(i)
 	}
 
+	// Close the results channel once all goroutines complete
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
 	// Collect all results
 	var errors []error
 	successCount := 0
-	for i := 0; i < numRepos; i++ {
-		res := <-results
+	for res := range results {
 		if res.err != nil {
 			errors = append(errors, fmt.Errorf("%s: %w", res.name, res.err))
 		} else {
