@@ -679,7 +679,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	var userAuth *login.UserAuth
 	// For auth modules that may not store an authID in user_auth (Generic OAuth never stores one;
 	// SAML omits it for SCIM-provisioned users), fall back to a UserId+AuthModule lookup.
-	if identity.AuthenticatedBy == login.GenericOAuthModule || identity.AuthenticatedBy == login.SAMLAuthModule {
+	if identity.AuthenticatedBy == login.GenericOAuthModule || (identity.AuthenticatedBy == login.SAMLAuthModule && usr.IsProvisioned) {
 		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthenticatedBy, UserId: usr.ID}
 		userAuth, err = s.authInfoService.GetAuthInfo(ctx, query)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {

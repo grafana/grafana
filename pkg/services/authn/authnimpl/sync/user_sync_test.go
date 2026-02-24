@@ -1991,6 +1991,59 @@ func TestUserSync_SyncUserHook_SCIMUserSAMLLoginUpdatesExistingUserAuth(t *testi
 	require.NoError(t, err)
 }
 
+func TestUserSync_SyncUserHook_NonProvisionedSAMLUserCreatesNewAuthConnection(t *testing.T) {
+	userSrv := usertest.NewMockService(t)
+	authInfoSrv := authinfotest.NewMockAuthInfoService(t)
+
+	nonProvisionedUser := &user.User{
+		ID:            444,
+		UID:           "user-uid-444",
+		Login:         "saml.user",
+		Email:         "saml.user@example.com",
+		Name:          "SAML User",
+		IsProvisioned: false,
+	}
+
+	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
+		return q.AuthId == "saml-auth-id" && q.AuthModule == login.SAMLAuthModule
+	})).Return(nil, user.ErrUserNotFound).Once()
+
+	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nonProvisionedUser, nil).Once()
+
+	authInfoSrv.On("SetAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.SetAuthInfoCommand) bool {
+		return cmd.UserId == 444 && cmd.AuthModule == login.SAMLAuthModule && cmd.AuthId == "saml-auth-id"
+	})).Return(nil).Once()
+
+	s := ProvideUserSync(
+		userSrv,
+		authinfoimpl.ProvideOSSUserProtectionService(),
+		authInfoSrv,
+		&quotatest.FakeQuotaService{},
+		tracing.NewNoopTracerService(),
+		featuremgmt.WithFeatures(),
+		setting.NewCfg(),
+		nil,
+	)
+
+	email := "saml.user@example.com"
+	err := s.SyncUserHook(context.Background(), &authn.Identity{
+		AuthID:          "saml-auth-id",
+		AuthenticatedBy: login.SAMLAuthModule,
+		Login:           "saml.user",
+		Email:           "saml.user@example.com",
+		Name:            "SAML User",
+		ClientParams: authn.ClientParams{
+			SyncUser: true,
+			LookUpParams: login.UserLookupParams{
+				Email: &email,
+			},
+		},
+	}, nil)
+
+	require.NoError(t, err)
+	authInfoSrv.AssertNotCalled(t, "UpdateAuthInfo", mock.Anything, mock.Anything)
+}
+
 func TestUserSync_SyncUserHook_SCIMAuthModuleMismatch(t *testing.T) {
 	userSrv := usertest.NewMockService(t)
 	authInfoSrv := authinfotest.NewMockAuthInfoService(t)
