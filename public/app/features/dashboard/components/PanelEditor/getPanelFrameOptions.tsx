@@ -13,6 +13,7 @@ import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButto
 import { GenAIPanelTitleButton } from '../GenAI/GenAIPanelTitleButton';
 import { GenAITextArea } from '../GenAI/GenAITextArea';
 import { GenAITextInput } from '../GenAI/GenAITextInput';
+import { LLMFallbackAddon } from '../GenAI/hooks';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -69,11 +70,13 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           );
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelTitleButton
-            onGenerate={setPanelTitle}
-            panel={saveModel}
-            dashboard={dashboardModel}
-          />
+          <LLMFallbackAddon>
+            <GenAIPanelTitleButton
+              onGenerate={setPanelTitle}
+              panel={saveModel}
+              dashboard={dashboardModel}
+            />
+          </LLMFallbackAddon>
         ),
       })
     )
@@ -96,10 +99,12 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           );
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelDescriptionButton
-            onGenerate={setPanelDescription}
-            panel={saveModel}
-          />
+          <LLMFallbackAddon>
+            <GenAIPanelDescriptionButton
+              onGenerate={setPanelDescription}
+              panel={saveModel}
+            />
+          </LLMFallbackAddon>
         ),
       })
     )

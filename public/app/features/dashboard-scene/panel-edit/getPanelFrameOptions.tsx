@@ -10,6 +10,7 @@ import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/G
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { GenAITextArea } from 'app/features/dashboard/components/GenAI/GenAITextArea';
 import { GenAITextInput } from 'app/features/dashboard/components/GenAI/GenAITextInput';
+import { LLMFallbackAddon } from 'app/features/dashboard/components/GenAI/hooks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -86,11 +87,13 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelFrameTitleInput id={descriptor.props.id} panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelTitleButton
-            onGenerate={(title) => editPanelTitleAction(panel, title)}
-            panel={vizPanelToPanel(panel)}
-            dashboard={transformSceneToSaveModel(dashboard)}
-          />
+          <LLMFallbackAddon>
+            <GenAIPanelTitleButton
+              onGenerate={(title) => editPanelTitleAction(panel, title)}
+              panel={vizPanelToPanel(panel)}
+              dashboard={transformSceneToSaveModel(dashboard)}
+            />
+          </LLMFallbackAddon>
         ),
       })
     )
@@ -103,10 +106,12 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelDescriptionButton
-            onGenerate={(description) => panel.setState({ description })}
-            panel={vizPanelToPanel(panel)}
-          />
+          <LLMFallbackAddon>
+            <GenAIPanelDescriptionButton
+              onGenerate={(description) => panel.setState({ description })}
+              panel={vizPanelToPanel(panel)}
+            />
+          </LLMFallbackAddon>
         ),
       })
     )
