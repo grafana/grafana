@@ -142,6 +142,7 @@ func NewStorageBackend(
 		Log:                  log.New("storage-backend"),
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {

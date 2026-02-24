@@ -284,12 +284,20 @@ func parseLokiEntry(s lokiclient.Sample) (Entry, error) {
 		groupLabels = make(map[string]string)
 	}
 
+	var enrichments interface{}
+	if len(lokiEntry.Alert.ExtraData) > 0 {
+		if err := json.Unmarshal(lokiEntry.Alert.ExtraData, &enrichments); err != nil {
+			return Entry{}, fmt.Errorf("failed to unmarshal enrichments [%s]: %w", s.T, err)
+		}
+	}
+
 	alerts := []EntryAlert{{
 		Status:      lokiEntry.Alert.Status,
 		Labels:      lokiEntry.Alert.Labels,
 		Annotations: lokiEntry.Alert.Annotations,
 		StartsAt:    lokiEntry.Alert.StartsAt,
 		EndsAt:      lokiEntry.Alert.EndsAt,
+		Enrichments: enrichments,
 	}}
 
 	return Entry{

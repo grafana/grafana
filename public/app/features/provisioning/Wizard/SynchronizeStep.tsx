@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -210,30 +211,36 @@ export const SynchronizeStep = memo(function SynchronizeStep({
           </Stack>
         </Alert>
       )}
-      <Text element="h3">
-        <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
-      </Text>
-      <Field noMargin>
-        <Checkbox
-          {...register('migrate.migrateResources')}
-          id="migrate-resources"
-          label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
-          checked={syncTarget === 'instance' ? true : undefined}
-          disabled={syncTarget === 'instance'}
-          description={
-            syncTarget === 'instance' ? (
-              <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
-                Instance sync requires all resources to be managed. Existing resources will be migrated automatically.
-              </Trans>
-            ) : (
-              <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
-                Import existing dashboards from connected external storage into the provisioning folder created in the
-                previous step
-              </Trans>
-            )
-          }
-        />
-      </Field>
+      {/* Migration/export functionality is experimental and gated behind the provisioningExport feature flag */}
+      {config.featureToggles.provisioningExport && (
+        <>
+          <Text element="h3">
+            <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
+          </Text>
+          <Field noMargin>
+            <Checkbox
+              {...register('migrate.migrateResources')}
+              id="migrate-resources"
+              label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
+              checked={syncTarget === 'instance' ? true : undefined}
+              disabled={syncTarget === 'instance'}
+              description={
+                syncTarget === 'instance' ? (
+                  <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
+                    Instance sync requires all resources to be managed. Existing resources will be migrated
+                    automatically.
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
+                    Import existing dashboards from connected external storage into the provisioning folder created in
+                    the previous step
+                  </Trans>
+                )
+              }
+            />
+          </Field>
+        </>
+      )}
       <Field noMargin>
         <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
           <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>

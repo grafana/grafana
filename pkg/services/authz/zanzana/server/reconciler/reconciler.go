@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -13,11 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/server"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
+var _ zanzana.MTReconciler = (*Reconciler)(nil)
+
 type Reconciler struct {
-	server        *server.Server
+	server        zanzana.ServerInternal
 	clientFactory resources.ClientFactory
 	cfg           Config
 	logger        log.Logger
@@ -53,7 +56,7 @@ var reconcileGVRs = []schema.GroupVersionResource{
 
 // NewReconciler creates a new reconciler instance.
 func NewReconciler(
-	srv *server.Server,
+	srv zanzana.ServerInternal,
 	clientFactory resources.ClientFactory,
 	cfg Config,
 	logger log.Logger,
@@ -214,6 +217,33 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 		"added", len(toAdd),
 		"deleted", len(toDelete),
 	)
+
+	return nil
+}
+
+func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) error {
+	ctx, span := r.tracer.Start(ctx, "reconciler.EnsureNamespace")
+	defer span.End()
+
+	store, err := r.server.GetStore(ctx, namespace)
+	if err != nil && !errors.Is(err, zanzana.ErrStoreNotFound) {
+		return fmt.Errorf("failed to get store: %w", err)
+	}
+
+	if store != nil {
+		return nil
+	}
+
+	// Create store if it doesn't exist
+	_, err = r.server.GetOrCreateStore(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to create store: %w", err)
+	}
+
+	err = r.reconcileNamespace(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to reconcile namespace: %w", err)
+	}
 
 	return nil
 }

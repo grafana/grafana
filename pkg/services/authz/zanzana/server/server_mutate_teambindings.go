@@ -2,17 +2,14 @@ package server
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	zanzana "github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-func (s *Server) mutateTeamBindings(ctx context.Context, store *storeInfo, operations []*authzextv1.MutateOperation) error {
+func (s *Server) mutateTeamBindings(ctx context.Context, store *zanzana.StoreInfo, operations []*authzextv1.MutateOperation) error {
 	ctx, span := s.tracer.Start(ctx, "server.mutateTeamBindings")
 	defer span.End()
 
@@ -22,13 +19,13 @@ func (s *Server) mutateTeamBindings(ctx context.Context, store *storeInfo, opera
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_CreateTeamBinding:
-			tuple, err := GetTeamBindingTuple(op.CreateTeamBinding.GetSubjectName(), op.CreateTeamBinding.GetTeamName(), op.CreateTeamBinding.GetPermission())
+			tuple, err := zanzana.GetTeamBindingTuple(op.CreateTeamBinding.GetSubjectName(), op.CreateTeamBinding.GetTeamName(), op.CreateTeamBinding.GetPermission())
 			if err != nil {
 				return err
 			}
 			writeTuples = append(writeTuples, tuple)
 		case *authzextv1.MutateOperation_DeleteTeamBinding:
-			tuple, err := GetTeamBindingTuple(op.DeleteTeamBinding.GetSubjectName(), op.DeleteTeamBinding.GetTeamName(), op.DeleteTeamBinding.GetPermission())
+			tuple, err := zanzana.GetTeamBindingTuple(op.DeleteTeamBinding.GetSubjectName(), op.DeleteTeamBinding.GetTeamName(), op.DeleteTeamBinding.GetPermission())
 			if err != nil {
 				return err
 			}
@@ -50,34 +47,4 @@ func (s *Server) mutateTeamBindings(ctx context.Context, store *storeInfo, opera
 	}
 
 	return nil
-}
-
-// GetTeamBindingTuple maps a team binding subject, team name, and permission to the corresponding
-// Zanzana tuple. This is the canonical mapping used throughout the system.
-func GetTeamBindingTuple(subject string, team string, permission string) (*openfgav1.TupleKey, error) {
-	if subject == "" {
-		return nil, errors.New("subject name cannot be empty")
-	}
-
-	if team == "" {
-		return nil, errors.New("team name cannot be empty")
-	}
-
-	relation := ""
-	switch permission {
-	case string(iamv0.TeamBindingTeamPermissionAdmin):
-		relation = zanzana.RelationTeamAdmin
-	case string(iamv0.TeamBindingTeamPermissionMember):
-		relation = zanzana.RelationTeamMember
-	default:
-		return nil, fmt.Errorf("unknown team permission '%s', expected member or admin", permission)
-	}
-
-	tuple := &openfgav1.TupleKey{
-		User:     zanzana.NewTupleEntry(zanzana.TypeUser, subject, ""),
-		Relation: relation,
-		Object:   zanzana.NewTupleEntry(zanzana.TypeTeam, team, ""),
-	}
-
-	return tuple, nil
 }

@@ -1,5 +1,5 @@
 ---
-description: Instructions for setting up Git Sync as code, so you can provision GitHub repositories for use with Grafana.
+description: Instructions for setting up Git Sync as code, so you can provision Git repositories for use with Grafana.
 keywords:
   - set up
   - git integration
@@ -11,8 +11,8 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Set up Git Sync for GitHub as code
-weight: 110
+title: Set up Git Sync as code
+weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/
 aliases:
   - ../../../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
@@ -29,7 +29,7 @@ Git Sync is available in [public preview](https://grafana.com/docs/release-life-
 
 {{< /admonition >}}
 
-You can also configure Git Sync using `grafanactl`. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create your required resources in YAML files and push them to Grafana using `grafanactl`. This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
+You can also configure Git Sync using `grafanactl`, the Grafana CLI. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create your required resources in YAML files and push them to Grafana using `grafanactl`. This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
 
 For more information, refer to the following documents:
 
@@ -37,9 +37,9 @@ For more information, refer to the following documents:
 - [Dashboard CRD Format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources/)
 - [`grafanactl` documentation](https://grafana.github.io/grafanactl/)
 
-## Set up Git Sync for GitHub as code
+## Set up Git Sync as code with the Grafana CLI
 
-To set up Git Sync with `grafanactl`, follow these steps:
+To set up Git Sync as code with `grafanactl`, follow these steps:
 
 1. Understand [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
 1. [Create the connection and repository CRDs](#create-the-resources-crds)
@@ -49,7 +49,9 @@ To set up Git Sync with `grafanactl`, follow these steps:
 
 ## Create the resources CRDs
 
-You need to create a repository resource and, if you're connecting to Git Sync with GitHub App, a connection resource as well.
+If you're connecting with any of the [supported Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits#compatible-git-providers) using a Personal Access Token, you need to create a repository resource to define the connection between your repositories and your Grafana instance.
+
+If you're connecting to Git Sync with GitHub App, in addition to the repository resource you need to create a connection resource as well.
 
 ### Create the connection resource
 
@@ -62,7 +64,7 @@ metadata:
   name: '<GITHUB_CONNECTION_NAME>'
   namespace: default
 spec:
-  title: <REPOSITORY_TITLE>
+  title: '<REPOSITORY_TITLE>'
   type: github
   url: https://github.com
   github:
@@ -70,7 +72,7 @@ spec:
     installationID: '<GITHUB_INSTALL_ID>'
 secure:
   privateKey:
-    create: '<GITHUB_PRIVATE_KEY'
+    create: '<GITHUB_PRIVATE_KEY>'
 ```
 
 Replace the placeholders with your values:
@@ -83,45 +85,76 @@ Replace the placeholders with your values:
 
 ### Create the repository resource
 
-Next, create a `repository.yaml` file defining your Git Sync configuration. Depending on your authentication method, add your Personal Access Token information or the connection name.
+Next, create a `repository.yaml` file defining your Git Sync configuration. Depending on your Git provider and authentication method, add your Personal Access Token information or the connection name.
 
 ```yaml
 apiVersion: provisioning.grafana.app/v0alpha1
 kind: Repository
 metadata:
-  name: <REPOSITORY_NAME>
+  name: '<REPOSITORY_NAME>'
 spec:
-  title: <REPOSITORY_TITLE>
-  type: github
-  github:
-    url: <GITHUB_REPO_URL>
-    branch: <BRANCH>
-    path: grafana/
-    generateDashboardPreviews: true
-  # GitHub App connection only:
-  connection:
-    name: <GITHUB_CONNECTION_NAME>
-sync:
+  sync:
     enabled: true
     intervalSeconds: 60
     target: folder
   workflows:
     - write
     - branch
-# Personal Access Token connection only:
+  title: '<REPOSITORY_TITLE>'
+
+# Git Sync for GitHub:
+spec:
+  type: github
+  github:
+    url: '<GIT_REPO_URL>'
+    branch: '<BRANCH>'
+    path: grafana/
+# GitHub App connection only:
+  connection:
+    name: '<GITHUB_CONNECTION_NAME>'
+# GitHub Personal Access Token only:
 secure:
-  token:
-    create: <GITHUB_PAT>
+  token: { create: "GIT_PAT" }
+
+# GitLab Personal Access Token only:
+spec:
+  type: gitlab
+  gitlab:
+    url: '<GIT_REPO_URL>'
+    branch: '<BRANCH>'
+secure:
+  token: { create: "GIT_PAT" }
+
+# Bitbucket Personal Access Token only:
+spec:
+  type: bitbucket
+  bitbucket:
+    url: '<GIT_REPO_URL>'
+    branch: '<BRANCH>'
+    tokenUser: tokenuser
+secure:
+  token: { create: "GIT_PAT" }
+
+# Pure Git only:
+spec:
+  type: git
+  git:
+    url: '<GIT_REPO_URL>'
+    branch: '<BRANCH>'
+    path: "grafana/"
+    tokenUser: tokenuser
+secure:
+  token: { create: "GIT_PAT" }
 ```
 
 Replace the placeholders with your values:
 
 - _`<REPOSITORY_NAME>`_: Unique identifier for this repository resource
 - _`<REPOSITORY_TITLE>`_: Human-readable name displayed in Grafana UI
-- _`<GITHUB_REPO_URL>`_: GitHub repository URL
+- _`<GIT_REPO_URL>`_: GitHub repository URL
 - _`<BRANCH>`_: Branch to sync
 - _`<GITHUB_CONNECTION_NAME>`_: The name of your GitHub connection
-- _`<GITHUB_PAT>`_: GitHub Personal Access Token
+- _`<GIT_PAT>`_: Git provider Personal Access Token
 
 {{< admonition type="note" >}}
 

@@ -122,6 +122,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EnforceQuotas = section.Key("enforce_quotas").MustBool(false)
 	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
 
+	// tenant watcher
+	cfg.TenantApiServerAddress = section.Key("tenant_api_server_address").String()
+	cfg.TenantWatcherAllowInsecureTLS = section.Key("tenant_watcher_allow_insecure_tls").MustBool(false)
+
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)

@@ -218,6 +218,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			serviceLink := &navtree.NavLink{
 				Text:       "Service center",
 				Id:         "standalone-plugin-page-slo-services",
+				SubTitle:   "Centralizes service-level operational data including SLOs, alerts, and incidents by grouping resources through shared labels or tags",
 				Url:        s.cfg.AppSubURL + "/a/grafana-slo-app/services",
 				SortWeight: 1,
 				IsNew:      true,
