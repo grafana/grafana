@@ -102,10 +102,11 @@ export const AutoSize: Story = {
 
 export const OptionIcons: Story = {
   args: {
+    width: 'auto',
     value: 'one',
     options: [
       { label: 'One', value: 'one', group: 'Group 1', icon: 'text-fields' },
-      { label: 'Two', value: 'two', group: 'Group 1', icon: 'text-fields' },
+      { label: 'Two a longer thing that lorem ipsum et deloret', value: 'two', group: 'Group 1', icon: 'text-fields' },
       { label: 'Three', value: 'three', group: 'Group 2', icon: 'keyboard' },
       { label: 'Four', value: 'four', group: 'Group 2', icon: 'keyboard' },
     ],
