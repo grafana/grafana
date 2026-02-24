@@ -9,6 +9,9 @@ type QuotaTracker struct {
 	limit   int64 // 0 means unlimited
 }
 
+// NewQuotaTracker creates a new QuotaTracker.
+// currentUsage is the current usage of the quota.
+// limit is the limit of the quota. 0 means unlimited. limit should be >= 0.
 func NewQuotaTracker(currentUsage, limit int64) *QuotaTracker {
 	return &QuotaTracker{
 		current: currentUsage,
@@ -18,7 +21,7 @@ func NewQuotaTracker(currentUsage, limit int64) *QuotaTracker {
 
 // TryAcquire checks if creating one more resource would stay within the quota.
 func (q *QuotaTracker) TryAcquire() bool {
-	if q.limit <= 0 {
+	if q.limit == 0 {
 		return true
 	}
 	q.mu.Lock()
@@ -32,7 +35,7 @@ func (q *QuotaTracker) TryAcquire() bool {
 
 // Release decrements the resource counter, e.g. after a successful deletion.
 func (q *QuotaTracker) Release() {
-	if q.limit <= 0 {
+	if q.limit == 0 {
 		return
 	}
 	q.mu.Lock()
