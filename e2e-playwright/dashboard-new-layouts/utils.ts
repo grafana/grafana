@@ -286,12 +286,12 @@ export async function moveRow(
 
 export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await page.getByText('Group into tab').click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addTab).click();
 }
 
 export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await page.getByText('Group into row').click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow).click();
 }
 
 export async function checkRepeatedTabTitles(
