@@ -409,7 +409,10 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef);
     if (!newDataSource) {
-      throw new Error(`Failed to get datasource ${dsRef.uid ?? dsRef.type}`);
+      // Surface the failure in the editor rather than throwing — the caller (sidebar DS picker)
+      // does not wrap changeDataSource in a try/catch, so a thrown error would be silently swallowed.
+      this.setState({ dsError: new Error(`Datasource not found: ${dsRef.uid ?? dsRef.type}`) });
+      return;
     }
 
     const queries = [...queryRunner.state.queries];
@@ -431,7 +434,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
         const ds = await getDataSourceSrv().get(dsRef);
         updatedQuery = { ...ds.getDefaultQuery?.(CoreApp.PanelEditor), ...targetQuery, datasource: dsRef };
       } catch {
-        throw new Error(`Failed to get datasource ${newDataSource.name ?? newDataSource.uid}`);
+        this.setState({ dsError: new Error(`Failed to load datasource: ${newDataSource.name ?? newDataSource.uid}`) });
+        return;
       }
     } else {
       updatedQuery = { ...targetQuery, datasource: dsRef };
@@ -464,6 +468,10 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
         datasource: { type: 'mixed', uid: MIXED_DATASOURCE_NAME },
       });
     } else {
+      // Panel is already Mixed — only update the target query's ref. The panel-level datasource
+      // hasn't changed, so the subscription in onActivate does NOT fire and loadDatasource is
+      // deliberately not called. The per-query datasource resolves independently via
+      // useSelectedQueryDatasource on the next render.
       queryRunner.setState({ queries });
     }
 
@@ -494,7 +502,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const timeShift = options.timeRange?.shift ?? undefined;
     const hideTimeOverride = options.timeRange?.hide;
 
-    if (timeFrom || timeShift) {
+    if (timeFrom !== undefined || timeShift !== undefined) {
       panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride });
       panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange);
     } else {

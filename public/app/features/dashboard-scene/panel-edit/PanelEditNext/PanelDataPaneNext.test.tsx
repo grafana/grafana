@@ -81,12 +81,15 @@ describe('PanelDataPaneNext', () => {
       throw new Error('getDashboardSceneFor called but not mocked for this test');
     });
 
+    const panelState: { title: string; $timeRange: unknown } = { title: 'Test Panel', $timeRange: undefined };
     mockPanel = {
-      state: {
-        title: 'Test Panel',
-        $timeRange: undefined,
+      get state() {
+        return panelState;
       },
-      setState: jest.fn(),
+      // Propagate setState so live state reads in onQueryOptionsChange see real values.
+      setState: jest.fn().mockImplementation((update: Partial<typeof panelState>) => {
+        Object.assign(panelState, update);
+      }),
     } as unknown as VizPanel;
 
     const mockPanelRef = {
@@ -269,7 +272,7 @@ describe('PanelDataPaneNext', () => {
       });
     });
 
-    it('should always call runQueries after changes', () => {
+    it('should call runQueries', () => {
       dataPane.onQueryOptionsChange({
         dataSource: { type: 'test', uid: 'test' },
         queries: [],
@@ -931,6 +934,7 @@ describe('PanelDataPaneNext', () => {
       expect(mockGet).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' });
       expect(testDataPane.state.datasource).toBe(promDatasource);
     });
+
   });
 
   /**
@@ -1199,13 +1203,35 @@ describe('PanelDataPaneNext', () => {
       expect(queryB.datasource?.uid).toBe('default-uid');
     });
 
-    it('should throw when the target datasource cannot be found in the registry', async () => {
+    it('should set dsError when the target datasource cannot be found in the registry', async () => {
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
 
       mockGetInstanceSettings.mockReturnValue(undefined); // not found
 
-      await expect(testDataPane.changeDataSource({ uid: 'nonexistent-uid', type: 'unknown' }, 'A')).rejects.toThrow();
+      await testDataPane.changeDataSource({ uid: 'nonexistent-uid', type: 'unknown' }, 'A');
+
+      expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+      expect(testDataPane.state.dsError?.message).toMatch(/nonexistent-uid/);
+      // queryRunner must not have been touched — the change never went through
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+      expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
+    });
+
+    it('should set dsError and not update queries when get() fails during a type-change DS switch', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      // First call: look up the new target (loki). Second call: look up the previous query DS (prom).
+      // The type mismatch triggers shouldUseDefaultQuery=true, which calls get() — which then rejects.
+      mockGetInstanceSettings.mockReturnValueOnce(lokiSettings).mockReturnValueOnce(promSettings);
+      mockGet.mockRejectedValue(new Error('Plugin not found'));
+
+      await testDataPane.changeDataSource({ uid: 'loki-uid', type: 'loki' }, 'A');
+
+      expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+      expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
 
     it('should run queries after the datasource change', async () => {
