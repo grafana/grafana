@@ -45,6 +45,7 @@ function setupMocks({
     data: { path: 'folders/my-folder/_folder.json' },
     error: undefined,
     isLoading: false,
+    isFetching: false,
     refetch: jest.fn(),
     ...fileQueryOverrides,
   } as ReturnType<typeof useGetRepositoryFilesWithPathQuery>);
@@ -90,9 +91,9 @@ describe('useFolderMetadataStatus', () => {
       expect(result.current).toBe('loading');
     });
 
-    it('when file query is loading', () => {
+    it('when file query is fetching', () => {
       setupMocks({
-        fileQueryOverrides: { isLoading: true },
+        fileQueryOverrides: { isFetching: true },
       });
 
       const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));

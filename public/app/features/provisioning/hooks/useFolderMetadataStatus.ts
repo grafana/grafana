@@ -27,7 +27,7 @@ export function useFolderMetadataStatus(folderUID: string): FolderMetadataStatus
 
   const shouldQueryFile = isProvisioned && !!repoName;
 
-  const { error, isLoading: isFileLoading } = useGetRepositoryFilesWithPathQuery(
+  const { error, isFetching: isFileLoading } = useGetRepositoryFilesWithPathQuery(
     shouldQueryFile ? { name: repoName, path: folderJsonPath } : skipToken
   );
 

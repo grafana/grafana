@@ -12,7 +12,8 @@ export function MissingFolderMetadataBanner() {
       title={t('provisioning.missing-folder-metadata-banner.title', 'This folder is missing metadata.')}
     >
       <Trans i18nKey="provisioning.missing-folder-metadata-banner.message">
-        If you move or rename it in Git, permissions may not persist.
+        Since this folder doesn&apos;t contain a metadata file, the folder ID is based on the folder path. If you move
+        or rename the folder, the folder ID will change, and permissions may no longer apply to the folder.
       </Trans>
     </Alert>
   );
@@ -34,27 +35,41 @@ function MetadataErrorAlert() {
 interface FolderPermissionsProps {
   folderUID: string;
   canSetPermissions: boolean;
+  isProvisionedFolder: boolean;
 }
 
-export function FolderPermissions({ folderUID, canSetPermissions }: FolderPermissionsProps) {
-  if (!config.featureToggles.provisioning || !config.featureToggles.provisioningFolderMetadata) {
+export function FolderPermissions({ folderUID, canSetPermissions, isProvisionedFolder }: FolderPermissionsProps) {
+  if (
+    !isProvisionedFolder ||
+    !config.featureToggles.provisioning ||
+    !config.featureToggles.provisioningFolderMetadata
+  ) {
     return <Permissions resource="folders" resourceId={folderUID} canSetPermissions={canSetPermissions} />;
   }
 
   return <FolderPermissionsWithMetadataCheck folderUID={folderUID} canSetPermissions={canSetPermissions} />;
 }
 
-function FolderPermissionsWithMetadataCheck({ folderUID, canSetPermissions }: FolderPermissionsProps) {
+function FolderPermissionsWithMetadataCheck({
+  folderUID,
+  canSetPermissions,
+}: Omit<FolderPermissionsProps, 'isProvisionedFolder'>) {
   const metadataStatus = useFolderMetadataStatus(folderUID);
 
   switch (metadataStatus) {
     case 'loading':
       return <LoadingPlaceholder text={t('provisioning.folder-permissions.loading', 'Loading...')} />;
     case 'missing':
-      return <MissingFolderMetadataBanner />;
+      return (
+        <>
+          <MissingFolderMetadataBanner />
+          <Permissions resource="folders" resourceId={folderUID} canSetPermissions={false} />
+        </>
+      );
     case 'error':
       return <MetadataErrorAlert />;
     case 'ok':
+    default:
       return <Permissions resource="folders" resourceId={folderUID} canSetPermissions={canSetPermissions} />;
   }
 }
