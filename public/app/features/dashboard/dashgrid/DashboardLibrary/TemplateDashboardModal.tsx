@@ -12,10 +12,10 @@ import { Box, Grid, Modal, Text, useStyles2 } from '@grafana/ui';
 import { DashboardCard } from './DashboardCard';
 import {
   CONTENT_KINDS,
-  DashboardLibraryInteractions,
   DISCOVERY_METHODS,
   EVENT_LOCATIONS,
   SourceEntryPoint,
+  TemplateDashboardInteractions,
   TemplateDashboardSourceEntryPoint,
 } from './interactions';
 import { GnetDashboard, GnetDashboardsResponse, Link } from './types';
@@ -49,7 +49,7 @@ export const TemplateDashboardModal = () => {
   const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
     const sourceEntryPoint = SourceEntryPointMap[entryPoint] || 'unknown';
 
-    DashboardLibraryInteractions.itemClicked({
+    TemplateDashboardInteractions.itemClicked({
       contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
       datasourceTypes: [String(testDataSource?.type)],
       libraryItemId: String(dashboard.id),
@@ -92,7 +92,7 @@ export const TemplateDashboardModal = () => {
 
   useEffect(() => {
     if (isOpen && !loading && dashboards.length > 0) {
-      DashboardLibraryInteractions.loaded({
+      TemplateDashboardInteractions.loaded({
         numberOfItems: dashboards.length,
         contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
         datasourceTypes: [String(testDataSource?.type)],
