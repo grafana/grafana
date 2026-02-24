@@ -494,6 +494,60 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.Equal(t, 0, count)
 	})
 
+	t.Run("nothing is eligble to delete", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
+
+		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.GarbageCollection = gcConfig
+		})
+		b := storageBackend
+
+		_, err := NewResourceServer(ResourceServerOptions{
+			Backend: storageBackend,
+		})
+		require.NoError(t, err)
+
+		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
+			func(o *writeEventOptions) {
+				o.Namespace = "namespace"
+				o.PreviousRV = rv1
+			})
+		require.NoError(t, err)
+
+		// count how many history entries there are before GC runs - should be 2 (created and deleted)
+		historyResp := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})
+		count := 0
+		historyResp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		require.Equal(t, 2, count)
+
+		cutoffTimestamp := time.Now().Add(-time.Hour).UnixMicro() // nothing eligible for deletion
+		b.runGarbageCollection(ctx, cutoffTimestamp)
+
+		// count how many history entries there are after GC runs - should be 0
+		historyResp = storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})
+		count = 0
+		historyResp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		require.Equal(t, 2, count)
+	})
+
 	t.Run("will respect dashboard retention settings", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 

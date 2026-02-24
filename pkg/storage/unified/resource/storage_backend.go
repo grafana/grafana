@@ -432,6 +432,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	prefix := key.Prefix()
 	startKey := prefix
 	endKey := PrefixRangeEnd(prefix)
+	nextEndKey := ""
 
 	for {
 		keysProcessed := int64(0)
@@ -440,11 +441,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 		// traverse all keys in descending order of resource version,
 		// for deleted keys with resource version older than the cutoff,
 		// we will scan a fixed number of keys (batchSize) each time
-		for dataKey, err := range b.kv.Keys(ctx, kv.DataSection, kv.ListOptions{
+		it := b.kv.Keys(ctx, kv.DataSection, kv.ListOptions{
 			StartKey: startKey,
 			EndKey:   endKey,
 			Limit:    int64(batchSize),
-			Sort:     kv.SortOrderDesc}) {
+			Sort:     kv.SortOrderDesc,
+		})
+
+		for dataKey, err := range it {
 			if err != nil {
 				return fmt.Errorf("failed to list collection before delete: %s", err)
 			}
@@ -457,25 +461,29 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				return fmt.Errorf("failed to parse dataKey '%s': %s", dataKey, err)
 			}
 
+			// get the request key for the current datakey, which will be used to calculate the next start and end key
+			k := ListRequestKey{
+				Group:     dk.Group,
+				Resource:  dk.Resource,
+				Namespace: dk.Namespace,
+				Name:      dk.Name,
+			}
+
 			// update the next end key for pagination. We will use this to continue scanning in the next batch
-			endKey = dataKey
+			nextEndKey = k.Prefix()
 
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
 			if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
-				startKey := ListRequestKey{
-					Group:     dk.Group,
-					Resource:  dk.Resource,
-					Namespace: dk.Namespace,
-					Name:      dk.Name,
-				}.Prefix()
+				startKey := k.Prefix()
+				// end key is exclusive, so we need to add a suffix to make sure we include all the versions we want to delete
 				endKey := PrefixRangeEnd(dk.String())
 
 				keysToDelete := []string{}
 				for deleteKey, err := range b.kv.Keys(ctx, kv.DataSection, ListOptions{
 					StartKey: startKey,
 					EndKey:   endKey,
-					Sort:     kv.SortOrderDesc,
+					Sort:     kv.SortOrderAsc,
 				}) {
 					if err != nil {
 						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
@@ -498,6 +506,10 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				}
 			}
 		}
+
+		// update the end key for the next batch to be the last processed key in this batch,
+		// so that we can continue scanning from there
+		endKey = nextEndKey
 
 		// if there are no more entries to process, break the loop
 		if keysProcessed == 0 {
