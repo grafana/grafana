@@ -5,7 +5,6 @@ import { GrafanaTheme2, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ClickOutsideWrapper, Stack, Switch, useStyles2 } from '@grafana/ui';
 
-
 import {
   useActionsContext,
   useDatasourceContext,
