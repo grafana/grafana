@@ -301,45 +301,43 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	require.NoError(t, err, "Failed to walk input directory")
 }
 
-// TestMigratedDashboardsConversion tests conversion of already-migrated dashboards
-// from the migration package's latest_version output directory
+// TestMigratedDashboardsConversion tests that dashboards migrated from older
+// schema versions can be converted to all API versions. It reads the raw input
+// files from the migration package, runs the schema migration to the latest
+// version inline, then converts to each target API version.
 func TestMigratedDashboardsConversion(t *testing.T) {
-	// Initialize the migrator with a test data source provider
+	migration.ResetForTesting()
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
-	// Use TestLibraryElementProvider for tests that need library panel models with repeat options
 	leProvider := migrationtestutil.NewTestLibraryElementProvider()
 	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
 
-	// Set up conversion scheme
 	scheme := runtime.NewScheme()
 	err := RegisterConversions(scheme, dsProvider, leProvider)
 	require.NoError(t, err)
 
-	// Read all files from migration package's latest_version directory
-	inputDir := filepath.Join("..", "testdata", "output", "latest_version")
+	inputDir := filepath.Join("..", "testdata", "input")
 	files, err := os.ReadDir(inputDir)
-	require.NoError(t, err, "Failed to read latest_version directory")
+	require.NoError(t, err, "Failed to read migration input directory %s", inputDir)
 
 	for _, file := range files {
-		if file.IsDir() {
+		if file.IsDir() || !strings.HasSuffix(file.Name(), ".json") {
 			continue
 		}
 
 		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
-			// Read input dashboard file
 			inputFile := filepath.Join(inputDir, file.Name())
-			// ignore gosec G304 as this function is only used in the test process
 			//nolint:gosec
 			inputData, err := os.ReadFile(inputFile)
 			require.NoError(t, err, "Failed to read input file")
 
-			// Parse the raw dashboard JSON
 			var rawDash map[string]interface{}
 			err = json.Unmarshal(inputData, &rawDash)
 			require.NoError(t, err, "Failed to unmarshal dashboard JSON")
 
-			// These files are from the old migration system and are raw dashboard JSON
-			// We need to wrap them in the proper v1beta1 API structure
+			// Run schema migration to latest version (same as TestMigrate does)
+			err = migration.Migrate(t.Context(), rawDash, schemaversion.LATEST_VERSION)
+			require.NoError(t, err, "Failed to migrate %s to schema version %d", file.Name(), schemaversion.LATEST_VERSION)
+
 			sourceDash := &dashv1.Dashboard{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Dashboard",
@@ -415,8 +413,6 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 	}
 }
 
-
-
 // setupTestConversionScheme initializes the migration system and sets up the conversion scheme
 // with test data source and library element providers. Returns the configured scheme.
 func setupTestConversionScheme(t *testing.T) *runtime.Scheme {
@@ -434,7 +430,7 @@ func setupTestConversionScheme(t *testing.T) *runtime.Scheme {
 // writeOrCompareOutputFile writes the golden file to disk (always, so the
 // frontend parity test can consume it) and validates or updates its SHA-256
 // checksum in golden_checksums.json.
-func writeOrCompareOutputFile(t *testing.T, obj interface{}, outputPath string, _ string) {
+func writeOrCompareOutputFile(t *testing.T, obj interface{}, outputPath string) {
 	t.Helper()
 
 	outputData, err := json.MarshalIndent(obj, "", "  ")
@@ -448,10 +444,10 @@ func writeOrCompareOutputFile(t *testing.T, obj interface{}, outputPath string, 
 	err = os.WriteFile(outputPath, outputData, 0644)
 	require.NoError(t, err, "Failed to write output file")
 
-	key, err := checksumKey(outputPath)
+	key, err := migrationtestutil.ChecksumKey("testdata", outputPath)
 	require.NoError(t, err)
 
-	goldenChecksums.validateOrUpdate(t, key, outputData)
+	goldenChecksums.ValidateOrUpdate(t, key, outputData)
 }
 
 // readInputFile reads and unmarshals a JSON input file into the provided target.
@@ -484,10 +480,10 @@ func testConversion(t *testing.T, convertedDash metav1.Object, filename, outputD
 	err = os.WriteFile(outPath, outBytes, 0644)
 	require.NoError(t, err, "failed to write output file %s", outPath)
 
-	key, err := checksumKey(outPath)
+	key, err := migrationtestutil.ChecksumKey("testdata", outPath)
 	require.NoError(t, err)
 
-	goldenChecksums.validateOrUpdate(t, key, outBytes)
+	goldenChecksums.ValidateOrUpdate(t, key, outBytes)
 }
 
 // TestConversionMetrics tests that conversion-level metrics are recorded correctly
