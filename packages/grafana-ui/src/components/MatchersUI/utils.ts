@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, SelectableValue, FieldNamePickerBaseNameMode } from '@grafana/data';
+import { DataFrame, Field, FieldNamePickerBaseNameMode, getFieldDisplayName, IconName } from '@grafana/data';
 
 import { getFieldTypeIcon } from '../../types/icon';
 
@@ -67,19 +67,20 @@ export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) 
   }, [data, filter]);
 }
 
+type MatcherSelectOption = { value: string; label: string; icon?: IconName };
 /**
  * @internal
  */
 export function useSelectOptions(
   displayNames: FrameFieldsDisplayNames,
   currentName?: string,
-  firstItem?: SelectableValue<string>,
+  firstItem?: MatcherSelectOption,
   fieldType?: string,
   baseNameMode?: FieldNamePickerBaseNameMode
-): Array<SelectableValue<string>> {
+): MatcherSelectOption[] {
   return useMemo(() => {
     let found = false;
-    const options: Array<SelectableValue<string>> = [];
+    const options: MatcherSelectOption[] = [];
     if (firstItem) {
       options.push(firstItem);
     }
