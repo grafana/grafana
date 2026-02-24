@@ -13,6 +13,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/util/dryrun"
 
@@ -531,6 +532,25 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 		return nil, err
 	}
 	return deletedLegacy, nil
+}
+
+// Watch delegates the watch to the storage that is the current read source.
+// For Mode3 (readUnified=true) it delegates to unified; for Mode1/2 it delegates to legacy.
+func (d *dualWriter) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	var src rest.Watcher
+	if d.readUnified {
+		if w, ok := d.unified.(rest.Watcher); ok {
+			src = w
+		}
+	} else {
+		if w, ok := d.legacy.(rest.Watcher); ok {
+			src = w
+		}
+	}
+	if src == nil {
+		return nil, fmt.Errorf("watch is not supported on this storage")
+	}
+	return src.Watch(ctx, options)
 }
 
 func (d *dualWriter) Destroy() {
