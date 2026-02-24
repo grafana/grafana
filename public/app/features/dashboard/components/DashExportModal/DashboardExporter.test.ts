@@ -1,6 +1,7 @@
 import { find } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import config from 'app/core/config';
 
@@ -340,23 +341,11 @@ describe('given dashboard with repeated panels', () => {
 
     config.buildInfo.version = '3.0.2';
 
-    config.panels['graph'] = {
-      id: 'graph',
-      name: 'Graph',
-      info: { version: '1.1.0' },
-    } as PanelPluginMeta;
-
-    config.panels['table'] = {
-      id: 'table',
-      name: 'Table',
-      info: { version: '1.1.1' },
-    } as PanelPluginMeta;
-
-    config.panels['heatmap'] = {
-      id: 'heatmap',
-      name: 'Heatmap',
-      info: { version: '1.1.2' },
-    } as PanelPluginMeta;
+    setPanelPluginMetas({
+      graph: { id: 'graph', name: 'Graph', info: { version: '1.1.0' } } as PanelPluginMeta,
+      table: { id: 'table', name: 'Table', info: { version: '1.1.1' } } as PanelPluginMeta,
+      heatmap: { id: 'heatmap', name: 'Heatmap', info: { version: '1.1.2' } } as PanelPluginMeta,
+    });
 
     dash = new DashboardModel(
       dash,
@@ -382,6 +371,10 @@ describe('given dashboard with repeated panels', () => {
       exported = clean;
       done();
     });
+  });
+
+  afterEach(() => {
+    setPanelPluginMetas({});
   });
 
   it('should replace datasource refs', () => {

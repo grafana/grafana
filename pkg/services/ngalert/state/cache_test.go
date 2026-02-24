@@ -395,6 +395,129 @@ func TestCache_GetAlertInstances(t *testing.T) {
 	}
 }
 
+func TestCache_reset(t *testing.T) {
+	orgID := int64(1)
+
+	testCases := []struct {
+		name          string
+		setup         func(c *cache)
+		expectedOrg1  int
+		expectedOrg2  int
+		expectedTotal int
+	}{
+		{
+			name:          "clears empty cache",
+			setup:         func(c *cache) {},
+			expectedOrg1:  0,
+			expectedOrg2:  0,
+			expectedTotal: 0,
+		},
+		{
+			name: "clears single org states",
+			setup: func(c *cache) {
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(2), State: eval.Pending})
+			},
+			expectedOrg1:  0,
+			expectedOrg2:  0,
+			expectedTotal: 0,
+		},
+		{
+			name: "clears multiple org states",
+			setup: func(c *cache) {
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule2", CacheID: data.Fingerprint(2), State: eval.Normal})
+				c.set(&State{OrgID: 2, AlertRuleUID: "rule3", CacheID: data.Fingerprint(3), State: eval.Error})
+			},
+			expectedOrg1:  0,
+			expectedOrg2:  0,
+			expectedTotal: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cache := newCache()
+			tc.setup(cache)
+
+			cache.reset()
+
+			require.Len(t, cache.getAll(orgID), tc.expectedOrg1)
+			require.Len(t, cache.getAll(2), tc.expectedOrg2)
+			require.Len(t, cache.GetAlertInstances(), tc.expectedTotal)
+		})
+	}
+
+	t.Run("resets metrics state counts and lastUpdate", func(t *testing.T) {
+		cache := newCache()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+		cache.updateMetrics()
+
+		cache.metrics.mtx.RLock()
+		require.NotNil(t, cache.metrics.stateCounts)
+		require.False(t, cache.metrics.lastUpdate.IsZero())
+		cache.metrics.mtx.RUnlock()
+
+		cache.reset()
+
+		cache.metrics.mtx.RLock()
+		require.Nil(t, cache.metrics.stateCounts)
+		require.True(t, cache.metrics.lastUpdate.IsZero())
+		cache.metrics.mtx.RUnlock()
+	})
+
+	t.Run("cache is usable after reset", func(t *testing.T) {
+		cache := newCache()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+
+		cache.reset()
+
+		newState := &State{OrgID: orgID, AlertRuleUID: "rule2", CacheID: data.Fingerprint(2), State: eval.Pending}
+		cache.set(newState)
+
+		states := cache.getAll(orgID)
+		require.Len(t, states, 1)
+		require.Equal(t, newState, states[0])
+	})
+
+	t.Run("metrics can be recalculated after reset", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		cache := newCache()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(2), State: eval.Alerting})
+		cache.RegisterMetrics(reg)
+
+		expectedBefore := `
+			# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+			# TYPE grafana_alerting_alerts gauge
+			grafana_alerting_alerts{state="alerting"} 2
+			grafana_alerting_alerts{state="error"} 0
+			grafana_alerting_alerts{state="nodata"} 0
+			grafana_alerting_alerts{state="normal"} 0
+			grafana_alerting_alerts{state="pending"} 0
+			grafana_alerting_alerts{state="recovering"} 0
+		`
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedBefore), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		cache.reset()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(3), State: eval.Pending})
+
+		expectedAfter := `
+			# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+			# TYPE grafana_alerting_alerts gauge
+			grafana_alerting_alerts{state="alerting"} 0
+			grafana_alerting_alerts{state="error"} 0
+			grafana_alerting_alerts{state="nodata"} 0
+			grafana_alerting_alerts{state="normal"} 0
+			grafana_alerting_alerts{state="pending"} 1
+			grafana_alerting_alerts{state="recovering"} 0
+		`
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedAfter), "grafana_alerting_alerts")
+		require.NoError(t, err)
+	})
+}
+
 func randomState(ruleKey models.AlertRuleKey) State {
 	return State{
 		OrgID:             ruleKey.OrgID,

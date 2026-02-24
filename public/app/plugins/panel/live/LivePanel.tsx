@@ -148,7 +148,7 @@ export class LivePanel extends PureComponent<Props, State> {
           <h4>
             <Trans i18nKey="live.live-panel.waiting-for-data">Waiting for data:</Trans>
           </h4>
-          {options.channel?.scope}/{options.channel?.namespace}/{options.channel?.path}
+          {options.channel?.scope}/{options.channel?.stream}/{options.channel?.path}
         </div>
       );
     }

@@ -28,6 +28,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -48,14 +49,15 @@ var resourceInfo = folders.FolderResourceInfo
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	features            featuremgmt.FeatureToggles
-	namespacer          request.NamespaceMapper
-	storage             grafanarest.Storage
-	permissionStore     reconcilers.PermissionStore
-	accessClient        authlib.AccessClient
-	parents             parentsGetter
-	searcher            resourcepb.ResourceIndexClient
-	permissionsOnCreate bool
+	features             featuremgmt.FeatureToggles
+	namespacer           request.NamespaceMapper
+	storage              grafanarest.Storage
+	permissionStore      reconcilers.PermissionStore
+	accessClient         authlib.AccessClient
+	parents              parentsGetter
+	searcher             resourcepb.ResourceIndexClient
+	permissionsOnCreate  bool
+	maxNestedFolderDepth int
 
 	// Legacy services -- these will not exist in the MT environment
 	folderSvc              folder.LegacyService
@@ -88,6 +90,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		searcher:             unified,
 		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
+		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -134,6 +137,10 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	//   return err
 	// }
 	metav1.AddToGroupVersion(scheme, gv)
+	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, gv, folders.FolderKind())
+	if err != nil {
+		return err
+	}
 	return scheme.SetVersionPriority(gv)
 }
 
@@ -148,7 +155,10 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		Permissions:                 b.setDefaultFolderPermissions,
 	})
 
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(folders.FolderKind()),
+	}
+	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, resourceInfo, opts.OptsGetter, selectableFieldsOpts)
 	if err != nil {
 		return err
 	}
@@ -178,7 +188,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = b.storage
 
-	b.parents = newParentsGetter(b.storage, folder.MaxNestedFolderDepth) // used for validation
+	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
 		parents: b.parents,
@@ -348,7 +358,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	switch a.GetOperation() {
 	case admission.Create:
-		return validateOnCreate(ctx, f, b.parents, folder.MaxNestedFolderDepth)
+		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
 		return validateOnDelete(ctx, f, b.searcher)
 	case admission.Update:
@@ -356,7 +366,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, folder.MaxNestedFolderDepth)
+		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.maxNestedFolderDepth)
 	default:
 		return nil
 	}

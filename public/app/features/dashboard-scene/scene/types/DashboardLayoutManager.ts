@@ -1,5 +1,5 @@
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { LayoutRegistryItem } from './LayoutRegistryItem';
@@ -20,7 +20,7 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   /**
    * Serializer for layout
    */
-  serialize(): DashboardV2Spec['layout'];
+  serialize(isSnapshot?: boolean): DashboardV2Spec['layout'];
 
   /**
    * Adds a new panel to the layout

@@ -14,24 +14,28 @@ jest.mock('../ScopesContextProvider', () => ({
   }),
 }));
 
-describe('ScopesTreeItemList', () => {
-  const mockFilterNode = jest.fn();
-  const mockSelectScope = jest.fn();
-  const mockDeselectScope = jest.fn();
-  const mockToggleExpandedNode = jest.fn();
+// Mock useScopeActions hook (used by child ScopesTreeItem)
+const mockSelectScope = jest.fn();
+const mockDeselectScope = jest.fn();
+const mockToggleExpandedNode = jest.fn();
 
+jest.mock('./useScopeActions', () => ({
+  useScopeActions: () => ({
+    selectScope: mockSelectScope,
+    deselectScope: mockDeselectScope,
+    toggleExpandedNode: mockToggleExpandedNode,
+  }),
+}));
+
+describe('ScopesTreeItemList', () => {
   const defaultProps = {
     anyChildExpanded: false,
     lastExpandedNode: false,
     loadingNodeName: undefined,
     maxHeight: '100%',
     selectedScopes: [] as SelectedScope[],
-    filterNode: mockFilterNode,
-    selectScope: mockSelectScope,
-    deselectScope: mockDeselectScope,
     highlightedId: undefined,
     id: 'test-tree',
-    toggleExpandedNode: mockToggleExpandedNode,
   };
 
   const createMockScopeNode = (name: string, parentName = 'parent'): ScopeNode => ({

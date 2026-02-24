@@ -47,7 +47,7 @@ func TestIsTransientError(t *testing.T) {
 		{
 			name:     "internal error",
 			err:      apierrors.NewInternalError(errors.New("internal error")),
-			expected: true,
+			expected: false,
 		},
 		{
 			name:     "network timeout error",
@@ -79,6 +79,21 @@ func TestIsTransientError(t *testing.T) {
 		{
 			name:     "generic error",
 			err:      errors.New("generic error"),
+			expected: false,
+		},
+		{
+			name:     "managed by repository error",
+			err:      errors.New("this resource is managed by a repository"),
+			expected: false,
+		},
+		{
+			name:     "context canceled",
+			err:      context.Canceled,
+			expected: false,
+		},
+		{
+			name:     "context deadline exceeded",
+			err:      context.DeadlineExceeded,
 			expected: false,
 		},
 	}
@@ -242,7 +257,7 @@ func TestRetryResourceInterface_Delete(t *testing.T) {
 func TestRetryResourceInterface_List(t *testing.T) {
 	mockClient := &MockDynamicResourceInterface{}
 	mockClient.On("List", mock.Anything, mock.Anything).
-		Return(nil, apierrors.NewInternalError(errors.New("internal error"))).Once()
+		Return(nil, apierrors.NewServiceUnavailable("service unavailable")).Once()
 	mockClient.On("List", mock.Anything, mock.Anything).
 		Return(&unstructured.UnstructuredList{}, nil).Once()
 

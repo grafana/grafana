@@ -24,7 +24,6 @@ export class PublicAnnotationsDataSource extends DataSourceApi<DataQuery, DataSo
 
     super({
       name: 'public-ds',
-      id: 0,
       type: 'public-ds',
       meta,
       uid: PUBLIC_DATASOURCE,

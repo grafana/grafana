@@ -115,6 +115,7 @@ var permissionMapper = map[ngmodels.ReceiverPermission]string{
 	ngmodels.ReceiverPermissionWrite:           "canWrite",
 	ngmodels.ReceiverPermissionDelete:          "canDelete",
 	ngmodels.ReceiverPermissionModifyProtected: "canModifyProtected",
+	ngmodels.ReceiverPermissionTest:            "canTest",
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {

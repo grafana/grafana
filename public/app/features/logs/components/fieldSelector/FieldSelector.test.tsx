@@ -9,7 +9,9 @@ import { LogListContext } from '../panel/LogListContext';
 import { defaultValue } from '../panel/__mocks__/LogListContext';
 import { LogListModel } from '../panel/processing';
 
-import { LogListFieldSelector, LogsTableFieldSelector, MIN_WIDTH } from './FieldSelector';
+import { FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
+import { LogListFieldSelector } from './LogListFieldSelector';
+import { LogsTableFieldSelector } from './LogsTableFieldSelector';
 
 let containerElement: HTMLDivElement;
 let logs: LogListModel[];
@@ -76,7 +78,7 @@ describe('LogListFieldSelector', () => {
   });
 
   test('should render collapsed button when width is too small', async () => {
-    jest.spyOn(store, 'get').mockReturnValue(String(MIN_WIDTH));
+    jest.spyOn(store, 'get').mockReturnValue(String(FIELD_SELECTOR_MIN_WIDTH));
 
     render(
       <LogListContext.Provider value={defaultContextValue}>
@@ -139,7 +141,7 @@ describe('LogListFieldSelector', () => {
     const collapseButton = screen.getByLabelText('Collapse sidebar');
     await userEvent.click(collapseButton);
 
-    expect(storeSpy).toHaveBeenCalledWith(`${storageKey}.fieldSelector.width`, MIN_WIDTH);
+    expect(storeSpy).toHaveBeenCalledWith(`${storageKey}.fieldSelector.width`, FIELD_SELECTOR_MIN_WIDTH);
   });
 
   test('should show selected fields and available fields', async () => {
@@ -189,10 +191,9 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
@@ -208,10 +209,9 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={MIN_WIDTH}
+        setWidth={setSidebarWidth}
+        width={FIELD_SELECTOR_MIN_WIDTH}
         toggle={toggle}
       />
     );
@@ -233,10 +233,9 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
@@ -261,10 +260,9 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
@@ -282,17 +280,16 @@ describe('LogsTableFieldSelector', () => {
         columnsWithMeta={columnsWithMeta}
         clear={clear}
         dataFrames={dataFrames}
-        logs={logs}
         reorder={reorder}
-        setSidebarWidth={setSidebarWidth}
-        sidebarWidth={300}
+        setWidth={setSidebarWidth}
+        width={300}
         toggle={toggle}
       />
     );
 
     await userEvent.click(screen.getByLabelText('Collapse sidebar'));
 
-    expect(setSidebarWidth).toHaveBeenCalledWith(MIN_WIDTH);
+    expect(setSidebarWidth).toHaveBeenCalledWith(FIELD_SELECTOR_MIN_WIDTH);
     expect(storeSpy).toHaveBeenCalled();
   });
 });

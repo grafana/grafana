@@ -220,14 +220,6 @@ func (m *mockZanzanaClient) Write(ctx context.Context, req *authzextv1.WriteRequ
 	return args.Error(0)
 }
 
-func (m *mockZanzanaClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*authzextv1.BatchCheckResponse), args.Error(1)
-}
-
 // authlib.AccessClient methods
 func (m *mockZanzanaClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	args := m.Called(ctx, id, req, folder)
@@ -240,6 +232,10 @@ func (m *mockZanzanaClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 		return nil, nil, args.Error(2)
 	}
 	return args.Get(0).(authlib.ItemChecker), args.Get(1).(authlib.Zookie), args.Error(2)
+}
+
+func (m *mockZanzanaClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, nil
 }
 
 func (m *mockZanzanaClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
@@ -951,7 +947,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil)
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -997,7 +993,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil)
 
-		collector := zanzanaCollector([]string{"member", "admin"})
+		collector := zanzanaCollector([]string{"member", "admin"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -1045,7 +1041,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil).Once()
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -1062,7 +1058,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil)
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -1076,10 +1072,39 @@ func TestZanzanaCollector(t *testing.T) {
 
 		mockClient.On("Read", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("client error"))
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		_, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.Error(t, err)
+
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("should pass correct page size to read request", func(t *testing.T) {
+		mockClient := new(mockZanzanaClient)
+
+		var capturedPageSize int32
+
+		mockClient.On("Read", mock.Anything, mock.MatchedBy(func(req *authzextv1.ReadRequest) bool {
+			if req.PageSize != nil {
+				val := req.PageSize.GetValue()
+				capturedPageSize = val
+			}
+			return true
+		})).Return(
+			&authzextv1.ReadResponse{
+				Tuples:            []*authzextv1.Tuple{},
+				ContinuationToken: "",
+			}, nil,
+		)
+
+		customPageSize := int32(250)
+		collector := zanzanaCollector([]string{"member"}, customPageSize)
+		_, err := collector(context.Background(), mockClient, "team:team1", "org:1")
+		require.NoError(t, err)
+
+		require.NotNil(t, capturedPageSize, "PageSize should be set in ReadRequest")
+		assert.Equal(t, customPageSize, capturedPageSize, "PageSize should match configured value")
 
 		mockClient.AssertExpectations(t)
 	})

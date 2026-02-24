@@ -2,10 +2,14 @@ package rendering
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/gob"
 	"errors"
 	"fmt"
 	"math"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -13,6 +17,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -32,12 +38,13 @@ type RenderingService struct {
 	renderAction        renderFunc
 	renderCSVAction     renderCSVFunc
 	domain              string
-	inProgressCount     int32
+	inProgressCount     atomic.Int32
 	version             string
 	versionMutex        sync.RWMutex
 	capabilities        []Capability
 	pluginAvailable     bool
 	rendererCallbackURL string
+	netClient           *http.Client
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
@@ -121,6 +128,32 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 
 	_, exists := rm.Renderer(context.Background())
 
+	netTransport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 5 * time.Second,
+	}
+
+	if cfg.RendererCACert != "" {
+		caCert, err := os.ReadFile(cfg.RendererCACert)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read renderer CA cert file: %w", err)
+		}
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to parse renderer CA cert")
+		}
+		netTransport.TLSClientConfig = &tls.Config{
+			RootCAs: caCertPool,
+		}
+	}
+
+	netClient := &http.Client{
+		Transport: otelhttp.NewTransport(netTransport),
+	}
+
 	s := &RenderingService{
 		perRequestRenderKeyProvider: renderKeyProvider,
 		capabilities: []Capability{
@@ -145,6 +178,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		domain:                domain,
 		pluginAvailable:       exists,
 		rendererCallbackURL:   rendererCallbackURL,
+		netClient:             netClient,
 	}
 
 	gob.Register(&RenderUser{})
@@ -280,7 +314,14 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		return rs.renderUnavailableImage(), nil
 	}
 
-	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+	newInProgressCount := rs.inProgressCount.Add(1)
+
+	defer func() {
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount.Add(-1)))
+	}()
+	metrics.MRenderingQueue.Set(float64(newInProgressCount))
+
+	if opts.ConcurrentLimit > 0 && int(newInProgressCount) > opts.ConcurrentLimit {
 		logger.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 		if opts.ErrorConcurrentLimitReached {
 			return nil, ErrConcurrentLimitReached
@@ -295,11 +336,6 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 			FilePath: filepath.Join(rs.Cfg.HomePath, filePath),
 		}, nil
 	}
-
-	defer func() {
-		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
-	}()
-	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
 
 	if renderType == RenderPDF {
 		if err := rs.IsCapabilitySupported(ctx, PDFRendering); err != nil {
@@ -350,7 +386,14 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 		return nil, ErrRenderUnavailable
 	}
 
-	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+	newInProgressCount := rs.inProgressCount.Add(1)
+
+	defer func() {
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount.Add(-1)))
+	}()
+	metrics.MRenderingQueue.Set(float64(newInProgressCount))
+
+	if opts.ConcurrentLimit > 0 && int(newInProgressCount) > opts.ConcurrentLimit {
 		return nil, ErrConcurrentLimitReached
 	}
 
@@ -362,11 +405,6 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 
 	defer renderKeyProvider.afterRequest(ctx, opts.AuthOpts, renderKey)
 
-	defer func() {
-		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
-	}()
-
-	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
 	return rs.renderCSVAction(ctx, renderKey, opts)
 }
 
@@ -409,7 +447,7 @@ func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 	switch protocol {
 	case setting.HTTPScheme:
 		protocol = "http"
-	case setting.HTTP2Scheme, setting.HTTPSScheme:
+	case setting.HTTP2Scheme, setting.HTTPSScheme, setting.SocketHTTP2Scheme:
 		protocol = "https"
 	default:
 		// TODO: Handle other schemes?

@@ -4,7 +4,8 @@ import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 
-import { getDatasourceFromQueryRunner, getQueryRunnerFor } from './utils';
+import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
+import { getQueryRunnerFor } from './utils';
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), {

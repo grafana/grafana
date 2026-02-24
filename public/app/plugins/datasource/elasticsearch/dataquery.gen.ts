@@ -8,7 +8,11 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/elasticsearch/dataquery.cue file.
+
 import * as common from '@grafana/schema';
+
+export type QueryType = ('lucene' | 'dsl');
 
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 
@@ -394,13 +398,17 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    */
   metrics?: Array<MetricAggregation>;
   /**
-   * Lucene query
+   * Query string (Lucene or DSL depending on queryType)
    */
   query?: string;
   /**
-   * Raw DSL query
+   * Specify the query flavor
+   * TODO make this required and give it a default
    */
-  rawDSLQuery?: string;
+  /**
+   * Query type - determines how the query field is interpreted
+   */
+  queryType?: string;
   /**
    * Name of time field
    */

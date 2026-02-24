@@ -34,7 +34,7 @@ import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
 }
@@ -45,14 +45,14 @@ export function SaveProvisionedDashboardForm({
   drawer,
   changeInfo,
   isNew,
-  workflowOptions,
+  canPushToConfiguredBranch,
   readOnly,
   repository,
   saveAsCopy,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { isDirty, editPanel: panelEditor } = dashboard.useState();
+  const { isDirty } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -111,15 +111,13 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleDismiss = useCallback(() => {
-    panelEditor?.onDiscard();
-
     const model = dashboard.getSaveModel();
     const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
     const saveResponse = createSaveResponseFromResource(resourceData);
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
 
     drawer.onClose();
-  }, [dashboard, defaultValues.folder?.uid, drawer, panelEditor, request?.data?.resource]);
+  }, [dashboard, defaultValues.folder?.uid, drawer, request?.data?.resource]);
 
   const onWriteSuccess = useCallback(
     (upsert: Resource<Dashboard>) => {
@@ -298,8 +296,7 @@ export function SaveProvisionedDashboardForm({
           <ResourceEditFormSharedFields
             resourceType="dashboard"
             readOnly={readOnly}
-            workflow={workflow}
-            workflowOptions={workflowOptions}
+            canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             isNew={isNew}
           />
@@ -374,7 +371,6 @@ function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardR
     uid,
     // Use the current dashboard state version to maintain consistency
     version: resource?.metadata?.generation,
-    id: resource?.spec?.id || 0,
     status: 'success',
     url: locationUtil.assureBaseUrl(
       getDashboardUrl({

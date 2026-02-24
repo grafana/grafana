@@ -18,6 +18,7 @@ import (
 	k8testing "k8s.io/client-go/testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -222,8 +223,8 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				}), "").Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil).Maybe()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionCreated &&
-						(result.Path == "dashboards/one.json" || result.Path == "dashboards/two.json" || result.Path == "dashboards/three.json")
+					return result.Action() == repository.FileActionCreated &&
+						(result.Path() == "dashboards/one.json" || result.Path() == "dashboards/two.json" || result.Path() == "dashboards/three.json")
 				})).Return().Maybe()
 			},
 			expectedError: "too many errors",
@@ -244,13 +245,8 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionCreated,
-					Path:   "dashboards/test.json",
-					Name:   "test-dashboard",
-					Kind:   "Dashboard",
-					Group:  "dashboards",
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+					"test-dashboard", "dashboards", "Dashboard").WithAction(repository.FileActionCreated).WithPath("dashboards/test.json").Build()).Return()
 			},
 		},
 		{
@@ -270,13 +266,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionCreated &&
-						result.Path == "dashboards/test.json" &&
-						result.Name == "test-dashboard" &&
-						result.Kind == "Dashboard" &&
-						result.Group == "dashboards" &&
-						result.Error != nil &&
-						result.Error.Error() == "writing resource from file dashboards/test.json: write error"
+					return result.Action() == repository.FileActionCreated &&
+						result.Path() == "dashboards/test.json" &&
+						result.Name() == "test-dashboard" &&
+						result.Kind() == "Dashboard" &&
+						result.Group() == "dashboards" &&
+						result.Error() != nil &&
+						result.Error().Error() == "writing resource from file dashboards/test.json: write error"
 				})).Return()
 			},
 		},
@@ -296,13 +292,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionUpdated,
-					Path:   "dashboards/test.json",
-					Name:   "test-dashboard",
-					Kind:   "Dashboard",
-					Group:  "dashboards",
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+					"test-dashboard",
+					"dashboards",
+					"Dashboard",
+				).WithPath("dashboards/test.json").
+					WithAction(repository.FileActionUpdated).
+					Build()).Return()
 			},
 		},
 		{
@@ -322,13 +318,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionUpdated &&
-						result.Path == "dashboards/test.json" &&
-						result.Name == "test-dashboard" &&
-						result.Kind == "Dashboard" &&
-						result.Group == "dashboards" &&
-						result.Error != nil &&
-						result.Error.Error() == "writing resource from file dashboards/test.json: write error"
+					return result.Action() == repository.FileActionUpdated &&
+						result.Path() == "dashboards/test.json" &&
+						result.Name() == "test-dashboard" &&
+						result.Kind() == "Dashboard" &&
+						result.Group() == "dashboards" &&
+						result.Error() != nil &&
+						result.Error().Error() == "writing resource from file dashboards/test.json: write error"
 				})).Return()
 			},
 		},
@@ -346,13 +342,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "one/two/three/").Return("some-folder", nil)
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionCreated,
-					Path:   "one/two/three/",
-					Name:   "some-folder",
-					Kind:   "Folder",
-					Group:  "folder.grafana.app",
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+					"some-folder",
+					"folder.grafana.app",
+					"Folder",
+				).WithPath("one/two/three/").
+					WithAction(repository.FileActionCreated).
+					Build()).Return()
 			},
 		},
 		{
@@ -374,13 +370,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					"one/two/three/",
 				).Return("some-folder", errors.New("folder creation error"))
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionCreated &&
-						result.Path == "one/two/three/" &&
-						result.Name == "" &&
-						result.Kind == "Folder" &&
-						result.Group == "folder.grafana.app" &&
-						result.Error != nil &&
-						result.Error.Error() == "ensuring folder exists at path one/two/three/: folder creation error"
+					return result.Action() == repository.FileActionCreated &&
+						result.Path() == "one/two/three/" &&
+						result.Name() == "" &&
+						result.Kind() == "Folder" &&
+						result.Group() == "folder.grafana.app" &&
+						result.Error() != nil &&
+						result.Error().Error() == "ensuring folder exists at path one/two/three/: folder creation error"
 				})).Return()
 			},
 		},
@@ -433,14 +429,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Version: "v1",
 				}, nil)
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionDeleted,
-					Path:   "dashboards/test.json",
-					Name:   "test-dashboard",
-					Kind:   "Dashboard",
-					Group:  "dashboards",
-					Error:  nil,
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+					"test-dashboard",
+					"dashboards",
+					"Dashboard",
+				).WithPath("dashboards/test.json").
+					WithAction(repository.FileActionDeleted).
+					Build()).Return()
 			},
 		},
 		{
@@ -493,13 +488,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				}, nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionDeleted &&
-						result.Path == "dashboards/test.json" &&
-						result.Name == "test-dashboard" &&
-						result.Kind == "Dashboard" &&
-						result.Group == "dashboards" &&
-						result.Error != nil &&
-						result.Error.Error() == "deleting resource dashboards/Dashboard test-dashboard: delete failed"
+					return result.Action() == repository.FileActionDeleted &&
+						result.Path() == "dashboards/test.json" &&
+						result.Name() == "test-dashboard" &&
+						result.Kind() == "Dashboard" &&
+						result.Group() == "dashboards" &&
+						result.Error() != nil &&
+						result.Error().Error() == "deleting resource dashboards/Dashboard test-dashboard: delete failed"
 				})).Return()
 			},
 		},
@@ -516,10 +511,10 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionDeleted &&
-						result.Path == "dashboards/test.json" &&
-						result.Error != nil &&
-						result.Error.Error() == "processing deletion for file dashboards/test.json: missing existing reference"
+					return result.Action() == repository.FileActionDeleted &&
+						result.Path() == "dashboards/test.json" &&
+						result.Error() != nil &&
+						result.Error().Error() == "processing deletion for file dashboards/test.json: missing existing reference"
 				})).Return()
 			},
 		},
@@ -536,10 +531,10 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionDeleted &&
-						result.Path == "dashboards/test.json" &&
-						result.Error != nil &&
-						result.Error.Error() == "processing deletion for file dashboards/test.json: missing existing reference"
+					return result.Action() == repository.FileActionDeleted &&
+						result.Path() == "dashboards/test.json" &&
+						result.Error() != nil &&
+						result.Error().Error() == "processing deletion for file dashboards/test.json: missing existing reference"
 				})).Return()
 			},
 		},
@@ -565,14 +560,14 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Resource: "dashboards",
 				}).Return(nil, schema.GroupVersionKind{}, errors.New("didn't work"))
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Name:   "test-dashboard",
-					Group:  "dashboards",
-					Kind:   "dashboards", // could not find a real kind
-					Action: repository.FileActionDeleted,
-					Path:   "dashboards/test.json",
-					Error:  fmt.Errorf("get client for deleted object: %w", errors.New("didn't work")),
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+					"test-dashboard",
+					"dashboards",
+					"dashboards", // could not find a real kind
+				).WithPath("dashboards/test.json").
+					WithAction(repository.FileActionDeleted).
+					WithError(fmt.Errorf("get client for deleted object: %w", errors.New("didn't work"))).
+					Build()).Return()
 			},
 		},
 		{
@@ -625,14 +620,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Version: "v1",
 				}, nil)
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionDeleted,
-					Path:   "to-be-deleted/",
-					Name:   "test-folder",
-					Kind:   "Folder",
-					Group:  "folders",
-					Error:  nil,
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+					"test-folder",
+					"folders",
+					"Folder",
+				).WithPath("to-be-deleted/").
+					WithAction(repository.FileActionDeleted).
+					Build()).Return()
 			},
 		},
 		{
@@ -686,13 +680,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				}, nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionDeleted &&
-						result.Path == "to-be-deleted/" &&
-						result.Name == "test-folder" &&
-						result.Kind == "Folder" &&
-						result.Group == "folders" &&
-						result.Error != nil &&
-						result.Error.Error() == "deleting resource folders/Folder test-folder: delete failed"
+					return result.Action() == repository.FileActionDeleted &&
+						result.Path() == "to-be-deleted/" &&
+						result.Name() == "test-folder" &&
+						result.Kind() == "Folder" &&
+						result.Group() == "folders" &&
+						result.Error() != nil &&
+						result.Error().Error() == "deleting resource folders/Folder test-folder: delete failed"
 				})).Return()
 			},
 		},
@@ -723,10 +717,10 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 
 				// applyChange records the error from WriteResourceFromFile
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionCreated &&
-						result.Path == "dashboards/slow.json" &&
-						result.Error != nil &&
-						result.Error.Error() == "writing resource from file dashboards/slow.json: context deadline exceeded"
+					return result.Action() == repository.FileActionCreated &&
+						result.Path() == "dashboards/slow.json" &&
+						result.Error() != nil &&
+						result.Error().Error() == "writing resource from file dashboards/slow.json: context deadline exceeded"
 				})).Return().Once()
 			},
 		},
@@ -757,6 +751,271 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {
 				require.NoError(t, err, tt.description)
+			}
+		})
+	}
+}
+
+func createdChanges(n int) []ResourceFileChange {
+	changes := make([]ResourceFileChange, n)
+	for i := range changes {
+		changes[i] = ResourceFileChange{
+			Path:   fmt.Sprintf("file-%d.json", i),
+			Action: repository.FileActionCreated,
+		}
+	}
+	return changes
+}
+
+func deletedChanges(n int) []ResourceFileChange {
+	changes := make([]ResourceFileChange, n)
+	for i := range changes {
+		changes[i] = ResourceFileChange{
+			Path:   fmt.Sprintf("file-%d.json", i),
+			Action: repository.FileActionDeleted,
+		}
+	}
+	return changes
+}
+
+func TestCheckQuotaBeforeSync(t *testing.T) {
+	tracer := tracing.NewNoopTracerService()
+
+	tests := []struct {
+		name      string
+		changes   []ResourceFileChange
+		config    *provisioning.Repository
+		expectErr bool
+	}{
+		{
+			name:    "no resource quota condition - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "resource quota condition with status True - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionTrue,
+							Reason: "WithinLimit",
+						},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "resource quota exceeded but quota limit is zero (unlimited) - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 0,
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "final count within quota - proceeds",
+			changes: createdChanges(5),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50},
+						{Group: "alerting.grafana.app", Resource: "rules", Count: 40},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "final count exactly at quota limit - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "final count exceeds quota - returns QuotaExceededError",
+			changes: createdChanges(20),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
+					},
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name:    "negative net change brings count below quota - proceeds",
+			changes: deletedChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "delete-only pull still over quota - proceeds since all changes are deletions",
+			changes: deletedChanges(5),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 120},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "mixed deletions and creations with net negative changes - blocked",
+			changes: append(deletedChanges(10), createdChanges(3)...),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
+					},
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name:    "multiple resource types - counts summed exceeds quota",
+			changes: createdChanges(5),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 40},
+						{Group: "folders.grafana.app", Resource: "folders", Count: 56},
+					},
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name:    "condition reason is not QuotaExceeded - proceeds",
+			changes: createdChanges(1000),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: "SomeOtherReason",
+						},
+					},
+				},
+			},
+			expectErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockConfigRepository(t)
+			repo.EXPECT().Config().Return(tt.config)
+
+			err := checkQuotaBeforeSync(context.Background(), repo, tt.changes, tracer)
+			if tt.expectErr {
+				var quotaErr *quotas.QuotaExceededError
+				require.ErrorAs(t, err, &quotaErr)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}

@@ -220,7 +220,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -639,7 +639,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=11.6.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -885,7 +885,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -947,7 +947,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1005,7 +1005,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1222,7 +1222,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1330,7 +1330,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.4.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1380,7 +1380,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.4.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1430,7 +1430,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.4.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1580,7 +1580,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1639,7 +1639,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1739,7 +1739,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=11.6.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -2047,7 +2047,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -2097,7 +2097,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -2450,7 +2450,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {

@@ -24,7 +24,7 @@ export function usePluginLinks({
 }: UsePluginLinksOptions): UsePluginLinksResult {
   const registryItems = useAddedLinksRegistrySlice(extensionPointId);
   const pluginContext = usePluginContext();
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(extensionPointId, getExtensionPointPluginDependencies);
 
   return useMemo(() => {
     const { result, pointLog } = validateExtensionPoint({

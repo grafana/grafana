@@ -55,6 +55,8 @@ const getPluginSettingsMock = getPluginSettings as jest.Mock<
   Parameters<typeof getPluginSettings>
 >;
 
+// don't care about this component - it's just for a test
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 class RootComponent extends Component<AppRootProps> {
   static timesRendered = 0;
   render() {
@@ -89,10 +91,10 @@ function renderUnderRouter(page = '') {
   appPluginNavItem.parentItem = appsSection;
 
   const registries = {
-    addedComponentsRegistry: new AddedComponentsRegistry(),
-    exposedComponentsRegistry: new ExposedComponentsRegistry(),
-    addedLinksRegistry: new AddedLinksRegistry(),
-    addedFunctionsRegistry: new AddedFunctionsRegistry(),
+    addedComponentsRegistry: new AddedComponentsRegistry([]),
+    exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    addedLinksRegistry: new AddedLinksRegistry([]),
+    addedFunctionsRegistry: new AddedFunctionsRegistry([]),
   };
   const pagePath = page ? `/${page}` : '';
   const route = {

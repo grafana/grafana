@@ -1,3 +1,5 @@
+import { IconName } from '@grafana/data';
+
 export const ALL_OPTION_VALUE = '__GRAFANA_INTERNAL_MULTICOMBOBOX_ALL_OPTION__';
 
 export type ComboboxOption<T extends string | number = string> = {
@@ -6,4 +8,5 @@ export type ComboboxOption<T extends string | number = string> = {
   description?: string;
   group?: string;
   infoOption?: boolean;
+  icon?: IconName;
 };

@@ -67,7 +67,7 @@ class DashboardWatcher {
     if (uid !== this.uid) {
       this.channel = {
         scope: LiveChannelScope.Grafana,
-        namespace: 'dashboard',
+        stream: 'dashboard',
         path: `uid/${uid}`,
       };
       this.leave();

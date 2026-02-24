@@ -72,6 +72,35 @@ describe('TableContainerWithTheme', () => {
       render(<TableContainerWithTheme {...tableProps} />);
       expect(screen.getByText('Table - metric{label="value"}')).toBeInTheDocument();
     });
+
+    it('preserves datasource hidden fields while applying Explore column limiting', () => {
+      const df = toDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'traceIdHidden',
+            type: FieldType.string,
+            values: ['t1'],
+            config: {
+              custom: {
+                hideFrom: { viz: true },
+              },
+            },
+          },
+
+          {
+            name: 'spanId',
+            type: FieldType.string,
+            values: ['s1'],
+            config: {},
+          },
+        ],
+      });
+
+      render(<TableContainerWithTheme {...defaultProps} tableResult={[df]} />);
+      expect(df.fields[0].config.custom?.hideFrom?.viz).toBe(true);
+      expect(df.fields[1].config.custom?.hideFrom?.viz).toBe(false);
+    });
   });
 
   describe('With multiple main frames', () => {

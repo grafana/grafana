@@ -87,7 +87,6 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   hasIncrementalQuery: boolean;
   httpMethod: string;
-  id: number;
   interval: string;
   languageProvider: PrometheusLanguageProviderInterface;
   lookupsDisabled: boolean;
@@ -123,7 +122,6 @@ export class PrometheusDatasource
     this.exemplarsAvailable = true;
     this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
-    this.id = instanceSettings.id;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.ruleMappings = {};
@@ -565,6 +563,12 @@ export class PrometheusDatasource
     return labelKeys
       .filter((labelName) => !options.filters.find((filter) => filter.key === labelName))
       .map((k) => ({ value: k, text: k }));
+  }
+
+  // By implementing getGroupByKeys we add group by variable support independently from adhoc filters.
+  // It delegates to getTagKeys
+  async getGroupByKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+    return this.getTagKeys(options);
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality

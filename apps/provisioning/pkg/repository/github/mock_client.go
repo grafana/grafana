@@ -290,6 +290,64 @@ func (_c *MockClient_EditWebhook_Call) RunAndReturn(run func(context.Context, st
 	return _c
 }
 
+// GetRepository provides a mock function with given fields: ctx, owner, repository
+func (_m *MockClient) GetRepository(ctx context.Context, owner string, repository string) (Repository, error) {
+	ret := _m.Called(ctx, owner, repository)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRepository")
+	}
+
+	var r0 Repository
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (Repository, error)); ok {
+		return rf(ctx, owner, repository)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) Repository); ok {
+		r0 = rf(ctx, owner, repository)
+	} else {
+		r0 = ret.Get(0).(Repository)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, owner, repository)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_GetRepository_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRepository'
+type MockClient_GetRepository_Call struct {
+	*mock.Call
+}
+
+// GetRepository is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner string
+//   - repository string
+func (_e *MockClient_Expecter) GetRepository(ctx interface{}, owner interface{}, repository interface{}) *MockClient_GetRepository_Call {
+	return &MockClient_GetRepository_Call{Call: _e.mock.On("GetRepository", ctx, owner, repository)}
+}
+
+func (_c *MockClient_GetRepository_Call) Run(run func(ctx context.Context, owner string, repository string)) *MockClient_GetRepository_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_GetRepository_Call) Return(_a0 Repository, _a1 error) *MockClient_GetRepository_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_GetRepository_Call) RunAndReturn(run func(context.Context, string, string) (Repository, error)) *MockClient_GetRepository_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetWebhook provides a mock function with given fields: ctx, owner, repository, webhookID
 func (_m *MockClient) GetWebhook(ctx context.Context, owner string, repository string, webhookID int64) (WebhookConfig, error) {
 	ret := _m.Called(ctx, owner, repository, webhookID)

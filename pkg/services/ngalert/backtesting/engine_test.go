@@ -256,7 +256,7 @@ func (f *fakeStateManager) ProcessEvalResults(_ context.Context, evaluatedAt tim
 	return f.stateCallback(evaluatedAt)
 }
 
-func (f *fakeStateManager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.State {
+func (f *fakeStateManager) GetStatesForRuleUID(_ context.Context, orgID int64, alertRuleUID string) []*state.State {
 	return nil
 }
 

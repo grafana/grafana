@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, Icon, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 
-import { getFieldSelectorWidth } from '../fieldSelector/FieldSelector';
+import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
 import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';

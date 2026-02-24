@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
+	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
@@ -33,8 +35,10 @@ import (
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
 	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 	playlistAppInstaller *playlist.AppInstaller,
-	pluginsApplInstaller *plugins.AppInstaller,
+	pluginsAppInstaller *plugins.AppInstaller,
+	liveAppInstaller *live.AppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 	rulesAppInstaller *rules.AppInstaller,
 	correlationsAppInstaller *correlations.AppInstaller,
@@ -45,11 +49,12 @@ func ProvideAppInstallers(
 	advisorAppInstaller *advisor.AppInstaller,
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
+	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	featureClient := openfeature.NewDefaultClient()
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
-		pluginsApplInstaller,
+		pluginsAppInstaller,
 		exampleAppInstaller,
 	}
 	if featureClient.Boolean(context.Background(), featuremgmt.FlagKubernetesUnifiedStorageQuotas, false, openfeature.TransactionContext(context.Background())) {
@@ -74,10 +79,7 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
-	//nolint:staticcheck
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
-		installers = append(installers, annotationAppInstaller)
-	}
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
 		installers = append(installers, advisorAppInstaller)
@@ -87,6 +89,27 @@ func ProvideAppInstallers(
 		installers = append(installers, alertingHistorianAppInstaller)
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagLiveAPIServer) {
+		installers = append(installers, liveAppInstaller)
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagDashboardValidatorApp) {
+		installers = append(installers, dashvalidatorAppInstaller)
+	}
+
+	// Applications under active development should be disabled by default
+	// and enabled in a dedicated section of **config.ini**.
+	//
+	// We kindly ask developers not to rely on `features.IsEnabledGlobally` to control app registration
+	// as this API has been deprecated and will be removed in future releases.
+	//
+	// Developers are encouraged to explore the built-in functionality of the App Platform
+	// to control the app registration (see `docs/apps/example/README.md`).
+	if cfg.KubernetesAnnotationsAppEnabled {
+		installers = append(installers, annotationAppInstaller)
+	}
 	return installers
 }
 

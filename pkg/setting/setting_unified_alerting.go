@@ -99,6 +99,7 @@ type UnifiedAlertingSettings struct {
 	HARedisMaxConns                 int
 	HARedisTLSEnabled               bool
 	HARedisTLSConfig                dstls.ClientConfig
+	HASingleNodeEvaluation          bool
 	InitializationTimeout           time.Duration
 	MaxAttempts                     int64
 	InitialRetryDelay               time.Duration
@@ -150,6 +151,8 @@ type UnifiedAlertingSettings struct {
 	AlertmanagerMaxTemplateOutputSize int64
 
 	BacktestingMaxEvaluations int
+
+	IgnorePendingForNoDataAndError bool
 }
 
 type RecordingRuleSettings struct {
@@ -340,6 +343,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HARedisTLSConfig.InsecureSkipVerify = ua.Key("ha_redis_tls_insecure_skip_verify").MustBool(false)
 	uaCfg.HARedisTLSConfig.CipherSuites = ua.Key("ha_redis_tls_cipher_suites").MustString("")
 	uaCfg.HARedisTLSConfig.MinVersion = ua.Key("ha_redis_tls_min_version").MustString("")
+	uaCfg.HASingleNodeEvaluation = ua.Key("ha_single_node_evaluation").MustBool(false)
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration

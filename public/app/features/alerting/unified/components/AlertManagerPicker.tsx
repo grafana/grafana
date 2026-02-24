@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
-import { isExtraConfig } from '../utils/alertmanager/extraConfigs';
 import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface Props {
@@ -26,17 +25,12 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
   const { selectedAlertmanager, availableAlertManagers, setSelectedAlertmanager } = useAlertmanager();
 
   const options = useMemo(() => {
-    // Group alertmanagers
     const grafanaAM = availableAlertManagers.find((am) => am.name === GRAFANA_RULES_SOURCE_NAME);
-    const extraConfig = availableAlertManagers.find((am) => isExtraConfig(am.name));
-    const datasourceAMs = availableAlertManagers.filter(
-      (am) => am.name !== GRAFANA_RULES_SOURCE_NAME && !isExtraConfig(am.name)
-    );
+    const datasourceAMs = availableAlertManagers.filter((am) => am.name !== GRAFANA_RULES_SOURCE_NAME);
 
     const groupedOptions: Array<SelectableValue<string> | { label: string; options: Array<SelectableValue<string>> }> =
       [];
 
-    // Add Grafana alertmanager first
     if (grafanaAM) {
       groupedOptions.push({
         label: getAlertManagerLabel(grafanaAM),
@@ -46,17 +40,6 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
       });
     }
 
-    // Add extra config (single merged configuration)
-    if (extraConfig) {
-      groupedOptions.push({
-        label: getAlertManagerLabel(extraConfig),
-        value: extraConfig.name,
-        imgUrl: extraConfig.imgUrl,
-        meta: extraConfig.meta,
-      });
-    }
-
-    // Add external alertmanagers
     if (datasourceAMs.length > 0) {
       groupedOptions.push({
         label: t('alerting.alert-manager-picker.external-alertmanagers-group', 'External Alertmanagers'),

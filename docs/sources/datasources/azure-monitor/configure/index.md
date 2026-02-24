@@ -21,68 +21,12 @@ menuTitle: Configure
 title: Configure the Azure Monitor data source
 weight: 200
 last_reviewed: 2025-12-04
-refs:
-  configure-grafana-feature-toggles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  configure-grafana-azure-auth:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-  configure-grafana-azure:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  configure-grafana-azure-auth-scopes:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
-  data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-  configure-pdc:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
 ---
 
 # Configure the Azure Monitor data source
 
 This document explains how to configure the Azure Monitor data source and the available configuration options.
-For general information about data sources, refer to [Grafana data sources](ref:data-sources) and [Data source management](ref:data-source-management).
+For general information about data sources, refer to [Grafana data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) and [Data source management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
 
 ## Before you begin
 
@@ -215,7 +159,7 @@ managed_identity_enabled = true
 managed_identity_client_id = <USER_ASSIGNED_IDENTITY_CLIENT_ID>
 ```
 
-Refer to [Grafana Azure configuration](ref:configure-grafana-azure) for more details.
+Refer to [Grafana Azure configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure) for more details.
 
 #### Managed Identity UI configuration
 
@@ -271,7 +215,7 @@ workload_identity_client_id = <IDENTITY_CLIENT_ID>    # Client ID if different f
 workload_identity_token_file = <TOKEN_FILE_PATH>      # Path to the token file
 ```
 
-Refer to [Grafana Azure configuration](ref:configure-grafana-azure) and the [Azure workload identity documentation](https://azure.github.io/azure-workload-identity/docs/) for more details.
+Refer to [Grafana Azure configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure) and the [Azure workload identity documentation](https://azure.github.io/azure-workload-identity/docs/) for more details.
 
 #### Workload Identity UI configuration
 
@@ -307,7 +251,7 @@ Current User authentication is an [experimental feature](/docs/release-life-cycl
 
 #### Current User prerequisites
 
-Your Grafana instance must be configured with Microsoft Entra ID authentication. Refer to the [Microsoft Entra ID authentication documentation](ref:configure-grafana-azure-auth).
+Your Grafana instance must be configured with Microsoft Entra ID authentication. Refer to the [Microsoft Entra ID authentication documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/).
 
 #### Configure your Azure App Registration
 
@@ -357,7 +301,7 @@ user_identity_fallback_credentials_enabled = false
 ```
 
 {{< admonition type="note" >}}
-To use fallback service credentials, the [feature toggle](ref:configure-grafana-feature-toggles) `idForwarding` must be set to `true`.
+To use fallback service credentials, the [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) `idForwarding` must be set to `true`.
 {{< /admonition >}}
 
 #### Limitations and fallback credentials
@@ -427,7 +371,7 @@ If you're using Grafana Cloud and need to connect to Azure resources in a privat
 1. Click the **Private data source connect** dropdown to select your PDC configuration.
 1. Click **Manage private data source connect** to view your PDC connection details.
 
-For more information, refer to [Private data source connect](ref:private-data-source-connect) and [Configure PDC](ref:configure-pdc).
+For more information, refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc).
 
 ## Supported cloud names
 
@@ -457,7 +401,7 @@ If the test fails, verify:
 ## Provision the data source
 
 You can define and configure the Azure Monitor data source in YAML files as part of the Grafana provisioning system.
-For more information about provisioning, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+For more information about provisioning, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ### Provision quick reference
 

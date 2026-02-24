@@ -9,8 +9,10 @@ import {
   toDataFrame,
   DataSourceApi,
   DataSourceInstanceSettings,
+  PanelPluginMeta,
 } from '@grafana/data';
 import { CorrelationData } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { DataSourceJsonData, DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types/explore';
@@ -28,16 +30,6 @@ jest.mock('@grafana/data', () => ({
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
 }));
-
-jest.mock('../../plugins/importPanelPlugin', () => {
-  const actual = jest.requireActual('../../plugins/importPanelPlugin');
-  return {
-    ...actual,
-    hasPanelPlugin: (id: string) => {
-      return id === 'someCustomPanelPlugin';
-    },
-  };
-});
 
 const getTestContext = () => {
   const timeSeries = toDataFrame({
@@ -126,14 +118,13 @@ const datasource = {
 
 const datasourceInstance = {
   name: datasource.name,
-  id: 1,
   uid: datasource.uid,
   type: datasource.type,
   jsonData: {},
 } as DataSourceInstanceSettings<DataSourceJsonData>;
 
 describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
-  it('should correctly classify the dataFrames', () => {
+  it('should correctly classify the dataFrames', async () => {
     const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
     const series = [table, logs, timeSeries, emptyTable, flameGraph];
     const timeRange = getDefaultTimeRange();
@@ -143,7 +134,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       timeRange,
     };
 
-    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
+    expect(await decorateWithFrameTypeMetadata(panelData)).toEqual({
       series,
       state: LoadingState.Done,
       timeRange,
@@ -162,7 +153,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
     });
   });
 
-  it('should handle empty array', () => {
+  it('should handle empty array', async () => {
     const series: DataFrame[] = [];
     const timeRange = getDefaultTimeRange();
     const panelData: PanelData = {
@@ -171,7 +162,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       timeRange,
     };
 
-    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
+    expect(await decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [],
       state: LoadingState.Done,
       timeRange: timeRange,
@@ -190,7 +181,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
     });
   });
 
-  it('should return frames even if there is an error', () => {
+  it('should return frames even if there is an error', async () => {
     const { timeSeries, logs, table } = getTestContext();
     const series: DataFrame[] = [timeSeries, logs, table];
     const timeRange = getDefaultTimeRange();
@@ -201,7 +192,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       timeRange,
     };
 
-    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
+    expect(await decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [timeSeries, logs, table],
       error: {},
       state: LoadingState.Error,
@@ -359,7 +350,11 @@ describe('decorateWithLogsResult', () => {
 });
 
 describe('decorateWithCustomFrames', () => {
-  it('returns empty array if no custom frames', () => {
+  beforeEach(() => {
+    setPanelPluginMetas({});
+  });
+
+  it('returns empty array if no custom frames', async () => {
     const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
     const series = [table, logs, timeSeries, emptyTable, flameGraph];
     const timeRange = getDefaultTimeRange();
@@ -369,9 +364,10 @@ describe('decorateWithCustomFrames', () => {
       timeRange,
     };
 
-    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([]);
+    expect((await decorateWithFrameTypeMetadata(panelData)).customFrames).toEqual([]);
   });
-  it('returns data if we have custom frames', () => {
+  it('returns data if we have custom frames', async () => {
+    setPanelPluginMetas({ someCustomPanelPlugin: { id: 'someCustomPanelPlugin' } as PanelPluginMeta });
     const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
     const customFrame = toDataFrame({
       name: 'custom-panel',
@@ -388,7 +384,7 @@ describe('decorateWithCustomFrames', () => {
       timeRange,
     };
 
-    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([customFrame]);
+    expect((await decorateWithFrameTypeMetadata(panelData)).customFrames).toEqual([customFrame]);
   });
 });
 

@@ -1,5 +1,5 @@
 import { PluginLoadingStrategy } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import {
@@ -21,6 +21,10 @@ import {
 } from './rules';
 
 describe('getRuleOrigin', () => {
+  afterEach(() => {
+    setAppPluginMetas({});
+  });
+
   it('returns undefined when no origin label is present', () => {
     const rule = mockPromAlertingRule({
       labels: {},
@@ -35,15 +39,15 @@ describe('getRuleOrigin', () => {
     expect(getRulePluginOrigin(rule)).toBeUndefined();
   });
 
-  it('returns undefined when plugin is not installed', () => {
+  it('returns pluginId even when plugin is not installed', () => {
     const rule = mockPromAlertingRule({
       labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/uninstalled_plugin' },
     });
-    expect(getRulePluginOrigin(rule)).toBeUndefined();
+    expect(getRulePluginOrigin(rule)).toEqual({ pluginId: 'uninstalled_plugin' });
   });
 
   it('returns pluginId when origin label matches expected format and plugin is installed', () => {
-    config.apps = {
+    setAppPluginMetas({
       installed_plugin: {
         id: 'installed_plugin',
         version: '',
@@ -66,7 +70,7 @@ describe('getRuleOrigin', () => {
           },
         },
       },
-    };
+    });
     const rule = mockPromAlertingRule({
       labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/installed_plugin' },
     });

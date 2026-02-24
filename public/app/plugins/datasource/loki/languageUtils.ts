@@ -2,7 +2,7 @@ import { invert } from 'lodash';
 
 import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, DataFrame, TimeRange } from '@grafana/data';
 
-import { LabelType } from './types';
+import { DATAPLANE_LABEL_TYPES_NAME, LabelType } from './types';
 
 function roundMsToMin(milliseconds: number): number {
   return roundSecToMin(milliseconds / 1000);
@@ -93,16 +93,33 @@ export function isBytesString(string: string) {
   return !!match;
 }
 
-export function getLabelTypeFromFrame(labelKey: string, frame?: DataFrame, index?: number): null | LabelType {
-  if (!frame || index === undefined) {
+/**
+ * Gets the label type from the data frame if present
+ * @param labelKey
+ * @param frame
+ * @param index - if null, will check every value in the data frame for a match.
+ */
+export function getLokiLabelTypeFromFrame(
+  labelKey: string,
+  frame: DataFrame | undefined,
+  index: number | null
+): null | LabelType {
+  if (!frame) {
     return null;
   }
 
-  const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
+  const typeField = frame.fields.find((field) => field.name === DATAPLANE_LABEL_TYPES_NAME);
+
   if (!typeField) {
     return null;
   }
-  switch (typeField[labelKey]) {
+
+  if (index === null) {
+    index = typeField.values.findIndex((typeFieldValue) => typeFieldValue[labelKey]);
+  }
+
+  const valueTypes = typeField?.values[index];
+  switch (valueTypes?.[labelKey]) {
     case 'I':
       return LabelType.Indexed;
     case 'S':

@@ -39,6 +39,7 @@ import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/uti
 
 import { getDataframeFields } from './components/logParser';
 import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
+import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME } from './logsFrame';
 
 /**
  * Returns the log level of a log line.
@@ -392,7 +393,7 @@ export function createLogRowsMap() {
   };
 }
 
-function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index: number): null | string {
+function getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame, index: number): null | string {
   const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
   if (!typeField) {
     return null;
@@ -400,27 +401,41 @@ function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index: number
   return typeField[labelKey] ?? null;
 }
 
+/**
+ * @deprecated Implement DataSourceWithLogsLabelTypesSupport and use ds.getLabelDisplayTypeFromFrame
+ * to support label types.
+ *
+ * Look for a `labelTypes` field. If found, use it to resolve the type for the
+ * provided label.
+ *
+ * @param label
+ * @param row
+ * @param plural
+ */
 export function getLabelTypeFromRow(label: string, row: LogRowModel, plural = false) {
-  if (!row.datasourceType) {
-    return null;
-  }
-  const labelType = getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
+  const labelType = getLabelDisplayTypeFromFrame(label, row.dataFrame, row.rowIndex);
   if (!labelType) {
     return null;
   }
   return getDataSourceLabelType(labelType, row.datasourceType, plural);
 }
 
-function getDataSourceLabelType(labelType: string, datasourceType: string, plural: boolean) {
+/**
+ * @deprecated
+ * @param labelType
+ * @param datasourceType
+ * @param plural
+ */
+function getDataSourceLabelType(labelType: string, datasourceType: string | undefined, plural: boolean) {
   switch (datasourceType) {
     case 'loki':
       switch (labelType) {
         case 'I':
-          return t('logs.fields.type.loki.indexed-label', 'Indexed label', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.indexed-label', 'Indexed labels', { count: plural ? 2 : 1 });
         case 'S':
           return t('logs.fields.type.loki.structured-metadata', 'Structured metadata', { count: plural ? 2 : 1 });
         case 'P':
-          return t('logs.fields.type.loki.parsedl-label', 'Parsed field', { count: plural ? 2 : 1 });
+          return t('logs.fields.type.loki.parsedl-label', 'Parsed fields', { count: plural ? 2 : 1 });
         default:
           return null;
       }
@@ -490,8 +505,8 @@ export const downloadLogs = async (
               id: 'organize',
               options: {
                 excludeByName: {
-                  ['labels']: true,
-                  ['labelTypes']: true,
+                  [DATAPLANE_LABELS_NAME]: true,
+                  [DATAPLANE_LABEL_TYPES_NAME]: true,
                 },
               },
             },

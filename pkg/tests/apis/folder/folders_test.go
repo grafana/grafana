@@ -21,6 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	k8srest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -2197,4 +2199,242 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 
 	require.Equal(t, expectedLabels, accessor.GetLabels())
 	require.Equal(t, expectedAnnotations, accessor.GetAnnotations())
+}
+
+// Test finding folders with an owner
+func TestIntegrationFolderSearchWithOwner(t *testing.T) {
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous:     true,
+		AppModeProduction:    true,
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			folders.RESOURCEGROUP: {
+				DualWriterMode: grafanarest.Mode5,
+			},
+			"dashboards.dashboard.grafana.app": {
+				DualWriterMode: grafanarest.Mode5,
+			},
+		},
+	})
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Without owner
+	folder := &unstructured.Unstructured{
+		Object: map[string]any{
+			"spec": map[string]any{
+				"title": "Folder without owner",
+			},
+		},
+	}
+	folder.SetName("folderA")
+	out, err := client.Resource.Create(context.Background(), folder, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, folder.GetName(), out.GetName())
+
+	// with owner
+	folder = &unstructured.Unstructured{
+		Object: map[string]any{
+			"spec": map[string]any{
+				"title": "Folder with owner",
+			},
+		},
+	}
+	folder.SetName("folderB")
+	folder.SetOwnerReferences([]metav1.OwnerReference{{
+		APIVersion: "iam.grafana.app/v0alpha1",
+		Kind:       "Team",
+		Name:       "engineering",
+		UID:        "123456", // required by k8s
+	}, {
+		APIVersion: "iam.grafana.app/v0alpha1",
+		Kind:       "Team",
+		Name:       "testing",
+		UID:        "123457", // required by k8s
+	}})
+	out, err = client.Resource.Create(context.Background(), folder, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, folder.GetName(), out.GetName())
+
+	// Get everything
+	results, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{"folderA", "folderB"}, getNames(results.Items))
+
+	// Verify folderB has owner references set
+	folderB, err := client.Resource.Get(context.Background(), "folderB", metav1.GetOptions{})
+	require.NoError(t, err)
+	owners := folderB.GetOwnerReferences()
+	require.Len(t, owners, 2, "folderB should have 2 owner references")
+	require.Equal(t, "engineering", owners[0].Name)
+	require.Equal(t, "Team", owners[0].Kind)
+
+	// Find results with a specific owner (with trimming suffix)
+	suffixToTrim := " "
+	sr := callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/engineering"+suffixToTrim)
+	require.Len(t, sr.Hits, 1)
+	require.Equal(t, "folderB", sr.Hits[0].Name)
+
+	// Do not find results if owner does not match
+	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing")
+	require.Len(t, sr.Hits, 0)
+
+	// Find results using OR conditions and search by second owner reference
+	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing&ownerReference=iam.grafana.app/Team/testing")
+	require.Len(t, sr.Hits, 1)
+	require.Equal(t, "folderB", sr.Hits[0].Name)
+}
+
+func getNames(items []unstructured.Unstructured) []string {
+	names := make([]string, 0, len(items))
+	for _, item := range items {
+		names = append(names, item.GetName())
+	}
+	return names
+}
+
+func callSearch(t *testing.T, user apis.User, params string) *v0alpha1.SearchResults {
+	require.NotNil(t, user)
+	ns := user.Identity.GetNamespace()
+	cfg := dynamic.ConfigFor(user.NewRestConfig())
+	gv := gvr.GroupVersion()
+	cfg.GroupVersion = &gv
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+
+	var statusCode int
+	req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+		Param("limit", "1000").
+		Param("type", "folder")
+
+	for kv := range strings.SplitSeq(params, "&") {
+		if kv == "" {
+			continue
+		}
+		parts := strings.SplitN(kv, "=", 2)
+		if len(parts) == 2 {
+			req = req.Param(parts[0], parts[1])
+		}
+	}
+	res := req.Do(context.Background()).StatusCode(&statusCode)
+	require.NoError(t, res.Error())
+	require.Equal(t, http.StatusOK, statusCode)
+	var sr v0alpha1.SearchResults
+	raw, err := res.Raw()
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &sr))
+	return &sr
+}
+
+func TestIntegrationFolderDryRun(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	// Test dry-run on dual-writer modes 1-4.
+	// Mode 0 (legacy-only) does not use the dualWriter, so dry-run is not intercepted.
+	for mode := 1; mode <= 4; mode++ {
+		modeDw := grafanarest.DualWriterMode(mode)
+		t.Run(fmt.Sprintf("dry-run mode %v", modeDw), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{},
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create a real folder first
+			folderObj := &unstructured.Unstructured{
+				Object: map[string]any{
+					"spec": map[string]any{
+						"title": "DryRun Test Folder",
+					},
+				},
+			}
+			folderObj.SetGenerateName("dryrun-test-")
+			created, err := client.Resource.Create(context.Background(), folderObj, metav1.CreateOptions{})
+			require.NoError(t, err)
+			createdName := created.GetName()
+			require.NotEmpty(t, createdName)
+
+			t.Run("delete with dry-run should not actually delete", func(t *testing.T) {
+				err := client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{
+					DryRun: []string{metav1.DryRunAll},
+				})
+				require.NoError(t, err)
+
+				// Folder should still exist
+				got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+				require.NoError(t, err, "folder should still exist after dry-run delete")
+				require.Equal(t, createdName, got.GetName())
+			})
+
+			t.Run("create with dry-run should not actually create", func(t *testing.T) {
+				dryRunFolder := &unstructured.Unstructured{
+					Object: map[string]any{
+						"spec": map[string]any{
+							"title": "DryRun Create Folder",
+						},
+					},
+				}
+				dryRunFolder.SetName("dryrun-create-test")
+				_, err := client.Resource.Create(context.Background(), dryRunFolder, metav1.CreateOptions{
+					DryRun: []string{metav1.DryRunAll},
+				})
+				require.NoError(t, err)
+
+				// Folder should NOT exist
+				_, err = client.Resource.Get(context.Background(), "dryrun-create-test", metav1.GetOptions{})
+				require.Error(t, err, "folder should not exist after dry-run create")
+			})
+
+			// Update dry-run only works reliably in modes 3+ where unified storage is
+			// the primary read source, so the client-sent UID matches the unified store.
+			// In modes 1/2, the client reads from legacy (which has a different UID than
+			// unified), causing a UID precondition mismatch on dry-run update.
+			if mode >= 3 {
+				t.Run("update with dry-run should not actually update", func(t *testing.T) {
+					// Get the current folder
+					current, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+					require.NoError(t, err)
+
+					// Modify the title
+					spec := current.Object["spec"].(map[string]any)
+					originalTitle := spec["title"]
+					spec["title"] = "DryRun Updated Title"
+					current.Object["spec"] = spec
+
+					_, err = client.Resource.Update(context.Background(), current, metav1.UpdateOptions{
+						DryRun: []string{metav1.DryRunAll},
+					})
+					require.NoError(t, err)
+
+					// Title should be unchanged
+					got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+					require.NoError(t, err)
+					gotSpec := got.Object["spec"].(map[string]any)
+					require.Equal(t, originalTitle, gotSpec["title"], "title should not change after dry-run update")
+				})
+			}
+
+			// Clean up
+			err = client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+	}
 }

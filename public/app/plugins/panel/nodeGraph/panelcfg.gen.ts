@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/nodeGraph/panelcfg.cue file.
+
 export interface ArcOption {
   /**
    * The color of the arc.

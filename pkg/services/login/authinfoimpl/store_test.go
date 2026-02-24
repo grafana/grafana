@@ -25,7 +25,8 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sql := db.InitTestDB(t)
-	store := ProvideStore(sql, secretstest.NewFakeSecretsService())
+	store, err := ProvideStore(sql, secretstest.NewFakeSecretsService())
+	require.NoError(t, err)
 
 	t.Run("should be able to auth lables for users", func(t *testing.T) {
 		ctx := context.Background()
@@ -33,16 +34,19 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 			AuthModule: login.LDAPAuthModule,
 			AuthId:     "1",
 			UserId:     1,
+			UserUID:    "1",
 		}))
 		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
 			AuthModule: login.AzureADAuthModule,
 			AuthId:     "1",
 			UserId:     1,
+			UserUID:    "1",
 		}))
 		require.NoError(t, store.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
 			AuthModule: login.GoogleAuthModule,
 			AuthId:     "10",
 			UserId:     2,
+			UserUID:    "2",
 		}))
 
 		labels, err := store.GetUsersRecentlyUsedLabel(ctx, login.GetUserLabelsQuery{UserIDs: []int64{1, 2}})
@@ -62,6 +66,7 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 			AuthModule: login.LDAPAuthModule,
 			AuthId:     "1",
 			UserId:     1,
+			UserUID:    "1",
 		}))
 
 		defer func() {
@@ -76,6 +81,7 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 			AuthModule: login.AzureADAuthModule,
 			AuthId:     "2",
 			UserId:     1,
+			UserUID:    "1",
 		}))
 
 		info, err := store.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
@@ -103,6 +109,7 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 			AuthModule: login.GenericOAuthModule,
 			AuthId:     "1",
 			UserId:     10,
+			UserUID:    "10",
 		}
 
 		require.NoError(t, store.SetAuthInfo(ctx, setCmd))

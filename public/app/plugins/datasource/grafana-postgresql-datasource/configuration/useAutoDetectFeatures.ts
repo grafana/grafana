@@ -4,11 +4,11 @@ import { useDeepCompareEffect } from 'react-use';
 import {
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings,
-  SelectableValue,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginOption,
 } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { ComboboxOption } from '@grafana/ui';
 
 import { PostgresDatasource } from '../datasource';
 import { PostgresOptions, PostgresTLSModes, SecureJsonData } from '../types';
@@ -17,7 +17,7 @@ import { postgresVersions } from './ConfigurationEditor';
 
 type Options = {
   props: DataSourcePluginOptionsEditorProps<PostgresOptions, SecureJsonData>;
-  setVersionOptions: Dispatch<SetStateAction<Array<SelectableValue<number>>>>;
+  setVersionOptions: Dispatch<SetStateAction<Array<ComboboxOption<number>>>>;
 };
 
 export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
@@ -29,7 +29,7 @@ export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
       if (!saved) {
         // We need to save the datasource before we can get the version so we can query the database with the options we have.
         const result = await getBackendSrv().put<{ datasource: DataSourceSettings }>(
-          `/api/datasources/${options.id}`,
+          `/api/datasources/uid/${options.uid}`,
           options
         );
 

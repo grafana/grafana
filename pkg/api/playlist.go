@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
 	internalplaylist "github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -23,7 +23,7 @@ import (
 
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	// Register the actual handlers
-	// TODO: remove kubernetesPlaylists feature flag
+	// Deprecated: use /apis/playlist.grafana.app/ instead
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
 		// Use k8s client to implement legacy API
 		handler := newPlaylistK8sHandler(hs)
@@ -145,7 +145,7 @@ type playlistK8sHandler struct {
 
 func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
 	return &playlistK8sHandler{
-		gvr:                  v0alpha1.PlaylistKind().GroupVersionResource(),
+		gvr:                  playlistv1.PlaylistKind().GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 	}
@@ -155,11 +155,13 @@ func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
 //
 // Get playlists.
 //
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: searchPlaylistsResponse
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) searchPlaylists(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -190,14 +192,16 @@ func (pk8s *playlistK8sHandler) searchPlaylists(c *contextmodel.ReqContext) {
 //
 // Get playlist.
 //
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: getPlaylistResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) getPlaylist(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -216,14 +220,16 @@ func (pk8s *playlistK8sHandler) getPlaylist(c *contextmodel.ReqContext) {
 //
 // Get playlist items.
 //
+// Please refer to [new API](?api=playlist.grafana.app-v1) instead (items are included in the playlist spec).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: getPlaylistItemsResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) getPlaylistItems(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -242,14 +248,16 @@ func (pk8s *playlistK8sHandler) getPlaylistItems(c *contextmodel.ReqContext) {
 //
 // Delete playlist.
 //
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: okResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) deletePlaylist(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -268,14 +276,16 @@ func (pk8s *playlistK8sHandler) deletePlaylist(c *contextmodel.ReqContext) {
 //
 // Update playlist.
 //
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: updatePlaylistResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
@@ -307,14 +317,16 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 //
 // Create playlist.
 //
+// Please refer to [new API](?api=playlist.grafana.app-v1).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: createPlaylistResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-//
-// Deprecated: use /apis/playlist.grafana.app/
 func (pk8s *playlistK8sHandler) createPlaylist(c *contextmodel.ReqContext) {
 	client, ok := pk8s.getClient(c)
 	if !ok {
