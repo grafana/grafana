@@ -238,6 +238,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 
 	// Write each event into the history
 	for iter.Next() {
+		iterStart := time.Now()
 		if iter.RollbackRequested() {
 			return rollbackWithError(nil)
 		}
@@ -273,6 +274,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 		keyPath := buildKeyPath(req.Key, resourceVersion, req.Action, req.Folder)
 
 		// Write the event to history
+		insertStart := time.Now()
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent: resource.WriteEvent{
@@ -287,6 +289,13 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			KeyPath:         keyPath,
 		}); err != nil {
 			return rollbackWithError(fmt.Errorf("insert into resource history: %w", err))
+		}
+		insertDuration := time.Since(insertStart)
+
+		if insertDuration > 500*time.Millisecond {
+			b.log.Warn("slow bulk insert", "processed", rsp.Processed, "recv_wait", insertStart.Sub(iterStart), "insert", insertDuration, "name", req.Key.Name)
+		} else if rsp.Processed%10 == 0 {
+			b.log.Debug("bulk insert timing", "processed", rsp.Processed, "recv_wait", insertStart.Sub(iterStart), "insert", insertDuration, "name", req.Key.Name)
 		}
 	}
 

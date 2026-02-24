@@ -1839,10 +1839,18 @@
       "apply": "Appliquer"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Échec du chargement de l’historique des états",
       "history-error-desc": "Impossible de récupérer l’historique des transitions d’état pour cette instance.",
       "no-history": "Aucun changement d’état récent",
-      "state-history": "Changements d’état récents"
+      "state-error-description": "",
+      "state-history": "Changements d’état récents",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Étiquettes non correspondantes",
@@ -5027,7 +5035,7 @@
           }
         }
       },
-      "name": "Grille automatique",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Effacer"
@@ -6135,6 +6143,8 @@
       "title-transformations": "Transformations"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Rechercher une transformation",
       "show-images": "Afficher les images",
       "sql-expressions-message-description": "Manipulez et transformez les résultats de vos requêtes de sources de données via une syntaxe proche de MySQL.",
@@ -6272,11 +6282,12 @@
     "browse-grafana-com": "Parcourir Grafana.com",
     "browse-plugins": "Parcourir les plugins",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Source de données fournie",
       "details-tooltip": "Détails",
       "no-preview": "Aucun aperçu disponible",
       "use-dashboard-button": "Utiliser le tableau de bord",
-      "use-template-button": "Utiliser le modèle"
+      "view-template-button": ""
     },
     "community-empty-title": "Aucun tableau de bord communautaire trouvé",
     "community-empty-title-with-datasource": "Aucun tableau de bord communautaire trouvé pour {{datasourceType}}",
@@ -6386,10 +6397,12 @@
         "new-panel": "Nouveau panneau"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7875,6 +7888,11 @@
       "continue-without-saving": "Continuer sans enregistrer",
       "save-correlation": "Enregistrer la corrélation",
       "title-unsaved-changes-to-correlation": "Modifications non enregistrées de la corrélation"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Cliquez et faites glisser le séparateur gris dans la zone colorée ci-dessous.",
@@ -12367,6 +12385,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Dernière branche",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Branche de requête de tirage",
       "suffix-read-only-branch": ""
     }
@@ -12403,10 +12422,10 @@
       },
       "pr-workflow-description": "Permet aux utilisateurs de choisir s’ils souhaitent ouvrir une demande de tirage lors de l’enregistrement des modifications. Si le dépôt n’autorise pas les modifications directes sur la branche principale, une demande de tirage peut tout de même être nécessaire.",
       "pr-workflow-label": "Activer l’option de demande de tirage à l’enregistrement",
-      "token-description": "Mot de passe d’application Bitbucket avec autorisations sur le dépôt",
-      "token-label": "Mot de passe d’application",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Le token Bitbucket est requis",
-      "token-user-description": "Le nom d’utilisateur qui sera utilisé pour accéder au dépôt avec le mot de passe d’application",
+      "token-user-description": "",
       "token-user-required": "Le nom d’utilisateur est requis",
       "url-description": "L’URL du dépôt Bitbucket",
       "url-required": "L’URL du dépôt est requise"
@@ -12432,9 +12451,6 @@
       "files-count_other": "{{count}} fichiers",
       "folders-count_one": "{{count}} dossier",
       "folders-count_other": "{{count}} dossier"
-    },
-    "check-repository": {
-      "check": "Vérifier"
     },
     "code-block": {
       "aria-label-copy": "Copier le code dans le presse-papiers"
@@ -12822,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Vérifié :",
       "connection-status": "État de la connexion :",
       "finished": "Dernière récupération réussie :",
@@ -12831,7 +12848,9 @@
       "last-ref": "Dernière réf :",
       "messages": "Messages :",
       "not-available": "S/O",
+      "path": "",
       "pull-status": "Statut de fusion",
+      "repo-url": "",
       "resources": "Ressources",
       "status": "Statut :",
       "unhealthy": "Non sain",
@@ -12968,8 +12987,8 @@
     "token-permissions-info": {
       "and-click": "et cliquez",
       "bitbucket": {
-        "create-token-button": "Créer des mots de passe d’application",
-        "token-text": "Jeton d’accès personnel Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Ajouter un nouveau jeton",
@@ -14340,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "Supprimer l’équipe {{teamName}}",
         "aria-label-edit-team": "Modifier l’équipe {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Modifier l’équipe",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Modifier l’équipe"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Chargement des équipes…",
       "new-team": "Nouvelle équipe",
       "placeholder-search-teams": "Rechercher les équipes"

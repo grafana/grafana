@@ -29,12 +29,24 @@ type ResourceMigratorTestCase interface {
 func verifyResourceCount(t *testing.T, client *apis.K8sResourceClient, expectedCount int) {
 	t.Helper()
 
-	l, err := client.Resource.List(context.Background(), metav1.ListOptions{})
-	require.NoError(t, err)
+	var total int
+	continueToken := ""
+	for {
+		l, err := client.Resource.List(context.Background(), metav1.ListOptions{
+			Continue: continueToken,
+		})
+		require.NoError(t, err)
 
-	resources, err := meta.ExtractList(l)
-	require.NoError(t, err)
-	require.Equal(t, expectedCount, len(resources))
+		resources, err := meta.ExtractList(l)
+		require.NoError(t, err)
+		total += len(resources)
+
+		continueToken = l.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+	require.Equal(t, expectedCount, total)
 }
 
 // verifyResource verifies that a resource with the given UID exists in K8s storage

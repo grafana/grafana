@@ -122,9 +122,12 @@ func buildQuery(query Query) (string, error) {
 
 	logql := fmt.Sprintf(`{%s}`, strings.Join(selectors, `,`))
 
-	// Searching for ruleUID before JSON parsing can dramatically improve performance.
+	// Searching for ruleUID and receiver before JSON parsing can dramatically improve performance.
 	if query.RuleUID != nil && *query.RuleUID != "" {
 		logql += fmt.Sprintf(` |= %q`, *query.RuleUID)
+	}
+	if query.Receiver != nil && *query.Receiver != "" {
+		logql += fmt.Sprintf(` |= %q`, *query.Receiver)
 	}
 
 	logql += ` | json`

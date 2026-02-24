@@ -16,17 +16,20 @@ type Migrator interface {
 
 type MigrationWorker struct {
 	unifiedMigrator Migrator
+	enabled         bool
 }
 
-func NewMigrationWorkerFromUnified(unifiedMigrator Migrator) *MigrationWorker {
+func NewMigrationWorkerFromUnified(unifiedMigrator Migrator, enabled bool) *MigrationWorker {
 	return &MigrationWorker{
 		unifiedMigrator: unifiedMigrator,
+		enabled:         enabled,
 	}
 }
 
-func NewMigrationWorker(unifiedMigrator Migrator) *MigrationWorker {
+func NewMigrationWorker(unifiedMigrator Migrator, enabled bool) *MigrationWorker {
 	return &MigrationWorker{
 		unifiedMigrator: unifiedMigrator,
+		enabled:         enabled,
 	}
 }
 
@@ -35,6 +38,10 @@ func (w *MigrationWorker) IsSupported(ctx context.Context, job provisioning.Job)
 }
 
 func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+	if !w.enabled {
+		return errors.New("migrate functionality is disabled by configuration")
+	}
+
 	options := job.Spec.Migrate
 	if options == nil {
 		return errors.New("missing migrate settings")

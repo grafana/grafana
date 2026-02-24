@@ -1855,10 +1855,18 @@
       "apply": "Применить"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Не удалось загрузить журнал состояний",
       "history-error-desc": "Для этого экземпляра не удалось получить журнал изменения состояний.",
       "no-history": "Последние изменения состояний не найдены",
-      "state-history": "Последние изменения состояний"
+      "state-error-description": "",
+      "state-history": "Последние изменения состояний",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Несовпадающие метки",
@@ -5079,7 +5087,7 @@
           }
         }
       },
-      "name": "Автоматическая сетка",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Очистить"
@@ -6189,6 +6197,8 @@
       "title-transformations": "Преобразования"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Поиск преобразования",
       "show-images": "Показать изображения",
       "sql-expressions-message-description": "Новый способ обработки и преобразования результатов запросов к источникам данных с использованием синтаксиса, подобного MySQL.",
@@ -6326,11 +6336,12 @@
     "browse-grafana-com": "Обзор Grafana.com",
     "browse-plugins": "Обзор плагинов",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Источник данных указан",
       "details-tooltip": "Подробности",
       "no-preview": "Предварительный просмотр недоступен",
       "use-dashboard-button": "Использовать дашборд",
-      "use-template-button": "Использовать шаблон"
+      "view-template-button": ""
     },
     "community-empty-title": "Дашборды сообщества не найдены",
     "community-empty-title-with-datasource": "Дашборды сообщества ({{datasourceType}}) не найдены",
@@ -6442,10 +6453,12 @@
         "new-panel": "Новая панель"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7937,6 +7950,11 @@
       "continue-without-saving": "Продолжить без сохранения",
       "save-correlation": "Сохранить корреляцию",
       "title-unsaved-changes-to-correlation": "Несохраненные изменения в корреляции"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Нажмите и перетащите серый разделитель в цветной области ниже.",
@@ -12475,6 +12493,7 @@
       "placeholder-branch": "Выберите или введите имя ветви",
       "suffix-configured-branch": "",
       "suffix-last-used": "Последняя ветвь",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Ветвь запроса на извлечение данных",
       "suffix-read-only-branch": ""
     }
@@ -12511,10 +12530,10 @@
       },
       "pr-workflow-description": "Позволяет пользователям выбрать, следует ли открывать запрос на включение изменений при их сохранении. Если репозиторий не позволяет вносить прямые изменения в основную ветвь, всё равно может потребоваться запрос на включение изменений.",
       "pr-workflow-label": "Включить параметр запроса на включение изменений при сохранении",
-      "token-description": "Пароль приложения Bitbucket с правами доступа к репозиторию",
-      "token-label": "Пароль приложения",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Требуется токен Bitbucket",
-      "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с паролем приложения",
+      "token-user-description": "",
       "token-user-required": "Требуется ввести имя пользователя",
       "url-description": "URL-адрес репозитория Bitbucket",
       "url-required": "Требуется указать URL-адрес репозитория"
@@ -12546,9 +12565,6 @@
       "folders-count_few": "{{count}} папки",
       "folders-count_many": "{{count}} папок",
       "folders-count_other": "{{count}} папки"
-    },
-    "check-repository": {
-      "check": "Проверить"
     },
     "code-block": {
       "aria-label-copy": "Копировать в буфер обмена"
@@ -12942,6 +12958,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Проверено:",
       "connection-status": "Состояние подключения:",
       "finished": "Последнее успешное извлечение:",
@@ -12951,7 +12968,9 @@
       "last-ref": "Последняя ссылка:",
       "messages": "Сообщения:",
       "not-available": "Н/Д",
+      "path": "",
       "pull-status": "Состояние включения изменений",
+      "repo-url": "",
       "resources": "Ресурсы",
       "status": "Состояние:",
       "unhealthy": "Неисправен",
@@ -13088,8 +13107,8 @@
     "token-permissions-info": {
       "and-click": "и нажать",
       "bitbucket": {
-        "create-token-button": "Создать пароли для приложений",
-        "token-text": "Токен личного доступа Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Добавить новый токен",
@@ -14474,9 +14493,18 @@
       "columns": {
         "aria-label-delete-button": "Удалить команду {{teamName}}",
         "aria-label-edit-team": "Редактировать команду {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Редактирование команды",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Редактировать команду"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Загрузка команд...",
       "new-team": "Новая команда",
       "placeholder-search-teams": "Поиск команд"
