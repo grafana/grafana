@@ -1858,14 +1858,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "createdByMeSearchFilter",
-			Description:  "Enables the created by me search filter on the browse dashboards page",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendNavigation,
-			FrontendOnly: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,

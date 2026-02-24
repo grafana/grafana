@@ -1136,7 +1136,8 @@
       "metadata": {
         "name": "createdByMeSearchFilter",
         "resourceVersion": "1771962469920",
-        "creationTimestamp": "2026-02-24T19:47:49Z"
+        "creationTimestamp": "2026-02-24T19:47:49Z",
+        "deletionTimestamp": "2026-02-24T20:46:32Z"
       },
       "spec": {
         "description": "Enables the created by me search filter on the browse dashboards page",
