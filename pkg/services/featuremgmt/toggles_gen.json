@@ -1134,6 +1134,20 @@
     },
     {
       "metadata": {
+        "name": "createdByMeSearchFilter",
+        "resourceVersion": "1771965456951",
+        "creationTimestamp": "2026-02-24T20:37:36Z"
+      },
+      "spec": {
+        "description": "Enables the created by me search filter on the browse dashboards page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardAdHocAndGroupByWrapper",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-12-18T18:58:21Z"
