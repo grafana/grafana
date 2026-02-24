@@ -3,7 +3,6 @@ import { Panel } from '@grafana/schema';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 
 import { GenAIButton } from './GenAIButton';
-import { useIsAssistantAvailable } from './hooks';
 import { EventTrackingSrc } from './tracking';
 import { Message, Role, getFilteredPanelString } from './utils';
 
@@ -24,12 +23,6 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   `The description should be, at most, ${PANEL_DESCRIPTION_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
-  const isAssistant = useIsAssistantAvailable();
-
-  if (isAssistant) {
-    return null;
-  }
-
   return (
     <GenAIButton
       messages={() => getMessages(panel)}

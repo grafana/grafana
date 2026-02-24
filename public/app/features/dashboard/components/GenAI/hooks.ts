@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
@@ -196,4 +196,17 @@ export function useIsAssistantAvailable(): boolean {
   }, []);
 
   return available;
+}
+
+/**
+ * Wrapper that renders children only when the Assistant is NOT active.
+ * Used to gate LLM-plugin addon buttons so they don't appear alongside
+ * Assistant-powered inputs.
+ */
+export function LLMFallbackAddon({ children }: { children: React.ReactNode }): React.ReactNode {
+  const isAssistant = useIsAssistantAvailable();
+  if (isAssistant) {
+    return null;
+  }
+  return children;
 }

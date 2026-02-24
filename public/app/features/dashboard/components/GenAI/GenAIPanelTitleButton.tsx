@@ -1,7 +1,6 @@
 import { Dashboard, Panel } from '@grafana/schema';
 
 import { GenAIButton } from './GenAIButton';
-import { useIsAssistantAvailable } from './hooks';
 import { EventTrackingSrc } from './tracking';
 import { Message, Role, getFilteredPanelString } from './utils';
 
@@ -19,12 +18,6 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   `The title should be shorter than ${PANEL_TITLE_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel, dashboard }: GenAIPanelTitleButtonProps) => {
-  const isAssistant = useIsAssistantAvailable();
-
-  if (isAssistant) {
-    return null;
-  }
-
   return (
     <GenAIButton
       messages={() => getMessages(panel, dashboard)}
