@@ -1,29 +1,30 @@
 /**
- * Dashboard Mutation API -- Restricted API wrapper.
+ * Dashboard Mutation API -- Restricted API wrapper with built-in store.
  *
- * This module provides the API object exposed to plugins via RestrictedGrafanaApis.
+ * This module manages the single active MutationClient instance and provides
+ * the API object that is exposed to plugins via RestrictedGrafanaApis.
  *
- * The active MutationClient is managed by DashboardMutationBehavior (a $behavior
- * on DashboardScene) which stores it in dashboardMutationStore on
- * activation and clears it on deactivation.
- *
- * Plugins access this through RestrictedGrafanaApis context -- they cannot
+ * DashboardScene sets/clears the client on activation/deactivation.
+ * Plugins access it through RestrictedGrafanaApis context -- they cannot
  * import this module directly because it lives inside the core bundle.
  */
 
 import type { DashboardMutationAPI } from '@grafana/data';
 import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
-import type { MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
+import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
 
-import { getDashboardMutationClient } from './dashboardMutationStore';
+let _client: MutationClient | null = null;
+
+export function setDashboardMutationClient(client: MutationClient | null): void {
+  _client = client;
+}
 
 export const dashboardMutationApi: DashboardMutationAPI = {
   execute: (mutation: MutationRequest) => {
-    const client = getDashboardMutationClient();
-    if (!client) {
+    if (!_client) {
       return Promise.reject(new Error('Dashboard Mutation API is not available. No dashboard is currently loaded.'));
     }
-    return client.execute(mutation);
+    return _client.execute(mutation);
   },
   getPayloadSchema: (commandId: string) => {
     const normalized = commandId.toUpperCase();

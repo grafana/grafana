@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 
+import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -8,7 +9,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardMutationClient } from '../DashboardMutationClient';
-import type { MutableDashboardScene, MutationResult } from '../types';
+import type { MutationResult } from '../types';
 
 // Mock the edit-pane actions so that perform() is called synchronously
 // instead of publishing an event (which requires a DashboardScene subscriber).
@@ -53,7 +54,7 @@ function mockSerializer(elementMap: Record<string, number> = {}) {
   };
 }
 
-function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): MutableDashboardScene {
+function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): DashboardScene {
   const rows = rowTitles.map(
     (title) =>
       new RowItem({
@@ -84,10 +85,10 @@ function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): MutableDashbo
   };
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return scene as unknown as MutableDashboardScene;
+  return scene as unknown as DashboardScene;
 }
 
-function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): MutableDashboardScene {
+function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): DashboardScene {
   const tabs = tabTitles.map(
     (title) =>
       new TabItem({
@@ -118,10 +119,10 @@ function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): MutableDashbo
   };
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return scene as unknown as MutableDashboardScene;
+  return scene as unknown as DashboardScene;
 }
 
-function buildRowsSceneWithPanels(): MutableDashboardScene {
+function buildRowsSceneWithPanels(): DashboardScene {
   const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
   const panelB = new VizPanel({ key: 'panel-2', title: 'Panel B', pluginId: 'timeseries' });
 
@@ -156,7 +157,7 @@ function buildRowsSceneWithPanels(): MutableDashboardScene {
   };
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return scene as unknown as MutableDashboardScene;
+  return scene as unknown as DashboardScene;
 }
 
 /**
@@ -166,7 +167,7 @@ function buildRowsSceneWithPanels(): MutableDashboardScene {
 function buildSceneWithLayoutParent(
   body: DefaultGridLayoutManager | RowsLayoutManager | TabsLayoutManager | AutoGridLayoutManager,
   serializer = mockSerializer()
-): MutableDashboardScene {
+): DashboardScene {
   const state: Record<string, unknown> = {
     uid: 'test-dash',
     isEditing: false,
@@ -196,7 +197,7 @@ function buildSceneWithLayoutParent(
   };
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return scene as unknown as MutableDashboardScene;
+  return scene as unknown as DashboardScene;
 }
 
 describe('Layout mutation commands', () => {
@@ -679,7 +680,7 @@ describe('Layout mutation commands', () => {
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
-      } as unknown as MutableDashboardScene;
+      } as unknown as DashboardScene;
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -726,7 +727,7 @@ describe('Layout mutation commands', () => {
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
-      } as unknown as MutableDashboardScene;
+      } as unknown as DashboardScene;
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -769,7 +770,7 @@ describe('Layout mutation commands', () => {
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
-      } as unknown as MutableDashboardScene;
+      } as unknown as DashboardScene;
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -944,7 +945,7 @@ describe('Layout mutation commands', () => {
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
-      } as unknown as MutableDashboardScene;
+      } as unknown as DashboardScene;
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -1417,7 +1418,7 @@ describe('Layout mutation commands', () => {
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
-      } as unknown as MutableDashboardScene;
+      } as unknown as DashboardScene;
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -1459,7 +1460,7 @@ describe('Layout mutation commands', () => {
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
-      } as unknown as MutableDashboardScene;
+      } as unknown as DashboardScene;
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -1504,7 +1505,7 @@ describe('Layout mutation commands', () => {
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
-      } as unknown as MutableDashboardScene;
+      } as unknown as DashboardScene;
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -1546,7 +1547,7 @@ describe('Layout mutation commands', () => {
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
         }),
-      } as unknown as MutableDashboardScene;
+      } as unknown as DashboardScene;
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -1589,7 +1590,7 @@ describe('Layout mutation commands', () => {
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(tabsState, partial);
         }),
-      } as unknown as MutableDashboardScene;
+      } as unknown as DashboardScene;
 
       const executor = new DashboardMutationClient(tabsScene);
       const result = await executor.execute({

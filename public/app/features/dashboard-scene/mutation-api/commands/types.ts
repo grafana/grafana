@@ -9,15 +9,16 @@ import { z } from 'zod';
 
 import { config } from '@grafana/runtime';
 
-import type { MutableDashboardScene, MutationResult } from '../types';
+import type { DashboardScene } from '../../scene/DashboardScene';
+import type { MutationResult } from '../types';
 
 export interface MutationContext {
-  scene: MutableDashboardScene;
+  scene: DashboardScene;
 }
 
 export type PermissionCheckResult = { allowed: true } | { allowed: false; error: string };
 
-export type PermissionCheck = (scene: MutableDashboardScene) => PermissionCheckResult;
+export type PermissionCheck = (scene: DashboardScene) => PermissionCheckResult;
 
 /**
  * A complete mutation command: schema, handler, permission, and metadata.
@@ -41,7 +42,7 @@ export interface MutationCommand<T = unknown> {
 /**
  * Requires edit permissions on the dashboard (pure check, no side effects).
  */
-export function requiresEdit(scene: MutableDashboardScene): PermissionCheckResult {
+export function requiresEdit(scene: DashboardScene): PermissionCheckResult {
   if (!scene.canEditDashboard()) {
     return {
       allowed: false,
@@ -54,7 +55,7 @@ export function requiresEdit(scene: MutableDashboardScene): PermissionCheckResul
 /**
  * No permission requirements -- read-only operations.
  */
-export function readOnly(_scene: MutableDashboardScene): PermissionCheckResult {
+export function readOnly(_scene: DashboardScene): PermissionCheckResult {
   return { allowed: true };
 }
 
@@ -62,7 +63,7 @@ export function readOnly(_scene: MutableDashboardScene): PermissionCheckResult {
  * Requires the dashboardNewLayouts feature toggle AND edit permissions.
  * Used by all layout mutation commands (row/tab CRUD, panel movement).
  */
-export function requiresNewDashboardLayouts(scene: MutableDashboardScene): PermissionCheckResult {
+export function requiresNewDashboardLayouts(scene: DashboardScene): PermissionCheckResult {
   if (!config.featureToggles.dashboardNewLayouts) {
     return {
       allowed: false,
@@ -76,7 +77,7 @@ export function requiresNewDashboardLayouts(scene: MutableDashboardScene): Permi
  * Requires the dashboardNewLayouts feature toggle (read-only).
  * Used by GET_LAYOUT and other read-only layout commands.
  */
-export function requiresNewDashboardLayoutsReadOnly(_scene: MutableDashboardScene): PermissionCheckResult {
+export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): PermissionCheckResult {
   if (!config.featureToggles.dashboardNewLayouts) {
     return {
       allowed: false,
@@ -90,7 +91,7 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: MutableDashboardScen
  * Enter edit mode if the dashboard is not already editing.
  * Call this at the top of any command handler that modifies the dashboard.
  */
-export function enterEditModeIfNeeded(scene: MutableDashboardScene): void {
+export function enterEditModeIfNeeded(scene: DashboardScene): void {
   if (!scene.state.isEditing) {
     scene.onEnterEditMode();
   }

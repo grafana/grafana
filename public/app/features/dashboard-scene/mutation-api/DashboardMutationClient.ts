@@ -13,22 +13,24 @@
  * 3. Payload validation (does the payload match the Zod schema?)
  */
 
+import type { DashboardScene } from '../scene/DashboardScene';
+
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
 import type { MutationCommand, MutationContext } from './commands/types';
-import type { MutableDashboardScene, MutationClient, MutationRequest, MutationResult } from './types';
+import type { MutationClient, MutationRequest, MutationResult } from './types';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
 
 interface CommandRegistration {
   handler: MutationHandler;
-  canExecute: (scene: MutableDashboardScene) => { allowed: true } | { allowed: false; error: string };
+  canExecute: (scene: DashboardScene) => { allowed: true } | { allowed: false; error: string };
 }
 
 export class DashboardMutationClient implements MutationClient {
-  private scene: MutableDashboardScene;
+  private scene: DashboardScene;
   private commands: Map<string, CommandRegistration> = new Map();
 
-  constructor(scene: MutableDashboardScene) {
+  constructor(scene: DashboardScene) {
     this.scene = scene;
     for (const cmd of ALL_COMMANDS) {
       this.registerCommand(cmd);

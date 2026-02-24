@@ -1,8 +1,7 @@
 import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 
-import { dashboardMutationApi } from './dashboardMutationApi';
-import { setDashboardMutationClient } from './dashboardMutationStore';
+import { dashboardMutationApi, setDashboardMutationClient } from './dashboardMutationApi';
 
 function createMockClient(): MutationClient {
   return {
@@ -84,8 +83,6 @@ describe('dashboardMutationApi', () => {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- checking window global doesn't leak
       expect((window as Record<string, unknown>).__grafanaDashboardMutationAPI).toBeUndefined();
-
-      setDashboardMutationClient(null);
     });
   });
 });
