@@ -66,7 +66,7 @@ The headline is improved dashboard productivity: Dynamic dashboards and template
 
 Beyond dashboards, this version includes improvements across the product: Logs and Logs Drilldown get better default columns and save/resume log explorations, data sources receive sensible new defaults and expanded support, SCIM provisioning simplifies user and team management, short URLs are now persistent, and a small set of breaking changes and storage migration enhancements help ensure long-term manageability.
 
-{{< youtube id=VidGeu4PRZw >}}
+{{< youtube id=fWpL1Upc754 >}}
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v12.4, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v12.4/).
 
