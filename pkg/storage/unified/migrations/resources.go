@@ -23,7 +23,7 @@ func registerMigrations(ctx context.Context,
 ) error {
 	for _, def := range registry.All() {
 		if shouldAutoMigrate(ctx, def, cfg, sqlStore) {
-			registerMigration(mg, migrator, cfg, client, def, WithAutoMigrate(cfg))
+			registerMigration(mg, migrator, tableLocker, cfg, client, def, WithAutoMigrate(cfg))
 			continue
 		}
 
