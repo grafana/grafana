@@ -232,6 +232,70 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test-v2", obj.GetName())
 
+	t.Run("invalid v2 in legacy apis", func(t *testing.T) {
+		cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+		cfg.GroupVersion = &dashboardV0.GroupVersion
+		adminClient, err := k8srest.RESTClientFor(cfg)
+		require.NoError(t, err)
+
+		testCases := []struct {
+			name     string
+			input    map[string]any
+			expect   string
+			asV0spec bool
+		}{{
+			name: "with apiVersion",
+			input: map[string]any{
+				"apiVersion": "v2",
+			},
+			expect: "Dashboard appears to be a full k8s style resource",
+		}, {
+			name: "with elements",
+			input: map[string]any{
+				"elements": []any{},
+			},
+			expect: "Dashboard appears to be in v2 format",
+		}, {
+			name: "with layout",
+			input: map[string]any{
+				"layout": "???",
+			},
+			expect: "Dashboard appears to be in v2 format",
+		}, {
+			name: "missing title",
+			input: map[string]any{
+				"panels": []any{},
+			},
+			expect: "Dashboard is missing required title property",
+		}}
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				dash, err := json.Marshal(tc.input)
+				require.NoError(t, err)
+
+				var statusCode int
+				result := adminClient.Post().AbsPath("api", "dashboards", "db").
+					Body([]byte(`{"dashboard": `+string(dash)+`}`)).
+					SetHeader("Content-type", "application/json").
+					Do(ctx).
+					StatusCode(&statusCode)
+				body, _ := result.Raw()
+				require.Equal(t, int(http.StatusBadRequest), statusCode)
+				require.Contains(t, string(body), tc.expect)
+
+				if tc.asV0spec {
+					obj := &unstructured.Unstructured{
+						Object: map[string]any{
+							"spec": tc.input,
+						},
+					}
+					_, err := clientV0.Resource.Create(ctx, obj, metav1.CreateOptions{})
+					require.ErrorContains(t, err, tc.expect)
+				}
+			})
+		}
+	})
+
 	//---------------------------------------------------------
 	// Now check that we can get each dashboard with any API
 	//---------------------------------------------------------

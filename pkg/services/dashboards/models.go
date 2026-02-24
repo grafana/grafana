@@ -399,6 +399,19 @@ type SaveDashboardDTO struct {
 	Dashboard *Dashboard
 }
 
+func LooksLikeK8sResource(data map[string]any) bool {
+	if _, ok := data["apiVersion"]; ok {
+		return true
+	}
+	if _, ok := data["metadata"]; ok {
+		return true
+	}
+	if _, ok := data["spec"]; ok {
+		return true
+	}
+	return false
+}
+
 func LooksLikeV2Spec(data map[string]any) bool {
 	if _, ok := data["elements"]; ok {
 		return true
