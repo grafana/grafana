@@ -5,17 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
-
-	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
 )
-
-func AppManifests() []app.Manifest {
-	return []app.Manifest{
-		// TODO: don't use hardcoded list of manifests.
-		// We include iam manifests because they actually have some selectable fields defined.
-		iam.LocalManifest(),
-	}
-}
 
 // SelectableFields returns map of <group>/<Kind> to list of selectable fields for known manifests.
 func SelectableFields() map[string][]string {

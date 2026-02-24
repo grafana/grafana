@@ -26,11 +26,13 @@ export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Optio
     console.log('Was angular table', panel);
   }
 
+  // ensure overrides array exists before applying rest of overrides
+  panel.fieldConfig.overrides = panel.fieldConfig.overrides ?? [];
+
   migrateTextWrapToFieldLevel(panel);
   migrateHiddenFields(panel);
   migrateFooterV2(panel);
 
-  // Nothing changed
   return panel.options;
 };
 

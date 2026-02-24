@@ -31,11 +31,17 @@ func (t *SimpleConnectionTester) TestConnection(ctx context.Context, conn *provi
 			Errors:  make([]provisioning.ErrorDetails, len(errors)),
 		}
 		for i, err := range errors {
-			rsp.Errors[i] = provisioning.ErrorDetails{
-				Type:   metav1.CauseType(err.Type),
-				Field:  err.Field,
-				Detail: err.Detail,
+			details := provisioning.ErrorDetails{
+				Type:     metav1.CauseType(err.Type),
+				Field:    err.Field,
+				Detail:   err.Detail,
+				BadValue: "",
 			}
+			if err.BadValue != nil {
+				details.BadValue = err.BadValue
+			}
+
+			rsp.Errors[i] = details
 		}
 		return rsp, nil
 	}

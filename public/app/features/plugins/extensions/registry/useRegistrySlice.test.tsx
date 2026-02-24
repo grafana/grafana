@@ -21,10 +21,10 @@ describe('useRegistrySlice', () => {
 
   beforeEach(() => {
     registries = {
-      addedComponentsRegistry: new AddedComponentsRegistry(),
-      exposedComponentsRegistry: new ExposedComponentsRegistry(),
-      addedLinksRegistry: new AddedLinksRegistry(),
-      addedFunctionsRegistry: new AddedFunctionsRegistry(),
+      addedComponentsRegistry: new AddedComponentsRegistry([]),
+      exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+      addedLinksRegistry: new AddedLinksRegistry([]),
+      addedFunctionsRegistry: new AddedFunctionsRegistry([]),
     };
 
     wrapper = ({ children }: { children: React.ReactNode }) => (

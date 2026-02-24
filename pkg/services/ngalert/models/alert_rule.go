@@ -365,7 +365,7 @@ type AlertRule struct {
 	Annotations          map[string]string
 	Labels               map[string]string
 	IsPaused             bool
-	NotificationSettings []NotificationSettings
+	NotificationSettings *NotificationSettings
 	Metadata             AlertRuleMetadata
 	// MissingSeriesEvalsToResolve specifies the number of consecutive evaluation intervals
 	// required before resolving an alert state (a dimension) when data is missing.
@@ -400,10 +400,30 @@ type Namespaced interface {
 	GetNamespaceUID() string
 }
 
-type Namespace folder.FolderReference
+// NamespacedWithFullpath extends Namespaced with pre-computed folder path UIDs.
+type NamespacedWithFullpath interface {
+	Namespaced
+	GetFullpathUIDs() string
+}
+
+// Namespace represents a folder that can contain alert rules.
+type Namespace struct {
+	folder.FolderReference
+	FullpathUIDs string
+}
 
 func NewNamespace(f *folder.Folder) Namespace {
-	return Namespace(*f.ToFolderReference())
+	return Namespace{
+		FolderReference: *f.ToFolderReference(),
+		FullpathUIDs:    f.FullpathUIDs,
+	}
+}
+
+// NewNamespaceUID creates a Namespace with just a UID (no fullpath for optimized checks).
+func NewNamespaceUID(uid string) Namespace {
+	return Namespace{
+		FolderReference: folder.FolderReference{UID: uid},
+	}
 }
 
 func (n Namespace) ValidateForRuleStorage() error {
@@ -418,6 +438,10 @@ func (n Namespace) ValidateForRuleStorage() error {
 
 func (n Namespace) GetNamespaceUID() string {
 	return n.UID
+}
+
+func (n Namespace) GetFullpathUIDs() string {
+	return n.FullpathUIDs
 }
 
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
@@ -782,14 +806,12 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		}
 	}
 
-	if len(alertRule.NotificationSettings) > 0 {
-		if len(alertRule.NotificationSettings) != 1 {
-			return fmt.Errorf("%w: only one notification settings entry is allowed", ErrAlertRuleFailedValidation)
-		}
-		if err := alertRule.NotificationSettings[0].Validate(); err != nil {
+	if alertRule.NotificationSettings != nil {
+		if err := alertRule.NotificationSettings.Validate(); err != nil {
 			return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("invalid notification settings: %w", err))
 		}
 	}
+
 	return nil
 }
 
@@ -821,6 +843,13 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 	ClearRecordingRuleIgnoredFields(rule)
 
 	return nil
+}
+
+func (alertRule *AlertRule) ContactPointRouting() *ContactPointRouting {
+	if alertRule.NotificationSettings == nil {
+		return nil
+	}
+	return alertRule.NotificationSettings.ContactPointRouting
 }
 
 func (alertRule *AlertRule) ResourceType() string {
@@ -926,8 +955,8 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		result.Metadata.PrometheusStyleRule = &prometheusStyleRule
 	}
 
-	for _, s := range alertRule.NotificationSettings {
-		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
+	if alertRule.NotificationSettings != nil {
+		result.NotificationSettings = util.Pointer(CopyNotificationSettings(*alertRule.NotificationSettings))
 	}
 
 	return &result

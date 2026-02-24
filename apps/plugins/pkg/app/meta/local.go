@@ -28,13 +28,13 @@ func NewLocalProvider(pluginStore pluginstore.Store, moduleHashCalc *modulehash.
 }
 
 // GetMeta retrieves plugin metadata for locally installed plugins.
-func (p *LocalProvider) GetMeta(ctx context.Context, pluginID, version string) (*Result, error) {
-	plugin, exists := p.store.Plugin(ctx, pluginID)
+func (p *LocalProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
+	plugin, exists := p.store.Plugin(ctx, ref.ID)
 	if !exists {
 		return nil, ErrMetaNotFound
 	}
 
-	moduleHash := p.moduleHashCalc.ModuleHash(ctx, pluginID, version)
+	moduleHash := p.moduleHashCalc.ModuleHash(ctx, ref.ID, ref.Version)
 	spec := pluginStorePluginToMeta(plugin, moduleHash)
 	return &Result{
 		Meta: spec,

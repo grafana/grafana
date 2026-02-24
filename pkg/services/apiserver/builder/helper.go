@@ -50,10 +50,32 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + matches[2] + "/name" // connector requires a name
 		},
 	},
+	{ // Migrate datasource.grafana.app to query.grafana.app
+		Pattern: regexp.MustCompile(`/apis/datasource.grafana.app/v0alpha1(.*$)`),
+		ReplaceFunc: func(matches []string) string {
+			result := "/apis/query.grafana.app/v0alpha1" + matches[1]
+			if strings.HasSuffix(matches[1], "/query") {
+				result += "/name" // same as the rewrite pattern below
+			}
+			if strings.HasSuffix(matches[1], "/sqlschemas") && !strings.Contains(matches[1], "/query/") {
+				result = strings.Replace(result, "/sqlschemas", "/query/sqlschemas", 1)
+			}
+			return result
+		},
+	},
 	{
 		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/query$)`),
 		ReplaceFunc: func(matches []string) string {
 			return matches[1] + "/name" // connector requires a name
+		},
+	},
+	{
+		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/)sqlschemas$`),
+		ReplaceFunc: func(matches []string) string {
+			if strings.HasSuffix(matches[0], "query/sqlschemas") {
+				return matches[0] // already rewritten
+			}
+			return matches[1] + "query/sqlschemas"
 		},
 	},
 	{

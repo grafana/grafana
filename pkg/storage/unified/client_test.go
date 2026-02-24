@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -51,11 +52,11 @@ func TestUnifiedStorageClient(t *testing.T) {
 
 			testCallAllMethods(client)
 			// every method should hit resource server exactly once
-			for method, count := range resourceServer.Calls {
+			for method, count := range resourceServer.getCalls() {
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 			}
 			// no hits to the index server in this case
-			for range indexServer.Calls {
+			for range indexServer.getCalls() {
 				require.FailNow(t, "index server was called when it should have not")
 			}
 		})
@@ -85,16 +86,45 @@ func TestUnifiedStorageClient(t *testing.T) {
 
 			testCallAllMethods(client)
 			// only resource store methods in this case
-			for method, count := range resourceServer.Calls {
+			for method, count := range resourceServer.getCalls() {
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 				require.True(t, strings.Contains(method, "resource.ResourceStore"))
 			}
 			// index server methods should be called here
-			for method, count := range indexServer.Calls {
+			for method, count := range indexServer.getCalls() {
 				require.Equal(t, 1, count, "method was called more than once: "+method)
 				require.True(t, strings.Contains(method, "resource.ResourceIndex") || strings.Contains(method, "resource.ManagedObjectIndex"))
 			}
 		})
+	})
+}
+
+func TestNewSearchClient(t *testing.T) {
+	t.Run("new search client fails when address is empty", func(t *testing.T) {
+		cfg := setting.NewCfg()
+
+		_, err := NewSearchClient(cfg, featuremgmt.WithFeatures())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "search_server_address")
+	})
+
+	t.Run("returns nil when creating storage api search client when EnableSearchClient is false", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.EnableSearchClient = false
+
+		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.Nil(t, client)
+	})
+
+	t.Run("new search client succeeds when address is provided", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.EnableSearchClient = true
+		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:12345")
+
+		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.NotNil(t, client)
 	})
 }
 
@@ -131,6 +161,7 @@ func createTestGrpcServer(t *testing.T, address string) *testServer {
 type testServer struct {
 	resource.ResourceServer
 	Calls map[string]int
+	mu    sync.Mutex
 	s     *grpc.Server
 }
 
@@ -141,13 +172,30 @@ func newTestServer() *testServer {
 }
 
 func (s *testServer) resetCalls() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.Calls = make(map[string]int)
+}
+
+func (s *testServer) getCalls() map[string]int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	calls := make(map[string]int, len(s.Calls))
+	for method, count := range s.Calls {
+		calls[method] = count
+	}
+
+	return calls
 }
 
 func (s *testServer) handler(srv interface{}, serverStream grpc.ServerStream) error {
 	fullMethodName, ok := grpc.MethodFromServerStream(serverStream)
 	if ok {
+		s.mu.Lock()
 		s.Calls[fullMethodName]++
+		s.mu.Unlock()
 	}
 	return nil
 }

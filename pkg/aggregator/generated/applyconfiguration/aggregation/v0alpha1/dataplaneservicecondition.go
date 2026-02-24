@@ -11,12 +11,20 @@ import (
 
 // DataPlaneServiceConditionApplyConfiguration represents a declarative configuration of the DataPlaneServiceCondition type for use
 // with apply.
+//
+// DataPlaneServiceCondition describes the state of an DataPlaneService at a particular point
 type DataPlaneServiceConditionApplyConfiguration struct {
-	Type               *aggregationv0alpha1.DataPlaneServiceConditionType `json:"type,omitempty"`
-	Status             *aggregationv0alpha1.ConditionStatus               `json:"status,omitempty"`
-	LastTransitionTime *v1.Time                                           `json:"lastTransitionTime,omitempty"`
-	Reason             *string                                            `json:"reason,omitempty"`
-	Message            *string                                            `json:"message,omitempty"`
+	// Type is the type of the condition.
+	Type *aggregationv0alpha1.DataPlaneServiceConditionType `json:"type,omitempty"`
+	// Status is the status of the condition.
+	// Can be True, False, Unknown.
+	Status *aggregationv0alpha1.ConditionStatus `json:"status,omitempty"`
+	// Last time the condition transitioned from one status to another.
+	LastTransitionTime *v1.Time `json:"lastTransitionTime,omitempty"`
+	// Unique, one-word, CamelCase reason for the condition's last transition.
+	Reason *string `json:"reason,omitempty"`
+	// Human-readable message indicating details about last transition.
+	Message *string `json:"message,omitempty"`
 }
 
 // DataPlaneServiceConditionApplyConfiguration constructs a declarative configuration of the DataPlaneServiceCondition type for use with

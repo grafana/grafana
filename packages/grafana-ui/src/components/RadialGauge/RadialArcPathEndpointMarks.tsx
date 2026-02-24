@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { FieldDisplay } from '@grafana/data';
 
 import { getEndpointMarkerColors, getGuideDotColor } from './colors';
@@ -36,63 +38,67 @@ const DOT_OPACITY = 0.5;
 const DOT_RADIUS_FACTOR = 0.4;
 const MAX_DOT_RADIUS = 8;
 
-export function RadialArcPathEndpointMarks({
-  startAngle: angle,
-  arcLengthDeg,
-  dimensions,
-  endpointMarker,
-  fieldDisplay,
-  xStart,
-  xEnd,
-  yStart,
-  yEnd,
-  roundedBars,
-  endpointMarkerGlowFilter,
-  glowFilter,
-  ...rest
-}: RadialArcPathEndpointMarksProps) {
-  const isGradient = 'gradient' in rest;
-  const { radius, centerX, centerY, barWidth } = dimensions;
-  const endRadians = toRad(angle + arcLengthDeg);
+export const RadialArcPathEndpointMarks = memo(
+  ({
+    startAngle: angle,
+    arcLengthDeg,
+    dimensions,
+    endpointMarker,
+    fieldDisplay,
+    xStart,
+    xEnd,
+    yStart,
+    yEnd,
+    roundedBars,
+    endpointMarkerGlowFilter,
+    glowFilter,
+    ...rest
+  }: RadialArcPathEndpointMarksProps) => {
+    const isGradient = 'gradient' in rest;
+    const { radius, centerX, centerY, barWidth } = dimensions;
+    const endRadians = toRad(angle + arcLengthDeg);
 
-  switch (endpointMarker) {
-    case 'point': {
-      const [pointColorStart, pointColorEnd] = isGradient
-        ? getEndpointMarkerColors(rest.gradient, fieldDisplay.display.percent)
-        : [getGuideDotColor(rest.color), getGuideDotColor(rest.color)];
+    switch (endpointMarker) {
+      case 'point': {
+        const [pointColorStart, pointColorEnd] = isGradient
+          ? getEndpointMarkerColors(rest.gradient, fieldDisplay.display.percent)
+          : [getGuideDotColor(rest.color), getGuideDotColor(rest.color)];
 
-      const dotRadius =
-        endpointMarker === 'point' ? Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS) : barWidth / 2;
+        const dotRadius =
+          endpointMarker === 'point' ? Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS) : barWidth / 2;
 
-      return (
-        <>
-          {arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE && (
-            <circle cx={xStart} cy={yStart} r={dotRadius} fill={pointColorStart} opacity={DOT_OPACITY} />
-          )}
-          <circle cx={xEnd} cy={yEnd} r={dotRadius} fill={pointColorEnd} opacity={DOT_OPACITY} />
-        </>
-      );
-    }
-    case 'glow':
-      const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
-      const xStartMark = centerX + radius * Math.cos(endRadians + offsetAngle);
-      const yStartMark = centerY + radius * Math.sin(endRadians + offsetAngle);
-      if (arcLengthDeg <= ENDPOINT_MARKER_MIN_ANGLE) {
-        break;
+        return (
+          <>
+            {arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE && (
+              <circle cx={xStart} cy={yStart} r={dotRadius} fill={pointColorStart} opacity={DOT_OPACITY} />
+            )}
+            <circle cx={xEnd} cy={yEnd} r={dotRadius} fill={pointColorEnd} opacity={DOT_OPACITY} />
+          </>
+        );
       }
-      return (
-        <path
-          d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
-          fill="none"
-          strokeWidth={barWidth}
-          stroke={endpointMarkerGlowFilter}
-          strokeLinecap={roundedBars ? 'round' : 'butt'}
-          filter={glowFilter}
-        />
-      );
-    default:
-      break;
-  }
+      case 'glow':
+        if (arcLengthDeg <= ENDPOINT_MARKER_MIN_ANGLE) {
+          return null;
+        }
+        const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
+        const xStartMark = centerX + radius * Math.cos(endRadians + offsetAngle);
+        const yStartMark = centerY + radius * Math.sin(endRadians + offsetAngle);
+        return (
+          <path
+            d={`M ${xStartMark} ${yStartMark} A ${radius} ${radius} 0 0 1 ${xEnd} ${yEnd}`}
+            fill="none"
+            strokeWidth={barWidth}
+            stroke={endpointMarkerGlowFilter}
+            strokeLinecap={roundedBars ? 'round' : 'butt'}
+            filter={glowFilter}
+          />
+        );
+      default:
+        break;
+    }
 
-  return null;
-}
+    return null;
+  }
+);
+
+RadialArcPathEndpointMarks.displayName = 'RadialArcPathEndpointMarks';

@@ -28,7 +28,22 @@ export {
 
 export { UserStorage } from '../utils/userStorage';
 
-export { initOpenFeature, evaluateBooleanFlag } from './openFeature';
+export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
+
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
-export { useAppPluginMeta, useAppPluginMetas } from '../services/pluginMeta/hooks';
-export type { AppPluginMetas } from '../services/pluginMeta/types';
+export {
+  useAppPluginMeta,
+  useAppPluginMetas,
+  usePanelPluginMeta,
+  usePanelPluginMetas,
+  usePanelPluginMetasMap,
+} from '../services/pluginMeta/hooks';
+export type { AppPluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
+export { getCachedPromise, invalidateCache, setLogger } from '../utils/getCachedPromise';
+export {
+  getPanelPluginMeta,
+  getPanelPluginMetas,
+  getPanelPluginMetasMap,
+  setPanelPluginMetas,
+  refetchPanelPluginMetas,
+} from '../services/pluginMeta/panels';

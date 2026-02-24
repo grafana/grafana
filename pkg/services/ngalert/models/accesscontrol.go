@@ -10,21 +10,30 @@ import (
 )
 
 const (
-	ScopeReceiversRoot = "receivers"
-	AlertRolesGroup    = "Alerting"
+	ScopeReceiversRoot       = "receivers"
+	ScopeInhibitionRulesRoot = "inhibition-rules"
+	AlertRolesGroup          = "Alerting"
 
 	PermissionView  ReceiverPermission = "View"
 	PermissionEdit  ReceiverPermission = "Edit"
 	PermissionAdmin ReceiverPermission = "Admin"
+
+	NewReceiverScopeID = "-"
 )
 
 var (
-	ScopeReceiversProvider = ReceiverScopeProvider{accesscontrol.NewScopeProvider(ScopeReceiversRoot)}
-	ScopeReceiversAll      = ScopeReceiversProvider.GetResourceAllScope()
+	ScopeReceiversProvider       = ReceiverScopeProvider{accesscontrol.NewScopeProvider(ScopeReceiversRoot)}
+	ScopeReceiversAll            = ScopeReceiversProvider.GetResourceAllScope()
+	ScopeInhibitionRulesProvider = accesscontrol.NewScopeProvider(ScopeInhibitionRulesRoot)
+	ScopeInhibitionRulesAll      = ScopeInhibitionRulesProvider.GetResourceAllScope()
 )
 
 type ReceiverScopeProvider struct {
 	accesscontrol.ScopeProvider
+}
+
+func (p ReceiverScopeProvider) GetNewResourceScope() string {
+	return ScopeReceiversProvider.ScopeProvider.GetResourceScopeUID(p.GetResourceIDFromUID(NewReceiverScopeID))
 }
 
 func (p ReceiverScopeProvider) GetResourceScopeUID(uid string) string {

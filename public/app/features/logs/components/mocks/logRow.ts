@@ -49,6 +49,6 @@ export const createLogLine = (
     wrapLogMessage: true,
   }
 ): LogListModel => {
-  const logs = preProcessLogs([createLogRow(overrides)], processOptions);
+  const logs = preProcessLogs([createLogRow({ datasourceUid: 'abc-123', ...overrides })], processOptions);
   return logs[0];
 };

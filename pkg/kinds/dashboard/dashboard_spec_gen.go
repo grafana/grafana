@@ -32,7 +32,7 @@ type Spec struct {
 	// to see if the version has changed since the last time.
 	Revision *int64 `json:"revision,omitempty"`
 	// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
-	GnetId *string `json:"gnetId,omitempty"`
+	GnetId *int64 `json:"gnetId,omitempty"`
 	// Tags associated with dashboard.
 	Tags []string `json:"tags,omitempty"`
 	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
@@ -407,7 +407,7 @@ type FieldConfig struct {
 	// True if data source field supports ad-hoc filters
 	Filterable *bool `json:"filterable,omitempty"`
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -903,6 +903,8 @@ type VariableOption struct {
 	Text StringOrArrayOfString `json:"text"`
 	// Value of the option
 	Value StringOrArrayOfString `json:"value"`
+	// Additional properties for multi-props variables
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // NewVariableOption creates a new VariableOption object.

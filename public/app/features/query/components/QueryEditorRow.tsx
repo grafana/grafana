@@ -550,7 +550,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             )}
             {editor}
           </ErrorBoundaryAlert>
-          {error && <QueryErrorAlert error={error} />}
+          {error && <QueryErrorAlert error={error} query={query} />}
           {visualization}
         </div>
       </QueryOperationRow>
@@ -626,7 +626,7 @@ function SavedQueryButtons(props: {
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
   datasourceFilters: string[];
-  parentRef: React.RefObject<HTMLDivElement>;
+  parentRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
   return renderSavedQueryButtons(

@@ -40,7 +40,7 @@
     "minInterval": true
   },
   "dependencies": {
-    "grafanaDependency": ">=11.6.0",
+    "grafanaDependency": ">=12.3.0",
     "plugins": []
   }
 }

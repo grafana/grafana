@@ -24,8 +24,8 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 			uidScope := datasources.ScopeProvider.GetResourceScopeUID(attr.GetName())
 
-			// Must have query access to see a connection
-			if attr.GetResource() == b.datasourceResourceInfo.GroupResource().Resource {
+			// Must have query permission to access any subresource
+			if attr.GetSubresource() != "" {
 				scopes := []string{}
 				if attr.GetName() != "" {
 					scopes = []string{uidScope}
@@ -42,7 +42,7 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionAllow, "", nil
 			}
 
-			// Must have query access to see a connection
+			// Check for the right actions for datasource CRUD
 			action := "" // invalid
 
 			switch attr.GetVerb() {

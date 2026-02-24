@@ -9,9 +9,9 @@ import { Alert, Button, Divider, Field, Input, RadioButtonGroup, Stack, Text, us
 import { getExpireOptions } from '../../ShareSnapshotTab';
 
 const DASHBOARD_SNAPSHOT_URL =
-  'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/#share-a-snapshot';
+  'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#share-a-snapshot';
 
-const PANEL_SNAPSHOT_URL = 'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/#panel-snapshot';
+const PANEL_SNAPSHOT_URL = 'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#panel-snapshot';
 
 interface Props {
   name: string;

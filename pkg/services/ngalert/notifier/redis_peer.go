@@ -459,7 +459,7 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	close(p.readyc)
 }
 
-func (p *redisPeer) AddState(key string, state alertingCluster.State, _ prometheus.Registerer) alertingCluster.ClusterChannel {
+func (p *redisPeer) AddState(key string, state alertingCluster.State, _ prometheus.Registerer, _ ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
 	p.statesMtx.Lock()
 	defer p.statesMtx.Unlock()
 	p.states[key] = state

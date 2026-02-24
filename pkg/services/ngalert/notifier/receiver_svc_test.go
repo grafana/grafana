@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -285,7 +286,7 @@ func TestReceiverService_Delete(t *testing.T) {
 		deleteUID        string
 		callerProvenance models.Provenance
 		version          string
-		storeSettings    map[models.AlertRuleKey][]models.NotificationSettings
+		storeSettings    map[models.AlertRuleKey]models.ContactPointRouting
 		existing         *models.Receiver
 		expectedErr      error
 		opts             []createReceiverServiceSutOpt
@@ -326,10 +327,8 @@ func TestReceiverService_Delete(t *testing.T) {
 			user:      writer,
 			deleteUID: baseReceiver.UID,
 			existing:  util.Pointer(baseReceiver.Clone()),
-			storeSettings: map[models.AlertRuleKey][]models.NotificationSettings{
-				{OrgID: 1, UID: "rule1"}: {
-					models.NotificationSettingsGen(models.NSMuts.WithReceiver(baseReceiver.Name))(),
-				},
+			storeSettings: map[models.AlertRuleKey]models.ContactPointRouting{
+				{OrgID: 1, UID: "rule1"}: models.ContactPointRoutingGen(models.CPRMuts.WithReceiver(baseReceiver.Name))(),
 			},
 			expectedErr: makeReceiverInUseErr(false, []models.AlertRuleKey{{OrgID: 1, UID: "rule1"}}),
 		},
@@ -379,7 +378,7 @@ func TestReceiverService_Delete(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			store := &fakeAlertRuleNotificationStore{}
-			store.ListNotificationSettingsFn = func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+			store.ListContactPointRoutingsFn = func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 				return tc.storeSettings, nil
 			}
 			sut := createReceiverServiceSut(t, &secretsService, tc.opts...)
@@ -973,8 +972,8 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
 		require.NoError(t, err)
 
-		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName), "old receiver name '%s' should not be used by routes", receiverName)
-		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName), "new receiver name '%s' should be used by routes", newReceiverName)
+		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName, false), "old receiver name '%s' should not be used by routes", receiverName)
+		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName, false), "new receiver name '%s' should be used by routes", newReceiverName)
 	})
 
 	t.Run("returns ErrReceiverDependentResourcesProvenance if route has different provenance status", func(t *testing.T) {
@@ -1645,7 +1644,7 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 		name             string
 		user             identity.Requester
 		storeRoute       definitions.Route
-		storeSettings    map[models.AlertRuleKey][]models.NotificationSettings
+		storeSettings    map[models.AlertRuleKey]models.ContactPointRouting
 		existing         []*models.Receiver
 		expectedMetadata map[string]models.ReceiverMetadata
 	}{
@@ -1658,15 +1657,9 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"))()),
 				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver4"))()),
 			},
-			storeSettings: map[models.AlertRuleKey][]models.NotificationSettings{
-				{OrgID: 1, UID: "rule1uid"}: {
-					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver1"))(),
-					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver2"))(),
-				},
-				{OrgID: 1, UID: "rule2uid"}: {
-					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver2"))(),
-					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver3"))(),
-				},
+			storeSettings: map[models.AlertRuleKey]models.ContactPointRouting{
+				{OrgID: 1, UID: "rule1uid"}: models.ContactPointRoutingGen(models.CPRMuts.WithReceiver("receiver1"))(),
+				{OrgID: 1, UID: "rule2uid"}: models.ContactPointRoutingGen(models.CPRMuts.WithReceiver("receiver2"))(),
 			},
 			storeRoute: definitions.Route{
 				Receiver: "receiver1",
@@ -1689,12 +1682,12 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 					CanUse:        true,
 				},
 				legacy_storage.NameToUid("receiver2"): {
-					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}, {OrgID: 1, UID: "rule2uid"}},
+					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule2uid"}},
 					InUseByRoutes: 1,
 					CanUse:        true,
 				},
 				legacy_storage.NameToUid("receiver3"): {
-					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule2uid"}},
+					InUseByRules:  []models.AlertRuleKey{},
 					InUseByRoutes: 2,
 					CanUse:        true,
 				},
@@ -1708,7 +1701,7 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			store := &fakeAlertRuleNotificationStore{}
-			store.ListNotificationSettingsFn = func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+			store.ListContactPointRoutingsFn = func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 				return tc.storeSettings, nil
 			}
 
@@ -1784,7 +1777,7 @@ func withInvalidExtraConfig(t *testing.T, sut *ReceiverService) {
 	extra.AlertmanagerConfig = "yaml:invalid"
 	cfg := createEncryptedConfig(t, sut.encryptionService, extra)
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
-	sut.cfgStore = legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(sut.encryptionService))
+	sut.cfgStore = legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(sut.encryptionService), featuremgmt.WithFeatures())
 }
 
 func withImportedIncluded(_ *testing.T, sut *ReceiverService) {
@@ -1799,9 +1792,10 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 
 	sut := NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false),
-		legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(encryptSvc)),
+		legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(encryptSvc), featuremgmt.WithFeatures()),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
+		routes.NewFakeService(legacy_storage.ConfigRevision{}),
 		encryptSvc,
 		xact,
 		log.NewNopLogger(),

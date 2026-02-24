@@ -16,3 +16,8 @@ func NewLogsDrilldownSpec() *LogsDrilldownSpec {
 		DefaultFields: []string{},
 	}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for LogsDrilldownSpec.
+func (LogsDrilldownSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1alpha1.LogsDrilldownSpec"
+}

@@ -190,8 +190,9 @@ func TestRenderLimitImageError(t *testing.T) {
 func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 	cfg := setting.NewCfg()
 	rs := &RenderingService{
-		Cfg: cfg,
-		log: log.New("rendering-test"),
+		Cfg:       cfg,
+		log:       log.New("rendering-test"),
+		netClient: &http.Client{},
 	}
 
 	t.Run("When renderer responds with correct version should return that version", func(t *testing.T) {
@@ -221,6 +222,18 @@ func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, version, "1.0.0")
+	})
+
+	t.Run("When renderer responds with 408 it returns a ErrServerTimeout error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusRequestTimeout)
+		}))
+		defer server.Close()
+
+		rs.Cfg.RendererServerUrl = server.URL + "/render"
+
+		_, err := rs.getRemotePluginVersion()
+		require.ErrorIs(t, err, ErrServerTimeout)
 	})
 
 	t.Run("When renderer responds with 500 should retry until success", func(t *testing.T) {

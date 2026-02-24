@@ -11,7 +11,10 @@ import (
 )
 
 var (
-	ErrNotImplemented = errors.New("not implemented")
+	ErrNotImplemented   = errors.New("not implemented")
+	ErrNotFound         = errors.New("not found")
+	ErrRepositoryAccess = errors.New("cannot access repository")
+	ErrAuthentication   = errors.New("authentication failed")
 )
 
 type ExpirableSecureValue struct {

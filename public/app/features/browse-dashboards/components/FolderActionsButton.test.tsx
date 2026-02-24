@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, userEvent } from 'test/test-utils';
 
 import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
@@ -119,7 +119,7 @@ describe('browse-dashboards FolderActionsButton', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
     await userEvent.click(screen.getByRole('menuitem', { name: managePermissionsLabel }));
-    expect(screen.getByRole('dialog', { name: 'Drawer title Manage permissions' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Manage permissions' })).toBeInTheDocument();
   });
 
   it('clicking the "Move" option opens the move modal', async () => {
@@ -157,28 +157,27 @@ describe('browse-dashboards FolderActionsButton', () => {
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
       return {
         ...mockPermissions,
-        canViewPermissions: false,
+        canDeleteFolders: true, // provisioned folder can be deleted too (if not repo root)
       };
     });
-    render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo }} />);
+    // passing parentUid to make it not a repo root folder
+    render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: '123' }} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
     expect(screen.queryByRole('menuitem', { name: managePermissionsLabel })).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
   });
 
-  it('does not render the "Move" option if folder is provisioned and is root repo folder', async () => {
+  it('does not render any actions if folder is provisioned and is root repo folder', async () => {
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
       return {
         ...mockPermissions,
-        canViewPermissions: false,
       };
     });
+    // passing undefined to parentUid to make it root repo folder
     render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: undefined }} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
-    expect(screen.queryByRole('menuitem', { name: moveMenuItemLabel })).not.toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
   });
 
   it('does render the "Move" option if folder is provisioned and is NOT root repo folder', async () => {
@@ -192,6 +191,31 @@ describe('browse-dashboards FolderActionsButton', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
     expect(screen.getByRole('menuitem', { name: moveMenuItemLabel })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
+  });
+
+  it('does not render any actions when repo is read-only', () => {
+    render(
+      <FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: '123' }} isReadOnlyRepo />
+    );
+    expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+  });
+
+  describe('with provisioningFolderMetadata feature flag', () => {
+    testWithFeatureToggles({ enable: ['provisioningFolderMetadata'] });
+
+    it('renders the "Manage permissions" option for provisioned folders', async () => {
+      render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: '123' }} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+      expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+    });
+
+    it('renders the "Folder actions" button for provisioned root repo folder when user can view permissions', async () => {
+      render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: undefined }} />);
+
+      expect(screen.getByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+      expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+    });
   });
 });

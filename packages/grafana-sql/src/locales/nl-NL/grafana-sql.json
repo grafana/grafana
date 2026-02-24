@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Automatisch maximaal inactief",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-auto-max-idle": "Indien ingeschakeld, stelt u het aantal <i>maximumaantal inactieve verbindingen</i> automatisch in op dezelfde waarde als <i> maximumaantal open verbindingen</i>. Als het maximumaantal open verbindingen niet is ingesteld, wordt dit ingesteld op de standaardwaarde ({{defaultMaxIdle}}).",
+        "content-max-idle": "Het maximumaantal aantal verbindingen in de pool voor inactieve verbindingen.Als het <i>maximumaantal open verbindingen</i> groter is fan 0 maar kleiner is dan <i>maximumaantal inactieve verbindingen</i>, dan wordt het <i>maximumaantal inactieve verbindingen</i> verlaagd tot <i>het maximumaantal open verbindingen</i>. Als dit is ingesteld op 0, worden er geen inactieve verbindingen behouden.",
         "content-max-lifetime": "De maximale hoeveelheid tijd in seconden dat een verbinding opnieuw kan worden gebruikt. Indien ingesteld op 0, worden verbindingen voor altijd hergebruikt.",
-        "content-max-open": "",
+        "content-max-open": "Het maximumaantal open verbindingen met de database. Als het <i>maximumaantal verbindingen</i> groter is dan 0 en het <i>maximumaantal open verbindingen</i> kleiner is dan de <i>maximumaantal inactieve verbindingen</i>, dan wordt het <i>maximumaantal inactieve verbindingen</i> verlaagd tot het <i>maximumaantal open verbindingen</i>. Indien ingesteld op 0, is er geen limiet op het aantal open verbindingen.",
         "max-idle": "Max. inactief",
         "max-lifetime": "Max. levensduur",
         "max-open": "Max. open",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "Uw query is ongeldig. Kijk hieronder voor meer informatie. <br />U kunt deze query echter nog steeds uitvoeren.",
         "editor-modes": {
           "label-builder": "Bouwer",
           "label-code": "Code"
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Tekstveld",
+          "valueField": "Waardeveld"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Query-formaat"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Deze query zal <strong>{{bytes}}</strong> verwerken wanneer deze wordt uitgevoerd.",
         "validating-query": "Query valideren..."
       },
       "raw-editor": {

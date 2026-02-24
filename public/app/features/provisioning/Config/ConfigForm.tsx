@@ -135,10 +135,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
       await submitData(spec, form.token);
     } catch (err) {
       if (isFetchError(err)) {
-        const [field, errorMessage] = getConfigFormErrors(err.data?.errors);
+        const errors = getConfigFormErrors(err.data);
 
-        if (field && errorMessage) {
-          setError(field, errorMessage);
+        if (errors.length > 0) {
+          for (const [field, errorMessage] of errors) {
+            setError(field, errorMessage);
+          }
           return;
         }
       }
