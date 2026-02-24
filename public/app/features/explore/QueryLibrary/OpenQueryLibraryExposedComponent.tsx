@@ -9,6 +9,7 @@ import { useQueryLibraryContext } from './QueryLibraryContext';
 
 interface Props {
   className?: string;
+  context?: string;
   datasourceFilters?: string[];
   // Query to save
   query?: DataQuery;
@@ -64,6 +65,7 @@ interface Props {
  */
 export const OpenQueryLibraryExposedComponent = ({
   className,
+  context,
   datasourceFilters,
   icon = 'save',
   query,
@@ -73,9 +75,10 @@ export const OpenQueryLibraryExposedComponent = ({
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const handleClick = useCallback(() => {
-    openDrawer({ datasourceFilters, onSelectQuery, query });
+    const options = context ? { context } : undefined;
+    openDrawer({ datasourceFilters, onSelectQuery, options, query });
     reportInteraction(`exposed_query_library-${onSelectQuery ? 'load-queries-open' : 'save-queries-open'}`);
-  }, [datasourceFilters, onSelectQuery, openDrawer, query]);
+  }, [context, datasourceFilters, onSelectQuery, openDrawer, query]);
 
   if (!queryLibraryEnabled) {
     console.warn(

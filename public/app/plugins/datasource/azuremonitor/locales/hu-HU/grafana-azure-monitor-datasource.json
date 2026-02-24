@@ -13,7 +13,7 @@
       "label-resource-group": "Erőforráscsoport",
       "label-resource-name": "Erőforrásnév",
       "label-resource-number": "Erőforrás {{resourceNum}}",
-      "label-resource-uri": "",
+      "label-resource-uri": "Erőforrás-URI-k",
       "label-subscription": "Előfizetés",
       "placeholder-resource-name": "név",
       "tooltip-region": "Az erőforrás kódterülete. Egy erőforrás esetén nem kötelező, de több erőforrás kiválasztásakor kötelező.",
@@ -226,26 +226,26 @@
       "select-resource": "Válasszon ki egy erőforrást"
     },
     "resource-picker": {
-      "browse-tab": "",
+      "browse-tab": "Böngészés",
       "button-apply": "Alkalmaz",
       "button-cancel": "Mégse",
       "header-location": "Hely",
-      "header-resource-group": "",
+      "header-resource-group": "Erőforráscsoport",
       "header-scope": "Hatókör",
       "header-type": "Típus",
       "heading-selection": "Kiválasztás",
-      "locations-filter": "",
-      "locations-filter-placeholder": "",
-      "recent-tab": "",
+      "locations-filter": "Helyek",
+      "locations-filter-placeholder": "Hely kiválasztása",
+      "recent-tab": "Legutóbbi",
       "result-limit": "Az első {{numResults}} találat megjelenítése",
-      "subscriptions-filter": "",
-      "subscriptions-filter-placeholder": "",
+      "subscriptions-filter": "Előfizetések",
+      "subscriptions-filter-placeholder": "Előfizetés kiválasztása",
       "text-loading": "Betöltés…",
-      "text-no-recent-resources": "",
+      "text-no-recent-resources": "Nem található friss erőforrás",
       "text-no-resources": "Nem található erőforrás",
       "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során",
-      "types-filter": "",
-      "types-filter-placeholder": ""
+      "types-filter": "Erőforrástípusok",
+      "types-filter-placeholder": "Válasszon ki egy erőforrástípust"
     },
     "scope-selector": {
       "label": "Hatókör"
@@ -274,7 +274,7 @@
       "label-time-column": "Időoszlop",
       "label-time-range": "Időtartomány",
       "tooltip-time-column": "<0>Meghatározza a szűréshez használt időoszlopot. Alapértelmezés szerint az első táblák <1>timeSpan</1> oszlopa, az első megtalált <3>datetime</3> oszlop vagy a <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": ""
+      "tooltip-time-range": "<0>Meghatározza a lekérdezéshez használt időtartományt. A <1>Lekérdezés</1> opció csak a lekérdezésben megadott időtartományokat használja. Az <3>Irányítópult</3> csak a Grafana-időtartományt használja.</0>"
     },
     "top-field": {
       "label-top": "Felső"

@@ -528,11 +528,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("with a rule that has notification settings", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		notificationSettings := ngmodels.NotificationSettings{
+		notificationSettings := ngmodels.ContactPointRouting{
 			Receiver: "test-receiver",
 			GroupBy:  []string{"job"},
 		}
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNotificationSettings(notificationSettings), gen.WithIsPaused(false))
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithContactPointRouting(notificationSettings), gen.WithIsPaused(false))
 		r := api.RouteGetRuleStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
 		var res apimodels.RuleResponse
@@ -2239,10 +2239,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			RuleGroup:    "Rule-Group-1",
 			OrgID:        orgID,
 		}), gen.WithNotificationSettings(
-			ngmodels.NotificationSettings{
-				Receiver: "webhook-a",
-				GroupBy:  []string{"alertname"},
-			},
+			ngmodels.NotificationSettingsGen(ngmodels.NSMuts.WithReceiver("webhook-a"), ngmodels.NSMuts.WithGroupBy("alertname"))(),
 		)).GenerateManyRef(1)
 		fakeStore.PutRule(context.Background(), rules...)
 
@@ -2292,8 +2289,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				RuleGroup:    "group-1",
 				OrgID:        orgID,
 			}),
-			gen.WithNotificationSettings(
-				ngmodels.NotificationSettings{
+			gen.WithContactPointRouting(
+				ngmodels.ContactPointRouting{
 					Receiver: "receiver-a",
 					GroupBy:  []string{"alertname"},
 				},
@@ -2307,8 +2304,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				RuleGroup:    "group-2",
 				OrgID:        orgID,
 			}),
-			gen.WithNotificationSettings(
-				ngmodels.NotificationSettings{
+			gen.WithContactPointRouting(
+				ngmodels.ContactPointRouting{
 					Receiver: "receiver-b",
 					GroupBy:  []string{"alertname"},
 				},

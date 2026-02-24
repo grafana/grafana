@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -265,7 +266,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		newCp.Name = newName
 
 		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
-			revision.RenameReceiverInRoutes(oldName, newName)
+			revision.RenameReceiverInRoutes(oldName, newName, false)
 			return nil
 		}
 
@@ -562,9 +563,10 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 
 	receiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true),
-		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService)),
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService), featuremgmt.WithFeatures()),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
+		routes.NewFakeService(legacy_storage.ConfigRevision{}),
 		secretService,
 		xact,
 		log.NewNopLogger(),
@@ -574,7 +576,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	)
 
 	return NewContactPointService(
-		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService)),
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService), featuremgmt.WithFeatures()),
 		secretService,
 		provisioningStore,
 		xact,

@@ -193,3 +193,58 @@ jobs:
         yarn run packages:pack
     - name: Validate packages
       run: ./scripts/validate-npm-packages.sh
+  lint-circular-dependencies:
+    needs: detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true'
+    name: Check circular dependencies
+    runs-on: ubuntu-x64-small
+    steps:
+    - name: Checkout build commit
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Install dependencies
+      run: yarn install --immutable
+    - name: Check circular dependencies on PR
+      # the first sed command is used to clean the output
+      run: |
+        yarn lint:circular &> /tmp/pr-circular.txt || true
+        sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/pr-circular.txt > /tmp/pr-circular-clean.txt
+        echo "Circular dependencies on PR:"
+        pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
+        echo "$pr_count"
+    - name: Checkout main branch
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+        repository: 'grafana/grafana'
+        ref: 'main'
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Install dependencies
+      run: yarn install --immutable
+    - name: Check circular dependencies on main
+      # the first sed command is used to clean the output
+      run: |
+        yarn lint:circular &> /tmp/main-circular.txt || true
+        sed -n '/.*Found \([0-9]*\) circular.*/,$p' /tmp/main-circular.txt > /tmp/main-circular-clean.txt
+        echo "Circular dependencies on main:"
+        main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
+        echo "$main_count"
+    - name: Compare circular dependencies
+      run: |
+        main_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/main-circular-clean.txt)
+        pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
+        echo "Main branch circular dependencies: $main_count lines"
+        echo "PR branch circular dependencies: $pr_count lines"
+        if [ "$pr_count" -gt "$main_count" ]; then
+          echo "🚨 ERROR: PR introduces new circular dependencies!"
+          echo "Diff between main and PR:"
+          diff -u /tmp/main-circular-clean.txt /tmp/pr-circular-clean.txt || true
+          exit 1
+        fi

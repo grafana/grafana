@@ -1,7 +1,6 @@
+import { MigrateDataResponseItemDto } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, Stack, Text } from '@grafana/ui';
-
-import { MigrateDataResponseItemDto } from '../api';
 
 import { prettyTypeName } from './TypeCell';
 import { ResourceTableItem } from './types';

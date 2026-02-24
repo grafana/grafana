@@ -66,17 +66,50 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			name: "valid connection passes validation",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
 			},
 			operation:     admission.Create,
 			factoryErrors: field.ErrorList{},
 			wantErr:       false,
 		},
 		{
-			name: "factory validation errors are returned",
+			name: "connection without title fails validation",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			operation: admission.Create,
+			factoryErrors: field.ErrorList{
+				field.Required(field.NewPath("spec", "title"), "title is required"),
+			},
+			wantErr: true,
+		},
+		{
+			name: "connection with empty title fails validation",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Title: "",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			operation: admission.Create,
+			factoryErrors: field.ErrorList{
+				field.Required(field.NewPath("spec", "title"), "title is required"),
+			},
+			wantErr: true,
+		},
+		{
+			name: "factory validation errors are returned",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
 			},
 			operation: admission.Create,
 			factoryErrors: field.ErrorList{
@@ -102,7 +135,10 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			name: "skips validation for DELETE operations",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
 			},
 			operation: admission.Delete,
 			wantErr:   false,
@@ -114,7 +150,10 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Name:              "test",
 					DeletionTimestamp: &metav1.Time{Time: time.Now()},
 				},
-				Spec: provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
 			},
 			operation: admission.Update,
 			wantErr:   false,
@@ -123,11 +162,17 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			name: "copies secure values from old connection on update",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
 			},
 			old: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
 				Secure: provisioning.ConnectionSecure{
 					Token: common.InlineSecureValue{Name: "old-token"},
 				},
@@ -189,7 +234,10 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 
 	oldConn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+		Spec: provisioning.ConnectionSpec{
+			Title: "Test Connection",
+			Type:  provisioning.GithubConnectionType,
+		},
 		Secure: provisioning.ConnectionSecure{
 			Token:        common.InlineSecureValue{Name: "old-token"},
 			PrivateKey:   common.InlineSecureValue{Name: "old-key"},
@@ -199,7 +247,10 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 
 	newConn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
-		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+		Spec: provisioning.ConnectionSpec{
+			Title: "Test Connection",
+			Type:  provisioning.GithubConnectionType,
+		},
 		// No secure values set
 	}
 
@@ -232,7 +283,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          "123",
 						InstallationID: "456",
@@ -259,7 +311,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          "123",
 						InstallationID: "999",
@@ -293,7 +346,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          "999",
 						InstallationID: "456",
@@ -327,7 +381,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          "123",
 						InstallationID: "456",
@@ -345,7 +400,10 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 			name: "dryRun skips runtime validation if structural validation fails",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
 			},
 			operation: admission.Create,
 			dryRun:    true,
@@ -359,7 +417,8 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          "123",
 						InstallationID: "456",

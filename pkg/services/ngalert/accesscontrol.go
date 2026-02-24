@@ -135,6 +135,7 @@ var (
 			Group:       models.AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversCreate},
+				{Action: accesscontrol.ActionAlertingReceiversTest}, // deprecated, kept for backward compatibility
 				{Action: accesscontrol.ActionAlertingReceiversTestCreate, Scope: models.ScopeReceiversProvider.GetResourceScopeType(alertingac.NewReceiverType)},
 			},
 		},

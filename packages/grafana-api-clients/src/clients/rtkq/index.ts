@@ -12,7 +12,7 @@ import { generatedAPI as logsdrilldownAPIv1alpha1 } from './logsdrilldown/v1alph
 import { generatedAPI as logsdrilldownAPIv1beta1 } from './logsdrilldown/v1beta1';
 import { generatedAPI as migrateToCloudAPI } from './migrate-to-cloud';
 import { generatedAPI as notificationsAlertingAPIv0alpha1 } from './notifications.alerting/v0alpha1';
-import { generatedAPI as playlistAPIv0alpha1 } from './playlist/v0alpha1';
+import { generatedAPI as playlistAPIv1 } from './playlist/v1';
 import { generatedAPI as preferencesUserAPI } from './preferences/user';
 import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
@@ -28,7 +28,7 @@ export const allMiddleware = [
   folderAPIv1beta1.middleware,
   iamAPIv0alpha1.middleware,
   migrateToCloudAPI.middleware,
-  playlistAPIv0alpha1.middleware,
+  playlistAPIv1.middleware,
   collectionsAPIv1alpha1.middleware, // stars
   preferencesAPIv1alpha1.middleware,
   preferencesUserAPI.middleware, // legacy preferences
@@ -51,7 +51,7 @@ export const allReducers = {
   [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
   [iamAPIv0alpha1.reducerPath]: iamAPIv0alpha1.reducer,
   [migrateToCloudAPI.reducerPath]: migrateToCloudAPI.reducer,
-  [playlistAPIv0alpha1.reducerPath]: playlistAPIv0alpha1.reducer,
+  [playlistAPIv1.reducerPath]: playlistAPIv1.reducer,
   [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer,
   [preferencesAPIv1alpha1.reducerPath]: preferencesAPIv1alpha1.reducer,
   [preferencesUserAPI.reducerPath]: preferencesUserAPI.reducer,

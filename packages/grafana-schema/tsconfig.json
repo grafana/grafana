@@ -7,7 +7,7 @@
     "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "rootDirs": ["."],
+    "rootDir": "./src",
     "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],

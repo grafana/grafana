@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { formatDuration } from 'date-fns';
-import { PureComponent } from 'react';
+import { memo } from 'react';
 
 import { SelectableValue, parseDuration } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -29,148 +29,159 @@ export interface Props {
   isOnCanvas?: boolean;
 }
 
+const offOption = {
+  label: 'Off',
+  value: '',
+  ariaLabel: 'Turn off auto refresh',
+};
+const liveOption = {
+  label: 'Live',
+  value: 'LIVE',
+  ariaLabel: 'Turn on live streaming',
+};
+const autoOption = {
+  label: 'Auto',
+  value: 'auto',
+  ariaLabel: 'Select refresh from the query range',
+};
+
 /**
  * This component is used on dashboards to refresh visualizations.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-refreshpicker--docs
  */
-export class RefreshPicker extends PureComponent<Props> {
-  static offOption = {
-    label: 'Off',
-    value: '',
-    ariaLabel: 'Turn off auto refresh',
-  };
-  static liveOption = {
-    label: 'Live',
-    value: 'LIVE',
-    ariaLabel: 'Turn on live streaming',
-  };
-  static autoOption = {
-    label: 'Auto',
-    value: 'auto',
-    ariaLabel: 'Select refresh from the query range',
-  };
-
-  static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
-
-  constructor(props: Props) {
-    super(props);
-  }
-
-  onChangeSelect = (item: SelectableValue<string>) => {
-    const { onIntervalChanged } = this.props;
+const RefreshPickerComponent = memo((props: Props) => {
+  const {
+    intervals,
+    onRefresh,
+    onIntervalChanged,
+    value,
+    tooltip,
+    isLoading,
+    isLive,
+    text,
+    noIntervalPicker,
+    showAutoInterval,
+    width,
+    primary,
+    isOnCanvas,
+  } = props;
+  const currentValue = value || '';
+  const options = intervalsToOptions({ intervals, showAutoInterval });
+  const option = options.find(({ value }) => value === currentValue);
+  const translatedOffOption = translateOption(offOption.value);
+  let selectedValue = option || translatedOffOption;
+  const handleChangeSelect = (item: SelectableValue<string>) => {
     if (onIntervalChanged && item.value != null) {
       onIntervalChanged(item.value);
     }
   };
 
-  getVariant(): ToolbarButtonVariant {
-    if (this.props.isLive) {
+  const getVariant = (): ToolbarButtonVariant => {
+    if (isLive) {
       return 'primary';
     }
 
-    if (this.props.primary) {
+    if (primary) {
       return 'primary';
     }
 
-    return this.props.isOnCanvas ? 'canvas' : 'default';
+    return isOnCanvas ? 'canvas' : 'default';
+  };
+  const variant = getVariant();
+
+  if (selectedValue.label === translatedOffOption.label) {
+    selectedValue = { value: '' };
   }
 
-  render() {
-    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width, showAutoInterval } =
-      this.props;
+  const durationAriaLabel = selectedValue.ariaLabel;
+  const ariaLabelDurationSelectedMessage = t(
+    'refresh-picker.aria-label.duration-selected',
+    'Choose refresh time interval with current interval {{durationAriaLabel}} selected',
+    { durationAriaLabel }
+  );
+  const ariaLabelChooseIntervalMessage = t(
+    'refresh-picker.aria-label.choose-interval',
+    'Auto refresh turned off. Choose refresh time interval'
+  );
+  const ariaLabel = selectedValue.value === '' ? ariaLabelChooseIntervalMessage : ariaLabelDurationSelectedMessage;
 
-    const currentValue = value || '';
-    const variant = this.getVariant();
-    const options = intervalsToOptions({ intervals, showAutoInterval });
-    const option = options.find(({ value }) => value === currentValue);
-    const translatedOffOption = translateOption(RefreshPicker.offOption.value);
-    let selectedValue = option || translatedOffOption;
+  const tooltipIntervalSelected = t('refresh-picker.tooltip.interval-selected', 'Set auto refresh interval');
+  const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
+  const tooltipAutoRefresh = selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
 
-    if (selectedValue.label === translatedOffOption.label) {
-      selectedValue = { value: '' };
-    }
-
-    const durationAriaLabel = selectedValue.ariaLabel;
-    const ariaLabelDurationSelectedMessage = t(
-      'refresh-picker.aria-label.duration-selected',
-      'Choose refresh time interval with current interval {{durationAriaLabel}} selected',
-      { durationAriaLabel }
-    );
-    const ariaLabelChooseIntervalMessage = t(
-      'refresh-picker.aria-label.choose-interval',
-      'Auto refresh turned off. Choose refresh time interval'
-    );
-    const ariaLabel = selectedValue.value === '' ? ariaLabelChooseIntervalMessage : ariaLabelDurationSelectedMessage;
-
-    const tooltipIntervalSelected = t('refresh-picker.tooltip.interval-selected', 'Set auto refresh interval');
-    const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
-    const tooltipAutoRefresh = selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
-
-    return (
-      <ButtonGroup className="refresh-picker">
-        <ToolbarButton
-          aria-label={text}
-          tooltip={tooltip}
-          onClick={onRefresh}
+  return (
+    <ButtonGroup className="refresh-picker">
+      <ToolbarButton
+        aria-label={text}
+        tooltip={tooltip}
+        onClick={onRefresh}
+        variant={variant}
+        icon={isLoading ? 'spinner' : 'sync'}
+        style={width ? { width } : undefined}
+        data-testid={selectors.components.RefreshPicker.runButtonV2}
+      >
+        {text}
+      </ToolbarButton>
+      {!noIntervalPicker && (
+        <ButtonSelect
+          className={css({
+            borderTopLeftRadius: 'unset',
+            borderBottomLeftRadius: 'unset',
+          })}
+          value={selectedValue}
+          options={options}
+          onChange={handleChangeSelect}
           variant={variant}
-          icon={isLoading ? 'spinner' : 'sync'}
-          style={width ? { width } : undefined}
-          data-testid={selectors.components.RefreshPicker.runButtonV2}
-        >
-          {text}
-        </ToolbarButton>
-        {!noIntervalPicker && (
-          <ButtonSelect
-            className={css({
-              borderTopLeftRadius: 'unset',
-              borderBottomLeftRadius: 'unset',
-            })}
-            value={selectedValue}
-            options={options}
-            onChange={this.onChangeSelect}
-            variant={variant}
-            data-testid={selectors.components.RefreshPicker.intervalButtonV2}
-            aria-label={ariaLabel}
-            tooltip={tooltipAutoRefresh}
-          />
-        )}
-      </ButtonGroup>
-    );
-  }
-}
+          data-testid={selectors.components.RefreshPicker.intervalButtonV2}
+          aria-label={ariaLabel}
+          tooltip={tooltipAutoRefresh}
+        />
+      )}
+    </ButtonGroup>
+  );
+});
 
-export function translateOption(option: string) {
+RefreshPickerComponent.displayName = 'RefreshPicker';
+
+export const RefreshPicker = Object.assign(RefreshPickerComponent, {
+  isLive: (refreshInterval?: string): boolean => refreshInterval === liveOption.value,
+  liveOption,
+  offOption,
+  autoOption,
+});
+
+export const translateOption = (option: string) => {
   switch (option) {
-    case RefreshPicker.liveOption.value:
+    case liveOption.value:
       return {
         label: t('refresh-picker.live-option.label', 'Live'),
         value: option,
         ariaLabel: t('refresh-picker.live-option.aria-label', 'Turn on live streaming'),
       };
-    case RefreshPicker.offOption.value:
+    case offOption.value:
       return {
         label: t('refresh-picker.off-option.label', 'Off'),
         value: option,
         ariaLabel: t('refresh-picker.off-option.aria-label', 'Turn off auto refresh'),
       };
-    case RefreshPicker.autoOption.value:
+    case autoOption.value:
       return {
-        label: t('refresh-picker.auto-option.label', RefreshPicker.autoOption.label),
+        label: t('refresh-picker.auto-option.label', autoOption.label),
         value: option,
-        ariaLabel: t('refresh-picker.auto-option.aria-label', RefreshPicker.autoOption.ariaLabel),
+        ariaLabel: t('refresh-picker.auto-option.aria-label', autoOption.ariaLabel),
       };
   }
   return {
     label: option,
     value: option,
   };
-}
+};
 
-export function intervalsToOptions({
+export const intervalsToOptions = ({
   intervals = defaultIntervals,
   showAutoInterval = false,
-}: { intervals?: string[]; showAutoInterval?: boolean } = {}): Array<SelectableValue<string>> {
+}: { intervals?: string[]; showAutoInterval?: boolean } = {}): Array<SelectableValue<string>> => {
   const options: Array<SelectableValue<string>> = intervals.map((interval) => {
     const duration = parseDuration(interval);
     const ariaLabel = formatDuration(duration);
@@ -183,8 +194,8 @@ export function intervalsToOptions({
   });
 
   if (showAutoInterval) {
-    options.unshift(translateOption(RefreshPicker.autoOption.value));
+    options.unshift(translateOption(autoOption.value));
   }
-  options.unshift(translateOption(RefreshPicker.offOption.value));
+  options.unshift(translateOption(offOption.value));
   return options;
-}
+};

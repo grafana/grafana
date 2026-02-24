@@ -15,12 +15,16 @@ func NewRolespecPermission() *RolespecPermission {
 	return &RolespecPermission{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RolespecPermission.
+func (RolespecPermission) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RolespecPermission"
+}
+
 // +k8s:openapi-gen=true
 type RoleSpec struct {
 	// Display name of the role
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Version     int64  `json:"version"`
 	Group       string `json:"group"`
 	// TODO:
 	// delegatable?: bool
@@ -34,4 +38,9 @@ func NewRoleSpec() *RoleSpec {
 	return &RoleSpec{
 		Permissions: []RolespecPermission{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for RoleSpec.
+func (RoleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleSpec"
 }

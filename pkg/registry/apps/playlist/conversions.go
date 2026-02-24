@@ -9,7 +9,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -69,19 +73,25 @@ func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlistsv
 	return dto
 }
 
-func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.NamespaceMapper) *playlist.Playlist {
-	spec := playlist.PlaylistSpec{
+func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.NamespaceMapper) *playlistv0alpha1.Playlist {
+	gvk := playlistv1.PlaylistKind().GroupVersionKind()
+	return convertToK8sResourceWithVersion(v, namespacer, gvk).(*playlistv1.Playlist)
+}
+
+// v0alpha1 and v1 are type aliases, so this can be used for both. the gvk param is only used to set the correct metadata, which is handled by the kind's zerovalue
+func convertToK8sResourceWithVersion(v *playlistsvc.PlaylistDTO, namespacer request.NamespaceMapper, gvk schema.GroupVersionKind) runtime.Object {
+	spec := playlistv1.PlaylistSpec{
 		Title:    v.Name,
 		Interval: v.Interval,
 	}
 	for _, item := range v.Items {
-		spec.Items = append(spec.Items, playlist.PlaylistItem{
-			Type:  playlist.PlaylistItemType(item.Type),
+		spec.Items = append(spec.Items, playlistv1.PlaylistItem{
+			Type:  playlistv1.PlaylistPlaylistItemType(item.Type),
 			Value: item.Value,
 		})
 	}
 
-	p := &playlist.Playlist{
+	p := &playlistv1.Playlist{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Uid,
 			UID:               types.UID(v.Uid),
@@ -100,10 +110,21 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 	}
 
 	p.UID = gapiutil.CalculateClusterWideUID(p)
+
+	// set the correct TypeMeta based on the requested version
+	p.APIVersion = gvk.GroupVersion().String()
+	p.Kind = gvk.Kind
+
 	return p
 }
 
-func convertToLegacyUpdateCommand(p *playlist.Playlist, orgId int64) (*playlistsvc.UpdatePlaylistCommand, error) {
+// v0alpha1 and v1 are type aliases, so this can be used for both
+func convertToLegacyUpdateCommand(obj runtime.Object, orgId int64) (*playlistsvc.UpdatePlaylistCommand, error) {
+	p, ok := obj.(*playlistv1.Playlist)
+	if !ok {
+		return nil, fmt.Errorf("unsupported playlist type: %T", obj)
+	}
+
 	spec := p.Spec
 	cmd := &playlistsvc.UpdatePlaylistCommand{
 		UID:      p.Name,
@@ -112,7 +133,7 @@ func convertToLegacyUpdateCommand(p *playlist.Playlist, orgId int64) (*playlists
 		OrgId:    orgId,
 	}
 	for _, item := range spec.Items {
-		if item.Type == playlist.PlaylistItemTypeDashboardById {
+		if item.Type == playlistv1.PlaylistPlaylistItemTypeDashboardById {
 			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
 		}
 		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{

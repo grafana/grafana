@@ -243,9 +243,14 @@ export function prepConfig(opts: PrepConfigOpts) {
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       isSparseHeatmap
         ? (u, dataMin, dataMax) => {
+            // Extract yMin and yMax arrays
+            const yMinData = u.data[1]?.[1];
+            const yMaxData = u.data[1]?.[2];
+            const yMinValues = Array.isArray(yMinData) ? yMinData : [];
+            const yMaxValues = Array.isArray(yMaxData) ? yMaxData : [];
+
             // ...but uPlot currently only auto-ranges from the yMin facet data, so we have to grow by 1 extra factor
-            // @ts-ignore
-            let bucketFactor = u.data[1][2][0] / u.data[1][1][0];
+            const bucketFactor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
 
             dataMax *= bucketFactor;
 
@@ -880,6 +885,32 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
 
     return null;
   };
+}
+
+/**
+ * Calculates a bucket expansion factor from yMin/yMax data arrays.
+ * Used to expand the y-axis range for sparse heatmaps where uPlot only auto-ranges from yMin.
+ *
+ * @param yMinValues - Array of yMin bucket boundary values
+ * @param yMaxValues - Array of yMax bucket boundary values
+ * @returns A valid expansion factor, or 1 as fallback
+ */
+export function calculateBucketExpansionFactor(yMinValues: unknown[], yMaxValues: unknown[]): number {
+  // Guard against invalid bucket factors (e.g., division by zero when first bucket starts at 0)
+  for (let i = 0; i < yMinValues.length; i++) {
+    const yMin = yMinValues[i];
+    const yMax = yMaxValues[i];
+    if (typeof yMin !== 'number' || typeof yMax !== 'number') {
+      continue;
+    }
+    const factor = yMax / yMin;
+    // finite checks for divide-by-zero
+    if (Number.isFinite(factor) && factor > 0) {
+      return factor;
+    }
+  }
+
+  return 1;
 }
 
 export const boundedMinMax = (

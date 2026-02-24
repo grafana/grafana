@@ -89,10 +89,10 @@ function renderUnderRouter(page = '') {
   appPluginNavItem.parentItem = appsSection;
 
   const registries = {
-    addedComponentsRegistry: new AddedComponentsRegistry(),
-    exposedComponentsRegistry: new ExposedComponentsRegistry(),
-    addedLinksRegistry: new AddedLinksRegistry(),
-    addedFunctionsRegistry: new AddedFunctionsRegistry(),
+    addedComponentsRegistry: new AddedComponentsRegistry([]),
+    exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    addedLinksRegistry: new AddedLinksRegistry([]),
+    addedFunctionsRegistry: new AddedFunctionsRegistry([]),
   };
   const pagePath = page ? `/${page}` : '';
   const route = {

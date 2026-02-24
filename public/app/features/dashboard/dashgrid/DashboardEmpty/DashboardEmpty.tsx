@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -22,12 +22,18 @@ import {
 } from './DashboardEmptyHooks';
 
 interface InternalProps {
+  dashboard: DashboardModel | DashboardScene;
   onAddVisualization?: () => void;
   onAddLibraryPanel?: () => void;
   onImportDashboard?: () => void;
 }
 
-const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImportDashboard }: InternalProps) => {
+const InternalDashboardEmpty = ({
+  dashboard,
+  onAddVisualization,
+  onAddLibraryPanel,
+  onImportDashboard,
+}: InternalProps) => {
   const styles = useStyles2(getStyles);
   const [searchParams] = useSearchParams();
   const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
@@ -42,14 +48,20 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
               !dashboardLibraryDatasourceUid,
           })}
         >
-          {config.featureToggles.dashboardNewLayouts
-            ? renderNewLayoutEmpty({ styles, dashboardLibraryDatasourceUid })
-            : renderOldLayoutEmpty({
-                dashboardLibraryDatasourceUid,
-                onAddVisualization,
-                onAddLibraryPanel,
-                onImportDashboard,
-              })}
+          {config.featureToggles.dashboardNewLayouts && dashboard instanceof DashboardScene ? (
+            <NewLayoutEmpty
+              dashboard={dashboard}
+              styles={styles}
+              dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid}
+            />
+          ) : (
+            <OldLayoutEmpty
+              dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid}
+              onAddVisualization={onAddVisualization}
+              onAddLibraryPanel={onAddLibraryPanel}
+              onImportDashboard={onImportDashboard}
+            />
+          )}
         </div>
       </Stack>
     </>
@@ -75,47 +87,60 @@ const DashboardExtensionsComponents = ({
       )}
   </>
 );
-
-const renderNewLayoutEmpty = ({
-  styles,
-  dashboardLibraryDatasourceUid,
-}: {
+interface NewLayoutEmptyProps {
+  dashboard: DashboardScene;
   styles: {
     wrapper: string;
     wrapperMaxWidth: string;
     appsIcon: string;
   };
   dashboardLibraryDatasourceUid: string | null;
-}) => (
-  <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
-    <Box padding={4}>
-      <Box marginBottom={2} paddingX={4} display="flex" justifyContent="center">
-        <Icon name="apps" size="xxl" className={styles.appsIcon} />
-      </Box>
-      <Text element="h1" textAlignment="center" weight="medium">
-        <Trans i18nKey="dashboard.empty.title">New dashboard</Trans>
-      </Text>
-      <Box marginTop={3} paddingX={4}>
-        <Text element="p" textAlignment="center" color="secondary">
-          <Trans i18nKey="dashboard.empty.description">Add a panel to visualize your data</Trans>
-        </Text>
-      </Box>
-    </Box>
-    <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
-  </Stack>
-);
+}
 
-const renderOldLayoutEmpty = ({
-  dashboardLibraryDatasourceUid,
-  onAddVisualization,
-  onAddLibraryPanel,
-  onImportDashboard,
-}: {
+const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: NewLayoutEmptyProps) => {
+  const { uid, isEditing, editPane } = dashboard.state;
+  const isEditingNewDashboard = isEditing && !uid;
+
+  // open the edit pane when the dashboard is new and in editing mode
+  // will only happen when the default empty state is shown (not overridden by extension point)
+  useEffect(() => {
+    if (isEditingNewDashboard) {
+      editPane.openPane('add');
+    }
+  }, [isEditingNewDashboard, editPane]);
+
+  return (
+    <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
+      <Box padding={4}>
+        <Box marginBottom={2} paddingX={4} display="flex" justifyContent="center">
+          <Icon name="apps" size="xxl" className={styles.appsIcon} />
+        </Box>
+        <Text element="h1" textAlignment="center" weight="medium">
+          <Trans i18nKey="dashboard.empty.title">New dashboard</Trans>
+        </Text>
+        <Box marginTop={3} paddingX={4}>
+          <Text element="p" textAlignment="center" color="secondary">
+            <Trans i18nKey="dashboard.empty.description">Add a panel to visualize your data</Trans>
+          </Text>
+        </Box>
+      </Box>
+      <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
+    </Stack>
+  );
+};
+
+interface OldLayoutEmptyProps {
   dashboardLibraryDatasourceUid: string | null;
   onAddVisualization?: () => void;
   onAddLibraryPanel?: () => void;
   onImportDashboard?: () => void;
-}) => (
+}
+const OldLayoutEmpty = ({
+  dashboardLibraryDatasourceUid,
+  onAddVisualization,
+  onAddLibraryPanel,
+  onImportDashboard,
+}: OldLayoutEmptyProps) => (
   <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
     <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
       <Stack direction="column" alignItems="center" gap={2}>
@@ -219,12 +244,13 @@ const DashboardEmpty = (props: Props) => {
       renderDefaultUI={useCallback(
         () => (
           <InternalDashboardEmpty
+            dashboard={props.dashboard}
             onAddVisualization={onAddVisualization}
             onAddLibraryPanel={onAddLibraryPanel}
             onImportDashboard={onImportDashboard}
           />
         ),
-        [onAddVisualization, onAddLibraryPanel, onImportDashboard]
+        [onAddVisualization, onAddLibraryPanel, onImportDashboard, props.dashboard]
       )}
       onAddVisualization={onAddVisualization}
       onAddLibraryPanel={onAddLibraryPanel}

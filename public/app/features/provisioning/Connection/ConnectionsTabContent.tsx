@@ -1,18 +1,16 @@
 import { t } from '@grafana/i18n';
-import { Alert, Spinner } from '@grafana/ui';
-
-import { useConnectionList } from '../hooks/useConnectionList';
-import { getErrorMessage } from '../utils/httpUtils';
+import { Alert } from '@grafana/ui';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
+import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionList } from './ConnectionList';
 
-export function ConnectionsTabContent() {
-  const [items, isLoading, error] = useConnectionList({ watch: true });
+interface Props {
+  items: Connection[];
+  error?: unknown;
+}
 
-  if (isLoading) {
-    return <Spinner />;
-  }
-
+export function ConnectionsTabContent({ items, error }: Props) {
   if (error) {
     return (
       <Alert severity="error" title={t('provisioning.connections.error-loading', 'Failed to load connections')}>
@@ -21,5 +19,5 @@ export function ConnectionsTabContent() {
     );
   }
 
-  return <ConnectionList items={items ?? []} />;
+  return <ConnectionList items={items} />;
 }

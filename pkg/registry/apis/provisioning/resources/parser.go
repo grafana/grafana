@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -157,6 +159,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 	}
 
+	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
+		return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
+	}
+
 	// Remove the internal dashboard UID,version and id if they exist
 	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "uid")
@@ -187,7 +193,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	if obj.GetName() == "" {
 		if obj.GetGenerateName() == "" {
-			return nil, ErrMissingName
+			return nil, NewResourceValidationError(ErrMissingName)
 		}
 		// Generate a new UID
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
@@ -290,6 +296,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
+		// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
 			DryRun:          []string{"All"},
 			FieldValidation: fieldValidation,
@@ -404,6 +412,11 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	// Try update, otherwise create
 	f.Action = provisioning.ResourceActionUpdate
+
+	// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
+	if f.Existing != nil {
+		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
+	}
 
 	updateCtx, updateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.update")
 	updateSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))

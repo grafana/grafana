@@ -15,6 +15,7 @@ import (
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/integrationtypeschema"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/templategroup"
@@ -53,9 +54,9 @@ func RegisterAppInstaller(
 		cfg: cfg,
 		ng:  ng,
 	}
-
 	customCfg := notificationsApp.Config{
-		ReceiverTestingHandler: receiver.New(ng.Api.ReceiverTestService),
+		ReceiverTestingHandler:       receiver.New(ng.Api.ReceiverTestService),
+		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false)),
 	}
 
 	localManifest := apis.LocalManifest()
@@ -115,7 +116,7 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		}
 		return templategroup.NewStorage(srv, namespacer)
 	} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
-		return routingtree.NewStorage(api.Policies, namespacer)
+		return routingtree.NewStorage(api.RouteService, namespacer)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
 }

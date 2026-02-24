@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"maps"
 
+	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
+	"github.com/prometheus/common/model"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -175,4 +177,38 @@ func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) 
 	}
 
 	return integration, nil
+}
+
+func ManagedRouteToRoute(r *ManagedRoute) definition.Route {
+	groupByAll, groupBy := ToGroupBy(r.GroupBy...)
+
+	// Only need to copy the fields that are valid for a root route.
+	return definition.Route{
+		Receiver:       r.Receiver,
+		GroupByStr:     r.GroupBy,
+		GroupWait:      r.GroupWait,
+		GroupInterval:  r.GroupInterval,
+		RepeatInterval: r.RepeatInterval,
+		Routes:         r.Routes,
+		Provenance:     definition.Provenance(r.Provenance),
+
+		// These are deceptively necessary since they are normally generated during unmarshalling and assumed to be
+		// present in upstream alertmanager code. We can't assume we'll be unmarshalling the route again, so we need to
+		// set them here.
+		GroupBy:    groupBy,
+		GroupByAll: groupByAll,
+	}
+}
+
+// ToGroupBy converts the given label strings to (groupByAll, []model.LabelName) where groupByAll is true if the input
+// contains models.GroupByAll. This logic is in accordance with upstream Route.ValidateChild().
+func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName) {
+	for _, l := range groupByStr {
+		if l == models.GroupByAll {
+			return true, nil
+		} else {
+			groupBy = append(groupBy, model.LabelName(l))
+		}
+	}
+	return false, groupBy
 }

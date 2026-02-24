@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 )
 
 func TestGetMuteTimings(t *testing.T) {
@@ -1167,13 +1168,13 @@ func TestDeleteMuteTimings(t *testing.T) {
 	t.Run("returns ErrTimeIntervalInUse if mute timing is used by rules", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		ruleNsStore := fakeAlertRuleNotificationStore{
-			ListNotificationSettingsFn: func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+			ListContactPointRoutingsFn: func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 				assertInTransaction(t, ctx)
 				assert.Equal(t, orgID, q.OrgID)
 				assert.Equal(t, timingToDelete.Name, q.TimeIntervalName)
 				assert.Empty(t, q.ReceiverName)
-				return map[models.AlertRuleKey][]models.NotificationSettings{
-					models.GenerateRuleKey(orgID): nil,
+				return map[models.AlertRuleKey]models.ContactPointRouting{
+					models.GenerateRuleKey(orgID): {},
 				}, nil
 			},
 		}
@@ -1190,7 +1191,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 		require.ErrorIs(t, err, ErrTimeIntervalInUse)
 		require.Len(t, ruleNsStore.Calls, 1)
-		require.Equal(t, "ListNotificationSettings", ruleNsStore.Calls[0].Method)
+		require.Equal(t, "ListContactPointRoutings", ruleNsStore.Calls[0].Method)
 	})
 
 	t.Run("returns ErrVersionConflict if provided version does not match", func(t *testing.T) {
@@ -1406,6 +1407,7 @@ func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storage.AlertmanagerC
 			return nil
 		},
 		ruleNotificationsStore: &fakeAlertRuleNotificationStore{},
+		routeService:           routes.NewFakeService(legacy_storage.ConfigRevision{}),
 	}, store, prov
 }
 

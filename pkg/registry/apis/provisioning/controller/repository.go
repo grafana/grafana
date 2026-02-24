@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,13 +66,15 @@ type RepositoryController struct {
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
 	healthChecker     *RepositoryHealthChecker
+	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue          workqueue.TypedRateLimitingInterface[*queueItem]
-	resyncInterval time.Duration
+	queue           workqueue.TypedRateLimitingInterface[*queueItem]
+	resyncInterval  time.Duration
+	minSyncInterval time.Duration
 
 	registry    prometheus.Registerer
 	tracer      tracing.Tracer
@@ -96,6 +99,7 @@ func NewRepositoryController(
 	tracer tracing.Tracer,
 	parallelOperations int,
 	resyncInterval time.Duration,
+	minSyncInterval time.Duration,
 	quotaGetter quotas.QuotaGetter,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
@@ -113,6 +117,7 @@ func NewRepositoryController(
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
+		quotaChecker:      NewRepositoryQuotaChecker(repoInformer.Lister()),
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
 			lister:        resourceLister,
@@ -120,12 +125,13 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:           jobs,
-		logger:         logging.DefaultLogger.With("logger", loggerName),
-		registry:       registry,
-		tracer:         tracer,
-		resyncInterval: resyncInterval,
-		quotaGetter:    quotaGetter,
+		jobs:            jobs,
+		logger:          logging.DefaultLogger.With("logger", loggerName),
+		registry:        registry,
+		tracer:          tracer,
+		resyncInterval:  resyncInterval,
+		minSyncInterval: minSyncInterval,
+		quotaGetter:     quotaGetter,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -294,6 +300,11 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
+	if syncInterval < rc.minSyncInterval {
+		// In case the sync interval is lower than the minimum sync interval set by the system
+		// we should default to the latter
+		syncInterval = rc.minSyncInterval
+	}
 	tolerance := time.Second
 
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
@@ -353,12 +364,36 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 	return patchOperations, nil
 }
 
-func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *provisioning.Repository, repo repository.Repository, shouldResync bool, healthStatus provisioning.HealthStatus) *provisioning.SyncJobOptions {
+// isQuotaExceeded checks if the given conditions have a RepositoryQuotaExceeded one.
+func isQuotaExceeded(conditions []v1.Condition) bool {
+	for _, condition := range conditions {
+		if condition.Type == provisioning.ConditionTypeNamespaceQuota {
+			return condition.Status == v1.ConditionFalse &&
+				condition.Reason == provisioning.ReasonQuotaExceeded
+		}
+	}
+	return false
+}
+
+func (rc *RepositoryController) determineSyncStrategy(
+	ctx context.Context,
+	obj *provisioning.Repository,
+	repo repository.Repository,
+	shouldResync bool,
+	isBlocked bool,
+	healthStatus provisioning.HealthStatus,
+) *provisioning.SyncJobOptions {
 	logger := logging.FromContext(ctx)
 
 	switch {
 	case !obj.Spec.Sync.Enabled:
 		logger.Info("skip sync as it's disabled")
+		return nil
+	case isBlocked:
+		logger.Info("skip sync for repository over quota",
+			"repository", obj.Name,
+			"namespace", obj.Namespace,
+		)
 		return nil
 	case !healthStatus.Healthy:
 		logger.Info("skip sync for unhealthy repository")
@@ -524,27 +559,144 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return rc.handleDelete(ctx, obj)
 	}
 
+	// Check quota state early - before trigger evaluation
+	// This allows blocked repos to check if they can unblock even without other triggers
+	newQuota, err := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to get quota status: %w", err)
+	}
+	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(ctx, namespace, newQuota)
+	if err != nil {
+		return fmt.Errorf("check repository quota: %w", err)
+	}
+	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
+	isOverQuota := isQuotaExceeded([]v1.Condition{quotaCondition})
+
+	// Blocked repos MUST process to check if they can unblock
+	forceProcessForUnblock := isCurrentlyBlocked && !isOverQuota
+
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
 
+	var shouldGenerateToken bool
+	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+		shouldGenerateToken = rc.shouldGenerateTokenFromConnection(obj)
+	}
+
 	// Determine the main triggering condition
 	switch {
+	// First, we check if the repository is blocked and return early in such a case.
+	case isCurrentlyBlocked && isOverQuota:
+		logger.Info("repository blocked and over quota, skipping reconciliation")
+		return nil
 	case hasSpecChanged:
 		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
+	case shouldResync:
+		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
+	case shouldCheckHealth:
+		logger.Info("health is stale", "health_status", obj.Status.Health.Healthy)
+	case forceProcessForUnblock:
+		logger.Info("repository was blocked but now within quota, processing to unblock")
+	case shouldGenerateToken:
+		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
+	default:
+		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
+		return nil
+	}
+
+	// In any case - repo blocked, repo unblocked, or simply spec has changed - we need to
+	// update the observedGeneration to alight with the given metadata.generation.
+	if hasSpecChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/observedGeneration",
 			"value": obj.Generation,
 		})
-	case shouldResync:
-		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
-	case shouldCheckHealth:
-		logger.Info("health is stale", "health_status", obj.Status.Health.Healthy)
-	default:
-		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
+	}
+
+	// Set quota information from configuration (only if changed)
+	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/quota",
+			"value": newQuota,
+		})
+	}
+
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
+	); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
+	}
+
+	// Repository needs to be blocked.
+	if !isCurrentlyBlocked && isOverQuota {
+		// Rule 1: Not blocked + over quota -> Block and exit
+		logger.Info("namespace over quota, blocking repository",
+			"namespace", namespace,
+			"max_repositories", newQuota.MaxRepositories,
+		)
+
+		// Mark the repository as unhealthy
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":   "replace",
+			"path": "/status/health",
+			"value": provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{quotaCondition.Message},
+			},
+		})
+
+		// Apply patch and exit
+		if len(patchOperations) > 0 {
+			if err := rc.statusPatcher.Patch(ctx, obj, patchOperations...); err != nil {
+				return fmt.Errorf("status patch operations failed: %w", err)
+			}
+		}
 		return nil
+	}
+
+	// We're unblocking the repository. Here - we should set the condition correctly, to match this case.
+	if forceProcessForUnblock {
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
+		); conditionPatchOps != nil {
+			patchOperations = append(patchOperations, conditionPatchOps...)
+		}
+	}
+
+	if shouldGenerateToken {
+		logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
+
+		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+		if err != nil {
+			logger.Error("retrieving connection",
+				"connection", obj.Spec.Connection.Name,
+				"error", err,
+			)
+			return err
+		}
+
+		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
+		if err != nil {
+			logger.Error("generating token for repository",
+				"connection", obj.Spec.Connection.Name,
+				"error", err,
+			)
+			return err
+		}
+
+		if len(tokenOps) > 0 {
+			patchOperations = append(patchOperations, tokenOps...)
+		}
+
+		// Adding secure token to object as it will be used for healthchecks and hooks process
+		obj.Secure.Token.Create = token
 	}
 
 	repo, err := rc.repoFactory.Build(ctx, obj)
@@ -564,36 +716,30 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		patchOperations = append(patchOperations, hookOps...)
 	}
 
+	// If branch is empty, fetch and set the default branch before running health check
+	if branchHandler, ok := repo.(repository.BranchHandler); ok {
+		if branchHandler.GetCurrentBranch() == "" {
+			logger.Info("given repository branch is empty, getting default branch")
+
+			defaultBranch, err := branchHandler.GetDefaultBranch(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get default branch: %w", err)
+			}
+
+			branchHandler.SetBranch(defaultBranch)
+
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  fmt.Sprintf("/spec/%s/branch", repo.Config().Spec.Type),
+				"value": defaultBranch,
+			})
+		}
+	}
+
 	// Handle health checks using the health checker
 	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
-	}
-
-	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
-		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
-		if err != nil {
-			logger.Error("retrieving connection",
-				"connection", obj.Spec.Connection.Name,
-				"error", err,
-			)
-			return err
-		}
-
-		if rc.shouldGenerateTokenFromConnection(obj, healthStatus, c) {
-			logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
-
-			tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
-			if err != nil {
-				logger.Error("generating token for repository",
-					"connection", obj.Spec.Connection.Name,
-					"error", err,
-				)
-				return err
-			}
-
-			patchOperations = append(patchOperations, tokenOps...)
-		}
 	}
 
 	// Add health patch operations first
@@ -614,20 +760,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		})
 	}
 
-	// Set quota information from configuration (only if changed)
-	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
-	// Only update if the quota has changed
-	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
-		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/quota",
-			"value": newQuota,
-		})
-	}
-
 	// determine the sync strategy and sync status to apply
-	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
+	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
 
 	// Apply all patch operations
@@ -680,37 +814,35 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 // We're going to work on this in https://github.com/grafana/git-ui-sync-project/issues/744.
 func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	obj *provisioning.Repository,
-	healthStatus provisioning.HealthStatus,
-	c *provisioning.Connection,
 ) bool {
 	// We should generate a token from the connection when
-	// - The token has not been recently created
-	// - The repo is not healthy
+	// - The token has never been generated, i.e. a new Repository is being added
+	// or
+	// - The token has not been recently created, and
 	// - The token will expire before the next resync interval
-	// - The linked connection is healthy (which means it is able to generate valid tokens)
+	if obj.Secure.Token.IsZero() {
+		return true
+	}
+
 	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
-	shouldRefresh := shouldRefreshBeforeExpiration(
-		time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval,
-	)
+	shouldRefresh := shouldRefreshBeforeExpiration(time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval)
 	return !recentlyCreated &&
-		!healthStatus.Healthy &&
-		shouldRefresh &&
-		c.Status.Health.Healthy
+		shouldRefresh
 }
 
 func (rc *RepositoryController) generateRepositoryToken(
 	ctx context.Context,
 	obj *provisioning.Repository,
 	c *provisioning.Connection,
-) ([]map[string]any, error) {
+) (common.RawSecureValue, []map[string]any, error) {
 	conn, err := rc.connectionFactory.Build(ctx, c)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create connection from configuration: %w", err)
+		return "", nil, fmt.Errorf("unable to create connection from configuration: %w", err)
 	}
 
 	token, err := conn.GenerateRepositoryToken(ctx, obj)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create token for repository: %w", err)
+		return "", nil, fmt.Errorf("unable to create token for repository: %w", err)
 	}
 
 	patchOperations := []map[string]any{
@@ -755,5 +887,5 @@ func (rc *RepositoryController) generateRepositoryToken(
 		})
 	}
 
-	return patchOperations, nil
+	return token.Token, patchOperations, nil
 }

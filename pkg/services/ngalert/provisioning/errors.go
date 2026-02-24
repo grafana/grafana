@@ -41,15 +41,6 @@ var (
 	ErrContactPointUidExists  = errutil.Conflict("alerting.notifications.contact-points.uidInUse").MustTemplate(
 		contactPointUidExists, errutil.WithPublic(contactPointUidExists),
 	)
-
-	ErrRouteInvalidFormat = errutil.BadRequest("alerting.notifications.routes.invalidFormat").MustTemplate(
-		"Invalid format of the submitted route.",
-		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
-	)
-
-	ErrRouteConflictingMatchers = errutil.BadRequest("alerting.notifications.routes.conflictingMatchers").MustTemplate("Routing tree conflicts with the external configuration",
-		errutil.WithPublic("Cannot add\\update route: matchers conflict with an external routing tree merging matchers {{ .Public.Matchers }}, making the added\\updated route unreachable."),
-	)
 )
 
 // MakeErrTimeIntervalInvalid creates an error with the ErrTimeIntervalInvalid template
@@ -110,23 +101,6 @@ func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []
 
 	return ErrTimeIntervalDependentResourcesProvenance.Build(errutil.TemplateData{
 		Public: data,
-	})
-}
-
-func MakeErrRouteInvalidFormat(err error) error {
-	return ErrRouteInvalidFormat.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"Error": err.Error(),
-		},
-		Error: err,
-	})
-}
-
-func MakeErrRouteConflictingMatchers(matchers string) error {
-	return ErrRouteConflictingMatchers.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"Matchers": matchers,
-		},
 	})
 }
 

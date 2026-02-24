@@ -222,7 +222,6 @@ export function PanelChrome({
       ) {
         return;
       }
-
       // setTimeout is needed here because onSelect stops the event propagation
       // By doing so, the event won't get to the document and drag will never be stopped
       setTimeout(() => onSelect?.(evt));
@@ -243,22 +242,20 @@ export function PanelChrome({
 
   const onContentPointerDown = React.useCallback(
     (evt: React.PointerEvent) => {
-      // Always ignore interactive controls so their clicks don't select the panel.
-      // This prevents legend item clicks from selecting the panel and opening the edit sidebar.
-      if (evt.target instanceof Element && evt.target.closest('button,a')) {
-        evt.stopPropagation();
-        return;
-      }
-
-      // When selected, ignore clicks inside canvas/svg to avoid selecting row config editor.
-      if (isSelected && evt.target instanceof Element && evt.target.closest('canvas,svg')) {
+      // Ignore clicks inside buttons, links, canvas and svg elments
+      // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
+      if (
+        evt.target instanceof Element &&
+        (evt.target.closest('button,a,canvas,svg') || evt.target.classList.contains('u-over'))
+      ) {
+        // Stop propagation otherwise row config editor will get selected
         evt.stopPropagation();
         return;
       }
 
       onSelect?.(evt);
     },
-    [isSelected, onSelect]
+    [onSelect]
   );
 
   const headerContent = (
@@ -436,6 +433,7 @@ export function PanelChrome({
                   placement="bottom-end"
                   menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
                   onOpenMenu={onOpenMenu}
+                  dragClassCancel={dragClassCancel}
                 />
               )}
             </div>

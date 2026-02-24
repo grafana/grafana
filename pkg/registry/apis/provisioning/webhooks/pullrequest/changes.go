@@ -142,6 +142,7 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		// for testability and decoupling
 		urlBuilder, err := url.Parse(baseURL)
 		if err != nil {
+			logger.Warn("Error parsing baseURL", "err", err)
 			info.Error = err.Error()
 			return info
 		}

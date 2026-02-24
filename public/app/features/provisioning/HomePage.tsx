@@ -8,35 +8,47 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { ConnectionsTabContent } from './Connection/ConnectionsTabContent';
 import GettingStarted from './GettingStarted/GettingStarted';
-import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
 import { CONNECTIONS_URL } from './constants';
+import { useConnectionList } from './hooks/useConnectionList';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
 export default function HomePage() {
-  const [items, isLoading] = useRepositoryList({ watch: true });
+  const [items, isLoadingRepos] = useRepositoryList({ watch: true });
+  const [connections, isLoadingConnections, connectionsError] = useConnectionList({ watch: true });
   const [deleteAll] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Read tab from URL - null means default (repositories)
-  const activeTab = searchParams.get('tab');
+  const isLoading = isLoadingRepos || isLoadingConnections;
+
+  const urlTab = searchParams.get('tab');
+  const defaultTab = useMemo(() => {
+    if (isLoading) {
+      return 'repositories';
+    }
+    if (items?.length) {
+      return 'repositories';
+    }
+    if (connections?.length) {
+      return 'connections';
+    }
+    return 'getting-started';
+  }, [isLoading, items?.length, connections?.length]);
+
+  const activeTab = urlTab ?? defaultTab;
 
   // Handler to update URL when tab changes
-  const handleTabChange = (tab: string | null) => {
-    if (tab) {
-      searchParams.set('tab', tab);
-    } else {
-      searchParams.delete('tab');
-    }
+  const handleTabChange = (tab: string) => {
+    searchParams.set('tab', tab);
     setSearchParams(searchParams, { replace: true });
   };
 
   const tabInfo = useMemo(
     () => [
       {
-        value: null,
+        value: 'repositories',
         label: t('provisioning.home-page.tab-repositories', 'Repositories'),
         title: t('provisioning.home-page.tab-repositories-title', 'List of repositories'),
       },
@@ -47,17 +59,12 @@ export default function HomePage() {
       },
       {
         value: 'getting-started',
-        label: t('provisioning.home-page.tab-getting-started', 'Getting started'),
-        title: t('provisioning.home-page.tab-getting-started-title', 'Getting started'),
+        label: t('provisioning.home-page.tab-getting-started', 'Get started'),
+        title: t('provisioning.home-page.tab-getting-started-title', 'Get started'),
       },
     ],
     []
   );
-
-  // Early return for onboarding
-  if (!items?.length && !isLoading) {
-    return <GettingStartedPage items={items ?? []} />;
-  }
 
   const onConfirmDelete = () => {
     deleteAll({});
@@ -67,9 +74,10 @@ export default function HomePage() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'connections':
-        return <ConnectionsTabContent />;
+        return <ConnectionsTabContent items={connections ?? []} error={connectionsError} />;
       case 'getting-started':
         return <GettingStarted items={items ?? []} />;
+      case 'repositories':
       default:
         return <RepositoryList items={items ?? []} />;
     }
@@ -83,6 +91,9 @@ export default function HomePage() {
             <Trans i18nKey="provisioning.connections.add-connection">Add connection</Trans>
           </LinkButton>
         );
+      case 'getting-started':
+        return null;
+      case 'repositories':
       default:
         return <ConnectRepositoryButton items={items} />;
     }

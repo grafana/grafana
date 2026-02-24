@@ -135,7 +135,7 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first().click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer).first().click();
 
       const panelTitleInput = dashboardPage.getByGrafanaSelector(
         selectors.components.PanelEditor.OptionsPane.fieldInput('Title')

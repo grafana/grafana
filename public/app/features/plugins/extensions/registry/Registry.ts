@@ -1,5 +1,7 @@
 import { Observable, ReplaySubject, Subject, distinctUntilChanged, firstValueFrom, map, scan, startWith } from 'rxjs';
 
+import { AppPluginConfig } from '@grafana/data';
+
 import { ExtensionsLog, log } from '../logs/log';
 import { deepFreeze } from '../utils';
 
@@ -25,11 +27,14 @@ export abstract class Registry<TRegistryValue extends object | unknown[] | Recor
   // (It will buffer the last value on the stream - the registry - and emit it to new subscribers immediately.)
   protected registrySubject: ReplaySubject<RegistryType<TRegistryValue>>;
 
-  constructor(options: {
-    registrySubject?: ReplaySubject<RegistryType<TRegistryValue>>;
-    initialState?: RegistryType<TRegistryValue>;
-    log?: ExtensionsLog;
-  }) {
+  constructor(
+    protected apps: AppPluginConfig[],
+    options: {
+      registrySubject?: ReplaySubject<RegistryType<TRegistryValue>>;
+      initialState?: RegistryType<TRegistryValue>;
+      log?: ExtensionsLog;
+    }
+  ) {
     this.resultSubject = new Subject<PluginExtensionConfigs<TMapType>>();
     this.logger = options.log ?? log;
     this.isReadOnly = false;

@@ -17,6 +17,7 @@ import { DATASOURCE_UID } from '../constants';
 
 import { WorkbenchSceneObject } from './Workbench';
 import { prometheusExpressionBuilder } from './expressionBuilder';
+import { getAdHocTagKeysProvider, getAdHocTagValuesProvider, getGroupByTagKeysProvider } from './tagKeysProviders';
 import { defaultTimeRange } from './utils';
 
 const cursorSync = new behaviors.CursorSync({ key: 'triage-cursor-sync', sync: DashboardCursorSync.Crosshair });
@@ -42,6 +43,7 @@ export const triageScene = new EmbeddedSceneWithContext({
         },
         allowCustomValue: true,
         applyMode: 'manual',
+        getTagKeysProvider: getGroupByTagKeysProvider,
       }),
       new AdHocFiltersVariable({
         name: 'filters',
@@ -58,8 +60,8 @@ export const triageScene = new EmbeddedSceneWithContext({
         baseFilters: [],
         layout: 'combobox',
         expressionBuilder: prometheusExpressionBuilder,
-        // Filter out __name__ from options as this is the metric name not a filterable label
-        tagKeyRegexFilter: /^(?!__name__$).*/,
+        getTagKeysProvider: getAdHocTagKeysProvider,
+        getTagValuesProvider: getAdHocTagValuesProvider,
       }),
     ],
   }),

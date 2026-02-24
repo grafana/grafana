@@ -221,12 +221,21 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		opts.Limit = options.Limit
 	}
 
+	// Extract continue token from request
+	if options.Continue != "" {
+		opts.Continue = options.Continue
+	}
+
 	result, err := s.store.List(ctx, namespace, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	return &annotationV0.AnnotationList{Items: result.Items}, nil
+	// Return list with continue token for pagination
+	return &annotationV0.AnnotationList{
+		Items:    result.Items,
+		ListMeta: metav1.ListMeta{Continue: result.Continue},
+	}, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {

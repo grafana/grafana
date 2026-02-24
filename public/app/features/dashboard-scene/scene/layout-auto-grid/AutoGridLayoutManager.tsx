@@ -8,13 +8,14 @@ import {
   VizPanel,
   SceneGridItemLike,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { trackDropItemCrossLayout } from '../../utils/tracking';
 import {
   forceRenderChildren,
   getDashboardSceneFor,
@@ -387,6 +388,7 @@ export class AutoGridLayoutManager
   }
 
   public draggedGridItemInside(gridItem: SceneGridItemLike, position?: number): void {
+    trackDropItemCrossLayout(gridItem);
     let newGridItem: AutoGridItem;
 
     if (gridItem instanceof AutoGridItem) {

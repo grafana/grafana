@@ -3,6 +3,7 @@ package sql
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -21,22 +22,36 @@ type eventNotifier interface {
 	close()
 }
 
-func newNotifier(b *backend) (eventNotifier, error) {
-	if b.isHA {
-		b.log.Info("Using polling notifier")
+// notifierConfig contains all dependencies needed to create a notifier
+type notifierConfig struct {
+	isHA            bool
+	pollingInterval time.Duration
+	watchBufferSize int
+	log             logging.Logger
+	bulkLock        *bulkLock
+	listLatestRVs   func(ctx context.Context) (groupResourceRV, error)
+	storageMetrics  *resource.StorageMetrics
+	done            <-chan struct{}
+	db              db.DB
+	dialect         sqltemplate.Dialect
+}
+
+func newNotifier(cfg *notifierConfig) (eventNotifier, error) {
+	if cfg.isHA {
+		cfg.log.Info("Using polling notifier")
 		notifier, err := newPollingNotifier(&pollingNotifierConfig{
-			pollingInterval: b.pollingInterval,
-			watchBufferSize: b.watchBufferSize,
-			log:             b.log,
-			bulkLock:        b.bulkLock,
-			listLatestRVs:   b.listLatestRVs,
-			storageMetrics:  b.storageMetrics,
+			pollingInterval: cfg.pollingInterval,
+			watchBufferSize: cfg.watchBufferSize,
+			log:             cfg.log,
+			bulkLock:        cfg.bulkLock,
+			listLatestRVs:   cfg.listLatestRVs,
+			storageMetrics:  cfg.storageMetrics,
 			historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
 				var records []*historyPollResponse
-				err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+				err := cfg.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 					var err error
 					records, err = dbutil.Query(ctx, tx, sqlResourceHistoryPoll, &sqlResourceHistoryPollRequest{
-						SQLTemplate:          sqltemplate.New(b.dialect),
+						SQLTemplate:          sqltemplate.New(cfg.dialect),
 						Resource:             res,
 						Group:                grp,
 						SinceResourceVersion: since,
@@ -46,8 +61,8 @@ func newNotifier(b *backend) (eventNotifier, error) {
 				})
 				return records, err
 			},
-			done:    b.done,
-			dialect: b.dialect,
+			done:    cfg.done,
+			dialect: cfg.dialect,
 		})
 		if err != nil {
 			return nil, err
@@ -55,8 +70,8 @@ func newNotifier(b *backend) (eventNotifier, error) {
 		return notifier, nil
 	}
 
-	b.log.Info("Using channel notifier")
-	return newChannelNotifier(b.watchBufferSize, b.log), nil
+	cfg.log.Info("Using channel notifier")
+	return newChannelNotifier(cfg.watchBufferSize, cfg.log), nil
 }
 
 type channelNotifier struct {

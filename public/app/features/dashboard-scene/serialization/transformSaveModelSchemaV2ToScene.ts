@@ -44,7 +44,7 @@ import {
   TextVariableKind,
   defaultDataQueryKind,
   AnnotationQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
@@ -52,7 +52,6 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
-  DeprecatedInternalId,
   AnnoKeyEmbedded,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -135,11 +134,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   const isDashboardEditable = Boolean(dashboard.editable);
   const canSave = dto.access.canSave !== false;
-  let dashboardId: number | undefined = undefined;
-
-  if (metadata.labels?.[DeprecatedInternalId]) {
-    dashboardId = parseInt(metadata.labels[DeprecatedInternalId], 10);
-  }
 
   const meta: DashboardMeta = {
     canShare: dto.access.canShare !== false,
@@ -206,7 +200,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
-      id: dashboardId,
       isDirty: false,
       links: dashboard.links,
       meta,
@@ -237,7 +230,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
-          uid: dashboardId?.toString(),
+          uid: metadata.name,
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
       ],
@@ -305,7 +298,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
   });
 }
 
-function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
+export function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
   const commonProperties = {
     name: variable.spec.name,
     label: variable.spec.label,
@@ -383,6 +376,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
             staticOptions: variable.spec.staticOptions.map((option) => ({
               label: String(option.text),
               value: String(option.value),
+              properties: option.properties,
             })),
           }
         : {}),

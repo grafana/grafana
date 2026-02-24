@@ -147,14 +147,11 @@ const mockFormData = {
 };
 
 const defaultHookData: ProvisionedFolderFormDataResult = {
-  workflowOptions: [
-    { label: 'Write directly', value: 'write' },
-    { label: 'Create branch', value: 'branch' },
-  ],
   repository: mockRepository,
   folder: mockFolder,
   initialValues: mockFormData,
   isReadOnlyRepo: false,
+  canPushToConfiguredBranch: true,
 };
 
 function setup(

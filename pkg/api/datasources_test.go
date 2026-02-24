@@ -469,6 +469,56 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 	}
 }
 
+func TestDeleteDataSourceByName_IncludesUIDForPermissions(t *testing.T) {
+	t.Run("should include UID when deleting datasource by name", func(t *testing.T) {
+		const dsName = "test-datasource"
+		const dsUID = "test-uid-12345"
+		const orgID int64 = 1
+
+		var capturedDeleteCmd *datasources.DeleteDataSourceCommand
+
+		// Mock datasource service
+		mockDsService := &dataSourcesServiceMock{
+			expectedDatasource: &datasources.DataSource{
+				Name:  dsName,
+				UID:   dsUID,
+				OrgID: orgID,
+			},
+			mockDeleteDataSource: func(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
+				capturedDeleteCmd = cmd
+				return nil
+			},
+		}
+
+		hs := &HTTPServer{
+			Cfg:                setting.NewCfg(),
+			pluginStore:        &pluginstore.FakePluginStore{},
+			DataSourcesService: mockDsService,
+			Live:               newTestLive(t),
+		}
+
+		// Create scenario context
+		sc := setupScenarioContext(t, "/api/datasources/name/"+dsName)
+		sc.m.Delete(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			c.Req = web.SetURLParams(c.Req, map[string]string{":name": dsName})
+			c.SignedInUser = authedUserWithPermissions(orgID, 1, []ac.Permission{})
+			c.OrgID = orgID
+			return hs.DeleteDataSourceByName(c)
+		}))
+
+		sc.fakeReqWithParams("DELETE", sc.url, map[string]string{":name": dsName}).exec()
+
+		// Verify the response was successful
+		assert.Equal(t, 200, sc.resp.Code)
+
+		// Verify that DeleteDataSource was called with the UID populated
+		require.NotNil(t, capturedDeleteCmd, "DeleteDataSource should have been called")
+		assert.Equal(t, dsName, capturedDeleteCmd.Name, "Command should have datasource name")
+		assert.Equal(t, dsUID, capturedDeleteCmd.UID, "Command should have datasource UID for permissions cleanup")
+		assert.Equal(t, orgID, capturedDeleteCmd.OrgID, "Command should have correct org ID")
+	})
+}
+
 type dataSourcesServiceMock struct {
 	datasources.DataSourceService
 
@@ -477,6 +527,7 @@ type dataSourcesServiceMock struct {
 	expectedError       error
 
 	mockUpdateDataSource func(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
+	mockDeleteDataSource func(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
 }
 
 func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
@@ -492,6 +543,9 @@ func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query
 }
 
 func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
+	if m.mockDeleteDataSource != nil {
+		return m.mockDeleteDataSource(ctx, cmd)
+	}
 	return m.expectedError
 }
 

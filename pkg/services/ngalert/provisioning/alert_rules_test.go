@@ -1541,6 +1541,75 @@ func TestDeleteAlertRule(t *testing.T) {
 		uids := deletes[0].Params[3].([]string)
 		require.Contains(t, uids, r.UID)
 	})
+
+	t.Run("provenance validation", func(t *testing.T) {
+		testCases := []struct {
+			name              string
+			storedProvenance  models.Provenance
+			requestProvenance models.Provenance
+			expectError       bool
+		}{
+			{
+				name:              "can delete converted_prometheus rule with ProvenanceNone",
+				storedProvenance:  models.ProvenanceConvertedPrometheus,
+				requestProvenance: models.ProvenanceNone,
+				expectError:       false,
+			},
+			{
+				name:              "can delete api rule with ProvenanceNone",
+				storedProvenance:  models.ProvenanceAPI,
+				requestProvenance: models.ProvenanceNone,
+				expectError:       false,
+			},
+			{
+				name:              "cannot delete file rule with ProvenanceNone",
+				storedProvenance:  models.ProvenanceFile,
+				requestProvenance: models.ProvenanceNone,
+				expectError:       true,
+			},
+			{
+				name:              "cannot delete api rule with converted_prometheus provenance",
+				storedProvenance:  models.ProvenanceAPI,
+				requestProvenance: models.ProvenanceConvertedPrometheus,
+				expectError:       true,
+			},
+			{
+				name:              "can delete rule with matching provenance",
+				storedProvenance:  models.ProvenanceAPI,
+				requestProvenance: models.ProvenanceAPI,
+				expectError:       false,
+			},
+			{
+				name:              "can delete none provenance rule with any provenance",
+				storedProvenance:  models.ProvenanceNone,
+				requestProvenance: models.ProvenanceAPI,
+				expectError:       false,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				service, ruleStore, provenanceStore, ac := initService(t)
+				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return true, nil
+				}
+
+				rule := gen.With(gen.WithOrgID(orgID)).GenerateRef()
+				_, err := ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.InsertRule{{AlertRule: *rule}})
+				require.NoError(t, err)
+				require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, tc.storedProvenance))
+
+				err = service.DeleteAlertRule(context.Background(), u, rule.UID, tc.requestProvenance)
+
+				if tc.expectError {
+					require.Error(t, err)
+					require.Truef(t, errProvenanceMismatch.Base.Is(err), "expected errProvenanceMismatch but got %s", err)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
+	})
 }
 
 func TestGetAlertRule(t *testing.T) {

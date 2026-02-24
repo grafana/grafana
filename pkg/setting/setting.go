@@ -150,8 +150,10 @@ type Cfg struct {
 	ProvisioningMaxRepositories           int64 // default 10, 0 in config = unlimited (converted to -1 internally)
 	DataPath                              string
 	LogsPath                              string
-	PluginsPath                           string
 	EnterpriseLicensePath                 string
+	// PluginsPaths: list of paths where Grafana will look for plugins.
+	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
+	PluginsPaths []string
 
 	// Classic Provisioning settings
 	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
@@ -281,12 +283,13 @@ type Cfg struct {
 	ManagedServiceAccountsEnabled bool
 
 	// AWS Plugin Auth
-	AWSAllowedAuthProviders   []string
-	AWSAssumeRoleEnabled      bool
-	AWSSessionDuration        string
-	AWSExternalId             string
-	AWSListMetricsPageLimit   int
-	AWSForwardSettingsPlugins []string
+	AWSAllowedAuthProviders          []string
+	AWSAssumeRoleEnabled             bool
+	AWSPerDatasourceHTTPProxyEnabled bool
+	AWSSessionDuration               string
+	AWSExternalId                    string
+	AWSListMetricsPageLimit          int
+	AWSForwardSettingsPlugins        []string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -539,8 +542,9 @@ type Cfg struct {
 
 	RBAC RBACSettings
 
-	ZanzanaClient ZanzanaClientSettings
-	ZanzanaServer ZanzanaServerSettings
+	ZanzanaClient     ZanzanaClientSettings
+	ZanzanaServer     ZanzanaServerSettings
+	ZanzanaReconciler ZanzanaReconcilerSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
@@ -624,8 +628,11 @@ type Cfg struct {
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
 	EnableSearch                               bool
+	EnableSearchClient                         bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
+	EnforceQuotas                              bool
+	QuotasErrorMessageSupportInfo              string
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
 	EnableGarbageCollection                    bool
@@ -633,6 +640,8 @@ type Cfg struct {
 	GarbageCollectionBatchSize                 int
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
+	// SimulatedNetworkLatency is used for testing only
+	SimulatedNetworkLatency time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -1215,7 +1224,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
-	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
+	bundledPlugins := valueAsString(iniFile.Section("paths"), "bundled_plugins", "data/plugins-bundled")
+	cfg.PluginsPaths = []string{makeAbsolute(plugins, cfg.HomePath), makeAbsolute(bundledPlugins, cfg.HomePath)}
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
@@ -1510,6 +1520,7 @@ func (cfg *Cfg) readLDAPConfig() {
 func (cfg *Cfg) handleAWSConfig() {
 	awsPluginSec := cfg.Raw.Section("aws")
 	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
+	cfg.AWSPerDatasourceHTTPProxyEnabled = awsPluginSec.Key("per_datasource_http_proxy_enabled").MustBool(false)
 	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
 	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
 		authProvider = strings.TrimSpace(authProvider)
@@ -1596,7 +1607,7 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Home", "path", cfg.HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
-	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPath)
+	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPaths)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + cfg.Env)
 }

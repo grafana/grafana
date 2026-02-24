@@ -80,31 +80,27 @@ const buildLabelPath = (label: string) => {
   return label.includes('.') || label.trim().includes(' ') ? `["${label}"]` : `.${label}`;
 };
 
+const isRecordOrArray = (value: unknown): value is Record<string, unknown> | unknown[] =>
+  typeof value === 'object' && value !== null;
+
 const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
-  if (!('valuesFormat' in variable) || variable.valuesFormat !== 'json') {
+  if (!('options' in variable) || !variable.options[0].properties) {
     return [];
   }
 
-  function collectFieldPaths(option: Record<string, string>, currentPath: string) {
+  function collectFieldPaths(properties: Record<string, unknown> | unknown[], currentPath: string) {
     let paths: string[] = [];
-    for (const field in option) {
-      if (option.hasOwnProperty(field)) {
-        const newPath = `${currentPath}.${field}`;
-        const value = option[field];
-        if (typeof value === 'object' && value !== null) {
-          paths = [...paths, ...collectFieldPaths(value, newPath)];
-        }
-        paths.push(newPath);
+    for (const [field, value] of Object.entries(properties)) {
+      const newPath = `${currentPath}.${field}`;
+      if (isRecordOrArray(value)) {
+        paths = [...paths, ...collectFieldPaths(value, newPath)];
       }
+      paths.push(newPath);
     }
     return paths;
   }
 
-  try {
-    return collectFieldPaths(JSON.parse(variable.query)[0], variable.name);
-  } catch {
-    return [];
-  }
+  return collectFieldPaths(variable.options[0].properties, variable.name);
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [

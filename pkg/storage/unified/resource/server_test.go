@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -684,4 +685,72 @@ func TestGetQuotaUsage(t *testing.T) {
 		assert.Equal(t, int64(42), resp.Usage)
 		assert.Equal(t, int64(500), resp.Limit)
 	})
+}
+
+func TestCheckQuotas(t *testing.T) {
+	tests := []struct {
+		name        string
+		limit       int
+		expectError bool
+	}{
+		{
+			name:        "will return error if quota exceeded",
+			limit:       1,
+			expectError: true,
+		},
+		{
+			name:        "will return nil if within quota",
+			limit:       2,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+			overrides := fmt.Sprintf(`overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: %d
+`, tt.limit)
+			require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+
+			tcr := tracing.NewNoopTracerService()
+			overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+				FilePath: overridesFile,
+			})
+			require.NoError(t, err)
+
+			nsr := NamespacedResource{
+				Namespace: "stacks-123",
+				Group:     "grafana.dashboard.app",
+				Resource:  "dashboards",
+			}
+
+			server, err := NewResourceServer(ResourceServerOptions{
+				Backend: &mockStorageBackend{
+					resourceStats: []ResourceStats{{
+						NamespacedResource: nsr,
+						Count:              1,
+					}},
+				},
+				OverridesService: overridesService,
+				QuotasConfig:     QuotasConfig{EnforceQuotas: true},
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = server.Stop(ctx)
+			})
+
+			err = server.checkQuota(ctx, nsr)
+			if tt.expectError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }

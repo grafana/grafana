@@ -338,7 +338,7 @@ describe('contact points', () => {
 
       const { user } = renderWithProvider(<ContactPoint contactPoint={{ ...basicContactPointInUse, policies }} />);
 
-      expect(screen.getByRole('link', { name: /1 notification policy/ })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /1 notification policies/ })).toBeInTheDocument();
 
       const moreActions = screen.getByRole('button', { name: /More/ });
       await user.click(moreActions);
@@ -519,8 +519,8 @@ describe('contact points', () => {
     it('renders number of alert rules and policies and does not permit deletion', async () => {
       const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithEverything} />);
 
-      expect(screen.getByText(/used by 3 alert rule/i)).toBeInTheDocument();
-      expect(screen.getByText(/used by 1 notification policy/i)).toBeInTheDocument();
+      expect(screen.getByText(/used by 3 alert rules/i)).toBeInTheDocument();
+      expect(screen.getByText(/used by 1 notification policies/i)).toBeInTheDocument();
 
       await clickMoreActionsButton(contactPointWithEverything.name);
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
@@ -611,7 +611,7 @@ describe('contact points', () => {
 
       await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
 
-      const permissionsDialog = await screen.findByRole('dialog', { name: /drawer title manage permissions/i });
+      const permissionsDialog = await screen.findByRole('dialog', { name: /manage permissions/i });
 
       expect(permissionsDialog).toBeInTheDocument();
       expect(await screen.findByRole('table')).toBeInTheDocument();

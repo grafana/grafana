@@ -39,7 +39,7 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 }
 
 func (s *Service) externalPluginSources() []plugins.PluginSource {
-	localSrcs, err := sources.DirAsLocalSources(s.cfg, s.cfg.PluginsPath, plugins.ClassExternal)
+	localSrcs, err := sources.DirAsLocalSources(s.cfg, s.cfg.PluginsPaths, plugins.ClassExternal)
 	if err != nil {
 		s.log.Error("Failed to load external plugins", "error", err)
 		return []plugins.PluginSource{}

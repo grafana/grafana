@@ -19,8 +19,8 @@ import { getDefaultVizPanel } from '../utils/utils';
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
-import { DashboardSidePaneNew } from './DashboardSidePaneNew';
 import { ElementEditPane } from './ElementEditPane';
+import { AddNewEditPane } from './add-new/AddNewEditPane';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -34,6 +34,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const hasUid = Boolean(uid);
+  const isEmbedded = meta.isEmbedded;
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
   // the layout element that was selected when opening the 'add' pane
@@ -94,11 +95,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       )}
       {openPane === 'add' && (
         <Sidebar.OpenPane>
-          <DashboardSidePaneNew
-            onAddPanel={onAddNewPanel}
-            dashboard={dashboard}
-            selectedElement={selectedLayoutElement}
-          />
+          <AddNewEditPane onAddPanel={onAddNewPanel} dashboard={dashboard} selectedElement={selectedLayoutElement} />
         </Sidebar.OpenPane>
       )}
       {openPane === 'outline' && (
@@ -109,16 +106,9 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       <Sidebar.Toolbar>
         {isEditing && (
           <>
-            {config.featureToggles.dashboardUndoRedo && (
-              <>
-                <UndoButton dashboard={dashboard} />
-                <RedoButton dashboard={dashboard} />
-              </>
-            )}
             <Sidebar.Button
               icon="plus"
-              iconColor="primary"
-              iconSize="xl"
+              variant="primary"
               onClick={() => {
                 onSetLayoutElement(selectedObject);
                 editPane.openPane('add');
@@ -128,6 +118,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
               active={selectedObject === null || openPane === 'add'}
             />
+
             <Sidebar.Button
               icon="cog"
               onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
@@ -136,13 +127,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
-            {/* <Sidebar.Button
-              tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
-              title={t('dashboard.sidebar.edit-schema.title', 'Code')}
-              icon="brackets-curly"
-              onClick={() => dashboard.openV2SchemaEditor()}
-            /> */}
-            <Sidebar.Divider />
             <Sidebar.Button
               style={{ color: '#ff671d' }}
               icon="comment-alt-message"
@@ -161,9 +145,17 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
                 'Give feedback on the new dashboard editing experience'
               )}
             />
+            {config.featureToggles.dashboardUndoRedo && (
+              <>
+                <Sidebar.Divider />
+                <UndoButton dashboard={dashboard} />
+                <RedoButton dashboard={dashboard} />
+                <Sidebar.Divider />
+              </>
+            )}
           </>
         )}
-        {hasUid && <ShareExportDashboardButton dashboard={dashboard} />}
+        {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}

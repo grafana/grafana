@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -968,7 +969,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch put creates new key", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpPut, Key: "put-key", Value: []byte("put-value")},
+			{Mode: kvpkg.BatchOpPut, Key: "put-key", Value: []byte("put-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -989,7 +990,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, "put-update-key", strings.NewReader("original-value"))
 
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpPut, Key: "put-update-key", Value: []byte("updated-value")},
+			{Mode: kvpkg.BatchOpPut, Key: "put-update-key", Value: []byte("updated-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1007,7 +1008,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch create succeeds for new key", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpCreate, Key: "create-new-key", Value: []byte("new-value")},
+			{Mode: kvpkg.BatchOpCreate, Key: "create-new-key", Value: []byte("new-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1028,18 +1029,18 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, "create-exists-key", strings.NewReader("existing-value"))
 
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpCreate, Key: "create-exists-key", Value: []byte("new-value")},
+			{Mode: kvpkg.BatchOpCreate, Key: "create-exists-key", Value: []byte("new-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
-		assert.ErrorIs(t, err, resource.ErrKeyAlreadyExists)
+		assert.ErrorIs(t, err, kvpkg.ErrKeyAlreadyExists)
 
 		// Verify BatchError fields
-		var batchErr *resource.BatchError
+		var batchErr *kvpkg.BatchError
 		if assert.ErrorAs(t, err, &batchErr) {
 			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
 			assert.Equal(t, "create-exists-key", batchErr.Op.Key, "failed operation key should match")
-			assert.Equal(t, resource.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
+			assert.Equal(t, kvpkg.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
 		}
 
 		// Verify the original value is unchanged
@@ -1057,7 +1058,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, "update-exists-key", strings.NewReader("original-value"))
 
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpUpdate, Key: "update-exists-key", Value: []byte("updated-value")},
+			{Mode: kvpkg.BatchOpUpdate, Key: "update-exists-key", Value: []byte("updated-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1075,18 +1076,18 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch update fails for non-existent key", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpUpdate, Key: "update-nonexistent-key", Value: []byte("new-value")},
+			{Mode: kvpkg.BatchOpUpdate, Key: "update-nonexistent-key", Value: []byte("new-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, resource.ErrNotFound)
 
 		// Verify BatchError fields
-		var batchErr *resource.BatchError
+		var batchErr *kvpkg.BatchError
 		if assert.ErrorAs(t, err, &batchErr) {
 			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
 			assert.Equal(t, "update-nonexistent-key", batchErr.Op.Key, "failed operation key should match")
-			assert.Equal(t, resource.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
+			assert.Equal(t, kvpkg.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
 		}
 
 		// Verify the key was not created
@@ -1099,7 +1100,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, "delete-exists-key", strings.NewReader("to-be-deleted"))
 
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpDelete, Key: "delete-exists-key"},
+			{Mode: kvpkg.BatchOpDelete, Key: "delete-exists-key"},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1112,7 +1113,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch delete is idempotent for non-existent key", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpDelete, Key: "delete-nonexistent-key"},
+			{Mode: kvpkg.BatchOpDelete, Key: "delete-nonexistent-key"},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1121,9 +1122,9 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch multiple operations atomic success", func(t *testing.T) {
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpPut, Key: "multi-key1", Value: []byte("value1")},
-			{Mode: resource.BatchOpPut, Key: "multi-key2", Value: []byte("value2")},
-			{Mode: resource.BatchOpPut, Key: "multi-key3", Value: []byte("value3")},
+			{Mode: kvpkg.BatchOpPut, Key: "multi-key1", Value: []byte("value1")},
+			{Mode: kvpkg.BatchOpPut, Key: "multi-key2", Value: []byte("value2")},
+			{Mode: kvpkg.BatchOpPut, Key: "multi-key3", Value: []byte("value3")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1147,20 +1148,20 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, "rollback-exists", strings.NewReader("existing"))
 
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpPut, Key: "rollback-new1", Value: []byte("value1")},
-			{Mode: resource.BatchOpCreate, Key: "rollback-exists", Value: []byte("should-fail")}, // This will fail
-			{Mode: resource.BatchOpPut, Key: "rollback-new2", Value: []byte("value2")},
+			{Mode: kvpkg.BatchOpPut, Key: "rollback-new1", Value: []byte("value1")},
+			{Mode: kvpkg.BatchOpCreate, Key: "rollback-exists", Value: []byte("should-fail")}, // This will fail
+			{Mode: kvpkg.BatchOpPut, Key: "rollback-new2", Value: []byte("value2")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
-		assert.ErrorIs(t, err, resource.ErrKeyAlreadyExists)
+		assert.ErrorIs(t, err, kvpkg.ErrKeyAlreadyExists)
 
 		// Verify BatchError identifies the correct operation
-		var batchErr *resource.BatchError
+		var batchErr *kvpkg.BatchError
 		if assert.ErrorAs(t, err, &batchErr) {
 			assert.Equal(t, 1, batchErr.Index, "failed operation index should be 1 (second operation)")
 			assert.Equal(t, "rollback-exists", batchErr.Op.Key, "failed operation key should match")
-			assert.Equal(t, resource.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
+			assert.Equal(t, kvpkg.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
 		}
 
 		// Verify rollback: the first operation should NOT have persisted
@@ -1178,10 +1179,10 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, "mixed-delete", strings.NewReader("to-delete"))
 
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpCreate, Key: "mixed-create", Value: []byte("created")},
-			{Mode: resource.BatchOpUpdate, Key: "mixed-update", Value: []byte("updated")},
-			{Mode: resource.BatchOpDelete, Key: "mixed-delete"},
-			{Mode: resource.BatchOpPut, Key: "mixed-put", Value: []byte("put")},
+			{Mode: kvpkg.BatchOpCreate, Key: "mixed-create", Value: []byte("created")},
+			{Mode: kvpkg.BatchOpUpdate, Key: "mixed-update", Value: []byte("updated")},
+			{Mode: kvpkg.BatchOpDelete, Key: "mixed-delete"},
+			{Mode: kvpkg.BatchOpPut, Key: "mixed-put", Value: []byte("put")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1220,9 +1221,9 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("batch too many operations", func(t *testing.T) {
-		ops := make([]resource.BatchOp, resource.MaxBatchOps+1)
+		ops := make([]kvpkg.BatchOp, kvpkg.MaxBatchOps+1)
 		for i := range ops {
-			ops[i] = resource.BatchOp{Mode: resource.BatchOpPut, Key: fmt.Sprintf("key-%d", i), Value: []byte("value")}
+			ops[i] = kvpkg.BatchOp{Mode: kvpkg.BatchOpPut, Key: fmt.Sprintf("key-%d", i), Value: []byte("value")}
 		}
 
 		err := kv.Batch(ctx, section, ops)
@@ -1235,21 +1236,21 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, "error-context-key2", strings.NewReader("existing"))
 
 		ops := []resource.BatchOp{
-			{Mode: resource.BatchOpPut, Key: "error-context-key0", Value: []byte("value0")},
-			{Mode: resource.BatchOpPut, Key: "error-context-key1", Value: []byte("value1")},
-			{Mode: resource.BatchOpUpdate, Key: "error-context-nonexistent", Value: []byte("should-fail")}, // This will fail at index 2
-			{Mode: resource.BatchOpPut, Key: "error-context-key3", Value: []byte("value3")},
+			{Mode: kvpkg.BatchOpPut, Key: "error-context-key0", Value: []byte("value0")},
+			{Mode: kvpkg.BatchOpPut, Key: "error-context-key1", Value: []byte("value1")},
+			{Mode: kvpkg.BatchOpUpdate, Key: "error-context-nonexistent", Value: []byte("should-fail")}, // This will fail at index 2
+			{Mode: kvpkg.BatchOpPut, Key: "error-context-key3", Value: []byte("value3")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
 		require.Error(t, err)
 
 		// Verify BatchError provides correct context
-		var batchErr *resource.BatchError
+		var batchErr *kvpkg.BatchError
 		require.ErrorAs(t, err, &batchErr, "error should be a BatchError")
 		assert.Equal(t, 2, batchErr.Index, "failed operation index should be 2")
 		assert.Equal(t, "error-context-nonexistent", batchErr.Op.Key, "failed operation key should match")
-		assert.Equal(t, resource.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
+		assert.Equal(t, kvpkg.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
 		assert.ErrorIs(t, batchErr.Err, resource.ErrNotFound, "underlying error should be ErrNotFound")
 
 		// Verify error message contains useful information

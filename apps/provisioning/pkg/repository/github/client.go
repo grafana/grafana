@@ -21,6 +21,9 @@ var (
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter
 type Client interface {
+	// Repositories
+	GetRepository(ctx context.Context, owner, repository string) (Repository, error)
+
 	// Commits
 	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
 
@@ -34,6 +37,12 @@ type Client interface {
 	// Pull requests
 	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
 	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
+}
+
+type Repository struct {
+	ID            int64
+	Name          string
+	DefaultBranch string
 }
 
 type CommitAuthor struct {

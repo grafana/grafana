@@ -196,6 +196,13 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   return 'getLogRowContext' in datasource;
 };
 
+export const hasLogsLabelTypesSupport = (datasource: unknown): datasource is DataSourceWithLogsLabelTypesSupport => {
+  if (!datasource || typeof datasource !== 'object') {
+    return false;
+  }
+  return 'getLabelDisplayTypeFromFrame' in datasource;
+};
+
 /**
  * Types of supplementary queries that can be run in Explore.
  * @internal
@@ -367,6 +374,14 @@ export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery
    * Returns a list of supported action types for `modifyQuery()`.
    */
   getSupportedQueryModifications(): Array<QueryFixType | string>;
+}
+
+/**
+ * Logs data sources that support custom field groupings within logs details in the Logs Panel.
+ * If this method is defined, the return value will be used to group fields in the Logs Panel.
+ */
+export interface DataSourceWithLogsLabelTypesSupport {
+  getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): null | string;
 }
 
 /**

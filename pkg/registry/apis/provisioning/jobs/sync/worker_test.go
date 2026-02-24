@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -95,7 +96,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
-			expectedQuotaReason: provisioning.ReasonResourceQuotaExceeded,
+			expectedQuotaReason: provisioning.ReasonQuotaExceeded,
 			expectedQuotaStatus: false,
 		},
 		{
@@ -106,8 +107,8 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
-			expectedQuotaReason: provisioning.ReasonResourceQuotaReached,
-			expectedQuotaStatus: false,
+			expectedQuotaReason: provisioning.ReasonQuotaReached,
+			expectedQuotaStatus: true,
 		},
 		{
 			name:                      "within quota when under limit",
@@ -140,6 +141,11 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					Name:       "test-repo",
 					Namespace:  "test-namespace",
 					Generation: 1,
+				},
+				Status: provisioning.RepositoryStatus{
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: tt.maxResourcesPerRepository,
+					},
 				},
 			}
 			readerWriter.MockRepository.On("Config").Return(repoConfig)
@@ -182,7 +188,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 					}
 					// Find the Quota condition
 					for _, c := range conditions {
-						if c.Type == provisioning.ConditionTypeQuota {
+						if c.Type == provisioning.ConditionTypeResourceQuota {
 							capturedQuotaCondition = c
 							return true
 						}
@@ -201,7 +207,6 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				10,
 			)
-			worker.SetQuotaLimits(quotas.QuotaLimits{MaxResources: tt.maxResourcesPerRepository})
 
 			// Create test job
 			job := provisioning.Job{
@@ -217,7 +222,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			require.NoError(t, err)
 
 			// Verify quota condition
-			require.Equal(t, provisioning.ConditionTypeQuota, capturedQuotaCondition.Type)
+			require.Equal(t, provisioning.ConditionTypeResourceQuota, capturedQuotaCondition.Type)
 			require.Equal(t, tt.expectedQuotaReason, capturedQuotaCondition.Reason)
 			if tt.expectedQuotaStatus {
 				require.Equal(t, metav1.ConditionTrue, capturedQuotaCondition.Status)
@@ -644,6 +649,66 @@ func TestSyncWorker_Process(t *testing.T) {
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
 			expectedError: "",
+		},
+		{
+			name: "quota exceeded error preserves lastRef",
+			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+				repoConfig := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "test-namespace",
+					},
+					Status: provisioning.RepositoryStatus{
+						Sync: provisioning.SyncStatus{
+							LastRef: "existing-ref",
+						},
+					},
+				}
+				rw.MockRepository.On("Config").Return(repoConfig)
+
+				// Initial status update - expect granular patches
+				pr.On("SetMessage", mock.Anything, "update sync status at start").Return()
+				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+				// Setup resources and clients
+				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				rrf.On("Client", mock.Anything, mock.Anything).Return(mockRepoResources, nil)
+
+				mockClients := resources.NewMockResourceClients(t)
+				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
+
+				// Sync returns a QuotaExceededError
+				quotaError := &quotas.QuotaExceededError{
+					Err: fmt.Errorf("repository is over quota"),
+				}
+				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
+				pr.On("StrictMaxErrors", 20).Return()
+				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
+					return true
+				}), mockRepoResources, mock.Anything, pr).Return("new-ref", quotaError)
+
+				// Complete with the quota error — state is Warning (not Error) because
+				// the error is recorded as a warning via isWarningError
+				pr.On("Complete", mock.Anything, quotaError).Return(provisioning.JobStatus{State: provisioning.JobStateWarning})
+				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
+
+				// Final patch should preserve existing-ref despite Warning state (not Error)
+				rpf.On("Execute", mock.Anything, repoConfig,
+					mock.MatchedBy(func(patch map[string]interface{}) bool {
+						if patch["op"] != "replace" || patch["path"] != "/status/sync" {
+							return false
+						}
+						syncStatus := patch["value"].(provisioning.SyncStatus)
+						return syncStatus.LastRef == "existing-ref" && // LastRef preserved on quota error
+							syncStatus.State == provisioning.JobStateWarning
+					}),
+					mock.MatchedBy(func(patch map[string]interface{}) bool {
+						return patch["path"] == "/status/conditions"
+					}),
+				).Return(nil).Once()
+			},
+			expectedError: "repository is over quota",
 		},
 		{
 			name: "failed final status patch",

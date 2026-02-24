@@ -1,9 +1,8 @@
 import { useState } from 'react';
 
+import { useCreateSessionMutation } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
 import { Trans } from '@grafana/i18n';
 import { Box, Button, Text } from '@grafana/ui';
-
-import { useCreateSessionMutation } from '../../../api';
 
 import { ConnectModal } from './ConnectModal';
 

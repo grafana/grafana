@@ -8,9 +8,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func testCheck(t *testing.T, server *Server) {
+func TestIntegrationServerCheck(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+
 	newReq := func(subject, verb, group, resource, subresource, folder, name string) *authzv1.CheckRequest {
 		return &authzv1.CheckRequest{
 			Namespace:   namespace,

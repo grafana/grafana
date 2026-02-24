@@ -14,7 +14,7 @@ import { useMenuFocus } from './hooks';
 
 /** @internal */
 export interface SubMenuProps {
-  parentItemRef: React.RefObject<HTMLElement>;
+  parentItemRef: React.RefObject<HTMLElement | null>;
   /** List of menu items of the subMenu */
   items?: Array<ReactElement<MenuItemProps>>;
   /** Open */

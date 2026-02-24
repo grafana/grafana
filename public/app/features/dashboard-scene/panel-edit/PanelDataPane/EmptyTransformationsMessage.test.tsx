@@ -1,12 +1,21 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { standardTransformersRegistry } from '@grafana/data';
+import { DataSourceInstanceSettings, standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { EmptyTransformationsMessage, LegacyEmptyTransformationsMessage } from './EmptyTransformationsMessage';
+
+const MOCK_DATA_SOURCE_UID = 'test-ds';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(),
+  reportInteraction: jest.fn(),
+}));
 
 describe('EmptyTransformationsMessage', () => {
   standardTransformersRegistry.setInit(getStandardTransformers);
@@ -46,6 +55,19 @@ describe('EmptyTransformationsMessage', () => {
   describe('EmptyTransformationsMessage (new UI)', () => {
     beforeEach(() => {
       config.featureToggles.transformationsEmptyPlaceholder = true;
+
+      const mockGetInstanceSettings = jest.fn().mockReturnValue({
+        uid: MOCK_DATA_SOURCE_UID,
+        type: 'test',
+        name: 'Test DS',
+        meta: {
+          backend: true,
+        },
+      } as DataSourceInstanceSettings);
+
+      (getDataSourceSrv as jest.Mock).mockReturnValue({
+        getInstanceSettings: mockGetInstanceSettings,
+      });
     });
 
     it('should render SQL expression card and transformation cards when sqlExpressions toggle is enabled', () => {
@@ -57,6 +79,8 @@ describe('EmptyTransformationsMessage', () => {
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
           data={[]}
+          datasourceUid={MOCK_DATA_SOURCE_UID}
+          queries={[]}
         />
       );
 
@@ -95,10 +119,12 @@ describe('EmptyTransformationsMessage', () => {
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
           data={[]}
+          datasourceUid={MOCK_DATA_SOURCE_UID}
+          queries={[]}
         />
       );
 
-      const sqlCard = screen.getByTestId('go-to-queries-button');
+      const sqlCard = screen.getByTestId('transform-with-sql-card');
       const button = sqlCard.querySelector('button');
       await user.click(button!);
 
@@ -120,6 +146,67 @@ describe('EmptyTransformationsMessage', () => {
 
       // But should still show the "Show more" button
       expect(screen.getByTestId(selectors.components.Transforms.addTransformationButton)).toBeInTheDocument();
+    });
+
+    it('should hide SQL expression card for frontend datasources', () => {
+      const mockGetInstanceSettings = jest.fn().mockReturnValue({
+        uid: MOCK_DATA_SOURCE_UID,
+        type: 'test',
+        name: 'Test DS',
+        meta: {
+          backend: false, // Frontend datasource
+        },
+      } as DataSourceInstanceSettings);
+
+      (getDataSourceSrv as jest.Mock).mockReturnValue({
+        getInstanceSettings: mockGetInstanceSettings,
+      });
+
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          data={[]}
+          datasourceUid={MOCK_DATA_SOURCE_UID}
+          queries={[]}
+        />
+      );
+
+      // SQL card should not be shown for frontend datasource
+      expect(screen.queryByTestId('transform-with-sql-card')).not.toBeInTheDocument();
+
+      // But other transformation cards should still be shown
+      expect(screen.getByText('Organize fields by name')).toBeInTheDocument();
+    });
+
+    it('should show SQL expression card for backend datasources', () => {
+      const mockGetInstanceSettings = jest.fn().mockReturnValue({
+        uid: 'prometheus-uid',
+        type: 'prometheus',
+        name: 'Prometheus',
+        meta: {
+          backend: true, // Backend datasource
+        },
+      } as DataSourceInstanceSettings);
+
+      (getDataSourceSrv as jest.Mock).mockReturnValue({
+        getInstanceSettings: mockGetInstanceSettings,
+      });
+
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          data={[]}
+          datasourceUid="prometheus-uid"
+          queries={[]}
+        />
+      );
+
+      // SQL card should be shown for backend datasource
+      expect(screen.getByTestId('transform-with-sql-card')).toBeInTheDocument();
     });
   });
 });

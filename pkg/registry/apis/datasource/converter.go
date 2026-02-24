@@ -24,14 +24,27 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-type converter struct {
+type Converter struct {
 	mapper request.NamespaceMapper
 	group  string   // the expected group
 	plugin string   // the expected pluginId
 	alias  []string // optional alias for the pluginId
 }
 
-func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.DataSource, error) {
+func NewConverter(mapper request.NamespaceMapper, group string, plugin string, alias []string) *Converter {
+	return &Converter{
+		mapper: mapper,
+		group:  group,
+		plugin: plugin,
+		alias:  alias,
+	}
+}
+
+func (r Converter) Mapper() request.NamespaceMapper {
+	return r.mapper
+}
+
+func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.DataSource, error) {
 	if ds.Type != r.plugin && !slices.Contains(r.alias, ds.Type) {
 		return nil, fmt.Errorf("expected datasource type: %s %v // not: %s", r.plugin, r.alias, ds.Type)
 	}
@@ -101,7 +114,7 @@ func ToInlineSecureValues(dsUID string, keys iter.Seq[string]) common.InlineSecu
 	values := make(common.InlineSecureValues)
 	for k := range keys {
 		values[k] = common.InlineSecureValue{
-			Name: getLegacySecureValueName(dsUID, k),
+			Name: GetLegacySecureValueName(dsUID, k),
 		}
 	}
 	if len(values) == 0 {
@@ -110,7 +123,7 @@ func ToInlineSecureValues(dsUID string, keys iter.Seq[string]) common.InlineSecu
 	return values
 }
 
-func getLegacySecureValueName(dsUID string, key string) string {
+func GetLegacySecureValueName(dsUID string, key string) string {
 	h := sha256.New()
 	h.Write([]byte(dsUID)) // unique identifier
 	h.Write([]byte("|"))
@@ -119,7 +132,7 @@ func getLegacySecureValueName(dsUID string, key string) string {
 	return apistore.LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX + n[0:10] // predictable name for dual writing
 }
 
-func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddDataSourceCommand, error) {
+func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddDataSourceCommand, error) {
 	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
@@ -154,7 +167,7 @@ func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 	return cmd, nil
 }
 
-func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
+func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
 	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
@@ -206,4 +219,50 @@ func toSecureJsonData(ds *datasourceV0.DataSource) map[string]string {
 		}
 	}
 	return secure
+}
+
+func (r Converter) AsLegacyDatasource(ds *datasourceV0.DataSource) (*datasources.DataSource, error) {
+	if r.group != "" && ds.APIVersion != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
+		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
+	}
+	info, err := types.ParseNamespace(ds.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	// This is nearly identical to AddDataSourceCommand, except for the SecureJsonData and ID
+	legacyDS := &datasources.DataSource{
+		Name:  ds.Spec.Title(),
+		UID:   ds.Name,
+		OrgID: info.OrgID,
+		Type:  r.plugin,
+
+		Access:          datasources.DsAccess(ds.Spec.Access()),
+		URL:             ds.Spec.URL(),
+		Database:        ds.Spec.Database(),
+		User:            ds.Spec.User(),
+		BasicAuth:       ds.Spec.BasicAuth(),
+		BasicAuthUser:   ds.Spec.BasicAuthUser(),
+		WithCredentials: ds.Spec.WithCredentials(),
+		IsDefault:       ds.Spec.IsDefault(),
+		ReadOnly:        ds.Spec.ReadOnly(),
+		SecureJsonData:  make(map[string][]byte),
+	}
+
+	if ds.Labels != nil {
+		if idStr, ok := ds.Labels[utils.LabelKeyDeprecatedInternalID]; ok {
+			legacyDS.ID, _ = strconv.ParseInt(idStr, 10, 64)
+		}
+	}
+
+	if jsonData := ds.Spec.JSONData(); jsonData != nil {
+		legacyDS.JsonData = simplejson.NewFromAny(jsonData)
+	}
+
+	// Only the keys are exposed, values are never returned
+	for k := range ds.Secure {
+		legacyDS.SecureJsonData[k] = []byte{}
+	}
+
+	return legacyDS, nil
 }

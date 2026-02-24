@@ -3,6 +3,7 @@ package legacy_storage
 import (
 	"testing"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
@@ -150,7 +151,7 @@ receivers:
 		const dupeConfig = `
 route:
   receiver: receiver1
-  routes: 
+  routes:
     - receiver: dupe-receiver
     - receiver: r1
 receivers:
@@ -170,6 +171,95 @@ receivers:
 			"dupe-receiver" + expectedDedupSuffix: 1,
 			"r1":                                  1,
 		}, actual)
+	})
+}
+
+func TestConfigRevisionImported_GetManagedRoute(t *testing.T) {
+	t.Run("should be empty if no configuration", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		route, err := imported.GetManagedRoute()
+		require.NoError(t, err)
+		require.Nil(t, route)
+	})
+	t.Run("should return the imported route", func(t *testing.T) {
+		const cfg = `
+route:
+  receiver: r1
+  routes:
+  - receiver: r2
+    routes:
+    - receiver: r1
+  - routes:
+    - receiver: r2
+receivers:
+- name: r1
+- name: r2
+`
+		extra := extraConfig(cfg)
+		rev := getConfigRevisionForTest(withExtraConfig(extra))
+
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		route, err := imported.GetManagedRoute()
+		require.NoError(t, err)
+		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
+		route.Version = ""
+		require.Equal(t, &ManagedRoute{
+			Name:     extra.Identifier,
+			Version:  "",
+			Receiver: "r1",
+			Routes: []*definitions.Route{
+				{Receiver: "r2", Routes: []*definitions.Route{{Receiver: "r1", Routes: make([]*definition.Route, 0)}}},
+				{Receiver: "", Routes: []*definitions.Route{{Receiver: "r2", Routes: make([]*definition.Route, 0)}}},
+			},
+			Provenance: models.ProvenanceConvertedPrometheus,
+			Origin:     models.ResourceOriginImported,
+		}, route)
+	})
+
+	t.Run("should correctly handle deduplicated names", func(t *testing.T) {
+		const dupeConfig = `
+route:
+  receiver: receiver1
+  routes:
+    - receiver: dupe-receiver
+      mute_time_intervals:
+        - mute-interval-1
+    - receiver: r1
+      active_time_intervals:
+        - time-interval-1
+receivers:
+  - name: receiver1
+  - name: dupe-receiver
+  - name: r1
+time_intervals:
+  - name: time-interval-1
+mute_time_intervals:
+  - name: mute-interval-1
+`
+		extra := extraConfig(dupeConfig)
+		expectedDedupSuffix := extra.Identifier
+		rev := getConfigRevisionForTest(withExtraConfig(extra))
+
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		route, err := imported.GetManagedRoute()
+		require.NoError(t, err)
+		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
+		route.Version = ""
+		require.Equal(t, &ManagedRoute{
+			Name:     extra.Identifier,
+			Version:  "",
+			Receiver: "receiver1" + expectedDedupSuffix,
+			Routes: []*definitions.Route{
+				{Receiver: "dupe-receiver" + expectedDedupSuffix, MuteTimeIntervals: []string{"mute-interval-1" + expectedDedupSuffix}, Routes: make([]*definition.Route, 0)},
+				{Receiver: "r1", ActiveTimeIntervals: []string{"time-interval-1" + expectedDedupSuffix}, Routes: make([]*definition.Route, 0)},
+			},
+			Provenance: models.ProvenanceConvertedPrometheus,
+			Origin:     models.ResourceOriginImported,
+		}, route)
 	})
 }
 
