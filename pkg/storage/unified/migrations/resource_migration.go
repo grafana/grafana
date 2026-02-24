@@ -88,7 +88,7 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 	}
 
 	lockTables := r.definition.GetLockTables()
-	unlockTables, err := r.tableLocker.LockMigrationTables(ctx, sess, mg, lockTables)
+	unlockTables, err := r.tableLocker.LockMigrationTables(ctx, sess, lockTables)
 	if err != nil {
 		return fmt.Errorf("failed to lock tables for migration: %w", err)
 	}

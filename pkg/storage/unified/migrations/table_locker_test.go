@@ -24,16 +24,14 @@ type tableLockerMock struct {
 	tables     []string
 }
 
-func (m *tableLockerMock) LockMigrationTables(_ context.Context, _ *xorm.Session, _ *migrator.Migrator, tables []string) (func(context.Context) error, error) {
+func (m *tableLockerMock) LockMigrationTables(_ context.Context, _ *xorm.Session, tables []string) (func(context.Context) error, error) {
 	m.tables = tables
 	return m.unlockFunc, nil
 }
 
 func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	if !db.IsTestDbMySQL() {
-		t.Skip("MySQL-only: only unlock for MySQL path")
-	}
+
 	dbstore := db.InitTestDB(t)
 	t.Cleanup(db.CleanupTestDB)
 
@@ -84,16 +82,14 @@ func TestIntegrationTableLocker(t *testing.T) {
 		name   string
 		locker MigrationTableLocker
 		sess   func(t *testing.T) *xorm.Session
-		mg     *migrator.Migrator
 	}
 	var setup lockerTestSetup
 	switch dbstore.GetDBType() {
 	case migrator.Postgres:
-		mg := migrator.NewMigrator(engine, setting.NewCfg())
+		sqlProvider := legacysql.NewDatabaseProvider(dbstore)
 		setup = lockerTestSetup{
 			name:   "postgres",
-			locker: &postgresTableLocker{},
-			mg:     mg,
+			locker: &postgresTableLocker{sql: sqlProvider},
 			sess: func(t *testing.T) *xorm.Session {
 				t.Helper()
 				s := engine.NewSession()
@@ -120,14 +116,14 @@ func TestIntegrationTableLocker(t *testing.T) {
 	t.Run(setup.name+"/lock and unlock tables", func(t *testing.T) {
 		tables := []string{createTestTable(t, dbstore), createTestTable(t, dbstore)}
 		sess := setup.sess(t) // register sess cleanup AFTER table cleanup (LIFO: sess closes first)
-		unlock, err := setup.locker.LockMigrationTables(ctx, sess, setup.mg, tables)
+		unlock, err := setup.locker.LockMigrationTables(ctx, sess, tables)
 		require.NoError(t, err)
 		require.NoError(t, unlock(ctx))
 	})
 
 	t.Run(setup.name+"/empty tables list returns no-op", func(t *testing.T) {
 		sess := setup.sess(t)
-		unlock, err := setup.locker.LockMigrationTables(ctx, sess, setup.mg, nil)
+		unlock, err := setup.locker.LockMigrationTables(ctx, sess, nil)
 		require.NoError(t, err)
 		require.NoError(t, unlock(ctx))
 	})
@@ -138,7 +134,7 @@ func TestIntegrationTableLocker(t *testing.T) {
 		}
 		table := createTestTable(t, dbstore)
 		sess := setup.sess(t) // register sess cleanup AFTER table cleanup
-		unlock, err := setup.locker.LockMigrationTables(ctx, sess, setup.mg, []string{table})
+		unlock, err := setup.locker.LockMigrationTables(ctx, sess, []string{table})
 		require.NoError(t, err)
 		require.NotNil(t, unlock)
 
