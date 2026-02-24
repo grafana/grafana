@@ -389,15 +389,13 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})
-				if testCase.expectedErr == "" {
-					require.NoError(collect, err)
-				} else {
-					require.Error(collect, err)
-					require.ErrorContains(collect, err, testCase.expectedErr)
-				}
-			}, waitTimeoutDefault, waitIntervalDefault)
+			_, err := helper.Repositories.Resource.Create(ctx, testCase.repo, metav1.CreateOptions{})
+			if testCase.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, testCase.expectedErr)
+			}
 		})
 	}
 
