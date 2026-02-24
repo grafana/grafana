@@ -273,6 +273,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "provisioningExport",
+			Description:     "Enable export functionality for provisioned resources",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -1003,6 +1011,14 @@ var (
 		{
 			Name:         "alertingSavedSearches",
 			Description:  "Enables saved searches for alert rules list",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingTriageSavedSearches",
+			Description:  "Enables saved searches for the Alert Activity page",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,

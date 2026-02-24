@@ -1839,10 +1839,18 @@
       "apply": "Aplicar"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Falha ao carregar o histórico de estado",
       "history-error-desc": "Não é possível buscar o histórico de transição de estado para esta instância.",
       "no-history": "Nenhuma alteração de estado recente",
-      "state-history": "Alterações de estado recentes"
+      "state-error-description": "",
+      "state-history": "Alterações de estado recentes",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Rótulos não correspondentes",
@@ -5027,7 +5035,7 @@
           }
         }
       },
-      "name": "Grade automática",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Limpar"
@@ -6135,6 +6143,8 @@
       "title-transformations": "Transformações"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Pesquisar por transformação",
       "show-images": "Exibir imagens",
       "sql-expressions-message-description": "Uma nova forma de ajustar e transformar os resultados das consultas de fontes de dados usando uma sintaxe semelhante ao do MySQL.",
@@ -6272,11 +6282,12 @@
     "browse-grafana-com": "Navegar em Grafana.com",
     "browse-plugins": "Navegar por plug-ins",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Fonte de dados fornecida",
       "details-tooltip": "Detalhes",
       "no-preview": "Nenhuma pré-visualização disponível",
       "use-dashboard-button": "Usar painel",
-      "use-template-button": "Usar modelo"
+      "view-template-button": ""
     },
     "community-empty-title": "Nenhum painel de comunidade encontrado",
     "community-empty-title-with-datasource": "Nenhum painel de comunidade de {{datasourceType}} encontrado",
@@ -6386,10 +6397,12 @@
         "new-panel": "Novo painel"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7875,6 +7888,11 @@
       "continue-without-saving": "Continuar sem salvar",
       "save-correlation": "Salvar correlação",
       "title-unsaved-changes-to-correlation": "Alterações não salvas na correlação"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Clique e arraste o divisor cinza na área colorida abaixo.",
@@ -12367,6 +12385,7 @@
       "placeholder-branch": "Selecione ou insira o nome da branch",
       "suffix-configured-branch": "",
       "suffix-last-used": "Última branch",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Branch da solicitação de extração",
       "suffix-read-only-branch": ""
     }
@@ -12403,10 +12422,10 @@
       },
       "pr-workflow-description": "Permite que os usuários escolham se desejam abrir uma solicitação de extração ao salvar as alterações. Se o repositório não permitir alterações diretas na ramificação principal, ainda pode ser necessário realizar uma solicitação de extração.",
       "pr-workflow-label": "Ativar a opção de solicitação de extração ao salvar",
-      "token-description": "Senha do aplicativo Bitbucket com permissões de repositório",
-      "token-label": "Senha do aplicativo",
+      "token-description": "",
+      "token-label": "",
       "token-required": "O token do Bitbucket é obrigatório",
-      "token-user-description": "O nome de usuário que será usado para acessar o repositório com a senha do aplicativo",
+      "token-user-description": "",
       "token-user-required": "O nome de usuário é obrigatório",
       "url-description": "O URL do repositório do Bitbucket",
       "url-required": "O URL do repositório é obrigatório"
@@ -12432,9 +12451,6 @@
       "files-count_other": "{{count}} arquivos",
       "folders-count_one": "{{count}} pasta",
       "folders-count_other": "{{count}} pasta"
-    },
-    "check-repository": {
-      "check": "Verificar"
     },
     "code-block": {
       "aria-label-copy": "Copiar código para a área de transferência"
@@ -12822,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Verificado:",
       "connection-status": "Status da conexão:",
       "finished": "Último pull bem-sucedido:",
@@ -12831,7 +12848,9 @@
       "last-ref": "Última ref:",
       "messages": "Mensagens:",
       "not-available": "Não se aplica",
+      "path": "",
       "pull-status": "Status da extração",
+      "repo-url": "",
       "resources": "Fontes",
       "status": "Status:",
       "unhealthy": "Instável",
@@ -12968,8 +12987,8 @@
     "token-permissions-info": {
       "and-click": "e clique",
       "bitbucket": {
-        "create-token-button": "Criar senhas de aplicativo",
-        "token-text": "Token de acesso pessoal do Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Adicionar novo token",
@@ -14340,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "Excluir equipe {{teamName}}",
         "aria-label-edit-team": "Editar equipe {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Editar equipe",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Editar equipe"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Carregando equipes…",
       "new-team": "Nova equipe",
       "placeholder-search-teams": "Pesquisar equipes"

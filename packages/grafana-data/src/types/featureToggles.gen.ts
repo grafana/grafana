@@ -184,6 +184,11 @@ export interface FeatureToggles {
   */
   provisioningFolderMetadata?: boolean;
   /**
+  * Enable export functionality for provisioned resources
+  * @default false
+  */
+  provisioningExport?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   * @default false
   */
@@ -643,6 +648,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSavedSearches?: boolean;
+  /**
+  * Enables saved searches for the Alert Activity page
+  * @default false
+  */
+  alertingTriageSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   * @default false

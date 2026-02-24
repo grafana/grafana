@@ -2207,15 +2207,15 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
           "links": [
             {
               "title": "Grafana",
               "url": "https://grafana.com"
             }
           ],
+          "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2250,7 +2250,9 @@
         },
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -2289,9 +2291,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
           "links": [
             {
               "title": "Grafana",
@@ -2302,6 +2301,9 @@
               "url": "https://grafana.com/docs/grafana/latest/whatsnew/"
             }
           ],
+          "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2336,7 +2338,9 @@
         },
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },

@@ -64,4 +64,5 @@ import (
     annotations: [string]: string
     startsAt: time.Time
     endsAt: time.Time
+    enrichments?: _
 }
