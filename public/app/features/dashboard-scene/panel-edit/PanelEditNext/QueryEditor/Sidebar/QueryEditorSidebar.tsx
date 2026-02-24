@@ -10,6 +10,7 @@ import { EMPTY_ALERT } from '../types';
 
 import { AlertsView } from './Alerts/AlertsView';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
+import { SidebarFooter } from './SidebarFooter';
 import { SidebarHeaderActions } from './SidebarHeaderActions';
 
 interface QueryEditorSidebarProps {
@@ -57,6 +58,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           )}
         </div>
       </ScrollContainer>
+      <SidebarFooter />
     </div>
   );
 });
