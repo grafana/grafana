@@ -1,21 +1,19 @@
 package sync
 
 import (
-	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 )
 
 func TestEvaluatePullCondition(t *testing.T) {
 	tests := []struct {
 		name           string
-		pullError      error
+		isQuotaError   bool
+		jobState       provisioning.JobState
 		expectedType   string
 		expectedStatus metav1.ConditionStatus
 		expectedReason string
@@ -23,49 +21,54 @@ func TestEvaluatePullCondition(t *testing.T) {
 	}{
 		{
 			name:           "successful pull",
-			pullError:      nil,
+			isQuotaError:   false,
+			jobState:       provisioning.JobStateSuccess,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionTrue,
 			expectedReason: provisioning.ReasonPullSuccessful,
 			expectedMsg:    "Pull completed successfully",
 		},
 		{
-			name:           "quota exceeded error",
-			pullError:      &quotas.QuotaExceededError{Err: fmt.Errorf("repository is over quota (current: 110 resources)")},
+			name:           "warning state without quota error",
+			isQuotaError:   false,
+			jobState:       provisioning.JobStateWarning,
+			expectedType:   provisioning.ConditionTypePullStatus,
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: provisioning.ReasonPullCompletedWithWarnings,
+			expectedMsg:    "Pull completed with warnings",
+		},
+		{
+			name:           "warning state with quota exceeded",
+			isQuotaError:   true,
+			jobState:       provisioning.JobStateWarning,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonQuotaExceeded,
-			expectedMsg:    "repository is over quota (current: 110 resources)",
+			expectedMsg:    "Pull completed with quota exceeded",
 		},
 		{
-			name:           "wrapped quota exceeded error",
-			pullError:      fmt.Errorf("pull failed: %w", &quotas.QuotaExceededError{Err: fmt.Errorf("over quota")}),
-			expectedType:   provisioning.ConditionTypePullStatus,
-			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonQuotaExceeded,
-			expectedMsg:    "pull failed: over quota",
-		},
-		{
-			name:           "general pull error",
-			pullError:      errors.New("network timeout"),
+			name:           "error state without quota error",
+			isQuotaError:   false,
+			jobState:       provisioning.JobStateError,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonPullFailed,
-			expectedMsg:    "network timeout",
+			expectedMsg:    "Pull completed with errors",
 		},
 		{
-			name:           "wrapped general error",
-			pullError:      fmt.Errorf("pull failed: %w", errors.New("connection refused")),
+			name:           "error state with quota error still uses PullFailed reason",
+			isQuotaError:   true,
+			jobState:       provisioning.JobStateError,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonPullFailed,
-			expectedMsg:    "pull failed: connection refused",
+			expectedMsg:    "Pull completed with errors",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			condition := EvaluatePullCondition(tt.pullError)
+			condition := EvaluatePullCondition(tt.isQuotaError, tt.jobState)
 
 			assert.Equal(t, tt.expectedType, condition.Type)
 			assert.Equal(t, tt.expectedStatus, condition.Status)

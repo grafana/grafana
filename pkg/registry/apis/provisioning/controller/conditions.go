@@ -27,14 +27,18 @@ func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, g
 		return nil
 	}
 
+	// Clone the conditions to avoid mutating the original
 	conditions := make([]metav1.Condition, len(existingConditions))
 	copy(conditions, existingConditions)
 
+	// Use meta.SetStatusCondition to handle LastTransitionTime correctly
 	for _, newCondition := range newConditions {
+		// Ensure ObservedGeneration is set
 		newCondition.ObservedGeneration = generation
 		meta.SetStatusCondition(&conditions, newCondition)
 	}
 
+	// Return patch operation to replace the entire conditions array
 	return []map[string]interface{}{
 		{
 			"op":    "replace",

@@ -51,6 +51,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Verify the deletion succeeded by checking that only 1 dashboard remains
 		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		// Verify pull status condition is successful after deletion sync
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonPullSuccessful)
 	})
 
 	t.Run("within limit repo syncs successfully and allows adding more resources", func(t *testing.T) {
@@ -77,6 +80,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Verify quota condition is WithinQuota
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
+		// Verify pull status condition is successful after initial sync
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonPullSuccessful)
+
 		// Add a second dashboard (still within limit of 5)
 		dashboard2Content := helper.LoadFile("testdata/text-options.json")
 		err := os.WriteFile(filepath.Join(repoPath, "dashboard2.json"), dashboard2Content, 0o600)
@@ -90,6 +96,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Verify quota condition is still WithinQuota
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
+
+		// Verify pull status condition is still successful after second sync
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonPullSuccessful)
 	})
 
 	t.Run("out of limit repo blocks new resource creation on subsequent sync", func(t *testing.T) {
@@ -145,6 +154,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		require.Contains(t, jobObj.Status.Message, "sync skipped: repository is already over quota and incoming changes do not free enough resources", "Sync job should fail due to quota when adding resources over limit")
 		// Verify only 2 dashboards exist (3rd was not created)
 		helper.RequireRepoDashboardCount(t, repo, 2)
+
+		// Verify pull status condition reflects quota exceeded after blocked sync
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonQuotaExceeded)
 	})
 	t.Run("out of limit repo allows delete-only sync even when still over quota", func(t *testing.T) {
 		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
@@ -185,5 +197,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Repository is still over quota (2 dashboards + 1 folder = 3 > limit of 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
+
+		// Verify pull status condition is successful after deletion sync (delete-only syncs succeed)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonPullSuccessful)
 	})
 }

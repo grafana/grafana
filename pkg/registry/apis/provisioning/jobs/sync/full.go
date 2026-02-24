@@ -80,7 +80,7 @@ func FullSync(
 		progress.Record(ctx, jobs.NewResourceResult().WithError(err).Build())
 		progress.SetFinalMessage(ctx, "sync skipped: repository is already over quota and incoming changes do not free enough resources")
 
-		return nil
+		return err
 	}
 	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 

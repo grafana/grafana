@@ -242,6 +242,7 @@ func TestSyncWorker_Process_SyncCondition(t *testing.T) {
 		jobState           provisioning.JobState
 		expectedSyncReason string
 		expectedSyncStatus metav1.ConditionStatus
+		expectProcessError bool
 	}{
 		{
 			name:               "successful sync sets Succeeded condition",
@@ -256,6 +257,15 @@ func TestSyncWorker_Process_SyncCondition(t *testing.T) {
 			jobState:           provisioning.JobStateError,
 			expectedSyncReason: provisioning.ReasonPullFailed,
 			expectedSyncStatus: metav1.ConditionFalse,
+			expectProcessError: true,
+		},
+		{
+			name:               "warning without quota error sets PullCompletedWithWarnings condition",
+			syncError:          errors.New("partial sync warnings"),
+			jobState:           provisioning.JobStateWarning,
+			expectedSyncReason: provisioning.ReasonPullCompletedWithWarnings,
+			expectedSyncStatus: metav1.ConditionFalse,
+			expectProcessError: true,
 		},
 		{
 			name:               "quota exceeded sets QuotaExceeded condition",
@@ -350,7 +360,7 @@ func TestSyncWorker_Process_SyncCondition(t *testing.T) {
 			}
 
 			err := worker.Process(context.Background(), readerWriter, job, progressRecorder)
-			if tt.syncError != nil {
+			if tt.expectProcessError {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
@@ -838,7 +848,7 @@ func TestSyncWorker_Process(t *testing.T) {
 					}),
 				).Return(nil).Once()
 			},
-			expectedError: "repository is over quota",
+			expectedError: "", // quota errors are not returned by Process
 		},
 		{
 			name: "failed final status patch",

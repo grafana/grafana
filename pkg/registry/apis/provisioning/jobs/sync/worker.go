@@ -163,6 +163,15 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
+
+	// HACK: This logic could be simplified if we handle warnings differently.
+	// For now, cleaning the error to avoid errors in traces for warning conditions.
+	var quotaErr *quotas.QuotaExceededError
+	isQuotaError := errors.As(syncError, &quotaErr)
+	if isQuotaError {
+		syncError = nil
+	}
+
 	if syncError != nil {
 		logger.Debug("failed to sync the repository", "error", syncError)
 		_ = tracing.Error(syncSpan, syncError)
@@ -175,8 +184,6 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	syncSpan.End()
 
 	// If we exceeded the quota, we need to preserve the lastRef to avoid losing the changes
-	var quotaErr *quotas.QuotaExceededError
-	isQuotaError := errors.As(syncError, &quotaErr)
 	if syncStatus.State != provisioning.JobStateError && !isQuotaError {
 		syncStatus.LastRef = currentRef
 	} else {
@@ -230,7 +237,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    not just what the controller thinks should exist.
 	quotaStatus := repo.Config().Status.Quota
 	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
-	syncCondition := EvaluatePullCondition(syncError)
+	syncCondition := EvaluatePullCondition(isQuotaError, jobStatus.State)
 	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)
 	}

@@ -1,36 +1,43 @@
 package sync
 
 import (
-	"errors"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 )
 
 // EvaluatePullCondition creates a PullStatus condition based on the outcome of a pull operation.
-// True = last pull succeeded, False = last pull failed.
-func EvaluatePullCondition(pullError error) metav1.Condition {
-	if pullError == nil {
+// True = last pull succeeded, False = last pull failed or completed with warnings/errors.
+func EvaluatePullCondition(isQuotaError bool, jobState provisioning.JobState) metav1.Condition {
+	switch jobState {
+	case provisioning.JobStateSuccess:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypePullStatus,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonPullSuccessful,
 			Message: "Pull completed successfully",
 		}
-	}
 
-	reason := provisioning.ReasonPullFailed
-	var quotaErr *quotas.QuotaExceededError
-	if errors.As(pullError, &quotaErr) {
-		reason = provisioning.ReasonQuotaExceeded
-	}
+	case provisioning.JobStateWarning:
+		reason := provisioning.ReasonPullCompletedWithWarnings
+		message := "Pull completed with warnings"
+		if isQuotaError {
+			reason = provisioning.ReasonQuotaExceeded
+			message = "Pull completed with quota exceeded"
+		}
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypePullStatus,
+			Status:  metav1.ConditionFalse,
+			Reason:  reason,
+			Message: message,
+		}
 
-	return metav1.Condition{
-		Type:    provisioning.ConditionTypePullStatus,
-		Status:  metav1.ConditionFalse,
-		Reason:  reason,
-		Message: pullError.Error(),
+	default:
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypePullStatus,
+			Status:  metav1.ConditionFalse,
+			Reason:  provisioning.ReasonPullFailed,
+			Message: "Pull completed with errors",
+		}
 	}
 }

@@ -65,6 +65,8 @@ const (
 	ReasonPullSuccessful = "PullSuccessful"
 	// ReasonPullFailed indicates the last pull failed due to an error.
 	ReasonPullFailed = "PullFailed"
+	// ReasonPullCompletedWithWarnings indicates the last pull completed but with non-critical issues.
+	ReasonPullCompletedWithWarnings = "PullCompletedWithWarnings"
 )
 
 // Condition reasons for the Quota condition
