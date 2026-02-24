@@ -11,3 +11,5 @@ export const DEFAULT_REPOSITORY_TYPES: Array<'github' | 'local'> = ['github', 'l
 export const FREE_TIER_CONNECTION_LIMIT = 1;
 
 export const DEFAULT_BRANCH_NAMES = ['main', 'master'] as const;
+
+export const FOLDER_METADATA_FILE = '_folder.json';

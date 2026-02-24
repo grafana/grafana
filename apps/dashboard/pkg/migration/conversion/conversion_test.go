@@ -30,6 +30,261 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// TestMultiStepConversionPreservesStoredVersion verifies that storedVersion is preserved
+// through multi-step conversions (e.g., v2beta1 → v1beta1 → v0alpha1).
+// This ensures that the original stored version is maintained regardless of intermediate steps.
+func TestMultiStepConversionPreservesStoredVersion(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewTestLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		source         runtime.Object
+		intermediate   runtime.Object
+		target         runtime.Object
+		expectedStored string
+		description    string
+	}{
+		{
+			name: "v2beta1 → v1beta1 → v0alpha1 preserves v2beta1",
+			source: &dashv2beta1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "test-dashboard",
+				},
+				Spec: dashv2beta1.DashboardSpec{
+					Title: "test dashboard",
+					Layout: dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+						GridLayoutKind: &dashv2beta1.DashboardGridLayoutKind{
+							Kind: "GridLayout",
+							Spec: dashv2beta1.DashboardGridLayoutSpec{},
+						},
+					},
+				},
+			},
+			intermediate:   &dashv1.Dashboard{},
+			target:         &dashv0.Dashboard{},
+			expectedStored: dashv2beta1.VERSION,
+			description:    "Original v2beta1 storedVersion should be preserved through v1beta1 to v0alpha1",
+		},
+		{
+			name: "v2alpha1 → v1beta1 → v0alpha1 preserves v2alpha1",
+			source: &dashv2alpha1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "test-dashboard",
+				},
+				Spec: dashv2alpha1.DashboardSpec{
+					Title: "test dashboard",
+					Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+						GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+							Kind: "GridLayout",
+							Spec: dashv2alpha1.DashboardGridLayoutSpec{},
+						},
+					},
+				},
+			},
+			intermediate:   &dashv1.Dashboard{},
+			target:         &dashv0.Dashboard{},
+			expectedStored: dashv2alpha1.VERSION,
+			description:    "Original v2alpha1 storedVersion should be preserved through v1beta1 to v0alpha1",
+		},
+		{
+			name: "v1beta1 → v0alpha1 preserves v1beta1",
+			source: &dashv1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "test-dashboard",
+				},
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"title":         "test dashboard",
+						"schemaVersion": 42,
+					},
+				},
+			},
+			intermediate:   nil, // No intermediate step
+			target:         &dashv0.Dashboard{},
+			expectedStored: dashv1.VERSION,
+			description:    "Original v1beta1 storedVersion should be preserved to v0alpha1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Step 1: Convert source to intermediate (if applicable)
+			current := tt.source
+			if tt.intermediate != nil {
+				err := scheme.Convert(tt.source, tt.intermediate, nil)
+				require.NoError(t, err, "First conversion step should succeed")
+
+				// Verify intermediate has correct storedVersion
+				var intermediateConv DashboardConversion
+				switch intermediate := tt.intermediate.(type) {
+				case *dashv0.Dashboard:
+					intermediateConv = intermediate
+				case *dashv1.Dashboard:
+					intermediateConv = intermediate
+				case *dashv2alpha1.Dashboard:
+					intermediateConv = intermediate
+				case *dashv2beta1.Dashboard:
+					intermediateConv = intermediate
+				default:
+					t.Fatalf("Unexpected intermediate type: %T", tt.intermediate)
+				}
+				require.NotNil(t, intermediateConv, "Intermediate should implement DashboardConversion")
+				require.Equal(t, tt.expectedStored, intermediateConv.GetStoredVersion(),
+					"Intermediate conversion should preserve original storedVersion")
+
+				current = tt.intermediate
+			}
+
+			// Step 2: Convert to final target
+			err := scheme.Convert(current, tt.target, nil)
+			require.NoError(t, err, "Final conversion step should succeed")
+
+			// Verify final target has correct storedVersion
+			var targetConv DashboardConversion
+			switch target := tt.target.(type) {
+			case *dashv0.Dashboard:
+				targetConv = target
+			case *dashv1.Dashboard:
+				targetConv = target
+			case *dashv2alpha1.Dashboard:
+				targetConv = target
+			case *dashv2beta1.Dashboard:
+				targetConv = target
+			default:
+				t.Fatalf("Unexpected target type: %T", tt.target)
+			}
+			require.NotNil(t, targetConv, "Target should implement DashboardConversion")
+			require.NotNil(t, targetConv.GetStoredVersion(), "storedVersion should be set")
+			require.Equal(t, tt.expectedStored, targetConv.GetStoredVersion(),
+				tt.description)
+		})
+	}
+}
+
+// TestConversionErrorPathPreservesMetadataAndStatus verifies that when a conversion fails,
+// normalizeConversion still copies metadata, sets conversion status with the error, and
+// calls EnsureDefaultSpec on the output.
+func TestConversionErrorPathPreservesMetadataAndStatus(t *testing.T) {
+	conversionErr := errors.New("simulated conversion failure")
+
+	tests := []struct {
+		name   string
+		input  DashboardConversion
+		output DashboardConversion
+		verify func(t *testing.T, in DashboardConversion, out DashboardConversion)
+	}{
+		{
+			name: "v2beta1 -> v0alpha1 error preserves metadata and sets status",
+			input: &dashv2beta1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "my-dashboard",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+			},
+			output: &dashv0.Dashboard{},
+			verify: func(t *testing.T, in DashboardConversion, out DashboardConversion) {
+				outDash := out.(*dashv0.Dashboard)
+				require.Equal(t, "my-dashboard", outDash.Name)
+				require.Equal(t, "default", outDash.Namespace)
+				require.Equal(t, "Dashboard", outDash.Kind)
+				require.Equal(t, dashv0.APIVERSION, outDash.APIVersion)
+			},
+		},
+		{
+			name: "v1beta1 -> v2beta1 error preserves metadata and ensures default spec",
+			input: &dashv1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "test-dash",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+			},
+			output: &dashv2beta1.Dashboard{},
+			verify: func(t *testing.T, in DashboardConversion, out DashboardConversion) {
+				outDash := out.(*dashv2beta1.Dashboard)
+				require.Equal(t, "test-dash", outDash.Name)
+				require.Equal(t, "org-1", outDash.Namespace)
+				require.Equal(t, dashv2beta1.APIVERSION, outDash.APIVersion)
+				require.NotNil(t, outDash.Spec.Layout.GridLayoutKind,
+					"EnsureDefaultSpec should set default GridLayout on error for v2beta1")
+			},
+		},
+		{
+			name: "v0alpha1 -> v2alpha1 error preserves metadata and ensures default spec",
+			input: &dashv0.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "another-dashboard",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+			},
+			output: &dashv2alpha1.Dashboard{},
+			verify: func(t *testing.T, in DashboardConversion, out DashboardConversion) {
+				outDash := out.(*dashv2alpha1.Dashboard)
+				require.Equal(t, "another-dashboard", outDash.Name)
+				require.Equal(t, dashv2alpha1.APIVERSION, outDash.APIVersion)
+				require.NotNil(t, outDash.Spec.Layout.GridLayoutKind,
+					"EnsureDefaultSpec should set default GridLayout on error for v2alpha1")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			failingFunc := normalizeConversion("source", "target",
+				func(a, b interface{}, scope conversion.Scope) error {
+					return conversionErr
+				},
+			)
+
+			// withConversionMetrics always returns nil; errors are communicated via Status.Conversion
+			err := failingFunc(tt.input, tt.output, nil)
+			require.NoError(t, err)
+
+			storedVersion := tt.output.GetStoredVersion()
+			require.Equal(t, tt.input.GetVersion(), storedVersion,
+				"storedVersion should fall back to input's short version")
+
+			tt.verify(t, tt.input, tt.output)
+
+			switch out := tt.output.(type) {
+			case *dashv0.Dashboard:
+				require.True(t, out.Status.Conversion.Failed)
+				require.NotNil(t, out.Status.Conversion.Error)
+				require.Equal(t, conversionErr.Error(), *out.Status.Conversion.Error)
+			case *dashv1.Dashboard:
+				require.True(t, out.Status.Conversion.Failed)
+				require.NotNil(t, out.Status.Conversion.Error)
+				require.Equal(t, conversionErr.Error(), *out.Status.Conversion.Error)
+			case *dashv2alpha1.Dashboard:
+				require.True(t, out.Status.Conversion.Failed)
+				require.NotNil(t, out.Status.Conversion.Error)
+				require.Equal(t, conversionErr.Error(), *out.Status.Conversion.Error)
+			case *dashv2beta1.Dashboard:
+				require.True(t, out.Status.Conversion.Failed)
+				require.NotNil(t, out.Status.Conversion.Error)
+				require.Equal(t, conversionErr.Error(), *out.Status.Conversion.Error)
+			}
+		})
+	}
+}
+
 func TestConversionMatrixExist(t *testing.T) {
 	// Initialize the migrator with a test data source provider
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)

@@ -12898,6 +12898,7 @@
       "header-status": "Status",
       "header-title": "Title",
       "header-type": "Type",
+      "missing-folder-metadata": "Missing folder metadata file",
       "search-placeholder": "Search by path or title",
       "source": "Source",
       "status-pending": "Pending",

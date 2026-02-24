@@ -163,11 +163,5 @@
     },
     "title": "Test: V2alpha1 dashboard with viz config",
     "variables": []
-  },
-  "status": {
-    "conversion": {
-      "failed": false,
-      "storedVersion": "v2beta1"
-    }
   }
 }
