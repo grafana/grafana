@@ -309,8 +309,9 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
 		},
 	}
-	search := newSlowSearchBackendWithCache()
-
+	search := &slowSearchBackendWithCache{
+		mockSearchBackend: mockSearchBackend{},
+	}
 	supplier := &TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"group": "resource",
@@ -336,13 +337,12 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
-	// Ensure BuildIndex actually started before waiting.
+	// Wait until indexing is finished. We need to wait 2 seconds here,
+	// because BuildIndex simulates a 1 second build time, and we want
+	// to be sure it has started before we check the calls.
 	require.Eventually(t, func() bool {
 		return search.slowBuildCalls.Load() > 0
-	}, 1*time.Second, 100*time.Millisecond, "BuildIndex never started")
-
-	// Wait until indexing is finished.
-	search.wg.Wait()
+	}, 2*time.Second, 100*time.Millisecond, "BuildIndex never started")
 
 	require.NotEmpty(t, search.buildIndexCalls)
 
@@ -359,15 +359,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 
 type slowSearchBackendWithCache struct {
 	mockSearchBackend
-	wg sync.WaitGroup
-
 	slowBuildCalls atomic.Int64
-}
-
-func newSlowSearchBackendWithCache() *slowSearchBackendWithCache {
-	return &slowSearchBackendWithCache{
-		mockSearchBackend: mockSearchBackend{},
-	}
 }
 
 func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
@@ -377,9 +369,7 @@ func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIn
 }
 
 func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
-	m.wg.Add(1)
-	m.slowBuildCalls.Add(1)
-	defer m.wg.Done()
+	defer m.slowBuildCalls.Add(1)
 
 	time.Sleep(1 * time.Second)
 
