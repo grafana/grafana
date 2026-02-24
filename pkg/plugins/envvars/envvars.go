@@ -18,6 +18,16 @@ var permittedHostEnvVarNames = []string{
 	"https_proxy",
 	"NO_PROXY",
 	"no_proxy",
+
+	// AWS credential chain env vars needed by plugins using SigV4 auth
+	// (e.g. OpenSearch, CloudWatch, Prometheus on ECS/EKS/EC2)
+	"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+	"AWS_CONTAINER_CREDENTIALS_FULL_URI",
+	"AWS_CONTAINER_AUTHORIZATION_TOKEN",
+	"AWS_WEB_IDENTITY_TOKEN_FILE",
+	"AWS_ROLE_ARN",
+	"AWS_DEFAULT_REGION",
+	"AWS_REGION",
 }
 
 type Provider interface {
