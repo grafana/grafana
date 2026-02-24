@@ -1,19 +1,18 @@
 import { useState } from 'react';
 
-import { AITextArea, AITextInput } from '@grafana/assistant';
 import { PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dashboard, Panel } from '@grafana/schema';
-import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
+import { DataLinksInlineEditor, RadioButtonGroup, Select, Switch } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from '../GenAI/GenAIPanelTitleButton';
-import { buildDescriptionInputSystemPrompt, buildTitleInputSystemPrompt } from '../GenAI/assistantContext';
-import { useIsAssistantAvailable } from '../GenAI/hooks';
+import { GenAITextArea } from '../GenAI/GenAITextArea';
+import { GenAITextInput } from '../GenAI/GenAITextInput';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -229,68 +228,44 @@ interface LegacyPanelInputProps {
 }
 
 function LegacyPanelTitleInput({ id, panel, dashboard, data, defaultValue, onCommit }: LegacyPanelInputProps) {
-  const isAssistant = useIsAssistantAvailable();
   const isDefault = !defaultValue || defaultValue === NEW_PANEL_TITLE;
-  const [value, setValue] = useState(isAssistant && isDefault ? '' : defaultValue);
-  const systemPrompt = isAssistant ? buildTitleInputSystemPrompt(panel, dashboard, data) : undefined;
-
-  if (isAssistant) {
-    return (
-      <AITextInput
-        data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
-        value={value}
-        onChange={(val) => {
-          setValue(val);
-          onCommit(val);
-        }}
-        systemPrompt={systemPrompt}
-        origin="grafana/panel-metadata/title"
-        placeholder={t('dashboard.panel-title-input.placeholder', 'Type a title or let AI generate one...')}
-        autoGenerate={isDefault}
-        streaming
-      />
-    );
-  }
+  const [value, setValue] = useState(isDefault ? '' : defaultValue);
 
   return (
-    <Input
+    <GenAITextInput
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
+      value={value}
+      onChange={(val) => {
+        setValue(val);
+        onCommit(val);
+      }}
+      onBlur={() => onCommit(value)}
+      panel={panel}
+      dashboard={dashboard}
+      data={data}
+      autoGenerate={isDefault}
       id={id}
-      defaultValue={defaultValue}
-      onBlur={(e) => onCommit(e.currentTarget.value)}
     />
   );
 }
 
 function LegacyPanelDescriptionInput({ id, panel, dashboard, data, defaultValue, onCommit }: LegacyPanelInputProps) {
-  const isAssistant = useIsAssistantAvailable();
   const [value, setValue] = useState(defaultValue);
-  const systemPrompt = isAssistant ? buildDescriptionInputSystemPrompt(panel, dashboard, data) : undefined;
-
-  if (isAssistant) {
-    return (
-      <AITextArea
-        data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
-        value={value}
-        onChange={(val) => {
-          setValue(val);
-          onCommit(val);
-        }}
-        systemPrompt={systemPrompt}
-        origin="grafana/panel-metadata/description"
-        placeholder={t('dashboard.panel-description-input.placeholder', 'Type a description or let AI generate one...')}
-        autoGenerate={!defaultValue}
-        streaming
-      />
-    );
-  }
 
   return (
-    <TextArea
+    <GenAITextArea
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
+      value={value}
+      onChange={(val) => {
+        setValue(val);
+        onCommit(val);
+      }}
+      onBlur={() => onCommit(value)}
+      panel={panel}
+      dashboard={dashboard}
+      data={data}
+      autoGenerate={!defaultValue}
       id={id}
-      defaultValue={defaultValue}
-      onBlur={(e) => onCommit(e.currentTarget.value)}
     />
   );
 }
