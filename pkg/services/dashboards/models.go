@@ -399,11 +399,11 @@ type SaveDashboardDTO struct {
 	Dashboard *Dashboard
 }
 
-func IsLikelyV2(data *simplejson.Json) bool {
-	if data.Get("elements") != nil {
+func LooksLikeV2Spec(data map[string]any) bool {
+	if _, ok := data["elements"]; ok {
 		return true
 	}
-	if data.Get("layout") != nil {
+	if _, ok := data["layout"]; ok {
 		return true
 	}
 	return false

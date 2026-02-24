@@ -589,13 +589,9 @@ func validateNotV2Object(obj runtime.Object) error {
 		return nil
 	}
 
-	if _, found := spec["elements"]; found {
-		return fmt.Errorf("dashboard appears to be in v2 format (contains elements property)")
+	if dashboards.LooksLikeV2Spec(spec) {
+		return fmt.Errorf("dashboard appears to be in v2 format")
 	}
-	if _, found := spec["layout"]; found {
-		return fmt.Errorf("dashboard appears to be in v2 format (contains layout property)")
-	}
-
 	return nil
 }
 
