@@ -21,10 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// sqliteDateTimeFormat is used for created/updated columns to avoid
+// dateTimeFormat is used for created/updated columns to avoid
 // platform-dependent time string conversion (e.g. Windows vs Unix).
-// SQLite accepts "YYYY-MM-DD HH:MM:SS" and avoids "unsupported time format" on Windows.
-const sqliteDateTimeFormat = "2006-01-02 15:04:05.000"
+// Format "2006-01-02 15:04:05" is consistent with xorm and avoids "unsupported time format" on Windows.
+const dateTimeFormat = "2006-01-02 15:04:05"
 
 const DEFAULT_BATCH_SIZE = 999
 
@@ -73,7 +73,11 @@ func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCo
 		createdBy := cmd.SignedInUser.UserID
 	*/
 	var lastInsertedID int64
-	nowStr := time.Now().UTC().Format(sqliteDateTimeFormat)
+	dbTZ := ss.db.GetEngine().DatabaseTZ
+	if dbTZ == nil {
+		dbTZ = time.UTC
+	}
+	nowStr := time.Now().In(dbTZ).Format(dateTimeFormat)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sql string
 		var args []any
@@ -132,7 +136,11 @@ func (ss *FolderStoreImpl) Delete(ctx context.Context, UIDs []string, orgID int6
 }
 
 func (ss *FolderStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
-	updatedStr := time.Now().UTC().Format(sqliteDateTimeFormat)
+	dbTZ := ss.db.GetEngine().DatabaseTZ
+	if dbTZ == nil {
+		dbTZ = time.UTC
+	}
+	updatedStr := time.Now().In(dbTZ).Format(dateTimeFormat)
 	uid := cmd.UID
 
 	var foldr *folder.Folder
