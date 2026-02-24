@@ -90,7 +90,6 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
       onClick={() => onSave(overwrite)}
       variant={overwrite ? 'destructive' : 'primary'}
       data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
-      data-testactive={isValid && !isLoading} // used in e2e tests to verify if save button is active
     >
       {isLoading
         ? t('dashboard-scene.save-button.saving', 'Saving...')

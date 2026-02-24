@@ -245,46 +245,6 @@ test.describe(
       await expect(secondRow.getByTestId(selectors.components.CanvasGridAddActions.addPanel)).toBeHidden();
     });
 
-    test('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
-      // collapse rows so it's easier to move them without simulating scrolling
-      const dashboardWithCollapsedRows = V2DashWithRowRepeats;
-      dashboardWithCollapsedRows.spec.layout.spec.rows[0].spec.collapse = true;
-
-      await importTestDashboard(
-        page,
-        selectors,
-        'Row layout repeats - move repeated rows',
-        JSON.stringify(V2DashWithRowRepeats),
-        // there are no panels to show, since all rows are collapsed
-        { checkPanelsVisible: false }
-      );
-      const singleRowTitle = 'single row';
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await moveRow(dashboardPage, page, selectors, `${repeatTitleBase}1`, singleRowTitle);
-
-      let singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
-      const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}1`);
-      expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y || 0);
-      // Wait for save button to be active (indicates changes have been applied)
-      // using the drawer button because the toolbar Save button is not responsive in playwright tests due to CSP
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton)
-      ).toHaveAttribute('data-testactive');
-
-      singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
-      await page.reload();
-
-      for (let i = 1; i <= repeatOptions.length; i++) {
-        // verify move by row position
-        const repeatedRow = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}${i}`);
-        expect(singleRowBox?.y).toBeLessThan(repeatedRow?.y || 0);
-      }
-    });
-
     test('views panels in repeated row', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
@@ -366,7 +326,7 @@ test.describe(
 
       // non repeated panel in repeated row
       // collapse row to make sure row 2 is in viewport
-      await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(`${repeatTitleBase}1`)).click();
+      await toggleRow(dashboardPage, selectors, `${repeatTitleBase}1`);
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 2'))
         .first()
@@ -416,9 +376,7 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.DashboardRow.title(`${repeatTitleBase}${repeatOptions.at(0)}`))
-        .click();
+      await selectRow(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`);
 
       const repeatOptionsGroup = dashboardPage.getByGrafanaSelector(
         selectors.components.OptionsGroup.group('dash-row-repeat')
@@ -533,6 +491,57 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabRepeatTitle(2, 2)))
       ).toBeVisible();
+    });
+  }
+);
+
+test.describe(
+  'Repeats - Dashboard rows layout with bypass CSP',
+  {
+    tag: ['@dashboards'],
+  },
+  () => {
+    // bypassing CSP to ensure the Save button is correctly updated
+    test.use({ contextOptions: { bypassCSP: true } });
+
+    test('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
+      // collapse rows so it's easier to move them without simulating scrolling
+      const dashboardWithCollapsedRows = V2DashWithRowRepeats;
+      dashboardWithCollapsedRows.spec.layout.spec.rows[0].spec.collapse = true;
+
+      await importTestDashboard(
+        page,
+        selectors,
+        'Row layout repeats - move repeated rows',
+        JSON.stringify(V2DashWithRowRepeats),
+        // there are no panels to show, since all rows are collapsed
+        { checkPanelsVisible: false }
+      );
+      const singleRowTitle = 'single row';
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await moveRow(dashboardPage, page, selectors, `${repeatTitleBase}1`, singleRowTitle);
+
+      let singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+      const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}1`);
+      expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y || 0);
+
+      // Wait for save button to be active (indicates changes have been applied)
+      // since we cannot verify that changes have been applied by checking the JSON diff we have to check the Save button state
+      // we have to bypass CSP for this test to allow worker scripts to run and change the button
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
+      ).toHaveAttribute('data-testactive');
+      await saveDashboard(dashboardPage, page, selectors);
+
+      await page.reload();
+
+      singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+      for (let i = 1; i <= repeatOptions.length; i++) {
+        // verify move by row position
+        const repeatedRow = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}${i}`);
+        expect(singleRowBox?.y).toBeLessThan(repeatedRow?.y || 0);
+      }
     });
   }
 );

@@ -316,7 +316,7 @@ export async function getRowBox(
   selectors: E2ESelectorGroups,
   rowTitle: string
 ): Promise<{ x: number; y: number; width: number; height: number }> {
-  const row = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).first();
+  const row = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
   await expect(row).toBeVisible();
   const boundingBox = await row.boundingBox();
   return boundingBox!;
@@ -345,14 +345,14 @@ export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage)
 }
 
 export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).click();
+  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).click();
 }
 export async function toggleRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).click();
+  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.toggle(rowTitle)).click();
 }
 
 export function getPanelByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle));
+  return dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle)).getByTestId(selectors.components.Panels.Panel.headerContainer);
 }
 
 export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
