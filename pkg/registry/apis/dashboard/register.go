@@ -590,7 +590,7 @@ func validateNotV2Object(obj runtime.Object) error {
 	}
 
 	if dashboards.LooksLikeV2Spec(spec) {
-		return fmt.Errorf(dashboards.LooksLikeK8sResourceMessage)
+		return fmt.Errorf(dashboards.LooksLikeV2SpecMessage)
 	}
 	return nil
 }

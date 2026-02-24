@@ -399,8 +399,6 @@ type SaveDashboardDTO struct {
 	Dashboard *Dashboard
 }
 
-const LooksLikeK8sResourceMessage = "Dashboard appears to be in Kubernetes format. Please use the /apis/dashboard.grafana.app API to manage this resource"
-
 func LooksLikeK8sResource(data map[string]any) bool {
 	if _, ok := data["apiVersion"]; ok {
 		return true
@@ -413,6 +411,8 @@ func LooksLikeK8sResource(data map[string]any) bool {
 	}
 	return false
 }
+
+const LooksLikeV2SpecMessage = "Dashboard appears to be in v2 format. Please use the /apis/dashboard.grafana.app/v2 API"
 
 func LooksLikeV2Spec(data map[string]any) bool {
 	if _, ok := data["elements"]; ok {
