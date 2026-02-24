@@ -263,10 +263,7 @@ describe('contact points', () => {
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await user.click(notificationTemplatesTab);
-      expect(screen.getByRole('link', { name: 'Add notification template group' })).toHaveAttribute(
-        'aria-disabled',
-        'true'
-      );
+      expect(screen.getByRole('link', { name: 'New notification template' })).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('allows deleting when not disabled', async () => {
@@ -477,7 +474,7 @@ describe('contact points', () => {
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await user.click(notificationTemplatesTab);
-      expect(screen.queryByRole('link', { name: 'Add notification template group' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'New notification template' })).not.toBeInTheDocument();
     });
   });
 
