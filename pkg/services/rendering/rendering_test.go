@@ -190,8 +190,9 @@ func TestRenderLimitImageError(t *testing.T) {
 func TestRenderingServiceGetRemotePluginVersion(t *testing.T) {
 	cfg := setting.NewCfg()
 	rs := &RenderingService{
-		Cfg: cfg,
-		log: log.New("rendering-test"),
+		Cfg:       cfg,
+		log:       log.New("rendering-test"),
+		netClient: &http.Client{},
 	}
 
 	t.Run("When renderer responds with correct version should return that version", func(t *testing.T) {
