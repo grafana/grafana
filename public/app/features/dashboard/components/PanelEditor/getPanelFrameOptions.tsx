@@ -73,7 +73,6 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             onGenerate={setPanelTitle}
             panel={saveModel}
             dashboard={dashboardModel}
-            data={props.data}
           />
         ),
       })
@@ -100,8 +99,6 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           <GenAIPanelDescriptionButton
             onGenerate={setPanelDescription}
             panel={saveModel}
-            dashboard={dashboardModel}
-            data={props.data}
           />
         ),
       })
