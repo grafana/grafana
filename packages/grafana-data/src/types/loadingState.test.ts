@@ -1,130 +1,140 @@
 import { LoadingState, isLoadingStateInProgress, isLoadingStateComplete } from './data';
 
-describe('LoadingState', () => {
-  it('has all defined values', () => {
-    expect(LoadingState.NotStarted).toBe('NotStarted');
-    expect(LoadingState.Loading).toBe('Loading');
-    expect(LoadingState.Streaming).toBe('Streaming');
-    expect(LoadingState.PartialResult).toBe('PartialResult');
-    expect(LoadingState.Done).toBe('Done');
-    expect(LoadingState.Error).toBe('Error');
-  });
-
-  it('should have PartialResult as a valid state', () => {
-    const states = Object.values(LoadingState);
-    expect(states).toContain('PartialResult');
-    expect(states).toHaveLength(6);
-  });
-
-  describe('state semantics', () => {
-    it('should treat PartialResult as in-progress (not done)', () => {
-      const inProgressStates = [LoadingState.Loading, LoadingState.Streaming, LoadingState.PartialResult];
-      const doneStates = [LoadingState.Done, LoadingState.Error];
-
-      // PartialResult should be treated like Loading/Streaming
-      expect(inProgressStates).toContain(LoadingState.PartialResult);
-      expect(doneStates).not.toContain(LoadingState.PartialResult);
-    });
-
-    it('should distinguish PartialResult from Streaming', () => {
-      // Both are in-progress states but serve different purposes
-      expect(LoadingState.PartialResult).not.toBe(LoadingState.Streaming);
-
-      // PartialResult: expects LoadingState.Done when complete
-      // Streaming: may never send Done (continuous stream)
-    });
-  });
-
-  describe('usage patterns', () => {
-    it('should handle partial result workflow', () => {
-      // Simulates query splitting or partial loading
-      const states: LoadingState[] = [];
-
-      // Start loading
-      states.push(LoadingState.Loading);
-
-      // Receive first partial result
-      states.push(LoadingState.PartialResult);
-
-      // Receive more partial results
-      states.push(LoadingState.PartialResult);
-
-      // All results received
-      states.push(LoadingState.Done);
-
-      expect(states).toHaveLength(4);
-      expect(states[states.length - 1]).toBe(LoadingState.Done);
-    });
-
-    it('should distinguish from streaming workflow', () => {
-      // Streaming may never send Done
-      const streamingStates: LoadingState[] = [];
-
-      streamingStates.push(LoadingState.Loading);
-      streamingStates.push(LoadingState.Streaming);
-      // ... continuous stream, no Done
-
-      // PartialResult must end with Done
-      const partialStates: LoadingState[] = [];
-
-      partialStates.push(LoadingState.Loading);
-      partialStates.push(LoadingState.PartialResult);
-      partialStates.push(LoadingState.Done);
-
-      expect(streamingStates).not.toContain(LoadingState.Done);
-      expect(partialStates).toContain(LoadingState.Done);
-    });
-  });
-});
-
 describe('isLoadingStateInProgress', () => {
-  it('should return true for Loading state', () => {
+  it('should identify Loading as in-progress', () => {
     expect(isLoadingStateInProgress(LoadingState.Loading)).toBe(true);
   });
 
-  it('should return true for Streaming state', () => {
+  it('should identify Streaming as in-progress', () => {
     expect(isLoadingStateInProgress(LoadingState.Streaming)).toBe(true);
   });
 
-  it('should return true for PartialResult state', () => {
+  it('should identify PartialResult as in-progress', () => {
     expect(isLoadingStateInProgress(LoadingState.PartialResult)).toBe(true);
   });
 
-  it('should return false for NotStarted state', () => {
+  it('should identify NotStarted as not in-progress', () => {
     expect(isLoadingStateInProgress(LoadingState.NotStarted)).toBe(false);
   });
 
-  it('should return false for Done state', () => {
+  it('should identify Done as not in-progress', () => {
     expect(isLoadingStateInProgress(LoadingState.Done)).toBe(false);
   });
 
-  it('should return false for Error state', () => {
+  it('should identify Error as not in-progress', () => {
     expect(isLoadingStateInProgress(LoadingState.Error)).toBe(false);
+  });
+
+  describe('use cases', () => {
+    it('should help determine if query needs cancellation', () => {
+      const states = [LoadingState.Loading, LoadingState.PartialResult, LoadingState.Streaming];
+      const needsCancellation = states.filter(isLoadingStateInProgress);
+
+      expect(needsCancellation).toHaveLength(3);
+    });
+
+    it('should help filter out completed queries', () => {
+      const states = [
+        LoadingState.Loading,
+        LoadingState.Done,
+        LoadingState.PartialResult,
+        LoadingState.Error,
+        LoadingState.Streaming,
+      ];
+      const inProgress = states.filter(isLoadingStateInProgress);
+
+      expect(inProgress).toEqual([LoadingState.Loading, LoadingState.PartialResult, LoadingState.Streaming]);
+    });
   });
 });
 
 describe('isLoadingStateComplete', () => {
-  it('should return true for Done state', () => {
+  it('should identify Done as complete', () => {
     expect(isLoadingStateComplete(LoadingState.Done)).toBe(true);
   });
 
-  it('should return true for Error state', () => {
+  it('should identify Error as complete', () => {
     expect(isLoadingStateComplete(LoadingState.Error)).toBe(true);
   });
 
-  it('should return false for NotStarted state', () => {
-    expect(isLoadingStateComplete(LoadingState.NotStarted)).toBe(false);
-  });
-
-  it('should return false for Loading state', () => {
+  it('should identify Loading as not complete', () => {
     expect(isLoadingStateComplete(LoadingState.Loading)).toBe(false);
   });
 
-  it('should return false for Streaming state', () => {
+  it('should identify Streaming as not complete', () => {
     expect(isLoadingStateComplete(LoadingState.Streaming)).toBe(false);
   });
 
-  it('should return false for PartialResult state', () => {
+  it('should identify PartialResult as not complete', () => {
     expect(isLoadingStateComplete(LoadingState.PartialResult)).toBe(false);
+  });
+
+  it('should identify NotStarted as not complete', () => {
+    expect(isLoadingStateComplete(LoadingState.NotStarted)).toBe(false);
+  });
+
+  describe('use cases', () => {
+    it('should help wait for query completion', () => {
+      const states = [LoadingState.Loading, LoadingState.PartialResult, LoadingState.Done];
+      const lastState = states[states.length - 1];
+
+      expect(isLoadingStateComplete(lastState)).toBe(true);
+    });
+
+    it('should filter completed queries for processing', () => {
+      const queryStates = [
+        { id: 1, state: LoadingState.Loading },
+        { id: 2, state: LoadingState.Done },
+        { id: 3, state: LoadingState.PartialResult },
+        { id: 4, state: LoadingState.Error },
+      ];
+
+      const completed = queryStates.filter((q) => isLoadingStateComplete(q.state));
+
+      expect(completed).toHaveLength(2);
+      expect(completed.map((q) => q.id)).toEqual([2, 4]);
+    });
+  });
+});
+
+describe('LoadingState semantics', () => {
+  describe('PartialResult vs Streaming', () => {
+    it('should treat both as in-progress', () => {
+      expect(isLoadingStateInProgress(LoadingState.PartialResult)).toBe(true);
+      expect(isLoadingStateInProgress(LoadingState.Streaming)).toBe(true);
+    });
+
+    it('should treat neither as complete', () => {
+      expect(isLoadingStateComplete(LoadingState.PartialResult)).toBe(false);
+      expect(isLoadingStateComplete(LoadingState.Streaming)).toBe(false);
+    });
+
+    it('should distinguish by completion expectation', () => {
+      // PartialResult expects Done
+      const partialFlow = [LoadingState.PartialResult, LoadingState.PartialResult, LoadingState.Done];
+      expect(isLoadingStateComplete(partialFlow[partialFlow.length - 1])).toBe(true);
+
+      // Streaming may never send Done
+      const streamFlow = [LoadingState.Streaming, LoadingState.Streaming /* ... continues */];
+      expect(streamFlow.every((s) => !isLoadingStateComplete(s))).toBe(true);
+    });
+  });
+
+  describe('PartialResult use case: query splitting', () => {
+    it('should handle multiple partial results before completion', () => {
+      const queryResponses = [
+        { data: [1, 2], state: LoadingState.Loading },
+        { data: [1, 2, 3, 4], state: LoadingState.PartialResult }, // First chunk
+        { data: [1, 2, 3, 4, 5, 6], state: LoadingState.PartialResult }, // Second chunk
+        { data: [1, 2, 3, 4, 5, 6, 7, 8], state: LoadingState.Done }, // Final
+      ];
+
+      const inProgress = queryResponses.filter((r) => isLoadingStateInProgress(r.state));
+      const complete = queryResponses.filter((r) => isLoadingStateComplete(r.state));
+
+      expect(inProgress).toHaveLength(3);
+      expect(complete).toHaveLength(1);
+      expect(complete[0].state).toBe(LoadingState.Done);
+    });
   });
 });
