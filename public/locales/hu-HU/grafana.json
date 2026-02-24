@@ -1839,10 +1839,18 @@
       "apply": "Alkalmaz"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Az állapotelőzmények betöltése nem sikerült",
       "history-error-desc": "Nem sikerült lekérni az állapotátmeneti előzményeket ehhez a példányhoz.",
       "no-history": "Nincsenek friss állapotváltozások",
-      "state-history": "Legutóbbi állapotváltozások"
+      "state-error-description": "",
+      "state-history": "Legutóbbi állapotváltozások",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Nem egyező címkék",
@@ -5027,7 +5035,7 @@
           }
         }
       },
-      "name": "Automatikus rács",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Törlés"
@@ -6135,6 +6143,8 @@
       "title-transformations": "Transzformációk"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Transzformáció keresése",
       "show-images": "Képek megjelenítése",
       "sql-expressions-message-description": "Az adatforrás-lekérdezések eredményeinek módosítására és átalakítására szolgáló új módszer MySQL-szerű szintaxissal.",
@@ -6272,11 +6282,12 @@
     "browse-grafana-com": "Böngészés a Grafana.com webhelyen",
     "browse-plugins": "Bővítmények tallózása",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Adatforrás biztosítva",
       "details-tooltip": "Részletek",
       "no-preview": "Nincs elérhető előnézet",
       "use-dashboard-button": "Irányítópult használata",
-      "use-template-button": "Sablon használata"
+      "view-template-button": ""
     },
     "community-empty-title": "Nem található közösségi irányítópult",
     "community-empty-title-with-datasource": "Nem található {{datasourceType}} típusú közösségi irányítópult",
@@ -6386,10 +6397,12 @@
         "new-panel": "Új panel"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -7875,6 +7888,11 @@
       "continue-without-saving": "Folytatás mentés nélkül",
       "save-correlation": "Korreláció mentése",
       "title-unsaved-changes-to-correlation": "Korreláció nem mentett módosításai"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Kattintson, és húzza a szürke elválasztót az alábbi színes területen.",
@@ -12367,6 +12385,7 @@
       "placeholder-branch": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Utolsó ág",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Lehívási kérelem ága",
       "suffix-read-only-branch": ""
     }
@@ -12403,10 +12422,10 @@
       },
       "pr-workflow-description": "Lehetővé teszi a felhasználók számára, hogy kiválasszák, megnyitják-e az összefésülési kérelmet a módosítások mentésekor. Ha az adattár nem teszi lehetővé a főág közvetlen módosítását, akkor is szükség lehet összefésülési kérelemre.",
       "pr-workflow-label": "Összefésülési kérelemopció engedélyezése mentéskor",
-      "token-description": "Bitbucket alkalmazás jelszava adattár-engedélyekkel",
-      "token-label": "Alkalmazásjelszó",
+      "token-description": "",
+      "token-label": "",
       "token-required": "A Bitbucket token megadása kötelező",
-      "token-user-description": "Az alkalmazás jelszavával az adattár eléréséhez használt felhasználónév",
+      "token-user-description": "",
       "token-user-required": "A felhasználónév megadása kötelező",
       "url-description": "A Bitbucket adattár URL-címe",
       "url-required": "Az adattár URL-címének megadása kötelező"
@@ -12432,9 +12451,6 @@
       "files-count_other": "{{count}} fájl",
       "folders-count_one": "{{count}} mappa",
       "folders-count_other": "{{count}} mappa"
-    },
-    "check-repository": {
-      "check": "Ellenőrzés"
     },
     "code-block": {
       "aria-label-copy": "Kód másolása vágólapra"
@@ -12822,6 +12838,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Ellenőrzés:",
       "connection-status": "Kapcsolat állapota:",
       "finished": "Utolsó sikeres lehívás:",
@@ -12831,7 +12848,9 @@
       "last-ref": "Legutóbbi hivatkozás:",
       "messages": "Üzenetek:",
       "not-available": "n.a.",
+      "path": "",
       "pull-status": "Lekérés állapota",
+      "repo-url": "",
       "resources": "Erőforrások",
       "status": "Állapot:",
       "unhealthy": "Nem megfelelő állapotú",
@@ -12968,8 +12987,8 @@
     "token-permissions-info": {
       "and-click": "és kattintson erre:",
       "bitbucket": {
-        "create-token-button": "Alkalmazásjelszavak létrehozása",
-        "token-text": "Bitbucket személyes hozzáférési token"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Új token hozzáadása",
@@ -14340,9 +14359,18 @@
       "columns": {
         "aria-label-delete-button": "A(z) {{teamName}} csapat törlése",
         "aria-label-edit-team": "A(z) {{teamName}} csapat szerkesztése",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Csapat szerkesztése",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Csapat szerkesztése"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Csapatok betöltése…",
       "new-team": "Új csapat",
       "placeholder-search-teams": "Csapatok keresése"
