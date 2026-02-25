@@ -23,13 +23,15 @@ This document provides instructions for configuring the Prometheus data source a
 
 ## Before you begin
 
-- You must have the `Organization administrator` role to add a data source. Administrators can also configure a data source via YAML files.
+- You need the `Organization administrator` role to configure the data source. You can also [configure it via YAML](#provision-the-prometheus-data-source) using Grafana provisioning.
 
-- Know which Prometheus-compatible database you are using.
+- Grafana includes a built-in Prometheus data source; no plugin installation is required.
 
-- Familiarize yourself with your Prometheus security configuration and gather any necessary security certificates and client keys.
+- Know which type of Prometheus-compatible database you're connecting to (Prometheus, Mimir, Cortex, or Thanos), as the configuration options vary by type.
 
-- Verify that data from Prometheus is being written to your Grafana instance.
+- Have your Prometheus server URL ready. If using TLS/SSL, gather any necessary security certificates and client keys.
+
+- If using Basic authentication, have your username and password ready.
 
 ## Configure the data source using the UI
 
