@@ -616,7 +616,9 @@ export type CreateNotificationqueryNotificationEntryAlert = {
 export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
 export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
 export type CreateNotificationqueryNotificationEntry = {
-  /** Alerts are the alerts grouped into the notification. */
+  /** AlertCount is the total number of alerts included in the notification. */
+  alertCount: number;
+  /** Alerts are the alerts grouped into the notification. Deprecated: not populated, will be removed. */
   alerts: CreateNotificationqueryNotificationEntryAlert[];
   /** Duration is the length of time the notification attempt took in nanoseconds. */
   duration: number;
@@ -628,6 +630,10 @@ export type CreateNotificationqueryNotificationEntry = {
   groupLabels: {
     [key: string]: string;
   };
+  /** Integration is the integration (contact point type) name. */
+  integration: string;
+  /** IntegrationIndex is the index of the integration within the receiver. */
+  integrationIndex: number;
   /** Outcome indicaes if the notificaion attempt was successful or if it failed. */
   outcome: CreateNotificationqueryNotificationOutcome;
   /** PipelineTime is the time at which the flush began. */
@@ -636,10 +642,14 @@ export type CreateNotificationqueryNotificationEntry = {
   receiver: string;
   /** Retry indicates if the attempt was a retried attempt. */
   retry: boolean;
+  /** RuleUIDs are the unique identifiers of the alert rules included in the notification. */
+  ruleUIDs: string[];
   /** Status indicates if the notification contains one or more firing alerts. */
   status: CreateNotificationqueryNotificationStatus;
   /** Timestamp is the time at which the notification attempt completed. */
   timestamp: string;
+  /** Uuid is a unique identifier for the notification attempt. */
+  uuid: string;
 };
 export type CreateNotificationqueryResponse = {
   entries: CreateNotificationqueryNotificationEntry[];

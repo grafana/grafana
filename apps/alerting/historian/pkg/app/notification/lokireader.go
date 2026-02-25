@@ -225,17 +225,27 @@ func parseLokiEntry(s lokiclient.Sample) (Entry, error) {
 		groupLabels = make(map[string]string)
 	}
 
+	ruleUIDs := lokiEntry.RuleUIDs
+	if ruleUIDs == nil {
+		ruleUIDs = []string{}
+	}
+
 	return Entry{
-		Timestamp:    s.T,
-		Receiver:     lokiEntry.Receiver,
-		Status:       Status(lokiEntry.Status),
-		Outcome:      outcome,
-		GroupKey:     lokiEntry.GroupKey,
-		GroupLabels:  groupLabels,
-		Alerts:       []EntryAlert{},
-		Retry:        lokiEntry.Retry,
-		Error:        entryError,
-		Duration:     lokiEntry.Duration,
-		PipelineTime: lokiEntry.PipelineTime,
+		Timestamp:        s.T,
+		Uuid:             lokiEntry.UUID,
+		Receiver:         lokiEntry.Receiver,
+		Integration:      lokiEntry.Integration,
+		IntegrationIndex: int64(lokiEntry.IntegrationIdx),
+		Status:           Status(lokiEntry.Status),
+		Outcome:          outcome,
+		GroupKey:         lokiEntry.GroupKey,
+		GroupLabels:      groupLabels,
+		RuleUIDs:         ruleUIDs,
+		AlertCount:       int64(lokiEntry.AlertCount),
+		Alerts:           []EntryAlert{},
+		Retry:            lokiEntry.Retry,
+		Error:            entryError,
+		Duration:         lokiEntry.Duration,
+		PipelineTime:     lokiEntry.PipelineTime,
 	}, nil
 }
