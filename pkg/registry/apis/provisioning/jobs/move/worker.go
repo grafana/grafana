@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -160,18 +159,18 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 	return nil
 }
 
-// constructTargetPath combines the job's target path with the file/folder name from the source path
+// constructTargetPath combines the job's target path with the file/folder name from the source path.
+// safepath.Clean normalises the target directory ("/" and "." become "", trailing slashes are stripped),
+// and safepath.Join produces a correct relative repository path.
 func (w *Worker) constructTargetPath(jobTargetPath, sourcePath string) string {
-	// Extract the file/folder name from the source path
-	fileName := filepath.Base(sourcePath)
+	fileName := safepath.Base(sourcePath)
+	targetDir := safepath.Clean(jobTargetPath)
 
-	// If the source path is a directory (ends with slash), preserve the trailing slash in target
 	if safepath.IsDir(sourcePath) {
-		return jobTargetPath + fileName + "/"
+		return safepath.Join(targetDir, fileName) + "/"
 	}
 
-	// For files, just append the filename
-	return jobTargetPath + fileName
+	return safepath.Join(targetDir, fileName)
 }
 
 // resolveResourcesToPaths converts ResourceRef entries to file paths, recording errors for individual resources
