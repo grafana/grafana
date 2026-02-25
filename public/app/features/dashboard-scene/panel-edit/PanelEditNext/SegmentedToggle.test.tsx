@@ -16,7 +16,9 @@ function renderToggle(value: View = 'data', onChange = jest.fn()) {
   // cast keeps TypeScript happy without verbose inline tuple types.
   return render(
     <SegmentedToggle
-      options={OPTIONS as [SegmentedToggleOption<View>, SegmentedToggleOption<View>, ...Array<SegmentedToggleOption<View>>]}
+      options={
+        OPTIONS as [SegmentedToggleOption<View>, SegmentedToggleOption<View>, ...Array<SegmentedToggleOption<View>>]
+      }
       value={value}
       onChange={onChange}
       aria-label="View"
