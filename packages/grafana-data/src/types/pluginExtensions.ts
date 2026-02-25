@@ -109,7 +109,8 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       path: string;
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
       icon: IconName;
-      category: string;
+      /** @deprecated in favor of group property */
+      category?: string;
       group: { name: string; icon?: IconName };
       openInNewTab: boolean;
     }>
@@ -141,7 +142,7 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   // (Optional) A icon that can be displayed in the ui for the extension option.
   icon?: IconName;
 
-  // @deprecated in favor of group
+  /** @deprecated in favor of group property */
   category?: string;
 
   // (Optional) A group to be used when grouping the options in the ui.
