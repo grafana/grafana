@@ -23,11 +23,11 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     return await getDataSourceSrv().get(datasourceRef);
   }, [variable.state]);
 
-  const { value: tagKeyOptions = [] } = useAsync(async () => {
-    if (!datasource?.getTagKeys) {
+  const { value: groupByKeys = [] } = useAsync(async () => {
+    if (!datasource?.getGroupByKeys) {
       return [];
     }
-    const result = await datasource.getTagKeys({ filters: [] });
+    const result = await datasource.getGroupByKeys({ filters: [] });
     const keys = Array.isArray(result) ? result : (result.data ?? []);
     return keys.map((k) => ({ label: k.text || String(k.value), value: String(k.value) }));
   }, [datasource]);
@@ -79,7 +79,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
       onDataSourceChange={onDataSourceChange}
       onDefaultOptionsChange={onDefaultOptionsChange}
       defaultValue={defaultValueStrings}
-      defaultValueOptions={tagKeyOptions}
+      defaultValueOptions={groupByKeys}
       onDefaultValueChange={onDefaultValueChange}
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
