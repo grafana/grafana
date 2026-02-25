@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 
+import { DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { DashboardLink, DataSourceRef } from '@grafana/schema';
@@ -32,8 +33,8 @@ async function loadDefaultControlsByRefs(refs: DataSourceRef[], traceId: string)
 
   for (const ds of datasources) {
     try {
-      if (ds.getDefaultVariables) {
-        const dsVariables = await invokeAndTrack(ds.getDefaultVariables, {
+      if (typeof ds.getDefaultVariables === 'function') {
+        const dsVariables = await invokeAndTrack(ds.getDefaultVariables.bind(ds), {
           traceId,
           phase: 'default_variables',
           datasourceType: ds.type,
@@ -56,8 +57,8 @@ async function loadDefaultControlsByRefs(refs: DataSourceRef[], traceId: string)
         }
       }
 
-      if (ds.getDefaultLinks) {
-        const dsLinks = await invokeAndTrack(ds.getDefaultLinks, {
+      if (typeof ds.getDefaultLinks === 'function') {
+        const dsLinks = await invokeAndTrack(ds.getDefaultLinks.bind(ds), {
           traceId,
           phase: 'default_links',
           datasourceType: ds.type,
@@ -89,11 +90,21 @@ async function loadDefaultControlsByRefs(refs: DataSourceRef[], traceId: string)
 }
 
 const loadDatasources = async (refs: DataSourceRef[]) => {
-  return Promise.all(refs.map((ref) => getDataSourceSrv().get(ref)));
+  const datasources: DataSourceApi[] = [];
+
+  for (const ref of refs) {
+    try {
+      const ds = await getDataSourceSrv().get(ref);
+      datasources.push(ds);
+    } catch (e) {
+      console.warn('Failed to load datasource', ref, e);
+    }
+  }
+  return datasources;
 };
 
 // Deduplicates datasource refs by type, keeping only one ref per datasource plugin type
-export const deduplicateDatasourceRefsByType = (refs: Array<DataSourceRef | null | undefined>): DataSourceRef[] => {
+const deduplicateDatasourceRefsByType = (refs: Array<DataSourceRef | null | undefined>): DataSourceRef[] => {
   const dsByType: Record<string, DataSourceRef> = {};
 
   for (const ref of refs) {

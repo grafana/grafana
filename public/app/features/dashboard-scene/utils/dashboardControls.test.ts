@@ -15,7 +15,6 @@ import { DashboardDTO } from 'app/types/dashboard';
 import { getRuntimePanelDataSource } from '../serialization/layoutSerializers/utils';
 
 import {
-  deduplicateDatasourceRefsByType,
   getDsRefsFromV1Dashboard,
   getDsRefsFromV2Dashboard,
   loadDefaultControlsFromDatasources,
@@ -148,71 +147,6 @@ const mockLink2: DashboardLink = {
 describe('dashboardControls', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('deduplicateDatasourceRefsByType', () => {
-    it('should return empty array for empty input', () => {
-      const result = deduplicateDatasourceRefsByType([]);
-      expect(result).toEqual([]);
-    });
-
-    it('should filter out null and undefined refs', () => {
-      const refs: Array<DataSourceRef | null | undefined> = [
-        { uid: 'ds-1', type: 'prometheus' },
-        null,
-        undefined,
-        { uid: 'ds-2', type: 'loki' },
-      ];
-
-      const result = deduplicateDatasourceRefsByType(refs);
-      expect(result).toHaveLength(2);
-      expect(result).toEqual([
-        { uid: 'ds-1', type: 'prometheus' },
-        { uid: 'ds-2', type: 'loki' },
-      ]);
-    });
-
-    it('should deduplicate refs by type, keeping the first occurrence', () => {
-      const refs: Array<DataSourceRef | null | undefined> = [
-        { uid: 'ds-1', type: 'prometheus' },
-        { uid: 'ds-2', type: 'prometheus' },
-        { uid: 'ds-3', type: 'loki' },
-        { uid: 'ds-4', type: 'prometheus' },
-      ];
-
-      const result = deduplicateDatasourceRefsByType(refs);
-      expect(result).toHaveLength(2);
-      expect(result[0]).toEqual({ uid: 'ds-1', type: 'prometheus' });
-      expect(result[1]).toEqual({ uid: 'ds-3', type: 'loki' });
-    });
-
-    it('should handle refs without uid but with type', () => {
-      const refs: Array<DataSourceRef | null | undefined> = [
-        { type: 'prometheus' },
-        { type: 'loki' },
-        { type: 'prometheus' },
-      ];
-
-      const result = deduplicateDatasourceRefsByType(refs);
-      expect(result).toHaveLength(2);
-      expect(result[0]).toEqual({ type: 'prometheus' });
-      expect(result[1]).toEqual({ type: 'loki' });
-    });
-
-    it('should filter out refs without type', () => {
-      const refs: Array<DataSourceRef | null | undefined> = [
-        { uid: 'ds-1', type: 'prometheus' },
-        { uid: 'ds-2' },
-        { uid: 'ds-3', type: 'loki' },
-      ];
-
-      const result = deduplicateDatasourceRefsByType(refs);
-      expect(result).toHaveLength(2);
-      expect(result).toEqual([
-        { uid: 'ds-1', type: 'prometheus' },
-        { uid: 'ds-3', type: 'loki' },
-      ]);
-    });
   });
 
   describe('loadDefaultControlsFromDatasources', () => {
