@@ -1,6 +1,6 @@
-# Configuration
+# Configuration options
 
-This guide explains how to configure [plugin name].
+This guide explains how to configure [plugin name], and the available settings and configuration options.
 
 ## Prerequisites
 
@@ -12,19 +12,7 @@ Before you configure the plugin, ensure you have:
 
 ## Add the panel to a dashboard
 
-To add [plugin name] to a dashboard:
-
-1. Navigate to your dashboard or create a new one.
-1. Click **Add** > **Visualization**.
-1. Select your data source from the dropdown.
-1. In the visualization picker on the right, search for "[plugin name]" and select it.
-
-## Configure data source
-
-Configure the data source query to return the data your panel needs:
-
-1. In the **Query** tab, build your query using the data source query editor.
-1. Refer to [Data requirements](DATA-REQUIREMENTS.md) for information about the expected data format.
+{{include @grafana/snippets/panel-add.md}}
 
 ## Configure panel options
 
@@ -140,15 +128,8 @@ For more information, refer to [Configure overrides](https://grafana.com/docs/gr
 
 ## Save the dashboard
 
-After configuring the panel:
-
-1. Click **Apply** to save the panel configuration.
-1. Click the save icon at the top of the dashboard.
-1. Add a descriptive name for the dashboard.
-1. Click **Save**.
+{{include @grafana/snippets/panel-save.md}}
 
 ## Next steps
 
-- [Learn about data requirements](DATA-REQUIREMENTS.md)
-- [Troubleshoot common issues](TROUBLESHOOTING.md)
-- [View examples and use cases](README.md)
+{{include @grafana/snippets/panel-next.md}}

@@ -1,4 +1,10 @@
-# Troubleshooting
+<!---
+This template is just a suggestion. 
+If your plugin doesn't require any troubleshooting you may skip this doc. 
+If the troubleshooting is specific to installation, you may place the content in the install doc directly.
+--->
+
+# Troubleshooting 
 
 This guide helps you troubleshoot common issues with [plugin name].
 

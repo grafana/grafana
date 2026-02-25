@@ -85,47 +85,17 @@ To install the plugin manually:
 
 ## Verify installation
 
-To verify the plugin installed successfully:
-
-1. Navigate to **Administration > Plugins and data > Plugins**.
-1. Search for "[plugin name]".
-1. Confirm the plugin appears in the list with an **Installed** badge.
-
-You can also check the Grafana logs:
-
-```sh
-grep "Plugin registered" /var/log/grafana/grafana.log | grep [plugin-id]
-```
+{{include @grafana/snippets/plugin-install-verify.md}}
 
 ## Update the plugin
 
-To update the plugin to the latest version, use the same installation method you used initially.
-
-For Grafana CLI:
-
-```sh
-grafana cli plugins update [plugin-id]
-sudo systemctl restart grafana-server
-```
+{{include @grafana/snippets/plugin-update.md}}
 
 ## Uninstall the plugin
 
-To uninstall the plugin:
-
-### Using Grafana CLI
-
-```sh
-grafana cli plugins remove [plugin-id]
-sudo systemctl restart grafana-server
-```
-
-### Manual uninstallation
-
-1. Remove the plugin directory from your Grafana plugins directory.
-1. Restart Grafana.
+{{include @grafana/snippets/plugin-uninstall.md}}
 
 ## Next steps
 
-- [Configure the plugin](CONFIGURATION.md)
-- [Learn about data requirements](DATA-REQUIREMENTS.md)
-- [View the quick start guide](README.md#quick-start)
+{{include @grafana/snippets/panel-next-steps.md}} # next steps different depending on plugin type
+

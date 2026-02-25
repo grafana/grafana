@@ -1,6 +1,6 @@
-# Data requirements
+# Data formats
 
-This guide explains the data requirements for [plugin name].
+This guide explains the supported data formats for [plugin name].
 
 ## Overview
 
