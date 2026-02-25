@@ -77,8 +77,8 @@ func (e *RecordingRuleExpression) IsSource() bool {
 	return e.Source != nil && *e.Source
 }
 
-func (e *RecordingRuleExpression) IsNonExpressionQuery() bool {
-	return e.DatasourceUID != nil && *e.DatasourceUID != "__expr__"
+func (e *RecordingRuleExpression) GetDatasource() *string {
+	return (*string)(e.DatasourceUID)
 }
 
 func (e *RecordingRuleExpression) HasValidRelativeTimeRange() bool {

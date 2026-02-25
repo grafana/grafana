@@ -104,6 +104,31 @@ func TestAlertRuleValidation_SuccessWithExpressionDatasourceWithoutRelativeTimeR
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
+func TestAlertRuleValidation_SuccessWithoutDatasourceUIDWithoutRelativeTimeRange(t *testing.T) {
+	r := &v1.AlertRule{}
+	r.SetGroupVersionKind(v1.AlertRuleKind().GroupVersionKind())
+	r.Name = "uid-1"
+	r.Namespace = "ns1"
+	r.Annotations = map[string]string{v1.FolderAnnotationKey: "f1"}
+	r.Labels = map[string]string{}
+	r.Spec = v1.AlertRuleSpec{
+		Title:   "ok",
+		Trigger: v1.AlertRuleIntervalTrigger{Interval: v1.AlertRulePromDuration("60s")},
+		Expressions: v1.AlertRuleExpressionMap{
+			"A": v1.AlertRuleExpression{
+				Model:  map[string]any{"expr": "1"},
+				Source: boolPtr(true),
+			},
+		},
+		NoDataState:  v1.DefaultNoDataState,
+		ExecErrState: v1.DefaultExecErrState,
+	}
+
+	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
+	validator := alertrule.NewValidator(makeDefaultRuntimeConfig())
+	require.NoError(t, validator.Validate(context.Background(), req))
+}
+
 func TestAlertRuleValidation_Errors(t *testing.T) {
 	mk := func(mut func(r *v1.AlertRule)) error {
 		r := baseAlertRule()
@@ -231,6 +256,31 @@ func TestRecordingRuleValidation_SuccessWithExpressionDatasourceWithoutRelativeT
 				Model:         map[string]any{"expr": "1"},
 				Source:        boolPtr(true),
 				DatasourceUID: &dsUID,
+			},
+		},
+		Metric:              "test_metric",
+		TargetDatasourceUID: "ds1",
+	}
+
+	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
+	validator := recordingrule.NewValidator(makeDefaultRuntimeConfig())
+	require.NoError(t, validator.Validate(context.Background(), req))
+}
+
+func TestRecordingRuleValidation_SuccessWithoutDatasourceUIDWithoutRelativeTimeRange(t *testing.T) {
+	r := &v1.RecordingRule{}
+	r.SetGroupVersionKind(v1.RecordingRuleKind().GroupVersionKind())
+	r.Name = "uid-2"
+	r.Namespace = "ns1"
+	r.Annotations = map[string]string{v1.FolderAnnotationKey: "f1"}
+	r.Labels = map[string]string{}
+	r.Spec = v1.RecordingRuleSpec{
+		Title:   "ok",
+		Trigger: v1.RecordingRuleIntervalTrigger{Interval: v1.RecordingRulePromDuration("60s")},
+		Expressions: v1.RecordingRuleExpressionMap{
+			"A": v1.RecordingRuleExpression{
+				Model:  map[string]any{"expr": "1"},
+				Source: boolPtr(true),
 			},
 		},
 		Metric:              "test_metric",

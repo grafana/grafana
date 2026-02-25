@@ -129,8 +129,8 @@ func (e *AlertRuleExpression) IsSource() bool {
 	return e.Source != nil && *e.Source
 }
 
-func (e *AlertRuleExpression) IsNonExpressionQuery() bool {
-	return e.DatasourceUID != nil && *e.DatasourceUID != "__expr__"
+func (e *AlertRuleExpression) GetDatasource() *string {
+	return (*string)(e.DatasourceUID)
 }
 
 func (e *AlertRuleExpression) HasValidRelativeTimeRange() bool {

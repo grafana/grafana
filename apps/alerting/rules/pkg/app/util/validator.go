@@ -28,15 +28,15 @@ func ValidateInterval(baseInterval time.Duration, d DurationLike) error {
 
 type Expression interface {
 	IsSource() bool
-	// IsNonExpressionQuery returns true if the datasource for this expression is not the expression evaluator datasource
-	IsNonExpressionQuery() bool
+	GetDatasource() *string
 	HasValidRelativeTimeRange() bool
 }
 
 func ValidateExpressions(expressions []Expression) error {
 	hasSource := false
 	for _, expression := range expressions {
-		if expression.IsNonExpressionQuery() && !expression.HasValidRelativeTimeRange() {
+		datasource := expression.GetDatasource()
+		if (datasource != nil && *datasource != "__expr__") && !expression.HasValidRelativeTimeRange() {
 			return fmt.Errorf("query expressions must have a relative time range")
 		}
 		if expression.IsSource() {
