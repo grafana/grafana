@@ -66,7 +66,7 @@ function EnrichmentItemView({ item }: { item: EnrichmentItem }) {
 
   // LinkButton renders an <a> tag so we need createRelativeUrl for subpath support
   const sanitizedLink = item.exploreLink ? textUtil.sanitizeUrl(item.exploreLink) : undefined;
-  const exploreHref = sanitizedLink && isRelativeUrl(sanitizedLink) ? createRelativeUrl(sanitizedLink) : sanitizedLink;
+  const exploreHref = sanitizedLink && isRelativeUrl(sanitizedLink) ? createRelativeUrl(sanitizedLink) : undefined;
 
   if (item.type === 'logs') {
     return (
