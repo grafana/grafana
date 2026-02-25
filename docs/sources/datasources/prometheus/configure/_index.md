@@ -19,7 +19,7 @@ weight: 200
 
 # Configure the Prometheus data source
 
-This document provides instructions for configuring the Prometheus data source and explains the available configuration options. Grafana includes built-in support for Prometheus, so you don't need to install a plugin. For general information on adding a data source to Grafana, refer to [Add a data source](/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).
+This document provides instructions for configuring the Prometheus data source and explains the available configuration options. Grafana includes built-in support for Prometheus, so you don't need to install a plugin. For general information on adding a data source to Grafana, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).
 
 ## Before you begin
 
@@ -112,9 +112,9 @@ Following are optional configuration settings you can configure for more control
 
 **Alerting:**
 
-- **Manage alerts via Alerting UI** -Toggled on by default. This enables [data source-managed rules in Grafana Alerting](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed. Change this by setting the [`default_manage_alerts_ui_toggle`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle) option in the `grafana.ini` configuration file.
+- **Manage alerts via Alerting UI** -Toggled on by default. This enables [data source-managed rules in Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed. Change this by setting the [`default_manage_alerts_ui_toggle`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle) option in the `grafana.ini` configuration file.
 
-- **Allow as recording rules target** - Toggled on by default. This allows the data source to be selected as a target destination for writing [Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/). When enabled, this data source will appear in the target data source list when creating or importing recording rules. When disabled, the data source will be filtered out from recording rules target selection. Change this by setting the [`default_allow_recording_rules_target_alerts_ui_toggle`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_allow_recording_rules_target_alerts_ui_toggle) option in the `grafana.ini` configuration file.
+- **Allow as recording rules target** - Toggled on by default. This allows the data source to be selected as a target destination for writing [Grafana-managed recording rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/). When enabled, this data source will appear in the target data source list when creating or importing recording rules. When disabled, the data source will be filtered out from recording rules target selection. Change this by setting the [`default_allow_recording_rules_target_alerts_ui_toggle`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_allow_recording_rules_target_alerts_ui_toggle) option in the `grafana.ini` configuration file.
 
 **Interval behavior:**
 
@@ -123,7 +123,7 @@ Following are optional configuration settings you can configure for more control
 
 **Query editor:**
 
-- **Default editor** - Sets the default query editor. Options are `Builder` or `Code`. `Builder` mode helps you build queries using a visual interface. `Code` mode is geared for the experienced Prometheus user with prior expertise in PromQL. For more details on editor types refer to [Prometheus query editor](/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor). You can switch easily code editors in the Query editor UI.
+- **Default editor** - Sets the default query editor. Options are `Builder` or `Code`. `Builder` mode helps you build queries using a visual interface. `Code` mode is geared for the experienced Prometheus user with prior expertise in PromQL. For more details on editor types refer to [Prometheus query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor). You can switch easily code editors in the Query editor UI.
 - **Disable metrics lookup** - Toggle on to disable the metrics chooser and metric and label support in the query field's autocomplete. This can improve performance for large Prometheus instances.
 
 **Performance:**
@@ -144,12 +144,12 @@ Following are optional configuration settings you can configure for more control
 
 **Exemplars:**
 
-Support for exemplars is available only for the Prometheus data source. For more information on exemplars refer to [Introduction to exemplars](/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/). An exemplar is a trace that represents a specific measurement taken within a given time interval.
+Support for exemplars is available only for the Prometheus data source. For more information on exemplars refer to [Introduction to exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/). An exemplar is a trace that represents a specific measurement taken within a given time interval.
 
 Click the **+ sign** to add exemplars.
 
 - **Internal link** - Toggle on to enable an internal link. This will display the data source selector, where you can choose the backend tracing data store for your exemplar data.
-- **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables).
+- **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables).
 - **Data source** - _(Visible when`Internal link` is enabled.)_ Select the data source that the exemplar will link to from the drop-down.
 - **URL label** - Adds a custom display label to override the value of the `Label name` field.
 - **Label name** - The name of the field in the `labels` object used to obtain the traceID property.
@@ -175,7 +175,7 @@ You can also remove a connection by clicking **Delete**.
 
 ## Provision the Prometheus data source
 
-You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provision Grafana](/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
+You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
 {{< admonition type="note" >}}
 After you have provisioned a data source you cannot edit it.
@@ -215,9 +215,9 @@ datasources:
 
 ## Azure authentication settings
 
-The Prometheus data source works with Azure authentication. To configure Azure authentication refer to [Configure Azure Active Directory (AD) authentication](/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication).
+The Prometheus data source works with Azure authentication. To configure Azure authentication refer to [Configure Azure Active Directory (AD) authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication).
 
-In Grafana Enterprise, you need to update the .ini configuration file. Refer to [Configuration file location](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location) to locate your .ini file.
+In Grafana Enterprise, you need to update the .ini configuration file. Refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location) to locate your .ini file.
 
 Add the following setting in the **[auth]** section of the .ini configuration file:
 

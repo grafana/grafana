@@ -25,10 +25,10 @@ Grafana provides native support for Prometheus, so you don't need to install a p
 
 The following documentation will help you get started working with Prometheus and Grafana:
 
-- [What is Prometheus?](/docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/)
+- [What is Prometheus?](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/)
 - [Prometheus data model](https://prometheus.io/docs/concepts/data_model/)
 - [Getting started](https://prometheus.io/docs/prometheus/latest/getting_started/)
-- [Configure the Prometheus data source](/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure)
+- [Configure the Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure)
 - [Prometheus query editor](query-editor/)
 - [Template variables](template-variables/)
 - [Troubleshooting](troubleshooting/)
@@ -37,7 +37,7 @@ The following documentation will help you get started working with Prometheus an
 
 In Prometheus, an **exemplar** is a specific trace that represents a measurement taken within a given time interval. While metrics provide an aggregated view of your system, and traces offer a detailed view of individual requests, exemplars serve as a bridge between the two, linking high-level metrics to specific traces for deeper insights.
 
-Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. Refer to [Introduction to exemplars](/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/) in the Prometheus documentation for detailed information on how they work.
+Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. Refer to [Introduction to exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/) in the Prometheus documentation for detailed information on how they work.
 
 Grafana can show exemplar data alongside a metric both in Explore and in Dashboards.
 
@@ -62,11 +62,11 @@ Grafana exposes metrics for Prometheus on the `/metrics` endpoint and includes a
 
 Complete the following steps to import the pre-built dashboard:
 
-1. Navigate to the Prometheus [configuration page](/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure).
+1. Navigate to the Prometheus [configuration page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure).
 1. Click the **Dashboards** tab.
 1. Locate the **Grafana metrics** dashboard in the list and click **Import**.
 
-For details about these metrics, refer to [Internal Grafana metrics](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/).
+For details about these metrics, refer to [Internal Grafana metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/).
 
 ## Amazon Managed Service for Prometheus
 
@@ -76,9 +76,9 @@ Grafana has deprecated the Prometheus data source for Amazon Managed Service for
 
 After you install and configure Prometheus you can:
 
-- Create a wide variety of [visualizations](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
-- Configure and use [templates and variables](/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/)
-- Add [transformations](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
-- Add [annotations](/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/)
-- Set up [alerting](/docs/grafana/<GRAFANA_VERSION>/alerting/)
-- Create [recorded queries](/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/)
+- Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
+- Configure and use [templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/)
+- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
+- Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/)
+- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- Create [recorded queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/)
