@@ -23,12 +23,6 @@ labels:
 menuTitle: Configure
 title: Configure the InfluxDB data source
 weight: 300
-refs:
-  provision-grafana:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-grafana
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-grafana
 ---
 
 # Configure the InfluxDB data source
@@ -238,7 +232,7 @@ You can also override this setting in a dashboard panel under its data source op
 
 You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer
-to [Provision Grafana](ref:provision-grafana).
+to [Provision Grafana](/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-grafana).
 
 {{< admonition type="note" >}}
 The `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).

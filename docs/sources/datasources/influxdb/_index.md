@@ -18,22 +18,6 @@ labels:
 menuTitle: InfluxDB
 title: InfluxDB data source
 weight: 700
-refs:
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
-  transformations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
 ---
 
 # InfluxDB data source
@@ -56,6 +40,6 @@ The following documents will help you get started with the InfluxDB data source 
 
 Once you have configured the data source you can:
 
-- Add [annotations](ref:annotations)
-- Set up [alerting](ref:alerting)
-- Add [transformations](ref:transformations)
+- Add [annotations](/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/)
+- Set up [alerting](/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- Add [transformations](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
