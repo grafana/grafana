@@ -162,6 +162,7 @@ Content-Type: application/json
     "certs_watch_interval": "0s",
     "domain":"mygraf.com",
     "enable_gzip":"false",
+    "enable_compression":"false",
     "enforce_domain":"false",
     "http_addr":"127.0.0.1",
     "http_port":"0000",

@@ -694,3 +694,55 @@ func TestDynamicSection(t *testing.T) {
 		assert.Equal(t, value, ds.section.Key(key).String())
 	})
 }
+
+func TestEnableCompression(t *testing.T) {
+	t.Run("defaults to enable_gzip value when enable_compression is not set", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+enable_gzip = true
+`))
+		require.NoError(t, err)
+		require.True(t, cfg.EnableGzip)
+		require.True(t, cfg.EnableCompression)
+	})
+
+	t.Run("defaults to true when neither is set", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+`))
+		require.NoError(t, err)
+		require.True(t, cfg.EnableGzip)
+		require.True(t, cfg.EnableCompression)
+	})
+
+	t.Run("enable_compression overrides enable_gzip when explicitly set", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+enable_gzip = true
+enable_compression = false
+`))
+		require.NoError(t, err)
+		require.True(t, cfg.EnableGzip)
+		require.False(t, cfg.EnableCompression)
+	})
+
+	t.Run("enable_compression true overrides enable_gzip false", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[server]
+enable_gzip = false
+enable_compression = true
+`))
+		require.NoError(t, err)
+		require.False(t, cfg.EnableGzip)
+		require.True(t, cfg.EnableCompression)
+	})
+
+	t.Run("enable_compression can be set via environment variable", func(t *testing.T) {
+		t.Setenv("GF_SERVER_ENABLE_COMPRESSION", "true")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+		require.True(t, cfg.EnableCompression)
+	})
+}
