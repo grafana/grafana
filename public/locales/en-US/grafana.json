@@ -2243,6 +2243,12 @@
       "uuid-not-found-title": "Notification not found",
       "yes": "Yes"
     },
+    "notification-history": {
+      "enrichment-explore": "View in Explore",
+      "enrichment-no-logs": "No log lines",
+      "enrichment-type-logs": "logs",
+      "enrichments": "Enrichments:"
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Contact point",
       "placeholder-search-by-contact-point": "Choose a contact point",
@@ -2328,9 +2334,6 @@
     "notifications-scene": {
       "annotations": "Annotations:",
       "description": "Description:",
-      "enrichment-explore": "View in Explore",
-      "enrichment-no-logs": "No log lines",
-      "enrichments": "Enrichments:",
       "filter": {
         "clear": "Clear filters"
       },
