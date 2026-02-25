@@ -341,7 +341,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		t.Skip("Skipping integration test when not enterprise")
 	}
 
-	helper := runGrafana(t)
+	// Enforcing enterprise connection types for the test (defaults to github only)
+	helper := runGrafana(t, withRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
 	ctx := context.Background()
 
 	gitlabNamePrefix := fmt.Sprintf("%s-", provisioning.GitlabConnectionType)
