@@ -95,7 +95,6 @@ type APIBuilder struct {
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
 	minSyncInterval     time.Duration
-	quotaLimits         quotas.QuotaLimits
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -213,15 +212,6 @@ func NewAPIBuilder(
 	return b
 }
 
-// SetQuotas sets the quota limits (including repository and resource limits).
-// HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
-// changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
-// once we can coordinate the change across repositories.
-// The limits are stored here and then passed to validators and workers via quotaLimits.
-func (b *APIBuilder) SetQuotas(limits quotas.QuotaLimits) {
-	b.quotaLimits = limits
-}
-
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
 func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	// If LokiURL is defined, use Loki
@@ -315,13 +305,6 @@ func RegisterAPIService(
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
 	)
-	// HACK: Set quota limits after construction to avoid changing NewAPIBuilder signature.
-	// See SetQuotas for details.
-	// Config defaults to 10 in pkg/setting. If user sets 0, that means unlimited.
-	builder.SetQuotas(quotas.QuotaLimits{
-		MaxResources:    cfg.ProvisioningMaxResourcesPerRepository,
-		MaxRepositories: cfg.ProvisioningMaxRepositories,
-	})
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -903,10 +886,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
-			quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
-				MaxResourcesPerRepository: b.quotaLimits.MaxResources,
-				MaxRepositories:           b.quotaLimits.MaxRepositories,
-			})
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -922,7 +901,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				10,
 				informerFactoryResyncInterval,
 				b.minSyncInterval,
-				quotaGetter,
+				b.quotaGetter,
 			)
 			if err != nil {
 				return err

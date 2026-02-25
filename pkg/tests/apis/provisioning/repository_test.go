@@ -698,6 +698,33 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	})
 }
 
+func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	t.Run("repository with no workflows should not create a webhook", func(t *testing.T) {
+		repoName := "readonly-no-webhook"
+		input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        repoName,
+			"SyncEnabled": false,
+		})
+
+		_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
+		require.NoError(t, err, "failed to create read-only repository")
+
+		helper.WaitForHealthyRepository(t, repoName)
+
+		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err, "failed to get repository")
+
+		repo := unstructuredToRepository(t, repoObj)
+		require.Empty(t, repo.Spec.Workflows, "repository should have no workflows (read-only)")
+		require.Nil(t, repo.Status.Webhook, "read-only repository should not have a webhook")
+	})
+}
+
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

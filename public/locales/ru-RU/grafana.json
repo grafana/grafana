@@ -475,10 +475,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Внешние обработчики оповещений",
-      "extra-config-warning": {
-        "content": "Здесь отображается объединенная конфигурация обработчика оповещений Grafana с импортированными настройками. В пользовательском интерфейсе это объединенное представление доступно только для чтения.",
-        "title": "Импортированная конфигурация"
-      },
       "noOptionsMessage-no-datasources-found": "Источники данных не найдены"
     },
     "alert-menu": {
@@ -5055,6 +5051,7 @@
       "description-color-annotation-event-markers": "Цвет, который будет использоваться для маркеров событий аннотаций.",
       "description-enabled-annotation-query-issued-every-dashboard": "Если этот параметр включен, запрос аннотации выдается при каждом обновлении панели.",
       "description-hidden": "Запросы аннотаций можно включать или отключать в верхней части панели. Если установлен этот параметр, переключатель будет скрыт.",
+      "error-loading-panels": "",
       "label-color": "Цвет",
       "label-data-source": "Источник данных",
       "label-enabled": "Включено",
@@ -6500,6 +6497,7 @@
       "delete": "Удалить",
       "description-color-annotation-event-markers": "Цвет, который будет использоваться для маркеров событий аннотаций.",
       "description-enabled-annotation-query-issued-every-dashboard": "Если этот параметр включен, запрос аннотации выдается при каждом обновлении панели.",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Показывать элементы управления аннотациями в",
       "label-color": "Цвет",
       "label-data-source": "Источник данных",
@@ -13020,6 +13018,7 @@
       "header-status": "Статус",
       "header-title": "Заголовок",
       "header-type": "Тип",
+      "missing-folder-metadata": "",
       "search-placeholder": "Поиск по пути или заголовку",
       "source": "Источник",
       "status-pending": "В ожидании",
@@ -13486,6 +13485,7 @@
       },
       "card-click": "Выбрать карту {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
       "transformations": "Преобразования",

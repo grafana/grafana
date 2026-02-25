@@ -845,4 +845,8 @@ const (
 	// FlagFrontendServiceUseSettingsService
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
+
+	// FlagManagedPluginsV2
+	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
+	FlagManagedPluginsV2 = "managedPluginsV2"
 )
