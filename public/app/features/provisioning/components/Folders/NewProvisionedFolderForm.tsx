@@ -63,7 +63,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       return;
     }
 
-    // When new folder is created but we don't have metadata, show user resource created banner
+    // When sync is disabled, the BE returns resource.upsert as null (no Grafana resource created).
+    // Redirect to dashboards with a banner linking to the repo status page.
     const url = buildResourceBranchRedirectUrl({
       paramName: 'resource_pushed_to',
       paramValue: repository?.name,
