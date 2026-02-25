@@ -1557,4 +1557,9 @@ export interface FeatureToggles {
   * @default false
   */
   functionalSharedPreferences?: boolean;
+  /**
+  * Enables managed plugins v2 (expanded rollout, community plugin coverage)
+  * @default false
+  */
+  managedPluginsV2?: boolean;
 }
