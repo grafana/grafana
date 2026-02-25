@@ -14,13 +14,27 @@ interface EnrichmentItem {
   lines?: string[];
 }
 
+function isEnrichmentItem(value: unknown): value is EnrichmentItem {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
+    return false;
+  }
+  const obj: Record<string, unknown> = value;
+  return typeof obj.type === 'string';
+}
+
 interface AlertEnrichmentsProps {
   enrichments: Record<string, unknown>;
 }
 
 export function AlertEnrichments({ enrichments }: AlertEnrichmentsProps) {
-  const items = enrichments?.items;
-  if (!Array.isArray(items) || items.length === 0) {
+  const rawItems = enrichments?.items;
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    return null;
+  }
+
+  // enrichments is typed as Record<string, unknown> from the API, so we validate each item at runtime
+  const items = rawItems.filter(isEnrichmentItem);
+  if (items.length === 0) {
     return null;
   }
 
@@ -31,7 +45,7 @@ export function AlertEnrichments({ enrichments }: AlertEnrichmentsProps) {
           <Trans i18nKey="alerting.notification-history.enrichments">Enrichments:</Trans>
         </strong>
       </Text>
-      {items.map((item: EnrichmentItem, idx: number) => (
+      {items.map((item, idx) => (
         <EnrichmentItemView key={idx} item={item} />
       ))}
     </Stack>
