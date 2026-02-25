@@ -188,6 +188,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			Title:     val.Spec.Title,
 			Type:      val.Spec.Type,
 			Target:    val.Spec.Sync.Target,
+			SyncEnabled: val.Spec.Sync.Enabled,
 			Branch:    branch,
 			URL:       url,
 			Path:      path,

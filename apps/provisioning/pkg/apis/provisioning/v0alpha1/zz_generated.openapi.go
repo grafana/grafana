@@ -2315,45 +2315,53 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Enum:        []interface{}{"folder", "instance"},
 						},
 					},
-					"branch": {
-						SchemaProps: spec.SchemaProps{
-							Description: "For git, this is the target branch",
-							Type:        []string{"string"},
-							Format:      "",
-						},
+				"syncEnabled": {
+					SchemaProps: spec.SchemaProps{
+						Description: "Whether automatic sync is enabled for this repository",
+						Default:     false,
+						Type:        []string{"boolean"},
+						Format:      "",
 					},
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Description: "For git, this is the target URL",
-							Type:        []string{"string"},
-							Format:      "",
-						},
+				},
+				"branch": {
+					SchemaProps: spec.SchemaProps{
+						Description: "For git, this is the target branch",
+						Type:        []string{"string"},
+						Format:      "",
 					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Description: "For git, this is the target path",
-							Type:        []string{"string"},
-							Format:      "",
-						},
+				},
+				"url": {
+					SchemaProps: spec.SchemaProps{
+						Description: "For git, this is the target URL",
+						Type:        []string{"string"},
+						Format:      "",
 					},
-					"workflows": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The supported workflows",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-										Enum:    []interface{}{"branch", "write"},
-									},
+				},
+				"path": {
+					SchemaProps: spec.SchemaProps{
+						Description: "For git, this is the target path",
+						Type:        []string{"string"},
+						Format:      "",
+					},
+				},
+				"workflows": {
+					SchemaProps: spec.SchemaProps{
+						Description: "The supported workflows",
+						Type:        []string{"array"},
+						Items: &spec.SchemaOrArray{
+							Schema: &spec.Schema{
+								SchemaProps: spec.SchemaProps{
+									Default: "",
+									Type:    []string{"string"},
+									Format:  "",
+									Enum:    []interface{}{"branch", "write"},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"name", "title", "type", "target", "workflows"},
+			},
+			Required: []string{"name", "title", "type", "target", "syncEnabled", "workflows"},
 			},
 		},
 	}
