@@ -20,7 +20,7 @@ keywords:
 
 `grafanactl`, the Grafana CLI tool, is a command-line tool for managing Grafana resources as code. To install and configure it, refer to the [Grafana CLI documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/).
 
-You can use `grafnactl` to manage Advisor `checks` and `checktypes`. 
+You can use `grafanactl` to manage Advisor `checks` and `checktypes`. 
 
 ## Get the list of checks
 
