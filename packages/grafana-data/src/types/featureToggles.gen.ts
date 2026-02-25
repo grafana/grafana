@@ -1228,11 +1228,6 @@ export interface FeatureToggles {
   */
   preferLibraryPanelTitle?: boolean;
   /**
-  * Use fixed-width numbers globally in the UI
-  * @default false
-  */
-  tabularNumbers?: boolean;
-  /**
   * Enables new design for the InfluxDB data source configuration page
   * @default false
   */
