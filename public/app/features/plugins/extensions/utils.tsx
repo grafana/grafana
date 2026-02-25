@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep, isArray, isObject } from 'lodash';
+import { cloneDeep, isArray, isObject, isString } from 'lodash';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
@@ -11,6 +11,8 @@ import {
   dateTime,
   PluginContextProvider,
   type PluginExtensionAddedLinkConfig,
+  type PluginExtensionLink,
+  PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
@@ -555,6 +557,38 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
       uel_epid: extensionPointId,
     })
   );
+}
+
+export type LinkExtensionOverrides = ReturnType<typeof getLinkExtensionOverrides>;
+
+/**
+ * Builds a PluginExtensionLink from an added link config and optional configure() overrides.
+ * Shared by getPluginExtensions and usePluginLinks.
+ */
+export function addedLinkToExtensionLink(
+  pluginId: string,
+  extensionPointId: string,
+  addedLink: AddedLinkRegistryItem,
+  overrides: LinkExtensionOverrides,
+  linkLog: ExtensionsLog,
+  frozenContext: object
+): PluginExtensionLink {
+  const path = overrides?.path ?? addedLink.path;
+  const group = overrides?.group ?? addedLink.group;
+  const category = overrides?.category ?? addedLink.category;
+  return {
+    id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
+    type: PluginExtensionTypes.link,
+    pluginId,
+    onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
+    icon: overrides?.icon ?? addedLink.icon,
+    title: overrides?.title ?? addedLink.title,
+    description: overrides?.description ?? addedLink.description ?? '',
+    path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
+    category,
+    group,
+    openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
+  };
 }
 
 // Comes from the `app_mode` setting in the Grafana config (defaults to "development")

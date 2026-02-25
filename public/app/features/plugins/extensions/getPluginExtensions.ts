@@ -1,4 +1,3 @@
-import { isString } from 'lodash';
 import { combineLatest, from, map, Observable, switchMap } from 'rxjs';
 
 import {
@@ -17,12 +16,11 @@ import { getPluginExtensionRegistries } from './registry/setup';
 import type { PluginExtensionRegistries } from './registry/types';
 import { GetExtensions, GetExtensionsOptions, GetPluginExtensions } from './types';
 import {
+  addedLinkToExtensionLink,
   getReadOnlyProxy,
   generateExtensionId,
   wrapWithPluginContext,
-  getLinkExtensionOnClick,
   getLinkExtensionOverrides,
-  getLinkExtensionPathWithTracking,
 } from './utils';
 
 /**
@@ -131,25 +129,14 @@ export const getPluginExtensions: GetExtensions = ({
         continue;
       }
 
-      const path = overrides?.path ?? addedLink.path;
-      const group = overrides?.group ?? addedLink.group;
-      const category = overrides?.category ?? addedLink.category;
-      const extension: PluginExtensionLink = {
-        id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
-        type: PluginExtensionTypes.link,
-        pluginId: pluginId,
-        onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
-
-        // Configurable properties
-        icon: overrides?.icon ?? addedLink.icon,
-        title: overrides?.title ?? addedLink.title,
-        description: overrides?.description ?? addedLink.description ?? '',
-        path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
-        category,
-        group,
-        openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
-      };
-
+      const extension = addedLinkToExtensionLink(
+        pluginId,
+        extensionPointId,
+        addedLink,
+        overrides,
+        linkLog,
+        frozenContext
+      );
       extensions.push(extension);
       extensionsByPlugin[pluginId] += 1;
     } catch (error) {
