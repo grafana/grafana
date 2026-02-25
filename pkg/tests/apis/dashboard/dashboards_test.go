@@ -347,7 +347,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				require.NoError(t, err)
 
 				body = []byte(`{"dashboard": ` + string(jj) + `, "overwrite": false}`)
-				result = adminClient.Post().AbsPath("api", "dashboards", "db").
+				_ = adminClient.Post().AbsPath("api", "dashboards", "db").
 					Body(body).
 					SetHeader("Content-type", "application/json").
 					Do(ctx).
@@ -356,7 +356,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 
 				// Overwrite!
 				body = []byte(`{"dashboard": ` + string(jj) + `, "overwrite": true}`)
-				result = adminClient.Post().AbsPath("api", "dashboards", "db").
+				_ = adminClient.Post().AbsPath("api", "dashboards", "db").
 					Body(body).
 					SetHeader("Content-type", "application/json").
 					Do(ctx).
