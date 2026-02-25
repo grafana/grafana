@@ -1176,10 +1176,15 @@
         "type": "object",
         "required": [
           "timestamp",
+          "uuid",
           "receiver",
+          "integration",
+          "integrationIndex",
           "status",
           "outcome",
           "groupLabels",
+          "ruleUIDs",
+          "alertCount",
           "alerts",
           "retry",
           "duration",
@@ -1187,8 +1192,12 @@
           "groupKey"
         ],
         "properties": {
+          "alertCount": {
+            "description": "AlertCount is the total number of alerts included in the notification.",
+            "type": "integer"
+          },
           "alerts": {
-            "description": "Alerts are the alerts grouped into the notification.",
+            "description": "Alerts are the alerts grouped into the notification. Deprecated: not populated, will be removed.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntryAlert"
@@ -1213,6 +1222,14 @@
               "type": "string"
             }
           },
+          "integration": {
+            "description": "Integration is the integration (contact point type) name.",
+            "type": "string"
+          },
+          "integrationIndex": {
+            "description": "IntegrationIndex is the index of the integration within the receiver.",
+            "type": "integer"
+          },
           "outcome": {
             "description": "Outcome indicaes if the notificaion attempt was successful or if it failed.",
             "allOf": [
@@ -1234,6 +1251,13 @@
             "description": "Retry indicates if the attempt was a retried attempt.",
             "type": "boolean"
           },
+          "ruleUIDs": {
+            "description": "RuleUIDs are the unique identifiers of the alert rules included in the notification.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "status": {
             "description": "Status indicates if the notification contains one or more firing alerts.",
             "allOf": [
@@ -1246,6 +1270,10 @@
             "description": "Timestamp is the time at which the notification attempt completed.",
             "type": "string",
             "format": "date-time"
+          },
+          "uuid": {
+            "description": "Uuid is a unique identifier for the notification attempt.",
+            "type": "string"
           }
         }
       },

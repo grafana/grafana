@@ -272,14 +272,18 @@ func TestParseLokiEntry(t *testing.T) {
 			sample: lokiclient.Sample{
 				T: timestamp,
 				V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
-					SchemaVersion: 2,
-					Receiver:      "test-receiver",
-					Status:        "firing",
-					Error:         "",
-					GroupKey:      "key:thing",
+					SchemaVersion:  2,
+					UUID:           "test-uuid",
+					Receiver:       "test-receiver",
+					Integration:    "email",
+					IntegrationIdx: 0,
+					Status:         "firing",
+					Error:          "",
+					GroupKey:       "key:thing",
 					GroupLabels: map[string]string{
 						"alertname": "test-alert",
 					},
+					RuleUIDs:     []string{"rule-uid-1"},
 					AlertCount:   1,
 					Retry:        false,
 					Duration:     100,
@@ -288,14 +292,19 @@ func TestParseLokiEntry(t *testing.T) {
 			},
 			wantErr: false,
 			want: Entry{
-				Timestamp: timestamp,
-				Receiver:  "test-receiver",
-				Status:    Status("firing"),
-				Outcome:   OutcomeSuccess,
-				GroupKey:  "key:thing",
+				Timestamp:        timestamp,
+				Uuid:             "test-uuid",
+				Receiver:         "test-receiver",
+				Integration:      "email",
+				IntegrationIndex: 0,
+				Status:           Status("firing"),
+				Outcome:          OutcomeSuccess,
+				GroupKey:         "key:thing",
 				GroupLabels: map[string]string{
 					"alertname": "test-alert",
 				},
+				RuleUIDs:     []string{"rule-uid-1"},
+				AlertCount:   1,
 				Alerts:       []EntryAlert{},
 				Retry:        false,
 				Error:        nil,
@@ -309,6 +318,7 @@ func TestParseLokiEntry(t *testing.T) {
 				T: timestamp,
 				V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
 					SchemaVersion: 2,
+					UUID:          "test-uuid-2",
 					Receiver:      "test-receiver",
 					Status:        "firing",
 					Error:         "notification failed",
@@ -321,11 +331,14 @@ func TestParseLokiEntry(t *testing.T) {
 			wantErr: false,
 			want: Entry{
 				Timestamp:    timestamp,
+				Uuid:         "test-uuid-2",
 				Receiver:     "test-receiver",
 				Status:       Status("firing"),
 				Outcome:      OutcomeError,
 				GroupKey:     "key:thing",
 				GroupLabels:  map[string]string{},
+				RuleUIDs:     []string{},
+				AlertCount:   1,
 				Alerts:       []EntryAlert{},
 				Error:        stringPtr("notification failed"),
 				PipelineTime: now,
@@ -344,6 +357,8 @@ func TestParseLokiEntry(t *testing.T) {
 				Status:       Status("firing"),
 				Outcome:      OutcomeSuccess,
 				GroupLabels:  map[string]string{},
+				RuleUIDs:     []string{},
+				AlertCount:   1,
 				Alerts:       []EntryAlert{},
 				PipelineTime: now,
 			},
@@ -380,11 +395,17 @@ func TestParseLokiEntry(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.want.Timestamp, got.Timestamp)
+			assert.Equal(t, tt.want.Uuid, got.Uuid)
 			assert.Equal(t, tt.want.Receiver, got.Receiver)
+			assert.Equal(t, tt.want.Integration, got.Integration)
+			assert.Equal(t, tt.want.IntegrationIndex, got.IntegrationIndex)
 			assert.Equal(t, tt.want.Status, got.Status)
 			assert.Equal(t, tt.want.Outcome, got.Outcome)
 			assert.Equal(t, tt.want.GroupKey, got.GroupKey)
 			assert.Equal(t, tt.want.GroupLabels, got.GroupLabels)
+			assert.Equal(t, tt.want.RuleUIDs, got.RuleUIDs)
+			assert.Equal(t, tt.want.AlertCount, got.AlertCount)
+			assert.Equal(t, tt.want.Alerts, got.Alerts)
 			assert.Equal(t, tt.want.Retry, got.Retry)
 			assert.Equal(t, tt.want.Duration, got.Duration)
 			assert.Equal(t, tt.want.PipelineTime, got.PipelineTime)
@@ -394,16 +415,6 @@ func TestParseLokiEntry(t *testing.T) {
 				assert.Equal(t, *tt.want.Error, *got.Error)
 			} else {
 				assert.Nil(t, got.Error)
-			}
-
-			assert.Equal(t, len(tt.want.Alerts), len(got.Alerts))
-			for i := range tt.want.Alerts {
-				assert.Equal(t, tt.want.Alerts[i].Status, got.Alerts[i].Status)
-				assert.Equal(t, tt.want.Alerts[i].Labels, got.Alerts[i].Labels)
-				assert.Equal(t, tt.want.Alerts[i].Annotations, got.Alerts[i].Annotations)
-				assert.Equal(t, tt.want.Alerts[i].StartsAt, got.Alerts[i].StartsAt)
-				assert.Equal(t, tt.want.Alerts[i].EndsAt, got.Alerts[i].EndsAt)
-				assert.Equal(t, tt.want.Alerts[i].Enrichments, got.Alerts[i].Enrichments)
 			}
 		})
 	}
@@ -425,6 +436,7 @@ func TestLokiReader_RunQuery(t *testing.T) {
 							T: entry1Time,
 							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
 								SchemaVersion: 2,
+								UUID:          "uuid-1",
 								Receiver:      "receiver-1",
 								Status:        "firing",
 								GroupKey:      "group1",
@@ -437,6 +449,7 @@ func TestLokiReader_RunQuery(t *testing.T) {
 							T: entry3Time,
 							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
 								SchemaVersion: 2,
+								UUID:          "uuid-3",
 								Receiver:      "receiver-3",
 								Status:        "firing",
 								GroupKey:      "group3",
@@ -453,6 +466,7 @@ func TestLokiReader_RunQuery(t *testing.T) {
 							T: entry2Time,
 							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
 								SchemaVersion: 2,
+								UUID:          "uuid-2",
 								Receiver:      "receiver-2",
 								Status:        "firing",
 								GroupKey:      "group2",
@@ -522,6 +536,7 @@ func createMockLokiResponse(timestamp time.Time) lokiclient.QueryRes {
 							T: timestamp,
 							V: createLokiEntryJSON(nil, historian.NotificationHistoryLokiEntry{
 								SchemaVersion: 2,
+								UUID:          "test-uuid",
 								Receiver:      "test-receiver",
 								Status:        "firing",
 								Error:         "",
@@ -529,6 +544,7 @@ func createMockLokiResponse(timestamp time.Time) lokiclient.QueryRes {
 								GroupLabels: map[string]string{
 									"alertname": "test-alert",
 								},
+								RuleUIDs:     []string{"rule-uid-1"},
 								AlertCount:   1,
 								Retry:        false,
 								Duration:     100,
@@ -554,6 +570,7 @@ func createLokiEntryJSONWithNilLabels(t *testing.T, timestamp time.Time) string 
 	// Create JSON with explicit null for group_labels
 	jsonStr := fmt.Sprintf(`{
 		"schemaVersion": 2,
+		"uuid": "",
 		"receiver": "test-receiver",
 		"status": "firing",
 		"error": "",
