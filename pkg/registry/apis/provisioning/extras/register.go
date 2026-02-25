@@ -62,6 +62,7 @@ func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []job
 func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repository.Factory, error) {
 	types := cfg.ProvisioningRepositoryTypes
 	if len(types) == 0 {
+		// Enforcing default repository values if settings are not set
 		types = []string{"git", "github", "local"}
 	}
 	enabledTypes := make(map[apisprovisioning.RepositoryType]struct{}, len(types))
@@ -73,8 +74,13 @@ func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repo
 }
 
 func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Extra) (connection.Factory, error) {
-	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(cfg.ProvisioningRepositoryTypes))
-	for _, e := range cfg.ProvisioningRepositoryTypes {
+	types := cfg.ProvisioningRepositoryTypes
+	if len(types) == 0 {
+		// Enforcing default connection values if settings are not set
+		types = []string{"github"}
+	}
+	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(types))
+	for _, e := range types {
 		enabledTypes[apisprovisioning.ConnectionType(e)] = struct{}{}
 	}
 
