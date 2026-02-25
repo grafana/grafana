@@ -38,6 +38,22 @@ function buildTitleUserPrompt(textInput: string, userPrompt?: string): string {
   return parts.join('\n\n');
 }
 
+function buildTitleSystemPrompt(
+  systemPrompt?: string,
+  userPrompt?: string,
+  includeContext = false
+): string | undefined {
+  if (!systemPrompt) {
+    return undefined;
+  }
+
+  if (!includeContext || !userPrompt) {
+    return systemPrompt;
+  }
+
+  return [systemPrompt, `Panel context:\n${userPrompt}`].join('\n\n');
+}
+
 /**
  * A text input that uses the Grafana Assistant for AI generation when available,
  * falling back to a plain Input otherwise.
@@ -57,6 +73,8 @@ export function GenAITextInput({
 }: GenAITextInputProps) {
   const isAssistant = useIsAssistantAvailable();
   const styles = useStyles2(getStyles);
+  const isAutoGeneration = autoGenerate && isAssistant;
+  const effectiveSystemPrompt = buildTitleSystemPrompt(systemPrompt, userPrompt, isAutoGeneration);
 
   if (isAssistant) {
     return (
@@ -65,12 +83,12 @@ export function GenAITextInput({
         value={value}
         onChange={onChange}
         onComplete={onComplete}
-        systemPrompt={systemPrompt}
+        systemPrompt={effectiveSystemPrompt}
         origin="grafana/panel-metadata/title"
         placeholder={t('gen-ai.text-input.placeholder', 'Type a title or let AI generate one...')}
         autoGenerate={autoGenerate}
         streaming
-        getUserPrompt={(textInput) => buildTitleUserPrompt(textInput, userPrompt)}
+        getUserPrompt={(textInput) => buildTitleUserPrompt(textInput, isAutoGeneration ? undefined : userPrompt)}
         className={styles.assistantInput}
       />
     );
