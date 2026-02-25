@@ -135,39 +135,39 @@ describe('contact points', () => {
       test('loads contact points tab', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=contact_points'] });
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('loads templates tab', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=templates'] });
 
-        expect(await screen.findByText(/add notification template/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new notification template/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with invalid query param', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=foo_bar'] });
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with no query param', async () => {
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab if user has only read permission', async () => {
         grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab if user has only create permission', async () => {
         grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
     });
 
