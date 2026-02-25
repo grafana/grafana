@@ -431,13 +431,13 @@ type Cfg struct {
 	FrontendAnalyticsConsoleReporting   bool
 
 	// LDAP
-	LDAPAuthEnabled                 bool
-	LDAPSkipOrgRoleSync             bool
-	LDAPConfigFilePath              string
-	LDAPAllowSignup                 bool
-	LDAPAllowInsecureEmailLookup    bool
-	LDAPActiveSyncEnabled           bool
-	LDAPSyncCron                    string
+	LDAPAuthEnabled              bool
+	LDAPSkipOrgRoleSync          bool
+	LDAPConfigFilePath           string
+	LDAPAllowSignup              bool
+	LDAPAllowInsecureEmailLookup bool
+	LDAPActiveSyncEnabled        bool
+	LDAPSyncCron                 string
 
 	DefaultTheme    string
 	DefaultLanguage string
