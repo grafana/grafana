@@ -694,10 +694,6 @@ const (
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
 
-	// FlagTabularNumbers
-	// Use fixed-width numbers globally in the UI
-	FlagTabularNumbers = "tabularNumbers"
-
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
 	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
@@ -845,4 +841,8 @@ const (
 	// FlagFrontendServiceUseSettingsService
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
+
+	// FlagManagedPluginsV2
+	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
+	FlagManagedPluginsV2 = "managedPluginsV2"
 )

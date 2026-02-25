@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externos",
-      "extra-config-warning": {
-        "content": "Isto mostra a configuração combinada do Grafana Alertmanager com configurações importadas. Esta visualização combinada é só de leitura na interface do utilizador.",
-        "title": "Configuração importada"
-      },
       "noOptionsMessage-no-datasources-found": "Nenhuma fonte de dados encontrada"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "Cor a utilizar para os marcadores de eventos de anotação",
       "description-enabled-annotation-query-issued-every-dashboard": "Quando esta opção está ativada, a consulta de anotação é emitida a cada atualização do painel de controlo",
       "description-hidden": "As consultas de anotação podem ser ativadas ou desativadas na parte superior do painel de controlo. Com esta opção marcada, esta alternância ficará oculta.",
+      "error-loading-panels": "",
       "label-color": "Cor",
       "label-data-source": "Origem dos dados",
       "label-enabled": "Ativado",
@@ -6444,6 +6441,7 @@
       "delete": "Eliminar",
       "description-color-annotation-event-markers": "Cor a utilizar para os marcadores de eventos de anotação",
       "description-enabled-annotation-query-issued-every-dashboard": "Quando esta opção está ativada, a consulta de anotação é emitida a cada atualização do painel de controlo",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Mostrar controlos de anotação em",
       "label-color": "Cor",
       "label-data-source": "Origem dos dados",
@@ -12900,6 +12898,7 @@
       "header-status": "Estado",
       "header-title": "Título",
       "header-type": "Tipo",
+      "missing-folder-metadata": "",
       "search-placeholder": "Pesquisar por caminho ou título",
       "source": "Origem",
       "status-pending": "Pendente",
@@ -13364,6 +13363,7 @@
       },
       "card-click": "Selecionar cartão {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Consultas e expressões",
       "toggle-size": "Alternar tamanho da barra lateral",
       "transformations": "Transformações",

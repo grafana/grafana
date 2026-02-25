@@ -6920,11 +6920,11 @@
       "static-options-legend": "Static options"
     },
     "resource-export": {
+      "classic-v2-warning": "This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the classic format and may be lost.",
       "label": {
         "advanced-options": "Advanced options",
         "classic": "Classic",
         "json": "JSON",
-        "v1-resource": "V1 Resource",
         "v2-resource": "V2 Resource",
         "yaml": "YAML"
       },
@@ -12634,6 +12634,9 @@
       "label-read-only": "Read only",
       "label-sync-interval": "Sync Interval (seconds)"
     },
+    "folder-permissions": {
+      "loading": "Loading..."
+    },
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
@@ -12767,6 +12770,12 @@
       "show-less": "show less",
       "show-more": "show more",
       "truncated": "Message truncated"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
+      "error-title": "Unable to check folder metadata status.",
+      "message": "Since this folder doesn't contain a metadata file, the folder ID is based on the folder path. If you move or rename the folder, the folder ID will change, and permissions may no longer apply to the folder.",
+      "title": "This folder is missing metadata."
     },
     "mode-options": {
       "disabled": {
@@ -13567,6 +13576,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "Created by me",
       "include-panels": "Include panels",
       "remove-datasource-filter": "Datasource: {{datasource}}",
       "sort-placeholder": "Sort",

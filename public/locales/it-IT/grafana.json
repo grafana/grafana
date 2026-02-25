@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanager esterni",
-      "extra-config-warning": {
-        "content": "Mostra la configurazione unita di Grafana alertmanager con le configurazioni importate. Questa vista unita è di sola lettura nell'interfaccia utente.",
-        "title": "Configurazione importata"
-      },
       "noOptionsMessage-no-datasources-found": "Nessuna fonte dati trovata"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "Colore da utilizzare per gli indicatori degli eventi di annotazione",
       "description-enabled-annotation-query-issued-every-dashboard": "Se abilitata, la query di annotazione viene emessa a ogni aggiornamento della dashboard",
       "description-hidden": "Le query di annotazione possono essere attivate o disattivate nella parte superiore della dashboard. Se questa opzione è selezionata, il toggle verrà nascosto.",
+      "error-loading-panels": "",
       "label-color": "Colore",
       "label-data-source": "Sorgente dati",
       "label-enabled": "Abilitato",
@@ -6444,6 +6441,7 @@
       "delete": "Elimina",
       "description-color-annotation-event-markers": "Colore da utilizzare per gli indicatori degli eventi di annotazione",
       "description-enabled-annotation-query-issued-every-dashboard": "Se abilitata, la query di annotazione viene emessa a ogni aggiornamento della dashboard",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Mostra i comandi delle annotazioni in",
       "label-color": "Colore",
       "label-data-source": "Sorgente dati",
@@ -12900,6 +12898,7 @@
       "header-status": "Stato",
       "header-title": "Titolo",
       "header-type": "Tipo",
+      "missing-folder-metadata": "",
       "search-placeholder": "Cerca per percorso o titolo",
       "source": "Origine",
       "status-pending": "In sospeso",
@@ -13364,6 +13363,7 @@
       },
       "card-click": "Seleziona scheda {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
       "transformations": "Trasformazioni",

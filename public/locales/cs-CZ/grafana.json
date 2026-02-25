@@ -475,10 +475,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externí správci výstrah",
-      "extra-config-warning": {
-        "content": "Zobrazuje sloučenou konfiguraci správců výstrah Grafana s importovanými konfiguracemi. Toto sloučené zobrazení je v uživatelském rozhraní jen pro čtení.",
-        "title": "Importovaná konfigurace"
-      },
       "noOptionsMessage-no-datasources-found": "Nebyly nalezeny žádné zdroje dat"
     },
     "alert-menu": {
@@ -5055,6 +5051,7 @@
       "description-color-annotation-event-markers": "Barva, která bude použita pro značky vysvětlivek události",
       "description-enabled-annotation-query-issued-every-dashboard": "Je-li povoleno, při každém obnovení nástěnky bude aktivován dotaz na vysvětlivky",
       "description-hidden": "Dotazy na vysvětlivky lze zapnout nebo vypnout v horní části nástěnky. Pokud je tato možnost zaškrtnuta, bude tento přepínač skrytý.",
+      "error-loading-panels": "",
       "label-color": "Barva",
       "label-data-source": "Zdroj dat",
       "label-enabled": "Povoleno",
@@ -6500,6 +6497,7 @@
       "delete": "Odstranit",
       "description-color-annotation-event-markers": "Barva, která bude použita pro značky vysvětlivek události",
       "description-enabled-annotation-query-issued-every-dashboard": "Je-li povoleno, při každém obnovení nástěnky bude aktivován dotaz na vysvětlivky",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Zobrazit ovládací prvky vysvětlivek v",
       "label-color": "Barva",
       "label-data-source": "Zdroj dat",
@@ -13020,6 +13018,7 @@
       "header-status": "Stav",
       "header-title": "Název",
       "header-type": "Typ",
+      "missing-folder-metadata": "",
       "search-placeholder": "Hledat podle cesty nebo názvu",
       "source": "Zdroj",
       "status-pending": "Nevyřízeno",
@@ -13486,6 +13485,7 @@
       },
       "card-click": "Vybrat kartu {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
       "transformations": "Transformace",
