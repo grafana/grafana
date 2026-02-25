@@ -681,6 +681,20 @@
     },
     {
       "metadata": {
+        "name": "alertingTriageSavedSearches",
+        "resourceVersion": "1769704033471",
+        "creationTimestamp": "2026-01-29T16:27:13Z"
+      },
+      "spec": {
+        "description": "Enables saved searches for the Alert Activity page",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingUIOptimizeReducer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-11-18T10:59:00Z"
@@ -1796,6 +1810,20 @@
     },
     {
       "metadata": {
+        "name": "functionalSharedPreferences",
+        "resourceVersion": "1771763406238",
+        "creationTimestamp": "2026-02-22T12:30:06Z"
+      },
+      "spec": {
+        "description": "Whether to use the new SharedPreferences functional component",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-06T20:21:21Z"
@@ -2867,7 +2895,8 @@
       "metadata": {
         "name": "newFiltersUI",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-08-30T12:48:13Z"
+        "creationTimestamp": "2024-08-30T12:48:13Z",
+        "deletionTimestamp": "2026-02-20T15:12:03Z"
       },
       "spec": {
         "description": "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
@@ -3389,6 +3418,37 @@
     },
     {
       "metadata": {
+        "name": "provisioningExport",
+        "resourceVersion": "1771845933585",
+        "creationTimestamp": "2026-02-23T11:25:33Z"
+      },
+      "spec": {
+        "description": "Enable export functionality for provisioned resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioningFolderMetadata",
+        "resourceVersion": "1771843876800",
+        "creationTimestamp": "2026-02-23T10:49:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-23 10:51:16.80095 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Allow setting folder metadata for provisioned folders",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboardsEmailSharing",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-01-03T19:45:15Z"
@@ -3667,17 +3727,20 @@
     {
       "metadata": {
         "name": "restrictedPluginApis",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1771593178037",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-20 13:12:58.037168 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables sharing a list of APIs with a list of plugins",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

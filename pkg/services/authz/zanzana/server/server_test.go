@@ -91,7 +91,7 @@ func setupOpenFGAServer(t *testing.T) *Server {
 		}
 	}
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, testStore, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
+	srv, err := NewEmbeddedZanzanaServer(cfg, testStore, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

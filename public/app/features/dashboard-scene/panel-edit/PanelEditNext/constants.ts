@@ -40,6 +40,7 @@ export const QUERY_EDITOR_COLORS = {
     hoverBg: '#1D293D',
     headerBg: '#20262F',
   },
+  error: '#D10E5C',
 };
 
 export interface QueryEditorTypeConfig {
@@ -107,6 +108,10 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
  * This is a common example value shown when no value is set.
  */
 export const TIME_OPTION_PLACEHOLDER = '1h';
+
+export const SIDEBAR_CARD_HEIGHT = 30;
+export const SIDEBAR_CARD_SPACING = 1;
+export const SIDEBAR_CARD_INDENT = 2;
 
 export const CONTENT_SIDE_BAR = {
   width: 300,

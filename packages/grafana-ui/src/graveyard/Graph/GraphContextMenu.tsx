@@ -19,6 +19,7 @@ import { SeriesIcon } from '../../components/VizLegend/SeriesIcon';
 import { useStyles2 } from '../../themes/ThemeContext';
 
 import { GraphDimensions } from './GraphTooltip/types';
+import { Stack } from '../../components/Layout/Stack/Stack';
 
 /** @deprecated */
 export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
@@ -121,10 +122,10 @@ export const GraphContextMenuHeader = ({
     <div className={styles.wrapper}>
       <strong>{timestamp}</strong>
       <HorizontalGroup>
-        <div>
+        <Stack alignItems="center" gap={1}>
           <SeriesIcon color={seriesColor} />
           <span className={styles.displayName}>{displayName}</span>
-        </div>
+        </Stack>
         {displayValue && <FormattedValueDisplay value={displayValue} />}
       </HorizontalGroup>
     </div>

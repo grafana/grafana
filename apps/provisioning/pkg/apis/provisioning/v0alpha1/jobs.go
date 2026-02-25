@@ -71,6 +71,10 @@ const (
 
 	// JobActionMove moves files in the remote repository
 	JobActionMove JobAction = "move"
+
+	// JobActionFixFolderMetadata is a placeholder job that will eventually regenerate folder metadata files.
+	// Currently a no-op to unblock frontend development.
+	JobActionFixFolderMetadata JobAction = "fixFolderMetadata"
 )
 
 // +enum
@@ -121,6 +125,9 @@ type JobSpec struct {
 
 	// Move when the action is `move`
 	Move *MoveJobOptions `json:"move,omitempty"`
+
+	// Options when the action is `fix-folder-metadata`
+	FixFolderMetadata *FixFolderMetadataJobOptions `json:"fixFolderMetadata,omitempty"`
 }
 
 func (JobSpec) OpenAPIModelName() string {
@@ -241,6 +248,12 @@ type MoveJobOptions struct {
 
 func (MoveJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "MoveJobOptions"
+}
+
+type FixFolderMetadataJobOptions struct{}
+
+func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FixFolderMetadataJobOptions"
 }
 
 // The job status

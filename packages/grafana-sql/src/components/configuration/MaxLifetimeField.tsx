@@ -14,6 +14,7 @@ interface Props {
 export function MaxLifetimeField({ labelWidth, onMaxLifetimeChanged, jsonData }: Props) {
   return (
     <Field
+      noMargin
       label={
         <Label>
           <Stack gap={0.5}>

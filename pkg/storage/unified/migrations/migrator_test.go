@@ -429,7 +429,6 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				nil,
 				mockClient,
 				registry,
 			)
@@ -486,7 +485,6 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		nil,
 		mockClient,
 		registry,
 	)
@@ -675,7 +673,6 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				nil,
 				mockClient,
 				registry,
 			)
@@ -748,7 +745,6 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		nil,
 		mockClient,
 		registry,
 	)

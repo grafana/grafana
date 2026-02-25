@@ -572,6 +572,36 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespaces(_ context.Context, or
 	return result, nil
 }
 
+func (f *RuleStore) UpdateFolderFullpathsForFolders(_ context.Context, orgID int64, folderUIDs []string) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "UpdateFolderFullpathsForFolders",
+		Params: []any{orgID, folderUIDs},
+	})
+
+	// Build map of folder UID -> fullpath from fake folders
+	folderPaths := make(map[string]string)
+	for _, folder := range f.Folders[orgID] {
+		for _, uid := range folderUIDs {
+			if folder.UID == uid {
+				folderPaths[uid] = folder.Fullpath
+				break
+			}
+		}
+	}
+
+	// Update folder_fullpath for all rules in these folders
+	for _, rule := range f.Rules[orgID] {
+		if fullpath, ok := folderPaths[rule.NamespaceUID]; ok {
+			rule.FolderFullpath = fullpath
+		}
+	}
+
+	return nil
+}
+
 func (f *RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return 0, nil
 }

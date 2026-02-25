@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -26,7 +25,7 @@ import { RoutingTreeFilter } from './components/RoutingTreeFilter';
 import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 import {
   isRouteProvisioned,
-  useCreateRoutingTree,
+  useCreatePolicyAction,
   useListNotificationPolicyRoutes,
   useRootRouteSearch,
 } from './useNotificationPolicyRoute';
@@ -34,21 +33,18 @@ import {
 const DEFAULT_PAGE_SIZE = 10;
 
 export const PoliciesList = () => {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [queryParams] = useURLSearchParams();
-
-  const [createPoliciesSupported, createPoliciesAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.CreateNotificationPolicy
-  );
-
   const { currentData: allPolicies, isLoading, error: fetchPoliciesError } = useListNotificationPolicyRoutes();
 
-  const existingPolicyNames = useMemo(
-    () => (allPolicies ?? []).map((p) => p.name).filter((name): name is string => name !== undefined),
-    [allPolicies]
-  );
-
-  const [createTrigger] = useCreateRoutingTree();
+  const {
+    isCreateModalOpen,
+    openCreateModal,
+    closeCreateModal,
+    createPoliciesSupported,
+    createPoliciesAllowed,
+    createTrigger,
+    existingPolicyNames,
+  } = useCreatePolicyAction(allPolicies);
 
   const search = queryParams.get('search');
 
@@ -78,7 +74,7 @@ export const PoliciesList = () => {
               aria-label={t('alerting.policies-list.create.aria-label', 'add policy')}
               variant="primary"
               disabled={!createPoliciesAllowed}
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={openCreateModal}
             >
               <Trans i18nKey="alerting.policies-list.create.text">New notification policy</Trans>
             </Button>
@@ -101,7 +97,7 @@ export const PoliciesList = () => {
         existingPolicyNames={existingPolicyNames}
         isOpen={isCreateModalOpen}
         onConfirm={(route) => createTrigger.execute(route)}
-        onDismiss={() => setIsCreateModalOpen(false)}
+        onDismiss={closeCreateModal}
       />
     </Stack>
   );
