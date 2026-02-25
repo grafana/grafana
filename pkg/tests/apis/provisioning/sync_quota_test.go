@@ -405,8 +405,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Verify the deletion succeeded - only 2 dashboards should remain
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
-		// Repository is still over quota (2 dashboards + 1 folder = 3 > limit of 2)
-		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
+		// Repository is still over quota (2 dashboards + 1 folder = 3 = limit of 3)
+		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		// Verify pull status condition is successful after deletion sync (delete-only syncs succeed)
 		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonPullSuccessful)
