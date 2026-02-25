@@ -8,6 +8,10 @@ import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { reportPerformance } from 'app/core/services/echo/EchoSrv';
 
 export function loadDefaultControlsFromDatasources(refs: DataSourceRef[]) {
+  if (refs.length === 0) {
+    return Promise.resolve({ defaultVariables: [], defaultLinks: [] });
+  }
+
   const traceId = nanoid(8);
 
   return invokeAndTrack(() => loadDefaultControlsByRefs(refs, traceId), {

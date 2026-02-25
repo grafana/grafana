@@ -133,6 +133,15 @@ describe('dashboardControls', () => {
   });
 
   describe('loadDefaultControlsFromDatasources', () => {
+    it('should return empty arrays and not track when refs is empty', async () => {
+      reportInteractionMock.mockClear();
+
+      const result = await loadDefaultControlsFromDatasources([]);
+
+      expect(result).toEqual({ defaultVariables: [], defaultLinks: [] });
+      expect(reportInteractionMock).not.toHaveBeenCalled();
+    });
+
     it('should return empty arrays when datasources have no default controls', async () => {
       const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
 
