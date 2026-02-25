@@ -1,11 +1,6 @@
 import { combineLatest, from, map, Observable, switchMap } from 'rxjs';
 
-import {
-  PluginExtensionTypes,
-  type PluginExtension,
-  type PluginExtensionLink,
-  type PluginExtensionComponent,
-} from '@grafana/data';
+import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
 import { log } from './logs/log';
