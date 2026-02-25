@@ -72,7 +72,7 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user identity.Requester, pe
 		leftJoin     string
 	)
 
-	filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported, sb.dialect)
+	filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported, sb.dialect, sb.cfg.MaxNestedFolderDepth)
 	leftJoin = filterRBAC.LeftJoin()
 	sql, params = filterRBAC.Where()
 	recQry, recQryParams = filterRBAC.With()

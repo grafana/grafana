@@ -152,6 +152,20 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/silence/:id/view',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingSilenceRead,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "SilenceViewPage" */ 'app/features/alerting/unified/components/silences/SilenceViewPage'
+          )
+      ),
+    },
+    {
       path: '/alerting/notifications',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,

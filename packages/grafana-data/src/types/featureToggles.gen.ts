@@ -179,6 +179,16 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Allow setting folder metadata for provisioned folders
+  * @default false
+  */
+  provisioningFolderMetadata?: boolean;
+  /**
+  * Enable export functionality for provisioned resources
+  * @default false
+  */
+  provisioningExport?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   * @default false
   */
@@ -619,6 +629,11 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
+  * Enables the Assistant button in the dashboard templates card
+  * @default false
+  */
+  dashboardTemplatesAssistantButton?: boolean;
+  /**
   * Enables the new alert list view design
   * @default false
   */
@@ -633,6 +648,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSavedSearches?: boolean;
+  /**
+  * Enables saved searches for the Alert Activity page
+  * @default false
+  */
+  alertingTriageSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   * @default false
@@ -709,11 +729,6 @@ export interface FeatureToggles {
   * @default false
   */
   dataplaneAggregator?: boolean;
-  /**
-  * Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
-  * @default true
-  */
-  newFiltersUI?: boolean;
   /**
   * Allows authenticated API calls in actions
   * @default false
@@ -1168,6 +1183,11 @@ export interface FeatureToggles {
   */
   experimentRecentlyViewedDashboards?: boolean;
   /**
+  * Enables the created by me search filter on the browse dashboards page
+  * @default false
+  */
+  createdByMeSearchFilter?: boolean;
+  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1207,11 +1227,6 @@ export interface FeatureToggles {
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
-  /**
-  * Use fixed-width numbers globally in the UI
-  * @default false
-  */
-  tabularNumbers?: boolean;
   /**
   * Enables new design for the InfluxDB data source configuration page
   * @default false
@@ -1259,7 +1274,7 @@ export interface FeatureToggles {
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
   /**
   * Enables sharing a list of APIs with a list of plugins
-  * @default false
+  * @default true
   */
   restrictedPluginApis?: boolean;
   /**
@@ -1408,11 +1423,6 @@ export interface FeatureToggles {
   */
   elasticsearchRawDSLQuery?: boolean;
   /**
-  * Enables app platform API for annotations
-  * @default false
-  */
-  kubernetesAnnotations?: boolean;
-  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1542,4 +1552,14 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceUseSettingsService?: boolean;
+  /**
+  * Whether to use the new SharedPreferences functional component
+  * @default false
+  */
+  functionalSharedPreferences?: boolean;
+  /**
+  * Enables managed plugins v2 (expanded rollout, community plugin coverage)
+  * @default false
+  */
+  managedPluginsV2?: boolean;
 }

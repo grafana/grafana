@@ -43,7 +43,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginProxyPreserveTrailingSlash`    | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`     | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
 | `cloudWatchRoundUpEndTime`            | Round up end time for metric queries to the next minute to avoid missing data                                                                                 | Yes                |
-| `newFiltersUI`                        | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                                                          | Yes                |
 | `alertingQueryAndExpressionsStepMode` | Enables step mode for alerting queries and expressions                                                                                                        | Yes                |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            | Yes                |
 | `useSessionStorageForRedirection`     | Use session storage for handling the redirection after login                                                                                                  | Yes                |
@@ -64,7 +63,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `unifiedNavbars`                      | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown` | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
-| `tabularNumbers`                      | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 

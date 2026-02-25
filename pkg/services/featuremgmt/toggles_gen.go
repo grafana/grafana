@@ -95,6 +95,14 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
+	// FlagProvisioningFolderMetadata
+	// Allow setting folder metadata for provisioned folders
+	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
+
+	// FlagProvisioningExport
+	// Enable export functionality for provisioned resources
+	FlagProvisioningExport = "provisioningExport"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -419,10 +427,6 @@ const (
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
 
-	// FlagNewFiltersUI
-	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
-	FlagNewFiltersUI = "newFiltersUI"
-
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
@@ -690,10 +694,6 @@ const (
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
 
-	// FlagTabularNumbers
-	// Use fixed-width numbers globally in the UI
-	FlagTabularNumbers = "tabularNumbers"
-
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
 	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
@@ -774,10 +774,6 @@ const (
 	// Enables the raw DSL query editor in the Elasticsearch data source
 	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
 
-	// FlagKubernetesAnnotations
-	// Enables app platform API for annotations
-	FlagKubernetesAnnotations = "kubernetesAnnotations"
-
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
@@ -845,4 +841,8 @@ const (
 	// FlagFrontendServiceUseSettingsService
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
+
+	// FlagManagedPluginsV2
+	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
+	FlagManagedPluginsV2 = "managedPluginsV2"
 )

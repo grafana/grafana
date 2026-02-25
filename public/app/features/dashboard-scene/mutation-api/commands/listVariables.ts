@@ -17,6 +17,7 @@ export const listVariablesCommand: MutationCommand<Record<string, never>> = {
 
   payloadSchema: payloads.listVariables,
   permission: readOnly,
+  readOnly: true,
 
   handler: async (_payload, context) => {
     const { scene } = context;

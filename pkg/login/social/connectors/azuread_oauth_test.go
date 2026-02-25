@@ -7,12 +7,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
@@ -1448,4 +1451,165 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 			require.EqualValues(t, tc.expectedForceUseGraphApi, s.forceUseGraphAPI)
 		})
 	}
+}
+
+func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
+	info := &social.OAuthInfo{
+		ClientId:                    "some-client-id",
+		ClientAuthentication:        social.WorkloadIdentity,
+		FederatedCredentialAudience: "api://AzureADTokenExchange",
+		TokenUrl:                    "https://login.microsoftonline.com/token",
+	}
+
+	t.Run("success", func(t *testing.T) {
+		workloadFile := path.Join(t.TempDir(), "workload.json")
+		err := os.WriteFile(workloadFile, []byte("mock-client-assertion"), 0600)
+		require.NoError(t, err)
+
+		s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+		s.info.WorkloadIdentityTokenFile = workloadFile
+
+		// Mock the token endpoint
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if err := r.ParseForm(); err != nil {
+				t.Error(err)
+			}
+			// Verify that client_assertion is present in the request
+			if r.FormValue("client_assertion") != "mock-client-assertion" {
+				t.Errorf("expected client_assertion to be 'mock-client-assertion', got '%s'", r.FormValue("client_assertion"))
+			}
+			if r.FormValue("client_assertion_type") != "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" {
+				t.Errorf("expected client_assertion_type to be 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer', got '%s'", r.FormValue("client_assertion_type"))
+			}
+			if r.FormValue("grant_type") != "refresh_token" {
+				t.Errorf("expected grant_type to be 'refresh_token', got '%s'", r.FormValue("grant_type"))
+			}
+			if r.FormValue("client_id") != "some-client-id" {
+				t.Errorf("expected client_id to be 'client-id', got '%s'", r.FormValue("client_id"))
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			err := json.NewEncoder(w).Encode(map[string]interface{}{
+				"access_token":  "new-access-token",
+				"token_type":    "Bearer",
+				"refresh_token": "new-refresh-token",
+				"expires_in":    3600,
+			})
+			require.NoError(t, err)
+		}))
+		defer server.Close()
+
+		// Update TokenURL to point to the mock server
+		s.Endpoint.TokenURL = server.URL
+
+		// Create a token source with an expired token
+		now := time.Now()
+		token := &oauth2.Token{
+			AccessToken:  "old-access-token",
+			RefreshToken: "old-refresh-token",
+			Expiry:       now.Add(-time.Hour),
+		}
+
+		// Create a context with the mock client
+		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, server.Client())
+
+		// Get a new token (this should trigger a refresh)
+		ts := s.TokenSource(ctx, token)
+		newToken, err := ts.Token()
+		require.NoError(t, err)
+		assert.Equal(t, "new-access-token", newToken.AccessToken)
+		assert.Equal(t, "new-refresh-token", newToken.RefreshToken)
+		assert.WithinDuration(t, now.Add(time.Hour), newToken.Expiry, time.Second)
+	})
+
+	t.Run("error when workload token file does not exist", func(t *testing.T) {
+		s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+		s.info.WorkloadIdentityTokenFile = "/non/existent/file"
+
+		token := &oauth2.Token{
+			AccessToken:  "old-access-token",
+			RefreshToken: "old-refresh-token",
+			Expiry:       time.Now().Add(-time.Hour),
+		}
+
+		ts := s.TokenSource(context.Background(), token)
+		_, err := ts.Token()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to read workload identity token file")
+	})
+
+	t.Run("error when token endpoint returns error", func(t *testing.T) {
+		workloadFile := path.Join(t.TempDir(), "workload.json")
+		err := os.WriteFile(workloadFile, []byte("mock-client-assertion"), 0600)
+		require.NoError(t, err)
+
+		s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+		s.info.WorkloadIdentityTokenFile = workloadFile
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer server.Close()
+		s.Endpoint.TokenURL = server.URL
+
+		token := &oauth2.Token{
+			AccessToken:  "old-access-token",
+			RefreshToken: "old-refresh-token",
+			Expiry:       time.Now().Add(-time.Hour),
+		}
+		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, server.Client())
+
+		ts := s.TokenSource(ctx, token)
+		_, err = ts.Token()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "oauth2: cannot fetch token: 500 Internal Server Error")
+	})
+
+	t.Run("error when missing refresh token", func(t *testing.T) {
+		workloadFile := path.Join(t.TempDir(), "workload.json")
+		err := os.WriteFile(workloadFile, []byte("mock-client-assertion"), 0600)
+		require.NoError(t, err)
+
+		s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+		s.info.WorkloadIdentityTokenFile = workloadFile
+
+		// No RefreshToken
+		token := &oauth2.Token{
+			AccessToken: "old-access-token",
+			Expiry:      time.Now().Add(-time.Hour),
+		}
+
+		ts := s.TokenSource(context.Background(), token)
+		_, err = ts.Token()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no refresh token available to refresh the access token")
+	})
+
+	t.Run("error when invalid token response", func(t *testing.T) {
+		workloadFile := path.Join(t.TempDir(), "workload.json")
+		err := os.WriteFile(workloadFile, []byte("mock-client-assertion"), 0600)
+		require.NoError(t, err)
+
+		s := NewAzureADProvider(info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+		s.info.WorkloadIdentityTokenFile = workloadFile
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte("invalid-json"))
+		}))
+		defer server.Close()
+		s.Endpoint.TokenURL = server.URL
+
+		token := &oauth2.Token{
+			AccessToken:  "old-access-token",
+			RefreshToken: "old-refresh-token",
+			Expiry:       time.Now().Add(-time.Hour),
+		}
+		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, server.Client())
+
+		ts := s.TokenSource(ctx, token)
+		_, err = ts.Token()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unable to unmarshal raw response body")
+	})
 }

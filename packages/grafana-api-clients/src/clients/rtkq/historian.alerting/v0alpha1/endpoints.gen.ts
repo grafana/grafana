@@ -604,6 +604,9 @@ export type CreateNotificationqueryNotificationEntryAlert = {
     [key: string]: string;
   };
   endsAt: string;
+  enrichments?: {
+    [key: string]: any;
+  };
   labels: {
     [key: string]: string;
   };

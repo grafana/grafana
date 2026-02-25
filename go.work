@@ -1,4 +1,4 @@
-go 1.26.0
+go 1.25.7
 
 // The `skip:golangci-lint` comment tag is used to exclude the package from the `golangci-lint` GitHub Action.
 // The module at the root of the repo (`.`) is excluded because ./pkg/... is included manually in the `golangci-lint` configuration.
@@ -40,6 +40,6 @@ use (
 	./pkg/storage/unified/resource/kv
 )
 
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c
 
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56

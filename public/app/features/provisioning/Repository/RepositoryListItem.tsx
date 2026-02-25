@@ -26,22 +26,21 @@ export function RepositoryListItem({ repository }: Props) {
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
 
-    if (spec?.type === 'github') {
-      const { url = '', branch } = spec.github ?? {};
-      const branchUrl = branch ? `${url}/tree/${branch}` : url;
-      const href = getRepoHrefForProvider(spec) || branchUrl;
-
-      meta.push(
-        <TextLink key="link" external href={href}>
-          {formatRepoUrl(href)}
-        </TextLink>
-      );
-    } else if (spec?.type === 'local') {
+    if (spec?.type === 'local') {
       meta.push(
         <Text variant="bodySmall" key="path">
           {spec.local?.path ?? ''}
         </Text>
       );
+    } else {
+      const href = getRepoHrefForProvider(spec);
+      if (href) {
+        meta.push(
+          <TextLink key="link" external href={href}>
+            {formatRepoUrl(href)}
+          </TextLink>
+        );
+      }
     }
 
     if (status?.sync?.finished) {

@@ -13,6 +13,7 @@ manifest: {
 			routes: v0alpha1.routes
 		}
 	}
+	roles: {}
 }
 
 dummyv0alpha1: {

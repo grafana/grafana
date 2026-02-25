@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -23,24 +24,30 @@ type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stage
 type ExportWorker struct {
 	clientFactory       resources.ClientFactory
 	repositoryResources resources.RepositoryResourcesFactory
+	resourceLister      resources.ResourceLister
 	exportFn            ExportFn
 	wrapWithStageFn     WrapWithStageFn
 	metrics             jobs.JobMetrics
+	enabled             bool
 }
 
 func NewExportWorker(
 	clientFactory resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
+	resourceLister resources.ResourceLister,
 	exportFn ExportFn,
 	wrapWithStageFn WrapWithStageFn,
 	metrics jobs.JobMetrics,
+	enabled bool,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
 		repositoryResources: repositoryResources,
+		resourceLister:      resourceLister,
 		exportFn:            exportFn,
 		wrapWithStageFn:     wrapWithStageFn,
 		metrics:             metrics,
+		enabled:             enabled,
 	}
 }
 
@@ -50,6 +57,10 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 
 // Process will start a job
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+	if !r.enabled {
+		return fmt.Errorf("export functionality is disabled by configuration")
+	}
+
 	options := job.Spec.Push
 	if options == nil {
 		return errors.New("missing export settings")
@@ -65,6 +76,11 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	cfg := repo.Config()
 	// Can write to external branch
 	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
+		return err
+	}
+
+	if err := checkExportQuota(ctx, cfg, r.resourceLister); err != nil {
+		progress.Complete(ctx, err)
 		return err
 	}
 
@@ -126,4 +142,42 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	return nil
+}
+
+func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister resources.ResourceLister) error {
+	quota := cfg.Status.Quota
+	if quota.MaxResourcesPerRepository == 0 {
+		return nil
+	}
+
+	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
+
+	stats, err := lister.Stats(ctx, cfg.Namespace, "")
+	if err != nil {
+		return fmt.Errorf("get resource stats for quota check: %w", err)
+	}
+
+	netChange := countSupportedResources(stats.Unmanaged)
+
+	if !quotas.WouldStayWithinQuota(quota, usage, netChange) {
+		total := usage.TotalResources + netChange
+		return quotas.NewQuotaExceededError(
+			fmt.Errorf("export would exceed quota: %d/%d resources", total, quota.MaxResourcesPerRepository),
+		)
+	}
+	return nil
+}
+
+// countSupportedResources sums counts for resource types that support provisioning.
+func countSupportedResources(stats []provisioning.ResourceCount) int64 {
+	var total int64
+	for _, stat := range stats {
+		for _, kind := range resources.SupportedProvisioningResources {
+			if stat.Group == kind.Group && stat.Resource == kind.Resource {
+				total += stat.Count
+				break
+			}
+		}
+	}
+	return total
 }

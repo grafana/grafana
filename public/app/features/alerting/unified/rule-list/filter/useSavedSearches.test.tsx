@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { act, getWrapper, renderHook, screen, waitFor } from 'test/test-utils';
+import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import * as runtime from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -156,8 +156,8 @@ describe('useSavedSearches', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Verify error notification appears in the UI
-      expect(await screen.findByText(/failed to load saved searches/i)).toBeInTheDocument();
+      // Malformed JSON is handled gracefully - returns empty array without showing error notification
+      // The error is logged but doesn't disrupt the UI
       expect(result.current.savedSearches).toEqual([]);
     });
   });
@@ -301,7 +301,7 @@ describe('useSavedSearches', () => {
         await result.current.deleteSearch('1');
       });
 
-      expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_delete');
+      expect(runtime.reportInteraction).toHaveBeenCalledWith('grafana_alerting_saved_search_delete', {});
     });
   });
 

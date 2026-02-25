@@ -720,6 +720,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	opts := testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagProvisioningExport,
 		},
 		// Provisioning requires resources to be fully migrated to unified storage.
 		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
@@ -741,7 +742,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	}
 
 	if extensions.IsEnterprise {
-		opts.ProvisioningRepositoryTypes = []string{"local", "github", "gitlab", "bitbucket"}
+		opts.ProvisioningRepositoryTypes = []string{"local", "git", "github", "gitlab", "bitbucket"}
 	}
 
 	for _, o := range options {
@@ -1052,7 +1053,13 @@ func (h *provisioningTestHelper) CreateGithubConnection(
 		return nil, err
 	}
 
-	return h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+	var res *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		res, err = h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(collect, err)
+	}, waitTimeoutDefault, waitIntervalDefault, "connection should be created")
+
+	return res, nil
 }
 
 func (h *provisioningTestHelper) UpdateGithubConnection(
@@ -1067,7 +1074,13 @@ func (h *provisioningTestHelper) UpdateGithubConnection(
 		return nil, err
 	}
 
-	return h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+	var res *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		res, err = h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+		require.NoError(collect, err)
+	}, waitTimeoutDefault, waitIntervalDefault, "connection should be updated")
+
+	return res, nil
 }
 
 func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstructured.Unstructured) error {
@@ -1134,6 +1147,12 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				w.WriteHeader(http.StatusOK)
 				installation := github.Installation{
 					ID: &idInt,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
 			}),
@@ -1220,4 +1239,16 @@ func findCondition(conditions []metav1.Condition, conditionType string) *metav1.
 		}
 	}
 	return nil
+}
+
+// withoutExportFeatureFlag disables the provisioningExport feature flag
+func withoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
+	// Remove provisioningExport from the enabled feature toggles
+	filtered := []string{}
+	for _, flag := range opts.EnableFeatureToggles {
+		if flag != "provisioningExport" {
+			filtered = append(filtered, flag)
+		}
+	}
+	opts.EnableFeatureToggles = filtered
 }
