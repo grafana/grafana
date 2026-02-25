@@ -46,11 +46,8 @@ import {
   SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
-import {
-  getDsRefsFromV1Dashboard,
-  getDsRefsFromV2Dashboard,
-  loadDefaultControlsFromDatasources,
-} from '../utils/dashboardControls';
+import { loadDefaultControlsFromDatasources } from '../utils/dashboardControls';
+import { getDsRefsFromV1Dashboard, getDsRefsFromV2Dashboard } from '../utils/dashboardDsRefs';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
