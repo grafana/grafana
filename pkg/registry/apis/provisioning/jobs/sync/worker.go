@@ -2,8 +2,8 @@ package sync
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -163,14 +163,8 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
-
-	// HACK: This logic could be simplified if we handle warnings differently.
-	// For now, cleaning the error to avoid errors in traces for warning conditions.
-	var quotaErr *quotas.QuotaExceededError
-	isQuotaError := errors.As(syncError, &quotaErr)
-	if isQuotaError {
-		syncError = nil
-	}
+	warningReasons := progress.WarningReasons()
+	isQuotaWarning := slices.Contains(warningReasons, jobs.WarningQuotaExceeded)
 
 	if syncError != nil {
 		logger.Debug("failed to sync the repository", "error", syncError)
@@ -183,12 +177,10 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	syncSpan.End()
 
-	// If we exceeded the quota, we need to preserve the lastRef to avoid losing the changes
-	if syncStatus.State != provisioning.JobStateError && !isQuotaError {
+	if syncStatus.State != provisioning.JobStateError && !isQuotaWarning {
 		syncStatus.LastRef = currentRef
 	} else {
-		// Preserve the original lastRef on error or quota exceeded
-		if isQuotaError {
+		if isQuotaWarning {
 			logger.Info("repository is over quota, preserving lastRef", "repository", cfg.Name)
 		}
 		syncStatus.LastRef = lastRef
@@ -237,7 +229,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    not just what the controller thinks should exist.
 	quotaStatus := repo.Config().Status.Quota
 	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
-	syncCondition := EvaluatePullCondition(isQuotaError, jobStatus.State)
+	syncCondition := EvaluatePullCondition(jobStatus.State, warningReasons)
 	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)
 	}

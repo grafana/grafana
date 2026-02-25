@@ -9,11 +9,20 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// isWarningError checks if the given error should be treated as a warning.
-// It uses errors.As to check if the error is of any of the warning error types.
-func isWarningError(err error) bool {
+// JobWarningReason represents a typed warning reason for a job resource result.
+type JobWarningReason string
+
+const (
+	WarningQuotaExceeded     JobWarningReason = "QuotaExceeded"
+	WarningValidationError   JobWarningReason = "ValidationError"
+	WarningOwnershipConflict JobWarningReason = "OwnershipConflict"
+	NoWarning                JobWarningReason = ""
+)
+
+// classifyWarning returns the warning reason for err, or "" if it is not a warning.
+func classifyWarning(err error) JobWarningReason {
 	if err == nil {
-		return false
+		return NoWarning
 	}
 
 	var validationErr *resources.ResourceValidationError
@@ -21,15 +30,20 @@ func isWarningError(err error) bool {
 	var quotaExceededErr *quotas.QuotaExceededError
 
 	switch {
-	case errors.As(err, &validationErr):
-		return true
-	case errors.As(err, &ownershipErr):
-		return true
 	case errors.As(err, &quotaExceededErr):
-		return true
+		return WarningQuotaExceeded
+	case errors.As(err, &validationErr):
+		return WarningValidationError
+	case errors.As(err, &ownershipErr):
+		return WarningOwnershipConflict
 	default:
-		return false
+		return NoWarning
 	}
+}
+
+// isWarningError checks if the given error should be treated as a warning.
+func isWarningError(err error) bool {
+	return classifyWarning(err) != NoWarning
 }
 
 // JobResourceResult represents the result of a resource operation in a job.
@@ -199,4 +213,9 @@ func (r JobResourceResult) Error() error {
 // Warning returns the warning associated with the resource operation.
 func (r JobResourceResult) Warning() error {
 	return r.warning
+}
+
+// WarningReason returns the warning reason for this result's warning, or "" if none.
+func (r JobResourceResult) WarningReason() JobWarningReason {
+	return classifyWarning(r.warning)
 }

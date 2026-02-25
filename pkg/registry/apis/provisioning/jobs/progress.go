@@ -53,6 +53,7 @@ type jobProgressRecorder struct {
 	summaries           map[string]*provisioning.JobResourceSummary
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
+	warningReasons      map[JobWarningReason]struct{}
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
@@ -62,6 +63,7 @@ func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
+		warningReasons:      make(map[JobWarningReason]struct{}),
 	}
 }
 
@@ -110,6 +112,10 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 			r.failedDeletions = append(r.failedDeletions, result.Path())
 		}
 
+		if reason := result.WarningReason(); reason != "" {
+			r.warningReasons[reason] = struct{}{}
+		}
+
 		shouldLogWarning = true
 		logWarning = result.Warning()
 	}
@@ -148,6 +154,10 @@ func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 		}
 	}
 	r.summaries = summaries
+
+	if !keepWarnings {
+		r.warningReasons = make(map[JobWarningReason]struct{})
+	}
 }
 
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
@@ -343,6 +353,20 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	return jobStatus
+}
+
+func (r *jobProgressRecorder) WarningReasons() []JobWarningReason {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if len(r.warningReasons) == 0 {
+		return nil
+	}
+	reasons := make([]JobWarningReason, 0, len(r.warningReasons))
+	for reason := range r.warningReasons {
+		reasons = append(reasons, reason)
+	}
+	return reasons
 }
 
 // HasDirPathFailedCreation checks if a path is nested under any failed folder creation

@@ -3,11 +3,9 @@ package sync
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -167,6 +165,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			progressRecorder.On("StrictMaxErrors", 20).Return()
 			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder).Return("new-ref", nil)
 			progressRecorder.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+			progressRecorder.On("WarningReasons").Return([]jobs.JobWarningReason(nil))
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
 
 			// Capture the final patch to verify quota condition
@@ -235,44 +234,38 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 	}
 }
 
-func TestSyncWorker_Process_SyncCondition(t *testing.T) {
+func TestSyncWorker_Process_PullCondition(t *testing.T) {
 	tests := []struct {
 		name               string
-		syncError          error
-		jobState           provisioning.JobState
-		expectedSyncReason string
-		expectedSyncStatus metav1.ConditionStatus
-		expectProcessError bool
+		jobStatus          provisioning.JobStatus
+		warningReasons     []jobs.JobWarningReason
+		expectedPullReason string
+		expectedPullStatus metav1.ConditionStatus
 	}{
 		{
 			name:               "successful sync sets Succeeded condition",
-			syncError:          nil,
-			jobState:           provisioning.JobStateSuccess,
-			expectedSyncReason: provisioning.ReasonPullSuccessful,
-			expectedSyncStatus: metav1.ConditionTrue,
+			jobStatus:          provisioning.JobStatus{State: provisioning.JobStateSuccess},
+			expectedPullReason: provisioning.ReasonPullSuccessful,
+			expectedPullStatus: metav1.ConditionTrue,
 		},
 		{
-			name:               "failed sync sets Failed condition",
-			syncError:          errors.New("sync operation failed"),
-			jobState:           provisioning.JobStateError,
-			expectedSyncReason: provisioning.ReasonPullFailed,
-			expectedSyncStatus: metav1.ConditionFalse,
-			expectProcessError: true,
+			name:               "error state sets Failed condition",
+			jobStatus:          provisioning.JobStatus{State: provisioning.JobStateError},
+			expectedPullReason: provisioning.ReasonPullFailed,
+			expectedPullStatus: metav1.ConditionFalse,
 		},
 		{
-			name:               "warning without quota error sets PullCompletedWithWarnings condition",
-			syncError:          errors.New("partial sync warnings"),
-			jobState:           provisioning.JobStateWarning,
-			expectedSyncReason: provisioning.ReasonPullCompletedWithWarnings,
-			expectedSyncStatus: metav1.ConditionFalse,
-			expectProcessError: true,
+			name:               "warning without typed reason sets PullCompletedWithWarnings condition",
+			jobStatus:          provisioning.JobStatus{State: provisioning.JobStateWarning},
+			expectedPullReason: provisioning.ReasonPullCompletedWithWarnings,
+			expectedPullStatus: metav1.ConditionFalse,
 		},
 		{
-			name:               "quota exceeded sets QuotaExceeded condition",
-			syncError:          &quotas.QuotaExceededError{Err: fmt.Errorf("repository is over quota")},
-			jobState:           provisioning.JobStateWarning,
-			expectedSyncReason: provisioning.ReasonQuotaExceeded,
-			expectedSyncStatus: metav1.ConditionFalse,
+			name:               "quota exceeded warning sets QuotaExceeded condition",
+			jobStatus:          provisioning.JobStatus{State: provisioning.JobStateWarning},
+			warningReasons:     []jobs.JobWarningReason{jobs.WarningQuotaExceeded},
+			expectedPullReason: provisioning.ReasonQuotaExceeded,
+			expectedPullStatus: metav1.ConditionFalse,
 		},
 	}
 
@@ -314,11 +307,12 @@ func TestSyncWorker_Process_SyncCondition(t *testing.T) {
 
 			progressRecorder.On("SetMessage", mock.Anything, "execute sync job").Return()
 			progressRecorder.On("StrictMaxErrors", 20).Return()
-			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder).Return("new-ref", tt.syncError)
-			progressRecorder.On("Complete", mock.Anything, tt.syncError).Return(provisioning.JobStatus{State: tt.jobState})
+			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder).Return("new-ref", nil)
+			progressRecorder.On("Complete", mock.Anything, nil).Return(tt.jobStatus)
+			progressRecorder.On("WarningReasons").Return(tt.warningReasons)
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
 
-			var capturedSyncCondition metav1.Condition
+			var capturedPullCondition metav1.Condition
 			repositoryPatchFn.On("Execute", mock.Anything, repoConfig,
 				mock.MatchedBy(func(patch map[string]interface{}) bool {
 					return patch["path"] == "/status/sync"
@@ -333,7 +327,7 @@ func TestSyncWorker_Process_SyncCondition(t *testing.T) {
 					}
 					for _, c := range conditions {
 						if c.Type == provisioning.ConditionTypePullStatus {
-							capturedSyncCondition = c
+							capturedPullCondition = c
 							return true
 						}
 					}
@@ -360,15 +354,11 @@ func TestSyncWorker_Process_SyncCondition(t *testing.T) {
 			}
 
 			err := worker.Process(context.Background(), readerWriter, job, progressRecorder)
-			if tt.expectProcessError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
+			require.NoError(t, err)
 
-			require.Equal(t, provisioning.ConditionTypePullStatus, capturedSyncCondition.Type)
-			require.Equal(t, tt.expectedSyncReason, capturedSyncCondition.Reason)
-			require.Equal(t, tt.expectedSyncStatus, capturedSyncCondition.Status)
+			require.Equal(t, provisioning.ConditionTypePullStatus, capturedPullCondition.Type)
+			require.Equal(t, tt.expectedPullReason, capturedPullCondition.Reason)
+			require.Equal(t, tt.expectedPullStatus, capturedPullCondition.Status)
 
 			repositoryPatchFn.AssertExpectations(t)
 		})
@@ -524,6 +514,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Final status updates
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				pr.On("WarningReasons").Return([]jobs.JobWarningReason(nil))
 				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
 
 				// Final patch should include new ref and quota condition
@@ -580,6 +571,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Final status updates
 				pr.On("Complete", mock.Anything, syncError).Return(provisioning.JobStatus{State: provisioning.JobStateError})
+				pr.On("WarningReasons").Return([]jobs.JobWarningReason(nil))
 				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
 
 				// Final patch should preserve existing ref on failure and include quota condition
@@ -619,6 +611,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				pr.On("WarningReasons").Return([]jobs.JobWarningReason(nil))
 				// Initial patch with granular updates, final patch with sync status and conditions
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
@@ -660,6 +653,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				pr.On("WarningReasons").Return([]jobs.JobWarningReason(nil))
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
 			expectedError: "",
@@ -726,6 +720,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				pr.On("WarningReasons").Return([]jobs.JobWarningReason(nil))
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
 			expectedError: "",
@@ -786,6 +781,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				pr.On("WarningReasons").Return([]jobs.JobWarningReason(nil))
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
 			expectedError: "",
@@ -818,19 +814,15 @@ func TestSyncWorker_Process(t *testing.T) {
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
 
-				// Sync returns a QuotaExceededError
-				quotaError := &quotas.QuotaExceededError{
-					Err: fmt.Errorf("repository is over quota"),
-				}
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
 				pr.On("StrictMaxErrors", 20).Return()
 				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true
-				}), mockRepoResources, mock.Anything, pr).Return("new-ref", quotaError)
+				}), mockRepoResources, mock.Anything, pr).Return("new-ref", nil)
 
-				// Complete with the quota error — state is Warning (not Error) because
-				// the error is recorded as a warning via isWarningError
-				pr.On("Complete", mock.Anything, quotaError).Return(provisioning.JobStatus{State: provisioning.JobStateWarning})
+				// Complete with warning state and WarningQuotaExceeded reason
+				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateWarning})
+				pr.On("WarningReasons").Return([]jobs.JobWarningReason{jobs.WarningQuotaExceeded})
 				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
 
 				// Final patch should preserve existing-ref despite Warning state (not Error)
@@ -877,6 +869,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("StrictMaxErrors", 20).Return()
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
+				pr.On("WarningReasons").Return([]jobs.JobWarningReason(nil))
 
 				// Final status patch fails (sync status and conditions)
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("failed to patch final status")).Once()

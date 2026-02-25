@@ -1,14 +1,16 @@
 package sync
 
 import (
+	"slices"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 // EvaluatePullCondition creates a PullStatus condition based on the outcome of a pull operation.
-// True = last pull succeeded, False = last pull failed or completed with warnings/errors.
-func EvaluatePullCondition(isQuotaError bool, jobState provisioning.JobState) metav1.Condition {
+func EvaluatePullCondition(jobState provisioning.JobState, warningReasons []jobs.JobWarningReason) metav1.Condition {
 	switch jobState {
 	case provisioning.JobStateSuccess:
 		return metav1.Condition{
@@ -19,12 +21,7 @@ func EvaluatePullCondition(isQuotaError bool, jobState provisioning.JobState) me
 		}
 
 	case provisioning.JobStateWarning:
-		reason := provisioning.ReasonPullCompletedWithWarnings
-		message := "Pull completed with warnings"
-		if isQuotaError {
-			reason = provisioning.ReasonQuotaExceeded
-			message = "Pull completed with quota exceeded"
-		}
+		reason, message := resolveWarnings(warningReasons)
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypePullStatus,
 			Status:  metav1.ConditionFalse,
@@ -40,4 +37,12 @@ func EvaluatePullCondition(isQuotaError bool, jobState provisioning.JobState) me
 			Message: "Pull completed with errors",
 		}
 	}
+}
+
+// resolveWarnings determines the condition reason and message from the warning reasons.
+func resolveWarnings(warningReasons []jobs.JobWarningReason) (string, string) {
+	if slices.Contains(warningReasons, jobs.WarningQuotaExceeded) {
+		return provisioning.ReasonQuotaExceeded, "Pull completed with quota exceeded"
+	}
+	return provisioning.ReasonPullCompletedWithWarnings, "Pull completed with warnings"
 }

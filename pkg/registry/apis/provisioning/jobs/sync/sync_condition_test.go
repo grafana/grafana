@@ -7,13 +7,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 func TestEvaluatePullCondition(t *testing.T) {
 	tests := []struct {
 		name           string
-		isQuotaError   bool
 		jobState       provisioning.JobState
+		warningReasons []jobs.JobWarningReason
 		expectedType   string
 		expectedStatus metav1.ConditionStatus
 		expectedReason string
@@ -21,7 +22,6 @@ func TestEvaluatePullCondition(t *testing.T) {
 	}{
 		{
 			name:           "successful pull",
-			isQuotaError:   false,
 			jobState:       provisioning.JobStateSuccess,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionTrue,
@@ -29,8 +29,7 @@ func TestEvaluatePullCondition(t *testing.T) {
 			expectedMsg:    "Pull completed successfully",
 		},
 		{
-			name:           "warning state without quota error",
-			isQuotaError:   false,
+			name:           "warning state without typed reason",
 			jobState:       provisioning.JobStateWarning,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
@@ -39,16 +38,15 @@ func TestEvaluatePullCondition(t *testing.T) {
 		},
 		{
 			name:           "warning state with quota exceeded",
-			isQuotaError:   true,
 			jobState:       provisioning.JobStateWarning,
+			warningReasons: []jobs.JobWarningReason{jobs.WarningQuotaExceeded},
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonQuotaExceeded,
 			expectedMsg:    "Pull completed with quota exceeded",
 		},
 		{
-			name:           "error state without quota error",
-			isQuotaError:   false,
+			name:           "error state without warning reasons",
 			jobState:       provisioning.JobStateError,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
@@ -56,9 +54,9 @@ func TestEvaluatePullCondition(t *testing.T) {
 			expectedMsg:    "Pull completed with errors",
 		},
 		{
-			name:           "error state with quota error still uses PullFailed reason",
-			isQuotaError:   true,
+			name:           "error state with quota reason still uses PullFailed reason",
 			jobState:       provisioning.JobStateError,
+			warningReasons: []jobs.JobWarningReason{jobs.WarningQuotaExceeded},
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonPullFailed,
@@ -68,7 +66,7 @@ func TestEvaluatePullCondition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			condition := EvaluatePullCondition(tt.isQuotaError, tt.jobState)
+			condition := EvaluatePullCondition(tt.jobState, tt.warningReasons)
 
 			assert.Equal(t, tt.expectedType, condition.Type)
 			assert.Equal(t, tt.expectedStatus, condition.Status)
