@@ -113,7 +113,7 @@ func (rs *RenderingService) sanitizeViaHTTP(ctx context.Context, req *SanitizeSV
 
 	rs.log.Debug("Sanitizer - HTTP: calling", "filename", req.Filename, "contentLength", len(req.Content), "url", sanitizerUrl)
 	// make request to renderer server
-	resp, err := netClient.Do(httpReq)
+	resp, err := rs.netClient.Do(httpReq)
 	if err != nil {
 		rs.log.Error("Sanitizer - HTTP: failed to send request", "error", err)
 		return nil, fmt.Errorf("sanitizer - HTTP: failed to send request: %w", err)
