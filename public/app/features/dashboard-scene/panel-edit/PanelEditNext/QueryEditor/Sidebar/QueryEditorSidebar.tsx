@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
@@ -26,19 +26,9 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const { setSelectedAlert, cardType } = useQueryEditorUIContext();
   const { alertRules } = useAlertingContext();
 
-  // Made to handle eventual new views (ai mode, etc.)
-  // viewInitializers is a map of view types to functions that initialize the view
-  const handleViewChange = useCallback(
-    (view: QueryEditorType) => {
-      const viewInitializers: Partial<Record<QueryEditorType, () => void>> = {
-        [QueryEditorType.Alert]: () => setSelectedAlert(alertRules[0] ?? EMPTY_ALERT),
-      };
-
-      setSelectedAlert(null);
-      viewInitializers[view]?.();
-    },
-    [alertRules, setSelectedAlert]
-  );
+  const handleViewChange = (view: QueryEditorType) => {
+    setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
+  };
 
   return (
     <div className={styles.container}>
