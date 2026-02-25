@@ -69,13 +69,13 @@ describe('AlertEnrichments', () => {
     expect(screen.queryByRole('link', { name: /View in Explore/i })).not.toBeInTheDocument();
   });
 
-  it('should render nothing for unknown enrichment types', () => {
+  it('should render a badge fallback for unknown enrichment types', () => {
     const enrichments = {
-      items: [{ type: 'unknown-type' }],
+      items: [{ type: 'metrics' }],
     };
     render(<AlertEnrichments enrichments={enrichments} />);
     expect(screen.getByText('Enrichments:')).toBeInTheDocument();
-    expect(screen.queryByText('No log lines')).not.toBeInTheDocument();
+    expect(screen.getByText('metrics')).toBeInTheDocument();
   });
 
   it('should skip invalid items and render valid ones', () => {

@@ -88,7 +88,7 @@ function EnrichmentItemView({ item }: { item: EnrichmentItem }) {
     );
   }
 
-  return null;
+  return <Badge color="purple" text={item.type} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
