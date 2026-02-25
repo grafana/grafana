@@ -119,7 +119,7 @@ async function getRemotePlugin(id: string): Promise<RemotePlugin | undefined> {
   }
 }
 
-async function getPluginVersion(id: string, version: string): Promise<Version> {
+async function getPluginVersion(id: string, version: string): Promise<Version | null> {
   try {
     const v: PluginVersion = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions/${version}`);
 
@@ -137,7 +137,7 @@ async function getPluginVersion(id: string, version: string): Promise<Version> {
       // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
       error.isHandled = true;
     }
-    throw error;
+    return null;
   }
 }
 

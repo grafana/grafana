@@ -168,7 +168,8 @@ func RegisterAPIService(
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return datasourceV0.SchemeGroupVersion
+	// TODO, finish rename return datasourceV0.SchemeGroupVersion
+	return schema.GroupVersion{Group: "query.grafana.app", Version: datasourceV0.VERSION}
 }
 
 func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
@@ -185,9 +186,10 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 }
 
 func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
-	addKnownTypes(scheme, datasourceV0.SchemeGroupVersion)
-	metav1.AddToGroupVersion(scheme, datasourceV0.SchemeGroupVersion)
-	return scheme.SetVersionPriority(datasourceV0.SchemeGroupVersion)
+	gv := b.GetGroupVersion()
+	addKnownTypes(scheme, gv)
+	metav1.AddToGroupVersion(scheme, gv)
+	return scheme.SetVersionPriority(gv)
 }
 
 func (b *QueryAPIBuilder) AllowedV0Alpha1Resources() []string {
@@ -308,6 +310,8 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		return nil, fmt.Errorf("expected name parameter in query service")
 	}
 	query.Parameters = []*spec3.Parameter{query.Parameters[1]}
+	query.Post.OperationId = "queryDatasources"
+	query.Post.Tags = []string{"Query"}
 
 	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
 	if ok && sqlschemas.Post != nil {

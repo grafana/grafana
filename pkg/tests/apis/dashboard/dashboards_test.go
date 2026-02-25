@@ -232,6 +232,91 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test-v2", obj.GetName())
 
+	t.Run("validate legacy apis", func(t *testing.T) {
+		cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+		cfg.GroupVersion = &dashboardV0.GroupVersion
+		adminClient, err := k8srest.RESTClientFor(cfg)
+		require.NoError(t, err)
+
+		testCases := []struct {
+			name   string
+			input  map[string]any
+			expect string
+			inK8s  bool
+		}{{
+			name: "with apiVersion",
+			input: map[string]any{
+				"apiVersion": "v2",
+			},
+			expect: "Dashboard appears to be a full k8s style resource",
+		}, {
+			name: "with metadata",
+			input: map[string]any{
+				"metadata": map[string]any{},
+			},
+			expect: "Dashboard appears to be a full k8s style resource",
+		}, {
+			name: "with spec",
+			input: map[string]any{
+				"spec": map[string]any{},
+			},
+			expect: "Dashboard appears to be a full k8s style resource",
+		}, {
+			name: "with elements",
+			input: map[string]any{
+				"elements": []any{},
+				"title":    "V2 dashboard",
+			},
+			expect: "dashboard appears to be in v2 format",
+			inK8s:  true,
+		}, {
+			name: "with layout",
+			input: map[string]any{
+				"layout": "???",
+				"title":  "V2 dashboard",
+			},
+			expect: "dashboard appears to be in v2 format",
+			inK8s:  true,
+		}, {
+			name: "missing title",
+			input: map[string]any{
+				"panels": []any{}, // this used to be a panic
+			},
+			expect: "Dashboard is missing required title property",
+		}}
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				dash, err := json.Marshal(tc.input)
+				require.NoError(t, err)
+
+				var statusCode int
+				result := adminClient.Post().AbsPath("api", "dashboards", "db").
+					Body([]byte(`{"dashboard": `+string(dash)+`}`)).
+					SetHeader("Content-type", "application/json").
+					Do(ctx).
+					StatusCode(&statusCode)
+				body, _ := result.Raw()
+				require.Equal(t, int(http.StatusBadRequest), statusCode)
+				require.Contains(t, string(body), tc.expect)
+
+				if tc.inK8s {
+					t.Run("inK8s", func(t *testing.T) {
+						obj := &unstructured.Unstructured{
+							Object: map[string]any{
+								"metadata": map[string]any{
+									"generateName": "xxx",
+								},
+								"spec": tc.input,
+							},
+						}
+						_, err := clientV0.Resource.Create(ctx, obj, metav1.CreateOptions{})
+						require.ErrorContains(t, err, tc.expect)
+					})
+				}
+			})
+		}
+	})
+
 	//---------------------------------------------------------
 	// Now check that we can get each dashboard with any API
 	//---------------------------------------------------------
@@ -334,7 +419,7 @@ func TestIntegrationListPagination(t *testing.T) {
 			// Create 5 dashboards to test pagination with small limits
 			const totalDashboards = 5
 			createdNames := make([]string, 0, totalDashboards)
-			for i := 0; i < totalDashboards; i++ {
+			for i := range totalDashboards {
 				obj := &unstructured.Unstructured{
 					Object: map[string]interface{}{
 						"spec": map[string]any{

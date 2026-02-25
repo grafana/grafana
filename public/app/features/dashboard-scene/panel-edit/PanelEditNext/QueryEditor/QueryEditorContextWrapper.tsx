@@ -13,11 +13,11 @@ import { PendingExpression, PendingTransformation, QueryEditorProvider } from '.
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
 import { usePendingTransformation } from './hooks/usePendingTransformation';
+import { useQueryOptions } from './hooks/useQueryOptions';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
 import { AlertRule, QueryOptionField, Transformation } from './types';
-import { useQueryOptions } from './useQueryOptions';
 import { getEditorType, getTransformId } from './utils';
 
 /**
@@ -68,7 +68,7 @@ export function QueryEditorContextWrapper({
     () => ({
       queries: queryRunnerState?.queries ?? [],
       data: queryRunnerState?.data,
-      isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
+      isLoading: queryRunnerState?.data?.state === LoadingState.Loading || queryRunnerState?.data?.state === undefined,
       queryError,
     }),
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]

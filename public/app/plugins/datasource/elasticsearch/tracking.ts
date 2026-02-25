@@ -126,19 +126,20 @@ export function trackQuery(
       return;
     }
     reportInteraction('grafana_elasticsearch_query_executed', {
-      app,
-      grafana_version: config.buildInfo.version,
-      with_lucene_query: query.query ? true : false,
-      query_type: getQueryType(query),
-      line_limit: getLineLimit(query),
       alias: query.alias,
-      has_error: response.error !== undefined,
+      app,
+      editor_type: query.editorType || 'builder',
+      grafana_version: config.buildInfo.version,
       has_data: response.data.some((frame) => frame.length > 0),
+      has_error: response.error !== undefined,
+      line_limit: getLineLimit(query),
+      query_language: query.queryType,
+      query_type: getQueryType(query),
       simultaneously_sent_query_count: queries.length,
       time_range_from: request?.range?.from?.toISOString(),
       time_range_to: request?.range?.to?.toISOString(),
       time_taken: Date.now() - startTime.getTime(),
-      editor_type: query.editorType || 'builder',
+      with_lucene_query: query.queryType === 'lucene' && query.query !== undefined,
     });
   }
 }

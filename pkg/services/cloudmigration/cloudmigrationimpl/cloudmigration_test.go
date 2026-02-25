@@ -1045,7 +1045,7 @@ func (m *gmsClientMock) MigrateData(_ context.Context, _ cloudmigration.CloudMig
 	panic("not implemented") // TODO: Implement
 }
 
-func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.EncryptionAlgo) (*cloudmigration.StartSnapshotResponse, error) {
 	m.startSnapshotCalled++
 	return nil, nil
 }

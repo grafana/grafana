@@ -10,6 +10,7 @@ export interface ActionItem {
   name: string;
   type: QueryEditorType;
   isHidden: boolean;
+  isError?: boolean;
   /** Alert state for dynamic styling (only used when type is Alert) */
   alertState?: AlertState | null;
 }

@@ -44,7 +44,7 @@ export enum DashboardSource {
 export interface ImportDashboardDTO {
   title: string;
   uid: string;
-  gnetId: string;
+  gnetId: number | string;
   constants: string[];
   dataSources: DataSourceInstanceSettings[];
   elements: LibraryElementDTO[];

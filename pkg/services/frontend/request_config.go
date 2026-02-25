@@ -42,7 +42,7 @@ func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequest
 		GoogleAnalytics4SendManualPageViews:  cfg.GoogleAnalytics4SendManualPageViews,
 		GoogleAnalyticsId:                    cfg.GoogleAnalyticsID,
 		GrafanaJavascriptAgent:               cfg.GrafanaJavascriptAgent,
-		Http2Enabled:                         cfg.Protocol == setting.HTTP2Scheme,
+		Http2Enabled:                         cfg.Protocol == setting.HTTP2Scheme || cfg.Protocol == setting.SocketHTTP2Scheme,
 		JwtHeaderName:                        cfg.JWTAuth.HeaderName,
 		JwtUrlLogin:                          cfg.JWTAuth.URLLogin,
 		LdapEnabled:                          cfg.LDAPAuthEnabled,
