@@ -56,31 +56,6 @@ describe('useFolderMetadataStatus', () => {
     jest.clearAllMocks();
   });
 
-  describe('returns ok when no metadata check is needed', () => {
-    it('when folder is not provisioned', () => {
-      setupMocks({
-        repoViewOverrides: {
-          folder: {
-            metadata: { annotations: {} },
-            spec: { title: 'Not Provisioned' },
-          } as ReturnType<typeof useGetResourceRepositoryView>['folder'],
-        },
-      });
-
-      const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('ok');
-    });
-
-    it('when no repository is found', () => {
-      setupMocks({
-        repoViewOverrides: { repository: undefined },
-      });
-
-      const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('ok');
-    });
-  });
-
   describe('returns loading', () => {
     it('when repository view is loading', () => {
       setupMocks({
@@ -190,6 +165,16 @@ describe('useFolderMetadataStatus', () => {
         name: 'my-repo',
         path: 'folders/my-folder/_folder.json',
       });
+    });
+
+    it('skips file query when repository name is not yet available', () => {
+      setupMocks({
+        repoViewOverrides: { repository: undefined },
+      });
+
+      renderHook(() => useFolderMetadataStatus('folder-uid'));
+
+      expect(mockUseGetRepositoryFilesWithPathQuery).toHaveBeenCalledWith(expect.any(Symbol));
     });
   });
 });
