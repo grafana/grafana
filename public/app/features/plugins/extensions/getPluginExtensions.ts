@@ -131,9 +131,9 @@ export const getPluginExtensions: GetExtensions = ({
         continue;
       }
 
-      const path = overrides?.path || addedLink.path;
+      const path = overrides?.path ?? addedLink.path;
       const group = overrides?.group ?? addedLink.group;
-      const category = overrides?.category || addedLink.category;
+      const category = overrides?.category ?? addedLink.category;
       const extension: PluginExtensionLink = {
         id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
         type: PluginExtensionTypes.link,
@@ -141,9 +141,9 @@ export const getPluginExtensions: GetExtensions = ({
         onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
 
         // Configurable properties
-        icon: overrides?.icon || addedLink.icon,
-        title: overrides?.title || addedLink.title,
-        description: overrides?.description || addedLink.description || '',
+        icon: overrides?.icon ?? addedLink.icon,
+        title: overrides?.title ?? addedLink.title,
+        description: overrides?.description ?? addedLink.description ?? '',
         path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
         category,
         group,
