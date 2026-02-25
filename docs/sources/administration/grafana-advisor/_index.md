@@ -24,43 +24,94 @@ Currently, Grafana Advisor performs regular checks on data sources, plugins, and
 You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
 {{< /admonition >}}
 
-TBD UPDATE?
+TBD UPDATE VIDEO?
 
 {{< youtube id="o84EfY-KP-c" >}}
 
-## Use Grafana Advisor
+To access the Grafana Advisor:
 
-### Access the Grafana Advisor UI
+1. Log in to your Grafana instance with an **Administrator account**.
+1. Navigate to the **Administration** section on the left navigation menu.
+1. Click **Advisor**. 
+1. If you're a first time user, select **Generate report** to run Advisor and obtain your first report. From now on, reporting is automated and updated periodically.
 
-1. Log in to your Grafana instance with an **administrator account**.
-1. Navigate to the Administration section.
-1. Select "Advisor" from the left navigation menu.
+## Navigate the Advisor report
 
-### Action needed section [TO BE REVIEWED]
+An Advisor report can contain the following tasks and action suggestions:
 
-This collapsible section displays issues requiring immediate attention:
+- [Action needed](#action-needed)
+- [Investigation needed](#investigation-needed)
+- [No action needed](#no-action-needed)
 
-- For each item, Grafana Advisor displays the specific name of the item that needs to be fixed.
-- For data source issues, Grafana Advisor displays the specific data source name.
-- One or more buttons appear. These buttons point you to different links to fix the issue, retry the check or hide the error.
+You can configure which checks Advisor will run. See how in [Configure application](#advisor-menu).
+
+### Use Grafana Advisor with Grafana Assistant
+
+You can use Advisor with the Grafana Assistant, a purpose-built LLM in Grafana Cloud that allows you to troubleshoot incidents, manage resources, and answer product questions in minutes. The Assistant removes manual operations and speeds up response time. Strong privacy and security controls ensure conversations respect RBAC, route through vetted service providers, and rely on your telemetry to produce action-ready results.
+
+To learn more, refer to the [Grafana Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/).
+
+### Action needed  
+
+This collapsible section displays issues requiring immediate attention. For each item, Grafana Advisor displays the specific name of the item that needs to be fixed. For data source issues, Grafana Advisor displays the specific data source name.
+
+For each item, one or more buttons appear: 
+
+- Fix the issue. 
+- The [Grafana Assistant](#use-grafana-advisor-with-grafana-assistant) sparkle icon. 
+- Retry the check.
+- Hide the error. 
+  - If you hide an error you can see it again by clicking the **Hide/Show silenced errors** eye icon on the top right corner.
 
 ![Action needed](/media/docs/grafana-advisor/action_needed.png)
 
-### Investigation needed section [TO BE REVIEWED]
+### Investigation needed 
 
-This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the "Action needed" section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
+This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the **Action needed** section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
 
 ![Investigation needed](/media/docs/grafana-advisor/investigation-needed.png)
 
-### More info section [TO BE REVIEWED]
+### No action needed 
 
-This collapsible section provides more details about which checks have been performed and how many items have been analyzed.
+This collapsible section provides more details about which checks have been performed and how many items have been analyzed. You can configure which checks Advisor will run. See how in [Advisor menu > Configure application](#advisor-menu).
 
-![<Grafana Advisor - More info tab>](/media/docs/grafana-advisor/more_info.png)
+## Advisor menu
 
-{{< admonition type="tip" >}}
-Click the cogwheel in this section to access Grafana Advisor settings, where you can enable or disable checks according to your preferences.
-{{< /admonition >}}
+On the top right corner of the Advisor UI you have the following options and settings:
+
+- **Refresh** the report.
+- **Configure application**. Click the cogwheel button to access Grafana Advisor plugin settings, where you can enable or disable checks according to your preferences. See below for [the list of available checks](#available-checks).
+- **Hide/Show silenced issues**.
+- **Delete reports**.
+
+### Available checks
+
+You can enable the following checks:
+
+Configuration:
+
+- Security config check
+
+Data sources:
+
+- UID validation
+- Health check
+- Missing plugin check
+- Prometheus deprecated authentication check
+
+Instance:
+
+- Grafana Cloud version check
+
+Plugin:
+
+- Deprecation check
+- Update check
+- Plugin signature check
+
+SSO settings:
+
+- SSO List Setting format validation
 
 ## Address issues detected by Grafana Advisor
 
@@ -71,16 +122,6 @@ To maintain system reliability and keep your Grafana instance secure and up to d
 - **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass
 - **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet
 
-## Use Grafana Advisor with Grafana Assistant
 
-You can also use Advisor with the Grafana Assistant, a purpose-built LLM in Grafana Cloud that allows you to troubleshoot incidents, manage resources, and answer product questions in minutes. The Assistant removes manual operations and speeds up response time. Strong privacy and security controls ensure conversations respect RBAC, route through vetted service providers, and rely on your telemetry to produce action-ready results.
 
-To learn more, refer to the [Grafana Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/).
 
-### Enable LLM suggestions 
-
-TBD REMOVE?
-
-If the [Grafana LLM app](https://grafana.com/grafana/plugins/grafana-llm-app/) is installed, the Advisor can use it to generate suggestions for issues. Enable the LLM app and click the magic (✨) button to generate a suggestion for an issue.
-
-![<Grafana Advisor - LLM suggestions>](/media/docs/grafana-advisor/llm-suggestions.png)
