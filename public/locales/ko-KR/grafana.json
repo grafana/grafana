@@ -466,10 +466,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "외부 경보 관리자",
-      "extra-config-warning": {
-        "content": "Grafana 경보 관리자와 가져온 구성이 병합된 구성 상태를 보여줍니다. 이 병합된 보기는 UI에서 읽기 전용으로 표시됩니다.",
-        "title": "가져온 구성"
-      },
       "noOptionsMessage-no-datasources-found": "데이터 소스를 찾을 수 없습니다"
     },
     "alert-menu": {
@@ -4977,6 +4973,7 @@
       "description-color-annotation-event-markers": "주석 이벤트 마커에 사용할 색상",
       "description-enabled-annotation-query-issued-every-dashboard": "활성화되면 대시보드를 새로 고칠 때마다 주석 쿼리가 실행됩니다",
       "description-hidden": "주석 쿼리는 대시보드 상단에서 토글하여 켜거나 끌 수 있습니다. 이 옵션을 선택하면 이 토글이 숨겨집니다.",
+      "error-loading-panels": "",
       "label-color": "색상",
       "label-data-source": "데이터 소스",
       "label-enabled": "활성화됨",
@@ -6416,6 +6413,7 @@
       "delete": "삭제",
       "description-color-annotation-event-markers": "주석 이벤트 마커에 사용할 색상",
       "description-enabled-annotation-query-issued-every-dashboard": "활성화되면 대시보드를 새로 고칠 때마다 주석 쿼리가 실행됩니다",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "다음에서 주석 제어 표시",
       "label-color": "색상",
       "label-data-source": "데이터 소스",
@@ -12840,6 +12838,7 @@
       "header-status": "상태",
       "header-title": "제목",
       "header-type": "유형",
+      "missing-folder-metadata": "",
       "search-placeholder": "경로 또는 제목으로 검색",
       "source": "소스",
       "status-pending": "대기 중",
@@ -13303,6 +13302,7 @@
       },
       "card-click": "{{id}} 카드 선택",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "쿼리 및 표현식",
       "toggle-size": "사이드바 크기 토글",
       "transformations": "변환",

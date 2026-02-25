@@ -241,4 +241,90 @@ describe('VisualizationSuggestions', () => {
       expect(mockOnChange).toHaveBeenCalled();
     });
   });
+
+  it('should not auto-select when there is no data (unconfigured panel)', async () => {
+    const mockOnChange = jest.fn();
+    const unconfiguredPanel = { type: UNCONFIGURED_PANEL_PLUGIN_ID } as PanelModel;
+    const emptyData: PanelData = {
+      series: [],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(
+      <VisualizationSuggestions onChange={mockOnChange} data={emptyData} panel={unconfiguredPanel} isNewPanel={true} />
+    );
+
+    await waitFor(() => {
+      expect(mockGetAllSuggestions).toHaveBeenCalled();
+    });
+
+    await waitFor(
+      () => {
+        expect(mockOnChange).not.toHaveBeenCalled();
+      },
+      { timeout: 500 }
+    );
+  });
+
+  it('should auto-select the first suggestion only after real data arrives', async () => {
+    const mockOnChange = jest.fn();
+    const unconfiguredPanel = { type: UNCONFIGURED_PANEL_PLUGIN_ID } as PanelModel;
+    const emptyData: PanelData = {
+      series: [],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    mockGetAllSuggestions.mockResolvedValueOnce({
+      suggestions: [{ pluginId: 'table', name: 'Table', hash: 'table-hash', options: {} }],
+      hasErrors: false,
+    });
+    mockGetAllSuggestions.mockResolvedValueOnce({
+      suggestions: [
+        { pluginId: 'timeseries', name: 'Line chart', hash: 'timeseries-hash', options: {} },
+        { pluginId: 'table', name: 'Table', hash: 'table-hash', options: {} },
+      ],
+      hasErrors: false,
+    });
+
+    const { rerender } = render(
+      <VisualizationSuggestions onChange={mockOnChange} data={emptyData} panel={unconfiguredPanel} isNewPanel={true} />
+    );
+
+    await waitFor(() => {
+      expect(mockGetAllSuggestions).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(
+      () => {
+        expect(mockOnChange).not.toHaveBeenCalled();
+      },
+      { timeout: 500 }
+    );
+
+    const testData: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 2,
+    };
+
+    rerender(
+      <VisualizationSuggestions onChange={mockOnChange} data={testData} panel={unconfiguredPanel} isNewPanel={true} />
+    );
+
+    await waitFor(() => {
+      expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ pluginId: 'timeseries' }));
+    });
+  });
 });

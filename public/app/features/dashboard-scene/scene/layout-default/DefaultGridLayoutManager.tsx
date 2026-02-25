@@ -569,6 +569,16 @@ export class DefaultGridLayoutManager
     return DefaultGridLayoutManager.fromVizPanels(panels);
   }
 
+  public static createEmpty(): DefaultGridLayoutManager {
+    return new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [],
+        isDraggable: true,
+        isResizable: true,
+      }),
+    });
+  }
+
   public static fromVizPanels(panels: VizPanel[] = []): DefaultGridLayoutManager {
     const children: DashboardGridItem[] = [];
     const panelHeight = 10;

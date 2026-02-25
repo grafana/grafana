@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externes",
-      "extra-config-warning": {
-        "content": "Cette vue présente la configuration fusionnée de l’Alertmanager Grafana avec les configurations importées. Cette vue fusionnée est en lecture seule dans l’interface utilisateur.",
-        "title": "Configuration importée"
-      },
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
       "description-enabled-annotation-query-issued-every-dashboard": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
       "description-hidden": "Les requêtes d’annotation peuvent être activées ou désactivées en haut du tableau de bord. Lorsque cette option est cochée, ce bouton sera masqué.",
+      "error-loading-panels": "",
       "label-color": "Couleur",
       "label-data-source": "Source de données",
       "label-enabled": "Activé",
@@ -6444,6 +6441,7 @@
       "delete": "Supprimer",
       "description-color-annotation-event-markers": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
       "description-enabled-annotation-query-issued-every-dashboard": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Afficher les contrôles d’annotation dans",
       "label-color": "Couleur",
       "label-data-source": "Source de données",
@@ -12900,6 +12898,7 @@
       "header-status": "Statut",
       "header-title": "Titre",
       "header-type": "Type",
+      "missing-folder-metadata": "",
       "search-placeholder": "Rechercher par chemin ou par titre",
       "source": "Source",
       "status-pending": "En attente",
@@ -13364,6 +13363,7 @@
       },
       "card-click": "Sélectionner la carte {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
       "transformations": "Transformations",

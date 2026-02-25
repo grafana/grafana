@@ -466,10 +466,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "外部 Alertmanager",
-      "extra-config-warning": {
-        "content": "這顯示了 Grafana alertmanager 與匯入設定的合併設定。此合併檢視在使用者介面中是唯讀的。",
-        "title": "已匯入設定"
-      },
       "noOptionsMessage-no-datasources-found": "未找到資料來源"
     },
     "alert-menu": {
@@ -4977,6 +4973,7 @@
       "description-color-annotation-event-markers": "用於註解事件標記的顏色",
       "description-enabled-annotation-query-issued-every-dashboard": "啟用後，每次儀表板重新整理時都會發出註解查詢",
       "description-hidden": "可以在儀表板頂部開啟或關閉註解查詢。選擇此選項後，此切換選項將被隱藏。",
+      "error-loading-panels": "",
       "label-color": "顏色",
       "label-data-source": "資料來源",
       "label-enabled": "已啟用",
@@ -6416,6 +6413,7 @@
       "delete": "刪除",
       "description-color-annotation-event-markers": "用於註解事件標記的顏色",
       "description-enabled-annotation-query-issued-every-dashboard": "啟用後，每次儀表板重新整理時都會發出註解查詢",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "在以下方地方顯示註解控制項",
       "label-color": "顏色",
       "label-data-source": "資料來源",
@@ -12840,6 +12838,7 @@
       "header-status": "狀態",
       "header-title": "標題",
       "header-type": "類型",
+      "missing-folder-metadata": "",
       "search-placeholder": "按路徑或標題搜尋",
       "source": "來源",
       "status-pending": "待處理",
@@ -13303,6 +13302,7 @@
       },
       "card-click": "選取卡片 {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
       "transformations": "轉換",

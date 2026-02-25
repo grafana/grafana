@@ -15,10 +15,10 @@ import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dash
 import {
   CONTENT_KINDS,
   CREATION_ORIGINS,
-  DashboardLibraryInteractions,
   DISCOVERY_METHODS,
   EVENT_LOCATIONS,
   SOURCE_ENTRY_POINTS,
+  SuggestedDashboardInteractions,
 } from './interactions';
 import { GnetDashboard } from './types';
 import {
@@ -164,7 +164,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
         ),
       ];
 
-      DashboardLibraryInteractions.loaded({
+      SuggestedDashboardInteractions.loaded({
         numberOfItems: result.dashboards.length,
         contentKinds,
         datasourceTypes: [datasourceType],
@@ -209,7 +209,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       return;
     }
 
-    DashboardLibraryInteractions.itemClicked({
+    SuggestedDashboardInteractions.itemClicked({
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [ds.type],
       libraryItemId: dashboard.uid,
@@ -247,7 +247,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       }
 
       // Track item click
-      DashboardLibraryInteractions.itemClicked({
+      SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [ds.type],
         libraryItemId: String(dashboard.id),

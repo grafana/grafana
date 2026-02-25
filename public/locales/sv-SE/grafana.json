@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externa Alertmanager",
-      "extra-config-warning": {
-        "content": "Detta visar den sammanslagna konfigurationen av Grafana Alertmanager med importerade konfigurationer. Denna sammanslagna vy är skrivskyddad i användargränssnittet.",
-        "title": "Importerad konfiguration"
-      },
       "noOptionsMessage-no-datasources-found": "Inga datakällor hittades"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "Färg som ska användas för kommentarshändelsemarkörer",
       "description-enabled-annotation-query-issued-every-dashboard": "När aktiverat utfärdas kommentarsfrågan vid varje uppdatering av instrumentpanelen",
       "description-hidden": "Frågor om kommentarer kan aktiveras eller inaktiveras högst upp på instrumentpanelen. Med det här alternativet markerat kommer denna växel att döljas.",
+      "error-loading-panels": "",
       "label-color": "Färg",
       "label-data-source": "Datakälla",
       "label-enabled": "Aktiverad",
@@ -6444,6 +6441,7 @@
       "delete": "Ta bort",
       "description-color-annotation-event-markers": "Färg som ska användas för kommentarshändelsemarkörer",
       "description-enabled-annotation-query-issued-every-dashboard": "När aktiverat utfärdas kommentarsfrågan vid varje uppdatering av instrumentpanelen",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Visa kommentar-kontroller i",
       "label-color": "Färg",
       "label-data-source": "Datakälla",
@@ -12900,6 +12898,7 @@
       "header-status": "Status",
       "header-title": "Titel",
       "header-type": "Typ",
+      "missing-folder-metadata": "",
       "search-placeholder": "Sök efter sökväg eller titel",
       "source": "Källa",
       "status-pending": "Väntande",
@@ -13364,6 +13363,7 @@
       },
       "card-click": "Välj kort {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
       "transformations": "Omvandlingar",

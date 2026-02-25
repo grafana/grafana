@@ -1036,6 +1036,7 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1072,6 +1073,7 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1080,6 +1082,21 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 			webhookURL:    "https://example.com/webhook",
 			expectedHook:  nil,
 			expectedError: fmt.Errorf("failed to create webhook"),
+		},
+		{
+			name:      "no webhook when repository has no workflows",
+			setupMock: func(_ *MockClient) {},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: nil,
 		},
 	}
 
@@ -1138,12 +1155,13 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 
 func TestGitHubRepository_OnUpdate(t *testing.T) {
 	tests := []struct {
-		name          string
-		setupMock     func(m *MockClient)
-		config        *provisioning.Repository
-		webhookURL    string
-		expectedHook  *provisioning.WebhookStatus
-		expectedError error
+		name            string
+		setupMock       func(m *MockClient)
+		config          *provisioning.Repository
+		webhookURL      string
+		expectedHook    *provisioning.WebhookStatus
+		expectedCleanup bool
+		expectedError   error
 	}{
 		{
 			name: "successfully update webhook when webhook exists",
@@ -1164,6 +1182,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1204,6 +1223,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1241,6 +1261,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1273,6 +1294,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1303,6 +1325,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1334,6 +1357,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1362,6 +1386,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1395,6 +1420,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1431,6 +1457,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1460,6 +1487,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
@@ -1478,6 +1506,49 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			},
 			webhookURL:    "https://example.com/webhook",
 			expectedHook:  nil, // nothing changed
+			expectedError: nil,
+		},
+		{
+			name: "delete webhook when workflows are removed",
+			setupMock: func(m *MockClient) {
+				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL:      "https://example.com/webhook",
+			expectedHook:    nil,
+			expectedCleanup: true,
+			expectedError:   nil,
+		},
+		{
+			name:      "no-op when no workflows and no existing webhook",
+			setupMock: func(_ *MockClient) {},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: nil,
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
 			expectedError: nil,
 		},
 	}
@@ -1525,6 +1596,12 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 
 					_, err := uuid.Parse(vals["create"])
 					require.NoError(t, err, "the secret is a valid UUID")
+				} else if tt.expectedCleanup {
+					require.NotNil(t, hookOps)
+					require.Len(t, hookOps, 1)
+					require.Equal(t, "replace", hookOps[0]["op"])
+					require.Equal(t, "/status/webhook", hookOps[0]["path"])
+					require.Nil(t, hookOps[0]["value"])
 				} else {
 					require.Nil(t, hookOps)
 				}
