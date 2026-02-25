@@ -7,10 +7,12 @@ import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/u
 import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
+import { contextSrv } from 'app/core/services/context_srv';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 
@@ -141,8 +143,12 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 
-  // For now, only admins can manage folder owners
-  const showManageOwners = config.featureToggles.teamFolders && canSetPermissions && !isProvisionedFolder;
+  // If user can set permissions for the folder and read teams, they can manage folder owners
+  const showManageOwners =
+    config.featureToggles.teamFolders &&
+    canSetPermissions &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRead) &&
+    !isProvisionedFolder;
 
   const menu = (
     <Menu>
