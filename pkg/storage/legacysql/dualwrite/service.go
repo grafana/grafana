@@ -134,7 +134,7 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 		return nil, err
 	}
 
-	m.logStorageModeComparison(gr, status)
+	logModeComparison(m.statusReader, m.metrics, gr, storageModeFromStatus(status))
 
 	if m.enabled && status.Runtime {
 		// Dynamic storage behavior
@@ -271,47 +271,26 @@ func (m *service) Update(ctx context.Context, status StorageStatus) (StorageStat
 	return status, m.db.set(ctx, status)
 }
 
-// logStorageModeComparison logs the storage mode from MigrationStatusReader alongside the
-// current status for observability. This allows validating that the new mode determination
-// agrees with the existing behavior before switching over in a future PR.
-func (m *service) logStorageModeComparison(gr schema.GroupResource, status StorageStatus) {
-	if m.statusReader == nil {
-		return
-	}
-	newMode, err := m.statusReader.GetStorageMode(context.Background(), gr)
-	if err != nil {
-		logger.Warn("Failed to get storage mode from MigrationStatusReader",
-			"resource", gr.String(), "error", err)
-		return
-	}
-
-	currentMode := storageModeFromStatus(status)
-	if currentMode != newMode && m.metrics != nil {
-		m.metrics.ModeMismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
-	}
-
-	logger.Info("Storage mode comparison",
-		"resource", gr.String(),
-		"newMode", newMode.String(),
-		"currentMode", currentMode.String(),
-	)
-}
-
 // LogStorageModeComparison implements Service.
 func (m *service) LogStorageModeComparison(gr schema.GroupResource, configMode rest.DualWriterMode) {
-	if m.statusReader == nil {
+	logModeComparison(m.statusReader, m.metrics, gr, storageModeFromConfigMode(configMode))
+}
+
+// logModeComparison compares currentMode with the mode from MigrationStatusReader
+// and emits metrics/logs for observability.
+func logModeComparison(statusReader unifiedmigrations.MigrationStatusReader, metrics *Metrics, gr schema.GroupResource, currentMode unifiedmigrations.StorageMode) {
+	if statusReader == nil {
 		return
 	}
-	newMode, err := m.statusReader.GetStorageMode(context.Background(), gr)
+	newMode, err := statusReader.GetStorageMode(context.Background(), gr)
 	if err != nil {
 		logger.Warn("Failed to get storage mode from MigrationStatusReader",
 			"resource", gr.String(), "error", err)
 		return
 	}
 
-	currentMode := storageModeFromConfigMode(configMode)
-	if currentMode != newMode && m.metrics != nil {
-		m.metrics.ModeMismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
+	if currentMode != newMode && metrics != nil {
+		metrics.ModeMismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
 	}
 
 	logger.Info("Storage mode comparison",
