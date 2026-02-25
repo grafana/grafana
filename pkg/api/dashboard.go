@@ -549,7 +549,7 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 		old, err := client.Get(ctx, name, metav1.GetOptions{})
 		if err == nil && old != nil {
 			if !cmd.Overwrite {
-				return response.Error(http.StatusPreconditionFailed,
+				return response.Error(http.StatusConflict,
 					"Dashboard already exists. Use overwrite flag to update.", nil)
 			}
 		} else if err != nil && k8serrors.IsNotFound(err) {
