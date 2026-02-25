@@ -2810,6 +2810,20 @@
     },
     {
       "metadata": {
+        "name": "managedPluginsV2",
+        "resourceVersion": "1772014398973",
+        "creationTimestamp": "2026-02-25T10:13:18Z"
+      },
+      "spec": {
+        "description": "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "metricsFromProfiles",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-09T10:55:28Z"
