@@ -80,14 +80,13 @@ function EnrichmentItemView({ item }: { item: EnrichmentItem }) {
               </LinkButton>
             )}
           </Stack>
-          {item.lines && item.lines.length > 0 && (
+          {item.lines && item.lines.length > 0 ? (
             <pre className={styles.logLines}>
               {item.lines.map((line, i) => (
                 <div key={i}>{line.trimEnd()}</div>
               ))}
             </pre>
-          )}
-          {(!item.lines || item.lines.length === 0) && (
+          ) : (
             <Text variant="bodySmall" color="secondary" italic>
               <Trans i18nKey="alerting.notification-history.enrichment-no-logs">No log lines</Trans>
             </Text>
