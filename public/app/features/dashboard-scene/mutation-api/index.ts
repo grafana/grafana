@@ -16,8 +16,3 @@ export type { MutationRequest, MutationResult, MutationChange, MutationClient, L
 export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
 
 export type { MutationCommand } from './commands/types';
-
-/**
- * @internal Not part of the public API surface.
- */
-export { MutationExecutor } from './MutationExecutor';

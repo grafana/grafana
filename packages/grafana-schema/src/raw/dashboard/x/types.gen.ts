@@ -1207,7 +1207,7 @@ export interface Dashboard {
   /**
    * ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
    */
-  gnetId?: string;
+  gnetId?: number;
   /**
    * Configuration of dashboard cursor sync behavior.
    * Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).

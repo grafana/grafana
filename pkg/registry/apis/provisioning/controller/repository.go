@@ -163,7 +163,7 @@ func repoKeyFunc(obj any) (string, error) {
 //
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
 // until shutdown. Individual processing operations already have their own spans.
-func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
+func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func()) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
 
@@ -182,6 +182,8 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
 	}
 
 	logger.Info("Started workers")
+	onStarted()
+
 	<-ctx.Done()
 	logger.Info("Shutting down workers")
 }

@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "External Alertmanagers",
-      "extra-config-warning": {
-        "content": "This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI.",
-        "title": "Imported configuration"
-      },
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -5013,6 +5009,7 @@
       "description-color-annotation-event-markers": "Color to use for the annotation event markers",
       "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
       "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
+      "error-loading-panels": "Failed to load panel plugins",
       "label-color": "Color",
       "label-data-source": "Data source",
       "label-enabled": "Enabled",
@@ -6153,6 +6150,8 @@
       "title-transformations": "Transformations"
     },
     "transformation-picker-ng": {
+      "clear-search": "Clear search",
+      "no-transformations-found": "No transformations found",
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
       "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
@@ -6452,6 +6451,7 @@
       "delete": "Delete",
       "description-color-annotation-event-markers": "Color to use for the annotation event markers",
       "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
+      "error-loading-panels": "Failed to load panel plugins",
       "label-annotation-controls-display": "Show annotation controls in",
       "label-color": "Color",
       "label-data-source": "Data source",
@@ -12393,6 +12393,7 @@
       "placeholder-branch": "Select or enter branch name",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
+      "suffix-new-branch": "New branch",
       "suffix-pr-branch": "Pull request branch",
       "suffix-read-only-branch": " (read-only)"
     }
@@ -12907,6 +12908,7 @@
       "header-status": "Status",
       "header-title": "Title",
       "header-type": "Type",
+      "missing-folder-metadata": "Missing folder metadata file",
       "search-placeholder": "Search by path or title",
       "source": "Source",
       "status-pending": "Pending",
@@ -13375,6 +13377,7 @@
       "data": "Data",
       "footer-items_one": "{{count}} item",
       "footer-items_other": "{{count}} items",
+      "loading-queries-transformations": "Loading queries and transformations",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations"

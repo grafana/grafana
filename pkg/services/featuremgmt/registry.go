@@ -2466,6 +2466,14 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "managedPluginsV2",
+			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
 	}
 )
 
