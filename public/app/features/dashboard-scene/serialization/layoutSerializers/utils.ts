@@ -1,5 +1,6 @@
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getPanelPluginMetasMapSync } from '@grafana/runtime/internal';
 import {
   SceneDataProvider,
   SceneDataQuery,
@@ -179,7 +180,8 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.vizConfig?.group]?.skipDataQuery) {
+  const panelMetas = getPanelPluginMetasMapSync();
+  if (panelMetas[panel.vizConfig?.group]?.skipDataQuery) {
     return undefined;
   }
 

@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { getPanelPluginMetasMapSync } from '@grafana/runtime/internal';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -12,7 +12,8 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.type]?.skipDataQuery) {
+  const panelMetas = getPanelPluginMetasMapSync();
+  if (panelMetas[panel.type]?.skipDataQuery) {
     return undefined;
   }
 
