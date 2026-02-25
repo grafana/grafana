@@ -13,6 +13,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		CoreRoleSpec{}.OpenAPIModelName():                                                                 schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRoleStatus":                        schema_pkg_apis_iam_v0alpha1_CoreRoleStatus(ref),
 		CoreRolespecPermission{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_CoreRolespecPermission(ref),
+		CoreRolespecRoleRef{}.OpenAPIModelName():                                                          schema_pkg_apis_iam_v0alpha1_CoreRolespecRoleRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolestatusOperatorState":           schema_pkg_apis_iam_v0alpha1_CoreRolestatusOperatorState(ref),
 		ExternalGroupMapping{}.OpenAPIModelName():                                                         schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref),
 		ExternalGroupMappingList{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref),
@@ -44,6 +45,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GlobalRoleSpec{}.OpenAPIModelName():                                                               schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleStatus":                      schema_pkg_apis_iam_v0alpha1_GlobalRoleStatus(ref),
 		GlobalRolespecPermission{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref),
+		GlobalRolespecRoleRef{}.OpenAPIModelName():                                                        schema_pkg_apis_iam_v0alpha1_GlobalRolespecRoleRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolestatusOperatorState":         schema_pkg_apis_iam_v0alpha1_GlobalRolestatusOperatorState(ref),
 		ResourcePermission{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref),
 		ResourcePermissionList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref),
@@ -64,6 +66,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		RoleSpec{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_RoleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleStatus":                            schema_pkg_apis_iam_v0alpha1_RoleStatus(ref),
 		RolespecPermission{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_RolespecPermission(ref),
+		RolespecRoleRef{}.OpenAPIModelName():                                                              schema_pkg_apis_iam_v0alpha1_RolespecRoleRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolestatusOperatorState":               schema_pkg_apis_iam_v0alpha1_RolestatusOperatorState(ref),
 		ServiceAccount{}.OpenAPIModelName():                                                               schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref),
 		ServiceAccountList{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref),
@@ -212,7 +215,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "delegatable?: bool created? updated?",
+							Description: "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -224,12 +227,40 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"permissionsOmitted": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(CoreRolespecPermission{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"roleRefs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(CoreRolespecRoleRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"title", "description", "group", "permissions"},
+				Required: []string{"title", "description", "group"},
 			},
 		},
 		Dependencies: []string{
-			CoreRolespecPermission{}.OpenAPIModelName()},
+			CoreRolespecPermission{}.OpenAPIModelName(), CoreRolespecRoleRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -301,6 +332,35 @@ func schema_pkg_apis_iam_v0alpha1_CoreRolespecPermission(ref common.ReferenceCal
 					},
 				},
 				Required: []string{"action", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CoreRolespecRoleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind of role being referenced (for now only GlobalRole is supported)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the role being referenced",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"kind", "name"},
 			},
 		},
 	}
@@ -1518,7 +1578,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "delegatable?: bool created? updated?",
+							Description: "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -1530,12 +1590,40 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 							},
 						},
 					},
+					"permissionsOmitted": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GlobalRolespecPermission{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"roleRefs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GlobalRolespecRoleRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"title", "description", "group", "permissions"},
+				Required: []string{"title", "description", "group"},
 			},
 		},
 		Dependencies: []string{
-			GlobalRolespecPermission{}.OpenAPIModelName()},
+			GlobalRolespecPermission{}.OpenAPIModelName(), GlobalRolespecRoleRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -1607,6 +1695,35 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref common.ReferenceC
 					},
 				},
 				Required: []string{"action", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GlobalRolespecRoleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind of role being referenced (for now only GlobalRole is supported)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the role being referenced",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"kind", "name"},
 			},
 		},
 	}
@@ -2353,7 +2470,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 					},
 					"permissions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "delegatable?: bool created? updated?",
+							Description: "Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -2365,12 +2482,40 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 							},
 						},
 					},
+					"permissionsOmitted": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Permissions that exist in seed but NOT in actual role (missing/omitted permissions) - used for basic roles only",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(RolespecPermission{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"roleRefs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Roles to take permissions from (for now the list should be of size 1) delegatable?: bool created? updated?",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(RolespecRoleRef{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"title", "description", "group", "permissions"},
+				Required: []string{"title", "description", "group"},
 			},
 		},
 		Dependencies: []string{
-			RolespecPermission{}.OpenAPIModelName()},
+			RolespecPermission{}.OpenAPIModelName(), RolespecRoleRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -2442,6 +2587,35 @@ func schema_pkg_apis_iam_v0alpha1_RolespecPermission(ref common.ReferenceCallbac
 					},
 				},
 				Required: []string{"action", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_RolespecRoleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind of role being referenced (for now only GlobalRole is supported)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the role being referenced",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"kind", "name"},
 			},
 		},
 	}

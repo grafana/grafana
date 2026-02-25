@@ -1,11 +1,18 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { DataFrame, DataTransformerID, standardTransformersRegistry, TransformerRegistryItem } from '@grafana/data';
+import {
+  DataFrame,
+  DataTransformerID,
+  GrafanaTheme2,
+  standardTransformersRegistry,
+  TransformerRegistryItem,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Box, Button, Stack, Text } from '@grafana/ui';
+import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
@@ -22,6 +29,7 @@ interface EmptyTransformationsProps {
   data: DataFrame[];
   datasourceUid?: string;
   queries?: DataQuery[];
+  showHeaderText?: boolean;
 }
 
 const TRANSFORMATION_IDS = [
@@ -61,8 +69,11 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
 }
 
 export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
+  const styles = useStyles2(getStyles);
+
   const hasGoToQueries = props.onGoToQueries != null;
   const hasAddTransformation = props.onAddTransformation != null;
+  const showHeaderText = props.showHeaderText ?? true;
 
   // Get transformations from registry
   const transformations = useMemo(() => {
@@ -104,21 +115,23 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
   return (
     <Box padding={2}>
       <Stack direction="column" alignItems="start" gap={2}>
-        <Stack direction="column" alignItems="start" gap={1}>
-          <Text element="h3" textAlignment="start">
-            <Trans i18nKey="transformations.empty.add-transformation-header">Add a Transformation</Trans>
-          </Text>
-          <Text element="p" textAlignment="start" color="secondary">
-            <Trans i18nKey="transformations.empty.add-transformation-body">
-              Transformations allow data to be changed in various ways before your visualization is shown.
-              <br />
-              This includes joining data together, renaming fields, making calculations, formatting data for display,
-              and more.
-            </Trans>
-          </Text>
-        </Stack>
+        {showHeaderText && (
+          <Stack direction="column" alignItems="start" gap={1}>
+            <Text element="h3" textAlignment="start">
+              <Trans i18nKey="transformations.empty.add-transformation-header">Add a Transformation</Trans>
+            </Text>
+            <Text element="p" textAlignment="start" color="secondary">
+              <Trans i18nKey="transformations.empty.add-transformation-body">
+                Transformations allow data to be changed in various ways before your visualization is shown.
+                <br />
+                This includes joining data together, renaming fields, making calculations, formatting data for display,
+                and more.
+              </Trans>
+            </Text>
+          </Stack>
+        )}
         {(hasAddTransformation || hasGoToQueries) && (
-          <Stack direction="row" gap={1} wrap>
+          <div className={styles.transformationsContainer}>
             {showSqlCard && (
               <SqlExpressionCard
                 name={t('dashboard-scene.empty-transformations-message.sql-name', 'Transform with SQL')}
@@ -129,6 +142,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                 imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
                 onClick={handleSqlTransformationClick}
                 testId="transform-with-sql-card"
+                fullWidth
               />
             )}
             {hasAddTransformation &&
@@ -140,10 +154,11 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                   showIllustrations={true}
                   showPluginState={false}
                   showTags={false}
+                  fullWidth
                   data={props.data}
                 />
               ))}
-          </Stack>
+          </div>
         )}
         <Button
           icon="plus"
@@ -166,3 +181,12 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
 
   return <LegacyEmptyTransformationsMessage onShowPicker={props.onShowPicker} />;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  transformationsContainer: css({
+    display: 'grid',
+    gap: theme.spacing(1),
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    width: '100%',
+  }),
+});

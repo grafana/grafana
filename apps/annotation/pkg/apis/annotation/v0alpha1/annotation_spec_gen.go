@@ -10,6 +10,7 @@ type AnnotationSpec struct {
 	DashboardUID *string  `json:"dashboardUID,omitempty"`
 	PanelID      *int64   `json:"panelID,omitempty"`
 	Tags         []string `json:"tags,omitempty"`
+	Scopes       []string `json:"scopes,omitempty"`
 }
 
 // NewAnnotationSpec creates a new AnnotationSpec object.

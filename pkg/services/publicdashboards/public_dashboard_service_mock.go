@@ -11,7 +11,7 @@ import (
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	dtos "github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	dashboards "github.com/grafana/grafana/pkg/services/dashboards"
 	models "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	user "github.com/grafana/grafana/pkg/services/user"

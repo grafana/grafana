@@ -74,6 +74,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Users",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.email",
+						"spec.login",
+					},
 					Routes: map[string]spec3.PathProps{
 						"/teams": {
 							Get: &spec3.Operation{
@@ -289,6 +293,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "ExternalGroupMappings",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.teamRef.name",
+						"spec.externalGroupId",
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

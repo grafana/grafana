@@ -164,3 +164,53 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 	require.True(t, found,
 		"should have warning message mentioning refresh interval validation error")
 }
+
+func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+
+	// Create a test repository with two dashboard files that share the same metadata.name.
+	// The second file processed should trigger a "duplicate resource name" validation warning.
+	const repo = "job-warning-duplicate-name-repo"
+	testRepo := TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"testdata/dashboard-duplicate-name.json":      "dashboard-dup1.json",
+			"testdata/dashboard-duplicate-name-copy.json": "dashboard-dup2.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	}
+	helper.CreateRepo(t, testRepo)
+
+	// Execute a pull job - this should detect the duplicate name and produce a warning
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+
+	// Verify the job completed with warning state
+	jobObj := &provisioning.Job{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+	require.NoError(t, err)
+
+	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		"job should complete with warning state for duplicate resource name")
+	require.NotEmpty(t, jobObj.Status.Warnings,
+		"job should have warnings for the duplicate resource name")
+	require.Empty(t, jobObj.Status.Errors,
+		"duplicate resource name should be treated as warning, not error")
+
+	// Verify the warning message contains the duplicate name error
+	found := false
+	for _, warningMsg := range jobObj.Status.Warnings {
+		if strings.Contains(warningMsg, "duplicate resource name") {
+			found = true
+			break
+		}
+	}
+	require.True(t, found,
+		"should have warning message mentioning duplicate resource name")
+}

@@ -351,6 +351,7 @@ type AlertRule struct {
 	Version         int64
 	UID             string
 	NamespaceUID    string
+	FolderFullpath  string
 	DashboardUID    *string
 	PanelID         *int64
 	RuleGroup       string

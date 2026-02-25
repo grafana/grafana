@@ -6,10 +6,12 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { GeomapPanel } from './GeomapPanel';
 import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
+import { VariableNameEditor } from './editor/VariableNameEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
+import { defaultMapViewConfig, type Options, TooltipMode } from './panelcfg.gen';
 import { geomapSuggestionsSupplier } from './suggestions';
-import { defaultMapViewConfig, Options, TooltipMode, GeomapInstanceState } from './types';
+import { GeomapInstanceState } from './types';
 
 export const plugin = new PanelPlugin<Options>(GeomapPanel)
   .setNoPadding()
@@ -49,6 +51,27 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
       name: t('geomap.name-no-repeat', 'No map repeating'),
       description: t('geomap.description-no-repeat', 'Prevent the map from repeating horizontally'),
       defaultValue: false,
+    });
+
+    builder.addBooleanSwitch({
+      category,
+      path: 'view.dashboardVariable',
+      name: t('geomap.name-sync-view-variable', 'Sync view to dashboard variable'),
+      description: t(
+        'geomap.description-sync-view-variable',
+        'Store view bounds in a dashboard variable for use in queries'
+      ),
+      defaultValue: false,
+    });
+
+    builder.addCustomEditor({
+      category,
+      id: 'view.dashboardVariableName',
+      path: 'view.dashboardVariableName',
+      name: t('geomap.name-variable-name', 'Variable name'),
+      description: t('geomap.description-variable-name', 'Specify the dashboard variable to store view bounds'),
+      editor: VariableNameEditor,
+      showIf: (config) => config.view?.dashboardVariable === true,
     });
 
     // eslint-disable-next-line
