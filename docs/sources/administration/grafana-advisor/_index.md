@@ -74,7 +74,7 @@ This collapsible section provides more details about which checks have been perf
 
 You can use Advisor with the Grafana Assistant, a purpose-built LLM in Grafana Cloud that allows you to troubleshoot incidents, manage resources, and answer product questions in minutes. The Assistant removes manual operations and speeds up response time. Strong privacy and security controls ensure conversations respect RBAC, route through vetted service providers, and rely on your telemetry to produce action-ready results.
 
-Access the Assistant by clicking the sparkle icon next to each issue detected, or select the sparkle icon on the top right corner of the Grafana UI, next to your profile information.
+Clicking the sparkle icon next to each issue detected will open a chat with the Assitant, adding all the existing information about the issue.
 
 To learn more, refer to the [Grafana Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/).
 
