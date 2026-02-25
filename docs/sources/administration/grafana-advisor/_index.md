@@ -32,7 +32,7 @@ To access the Grafana Advisor:
 
 1. Log in to your Grafana instance with an **Administrator account**.
 1. Navigate to the **Administration** section on the left navigation menu.
-1. Click **Advisor**. 
+1. Click **Advisor**.
 1. If you're a first time user, select **Generate report** to run Advisor and obtain your first report. From now on, reporting is automated and updated periodically.
 
 ## Navigate the Advisor report
@@ -51,22 +51,22 @@ You can configure which checks Advisor will run. See how in [Configure applicati
 
 {{< /admonition >}}
 
-### Action needed  
+### Action needed
 
 This collapsible section displays issues requiring immediate attention. For each item, Grafana Advisor displays the specific name of the item that needs to be fixed. For data source issues, Grafana Advisor displays the specific data source name.
 
-For each item, one or more buttons appear: 
+For each item, one or more buttons appear:
 
-- Fix the issue. 
-- The [Grafana Assistant](#use-grafana-advisor-with-grafana-assistant) sparkle icon. 
+- Fix the issue.
+- The [Grafana Assistant](#use-grafana-advisor-with-grafana-assistant) sparkle icon.
 - Retry the check.
 - Hide the error. If you hide an error you can see it again by clicking the **Hide/Show silenced errors** eye icon on the top right corner.
 
-### Investigation needed 
+### Investigation needed
 
 This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the **Action needed** section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
 
-### No action needed 
+### No action needed
 
 This collapsible section provides more details about which checks have been performed and how many items have been analyzed. You can configure which checks Advisor will run. See how in [Advisor menu > Configure application](#advisor-menu).
 
@@ -122,7 +122,3 @@ To maintain system reliability and keep your Grafana instance secure and up to d
 - **Immediate Action:** Address "Action needed" items promptly to ensure system reliability
 - **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass
 - **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet
-
-
-
-

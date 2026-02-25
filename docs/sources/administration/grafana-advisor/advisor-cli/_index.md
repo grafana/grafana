@@ -1,6 +1,6 @@
 ---
 title: Manage Advisor with Grafana CLI
-description: Manage Grafana Advisor using the Grafana CLI 
+description: Manage Grafana Advisor using the Grafana CLI
 weight: 100
 labels:
   products:
@@ -16,11 +16,11 @@ keywords:
   - grafanactl
 ---
 
-# Manage Grafana Advisor using the Grafana CLI 
+# Manage Grafana Advisor using the Grafana CLI
 
 `grafanactl`, the Grafana CLI tool, is a command-line tool for managing Grafana resources as code. To install and configure it, refer to the [Grafana CLI documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/).
 
-You can use `grafanactl` to manage Advisor `checks` and `checktypes`. 
+You can use `grafanactl` to manage Advisor `checks` and `checktypes`.
 
 ## Get the list of checks
 
@@ -85,7 +85,7 @@ grafanactl resources get checks -o json | jq -r '
 ' | column -t -s $'\t'
 ```
 
-## Run checks for a type 
+## Run checks for a type
 
 To run checks for a specific type, create the check resource and push it:
 

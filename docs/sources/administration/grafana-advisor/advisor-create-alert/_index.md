@@ -115,4 +115,3 @@ Select your preferred evaluation (e.g. every 24 hours) and notification settings
 Click **Save** and check the alert is being triggered.
 
 Your alert is now configured to monitor Advisor results and notify you when failures are detected!
-
