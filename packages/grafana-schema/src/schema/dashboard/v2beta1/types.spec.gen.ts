@@ -983,120 +983,6 @@ export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
 	value: "",
 });
 
-// Links with references to other dashboards or external resources
-export interface DashboardLink {
-	// Title to display with the link
-	title: string;
-	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-	// FIXME: The type is generated as `type: DashboardLinkType | dashboardLinkType.Link;` but it should be `type: DashboardLinkType`
-	type: DashboardLinkType;
-	// Icon name to be displayed with the link
-	icon: string;
-	// Tooltip to display when the user hovers their mouse over it
-	tooltip: string;
-	// Link URL. Only required/valid if the type is link
-	url?: string;
-	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
-	tags: string[];
-	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
-	asDropdown: boolean;
-	// If true, the link will be opened in a new tab
-	targetBlank: boolean;
-	// If true, includes current template variables values in the link as query params
-	includeVars: boolean;
-	// If true, includes current time range in the link as query params
-	keepTime: boolean;
-	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
-	placement?: "inControlsMenu";
-}
-
-export const defaultDashboardLink = (): DashboardLink => ({
-	title: "",
-	type: "link",
-	icon: "",
-	tooltip: "",
-	tags: [],
-	asDropdown: false,
-	targetBlank: false,
-	includeVars: false,
-	keepTime: false,
-	placement: DashboardLinkPlacement,
-});
-
-// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-export type DashboardLinkType = "link" | "dashboards";
-
-export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
-
-// Dashboard Link placement. Defines where the link should be displayed.
-// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
-export const DashboardLinkPlacement = "inControlsMenu";
-
-// Time configuration
-// It defines the default time config for the time picker, the refresh picker for the specific dashboard.
-export interface TimeSettingsSpec {
-	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
-	timezone?: string;
-	// Start time range for dashboard.
-	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
-	from: string;
-	// End time range for dashboard.
-	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
-	to: string;
-	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	// v1: refresh
-	autoRefresh: string;
-	// Interval options available in the refresh picker dropdown.
-	// v1: timepicker.refresh_intervals
-	autoRefreshIntervals: string[];
-	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-	// v1: timepicker.quick_ranges , not exposed in the UI
-	quickRanges?: TimeRangeOption[];
-	// Whether timepicker is visible or not.
-	// v1: timepicker.hidden
-	hideTimepicker: boolean;
-	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-	weekStart?: "saturday" | "monday" | "sunday";
-	// The month that the fiscal year starts on. 0 = January, 11 = December
-	fiscalYearStartMonth: number;
-	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
-	// v1: timepicker.nowDelay
-	nowDelay?: string;
-}
-
-export const defaultTimeSettingsSpec = (): TimeSettingsSpec => ({
-	timezone: "browser",
-	from: "now-6h",
-	to: "now",
-	autoRefresh: "",
-	autoRefreshIntervals: [
-"5s",
-"10s",
-"30s",
-"1m",
-"5m",
-"15m",
-"30m",
-"1h",
-"2h",
-"1d",
-],
-	hideTimepicker: false,
-	fiscalYearStartMonth: 0,
-});
-
-export interface TimeRangeOption {
-	display: string;
-	from: string;
-	to: string;
-}
-
-export const defaultTimeRangeOption = (): TimeRangeOption => ({
-	display: "Last 6 hours",
-	from: "now-6h",
-	to: "now",
-});
-
 export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind | SwitchVariableKind;
 
 export const defaultVariableKind = (): VariableKind => (defaultQueryVariableKind());
@@ -1529,6 +1415,120 @@ export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
 	disabledValue: "false",
 	hide: "dontHide",
 	skipUrlSync: false,
+});
+
+// Links with references to other dashboards or external resources
+export interface DashboardLink {
+	// Title to display with the link
+	title: string;
+	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+	// FIXME: The type is generated as `type: DashboardLinkType | dashboardLinkType.Link;` but it should be `type: DashboardLinkType`
+	type: DashboardLinkType;
+	// Icon name to be displayed with the link
+	icon: string;
+	// Tooltip to display when the user hovers their mouse over it
+	tooltip: string;
+	// Link URL. Only required/valid if the type is link
+	url?: string;
+	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
+	tags: string[];
+	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+	asDropdown: boolean;
+	// If true, the link will be opened in a new tab
+	targetBlank: boolean;
+	// If true, includes current template variables values in the link as query params
+	includeVars: boolean;
+	// If true, includes current time range in the link as query params
+	keepTime: boolean;
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	placement?: "inControlsMenu";
+}
+
+export const defaultDashboardLink = (): DashboardLink => ({
+	title: "",
+	type: "link",
+	icon: "",
+	tooltip: "",
+	tags: [],
+	asDropdown: false,
+	targetBlank: false,
+	includeVars: false,
+	keepTime: false,
+	placement: DashboardLinkPlacement,
+});
+
+// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+export type DashboardLinkType = "link" | "dashboards";
+
+export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+export const DashboardLinkPlacement = "inControlsMenu";
+
+// Time configuration
+// It defines the default time config for the time picker, the refresh picker for the specific dashboard.
+export interface TimeSettingsSpec {
+	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
+	timezone?: string;
+	// Start time range for dashboard.
+	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
+	from: string;
+	// End time range for dashboard.
+	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
+	to: string;
+	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
+	// v1: refresh
+	autoRefresh: string;
+	// Interval options available in the refresh picker dropdown.
+	// v1: timepicker.refresh_intervals
+	autoRefreshIntervals: string[];
+	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+	// v1: timepicker.quick_ranges , not exposed in the UI
+	quickRanges?: TimeRangeOption[];
+	// Whether timepicker is visible or not.
+	// v1: timepicker.hidden
+	hideTimepicker: boolean;
+	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
+	weekStart?: "saturday" | "monday" | "sunday";
+	// The month that the fiscal year starts on. 0 = January, 11 = December
+	fiscalYearStartMonth: number;
+	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
+	// v1: timepicker.nowDelay
+	nowDelay?: string;
+}
+
+export const defaultTimeSettingsSpec = (): TimeSettingsSpec => ({
+	timezone: "browser",
+	from: "now-6h",
+	to: "now",
+	autoRefresh: "",
+	autoRefreshIntervals: [
+"5s",
+"10s",
+"30s",
+"1m",
+"5m",
+"15m",
+"30m",
+"1h",
+"2h",
+"1d",
+],
+	hideTimepicker: false,
+	fiscalYearStartMonth: 0,
+});
+
+export interface TimeRangeOption {
+	display: string;
+	from: string;
+	to: string;
+}
+
+export const defaultTimeRangeOption = (): TimeRangeOption => ({
+	display: "Last 6 hours",
+	from: "now-6h",
+	to: "now",
 });
 
 export interface Spec {
