@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { AdHocFilterWithLabels, AdHocFiltersComboboxRenderer } from '@grafana/scenes';
+import { AdHocFilterWithLabels, AdHocFiltersComboboxRenderer, AdHocFiltersController } from '@grafana/scenes';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
@@ -83,7 +83,7 @@ export function SilencesFilter({ silences }: SilencesFilterProps) {
   );
 }
 
-class SilenceFiltersController {
+class SilenceFiltersController implements AdHocFiltersController {
   private silencesRef: React.RefObject<Silence[]>;
   private filters: AdHocFilterWithLabels[];
   private setFilters: (filters: AdHocFilterWithLabels[]) => void;
@@ -114,11 +114,11 @@ class SilenceFiltersController {
       allowCustomValue: true,
       supportsMultiValueOperators: false,
       wip: this.wip,
-      inputPlaceholder: 'Search by matchers',
+      inputPlaceholder: t('alerting.silences.filter.search-by-matchers', 'Search by matchers'),
     };
   }
 
-  async getKeys(): Promise<Array<SelectableValue<string>>> {
+  async getKeys(_currentKey: string | null): Promise<Array<SelectableValue<string>>> {
     const keys = new Set<string>();
     for (const silence of this.silencesRef.current ?? []) {
       for (const matcher of silence.matchers ?? []) {

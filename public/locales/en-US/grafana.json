@@ -3171,6 +3171,9 @@
     },
     "silences": {
       "affected-instances": "Affected alert instances",
+      "filter": {
+        "search-by-matchers": "Search by matchers"
+      },
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "operator": {
         "equals": "Equals",
