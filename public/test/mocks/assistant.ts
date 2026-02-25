@@ -29,21 +29,28 @@ export const useInlineAssistant = jest.fn().mockReturnValue({
 });
 
 // Stub components for AITextInput and AITextArea
-export const AITextInput = jest.fn(({ value, onChange, ...props }: any) => {
+type AIMockProps = {
+  value: string;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+  'data-testid'?: string;
+};
+
+export const AITextInput = jest.fn(({ value, onChange, ...props }: AIMockProps) => {
   const React = require('react');
   return React.createElement('input', {
     value,
-    onChange: (e: any) => onChange?.(e.target.value),
+    onChange: (e: { target: { value: string } }) => onChange?.(e.target.value),
     'data-testid': props['data-testid'],
     placeholder: props.placeholder,
   });
 });
 
-export const AITextArea = jest.fn(({ value, onChange, ...props }: any) => {
+export const AITextArea = jest.fn(({ value, onChange, ...props }: AIMockProps) => {
   const React = require('react');
   return React.createElement('textarea', {
     value,
-    onChange: (e: any) => onChange?.(e.target.value),
+    onChange: (e: { target: { value: string } }) => onChange?.(e.target.value),
     'data-testid': props['data-testid'],
     placeholder: props.placeholder,
   });
