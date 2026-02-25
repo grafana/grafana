@@ -43,13 +43,13 @@ An Advisor report can contain the following tasks and action suggestions:
 - [Investigation needed](#investigation-needed)
 - [No action needed](#no-action-needed)
 
+![Action needed](/media/docs/grafana-advisor/advisor-g13.png)
+
+{{< admonition type="note" >}}
+
 You can configure which checks Advisor will run. See how in [Configure application](#advisor-menu).
 
-### Use Grafana Advisor with Grafana Assistant
-
-You can use Advisor with the Grafana Assistant, a purpose-built LLM in Grafana Cloud that allows you to troubleshoot incidents, manage resources, and answer product questions in minutes. The Assistant removes manual operations and speeds up response time. Strong privacy and security controls ensure conversations respect RBAC, route through vetted service providers, and rely on your telemetry to produce action-ready results.
-
-To learn more, refer to the [Grafana Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/).
+{{< /admonition >}}
 
 ### Action needed  
 
@@ -60,20 +60,21 @@ For each item, one or more buttons appear:
 - Fix the issue. 
 - The [Grafana Assistant](#use-grafana-advisor-with-grafana-assistant) sparkle icon. 
 - Retry the check.
-- Hide the error. 
-  - If you hide an error you can see it again by clicking the **Hide/Show silenced errors** eye icon on the top right corner.
-
-![Action needed](/media/docs/grafana-advisor/action_needed.png)
+- Hide the error. If you hide an error you can see it again by clicking the **Hide/Show silenced errors** eye icon on the top right corner.
 
 ### Investigation needed 
 
 This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the **Action needed** section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
 
-![Investigation needed](/media/docs/grafana-advisor/investigation-needed.png)
-
 ### No action needed 
 
 This collapsible section provides more details about which checks have been performed and how many items have been analyzed. You can configure which checks Advisor will run. See how in [Advisor menu > Configure application](#advisor-menu).
+
+### Use Grafana Advisor with Grafana Assistant
+
+You can use Advisor with the Grafana Assistant, a purpose-built LLM in Grafana Cloud that allows you to troubleshoot incidents, manage resources, and answer product questions in minutes. The Assistant removes manual operations and speeds up response time. Strong privacy and security controls ensure conversations respect RBAC, route through vetted service providers, and rely on your telemetry to produce action-ready results.
+
+To learn more, refer to the [Grafana Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/).
 
 ## Advisor menu
 
