@@ -496,8 +496,6 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					}
 
 					keysDeleted = keysDeleted + int64(len(keysToDelete))
-				} else {
-					b.log.Info("garbage collection not deleting any keys because dry run mode is enabled")
 				}
 			}
 		}
