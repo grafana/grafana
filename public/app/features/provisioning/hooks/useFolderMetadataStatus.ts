@@ -33,11 +33,7 @@ export function useFolderMetadataStatus(folderUID: string): FolderMetadataStatus
     repoName ? { name: repoName, path: folderJsonPath } : skipToken
   );
 
-  if (isRepoViewLoading) {
-    return 'loading';
-  }
-
-  if (isFileLoading) {
+  if (isRepoViewLoading || isFileLoading) {
     return 'loading';
   }
 
