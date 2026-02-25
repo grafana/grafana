@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Haricî Alertmanager'lar",
-      "extra-config-warning": {
-        "content": "Grafana Alertmanager'ın, içe aktarılmış yapılandırmalarla birleştirilmiş yapılandırması görüntülenir. Bu birleştirilmiş görünüm, kullanıcı arayüzünde salt okunur durumdadır.",
-        "title": "İçe aktarılan yapılandırma"
-      },
       "noOptionsMessage-no-datasources-found": "Veri kaynağı bulunamadı"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "Ek açıklama olay işaretçileri için kullanılacak renk",
       "description-enabled-annotation-query-issued-every-dashboard": "Etkinleştirildiğinde her pano yenilemesinde açıklama sorgusu çalıştırılır",
       "description-hidden": "Ek açıklama sorguları, panonun üst kısmından açılabilir veya kapatılabilir. Bu seçenek işaretlendiğinde bu açma/kapama gizlenecektir.",
+      "error-loading-panels": "",
       "label-color": "Renk",
       "label-data-source": "Veri kaynağı",
       "label-enabled": "Etkin",
@@ -6444,6 +6441,7 @@
       "delete": "Sil",
       "description-color-annotation-event-markers": "Ek açıklama olay işaretçileri için kullanılacak renk",
       "description-enabled-annotation-query-issued-every-dashboard": "Etkinleştirildiğinde her pano yenilemesinde açıklama sorgusu çalıştırılır",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Ek açıklama denetimlerini şurada göster:",
       "label-color": "Renk",
       "label-data-source": "Veri kaynağı",
@@ -12900,6 +12898,7 @@
       "header-status": "Durum",
       "header-title": "Başlık",
       "header-type": "Tür",
+      "missing-folder-metadata": "",
       "search-placeholder": "Yola veya başlığa göre ara",
       "source": "Kaynak",
       "status-pending": "Bekliyor",
@@ -13364,6 +13363,7 @@
       },
       "card-click": "{{id}} kartını seçin",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Sorgular ve İfadeler",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
       "transformations": "Dönüşümler",
