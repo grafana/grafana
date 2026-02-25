@@ -114,7 +114,8 @@ async function fillConnectionForm(
   });
 
   if (type !== 'local' && data.branch) {
-    const branchCombobox = screen.getByRole('combobox');
+    const comboboxes = screen.getAllByRole('combobox');
+    const branchCombobox = comboboxes[0];
     await user.click(branchCombobox);
     await user.clear(branchCombobox);
     await user.paste(data.branch);
@@ -122,7 +123,16 @@ async function fillConnectionForm(
   }
 
   if (data.path) {
-    await pasteIntoInput(user, screen.getByRole('textbox', { name: /Path/i }), data.path);
+    if (type === 'local') {
+      await pasteIntoInput(user, screen.getByRole('textbox', { name: /Path/i }), data.path);
+    } else {
+      const comboboxes = screen.getAllByRole('combobox');
+      const pathCombobox = comboboxes[1];
+      await user.click(pathCombobox);
+      await user.clear(pathCombobox);
+      await user.paste(data.path);
+      await user.keyboard('{Enter}');
+    }
   }
 }
 
@@ -340,7 +350,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
 
       // User edits a visible field (branch)
-      const branchCombobox = screen.getByRole('combobox');
+      const branchCombobox = screen.getAllByRole('combobox')[0];
       await user.clear(branchCombobox);
       await user.paste('develop');
       await user.keyboard('{Enter}');
@@ -373,8 +383,8 @@ describe('ProvisioningWizard', () => {
       await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
       expect(await screen.findByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
 
-      const clearButton = screen.getByTitle(/Clear value/i);
-      await user.click(clearButton);
+      const clearButtons = screen.getAllByTitle(/Clear value/i);
+      await user.click(clearButtons[0]); // Clear the branch combobox
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
@@ -397,9 +407,8 @@ describe('ProvisioningWizard', () => {
         url: 'https://gitlab.com/test/repo',
       });
 
-      // Connection step fields
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
 
     it('should render Bitbucket-specific fields', async () => {
@@ -416,9 +425,8 @@ describe('ProvisioningWizard', () => {
         url: 'https://bitbucket.org/test/repo',
       });
 
-      // Connection step fields
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
 
     it('should render Git-specific fields', async () => {
@@ -435,9 +443,8 @@ describe('ProvisioningWizard', () => {
         url: 'https://git.example.com/test/repo.git',
       });
 
-      // Connection step fields
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
 
     it('should render local repository fields', async () => {

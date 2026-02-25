@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Combobox, Field, Input, Stack } from '@grafana/ui';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { useGetRepositoryFolders } from '../hooks/useGetRepositoryFolders';
 import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
@@ -22,7 +23,7 @@ export const ConnectStep = memo(function ConnectStep() {
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryName = ''] = watch(['repositoryName']);
+  const [repositoryName = '', branch = ''] = watch(['repositoryName', 'repository.branch']);
   const isGitBased = isGitProvider(type);
 
   const {
@@ -33,6 +34,15 @@ export const ConnectStep = memo(function ConnectStep() {
   } = useGetRepositoryRefs({
     repositoryType: type,
     repositoryName: repositoryName,
+  });
+
+  const {
+    options: folderOptions,
+    loading: isFoldersLoading,
+    error: foldersError,
+  } = useGetRepositoryFolders({
+    repositoryName: repositoryName || undefined,
+    ref: branch || undefined,
   });
 
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
@@ -83,14 +93,26 @@ export const ConnectStep = memo(function ConnectStep() {
             noMargin
             label={gitFields.pathConfig.label}
             description={gitFields.pathConfig.description}
-            error={errors?.repository?.path?.message}
+            error={errors?.repository?.path?.message || foldersError}
             invalid={!!errors?.repository?.path?.message}
             required={gitFields.pathConfig.required}
           >
-            <Input
-              {...register('repository.path', gitFields.pathConfig.validation)}
-              id="git-path"
-              placeholder={gitFields.pathConfig.placeholder}
+            <Controller
+              name="repository.path"
+              control={control}
+              rules={gitFields.pathConfig.validation}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Combobox
+                  invalid={!!errors?.repository?.path?.message}
+                  onChange={(option) => onChange(option?.value ?? '')}
+                  placeholder={gitFields.pathConfig.placeholder}
+                  options={folderOptions}
+                  loading={isFoldersLoading}
+                  createCustomValue
+                  isClearable
+                  {...field}
+                />
+              )}
             />
           </Field>
         </>
