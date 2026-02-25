@@ -240,7 +240,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
 2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
-2025-06-24,tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 2025-06-29,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true

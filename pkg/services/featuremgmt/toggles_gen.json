@@ -4035,7 +4035,8 @@
       "metadata": {
         "name": "tabularNumbers",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-06-24T11:52:03Z"
+        "creationTimestamp": "2025-06-24T11:52:03Z",
+        "deletionTimestamp": "2026-02-24T18:16:36Z"
       },
       "spec": {
         "description": "Use fixed-width numbers globally in the UI",

@@ -1929,13 +1929,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "tabularNumbers",
-			Description: "Use fixed-width numbers globally in the UI",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
-		},
-		{
 			Name:         "newInfluxDSConfigPageDesign",
 			Description:  "Enables new design for the InfluxDB data source configuration page",
 			Stage:        FeatureStagePrivatePreview,
