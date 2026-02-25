@@ -41,6 +41,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true, // We'll check quota condition instead
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to be exceeded
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
@@ -73,6 +74,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 1 dashboard was created
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -116,6 +118,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to be exceeded after initial sync
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
@@ -171,6 +174,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -256,6 +260,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -376,6 +381,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to be exceeded after initial sync
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
