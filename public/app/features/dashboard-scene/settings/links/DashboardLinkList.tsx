@@ -23,9 +23,7 @@ export function DashboardLinkList({
   onDelete,
 }: DashboardLinkListProps) {
   const styles = useStyles2(getStyles);
-
-  const editableLinks = links.filter((link) => link.origin === undefined);
-  const isEmptyList = editableLinks.length === 0;
+  const isEmptyList = links.length === 0;
 
   if (isEmptyList) {
     return (
@@ -76,7 +74,7 @@ export function DashboardLinkList({
           </tr>
         </thead>
         <tbody>
-          {editableLinks.map((link, idx) => (
+          {links.map((link, idx) => (
             <tr key={`${link.title}-${idx}`} onKeyDown={(e) => handleKeyDown(e, idx)} tabIndex={0}>
               <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
                 <Icon name="external-link-alt" /> &nbsp; {link.type}
@@ -98,7 +96,7 @@ export function DashboardLinkList({
                 )}
               </td>
               <td style={{ width: '1%' }} role="gridcell">
-                {editableLinks.length > 1 && idx !== editableLinks.length - 1 ? (
+                {links.length > 1 && idx !== links.length - 1 ? (
                   <IconButton
                     name="arrow-down"
                     onClick={() => onOrderChange(idx, 1)}

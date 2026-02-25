@@ -80,7 +80,8 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
   const dashboard = getDashboardSceneFor(model);
   const { links } = dashboard.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const linkToEdit = editIndex !== undefined ? links[editIndex] : undefined;
+  const editableLinks = links.filter((link) => link.origin === undefined);
+  const linkToEdit = editIndex !== undefined ? editableLinks[editIndex] : undefined;
 
   if (linkToEdit) {
     return (
@@ -99,7 +100,7 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
       <DashboardLinkList
-        links={links}
+        links={editableLinks}
         onNew={model.onNewLink}
         onEdit={model.onEdit}
         onDelete={model.onDelete}
