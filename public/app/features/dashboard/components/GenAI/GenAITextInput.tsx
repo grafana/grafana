@@ -1,8 +1,14 @@
+import { css } from '@emotion/css';
+
 import { AITextInput } from '@grafana/assistant';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Input } from '@grafana/ui';
+import { Input, useStyles2 } from '@grafana/ui';
 
 import { useIsAssistantAvailable } from './hooks';
+
+const TITLE_USER_PROMPT_INSTRUCTION =
+  'Generate a title - no markdown, no description or reasoning, just the title.';
 
 export interface GenAITextInputProps {
   value: string;
@@ -11,10 +17,26 @@ export interface GenAITextInputProps {
   onBlur?: () => void;
   onFocus?: () => void;
   systemPrompt?: string;
+  userPrompt?: string;
   autoGenerate?: boolean;
   id?: string;
   'data-testid'?: string;
   inputRef?: React.Ref<HTMLInputElement>;
+}
+
+function buildTitleUserPrompt(textInput: string, userPrompt?: string): string {
+  const parts = [TITLE_USER_PROMPT_INSTRUCTION];
+
+  if (userPrompt) {
+    parts.push(`Panel context:\n${userPrompt}`);
+  }
+
+  const trimmedInput = textInput.trim();
+  if (trimmedInput) {
+    parts.push(`User request: ${trimmedInput}`);
+  }
+
+  return parts.join('\n\n');
 }
 
 /**
@@ -28,12 +50,14 @@ export function GenAITextInput({
   onBlur,
   onFocus,
   systemPrompt,
+  userPrompt,
   autoGenerate = false,
   id,
   'data-testid': dataTestId,
   inputRef,
 }: GenAITextInputProps) {
   const isAssistant = useIsAssistantAvailable();
+  const styles = useStyles2(getStyles);
 
   if (isAssistant) {
     return (
@@ -47,6 +71,8 @@ export function GenAITextInput({
         placeholder={t('gen-ai.text-input.placeholder', 'Type a title or let AI generate one...')}
         autoGenerate={autoGenerate}
         streaming
+        getUserPrompt={(textInput) => buildTitleUserPrompt(textInput, userPrompt)}
+        className={styles.assistantInput}
       />
     );
   }
@@ -63,3 +89,12 @@ export function GenAITextInput({
     />
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  assistantInput: css({
+    // Keep the AI action button inside narrow scrollable panes.
+    '& button[aria-label="Generate with AI"]': {
+      marginRight: theme.spacing(0.5),
+    },
+  }),
+});

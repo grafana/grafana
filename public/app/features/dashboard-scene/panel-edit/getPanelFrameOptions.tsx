@@ -11,8 +11,8 @@ import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/G
 import { GenAITextArea } from 'app/features/dashboard/components/GenAI/GenAITextArea';
 import { GenAITextInput } from 'app/features/dashboard/components/GenAI/GenAITextInput';
 import {
-  buildDescriptionInputSystemPrompt,
-  buildTitleInputSystemPrompt,
+  buildAssistantDescriptionPrompt,
+  buildAssistantTitlePrompt,
 } from 'app/features/dashboard/components/GenAI/assistantContext';
 import { LLMFallbackAddon, useIsAssistantAvailable } from 'app/features/dashboard/components/GenAI/hooks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -202,9 +202,9 @@ export function PanelFrameTitleInput({
 
   const isDefaultTitle = !title || title === t('dashboard.new-panel-title', 'New panel');
 
-  const systemPrompt = useMemo(() => {
+  const prompt = useMemo(() => {
     const dashboard = getDashboardSceneFor(panel);
-    return buildTitleInputSystemPrompt(vizPanelToPanel(panel), transformSceneToSaveModel(dashboard));
+    return buildAssistantTitlePrompt(vizPanelToPanel(panel), transformSceneToSaveModel(dashboard));
   }, [panel]);
 
   return (
@@ -215,7 +215,8 @@ export function PanelFrameTitleInput({
       onComplete={(val) => editPanelTitleAction(panel, val)}
       onFocus={() => setPrevTitle(title)}
       onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
-      systemPrompt={systemPrompt}
+      systemPrompt={prompt.systemPrompt}
+      userPrompt={prompt.prompt}
       autoGenerate={isAssistantAvailable && isDefaultTitle}
       id={id}
       inputRef={ref}
@@ -227,9 +228,9 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   const { description } = panel.useState();
   const [prevDescription, setPrevDescription] = React.useState(panel.state.description);
 
-  const systemPrompt = useMemo(() => {
+  const prompt = useMemo(() => {
     const dashboard = getDashboardSceneFor(panel);
-    return buildDescriptionInputSystemPrompt(vizPanelToPanel(panel), transformSceneToSaveModel(dashboard));
+    return buildAssistantDescriptionPrompt(vizPanelToPanel(panel), transformSceneToSaveModel(dashboard));
   }, [panel]);
 
   return (
@@ -253,7 +254,8 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
           undo: () => panel.setState({ description: prevDescription }),
         });
       }}
-      systemPrompt={systemPrompt}
+      systemPrompt={prompt.systemPrompt}
+      userPrompt={prompt.prompt}
       autoGenerate={!description}
       id={id}
     />
