@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Külső riasztáskezelők",
-      "extra-config-warning": {
-        "content": "Ez a nézet mutatja a Grafana Alertmanager és az importált konfigurációk egyesített beállításait. Az összevont nézet csak olvasható a felhasználói felületen.",
-        "title": "Importált konfiguráció"
-      },
       "noOptionsMessage-no-datasources-found": "Nem található adatforrás"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "A jegyzetesemény-jelölőkhöz használandó szín",
       "description-enabled-annotation-query-issued-every-dashboard": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
       "description-hidden": "A jegyzetlekérdezések be- és kikapcsolhatók az irányítópult tetején. Ha ez a lehetőség be van jelölve, ez a kapcsoló el lesz rejtve.",
+      "error-loading-panels": "",
       "label-color": "Szín",
       "label-data-source": "Adatforrás",
       "label-enabled": "Engedélyezve",
@@ -6444,6 +6441,7 @@
       "delete": "Törlés",
       "description-color-annotation-event-markers": "A jegyzetesemény-jelölőkhöz használandó szín",
       "description-enabled-annotation-query-issued-every-dashboard": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Jegyzetvezérlők megjelenítése itt:",
       "label-color": "Szín",
       "label-data-source": "Adatforrás",
@@ -12900,6 +12898,7 @@
       "header-status": "Állapot",
       "header-title": "Cím",
       "header-type": "Típus",
+      "missing-folder-metadata": "",
       "search-placeholder": "Keresés útvonal vagy cím alapján",
       "source": "Forrás",
       "status-pending": "Függőben",
@@ -13364,6 +13363,7 @@
       },
       "card-click": "{{id}} kártya kiválasztása",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Lekérdezések és kifejezések",
       "toggle-size": "Oldalsáv méretének átváltása",
       "transformations": "Transzformációk",

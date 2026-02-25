@@ -466,10 +466,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanager Eksternal",
-      "extra-config-warning": {
-        "content": "Ini menunjukkan gabungan konfigurasi alertmanager Grafana dengan konfigurasi yang diimpor. Tampilan gabungan ini bersifat hanya-baca di UI.",
-        "title": "Konfigurasi yang diimpor"
-      },
       "noOptionsMessage-no-datasources-found": "Tidak ada sumber data yang ditemukan"
     },
     "alert-menu": {
@@ -4977,6 +4973,7 @@
       "description-color-annotation-event-markers": "Warna yang akan digunakan untuk penanda peristiwa anotasi",
       "description-enabled-annotation-query-issued-every-dashboard": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap muat ulang dasbor",
       "description-hidden": "Kueri anotasi dapat diaktifkan atau dinonaktifkan di bagian atas dasbor. Dengan mencentang opsi ini, tombol ini akan disembunyikan.",
+      "error-loading-panels": "",
       "label-color": "Warna",
       "label-data-source": "Sumber data",
       "label-enabled": "Aktif",
@@ -6416,6 +6413,7 @@
       "delete": "Hapus",
       "description-color-annotation-event-markers": "Warna yang akan digunakan untuk penanda peristiwa anotasi",
       "description-enabled-annotation-query-issued-every-dashboard": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap muat ulang dasbor",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Tampilkan kontrol anotasi di",
       "label-color": "Warna",
       "label-data-source": "Sumber data",
@@ -12840,6 +12838,7 @@
       "header-status": "Status",
       "header-title": "Judul",
       "header-type": "Jenis",
+      "missing-folder-metadata": "",
       "search-placeholder": "Cari berdasarkan jalur atau judul",
       "source": "Sumber",
       "status-pending": "Tertunda",
@@ -13303,6 +13302,7 @@
       },
       "card-click": "Pilih kartu {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Kueri & Ekspresi",
       "toggle-size": "Alihkan ukuran bilah sisi",
       "transformations": "Transformasi",
