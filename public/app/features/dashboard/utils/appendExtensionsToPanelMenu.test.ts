@@ -86,6 +86,21 @@ describe('appendExtensionsToPanelMenu', () => {
     expect(rootMenu[1]).toMatchObject({ text: 'Root action 2', href: '/root/2' });
   });
 
+  it('does not push root items whose text is in reservedNames', () => {
+    const rootMenu: PanelMenuItem[] = [];
+    const reservedNames = new Set(['View', 'Remove']);
+    const extensions = [
+      createLink({ title: 'View', path: '/view', group: { name: ROOT_CATEGORY } }),
+      createLink({ title: 'Root action', path: '/root/1', group: { name: ROOT_CATEGORY } }),
+      createLink({ title: 'Remove', path: '/remove', group: { name: ROOT_CATEGORY } }),
+    ];
+
+    appendExtensionsToPanelMenu(createOptions({ rootMenu, extensions, reservedNames }));
+
+    expect(rootMenu).toHaveLength(1);
+    expect(rootMenu[0]).toMatchObject({ text: 'Root action', href: '/root/1' });
+  });
+
   it('creates root-level submenu for SUBMENU_CATEGORY_PREFIX group', () => {
     const rootMenu: PanelMenuItem[] = [];
     const extensions = [

@@ -1,4 +1,5 @@
 import { IconName, PanelMenuItem, PluginExtensionLink } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { truncateTitle } from 'app/features/plugins/extensions/utils';
 
 const METRICS_DRILLDOWN_CATEGORY = 'metrics-drilldown';
@@ -25,7 +26,8 @@ export function appendExtensionsToPanelMenu(options: AppendToPanelMenuOpts): voi
     if (key === ROOT_CATEGORY) {
       const menuItem = submenuGroups[key];
       if (shouldAppendSubmenu(menuItem)) {
-        rootMenu.push(...menuItem.subMenu);
+        const itemsToPush = menuItem.subMenu.filter((item) => !reservedNames.has(item.text ?? ''));
+        rootMenu.push(...itemsToPush);
       }
       continue;
     }
@@ -193,7 +195,7 @@ function getGroupForExtensionLink(extension: PluginExtensionLink): { name: strin
 
   if (extension.category === METRICS_DRILLDOWN_CATEGORY) {
     return {
-      name: `${ROOT_CATEGORY}/Metrics drilldown`,
+      name: `${ROOT_CATEGORY}/${t('dashboard-scene.panel-menu-behavior.async-func.text.metrics-drilldown', 'Metrics drilldown')}`,
       icon: 'code-branch',
     };
   }
