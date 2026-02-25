@@ -431,12 +431,13 @@ type Cfg struct {
 	FrontendAnalyticsConsoleReporting   bool
 
 	// LDAP
-	LDAPAuthEnabled       bool
-	LDAPSkipOrgRoleSync   bool
-	LDAPConfigFilePath    string
-	LDAPAllowSignup       bool
-	LDAPActiveSyncEnabled bool
-	LDAPSyncCron          string
+	LDAPAuthEnabled                 bool
+	LDAPSkipOrgRoleSync             bool
+	LDAPConfigFilePath              string
+	LDAPAllowSignup                 bool
+	LDAPAllowInsecureEmailLookup    bool
+	LDAPActiveSyncEnabled           bool
+	LDAPSyncCron                    string
 
 	DefaultTheme    string
 	DefaultLanguage string
@@ -1532,6 +1533,7 @@ func (cfg *Cfg) readLDAPConfig() {
 	cfg.LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
 	cfg.LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	cfg.LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
+	cfg.LDAPAllowInsecureEmailLookup = ldapSec.Key("allow_insecure_email_lookup").MustBool(false)
 }
 
 func (cfg *Cfg) handleAWSConfig() {

@@ -125,6 +125,16 @@ func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identit
 	return nil, retErr
 }
 
+func (c *LDAP) ldapLookupParams(info *login.ExternalUserInfo) login.UserLookupParams {
+	if !c.cfg.LDAPAllowInsecureEmailLookup {
+		return login.UserLookupParams{}
+	}
+	return login.UserLookupParams{
+		Login: &info.Login,
+		Email: &info.Email,
+	}
+}
+
 func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *authn.Identity {
 	return &authn.Identity{
 		OrgID:           orgID,
@@ -144,10 +154,7 @@ func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *
 			SyncPermissions: true,
 			SyncOrgRoles:    !c.cfg.LDAPSkipOrgRoleSync,
 			AllowSignUp:     c.cfg.LDAPAllowSignup,
-			LookUpParams: login.UserLookupParams{
-				Login: &info.Login,
-				Email: &info.Email,
-			},
+			LookUpParams:    c.ldapLookupParams(info),
 		},
 	}
 }

@@ -35,6 +35,8 @@ type ldapTestCase struct {
 	expectedAuthInfoErr error
 	disableCalled       bool
 	expectDisable       bool
+
+	allowInsecureEmailLookup bool
 }
 
 func TestLDAP_AuthenticateProxy_Disabled(t *testing.T) {
@@ -81,10 +83,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 					FetchSyncedUser: true,
 					SyncOrgRoles:    true,
 					SyncPermissions: true,
-					LookUpParams: login.UserLookupParams{
-						Email: strPtr("test@test.com"),
-						Login: strPtr("test"),
-					},
+					LookUpParams:    login.UserLookupParams{},
 				},
 			},
 		},
@@ -164,10 +163,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 					FetchSyncedUser: true,
 					SyncOrgRoles:    true,
 					SyncPermissions: true,
-					LookUpParams: login.UserLookupParams{
-						Email: strPtr("test@test.com"),
-						Login: strPtr("test"),
-					},
+					LookUpParams:    login.UserLookupParams{},
 				},
 			},
 		},
@@ -177,6 +173,43 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 			password:        "wrong",
 			expectedErr:     errInvalidPassword,
 			expectedLDAPErr: ldap.ErrInvalidCredentials,
+		},
+		{
+			desc:                     "should set LookUpParams when allow_insecure_email_lookup is true",
+			username:                 "test",
+			password:                 "test123",
+			allowInsecureEmailLookup: true,
+			expectedLDAPInfo: &login.ExternalUserInfo{
+				AuthModule: login.LDAPAuthModule,
+				AuthId:     "123",
+				Email:      "lookup@test.com",
+				Login:      "lookupuser",
+				Name:       "Lookup User",
+				Groups:     []string{"1"},
+				OrgRoles:   map[int64]org.RoleType{1: org.RoleEditor},
+			},
+			expectedIdentity: &authn.Identity{
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleEditor},
+				Login:           "lookupuser",
+				Name:            "Lookup User",
+				Email:           "lookup@test.com",
+				AuthenticatedBy: login.LDAPAuthModule,
+				AuthID:          "123",
+				Groups:          []string{"1"},
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					SyncTeams:       true,
+					EnableUser:      true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					SyncPermissions: true,
+					LookUpParams: login.UserLookupParams{
+						Email: strPtr("lookup@test.com"),
+						Login: strPtr("lookupuser"),
+					},
+				},
+			},
 		},
 		{
 			desc:            "should fail if not found",
@@ -225,8 +258,13 @@ func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 		ExpectedError:    tt.expectedAuthInfoErr,
 	}
 
+	cfg := setting.NewCfg()
+	if tt.allowInsecureEmailLookup {
+		cfg.LDAPAllowInsecureEmailLookup = true
+	}
+
 	c := ProvideLDAP(
-		setting.NewCfg(),
+		cfg,
 		&service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr, ExpectedEnabled: true},
 		userService,
 		authInfoService,
