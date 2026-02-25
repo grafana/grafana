@@ -87,7 +87,9 @@ export function useNotificationConfigNav() {
         id: 'notification-config-policies',
         text: t('alerting.navigation.notification-policies', 'Notification policies'),
         url: ALERTING_PATHS.ROUTES,
-        active: location.pathname.startsWith(ALERTING_PATHS.ROUTES),
+        active:
+          location.pathname.startsWith(ALERTING_PATHS.ROUTES) &&
+          !location.pathname.startsWith(ALERTING_PATHS.TIME_INTERVALS),
         parentItem: notificationConfigNav,
       });
     }

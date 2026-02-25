@@ -3381,7 +3381,7 @@
   },
   "public/app/plugins/datasource/dashboard/DashboardQueryEditor.tsx": {
     "no-restricted-syntax": {
-      "count": 6
+      "count": 4
     }
   },
   "public/app/plugins/datasource/dashboard/runSharedRequest.ts": {

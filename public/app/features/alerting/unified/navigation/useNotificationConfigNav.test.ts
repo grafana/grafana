@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -15,8 +16,14 @@ import {
 
 // Mock dependencies
 jest.mock('react-router-dom-v5-compat', () => ({
-  useLocation: jest.fn(() => ({ pathname: '/alerting/notifications' })),
+  useLocation: jest.fn(),
 }));
+
+const mockUseLocation = jest.mocked(useLocation);
+
+function mockLocation(pathname: string) {
+  mockUseLocation.mockReturnValue({ pathname, search: '', hash: '', state: null, key: 'default' });
+}
 
 jest.mock('app/types/store', () => ({
   useSelector: jest.fn((selector) =>
@@ -45,6 +52,7 @@ describe('useNotificationConfigNav', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLocation('/alerting/notifications');
   });
 
   afterEach(() => {
@@ -101,6 +109,34 @@ describe('useNotificationConfigNav', () => {
       expect(result.current.pageNav?.children?.[1].id).toBe('notification-config-templates');
     });
 
+    it('should only mark the time intervals tab as active when on time intervals path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/routes/mute-timing');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-time-intervals');
+    });
+
+    it('should only mark the notification policies tab as active when on routes path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/routes');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-policies');
+    });
+
     it('should not show tabs bar when only one tab is visible', () => {
       // Only allow contact points
       mockHasPermission.mockImplementation((action: AccessControlAction) => {
@@ -151,6 +187,7 @@ describe('consolidated navigation hooks', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLocation('/alerting/notifications');
     mockHasPermission.mockReturnValue(true);
   });
 
