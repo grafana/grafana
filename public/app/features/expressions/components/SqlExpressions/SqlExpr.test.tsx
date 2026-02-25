@@ -59,9 +59,17 @@ const mockBackendSrv = {
   }),
 };
 
+const mockDataSourceSrv = {
+  get: jest.fn().mockResolvedValue({
+    getRef: () => ({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
+  }),
+  getInstanceSettings: jest.fn().mockReturnValue({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => mockBackendSrv,
+  getDataSourceSrv: () => mockDataSourceSrv,
 }));
 
 // Note: Add more mocks if needed for other lazy components
