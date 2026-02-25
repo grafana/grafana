@@ -83,6 +83,9 @@ export const ActionRow = ({
       ? [SearchLayout.Folders]
       : [];
 
+  const createdByMe = `user:${contextSrv.user.uid}`;
+  const isFilteredByMe = state.createdBy === createdByMe;
+
   return (
     <Stack justifyContent="space-between" alignItems="center">
       <Stack alignItems="center">
@@ -112,7 +115,7 @@ export const ActionRow = ({
               label={t('search.actions.created-by-me', 'Created by me')}
               // Make sure the checkbox is checked if the createdBy is the current user
               value={state.createdBy === `user:${contextSrv.user.uid}`}
-              onChange={() => onCreatedByChange(state.createdBy ? undefined : `user:${contextSrv.user.uid}`)}
+              onChange={() => onCreatedByChange(isFilteredByMe ? undefined : createdByMe)}
             />
           </div>
         )}
