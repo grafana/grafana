@@ -43,7 +43,7 @@ export function QueryEditor({
         </Text>
         <Box marginTop={0.25}>
           <VariableQueryEditor
-            key={datasource.uid}
+            key={datasource.type}
             datasource={datasource}
             query={queryWithDefaults}
             templateSrv={getTemplateSrv()}
@@ -59,7 +59,7 @@ export function QueryEditor({
       <Box marginBottom={2}>
         <Box marginTop={0.25}>
           <VariableQueryEditor
-            key={datasource.uid}
+            key={datasource.type}
             datasource={datasource}
             query={queryWithDefaults}
             onChange={onQueryChange}
