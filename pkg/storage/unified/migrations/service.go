@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,12 +21,13 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/migrati
 var logger = log.New("storage.unified.migrations")
 
 type UnifiedStorageMigrationServiceImpl struct {
-	migrator UnifiedMigrator
-	cfg      *setting.Cfg
-	sqlStore db.DB
-	kv       kvstore.KVStore
-	client   resource.ResourceClient
-	registry *MigrationRegistry
+	migrator    UnifiedMigrator
+	tableLocker MigrationTableLocker
+	cfg         *setting.Cfg
+	sqlStore    db.DB
+	kv          kvstore.KVStore
+	client      resource.ResourceClient
+	registry    *MigrationRegistry
 }
 
 var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationServiceImpl)(nil)
@@ -33,6 +35,7 @@ var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationService
 // ProvideUnifiedStorageMigrationService is a Wire provider that creates the migration service.
 func ProvideUnifiedStorageMigrationService(
 	migrator UnifiedMigrator,
+	sql legacysql.LegacyDatabaseProvider,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	kv kvstore.KVStore,
@@ -40,12 +43,13 @@ func ProvideUnifiedStorageMigrationService(
 	registry *MigrationRegistry,
 ) contract.UnifiedStorageMigrationService {
 	return &UnifiedStorageMigrationServiceImpl{
-		migrator: migrator,
-		cfg:      cfg,
-		sqlStore: sqlStore,
-		kv:       kv,
-		client:   client,
-		registry: registry,
+		migrator:    migrator,
+		tableLocker: newTableLocker(sqlStore, sql),
+		cfg:         cfg,
+		sqlStore:    sqlStore,
+		kv:          kv,
+		client:      client,
+		registry:    registry,
 	}
 }
 
@@ -59,7 +63,7 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 	logger.Info("Running migrations for unified storage")
 	metrics.MUnifiedStorageMigrationStatus.Set(3)
-	return RegisterMigrations(ctx, p.migrator, p.cfg, p.sqlStore, p.client, p.registry)
+	return RegisterMigrations(ctx, p.migrator, p.tableLocker, p.cfg, p.sqlStore, p.client, p.registry)
 }
 
 // EnsureMigrationLogTable creates the unifiedstorage_migration_log table if it doesn't exist.
@@ -75,6 +79,7 @@ func EnsureMigrationLogTable(ctx context.Context, sqlStore db.DB, cfg *setting.C
 func RegisterMigrations(
 	ctx context.Context,
 	migrator UnifiedMigrator,
+	tableLocker MigrationTableLocker,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	client resource.ResourceClient,
@@ -93,7 +98,7 @@ func RegisterMigrations(
 		return err
 	}
 
-	if err := registerMigrations(ctx, cfg, mg, migrator, client, sqlStore, registry); err != nil {
+	if err := registerMigrations(ctx, cfg, mg, migrator, tableLocker, client, sqlStore, registry); err != nil {
 		return err
 	}
 

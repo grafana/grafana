@@ -1,23 +1,20 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { screen } from '@testing-library/react';
 import { UserEvent } from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import type { JSX } from 'react';
 import { render } from 'test/test-utils';
 
-import { useGetRepositoryRefsQuery } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
-import {
-  useCreateRepositoryJobsMutation,
-  useGetFrontendSettingsQuery,
-  useGetRepositoryFilesQuery,
-  useGetResourceStatsQuery,
-  useListRepositoryQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 
-import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
+import { setupProvisioningMswServer } from '../mocks/server';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 import { StepStatusProvider } from './StepStatusContext';
+
+setupProvisioningMswServer();
 
 const mockNavigate = jest.fn();
 
@@ -26,39 +23,13 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+// Keep useCreateOrUpdateRepository as jest.mock — it orchestrates a multi-step
+// test→create/update flow and the error tests need fine-grained call-by-call control.
 jest.mock('../hooks/useCreateOrUpdateRepository');
-jest.mock('../hooks/useConnectionOptions');
-jest.mock('@grafana/api-clients/rtkq/provisioning/v0alpha1', () => ({
-  ...jest.requireActual('@grafana/api-clients/rtkq/provisioning/v0alpha1'),
-  useGetRepositoryRefsQuery: jest.fn(),
-}));
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
-  useGetFrontendSettingsQuery: jest.fn(),
-  useGetRepositoryFilesQuery: jest.fn(),
-  useListRepositoryQuery: jest.fn(),
-  useGetResourceStatsQuery: jest.fn(),
-  useCreateRepositoryJobsMutation: jest.fn(),
-}));
 
 const mockUseCreateOrUpdateRepository = useCreateOrUpdateRepository as jest.MockedFunction<
   typeof useCreateOrUpdateRepository
 >;
-const mockUseGetRepositoryRefsQuery = useGetRepositoryRefsQuery as jest.MockedFunction<
-  typeof useGetRepositoryRefsQuery
->;
-const mockUseGetFrontendSettingsQuery = useGetFrontendSettingsQuery as jest.MockedFunction<
-  typeof useGetFrontendSettingsQuery
->;
-const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
-  typeof useGetRepositoryFilesQuery
->;
-const mockUseListRepositoryQuery = useListRepositoryQuery as jest.MockedFunction<typeof useListRepositoryQuery>;
-const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
-const mockUseCreateRepositoryJobsMutation = useCreateRepositoryJobsMutation as jest.MockedFunction<
-  typeof useCreateRepositoryJobsMutation
->;
-const mockUseConnectionOptions = useConnectionOptions as jest.MockedFunction<typeof useConnectionOptions>;
 
 function setup(jsx: JSX.Element) {
   return render(<StepStatusProvider>{jsx}</StepStatusProvider>);
@@ -155,128 +126,51 @@ async function fillConnectionForm(
   }
 }
 
+function setupMockSubmitData() {
+  const mockSubmitData = jest.fn();
+  const mockMutationState = {
+    status: QueryStatus.uninitialized,
+    isLoading: false,
+    error: null,
+    data: undefined,
+    isUninitialized: true,
+    isSuccess: false,
+    isError: false,
+    reset: jest.fn(),
+  };
+  (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
+    mockSubmitData,
+    mockMutationState,
+    mockMutationState,
+  ]);
+
+  mockSubmitData.mockResolvedValue({
+    data: {
+      metadata: {
+        name: 'test-repo-abc123',
+      },
+      spec: {
+        type: 'github',
+        title: 'Test Repository',
+      },
+    },
+  });
+
+  return mockSubmitData;
+}
+
 describe('ProvisioningWizard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Mock useGetRepositoryRefsQuery for GitHub repositories
-    mockUseGetRepositoryRefsQuery.mockReturnValue({
-      data: { items: [{ name: 'main' }, { name: 'develop' }] },
-      isLoading: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    // Mock useConnectionOptions to prevent async state updates
-    mockUseConnectionOptions.mockReturnValue({
-      options: [],
-      isLoading: false,
-      connections: [],
-      error: undefined,
-      refetch: jest.fn(),
-    });
-
-    mockUseGetFrontendSettingsQuery.mockReturnValue({
-      data: {
-        items: [],
-        allowImageRendering: true,
-        availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
-      },
-      isLoading: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    mockUseGetRepositoryFilesQuery.mockReturnValue({
-      data: [],
-      isLoading: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    mockUseListRepositoryQuery.mockReturnValue({
-      data: {
-        items: [
-          {
-            metadata: { name: 'test-repo', generation: 1 },
-            status: {
-              observedGeneration: 1,
-              health: {
-                healthy: true,
-                checked: Date.now(),
-                message: [],
-              },
-            },
-          },
-        ],
-      },
-      isLoading: false,
-      isFetching: false,
-      isError: false,
-      isSuccess: true,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    mockUseGetResourceStatsQuery.mockReturnValue({
-      data: {
-        instance: [],
-      },
-      isLoading: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    const mockCreateJob = jest.fn();
-    mockUseCreateRepositoryJobsMutation.mockReturnValue([
-      mockCreateJob,
-      {
-        status: QueryStatus.uninitialized,
-        isLoading: false,
-        error: null,
-        data: undefined,
-        isUninitialized: true,
-        isSuccess: false,
-        isError: false,
-        reset: jest.fn(),
-      },
-    ]);
-
-    const mockSubmitData = jest.fn();
-    const mockMutationState = {
-      status: QueryStatus.uninitialized,
-      isLoading: false,
-      error: null,
-      data: undefined,
-      isUninitialized: true,
-      isSuccess: false,
-      isError: false,
-      reset: jest.fn(),
-    };
-    (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
-      mockSubmitData,
-      mockMutationState,
-      mockMutationState,
-    ]);
-
-    mockSubmitData.mockResolvedValue({
-      data: {
-        metadata: {
-          name: 'test-repo-abc123',
-        },
-        spec: {
-          type: 'github',
-          title: 'Test Repository',
-        },
-      },
-    });
+    setupMockSubmitData();
   });
 
   describe('Happy Path', () => {
     it('should render choose auth type step initially for GitHub', async () => {
       setup(<ProvisioningWizard type="github" />);
 
-      expect(screen.getByRole('heading', { name: /Connect/i })).toBeInTheDocument();
+      // Wait for async operations (useConnectionOptions fetches) to settle
+      expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: /Use a personal access token to authenticate/i })).toBeInTheDocument();
       expect(
         screen.getByRole('radio', { name: /Use a GitHub App for enhanced security and team colla/i })
@@ -306,23 +200,16 @@ describe('ProvisioningWizard', () => {
     });
 
     it('should progress through first 3 steps successfully', async () => {
-      mockUseGetResourceStatsQuery.mockReturnValue({
-        data: {
-          instance: [{ group: 'dashboard.grafana.app', count: 1 }],
-        },
-        isLoading: false,
-        error: null,
-        refetch: jest.fn(),
-      });
-      // Mock files to ensure sync step is not skipped for folder sync
-      mockUseGetRepositoryFilesQuery.mockReturnValue({
-        data: {
-          items: [{ name: 'test.json', path: 'test.json' }],
-        },
-        isLoading: false,
-        error: null,
-        refetch: jest.fn(),
-      });
+      // Override stats and files for this test via MSW
+      server.use(
+        http.get(`${BASE}/stats`, () =>
+          HttpResponse.json({ instance: [{ group: 'dashboard.grafana.app', count: 1 }] })
+        ),
+        http.get(`${BASE}/repositories/:name/files/`, () =>
+          HttpResponse.json({ items: [{ name: 'test.json', path: 'test.json' }] })
+        )
+      );
+
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       await fillConnectionForm(user, 'github', {
@@ -345,24 +232,6 @@ describe('ProvisioningWizard', () => {
     });
 
     it('should skip sync step when there are no resources', async () => {
-      mockUseGetResourceStatsQuery.mockReturnValue({
-        data: {
-          instance: [], // No resources
-        },
-        isLoading: false,
-        error: null,
-        refetch: jest.fn(),
-      });
-
-      mockUseGetRepositoryFilesQuery.mockReturnValue({
-        data: {
-          items: [], // No files
-        },
-        isLoading: false,
-        error: null,
-        refetch: jest.fn(),
-      } as ReturnType<typeof useGetRepositoryFilesQuery>);
-
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       await fillConnectionForm(user, 'github', {
@@ -386,17 +255,7 @@ describe('ProvisioningWizard', () => {
 
   describe('Error Handling', () => {
     it('should show field errors when connection test fails with TestResults error', async () => {
-      const mockSubmitData = jest.fn();
-      const mockMutationState = {
-        status: QueryStatus.uninitialized,
-        isLoading: false,
-        error: null,
-      };
-      (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
-        mockSubmitData,
-        mockMutationState,
-        mockMutationState,
-      ]);
+      const mockSubmitData = setupMockSubmitData();
 
       const testResultsError = {
         data: {
@@ -441,17 +300,7 @@ describe('ProvisioningWizard', () => {
     });
 
     it('should allow retry after non-field error on connection step', async () => {
-      const mockSubmitData = jest.fn();
-      const mockMutationState = {
-        status: QueryStatus.uninitialized,
-        isLoading: false,
-        error: null,
-      };
-      (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
-        mockSubmitData,
-        mockMutationState,
-        mockMutationState,
-      ]);
+      const mockSubmitData = setupMockSubmitData();
 
       const urlError = {
         data: {

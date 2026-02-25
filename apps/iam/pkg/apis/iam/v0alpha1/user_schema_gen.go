@@ -5,13 +5,37 @@
 package v0alpha1
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaUser = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewUser(), &UserList{}, resource.WithKind("User"),
-		resource.WithPlural("users"), resource.WithScope(resource.NamespacedScope))
+		resource.WithPlural("users"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+			FieldSelector: "spec.email",
+			FieldValueFunc: func(o resource.Object) (string, error) {
+				cast, ok := o.(*User)
+				if !ok {
+					return "", errors.New("provided object must be of type *User")
+				}
+
+				return cast.Spec.Email, nil
+			},
+		},
+			{
+				FieldSelector: "spec.login",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*User)
+					if !ok {
+						return "", errors.New("provided object must be of type *User")
+					}
+
+					return cast.Spec.Login, nil
+				},
+			},
+		}))
 	kindUser = resource.Kind{
 		Schema: schemaUser,
 		Codecs: map[resource.KindEncoding]resource.Codec{
