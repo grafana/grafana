@@ -54,9 +54,7 @@ function buildDataContext(data?: PanelData): string {
   const fieldNames = data.series.flatMap((f) => f.fields.map((field) => field.name));
   const uniqueFieldNames = [...new Set(fieldNames)].filter((n) => n && n !== 'Time' && n !== 'time');
   if (uniqueFieldNames.length > 0) {
-    parts.push(
-      `Field names: ${uniqueFieldNames.slice(0, 20).join(', ')}${uniqueFieldNames.length > 20 ? '...' : ''}`
-    );
+    parts.push(`Field names: ${uniqueFieldNames.slice(0, 20).join(', ')}${uniqueFieldNames.length > 20 ? '...' : ''}`);
   }
 
   const sampleLabels = getSampleLabels(data);
@@ -98,11 +96,7 @@ export interface AssistantPromptResult {
 /**
  * Build Assistant prompt for panel title generation.
  */
-export function buildAssistantTitlePrompt(
-  panel: Panel,
-  dashboard: Dashboard,
-  data?: PanelData
-): AssistantPromptResult {
+export function buildAssistantTitlePrompt(panel: Panel, dashboard: Dashboard, data?: PanelData): AssistantPromptResult {
   const systemPrompt = [
     'You are an expert in creating Grafana panel titles.',
     'Generate a human-readable, "speaking" title that describes what the panel shows. Use plain language that a viewer would understand.',
