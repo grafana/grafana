@@ -6,14 +6,14 @@ import { DASHBOARD_FROM_LS_KEY, DashboardDTO } from 'app/types/dashboard';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 
-export function addPanelsOnLoadBehavior(scene: DashboardScene) {
+export async function addPanelsOnLoadBehavior(scene: DashboardScene) {
   const dto = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
 
   if (dto) {
     const model = new DashboardModel(dto.dashboard);
 
     for (const panel of model.panels) {
-      const gridItem = buildGridItemForPanel(panel);
+      const gridItem = await buildGridItemForPanel(panel);
       scene.addPanel(gridItem.state.body);
     }
 

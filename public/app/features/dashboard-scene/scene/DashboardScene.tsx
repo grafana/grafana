@@ -490,7 +490,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         meta: this.state.meta,
       };
 
-      dashScene = transformSaveModelToScene(dashboardDTO);
+      dashScene = await transformSaveModelToScene(dashboardDTO);
     }
 
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
@@ -659,11 +659,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(jsonData));
   }
 
-  public pastePanel() {
+  public async pastePanel() {
     const jsonData = store.get(LS_PANEL_COPY_KEY);
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
-    const gridItem = buildGridItemForPanel(panelModel);
+    const gridItem = await buildGridItemForPanel(panelModel);
     const panel = gridItem.state.body;
 
     this.addPanel(panel);

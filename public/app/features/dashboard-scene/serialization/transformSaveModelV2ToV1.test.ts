@@ -169,7 +169,7 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
   // Test each input file against each target version
   v2beta1Inputs.forEach(({ filePath: inputFilePath, relativePath }) => {
     TARGET_VERSIONS.forEach((targetVersion) => {
-      it(`${relativePath} → ${targetVersion}`, () => {
+      it(`${relativePath} → ${targetVersion}`, async () => {
         const relativeDir = path.dirname(relativePath);
         const fileName = path.basename(relativePath);
         const outputFileName = fileName.replace('.json', `.${targetVersion}.json`);
@@ -187,10 +187,10 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
         const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
 
         // Backend path: Load backend output through Scene
-        const backendSpec = loadAndSerializeV1SaveModel(backendOutput.spec);
+        const backendSpec = await loadAndSerializeV1SaveModel(backendOutput.spec);
 
         // Frontend path: Transform v2beta1 through Scene
-        const frontendSpec = transformV2ToV1UsingFrontendTransformers(jsonInput);
+        const frontendSpec = await transformV2ToV1UsingFrontendTransformers(jsonInput);
 
         // Compare specs (excluding metadata fields)
         expect(removeMetadata(backendSpec)).toEqual(removeMetadata(frontendSpec));
@@ -216,8 +216,8 @@ function removeMetadata(spec: Dashboard): Partial<Dashboard> {
  * or normalize data structures - this function ensures both outputs go through
  * identical processing.
  */
-function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
-  const scene = transformSaveModelToScene(
+async function loadAndSerializeV1SaveModel(dashboard: Dashboard): Promise<Dashboard> {
+  const scene = await transformSaveModelToScene(
     {
       dashboard: dashboard as DashboardDataDTO,
       meta: {
@@ -250,7 +250,9 @@ function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
  * the output goes through the same Scene load/save cycle as the backend output,
  * making the comparison fair.
  */
-function transformV2ToV1UsingFrontendTransformers(jsonInput: DashboardWithAccessInfo<DashboardV2Spec>): Dashboard {
+function transformV2ToV1UsingFrontendTransformers(
+  jsonInput: DashboardWithAccessInfo<DashboardV2Spec>
+): Promise<Dashboard> {
   const scene = transformSaveModelSchemaV2ToScene({
     spec: jsonInput.spec,
     metadata: jsonInput.metadata || {

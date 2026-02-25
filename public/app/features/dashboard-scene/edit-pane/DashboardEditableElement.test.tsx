@@ -22,7 +22,7 @@ jest.mock('@grafana/scenes', () => ({
 describe('DashboardEditableElement', () => {
   describe('DashboardTitleInput', () => {
     it('Supports undo/redo', async () => {
-      const { renderTitleInput, dashboard } = setup();
+      const { renderTitleInput, dashboard } = await setup();
 
       renderTitleInput();
       const titleInput = screen.getByRole('textbox');
@@ -32,7 +32,7 @@ describe('DashboardEditableElement', () => {
 
   describe('DashboardDescriptionInput', () => {
     it('Supports undo/redo', async () => {
-      const { renderDescriptionInput, dashboard } = setup();
+      const { renderDescriptionInput, dashboard } = await setup();
 
       renderDescriptionInput();
       const descriptionTextarea = screen.getByRole('textbox');
@@ -95,8 +95,8 @@ async function testDashboardEditableElement(dashboard: DashboardScene, inputElem
   expect(editPane.state.undoStack).toHaveLength(2);
 }
 
-function setup(overrides?: Partial<DashboardSceneState>) {
-  const dashboard = transformSaveModelToScene({
+async function setup(overrides?: Partial<DashboardSceneState>) {
+  const dashboard = await transformSaveModelToScene({
     dashboard: {
       title: 'initial',
       description: 'initial',

@@ -68,15 +68,15 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('DashboardSceneSerializer', () => {
   describe('v1 schema', () => {
-    it('Can detect no changes', () => {
-      const dashboard = setup();
+    it('Can detect no changes', async () => {
+      const dashboard = await setup();
       const result = dashboard.getDashboardChanges(false);
       expect(result.hasChanges).toBe(false);
       expect(result.diffCount).toBe(0);
     });
 
-    it('Can detect time changed', () => {
-      const dashboard = setup();
+    it('Can detect time changed', async () => {
+      const dashboard = await setup();
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
@@ -86,8 +86,8 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasTimeChanges).toBe(true);
     });
 
-    it('Can save time change', () => {
-      const dashboard = setup();
+    it('Can save time change', async () => {
+      const dashboard = await setup();
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
@@ -96,8 +96,8 @@ describe('DashboardSceneSerializer', () => {
       expect(result.diffCount).toBe(1);
     });
 
-    it('Can detect folder change', () => {
-      const dashboard = setup();
+    it('Can detect folder change', async () => {
+      const dashboard = await setup();
 
       dashboard.state.meta.folderUid = 'folder-2';
 
@@ -107,8 +107,8 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasFolderChanges).toBe(true);
     });
 
-    it('Can detect refresh changed', () => {
-      const dashboard = setup();
+    it('Can detect refresh changed', async () => {
+      const dashboard = await setup();
 
       const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
       if (refreshPicker instanceof SceneRefreshPicker) {
@@ -121,8 +121,8 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasRefreshChange).toBe(true);
     });
 
-    it('Can save refresh change', () => {
-      const dashboard = setup();
+    it('Can save refresh change', async () => {
+      const dashboard = await setup();
 
       const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
       if (refreshPicker instanceof SceneRefreshPicker) {
@@ -135,8 +135,8 @@ describe('DashboardSceneSerializer', () => {
     });
 
     describe('variable changes', () => {
-      it('Can detect variable change', () => {
-        const dashboard = setup();
+      it('Can detect variable change', async () => {
+        const dashboard = await setup();
 
         const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
         appVar.changeValueTo('app2');
@@ -148,8 +148,8 @@ describe('DashboardSceneSerializer', () => {
         expect(result.diffCount).toBe(0);
       });
 
-      it('Can save variable value change', () => {
-        const dashboard = setup();
+      it('Can save variable value change', async () => {
+        const dashboard = await setup();
 
         const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
         appVar.changeValueTo('app2');
@@ -170,8 +170,8 @@ describe('DashboardSceneSerializer', () => {
           config.featureToggles.groupByVariable = false;
         });
 
-        it('Can detect group by static options change', () => {
-          const dashboard = transformSaveModelToScene({
+        it('Can detect group by static options change', async () => {
+          const dashboard = await transformSaveModelToScene({
             dashboard: {
               title: 'hello',
               uid: 'my-uid',
@@ -221,7 +221,7 @@ describe('DashboardSceneSerializer', () => {
           expect(result.diffCount).toBe(1);
         });
 
-        it('Can detect adhoc filter static options change', () => {
+        it('Can detect adhoc filter static options change', async () => {
           const adhocVar = {
             id: 'adhoc',
             name: 'adhoc',
@@ -246,7 +246,7 @@ describe('DashboardSceneSerializer', () => {
             ],
           } as VariableModel;
 
-          const dashboard = transformSaveModelToScene({
+          const dashboard = await transformSaveModelToScene({
             dashboard: {
               title: 'hello',
               uid: 'my-uid',
@@ -281,8 +281,8 @@ describe('DashboardSceneSerializer', () => {
     });
 
     describe('Saving from panel edit', () => {
-      it('Should commit panel edit changes', () => {
-        const dashboard = setup();
+      it('Should commit panel edit changes', async () => {
+        const dashboard = await setup();
         const panel = findVizPanelByKey(dashboard, 'panel-1')!;
         const editScene = buildPanelEditScene(panel);
 
@@ -303,8 +303,8 @@ describe('DashboardSceneSerializer', () => {
         expect(serializer.getTrackingInformation()).toBe(undefined);
       });
 
-      it('provides dashboard tracking information with from initial save model', () => {
-        const dashboard = setup({
+      it('provides dashboard tracking information with from initial save model', async () => {
+        const dashboard = await setup({
           schemaVersion: 30,
           version: 10,
           uid: 'my-uid',
@@ -1487,8 +1487,8 @@ describe('DashboardSceneSerializer', () => {
   });
 });
 
-function setup(override: Partial<Dashboard> = {}) {
-  const dashboard = transformSaveModelToScene({
+async function setup(override: Partial<Dashboard> = {}) {
+  const dashboard = await transformSaveModelToScene({
     dashboard: {
       title: 'hello',
       uid: 'my-uid',

@@ -37,7 +37,7 @@ describe('View mode', () => {
 
   beforeEach(async () => {
     const renderResult = await renderDashboard();
-    dashboardScene = renderResult.scene;
+    dashboardScene = await renderResult.scene;
     scopesService = renderResult.scopesService;
   });
 

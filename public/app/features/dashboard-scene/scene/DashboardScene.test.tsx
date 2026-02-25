@@ -589,7 +589,7 @@ describe('DashboardScene', () => {
 
       it('Should paste a panel', () => {
         store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-        jest.mocked(buildGridItemForPanel).mockReturnValue(
+        jest.mocked(buildGridItemForPanel).mockResolvedValue(
           new DashboardGridItem({
             key: 'griditem-9',
             body: new VizPanel({
@@ -611,7 +611,7 @@ describe('DashboardScene', () => {
 
       it('Should paste a library viz panel', () => {
         store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-        jest.mocked(buildGridItemForPanel).mockReturnValue(
+        jest.mocked(buildGridItemForPanel).mockResolvedValue(
           new DashboardGridItem({
             body: new VizPanel({
               title: 'Library Panel',
@@ -1092,7 +1092,7 @@ describe('DashboardScene', () => {
       });
 
       mockRestoreDashboardVersion.mockResolvedValue({ version: newVersion });
-      jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
+      jest.mocked(transformSaveModelToScene).mockResolvedValue(mockScene);
 
       return scene.onRestore(getVersionMock()).then((res) => {
         expect(res).toBe(true);
@@ -1111,7 +1111,7 @@ describe('DashboardScene', () => {
         version: 4,
       });
       mockRestoreDashboardVersion.mockResolvedValue({ version: newVersion });
-      jest.mocked(transformSaveModelToScene).mockReturnValue(mockScene);
+      jest.mocked(transformSaveModelToScene).mockResolvedValue(mockScene);
 
       const reloadSpy = jest.spyOn(dashboardWatcher, 'reloadPage').mockImplementation(() => {});
 

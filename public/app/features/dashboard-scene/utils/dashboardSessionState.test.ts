@@ -44,9 +44,9 @@ describe('dashboardSessionState', () => {
   });
 
   describe('restoreDashboardStateFromLocalStorage', () => {
-    it('should restore dashboard state from session storage', () => {
+    it('should restore dashboard state from session storage', async () => {
       window.sessionStorage.setItem(PRESERVED_SCENE_STATE_KEY, '?var-customVar=b&from=now-5m&to=now&timezone=browser');
-      const scene = buildTestScene();
+      const scene = await buildTestScene();
 
       restoreDashboardStateFromLocalStorage(scene);
       const variable = scene.state.$variables!.getByName('customVar') as CustomVariable;
@@ -61,7 +61,7 @@ describe('dashboardSessionState', () => {
       expect(timeRange?.state.to).toEqual('now');
     });
 
-    it('should use preserved state filters if current location has empty filters state', () => {
+    it('should use preserved state filters if current location has empty filters state', async () => {
       // we have a saved state with filters set
       window.sessionStorage.setItem(
         PRESERVED_SCENE_STATE_KEY,
@@ -74,7 +74,7 @@ describe('dashboardSessionState', () => {
       });
 
       // var-filters must also be set on the scene otherwise restore fn will drop the filter url key
-      const scene = buildTestScene({
+      const scene = await buildTestScene({
         templating: {
           list: [
             {
@@ -100,13 +100,13 @@ describe('dashboardSessionState', () => {
       jest.clearAllMocks();
     });
 
-    it('should remove query params that are not applicable on a target dashboard', () => {
+    it('should remove query params that are not applicable on a target dashboard', async () => {
       window.sessionStorage.setItem(
         PRESERVED_SCENE_STATE_KEY,
         '?var-customVar=b&var-nonApplicableVar=b&from=now-5m&to=now&timezone=browser'
       );
 
-      const scene = buildTestScene();
+      const scene = await buildTestScene();
 
       restoreDashboardStateFromLocalStorage(scene);
 
@@ -114,11 +114,11 @@ describe('dashboardSessionState', () => {
     });
 
     // handles case when user navigates back to a dashboard with the same state, i.e. using back button
-    it('should remove duplicate query params', () => {
+    it('should remove duplicate query params', async () => {
       locationService.replace({ search: 'var-customVar=b&from=now-6h&to=now&timezone=browser' });
 
       window.sessionStorage.setItem(PRESERVED_SCENE_STATE_KEY, '?var-customVar=b&from=now-5m&to=now&timezone=browser');
-      const scene = buildTestScene();
+      const scene = await buildTestScene();
 
       restoreDashboardStateFromLocalStorage(scene);
 
@@ -127,7 +127,7 @@ describe('dashboardSessionState', () => {
   });
 });
 
-function buildTestScene(overrides?: Partial<DashboardDataDTO>) {
+async function buildTestScene(overrides?: Partial<DashboardDataDTO>) {
   const testDashboard: DashboardDataDTO = {
     annotations: { list: [] },
     editable: true,
@@ -161,7 +161,7 @@ function buildTestScene(overrides?: Partial<DashboardDataDTO>) {
     ...overrides,
   };
 
-  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
+  const scene = await transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
 
   // Removing data layers to avoid mocking built-in Grafana data source
   scene.setState({ $data: undefined });

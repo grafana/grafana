@@ -167,7 +167,7 @@ jest.mock('@grafana/scenes', () => ({
 
 describe('transformSceneToSaveModel', () => {
   describe('Given a simple scene with custom settings', () => {
-    it('Should transform back to persisted model', () => {
+    it('Should transform back to persisted model', async () => {
       const dashboardWithCustomSettings = {
         ...dashboard_to_load1,
         title: 'My custom title',
@@ -185,7 +185,10 @@ describe('transformSceneToSaveModel', () => {
         },
         links: [{ ...NEW_LINK, title: 'Link 1' }],
       };
-      const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
+      const scene = await transformSaveModelToScene({
+        dashboard: dashboardWithCustomSettings as DashboardDataDTO,
+        meta: {},
+      });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
@@ -193,8 +196,8 @@ describe('transformSceneToSaveModel', () => {
   });
 
   describe('Given a simple scene with variables', () => {
-    it('Should transform back to persisted model', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+    it('Should transform back to persisted model', async () => {
+      const scene = await transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
@@ -202,8 +205,8 @@ describe('transformSceneToSaveModel', () => {
   });
 
   describe('Given a scene with rows', () => {
-    it('Should transform back to persisted model', () => {
-      const scene = transformSaveModelToScene({
+    it('Should transform back to persisted model', async () => {
+      const scene = await transformSaveModelToScene({
         dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
         meta: {},
       });
@@ -217,8 +220,8 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel).toMatchSnapshot();
     });
 
-    it('Should remove repeated rows in save model', () => {
-      const scene = transformSaveModelToScene({
+    it('Should remove repeated rows in save model', async () => {
+      const scene = await transformSaveModelToScene({
         dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
         meta: {},
       });
@@ -245,8 +248,8 @@ describe('transformSceneToSaveModel', () => {
   });
 
   describe('Panel options', () => {
-    it('Given panel with time override', () => {
-      const gridItem = buildGridItemFromPanelSchema({
+    it('Given panel with time override', async () => {
+      const gridItem = await buildGridItemFromPanelSchema({
         timeFrom: '2h',
         timeShift: '1d',
         hideTimeOverride: true,
@@ -258,22 +261,22 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.hideTimeOverride).toBe(true);
     });
 
-    it('transparent panel', () => {
-      const gridItem = buildGridItemFromPanelSchema({ transparent: true });
+    it('transparent panel', async () => {
+      const gridItem = await buildGridItemFromPanelSchema({ transparent: true });
       const saveModel = gridItemToPanel(gridItem);
 
       expect(saveModel.transparent).toBe(true);
     });
 
-    it('interval', () => {
-      const gridItem = buildGridItemFromPanelSchema({ interval: '20m' });
+    it('interval', async () => {
+      const gridItem = await buildGridItemFromPanelSchema({ interval: '20m' });
       const saveModel = gridItemToPanel(gridItem);
 
       expect(saveModel.interval).toBe('20m');
     });
 
-    it('With angular options', () => {
-      const gridItem = buildGridItemFromPanelSchema({});
+    it('With angular options', async () => {
+      const gridItem = await buildGridItemFromPanelSchema({});
       const vizPanel = gridItem.state.body as VizPanel;
       vizPanel.setState({
         options: {
@@ -288,8 +291,8 @@ describe('transformSceneToSaveModel', () => {
       expect((saveModel as any).bars).toBe(true);
     });
 
-    it('Given panel with repeat', () => {
-      const gridItem = buildGridItemFromPanelSchema({
+    it('Given panel with repeat', async () => {
+      const gridItem = await buildGridItemFromPanelSchema({
         title: '',
         type: 'text-plugin-34',
         gridPos: { x: 1, y: 2, w: 12, h: 8 },
@@ -307,8 +310,8 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.gridPos?.w).toBe(12);
       expect(saveModel.gridPos?.h).toBe(8);
     });
-    it('Given panel with links', () => {
-      const gridItem = buildGridItemFromPanelSchema({
+    it('Given panel with links', async () => {
+      const gridItem = await buildGridItemFromPanelSchema({
         title: '',
         type: 'text-plugin-34',
         gridPos: { x: 1, y: 2, w: 12, h: 8 },
@@ -399,8 +402,8 @@ describe('transformSceneToSaveModel', () => {
       expect(result.options).toBeUndefined();
     });
 
-    it('given a library panel widget', () => {
-      const panel = buildGridItemFromPanelSchema({
+    it('given a library panel widget', async () => {
+      const panel = await buildGridItemFromPanelSchema({
         id: 4,
         gridPos: {
           h: 8,
@@ -425,16 +428,16 @@ describe('transformSceneToSaveModel', () => {
   });
 
   describe('Annotations', () => {
-    it('should transform annotations to save model', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+    it('should transform annotations to save model', async () => {
+      const scene = await transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel.annotations?.list?.length).toBe(4);
       expect(saveModel.annotations?.list).toMatchSnapshot();
     });
 
-    it('should transform annotations to save model after state changes', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+    it('should transform annotations to save model after state changes', async () => {
+      const scene = await transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       const layers = (scene.state.$data as DashboardDataLayerSet)?.state.annotationLayers;
       const enabledLayer = layers[1];
@@ -456,8 +459,8 @@ describe('transformSceneToSaveModel', () => {
   });
 
   describe('Queries', () => {
-    it('Given panel with queries', () => {
-      const panel = buildGridItemFromPanelSchema({
+    it('Given panel with queries', async () => {
+      const panel = await buildGridItemFromPanelSchema({
         datasource: {
           type: 'grafana-testdata',
           uid: 'abc',
@@ -498,8 +501,8 @@ describe('transformSceneToSaveModel', () => {
       });
     });
 
-    it('Given panel with transformations', () => {
-      const panel = buildGridItemFromPanelSchema({
+    it('Given panel with transformations', async () => {
+      const panel = await buildGridItemFromPanelSchema({
         datasource: {
           type: 'grafana-testdata',
           uid: 'abc',
@@ -553,8 +556,8 @@ describe('transformSceneToSaveModel', () => {
         uid: 'abc',
       });
     });
-    it('Given panel with shared query', () => {
-      const panel = buildGridItemFromPanelSchema({
+    it('Given panel with shared query', async () => {
+      const panel = await buildGridItemFromPanelSchema({
         datasource: {
           type: 'datasource',
           uid: SHARED_DASHBOARD_QUERY,
@@ -589,8 +592,8 @@ describe('transformSceneToSaveModel', () => {
       });
     });
 
-    it('Given panel with shared query and transformations', () => {
-      const panel = buildGridItemFromPanelSchema({
+    it('Given panel with shared query and transformations', async () => {
+      const panel = await buildGridItemFromPanelSchema({
         datasource: {
           type: 'datasource',
           uid: SHARED_DASHBOARD_QUERY,
@@ -637,8 +640,8 @@ describe('transformSceneToSaveModel', () => {
       });
     });
 
-    it('Given panel with query caching options', () => {
-      const panel = buildGridItemFromPanelSchema({
+    it('Given panel with query caching options', async () => {
+      const panel = await buildGridItemFromPanelSchema({
         datasource: {
           type: 'grafana-testdata',
           uid: 'abc',
@@ -677,7 +680,10 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('attaches snapshot data to panels using Grafana snapshot query', async () => {
-      const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as DashboardDataDTO, meta: {} });
+      const scene = await transformSaveModelToScene({
+        dashboard: snapshotableDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
 
       activateFullSceneTree(scene);
 
@@ -732,7 +738,7 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('handles basic rows', async () => {
-      const scene = transformSaveModelToScene({
+      const scene = await transformSaveModelToScene({
         dashboard: snapshotableWithRowsDashboardJson as DashboardDataDTO,
         meta: {},
       });
@@ -940,8 +946,11 @@ describe('transformSceneToSaveModel', () => {
     describe('trimDashboardForSnapshot', () => {
       let snapshot: Dashboard = {} as Dashboard;
 
-      beforeEach(() => {
-        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as DashboardDataDTO, meta: {} });
+      beforeEach(async () => {
+        const scene = await transformSaveModelToScene({
+          dashboard: snapshotableDashboardJson as DashboardDataDTO,
+          meta: {},
+        });
         activateFullSceneTree(scene);
         snapshot = transformSceneToSaveModel(scene, true);
       });
@@ -1005,7 +1014,10 @@ describe('transformSceneToSaveModel', () => {
       });
 
       it('should remove links', async () => {
-        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as DashboardDataDTO, meta: {} });
+        const scene = await transformSaveModelToScene({
+          dashboard: snapshotableDashboardJson as DashboardDataDTO,
+          meta: {},
+        });
         activateFullSceneTree(scene);
         const snapshot = transformSceneToSaveModel(scene, true);
         expect(snapshot.links?.length).toBe(1);
@@ -1016,8 +1028,8 @@ describe('transformSceneToSaveModel', () => {
   });
 
   describe('Given a scene with repeated panels and non-repeated panels', () => {
-    it('should save repeated panels itemHeight as height', () => {
-      const scene = transformSaveModelToScene({
+    it('should save repeated panels itemHeight as height', async () => {
+      const scene = await transformSaveModelToScene({
         dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
         meta: {},
       });
@@ -1032,8 +1044,8 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.panels?.[3].gridPos?.h).toBe(24);
     });
 
-    it('should not save non-repeated panels itemHeight as height', () => {
-      const scene = transformSaveModelToScene({
+    it('should not save non-repeated panels itemHeight as height', async () => {
+      const scene = await transformSaveModelToScene({
         dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
         meta: {},
       });
@@ -1054,7 +1066,7 @@ describe('transformSceneToSaveModel', () => {
 });
 
 describe('Given a scene with custom quick ranges', () => {
-  it('should save quick ranges to save model', () => {
+  it('should save quick ranges to save model', async () => {
     const dashboardWithCustomSettings = {
       ...dashboard_to_load1,
       timepicker: {
@@ -1073,7 +1085,10 @@ describe('Given a scene with custom quick ranges', () => {
         ],
       },
     };
-    const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
+    const scene = await transformSaveModelToScene({
+      dashboard: dashboardWithCustomSettings as DashboardDataDTO,
+      meta: {},
+    });
     const saveModel = transformSceneToSaveModel(scene);
 
     expect(saveModel).toMatchSnapshot();

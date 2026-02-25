@@ -51,8 +51,8 @@ const mockData = {
 };
 
 describe('PanelDataTransformationsModel', () => {
-  it('can change transformations', () => {
-    const { transformsTab } = setupTabScene('panel-1');
+  it('can change transformations', async () => {
+    const { transformsTab } = await setupTabScene('panel-1');
     transformsTab.onChangeTransformations([{ id: 'calculateField', options: {} }]);
     expect(transformsTab.getDataTransformer().state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
   });
@@ -177,8 +177,8 @@ describe('PanelDataTransformationsTab', () => {
   });
 });
 
-function setupTabScene(panelId: string) {
-  const scene = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
+async function setupTabScene(panelId: string) {
+  const scene = await transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const transformsTab = new PanelDataTransformationsTab({ panelRef: panel.getRef() });

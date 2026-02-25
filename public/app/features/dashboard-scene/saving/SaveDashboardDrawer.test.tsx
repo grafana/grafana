@@ -37,7 +37,7 @@ const ui = {
 describe('SaveDashboardDrawer', () => {
   describe('Given an already saved dashboard', () => {
     it('should render save drawer with only message textarea', async () => {
-      setup().openAndRender();
+      (await setup()).openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveTimerange)).not.toBeInTheDocument();
@@ -46,12 +46,12 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('When there are no changes', async () => {
-      setup().openAndRender();
+      (await setup()).openAndRender();
       expect(screen.getByText('No changes to save')).toBeInTheDocument();
     });
 
     it('When time range changed show save time range option', async () => {
-      const { dashboard, openAndRender } = setup();
+      const { dashboard, openAndRender } = await setup();
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
@@ -62,7 +62,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('When variable changed show save variables option', async () => {
-      const { dashboard, openAndRender } = setup();
+      const { dashboard, openAndRender } = await setup();
 
       sceneGraph
         .getVariables(dashboard)
@@ -80,7 +80,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('When variable has error show save variables warning', async () => {
-      const { dashboard, openAndRender } = setup();
+      const { dashboard, openAndRender } = await setup();
 
       sceneGraph.getVariables(dashboard).setState({
         variables: [
@@ -109,7 +109,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('Should update diff when including time range is', async () => {
-      const { dashboard, openAndRender } = setup();
+      const { dashboard, openAndRender } = await setup();
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
@@ -125,7 +125,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('When refresh changed show save refresh option', async () => {
-      const { dashboard, openAndRender } = setup();
+      const { dashboard, openAndRender } = await setup();
 
       const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
       if (refreshPicker instanceof SceneRefreshPicker) {
@@ -139,7 +139,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('Should update diff when including time range is', async () => {
-      const { dashboard, openAndRender } = setup();
+      const { dashboard, openAndRender } = await setup();
 
       const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
       if (refreshPicker instanceof SceneRefreshPicker) {
@@ -158,7 +158,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('Can show changes', async () => {
-      const { dashboard, openAndRender } = setup();
+      const { dashboard, openAndRender } = await setup();
 
       dashboard.setState({ title: 'New title' });
 
@@ -170,7 +170,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('Can save', async () => {
-      const { dashboard, openAndRender } = setup();
+      const { dashboard, openAndRender } = await setup();
 
       dashboard.setState({ title: 'New title' });
 
@@ -188,7 +188,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('Can handle save errors and overwrite', async () => {
-      const { dashboard, openAndRender } = setup();
+      const { dashboard, openAndRender } = await setup();
 
       dashboard.setState({ title: 'New title' });
 
@@ -219,7 +219,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('It should show the changes tab if the resource can be edited', async () => {
-      const { dashboard, openAndRender } = setup({
+      const { dashboard, openAndRender } = await setup({
         meta: {
           k8s: {
             annotations: {
@@ -238,7 +238,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('It should not show the changes tab if the resource cannot be edited; kubectl', async () => {
-      const { dashboard, openAndRender } = setup({
+      const { dashboard, openAndRender } = await setup({
         meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Kubectl } } },
       });
 
@@ -249,7 +249,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('It should not show the changes tab if the resource cannot be edited; terraform', async () => {
-      const { dashboard, openAndRender } = setup({
+      const { dashboard, openAndRender } = await setup({
         meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform } } },
       });
 
@@ -260,7 +260,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('It should not show the changes tab if the resource cannot be edited; plugin', async () => {
-      const { dashboard, openAndRender } = setup({
+      const { dashboard, openAndRender } = await setup({
         meta: {
           k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Plugin } },
         },
@@ -275,7 +275,7 @@ describe('SaveDashboardDrawer', () => {
 
   describe('Save as copy', () => {
     it('Should show save as form', async () => {
-      const { openAndRender } = setup();
+      const { openAndRender } = await setup();
       openAndRender(true);
 
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
@@ -320,8 +320,8 @@ function mockSaveDashboard(options: Partial<MockBackendApiOptions> = {}) {
 
 let cleanUp = () => {};
 
-function setup(overrides?: Partial<DashboardSceneState>) {
-  const dashboard = transformSaveModelToScene({
+async function setup(overrides?: Partial<DashboardSceneState>) {
+  const dashboard = await transformSaveModelToScene({
     dashboard: {
       title: 'hello',
       uid: 'my-uid',

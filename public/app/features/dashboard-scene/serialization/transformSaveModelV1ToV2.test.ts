@@ -261,7 +261,7 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       delete dashboardSpec.snapshot;
 
       // Wrap in DashboardDTO structure that transformSaveModelToScene expects
-      const scene = transformSaveModelToScene(
+      const scene = await transformSaveModelToScene(
         {
           dashboard: dashboardSpec,
           meta: {
@@ -350,7 +350,7 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       delete dashboardSpec.snapshot;
 
       // Wrap in DashboardDTO structure that transformSaveModelToScene expects
-      const scene = transformSaveModelToScene(
+      const scene = await transformSaveModelToScene(
         {
           dashboard: dashboardSpec,
           meta: {

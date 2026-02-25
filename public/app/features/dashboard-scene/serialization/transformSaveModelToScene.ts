@@ -76,7 +76,7 @@ export interface SaveModelToSceneOptions {
   isEmbedded?: boolean;
 }
 
-type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
+type LayoutCreator = (panels: PanelModel[], preload?: boolean) => Promise<DashboardLayoutManager>;
 
 export interface SceneCreationOptions {
   /**
@@ -92,11 +92,11 @@ export interface SceneCreationOptions {
 }
 
 // Rows as SceneGridRow within the grid.
-const createDefaultGridLayout: LayoutCreator = (panels, preload) => {
+const createDefaultGridLayout: LayoutCreator = async (panels, preload) => {
   return new DefaultGridLayoutManager({
     grid: new SceneGridLayout({
       isLazy: getIsLazy(preload),
-      children: createSceneObjectsForPanels(panels),
+      children: await createSceneObjectsForPanels(panels),
     }),
   });
 };
@@ -114,15 +114,15 @@ export const createV2RowsLayout: LayoutCreator = (panels, preload) => {
   return createDefaultGridLayout(panels, preload);
 };
 
-export function transformSaveModelToScene(
+export async function transformSaveModelToScene(
   rsp: DashboardDTO,
   options?: LoadDashboardOptions,
   sceneOptions?: SceneCreationOptions
-): DashboardScene {
+): Promise<DashboardScene> {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, options, sceneOptions);
+  const scene = await createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, options, sceneOptions);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
 
   const apiVersion = config.featureToggles.kubernetesDashboards
@@ -134,7 +134,7 @@ export function transformSaveModelToScene(
   return scene;
 }
 
-function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
+async function createRowsFromPanels(oldPanels: PanelModel[]): Promise<RowsLayoutManager> {
   const rowItems: RowItem[] = [];
 
   let currentLegacyRow: PanelModel | null = null;
@@ -166,18 +166,18 @@ function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
         currentLegacyRow = panel;
       } else {
         // This is a new row. We should flush the current panels into a row item.
-        rowItems.push(createRowItemFromLegacyRow(currentLegacyRow, currentRowPanels));
+        rowItems.push(await createRowItemFromLegacyRow(currentLegacyRow, currentRowPanels));
         currentRowPanels = [];
         currentLegacyRow = panel;
       }
     } else {
-      currentRowPanels.push(buildGridItemForPanel(panel));
+      currentRowPanels.push(await buildGridItemForPanel(panel));
     }
   }
 
   if (currentLegacyRow) {
     // If there is a row left to process, we should flush it into a row item.
-    rowItems.push(createRowItemFromLegacyRow(currentLegacyRow, currentRowPanels));
+    rowItems.push(await createRowItemFromLegacyRow(currentLegacyRow, currentRowPanels));
   }
 
   return new RowsLayoutManager({
@@ -185,7 +185,7 @@ function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
   });
 }
 
-function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
+async function createSceneObjectsForPanels(oldPanels: PanelModel[]): Promise<SceneGridItemLike[]> {
   // collects all panels and rows
   const panels: SceneGridItemLike[] = [];
 
@@ -199,7 +199,7 @@ function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike
       if (!currentRow) {
         if (Boolean(panel.collapsed)) {
           // collapsed rows contain their panels within the row model
-          panels.push(createRowFromPanelModel(panel, []));
+          panels.push(await createRowFromPanelModel(panel, []));
         } else {
           // indicate new row to be processed
           currentRow = panel;
@@ -208,11 +208,11 @@ function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike
         // when a row has been processed, and we hit a next one for processing
         if (currentRow.id !== panel.id) {
           // commit previous row panels
-          panels.push(createRowFromPanelModel(currentRow, currentRowPanels));
+          panels.push(await createRowFromPanelModel(currentRow, currentRowPanels));
 
           if (Boolean(panel.collapsed)) {
             // collapsed rows contain their panels within the row model
-            panels.push(createRowFromPanelModel(panel, []));
+            panels.push(await createRowFromPanelModel(panel, []));
             currentRow = null;
           } else {
             // indicate new row to be processed
@@ -228,7 +228,7 @@ function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike
         convertOldSnapshotToScenesSnapshot(panel);
       }
 
-      const panelObject = buildGridItemForPanel(panel);
+      const panelObject = await buildGridItemForPanel(panel);
 
       // when processing an expanded row, collect its panels
       if (currentRow) {
@@ -241,16 +241,16 @@ function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike
 
   // commit a row if it's the last one
   if (currentRow) {
-    panels.push(createRowFromPanelModel(currentRow, currentRowPanels));
+    panels.push(await createRowFromPanelModel(currentRow, currentRowPanels));
   }
 
   return panels;
 }
 
-function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]): SceneGridItemLike {
+async function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]): Promise<SceneGridItemLike> {
   if (Boolean(row.collapsed)) {
     if (row.panels) {
-      content = row.panels.map((saveModel) => {
+      const promises = row.panels.map((saveModel) => {
         // Collapsed panels are not actually PanelModel instances
         if (!(saveModel instanceof PanelModel)) {
           saveModel = new PanelModel(saveModel);
@@ -258,6 +258,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 
         return buildGridItemForPanel(saveModel);
       });
+      content = await Promise.all(promises);
     }
   }
 
@@ -280,7 +281,9 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
   });
 }
 
-function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]): RowItem {
+async function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]): Promise<RowItem> {
+  const promises = row.panels?.map((p) => buildGridItemForPanel(p instanceof PanelModel ? p : new PanelModel(p))) ?? [];
+  const children = await Promise.all(promises);
   const rowItem = new RowItem({
     key: getVizPanelKeyForPanelId(row.id),
     title: row.title,
@@ -288,9 +291,7 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
     layout: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         // If the row is collapsed it will have panels within the row model.
-        children: (
-          row.panels?.map((p) => buildGridItemForPanel(p instanceof PanelModel ? p : new PanelModel(p))) ?? []
-        ).concat(panels),
+        children: children.concat(panels),
       }),
     }),
     repeatByVariable: row.repeat,
@@ -298,7 +299,7 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
   return rowItem;
 }
 
-export function createDashboardSceneFromDashboardModel(
+export async function createDashboardSceneFromDashboardModel(
   oldModel: DashboardModel,
   dto: DashboardDataDTO,
   options?: LoadDashboardOptions,
@@ -398,13 +399,13 @@ export function createDashboardSceneFromDashboardModel(
 
   if (sceneOptions?.createLayout) {
     // Use injected layout creator (allows callers to specify v2 or custom layout strategy)
-    body = sceneOptions.createLayout(oldModel.panels, dto.preload);
+    body = await sceneOptions.createLayout(oldModel.panels, dto.preload);
   } else {
     // Default v1 layout: DefaultGridLayoutManager
     body = new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: getIsLazy(dto.preload),
-        children: createSceneObjectsForPanels(oldModel.panels),
+        children: await createSceneObjectsForPanels(oldModel.panels),
       }),
     });
   }
@@ -456,7 +457,7 @@ export function createDashboardSceneFromDashboardModel(
   return dashboardScene;
 }
 
-export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
+export async function buildGridItemForPanel(panel: PanelModel): Promise<DashboardGridItem> {
   const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
     ? {
         variableName: panel.repeat,
@@ -490,7 +491,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
-    $data: createPanelDataProvider(panel),
+    $data: await createPanelDataProvider(panel),
     titleItems,
     headerActions: new VizPanelHeaderActions({
       hideGroupByAction: !config.featureToggles.panelGroupBy,

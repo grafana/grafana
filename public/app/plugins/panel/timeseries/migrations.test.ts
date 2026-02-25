@@ -130,7 +130,7 @@ describe('Graph Migrations', () => {
       expect(panel).toMatchSnapshot();
     });
 
-    test('should migrate in scenes dashboard', () => {
+    test('should migrate in scenes dashboard', async () => {
       const old = {
         angular: {
           timeRegions: [
@@ -151,7 +151,7 @@ describe('Graph Migrations', () => {
 
       dashboard.panels.push(new PanelModelState(panel));
 
-      const scene = transformSaveModelToScene({ dashboard, meta: {} });
+      const scene = await transformSaveModelToScene({ dashboard, meta: {} });
       window.__grafanaSceneContext = scene;
 
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);

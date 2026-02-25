@@ -38,7 +38,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
   }
 
-  public setPanelFromLibPanel(libPanel: LibraryPanel) {
+  public async setPanelFromLibPanel(libPanel: LibraryPanel) {
     if (this.state._loadedPanel?.version === libPanel.version) {
       return;
     }
@@ -81,7 +81,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,
       description: libPanelModel.description,
       titleItems: titleItems,
-      $data: createPanelDataProvider(libPanelModel),
+      $data: await createPanelDataProvider(libPanelModel),
     };
 
     if (libPanelModel.timeFrom || libPanelModel.timeShift) {

@@ -179,7 +179,7 @@ export async function renderDashboard(
   jest.spyOn(console, 'error').mockImplementation(jest.fn());
 
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
-  const scene = transformSaveModelToScene(dto);
+  const scene = await transformSaveModelToScene(dto);
 
   const services = defaultScopesServices();
 

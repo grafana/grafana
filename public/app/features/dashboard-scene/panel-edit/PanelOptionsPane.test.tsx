@@ -21,8 +21,8 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('PanelOptionsPane', () => {
   describe('When changing plugin', () => {
-    it('Should set the cache', () => {
-      const { optionsPane, panel } = setupTest('panel-1');
+    it('Should set the cache', async () => {
+      const { optionsPane, panel } = await setupTest('panel-1');
       panel.changePluginType = jest.fn();
 
       expect(panel.state.pluginId).toBe('timeseries');
@@ -33,7 +33,7 @@ describe('PanelOptionsPane', () => {
       expect(optionsPane['_cachedPluginOptions']['timeseries']?.fieldConfig).toBe(panel.state.fieldConfig);
     });
 
-    it('When visualization suggestion is selected should update options and fieldConfig', () => {
+    it('When visualization suggestion is selected should update options and fieldConfig', async () => {
       pluginToLoad = getPanelPlugin({
         id: 'timeseries',
       });
@@ -48,7 +48,7 @@ describe('PanelOptionsPane', () => {
         },
       });
 
-      const { optionsPane, panel } = setupTest('panel-1');
+      const { optionsPane, panel } = await setupTest('panel-1');
       panel.setState({ $data: undefined });
       panel.activate();
 
@@ -65,8 +65,8 @@ describe('PanelOptionsPane', () => {
       expect((panel.state.fieldConfig.defaults.custom as any).axisBorderShow).toEqual(true);
     });
 
-    it('Should preserve correct field config', () => {
-      const { optionsPane, panel } = setupTest('panel-1');
+    it('Should preserve correct field config', async () => {
+      const { optionsPane, panel } = await setupTest('panel-1');
 
       const mockFn = jest.fn();
       panel.changePluginType = mockFn;
@@ -128,8 +128,8 @@ describe('PanelOptionsPane', () => {
       expect(mockFn.mock.calls[0][2].defaults.custom).toStrictEqual({});
     });
 
-    it('Should merge fieldConfig overrides when fieldConfig is provided in options', () => {
-      const { optionsPane, panel } = setupTest('panel-1');
+    it('Should merge fieldConfig overrides when fieldConfig is provided in options', async () => {
+      const { optionsPane, panel } = await setupTest('panel-1');
 
       const originalFieldConfig = {
         defaults: { unit: 'bytes' },
@@ -171,8 +171,8 @@ describe('PanelOptionsPane', () => {
       expect(mergedConfig.defaults.unit).toBe('percent');
     });
 
-    it('Should not call onFieldConfigChange when no fieldConfig provided', () => {
-      const { optionsPane, panel } = setupTest('panel-1');
+    it('Should not call onFieldConfigChange when no fieldConfig provided', async () => {
+      const { optionsPane, panel } = await setupTest('panel-1');
 
       const mockOnFieldConfigChange = jest.fn();
       panel.onFieldConfigChange = mockOnFieldConfigChange;
@@ -188,8 +188,8 @@ describe('PanelOptionsPane', () => {
   });
 });
 
-function setupTest(panelId: string) {
-  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
+async function setupTest(panelId: string) {
+  const scene = await transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const optionsPane = new PanelOptionsPane({ panelRef: panel.getRef(), listMode: OptionFilter.All, searchQuery: '' });

@@ -20,69 +20,81 @@ setBackendSrv({
 
 describe('setDashboardPanelContext', () => {
   describe('canAddAnnotations', () => {
-    it('Can add when builtIn is enabled and permissions allow', () => {
-      const { context } = buildTestScene({ builtInAnnotationsEnabled: true, dashboardCanEdit: true, canAdd: true });
+    it('Can add when builtIn is enabled and permissions allow', async () => {
+      const { context } = await buildTestScene({
+        builtInAnnotationsEnabled: true,
+        dashboardCanEdit: true,
+        canAdd: true,
+      });
       expect(context.canAddAnnotations!()).toBe(true);
     });
 
-    it('Can not when builtIn is disabled', () => {
-      const { context } = buildTestScene({ builtInAnnotationsEnabled: false, dashboardCanEdit: true, canAdd: true });
+    it('Can not when builtIn is disabled', async () => {
+      const { context } = await buildTestScene({
+        builtInAnnotationsEnabled: false,
+        dashboardCanEdit: true,
+        canAdd: true,
+      });
       expect(context.canAddAnnotations!()).toBe(false);
     });
 
-    it('Can not when permission do not allow', () => {
-      const { context } = buildTestScene({ builtInAnnotationsEnabled: true, dashboardCanEdit: true, canAdd: false });
+    it('Can not when permission do not allow', async () => {
+      const { context } = await buildTestScene({
+        builtInAnnotationsEnabled: true,
+        dashboardCanEdit: true,
+        canAdd: false,
+      });
       expect(context.canAddAnnotations!()).toBe(false);
     });
   });
 
   describe('canEditAnnotations', () => {
-    it('Can edit global event when user has org permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, orgCanEdit: true });
+    it('Can edit global event when user has org permission', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, orgCanEdit: true });
       expect(context.canEditAnnotations!()).toBe(true);
     });
 
-    it('Can not edit global event when has no org permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, orgCanEdit: false });
+    it('Can not edit global event when has no org permission', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, orgCanEdit: false });
       expect(context.canEditAnnotations!()).toBe(false);
     });
 
-    it('Can edit dashboard event when has dashboard permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canEdit: true });
+    it('Can edit dashboard event when has dashboard permission', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, canEdit: true });
       expect(context.canEditAnnotations!('dash-uid')).toBe(true);
     });
 
-    it('Can not edit dashboard event when has no dashboard permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canEdit: false });
+    it('Can not edit dashboard event when has no dashboard permission', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, canEdit: false });
       expect(context.canEditAnnotations!('dash-uid')).toBe(false);
     });
   });
 
   describe('canDeleteAnnotations', () => {
-    it('Can delete global event when user has org permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canDelete: true });
+    it('Can delete global event when user has org permission', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, canDelete: true });
       expect(context.canDeleteAnnotations!()).toBe(true);
     });
 
-    it('Can not delete global event when has no org permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canDelete: false });
+    it('Can not delete global event when has no org permission', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, canDelete: false });
       expect(context.canDeleteAnnotations!()).toBe(false);
     });
 
-    it('Can delete dashboard event when has dashboard permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canDelete: true });
+    it('Can delete dashboard event when has dashboard permission', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, canDelete: true });
       expect(context.canDeleteAnnotations!('dash-uid')).toBe(true);
     });
 
-    it('Can not delete dashboard event when has no dashboard permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canDelete: false });
+    it('Can not delete dashboard event when has no dashboard permission', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, canDelete: false });
       expect(context.canDeleteAnnotations!('dash-uid')).toBe(false);
     });
   });
 
   describe('onAnnotationCreate', () => {
-    it('should create annotation', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+    it('should create annotation', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
 
@@ -99,8 +111,8 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationUpdate', () => {
-    it('should update annotation', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+    it('should update annotation', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
 
@@ -118,8 +130,8 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationDelete', () => {
-    it('should update annotation', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
+    it('should update annotation', async () => {
+      const { context } = await buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       context.onAnnotationDelete!('I-do-not-want-you');
 
@@ -128,8 +140,8 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAddAdHocFilter', () => {
-    it('Should add new filter set', () => {
-      const { scene, context } = buildTestScene({});
+    it('Should add new filter set', async () => {
+      const { scene, context } = await buildTestScene({});
 
       context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '!=' });
       context.onAddAdHocFilter!({ key: 'hello', value: 'world2', operator: '!=' });
@@ -143,8 +155,8 @@ describe('setDashboardPanelContext', () => {
       ]);
     });
 
-    it('Should update and add filter to existing set', () => {
-      const { scene, context } = buildTestScene({ existingFilterVariable: true });
+    it('Should update and add filter to existing set', async () => {
+      const { scene, context } = await buildTestScene({ existingFilterVariable: true });
 
       const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
@@ -160,8 +172,8 @@ describe('setDashboardPanelContext', () => {
       expect(variable.state.filters[1].operator).toBe('!=');
     });
 
-    it('Should use existing adhoc filter when panel has no panel-level datasource because queries have all the same datasources (v2 behavior)', () => {
-      const { scene, context } = buildTestScene({ existingFilterVariable: true, panelDatasourceUndefined: true });
+    it('Should use existing adhoc filter when panel has no panel-level datasource because queries have all the same datasources (v2 behavior)', async () => {
+      const { scene, context } = await buildTestScene({ existingFilterVariable: true, panelDatasourceUndefined: true });
 
       const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
       variable.setState({ filters: [] });
@@ -187,8 +199,8 @@ describe('setDashboardPanelContext', () => {
       config.featureToggles.groupByVariable = false;
     });
 
-    it('should return filters based on grouping', () => {
-      const { scene, context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
+    it('should return filters based on grouping', async () => {
+      const { scene, context } = await buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
 
       const groupBy = sceneGraph.getVariables(scene).state.variables.find((f) => f instanceof GroupByVariable);
 
@@ -208,8 +220,8 @@ describe('setDashboardPanelContext', () => {
       ]);
     });
 
-    it('should return empty filters if there is no groupBy selection', () => {
-      const { context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
+    it('should return empty filters if there is no groupBy selection', async () => {
+      const { context } = await buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
 
       const filters: AdHocFilterItem[] = [
         { key: 'container', value: 'container', operator: '=' },
@@ -222,8 +234,8 @@ describe('setDashboardPanelContext', () => {
       expect(result).toEqual([]);
     });
 
-    it('should return empty filters if there is no groupBy variable', () => {
-      const { context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: false });
+    it('should return empty filters if there is no groupBy variable', async () => {
+      const { context } = await buildTestScene({ existingFilterVariable: true, existingGroupByVariable: false });
 
       const filters: AdHocFilterItem[] = [
         { key: 'container', value: 'container', operator: '=' },
@@ -236,8 +248,8 @@ describe('setDashboardPanelContext', () => {
       expect(result).toEqual([]);
     });
 
-    it('should return empty filters if panel and groupBy ds differs', () => {
-      const { scene, context } = buildTestScene({
+    it('should return empty filters if panel and groupBy ds differs', async () => {
+      const { scene, context } = await buildTestScene({
         existingFilterVariable: true,
         existingGroupByVariable: true,
         groupByDatasourceUid: 'different-ds',
@@ -260,8 +272,8 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAddAdHocFilters', () => {
-    it('should add adhoc filters', () => {
-      const { scene, context } = buildTestScene({
+    it('should add adhoc filters', async () => {
+      const { scene, context } = await buildTestScene({
         existingFilterVariable: true,
       });
 
@@ -279,8 +291,8 @@ describe('setDashboardPanelContext', () => {
       ]);
     });
 
-    it('should update and add adhoc filters', () => {
-      const { scene, context } = buildTestScene({
+    it('should update and add adhoc filters', async () => {
+      const { scene, context } = await buildTestScene({
         existingFilterVariable: true,
       });
 
@@ -304,8 +316,8 @@ describe('setDashboardPanelContext', () => {
       ]);
     });
 
-    it('should not do anything if filters empty', () => {
-      const { scene, context } = buildTestScene({
+    it('should not do anything if filters empty', async () => {
+      const { scene, context } = await buildTestScene({
         existingFilterVariable: true,
       });
 
@@ -332,7 +344,7 @@ interface SceneOptions {
   panelDatasourceUndefined?: boolean;
 }
 
-function buildTestScene(options: SceneOptions) {
+async function buildTestScene(options: SceneOptions) {
   const varList: VariableModel[] = [];
 
   if (options.existingFilterVariable) {
@@ -351,7 +363,7 @@ function buildTestScene(options: SceneOptions) {
     } as GroupByVariableModel);
   }
 
-  const scene = transformSaveModelToScene({
+  const scene = await transformSaveModelToScene({
     dashboard: {
       title: 'hello',
       uid: 'dash-1',

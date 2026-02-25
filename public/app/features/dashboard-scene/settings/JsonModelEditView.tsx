@@ -82,7 +82,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       dashboard.setState(newState);
     } else {
       jsonModel.version = result.version;
-      newDashboardScene = transformSaveModelToScene({
+      newDashboardScene = await transformSaveModelToScene({
         dashboard: jsonModel,
         meta: dashboard.state.meta,
       });

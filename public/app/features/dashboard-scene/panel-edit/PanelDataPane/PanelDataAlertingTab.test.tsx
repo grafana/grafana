@@ -238,7 +238,7 @@ describe('PanelAlertTabContent', () => {
       }),
     ];
 
-    renderAlertTab(dashboard, dashboard);
+    await renderAlertTab(dashboard, dashboard);
 
     const defaults = await clickNewButton();
 
@@ -265,7 +265,7 @@ describe('PanelAlertTabContent', () => {
       }),
     ];
 
-    renderAlertTab(dashboard, dashboard);
+    await renderAlertTab(dashboard, dashboard);
     const defaults = await clickNewButton();
 
     expect(defaults.queries[0].model).toEqual({
@@ -293,7 +293,7 @@ describe('PanelAlertTabContent', () => {
       }),
     ];
 
-    renderAlertTab(dashboard, dashboard);
+    await renderAlertTab(dashboard, dashboard);
     const defaults = await clickNewButton();
 
     expect(defaults.queries[0].model).toEqual({
@@ -313,7 +313,7 @@ describe('PanelAlertTabContent', () => {
   it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
     dashboard.panels = [panel];
     config.unifiedAlertingEnabled = true;
-    renderAlertTab(dashboard, dashboard);
+    await renderAlertTab(dashboard, dashboard);
 
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(2);
@@ -337,8 +337,8 @@ describe('PanelAlertTabContent', () => {
   });
 });
 
-function renderAlertTab(dashboard: DashboardModel, dto: DashboardDataDTO) {
-  const model = createModel(dashboard, dto);
+async function renderAlertTab(dashboard: DashboardModel, dto: DashboardDataDTO) {
+  const model = await createModel(dashboard, dto);
   renderAlertTabContent(model);
 }
 
@@ -356,8 +356,8 @@ async function clickNewButton() {
   return defaults;
 }
 
-function createModel(dashboard: DashboardModel, dto: DashboardDataDTO) {
-  const scene = createDashboardSceneFromDashboardModel(dashboard, dto);
+async function createModel(dashboard: DashboardModel, dto: DashboardDataDTO) {
+  const scene = await createDashboardSceneFromDashboardModel(dashboard, dto);
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
   const model = new PanelDataAlertingTab({ panelRef: vizPanel.getRef() });
   jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);

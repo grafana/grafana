@@ -253,9 +253,9 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     this.state.onClose();
   }
 
-  private applyV1PanelChange(jsonObj: unknown, panel: VizPanel, dashboard: DashboardScene) {
+  private async applyV1PanelChange(jsonObj: unknown, panel: VizPanel, dashboard: DashboardScene) {
     const panelModel = new PanelModel(jsonObj);
-    const gridItem = buildGridItemForPanel(panelModel);
+    const gridItem = await buildGridItemForPanel(panelModel);
     const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
 
     if (!(panel.parent instanceof DashboardGridItem)) {

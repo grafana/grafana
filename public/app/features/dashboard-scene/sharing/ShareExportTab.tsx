@@ -228,7 +228,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       // doesn't know about RowsLayoutManager structure needed for v2 serialization.
       if (initialSaveModelVersion === 'v1' && initialSaveModel && isV1ClassicDashboard(initialSaveModel)) {
         // Recreate scene with v2 layout creator to properly handle rows
-        sceneForV2Export = transformSaveModelToScene(
+        sceneForV2Export = await transformSaveModelToScene(
           {
             dashboard: { ...initialSaveModel, title: initialSaveModel.title ?? '', uid: initialSaveModel.uid ?? '' },
             meta: scene.state.meta,

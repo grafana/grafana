@@ -473,17 +473,19 @@ describe('DashboardScenePageStateManager v1', () => {
 
         // should return cached scene
         expect(
-          loader.transformResponseToScene(
-            {
-              meta: { created: '1' },
-              dashboard: { title: 'Dashboard 1', uid: 'fake-dash', schemaVersion: 1, version: 0 },
-            },
-            { uid: 'fake-dash', route: DashboardRoutes.Normal }
+          (
+            await loader.transformResponseToScene(
+              {
+                meta: { created: '1' },
+                dashboard: { title: 'Dashboard 1', uid: 'fake-dash', schemaVersion: 1, version: 0 },
+              },
+              { uid: 'fake-dash', route: DashboardRoutes.Normal }
+            )
           )?.state.title
         ).toBe('Dashboard 1');
 
         // try loading new scene
-        loader.transformResponseToScene(
+        await loader.transformResponseToScene(
           {
             meta: { created: '2' },
             dashboard: { title: 'Dashboard 2', uid: 'fake-dash', schemaVersion: 1, version: 0 },

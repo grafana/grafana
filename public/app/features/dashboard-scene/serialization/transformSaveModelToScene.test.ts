@@ -1,6 +1,7 @@
 import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   behaviors,
@@ -53,7 +54,7 @@ import {
 
 describe('transformSaveModelToScene', () => {
   describe('when creating dashboard scene', () => {
-    it('should initialize the DashboardScene with the model state', () => {
+    it('should initialize the DashboardScene with the model state', async () => {
       const dash = {
         ...defaultDashboard,
         title: 'test',
@@ -101,7 +102,7 @@ describe('transformSaveModelToScene', () => {
       };
       const oldModel = new DashboardModel(dash);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+      const scene = await createDashboardSceneFromDashboardModel(oldModel, dash);
       const dashboardControls = scene.state.controls!;
 
       expect(scene.state.title).toBe('test');
@@ -125,7 +126,7 @@ describe('transformSaveModelToScene', () => {
       expect(dashboardControls.state.hideTimeControls).toBe(true);
     });
 
-    it('should apply cursor sync behavior', () => {
+    it('should apply cursor sync behavior', async () => {
       const dash = {
         ...defaultDashboard,
         title: 'Test dashboard',
@@ -134,27 +135,27 @@ describe('transformSaveModelToScene', () => {
       };
       const oldModel = new DashboardModel(dash);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+      const scene = await createDashboardSceneFromDashboardModel(oldModel, dash);
 
       const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
       expect(cursorSync).toBeInstanceOf(behaviors.CursorSync);
       expect((cursorSync as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
 
-    it('should apply live now timer behavior', () => {
+    it('should apply live now timer behavior', async () => {
       const dash = {
         ...defaultDashboard,
         title: 'Test dashboard',
         uid: 'test-uid',
       };
       const oldModel = new DashboardModel(dash);
-      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+      const scene = await createDashboardSceneFromDashboardModel(oldModel, dash);
 
       const liveNowTimer = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
       expect(liveNowTimer).toBeInstanceOf(behaviors.LiveNowTimer);
     });
 
-    it('should initialize the Dashboard Scene with empty template variables', () => {
+    it('should initialize the Dashboard Scene with empty template variables', async () => {
       const dash = {
         ...defaultDashboard,
         title: 'test empty dashboard with no variables',
@@ -169,11 +170,11 @@ describe('transformSaveModelToScene', () => {
       };
       const oldModel = new DashboardModel(dash);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+      const scene = await createDashboardSceneFromDashboardModel(oldModel, dash);
       expect(scene.state.$variables?.state.variables).toBeDefined();
     });
 
-    it('should not return lazy loaded panels when user is image renderer', () => {
+    it('should not return lazy loaded panels when user is image renderer', async () => {
       contextSrv.user.authenticatedBy = 'render';
 
       const panel1 = createPanelSaveModel({
@@ -195,7 +196,7 @@ describe('transformSaveModelToScene', () => {
 
       const oldModel = new DashboardModel(dashboard);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+      const scene = await createDashboardSceneFromDashboardModel(oldModel, dashboard);
       const layout = scene.state.body as DefaultGridLayoutManager;
       const body = layout.state.grid;
 
@@ -206,14 +207,14 @@ describe('transformSaveModelToScene', () => {
   describe('When creating a new dashboard', () => {
     it('should initialize the DashboardScene in edit mode and dirty', async () => {
       const rsp = await buildNewDashboardSaveModel();
-      const scene = transformSaveModelToScene(rsp);
+      const scene = await transformSaveModelToScene(rsp);
       expect(scene.state.isEditing).toBe(undefined);
       expect(scene.state.isDirty).toBe(false);
     });
   });
 
   describe('When creating a snapshot dashboard scene', () => {
-    it('should initialize a dashboard scene with SnapshotVariables', () => {
+    it('should initialize a dashboard scene with SnapshotVariables', async () => {
       const customVariable = {
         current: {
           selected: false,
@@ -294,7 +295,7 @@ describe('transformSaveModelToScene', () => {
       };
 
       const oldModel = new DashboardModel(snapshot, { isSnapshot: true });
-      const scene = createDashboardSceneFromDashboardModel(oldModel, snapshot);
+      const scene = await createDashboardSceneFromDashboardModel(oldModel, snapshot);
 
       // check variables were converted to snapshot variables
       expect(scene.state.$variables?.state.variables).toHaveLength(3);
@@ -320,7 +321,7 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('when organizing panels as scene children', () => {
-    it('should leave panels outside second row if it is collapsed', () => {
+    it('should leave panels outside second row if it is collapsed', async () => {
       const panel1 = createPanelSaveModel({
         title: 'test1',
         gridPos: { x: 0, y: 1, w: 12, h: 8 },
@@ -356,7 +357,7 @@ describe('transformSaveModelToScene', () => {
 
       const oldModel = new DashboardModel(dashboard);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+      const scene = await createDashboardSceneFromDashboardModel(oldModel, dashboard);
       const layout = scene.state.body as DefaultGridLayoutManager;
       const body = layout.state.grid;
 
@@ -377,7 +378,7 @@ describe('transformSaveModelToScene', () => {
       expect(body.state.children[2]).toBeInstanceOf(DashboardGridItem);
     });
 
-    it('should create panels within collapsed rows', () => {
+    it('should create panels within collapsed rows', async () => {
       const panel = createPanelSaveModel({
         title: 'test',
         gridPos: { x: 1, y: 0, w: 12, h: 8 },
@@ -409,7 +410,7 @@ describe('transformSaveModelToScene', () => {
 
       const oldModel = new DashboardModel(dashboard);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+      const scene = await createDashboardSceneFromDashboardModel(oldModel, dashboard);
       const layout = scene.state.body as DefaultGridLayoutManager;
       const body = layout.state.grid;
 
@@ -429,7 +430,7 @@ describe('transformSaveModelToScene', () => {
       expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(VizPanel);
     });
 
-    it('should create panels within expanded row', () => {
+    it('should create panels within expanded row', async () => {
       const panelOutOfRow = createPanelSaveModel({
         title: 'Out of a row',
         gridPos: {
@@ -506,7 +507,7 @@ describe('transformSaveModelToScene', () => {
 
       const oldModel = new DashboardModel(dashboard);
 
-      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+      const scene = await createDashboardSceneFromDashboardModel(oldModel, dashboard);
       const layout = scene.state.body as DefaultGridLayoutManager;
       const body = layout.state.grid;
 
@@ -541,6 +542,10 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('when creating viz panel objects', () => {
+    afterEach(() => {
+      setPanelPluginMetas({});
+    });
+
     it('should initalize the VizPanel scene object state', () => {
       const panel = {
         title: 'test',
@@ -684,16 +689,18 @@ describe('transformSaveModelToScene', () => {
         targets: [{ refId: 'A' }],
       };
 
-      config.panels['text-plugin-34'] = getPanelPlugin({
-        skipDataQuery: true,
-      }).meta;
+      setPanelPluginMetas({
+        'text-plugin-34': getPanelPlugin({
+          skipDataQuery: true,
+        }).meta,
+      });
 
       const { vizPanel } = buildGridItemForTest(panel);
 
       expect(vizPanel.state.$data).toBeUndefined();
     });
 
-    it('When repeat is set but repeatDirection is not it should default to horizontal repeat', () => {
+    it('When repeat is set but repeatDirection is not it should default to horizontal repeat', async () => {
       const panel = {
         title: '',
         type: 'text-plugin-34',
@@ -702,7 +709,7 @@ describe('transformSaveModelToScene', () => {
         maxPerRow: 8,
       };
 
-      const gridItem = buildGridItemForPanel(new PanelModel(panel));
+      const gridItem = await buildGridItemForPanel(new PanelModel(panel));
       const repeater = gridItem as DashboardGridItem;
 
       expect(repeater.state.maxPerRow).toBe(8);
@@ -713,7 +720,7 @@ describe('transformSaveModelToScene', () => {
       expect(repeater.state.maxPerRow).toBe(8);
     });
 
-    it('When repeat is set should build PanelRepeaterGridItem', () => {
+    it('When repeat is set should build PanelRepeaterGridItem', async () => {
       const panel = {
         title: '',
         type: 'text-plugin-34',
@@ -723,7 +730,7 @@ describe('transformSaveModelToScene', () => {
         maxPerRow: 8,
       };
 
-      const gridItem = buildGridItemForPanel(new PanelModel(panel));
+      const gridItem = await buildGridItemForPanel(new PanelModel(panel));
       const repeater = gridItem as DashboardGridItem;
 
       expect(repeater.state.maxPerRow).toBe(8);
@@ -734,7 +741,7 @@ describe('transformSaveModelToScene', () => {
       expect(repeater.state.maxPerRow).toBe(8);
     });
 
-    it('When horizontal repeat is set should modify the width to 24', () => {
+    it('When horizontal repeat is set should modify the width to 24', async () => {
       const panel = {
         title: '',
         type: 'text-plugin-34',
@@ -744,7 +751,7 @@ describe('transformSaveModelToScene', () => {
         maxPerRow: 8,
       };
 
-      const gridItem = buildGridItemForPanel(new PanelModel(panel));
+      const gridItem = await buildGridItemForPanel(new PanelModel(panel));
       const repeater = gridItem as DashboardGridItem;
 
       expect(repeater.state.maxPerRow).toBe(8);
@@ -755,7 +762,7 @@ describe('transformSaveModelToScene', () => {
       expect(repeater.state.maxPerRow).toBe(8);
     });
 
-    it('When horizontal repeat is NOT fully configured should not modify the width', () => {
+    it('When horizontal repeat is NOT fully configured should not modify the width', async () => {
       const panel = {
         title: '',
         type: 'text-plugin-34',
@@ -764,7 +771,7 @@ describe('transformSaveModelToScene', () => {
         maxPerRow: 8,
       };
 
-      const gridItem = buildGridItemForPanel(new PanelModel(panel));
+      const gridItem = await buildGridItemForPanel(new PanelModel(panel));
       const repeater = gridItem as DashboardGridItem;
 
       expect(repeater.state.maxPerRow).toBe(8);
@@ -791,7 +798,7 @@ describe('transformSaveModelToScene', () => {
       expect(runner.state.queryCachingTTL).toBe(200000);
     });
 
-    it('should convert saved lib panel to a viz panel with LibraryPanelBehavior', () => {
+    it('should convert saved lib panel to a viz panel with LibraryPanelBehavior', async () => {
       const panel = {
         title: 'Panel',
         gridPos: { x: 0, y: 0, w: 12, h: 8 },
@@ -803,7 +810,7 @@ describe('transformSaveModelToScene', () => {
         },
       };
 
-      const gridItem = buildGridItemForPanel(new PanelModel(panel))!;
+      const gridItem = await buildGridItemForPanel(new PanelModel(panel))!;
       const libPanelBehavior = gridItem.state.body.state.$behaviors![0];
 
       expect(libPanelBehavior).toBeInstanceOf(LibraryPanelBehavior);
@@ -822,8 +829,8 @@ describe('transformSaveModelToScene', () => {
       config.featureToggles.dashboardNewLayouts = false;
     });
 
-    it('Should convert legacy rows to new rows', () => {
-      const scene = transformSaveModelToScene(
+    it('Should convert legacy rows to new rows', async () => {
+      const scene = await transformSaveModelToScene(
         {
           dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
           meta: {},
@@ -861,8 +868,8 @@ describe('transformSaveModelToScene', () => {
       expect(lastRowPanel.state.pluginId).toBe('text');
     });
 
-    it('Should convert legacy rows to new rows with free panels before first row', () => {
-      const scene = transformSaveModelToScene(
+    it('Should convert legacy rows to new rows with free panels before first row', async () => {
+      const scene = await transformSaveModelToScene(
         {
           dashboard: rowsAfterFreePanels as DashboardDataDTO,
           meta: {},
@@ -881,8 +888,8 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('Repeating rows', () => {
-    it('Should build correct scene model', () => {
-      const scene = transformSaveModelToScene({
+    it('Should build correct scene model', async () => {
+      const scene = await transformSaveModelToScene({
         dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
         meta: {},
       });
@@ -902,8 +909,8 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('Annotation queries', () => {
-    it('Should build correct scene model', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+    it('Should build correct scene model', async () => {
+      const scene = await transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
 
@@ -928,9 +935,9 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('Alerting data layer', () => {
-    it('Should add alert states data layer if unified alerting enabled', () => {
+    it('Should add alert states data layer if unified alerting enabled', async () => {
       config.unifiedAlertingEnabled = true;
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+      const scene = await transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
 
@@ -938,11 +945,11 @@ describe('transformSaveModelToScene', () => {
       expect(dataLayers.state.alertStatesLayer).toBeDefined();
     });
 
-    it('Should add alert states data layer if any panel has a legacy alert defined', () => {
+    it('Should add alert states data layer if any panel has a legacy alert defined', async () => {
       config.unifiedAlertingEnabled = false;
       const dashboard = { ...dashboard_to_load1 } as unknown as DashboardDataDTO;
       dashboard.panels![0].alert = {};
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+      const scene = await transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
 
@@ -999,7 +1006,7 @@ describe('transformSaveModelToScene', () => {
       ]);
     });
 
-    it('should translate scopedVars to local variable value', () => {
+    it('should translate scopedVars to local variable value', async () => {
       const panel = createPanelSaveModel({
         title: 'test',
         gridPos: { x: 1, y: 0, w: 12, h: 8 },
@@ -1015,7 +1022,7 @@ describe('transformSaveModelToScene', () => {
       }) as Panel;
 
       const oldPanelModel = new PanelModel(panel);
-      const scenePanel = buildGridItemForPanel(oldPanelModel);
+      const scenePanel = await buildGridItemForPanel(oldPanelModel);
       const vizPanel = scenePanel.state.body;
 
       expect(vizPanel.state.$variables?.state.variables[0].state.name).toBe('var1');
@@ -1026,7 +1033,7 @@ describe('transformSaveModelToScene', () => {
 });
 
 describe('When creating a snapshot dashboard scene', () => {
-  it('should initialize a dashboard scene with SnapshotVariables', () => {
+  it('should initialize a dashboard scene with SnapshotVariables', async () => {
     const dashboard = {
       ...defaultDashboard,
       title: 'With custom quick ranges',
@@ -1049,7 +1056,7 @@ describe('When creating a snapshot dashboard scene', () => {
     };
 
     const oldModel = new DashboardModel(dashboard);
-    const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+    const scene = await createDashboardSceneFromDashboardModel(oldModel, dashboard);
 
     expect(scene.state.controls?.state.timePicker.state.quickRanges).toBe(dashboard.timepicker.quick_ranges);
   });
