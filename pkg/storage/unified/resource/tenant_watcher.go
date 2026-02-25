@@ -187,6 +187,9 @@ func (tw *TenantWatcher) Stop() {
 func (tw *TenantWatcher) handleTenant(tenant *unstructured.Unstructured) {
 	name := tenant.GetName()
 	labels := tenant.GetLabels()
+	annotations := tenant.GetAnnotations()
+
+	tw.log.Debug("tenant watcher got tenant event", "tenant", name, "labels", labels, "annotations", annotations)
 
 	if labels[labelPendingDelete] == "true" {
 		deleteAfter, ok := tenant.GetAnnotations()[annotationPendingDeleteAfter]
