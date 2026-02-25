@@ -194,6 +194,25 @@ func TestAccessControl(t *testing.T) {
 		},
 	}
 
+	perUserClient := &mockAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+			for _, check := range req.Checks {
+				allowed := false
+				for _, c := range userAccessControlChecks {
+					if c.group == check.Group && c.resource == check.Resource && c.verb == check.Verb {
+						if check.Name == "user-1" {
+							allowed = c.action == "org.users:read" || c.action == "org.users:write"
+						}
+						break
+					}
+				}
+				results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: allowed}
+			}
+			return authlib.BatchCheckResponse{Results: results}, nil
+		},
+	}
+
 	errorClient := &mockAccessClient{
 		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 			return authlib.BatchCheckResponse{}, fmt.Errorf("access service unavailable")
@@ -267,6 +286,25 @@ func TestAccessControl(t *testing.T) {
 					assert.False(t, hit.AccessControl["org.users:add"])
 					assert.False(t, hit.AccessControl["org.users:remove"])
 					assert.False(t, hit.AccessControl["org.users:write"])
+				}
+			},
+		},
+		{
+			name:   "per-user scoped permissions",
+			url:    "/searchUsers?accesscontrol=true",
+			client: perUserClient,
+			checkHits: func(t *testing.T, hits []iamv0.GetSearchUsersUserHit) {
+				t.Helper()
+				for _, hit := range hits {
+					if hit.Name == "user-1" {
+						require.NotNil(t, hit.AccessControl)
+						assert.True(t, hit.AccessControl["org.users:read"])
+						assert.True(t, hit.AccessControl["org.users:write"])
+						assert.False(t, hit.AccessControl["org.users:add"])
+						assert.False(t, hit.AccessControl["org.users:remove"])
+					} else {
+						assert.Empty(t, hit.AccessControl, "user-2 should have no permissions")
+					}
 				}
 			},
 		},

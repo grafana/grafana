@@ -47,6 +47,7 @@ type accessControlCheck struct {
 	group    string
 	resource string
 	verb     string
+	name     string // user UID of the resource being checked
 }
 
 var userAccessControlChecks = []accessControlCheck{
@@ -366,9 +367,12 @@ func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identi
 	namespace := requester.GetNamespace()
 
 	items := func(yield func(accessControlCheck) bool) {
-		for _, c := range userAccessControlChecks {
-			if !yield(c) {
-				return
+		for _, hit := range hits {
+			for _, c := range userAccessControlChecks {
+				c.name = hit.Name
+				if !yield(c) {
+					return
+				}
 			}
 		}
 	}
@@ -379,19 +383,25 @@ func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identi
 			Group:     c.group,
 			Resource:  c.resource,
 			Namespace: namespace,
+			Name:      c.name,
+			// Folder is omitted: users are not folder-scoped resources.
+			// TODO: set FreshnessTimestamp once we decide whether cached AC is acceptable here.
 		}
 	}
 
-	acMap := make(map[string]bool, len(userAccessControlChecks))
+	acMap := make(map[string]map[string]bool, len(hits))
 	for c, err := range authz.FilterAuthorized(ctx, s.accessClient, items, extractFn, authz.WithTracer(s.tracer)) {
 		if err != nil {
 			return fmt.Errorf("access control check failed: %w", err)
 		}
-		acMap[c.action] = true
+		if acMap[c.name] == nil {
+			acMap[c.name] = make(map[string]bool, len(userAccessControlChecks))
+		}
+		acMap[c.name][c.action] = true
 	}
 
 	for i := range hits {
-		hits[i].AccessControl = acMap
+		hits[i].AccessControl = acMap[hits[i].Name]
 	}
 
 	return nil
