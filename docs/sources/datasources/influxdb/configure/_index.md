@@ -232,7 +232,7 @@ You can also override this setting in a dashboard panel under its data source op
 
 You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer
-to [Provision Grafana](/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-grafana).
+to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-grafana).
 
 {{< admonition type="note" >}}
 The `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).

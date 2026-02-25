@@ -61,8 +61,8 @@ The following documents will help you get started with the InfluxDB data source 
 
 Once you have configured the InfluxDB data source, you can:
 
-- Use [Explore](/docs/grafana/<GRAFANA_VERSION>/explore/) to run ad hoc queries against your InfluxDB data.
-- Configure and use [template variables](/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) for dynamic dashboards.
-- Add [transformations](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
-- [Build dashboards](/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) to visualize your InfluxDB data.
-- Set up [alerting](/docs/grafana/<GRAFANA_VERSION>/alerting/) based on your InfluxDB query results.
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run ad hoc queries against your InfluxDB data.
+- Configure and use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) for dynamic dashboards.
+- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
+- [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) to visualize your InfluxDB data.
+- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) based on your InfluxDB query results.
