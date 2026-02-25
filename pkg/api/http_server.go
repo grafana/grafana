@@ -88,6 +88,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -203,26 +204,27 @@ type HTTPServer struct {
 	pluginsCDNService            *pluginscdn.Service
 	managedPluginsService        managedplugins.Manager
 
-	userService          user.Service
-	tempUserService      tempUser.Service
-	loginAttemptService  loginAttempt.Service
-	orgService           org.Service
-	orgDeletionService   org.DeletionService
-	TeamService          team.Service
-	accesscontrolService accesscontrol.Service
-	annotationsRepo      annotations.Repository
-	tagService           tag.Service
-	oauthTokenService    oauthtoken.OAuthTokenService
-	statsService         stats.Service
-	authnService         authn.Service
-	starApi              *starApi.API
-	promRegister         prometheus.Registerer
-	promGatherer         prometheus.Gatherer
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
-	namespacer           request.NamespaceMapper
-	anonService          anonymous.Service
-	userVerifier         user.Verifier
-	tlsCerts             TLSCerts
+	userService             user.Service
+	tempUserService         tempUser.Service
+	loginAttemptService     loginAttempt.Service
+	orgService              org.Service
+	orgDeletionService      org.DeletionService
+	TeamService             team.Service
+	accesscontrolService    accesscontrol.Service
+	annotationsRepo         annotations.Repository
+	tagService              tag.Service
+	oauthTokenService       oauthtoken.OAuthTokenService
+	statsService            stats.Service
+	authnService            authn.Service
+	starApi                 *starApi.API
+	promRegister            prometheus.Registerer
+	promGatherer            prometheus.Gatherer
+	clientConfigProvider    grafanaapiserver.DirectRestConfigProvider
+	namespacer              request.NamespaceMapper
+	anonService             anonymous.Service
+	userVerifier            user.Verifier
+	tlsCerts                TLSCerts
+	publicDashboardsService publicdashboards.Service
 }
 
 type TLSCerts struct {
@@ -272,7 +274,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
-	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall,
+	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -377,6 +379,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
+		publicDashboardsService:      publicDashboardsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
