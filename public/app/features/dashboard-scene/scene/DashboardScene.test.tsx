@@ -600,7 +600,7 @@ describe('DashboardScene', () => {
           })
         );
 
-        scene.pastePanel();
+        scene.pastePanel({});
 
         expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
 
@@ -622,7 +622,7 @@ describe('DashboardScene', () => {
           })
         );
 
-        scene.pastePanel();
+        scene.pastePanel({});
 
         expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
 

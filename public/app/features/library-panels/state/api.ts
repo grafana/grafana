@@ -1,5 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { LibraryPanel, defaultDashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -208,6 +209,7 @@ export async function updateLibraryVizPanel(vizPanel: VizPanel): Promise<Library
 
 export async function saveLibPanel(panel: VizPanel) {
   const updatedLibPanel = await updateLibraryVizPanel(panel);
+  const panelsMeta = await getPanelPluginMetasMap();
 
   const libPanelBehavior = getLibraryPanelBehavior(panel);
 
@@ -215,5 +217,5 @@ export async function saveLibPanel(panel: VizPanel) {
     throw new Error('Could not find library panel behavior for panel');
   }
 
-  libPanelBehavior.setPanelFromLibPanel(updatedLibPanel);
+  libPanelBehavior.setPanelFromLibPanel(updatedLibPanel, panelsMeta);
 }

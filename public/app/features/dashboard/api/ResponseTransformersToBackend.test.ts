@@ -178,13 +178,16 @@ describe('V1 to V2 Dashboard Transformation Comparison (ResponseTransformers)', 
 
       // Backend path: Load backend output into Scene, then serialize back to v2beta1
       // This normalizes the backend output through the same Scene
-      const sceneBackend = transformSaveModelSchemaV2ToScene({
-        spec: backendOutput.spec,
-        metadata: backendOutput.metadata,
-        apiVersion: backendOutput.apiVersion,
-        access: {},
-        kind: 'DashboardWithAccessInfo',
-      } as DashboardWithAccessInfo<DashboardV2Spec>);
+      const sceneBackend = transformSaveModelSchemaV2ToScene(
+        {
+          spec: backendOutput.spec,
+          metadata: backendOutput.metadata,
+          apiVersion: backendOutput.apiVersion,
+          access: {},
+          kind: 'DashboardWithAccessInfo',
+        } as DashboardWithAccessInfo<DashboardV2Spec>,
+        {}
+      );
       const backendOutputAfterLoadedByScene = transformSceneToSaveModelSchemaV2(sceneBackend, false);
 
       // Frontend path: v1beta1 spec -> Scene -> v2beta1
@@ -212,7 +215,8 @@ describe('V1 to V2 Dashboard Transformation Comparison (ResponseTransformers)', 
           },
         },
         undefined,
-        getSceneCreationOptions()
+        getSceneCreationOptions(),
+        {}
       );
 
       const frontendOutput = transformSceneToSaveModelSchemaV2(scene, false);

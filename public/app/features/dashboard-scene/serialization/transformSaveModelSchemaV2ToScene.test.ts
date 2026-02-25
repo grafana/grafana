@@ -97,7 +97,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   it('should initialize the DashboardScene with the model state', () => {
-    const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+    const scene = transformSaveModelSchemaV2ToScene(defaultDashboard, {});
     const dashboardControls = scene.state.controls!;
     const dash = defaultDashboard.spec;
 
@@ -296,7 +296,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       },
     });
 
-    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+    const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels.length).toBe(2);
@@ -325,7 +325,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       },
     });
 
-    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+    const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels.length).toBe(2);
@@ -357,7 +357,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       },
     });
 
-    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+    const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels.length).toBe(2);
@@ -371,7 +371,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
       adhocVar.spec.defaultKeys = [];
 
-      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+      const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
 
       const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
       expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
@@ -385,7 +385,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
       expect(adhocVar.spec.defaultKeys.length).toBeGreaterThan(0);
 
-      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+      const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
 
       const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
       expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
@@ -407,7 +407,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         },
       };
 
-      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+      const scene = transformSaveModelSchemaV2ToScene(snapshot, {});
 
       // check variables were converted to snapshot variables
       expect(scene.state.$variables?.state.variables).toHaveLength(9);
@@ -446,7 +446,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       const adhocVar = snapshot.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
       adhocVar.spec.defaultKeys = [];
 
-      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+      const scene = transformSaveModelSchemaV2ToScene(snapshot, {});
 
       const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
       expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
@@ -458,7 +458,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   describe('meta', () => {
     describe('initializes meta based on k8s resource', () => {
       it('handles undefined access values', () => {
-        const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+        const scene = transformSaveModelSchemaV2ToScene(defaultDashboard, {});
         // when access metadata undefined
         expect(scene.state.meta.canShare).toBe(true);
         expect(scene.state.meta.canSave).toBe(true);
@@ -502,7 +502,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             },
           },
         };
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
 
         expect(scene.state.meta.canShare).toBe(false);
         expect(scene.state.meta.canSave).toBe(false);
@@ -528,7 +528,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
       });
       it('Should set meta canEdit and canSave to false', () => {
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
         expect(scene.state.meta.canMakeEditable).toBe(true);
 
         expect(scene.state.meta.canSave).toBe(false);
@@ -539,7 +539,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       describe('when does not have save permissions', () => {
         it('Should set meta correct meta', () => {
           dashboard.access.canSave = false;
-          const scene = transformSaveModelSchemaV2ToScene(dashboard);
+          const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
           expect(scene.state.meta.canMakeEditable).toBe(false);
 
           expect(scene.state.meta.canSave).toBe(false);
@@ -562,7 +562,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
       });
       it('Should set meta canEdit and canSave to false', () => {
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
 
         expect(scene.state.meta.canMakeEditable).toBe(false);
 
@@ -594,7 +594,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             ],
           },
         };
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
         const layoutManager = scene.state.body as AutoGridLayoutManager;
         expect(layoutManager.descriptor.id).toBe('AutoGridLayout');
         expect(layoutManager.state.maxColumnCount).toBe(4);
@@ -639,7 +639,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             ],
           },
         };
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
         const layoutManager = scene.state.body as TabsLayoutManager;
         expect(layoutManager.descriptor.id).toBe('TabsLayout');
         expect(layoutManager.state.tabs.length).toBe(1);
@@ -715,7 +715,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             ],
           },
         };
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const scene = transformSaveModelSchemaV2ToScene(dashboard, {});
         const layoutManager = scene.state.body as RowsLayoutManager;
         expect(layoutManager.descriptor.id).toBe('RowsLayout');
         expect(layoutManager.state.rows.length).toBe(2);
@@ -825,7 +825,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         },
       };
 
-      const scene = transformSaveModelSchemaV2ToScene(dashboardWithAnnotationOptions);
+      const scene = transformSaveModelSchemaV2ToScene(dashboardWithAnnotationOptions, {});
 
       // Get the annotation layers
       const dataLayerSet = scene.state.$data as DashboardDataLayerSet;

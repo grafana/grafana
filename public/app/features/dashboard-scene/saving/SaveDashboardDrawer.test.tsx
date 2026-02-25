@@ -321,26 +321,31 @@ function mockSaveDashboard(options: Partial<MockBackendApiOptions> = {}) {
 let cleanUp = () => {};
 
 function setup(overrides?: Partial<DashboardSceneState>) {
-  const dashboard = transformSaveModelToScene({
-    dashboard: {
-      title: 'hello',
-      uid: 'my-uid',
-      schemaVersion: 30,
-      panels: [],
-      version: 10,
-      templating: {
-        list: [
-          {
-            name: 'constant',
-            query: 'a constant value',
-            type: 'constant',
-          },
-        ],
+  const dashboard = transformSaveModelToScene(
+    {
+      dashboard: {
+        title: 'hello',
+        uid: 'my-uid',
+        schemaVersion: 30,
+        panels: [],
+        version: 10,
+        templating: {
+          list: [
+            {
+              name: 'constant',
+              query: 'a constant value',
+              type: 'constant',
+            },
+          ],
+        },
       },
+      meta: {},
+      ...overrides,
     },
-    meta: {},
-    ...overrides,
-  });
+    undefined,
+    undefined,
+    {}
+  );
 
   // Clear any data layers
   dashboard.setState({ $data: undefined });

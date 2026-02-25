@@ -96,18 +96,23 @@ async function testDashboardEditableElement(dashboard: DashboardScene, inputElem
 }
 
 function setup(overrides?: Partial<DashboardSceneState>) {
-  const dashboard = transformSaveModelToScene({
-    dashboard: {
-      title: 'initial',
-      description: 'initial',
-      uid: 'my-uid',
-      schemaVersion: 30,
-      panels: [],
-      version: 10,
+  const dashboard = transformSaveModelToScene(
+    {
+      dashboard: {
+        title: 'initial',
+        description: 'initial',
+        uid: 'my-uid',
+        schemaVersion: 30,
+        panels: [],
+        version: 10,
+      },
+      meta: {},
+      ...overrides,
     },
-    meta: {},
-    ...overrides,
-  });
+    undefined,
+    undefined,
+    {}
+  );
 
   // Clear any data layers
   dashboard.setState({ $data: undefined });

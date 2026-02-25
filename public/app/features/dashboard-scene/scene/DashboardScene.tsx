@@ -3,6 +3,7 @@ import * as H from 'history';
 import { CoreApp, DataQueryRequest, FieldConfig, locationUtil, NavIndex, NavModelItem, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { getPanelPluginMetasMap, PanelPluginMetas } from '@grafana/runtime/internal';
 import {
   sceneGraph,
   SceneObject,
@@ -488,15 +489,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     if (isDashboardV2Spec(version.data as Dashboard | DashboardV2Spec)) {
       const dto = await getDashboardAPI('v2').getDashboardDTO(version.uid);
-      dashScene = transformSaveModelSchemaV2ToScene(dto);
+      const panelsMeta = await getPanelPluginMetasMap();
+      dashScene = transformSaveModelSchemaV2ToScene(dto, panelsMeta);
     } else {
       const dashboardDTO: DashboardDTO = {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- v1 restore path requires Dashboard type
         dashboard: new DashboardModel(version.data as Dashboard),
         meta: this.state.meta,
       };
+      const panelsMeta = await getPanelPluginMetasMap();
 
-      dashScene = transformSaveModelToScene(dashboardDTO);
+      dashScene = transformSaveModelToScene(dashboardDTO, undefined, undefined, panelsMeta);
     }
 
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
@@ -665,11 +668,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(jsonData));
   }
 
-  public pastePanel() {
+  public pastePanel(panelsMeta: PanelPluginMetas) {
     const jsonData = store.get(LS_PANEL_COPY_KEY);
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
-    const gridItem = buildGridItemForPanel(panelModel);
+    const gridItem = buildGridItemForPanel(panelModel, panelsMeta);
     const panel = gridItem.state.body;
 
     this.addPanel(panel);

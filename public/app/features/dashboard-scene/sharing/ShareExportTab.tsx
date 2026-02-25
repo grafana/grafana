@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -228,6 +229,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       // doesn't know about RowsLayoutManager structure needed for v2 serialization.
       if (initialSaveModelVersion === 'v1' && initialSaveModel && isV1ClassicDashboard(initialSaveModel)) {
         // Recreate scene with v2 layout creator to properly handle rows
+        const panelsMeta = await getPanelPluginMetasMap();
         sceneForV2Export = transformSaveModelToScene(
           {
             dashboard: { ...initialSaveModel, title: initialSaveModel.title ?? '', uid: initialSaveModel.uid ?? '' },
@@ -237,7 +239,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
           {
             createLayout: createV2RowsLayout,
             targetVersion: 'v2',
-          }
+          },
+          panelsMeta
         );
       }
 

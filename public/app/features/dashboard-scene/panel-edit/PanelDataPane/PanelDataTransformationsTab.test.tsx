@@ -178,7 +178,12 @@ describe('PanelDataTransformationsTab', () => {
 });
 
 function setupTabScene(panelId: string) {
-  const scene = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
+  const scene = transformSaveModelToScene(
+    { dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} },
+    undefined,
+    undefined,
+    {}
+  );
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const transformsTab = new PanelDataTransformationsTab({ panelRef: panel.getRef() });

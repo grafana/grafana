@@ -5,6 +5,7 @@ import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
+import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import {
   Badge,
   Button,
@@ -101,6 +102,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: folderUid,
   });
+  const { value: panelsMeta } = usePanelPluginMetasMap();
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -218,7 +220,7 @@ export function ToolbarActions({ dashboard }: Props) {
               testId={selectors.pages.AddDashboard.itemButton('Add new panel from clipboard menu item')}
               label={t('dashboard.add-menu.paste-panel', 'Paste panel')}
               onClick={() => {
-                dashboard.pastePanel();
+                dashboard.pastePanel(panelsMeta ?? {});
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
               }}
             />

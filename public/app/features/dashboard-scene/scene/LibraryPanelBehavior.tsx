@@ -1,6 +1,7 @@
 import { PanelPlugin, PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { getPanelPluginMetasMap, PanelPluginMetas } from '@grafana/runtime/internal';
 import { SceneObject, SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
@@ -38,7 +39,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
   }
 
-  public setPanelFromLibPanel(libPanel: LibraryPanel) {
+  public setPanelFromLibPanel(libPanel: LibraryPanel, panelsMeta: PanelPluginMetas) {
     if (this.state._loadedPanel?.version === libPanel.version) {
       return;
     }
@@ -81,7 +82,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,
       description: libPanelModel.description,
       titleItems: titleItems,
-      $data: createPanelDataProvider(libPanelModel),
+      $data: createPanelDataProvider(libPanelModel, panelsMeta),
     };
 
     if (libPanelModel.timeFrom || libPanelModel.timeShift) {
@@ -141,7 +142,8 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
-      this.setPanelFromLibPanel(libPanel);
+      const panelsMeta = await getPanelPluginMetasMap();
+      this.setPanelFromLibPanel(libPanel, panelsMeta);
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: `Unable to load library panel: ${this.state.uid}`,

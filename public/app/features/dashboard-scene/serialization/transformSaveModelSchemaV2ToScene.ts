@@ -1,6 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { PanelPluginMetas } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   AdHocFilterWithLabels,
@@ -101,7 +102,10 @@ export type TypedVariableModelV2 =
   | AdhocVariableKind
   | SwitchVariableKind;
 
-export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
+export function transformSaveModelSchemaV2ToScene(
+  dto: DashboardWithAccessInfo<DashboardV2Spec>,
+  panelsMeta: PanelPluginMetas
+): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
   const found = dashboard.annotations.some((item) => item.spec.builtIn);
@@ -228,7 +232,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
-        addPanelsOnLoadBehavior,
+        addPanelsOnLoadBehavior(panelsMeta),
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: metadata.name,

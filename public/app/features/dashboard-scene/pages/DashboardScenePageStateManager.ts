@@ -1,7 +1,7 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
-import { UserStorage } from '@grafana/runtime/internal';
+import { getPanelPluginMetasMap, UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
@@ -100,7 +100,7 @@ interface DashboardScenePageStateManagerLike<T> {
   fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
   getDashboardFromCache(cacheKey: string): T | null;
   loadDashboard(options: LoadDashboardOptions): Promise<void>;
-  transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
+  transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): Promise<DashboardScene | null>;
   reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   loadSnapshot(slug: string): Promise<void>;
   setDashboardCache(cacheKey: string, dashboard: T): void;
@@ -145,7 +145,7 @@ abstract class DashboardScenePageStateManagerBase<T>
 {
   abstract fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
-  abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
+  abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): Promise<DashboardScene | null>;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
 
   protected cache: Record<string, DashboardScene> = {};
@@ -188,7 +188,8 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadHomeDashboard(): Promise<DashboardScene | null> {
     const rsp = await this.fetchHomeDashboard();
     if (rsp) {
-      return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
+      const panelsMeta = await getPanelPluginMetasMap();
+      return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions(), panelsMeta);
     }
 
     return null;
@@ -488,7 +489,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 }
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
-  transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
+  async transformResponseToScene(
+    rsp: DashboardDTO | null,
+    options: LoadDashboardOptions
+  ): Promise<DashboardScene | null> {
     const fromCache = this.getSceneFromCache(options.uid);
 
     if (
@@ -506,7 +510,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     if (rsp?.dashboard) {
       const sceneCreationOptions = getSceneCreationOptions(options, rsp.meta);
-      const scene = transformSaveModelToScene(rsp, options, sceneCreationOptions);
+      const panelsMeta = await getPanelPluginMetasMap();
+      const scene = transformSaveModelToScene(rsp, options, sceneCreationOptions, panelsMeta);
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
@@ -540,7 +545,13 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
 
       // Snapshots should use default v1 layout
-      const scene = transformSaveModelToScene(rsp, undefined, getSceneCreationOptions(undefined, { isSnapshot: true }));
+      const panelsMeta = await getPanelPluginMetasMap();
+      const scene = transformSaveModelToScene(
+        rsp,
+        undefined,
+        getSceneCreationOptions(undefined, { isSnapshot: true }),
+        panelsMeta
+      );
       return scene;
     }
 
@@ -833,7 +844,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
 
       const sceneCreationOptions = getSceneCreationOptions(undefined, rsp.meta);
-      const scene = transformSaveModelToScene(rsp, undefined, sceneCreationOptions);
+      const panelsMeta = await getPanelPluginMetasMap();
+      const scene = transformSaveModelToScene(rsp, undefined, sceneCreationOptions, panelsMeta);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
@@ -871,17 +883,18 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     const v2Response = ensureV2Response(rsp);
 
     if (v2Response.spec) {
-      const scene = transformSaveModelSchemaV2ToScene(v2Response);
+      const panelsMeta = await getPanelPluginMetasMap();
+      const scene = transformSaveModelSchemaV2ToScene(v2Response, panelsMeta);
       return scene;
     }
 
     throw new Error('Snapshot not found');
   }
 
-  transformResponseToScene(
+  async transformResponseToScene(
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
-  ): DashboardScene | null {
+  ): Promise<DashboardScene | null> {
     const fromCache = this.getSceneFromCache(options.uid);
 
     if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
@@ -894,7 +907,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     if (rsp) {
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      const panelsMeta = await getPanelPluginMetasMap();
+      const scene = transformSaveModelSchemaV2ToScene(rsp, panelsMeta);
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid) {
@@ -1033,7 +1047,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         return;
       }
 
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      const panelsMeta = await getPanelPluginMetasMap();
+      const scene = transformSaveModelSchemaV2ToScene(rsp, panelsMeta);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
@@ -1113,10 +1128,10 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     return this.activeManager.getDashboardFromCache(uid);
   }
 
-  transformResponseToScene(
+  async transformResponseToScene(
     rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
-  ): DashboardScene | null {
+  ): Promise<DashboardScene | null> {
     if (!rsp) {
       return null;
     }

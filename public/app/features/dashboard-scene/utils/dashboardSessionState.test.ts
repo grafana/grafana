@@ -161,7 +161,7 @@ function buildTestScene(overrides?: Partial<DashboardDataDTO>) {
     ...overrides,
   };
 
-  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
+  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} }, undefined, undefined, {});
 
   // Removing data layers to avoid mocking built-in Grafana data source
   scene.setState({ $data: undefined });

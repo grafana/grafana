@@ -244,13 +244,16 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
 
       // Load the backend output into a scene, then transform it back to a save model schema v2
       // This is to ensure that the backend output is the same as the frontend output being loaded by the scene
-      const sceneBackend = transformSaveModelSchemaV2ToScene({
-        spec: backendOutput.spec,
-        metadata: backendOutput.metadata,
-        apiVersion: backendOutput.apiVersion,
-        access: {},
-        kind: 'DashboardWithAccessInfo',
-      });
+      const sceneBackend = transformSaveModelSchemaV2ToScene(
+        {
+          spec: backendOutput.spec,
+          metadata: backendOutput.metadata,
+          apiVersion: backendOutput.apiVersion,
+          access: {},
+          kind: 'DashboardWithAccessInfo',
+        },
+        {}
+      );
       const backendOutputAfterLoadedByScene = transformSceneToSaveModelSchemaV2(sceneBackend, false);
 
       // Determine how to extract the dashboard spec:
@@ -279,7 +282,8 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
           },
         },
         undefined,
-        getSceneCreationOptions()
+        getSceneCreationOptions(),
+        {}
       );
 
       const frontendOutput = transformSceneToSaveModelSchemaV2(scene, false);
@@ -334,13 +338,16 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
 
       // Load the backend output into a scene, then transform it back to a save model schema v2
       // This is to ensure that the backend output is the same as the frontend output being loaded by the scene
-      const sceneBackend = transformSaveModelSchemaV2ToScene({
-        spec: backendOutput.spec,
-        metadata: backendOutput.metadata,
-        apiVersion: backendOutput.apiVersion,
-        access: {},
-        kind: 'DashboardWithAccessInfo',
-      });
+      const sceneBackend = transformSaveModelSchemaV2ToScene(
+        {
+          spec: backendOutput.spec,
+          metadata: backendOutput.metadata,
+          apiVersion: backendOutput.apiVersion,
+          access: {},
+          kind: 'DashboardWithAccessInfo',
+        },
+        {}
+      );
       const backendOutputAfterLoadedByScene = transformSceneToSaveModelSchemaV2(sceneBackend, false);
 
       // Transform using frontend path: raw dashboard JSON -> Scene -> v2beta1
@@ -368,7 +375,8 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
           },
         },
         undefined,
-        getSceneCreationOptions()
+        getSceneCreationOptions(),
+        {}
       );
 
       const frontendOutput = transformSceneToSaveModelSchemaV2(scene, false);

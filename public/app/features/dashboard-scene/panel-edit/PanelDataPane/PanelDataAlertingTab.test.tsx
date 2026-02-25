@@ -357,7 +357,7 @@ async function clickNewButton() {
 }
 
 function createModel(dashboard: DashboardModel, dto: DashboardDataDTO) {
-  const scene = createDashboardSceneFromDashboardModel(dashboard, dto);
+  const scene = createDashboardSceneFromDashboardModel(dashboard, dto, undefined, undefined, {});
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
   const model = new PanelDataAlertingTab({ panelRef: vizPanel.getRef() });
   jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);

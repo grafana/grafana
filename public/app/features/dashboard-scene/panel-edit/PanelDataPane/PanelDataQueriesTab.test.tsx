@@ -989,7 +989,12 @@ describe('PanelDataQueriesTab', () => {
 });
 
 async function setupScene(panelId: string) {
-  const dashboard = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
+  const dashboard = transformSaveModelToScene(
+    { dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} },
+    undefined,
+    undefined,
+    {}
+  );
   const panel = findVizPanelByKey(dashboard, panelId)!;
 
   const panelEditor = buildPanelEditScene(panel);
@@ -1012,7 +1017,7 @@ async function setupScene(panelId: string) {
 
 // Setup V2 scene - uses transformSaveModelSchemaV2ToScene
 async function setupV2Scene(panelKey: string) {
-  const dashboard = transformSaveModelSchemaV2ToScene(testDashboardV2);
+  const dashboard = transformSaveModelSchemaV2ToScene(testDashboardV2, {});
 
   const vizPanels = (dashboard.state.body as DashboardLayoutManager).getVizPanels();
   const panel = vizPanels.find((p) => p.state.key === panelKey)!;

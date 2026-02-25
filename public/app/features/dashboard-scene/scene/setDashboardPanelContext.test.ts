@@ -351,56 +351,61 @@ function buildTestScene(options: SceneOptions) {
     } as GroupByVariableModel);
   }
 
-  const scene = transformSaveModelToScene({
-    dashboard: {
-      title: 'hello',
-      uid: 'dash-1',
-      schemaVersion: 38,
-      annotations: {
-        list: [
-          {
-            builtIn: 1,
-            datasource: {
-              type: 'grafana',
-              uid: '-- Grafana --',
+  const scene = transformSaveModelToScene(
+    {
+      dashboard: {
+        title: 'hello',
+        uid: 'dash-1',
+        schemaVersion: 38,
+        annotations: {
+          list: [
+            {
+              builtIn: 1,
+              datasource: {
+                type: 'grafana',
+                uid: '-- Grafana --',
+              },
+              enable: options.builtInAnnotationsEnabled ?? false,
+              hide: true,
+              iconColor: 'rgba(0, 211, 255, 1)',
+              name: 'Annotations & Alerts',
+              target: { refId: 'A' },
+              type: 'dashboard',
             },
-            enable: options.builtInAnnotationsEnabled ?? false,
-            hide: true,
-            iconColor: 'rgba(0, 211, 255, 1)',
-            name: 'Annotations & Alerts',
-            target: { refId: 'A' },
-            type: 'dashboard',
+          ],
+        },
+        panels: [
+          {
+            type: 'timeseries',
+            id: 4,
+            datasource: { uid: 'my-ds-uid', type: 'prometheus' },
+            targets: [],
           },
         ],
-      },
-      panels: [
-        {
-          type: 'timeseries',
-          id: 4,
-          datasource: { uid: 'my-ds-uid', type: 'prometheus' },
-          targets: [],
+        templating: {
+          list: varList,
         },
-      ],
-      templating: {
-        list: varList,
       },
-    },
-    meta: {
-      canEdit: options.dashboardCanEdit,
-      annotationsPermissions: {
-        dashboard: {
-          canAdd: options.canAdd ?? false,
-          canEdit: options.canEdit ?? false,
-          canDelete: options.canDelete ?? false,
-        },
-        organization: {
-          canAdd: false,
-          canEdit: options.orgCanEdit ?? false,
-          canDelete: options.canDelete ?? false,
+      meta: {
+        canEdit: options.dashboardCanEdit,
+        annotationsPermissions: {
+          dashboard: {
+            canAdd: options.canAdd ?? false,
+            canEdit: options.canEdit ?? false,
+            canDelete: options.canDelete ?? false,
+          },
+          organization: {
+            canAdd: false,
+            canEdit: options.orgCanEdit ?? false,
+            canDelete: options.canDelete ?? false,
+          },
         },
       },
     },
-  });
+    undefined,
+    undefined,
+    {}
+  );
 
   const vizPanel = findVizPanelByKey(scene, 'panel-4')!;
 

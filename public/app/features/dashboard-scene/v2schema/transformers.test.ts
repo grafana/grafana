@@ -71,7 +71,7 @@ describe('V2 Transformers', () => {
     config.featureToggles.groupByVariable = false;
   });
   it('should match original V2 Schema when transforming to scene and back to V2 Schema', async () => {
-    const dashV2Scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+    const dashV2Scene = transformSaveModelSchemaV2ToScene(defaultDashboard, {});
     // Find and manually set options for CustomVariable
     // Options are set based on query field using getValueOptions
     const customVariable = dashV2Scene.state.$variables?.state.variables.find(

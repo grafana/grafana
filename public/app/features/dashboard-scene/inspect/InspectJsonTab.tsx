@@ -4,6 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import {
   SceneComponentProps,
   SceneDataTransformer,
@@ -253,9 +254,10 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     this.state.onClose();
   }
 
-  private applyV1PanelChange(jsonObj: unknown, panel: VizPanel, dashboard: DashboardScene) {
+  private async applyV1PanelChange(jsonObj: unknown, panel: VizPanel, dashboard: DashboardScene) {
     const panelModel = new PanelModel(jsonObj);
-    const gridItem = buildGridItemForPanel(panelModel);
+    const panelsMeta = await getPanelPluginMetasMap();
+    const gridItem = buildGridItemForPanel(panelModel, panelsMeta);
     const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
 
     if (!(panel.parent instanceof DashboardGridItem)) {

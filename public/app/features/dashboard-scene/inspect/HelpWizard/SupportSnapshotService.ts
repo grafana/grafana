@@ -2,6 +2,7 @@ import saveAs from 'file-saver';
 
 import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
@@ -81,7 +82,13 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     let scene: SceneObject | undefined = undefined;
     if (snapshot) {
       try {
-        const dash = transformSaveModelToScene({ dashboard: snapshot, meta: { isEmbedded: true } });
+        const panelsMeta = await getPanelPluginMetasMap();
+        const dash = transformSaveModelToScene(
+          { dashboard: snapshot, meta: { isEmbedded: true } },
+          undefined,
+          undefined,
+          panelsMeta
+        );
         scene = dash.state.body; // skip the wrappers
       } catch (ex) {
         console.log('Error creating scene:', ex);

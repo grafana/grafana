@@ -2,6 +2,7 @@ import saveAs from 'file-saver';
 
 import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { SceneObject } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { Randomize } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';
@@ -80,12 +81,13 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     const snapshotText = JSON.stringify(snapshot, null, 2);
     const markdownText = getGithubMarkdown(panel, snapshotText);
     const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
+    const panelsMeta = await getPanelPluginMetasMap();
 
     let scene: SceneObject | undefined = undefined;
 
     try {
       const oldModel = new DashboardModel(snapshot, { isEmbedded: true });
-      const dash = createDashboardSceneFromDashboardModel(oldModel, snapshot);
+      const dash = createDashboardSceneFromDashboardModel(oldModel, snapshot, undefined, undefined, panelsMeta);
       scene = dash.state.body; // skip the wrappers
     } catch (ex) {
       console.log('Error creating scene:', ex);

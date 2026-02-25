@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -74,18 +75,25 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     if (isV2) {
       // FIXME: We could avoid this call by storing the entire dashboard DTO as initial dashboard scene instead of only the spec and metadata
       const dto = await getDashboardAPI('v2').getDashboardDTO(result.uid);
-      newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
+      const panelsMeta = await getPanelPluginMetasMap();
+      newDashboardScene = transformSaveModelSchemaV2ToScene(dto, panelsMeta);
       const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(dto.spec, dto.metadata);
       dashboard.setState(newState);
     } else {
+      const panelsMeta = await getPanelPluginMetasMap();
       jsonModel.version = result.version;
-      newDashboardScene = transformSaveModelToScene({
-        dashboard: jsonModel,
-        meta: dashboard.state.meta,
-      });
+      newDashboardScene = transformSaveModelToScene(
+        {
+          dashboard: jsonModel,
+          meta: dashboard.state.meta,
+        },
+        undefined,
+        undefined,
+        panelsMeta
+      );
       const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();

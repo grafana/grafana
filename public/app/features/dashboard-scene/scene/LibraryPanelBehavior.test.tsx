@@ -121,7 +121,7 @@ describe('LibraryPanelBehavior', () => {
       model: panel,
     };
 
-    behavior.setPanelFromLibPanel(libraryPanelState);
+    behavior.setPanelFromLibPanel(libraryPanelState, {});
 
     expect(gridItem.state.body.state.$timeRange).toBeInstanceOf(PanelTimeRange);
   });
@@ -143,7 +143,7 @@ describe('LibraryPanelBehavior', () => {
       model: panel,
     };
 
-    behavior.setPanelFromLibPanel(libraryPanelState);
+    behavior.setPanelFromLibPanel(libraryPanelState, {});
 
     expect(behavior.state._loadedPanel?.name).toBe('LibraryPanel A');
     expect(behavior.state._loadedPanel?.uid).toBe('111');
@@ -182,7 +182,7 @@ describe('LibraryPanelBehavior', () => {
     };
 
     const behaviorClone = behavior.clone();
-    behaviorClone.setPanelFromLibPanel(libraryPanelState);
+    behaviorClone.setPanelFromLibPanel(libraryPanelState, {});
 
     expect(behaviorClone.state._loadedPanel?.name).toBe('LibraryPanel A');
     expect(behaviorClone.state._loadedPanel?.uid).toBe('111');

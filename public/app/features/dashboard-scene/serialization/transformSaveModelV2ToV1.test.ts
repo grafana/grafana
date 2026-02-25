@@ -235,7 +235,8 @@ function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
       },
     },
     undefined,
-    getSceneCreationOptions()
+    getSceneCreationOptions(),
+    {}
   );
 
   return transformSceneToSaveModel(scene, false);
@@ -251,18 +252,21 @@ function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
  * making the comparison fair.
  */
 function transformV2ToV1UsingFrontendTransformers(jsonInput: DashboardWithAccessInfo<DashboardV2Spec>): Dashboard {
-  const scene = transformSaveModelSchemaV2ToScene({
-    spec: jsonInput.spec,
-    metadata: jsonInput.metadata || {
-      name: 'test-dashboard',
-      generation: 1,
-      resourceVersion: '1',
-      creationTimestamp: new Date().toISOString(),
+  const scene = transformSaveModelSchemaV2ToScene(
+    {
+      spec: jsonInput.spec,
+      metadata: jsonInput.metadata || {
+        name: 'test-dashboard',
+        generation: 1,
+        resourceVersion: '1',
+        creationTimestamp: new Date().toISOString(),
+      },
+      apiVersion: jsonInput.apiVersion,
+      access: {},
+      kind: 'DashboardWithAccessInfo',
     },
-    apiVersion: jsonInput.apiVersion,
-    access: {},
-    kind: 'DashboardWithAccessInfo',
-  });
+    {}
+  );
 
   const frontendOutput = transformSceneToSaveModel(scene, false);
   return loadAndSerializeV1SaveModel(frontendOutput);

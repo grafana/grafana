@@ -1,18 +1,21 @@
-import { config } from '@grafana/runtime';
+import { PanelPluginMetas } from '@grafana/runtime/internal';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
-export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
+export function createPanelDataProvider(
+  panel: PanelModel,
+  panelsMeta: PanelPluginMetas
+): SceneDataProvider | undefined {
   // Skip setting query runner for panels without queries
   if (!panel.targets?.length) {
     return undefined;
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.type]?.skipDataQuery) {
+  if (panelsMeta[panel.type]?.skipDataQuery) {
     return undefined;
   }
 

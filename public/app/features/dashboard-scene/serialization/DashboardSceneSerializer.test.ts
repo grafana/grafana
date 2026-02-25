@@ -171,44 +171,49 @@ describe('DashboardSceneSerializer', () => {
         });
 
         it('Can detect group by static options change', () => {
-          const dashboard = transformSaveModelToScene({
-            dashboard: {
-              title: 'hello',
-              uid: 'my-uid',
-              schemaVersion: 30,
-              panels: [
-                {
-                  id: 1,
-                  title: 'Panel 1',
-                  type: 'text',
-                },
-              ],
-              version: 10,
-              templating: {
-                list: [
+          const dashboard = transformSaveModelToScene(
+            {
+              dashboard: {
+                title: 'hello',
+                uid: 'my-uid',
+                schemaVersion: 30,
+                panels: [
                   {
-                    type: 'groupby',
-                    datasource: {
-                      type: 'ds',
-                      uid: 'ds-uid',
-                    },
-                    name: 'GroupBy',
-                    options: [
-                      {
-                        text: 'Host',
-                        value: 'host',
-                      },
-                      {
-                        text: 'Region',
-                        value: 'region',
-                      },
-                    ],
+                    id: 1,
+                    title: 'Panel 1',
+                    type: 'text',
                   },
                 ],
+                version: 10,
+                templating: {
+                  list: [
+                    {
+                      type: 'groupby',
+                      datasource: {
+                        type: 'ds',
+                        uid: 'ds-uid',
+                      },
+                      name: 'GroupBy',
+                      options: [
+                        {
+                          text: 'Host',
+                          value: 'host',
+                        },
+                        {
+                          text: 'Region',
+                          value: 'region',
+                        },
+                      ],
+                    },
+                  ],
+                },
               },
+              meta: {},
             },
-            meta: {},
-          });
+            undefined,
+            undefined,
+            {}
+          );
           const initialSaveModel = transformSceneToSaveModel(dashboard);
           dashboard.setInitialSaveModel(initialSaveModel);
 
@@ -246,25 +251,30 @@ describe('DashboardSceneSerializer', () => {
             ],
           } as VariableModel;
 
-          const dashboard = transformSaveModelToScene({
-            dashboard: {
-              title: 'hello',
-              uid: 'my-uid',
-              schemaVersion: 30,
-              panels: [
-                {
-                  id: 1,
-                  title: 'Panel 1',
-                  type: 'text',
+          const dashboard = transformSaveModelToScene(
+            {
+              dashboard: {
+                title: 'hello',
+                uid: 'my-uid',
+                schemaVersion: 30,
+                panels: [
+                  {
+                    id: 1,
+                    title: 'Panel 1',
+                    type: 'text',
+                  },
+                ],
+                version: 10,
+                templating: {
+                  list: [adhocVar],
                 },
-              ],
-              version: 10,
-              templating: {
-                list: [adhocVar],
               },
+              meta: {},
             },
-            meta: {},
-          });
+            undefined,
+            undefined,
+            {}
+          );
 
           const initialSaveModel = transformSceneToSaveModel(dashboard);
           dashboard.setInitialSaveModel(initialSaveModel);
@@ -1488,35 +1498,40 @@ describe('DashboardSceneSerializer', () => {
 });
 
 function setup(override: Partial<Dashboard> = {}) {
-  const dashboard = transformSaveModelToScene({
-    dashboard: {
-      title: 'hello',
-      uid: 'my-uid',
-      schemaVersion: 30,
-      panels: [
-        {
-          id: 1,
-          title: 'Panel 1',
-          type: 'text',
-        },
-      ],
-      version: 10,
-      templating: {
-        list: [
+  const dashboard = transformSaveModelToScene(
+    {
+      dashboard: {
+        title: 'hello',
+        uid: 'my-uid',
+        schemaVersion: 30,
+        panels: [
           {
-            name: 'app',
-            type: 'custom',
-            current: {
-              text: 'app1',
-              value: 'app1',
-            },
+            id: 1,
+            title: 'Panel 1',
+            type: 'text',
           },
         ],
+        version: 10,
+        templating: {
+          list: [
+            {
+              name: 'app',
+              type: 'custom',
+              current: {
+                text: 'app1',
+                value: 'app1',
+              },
+            },
+          ],
+        },
+        ...override,
       },
-      ...override,
+      meta: {},
     },
-    meta: {},
-  });
+    undefined,
+    undefined,
+    {}
+  );
 
   const initialSaveModel = transformSceneToSaveModel(dashboard);
   dashboard.setInitialSaveModel(initialSaveModel);

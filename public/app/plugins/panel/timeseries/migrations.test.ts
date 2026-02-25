@@ -151,7 +151,7 @@ describe('Graph Migrations', () => {
 
       dashboard.panels.push(new PanelModelState(panel));
 
-      const scene = transformSaveModelToScene({ dashboard, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard, meta: {} }, undefined, undefined, {});
       window.__grafanaSceneContext = scene;
 
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);

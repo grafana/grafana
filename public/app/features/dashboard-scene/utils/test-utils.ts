@@ -233,84 +233,87 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
 }
 
 export function getTestDashboardSceneFromSaveModel(spec?: Partial<DashboardV2Spec>) {
-  const dashboard = transformSaveModelSchemaV2ToScene({
-    kind: 'DashboardWithAccessInfo',
-    spec: {
-      ...defaultDashboardV2Spec(),
-      title: 'hello',
-      timeSettings: {
-        ...defaultTimeSettingsSpec(),
-        autoRefresh: '10s',
-        from: 'now-1h',
-        to: 'now',
-      },
-      elements: {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            ...defaultPanelSpec(),
-            id: 1,
-            title: 'Panel 1',
+  const dashboard = transformSaveModelSchemaV2ToScene(
+    {
+      kind: 'DashboardWithAccessInfo',
+      spec: {
+        ...defaultDashboardV2Spec(),
+        title: 'hello',
+        timeSettings: {
+          ...defaultTimeSettingsSpec(),
+          autoRefresh: '10s',
+          from: 'now-1h',
+          to: 'now',
+        },
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              ...defaultPanelSpec(),
+              id: 1,
+              title: 'Panel 1',
+            },
           },
         },
-      },
-      layout: {
-        kind: 'GridLayout',
-        spec: {
-          items: [
-            {
-              kind: 'GridLayoutItem',
-              spec: {
-                x: 0,
-                y: 0,
-                width: 12,
-                height: 8,
-                element: {
-                  kind: 'ElementReference',
-                  name: 'panel-1',
+        layout: {
+          kind: 'GridLayout',
+          spec: {
+            items: [
+              {
+                kind: 'GridLayoutItem',
+                spec: {
+                  x: 0,
+                  y: 0,
+                  width: 12,
+                  height: 8,
+                  element: {
+                    kind: 'ElementReference',
+                    name: 'panel-1',
+                  },
                 },
               },
-            },
-          ],
-        },
-      },
-      variables: [
-        {
-          kind: 'CustomVariable',
-          spec: {
-            name: 'app',
-            label: 'Query Variable',
-            description: 'A query variable',
-            skipUrlSync: false,
-            hide: 'dontHide',
-            options: [],
-            multi: false,
-            current: {
-              text: 'app1',
-              value: 'app1',
-            },
-            query: 'app1',
-            allValue: '',
-            includeAll: false,
-            allowCustomValue: true,
+            ],
           },
         },
-      ],
-      ...spec,
+        variables: [
+          {
+            kind: 'CustomVariable',
+            spec: {
+              name: 'app',
+              label: 'Query Variable',
+              description: 'A query variable',
+              skipUrlSync: false,
+              hide: 'dontHide',
+              options: [],
+              multi: false,
+              current: {
+                text: 'app1',
+                value: 'app1',
+              },
+              query: 'app1',
+              allValue: '',
+              includeAll: false,
+              allowCustomValue: true,
+            },
+          },
+        ],
+        ...spec,
+      },
+      apiVersion: 'v1',
+      metadata: {
+        name: 'dashboard-test',
+        resourceVersion: '1',
+        creationTimestamp: '2023-01-01T00:00:00Z',
+      },
+      access: {
+        canEdit: true,
+        canSave: true,
+        canStar: true,
+        canShare: true,
+      },
     },
-    apiVersion: 'v1',
-    metadata: {
-      name: 'dashboard-test',
-      resourceVersion: '1',
-      creationTimestamp: '2023-01-01T00:00:00Z',
-    },
-    access: {
-      canEdit: true,
-      canSave: true,
-      canStar: true,
-      canShare: true,
-    },
-  });
+    {}
+  );
 
   const initialSaveModel = transformSceneToSaveModelSchemaV2(dashboard);
   dashboard.setInitialSaveModel(initialSaveModel);
