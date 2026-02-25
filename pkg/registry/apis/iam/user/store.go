@@ -181,12 +181,23 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	ctx, span := s.tracer.Start(ctx, "user.List")
 	defer span.End()
 
+	query := legacy.ListUserQuery{}
+
+	if options.FieldSelector != nil {
+		if email, ok := options.FieldSelector.RequiresExactMatch("spec.email"); ok {
+			query.Email = email
+		}
+		if login, ok := options.FieldSelector.RequiresExactMatch("spec.login"); ok {
+			query.Login = login
+		}
+	}
+
 	res, err := common.List(
 		ctx, userResource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.User], error) {
-			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
-				Pagination: p,
-			})
+			q := query
+			q.Pagination = p
+			found, err := s.store.ListUsers(ctx, ns, q)
 
 			if err != nil {
 				return nil, err

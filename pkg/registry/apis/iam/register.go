@@ -472,7 +472,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 
 func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
 	userResource := iamv0.UserResourceInfo
-	userUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
+
+	userSelectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(iamv0.UserKind()),
+	}
+	userUniStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, userResource, opts.OptsGetter, userSelectableFieldsOpts)
 	if err != nil {
 		return err
 	}

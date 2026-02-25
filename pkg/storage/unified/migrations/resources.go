@@ -16,13 +16,14 @@ func registerMigrations(ctx context.Context,
 	cfg *setting.Cfg,
 	mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
+	tableLocker MigrationTableLocker,
 	client resourcepb.ResourceIndexClient,
 	sqlStore db.DB,
 	registry *MigrationRegistry,
 ) error {
 	for _, def := range registry.All() {
 		if shouldAutoMigrate(ctx, def, cfg, sqlStore) {
-			registerMigration(mg, migrator, cfg, client, def, WithAutoMigrate(cfg))
+			registerMigration(mg, migrator, tableLocker, cfg, client, def, WithAutoMigrate(cfg))
 			continue
 		}
 
@@ -34,20 +35,21 @@ func registerMigrations(ctx context.Context,
 			logger.Info("Migration is disabled in config, skipping", "migration", def.ID)
 			continue
 		}
-		registerMigration(mg, migrator, cfg, client, def)
+		registerMigration(mg, migrator, tableLocker, cfg, client, def)
 	}
 	return nil
 }
 
 func registerMigration(mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
+	tableLocker MigrationTableLocker,
 	cfg *setting.Cfg,
 	client resourcepb.ResourceIndexClient,
 	def MigrationDefinition,
 	opts ...ResourceMigrationOption,
 ) {
 	validators := def.CreateValidators(client, mg.Dialect.DriverName())
-	migration := NewResourceMigration(migrator, def.GetGroupResources(), def.ID, validators, opts...)
+	migration := NewResourceMigration(migrator, tableLocker, def, validators, opts...)
 	migration.runner.cfg = cfg
 	mg.AddMigration(def.MigrationID, migration)
 }

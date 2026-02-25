@@ -466,10 +466,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "外部アラートマネージャー",
-      "extra-config-warning": {
-        "content": "これは、Grafanaアラートマネージャーとインポートされた設定をマージした設定を示しています。このマージされたビューは、UIでは読み取り専用です。",
-        "title": "インポートされた設定"
-      },
       "noOptionsMessage-no-datasources-found": "データソースが見つかりません"
     },
     "alert-menu": {
@@ -4977,6 +4973,7 @@
       "description-color-annotation-event-markers": "注釈イベントマーカーに使用する色",
       "description-enabled-annotation-query-issued-every-dashboard": "有効にすると、ダッシュボードの更新ごとに注釈クエリが発行されます",
       "description-hidden": "ダッシュボード上部で、注釈クエリのオン/オフを切り替えられます。このオプションをオンにすると、このトグルは非表示になります。",
+      "error-loading-panels": "",
       "label-color": "色",
       "label-data-source": "データソース",
       "label-enabled": "有効化",
@@ -6416,6 +6413,7 @@
       "delete": "削除",
       "description-color-annotation-event-markers": "注釈イベントマーカーに使用する色",
       "description-enabled-annotation-query-issued-every-dashboard": "有効にすると、ダッシュボードの更新ごとに注釈クエリが発行されます",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "注釈コントロールの表示場所",
       "label-color": "色",
       "label-data-source": "データソース",
@@ -12840,6 +12838,7 @@
       "header-status": "ステータス",
       "header-title": "タイトル",
       "header-type": "タイプ",
+      "missing-folder-metadata": "",
       "search-placeholder": "パスまたはタイトルで検索",
       "source": "ソース",
       "status-pending": "保留中",
@@ -13303,6 +13302,7 @@
       },
       "card-click": "カード{{id}}を選択",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
       "transformations": "変換",

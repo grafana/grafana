@@ -1858,6 +1858,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "createdByMeSearchFilter",
+			Description:  "Enables the created by me search filter on the browse dashboards page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,
@@ -1918,13 +1926,6 @@ var (
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "tabularNumbers",
-			Description: "Use fixed-width numbers globally in the UI",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
 		{
@@ -2464,6 +2465,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "managedPluginsV2",
+			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
 	}

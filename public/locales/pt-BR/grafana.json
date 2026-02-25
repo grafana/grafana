@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externos",
-      "extra-config-warning": {
-        "content": "Exibe a combinação entre as configurações do alertmanager do Grafana e as configurações importadas. Esta visualização combinada é definida como somente leitura na interface do usuário.",
-        "title": "Configuração importada"
-      },
       "noOptionsMessage-no-datasources-found": "Nenhuma fonte de dados encontrada"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "Cor que será usada para os marcadores de evento de anotação",
       "description-enabled-annotation-query-issued-every-dashboard": "Quando ativada, a consulta de anotação é emitida a cada atualização do painel",
       "description-hidden": "As consultas de anotação podem ser ativadas ou desativadas na parte superior do painel. Com esta opção marcada, este botão de alternância ficará oculto.",
+      "error-loading-panels": "",
       "label-color": "Cor",
       "label-data-source": "Fonte de dados",
       "label-enabled": "Ativado",
@@ -6444,6 +6441,7 @@
       "delete": "Excluir",
       "description-color-annotation-event-markers": "Cor que será usada para os marcadores de evento de anotação",
       "description-enabled-annotation-query-issued-every-dashboard": "Quando ativada, a consulta de anotação é emitida a cada atualização do painel",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Mostrar controles de anotação em",
       "label-color": "Cor",
       "label-data-source": "Fonte de dados",
@@ -12900,6 +12898,7 @@
       "header-status": "Status",
       "header-title": "Título",
       "header-type": "Tipo",
+      "missing-folder-metadata": "",
       "search-placeholder": "Buscar por caminho ou título",
       "source": "Fonte",
       "status-pending": "Pendente",
@@ -13364,6 +13363,7 @@
       },
       "card-click": "Selecionar cartão {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Consultas e expressões",
       "toggle-size": "Alternar tamanho da barra lateral",
       "transformations": "Transformações",
