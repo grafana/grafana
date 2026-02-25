@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+
+import { createRelativeUrl, isRelativeUrl } from '../utils/url';
 
 interface EnrichmentItem {
   type: string;
@@ -39,14 +41,18 @@ export function AlertEnrichments({ enrichments }: AlertEnrichmentsProps) {
 function EnrichmentItemView({ item }: { item: EnrichmentItem }) {
   const styles = useStyles2(getStyles);
 
+  // LinkButton renders an <a> tag so we need createRelativeUrl for subpath support
+  const sanitizedLink = item.exploreLink ? textUtil.sanitizeUrl(item.exploreLink) : undefined;
+  const exploreHref = sanitizedLink && isRelativeUrl(sanitizedLink) ? createRelativeUrl(sanitizedLink) : sanitizedLink;
+
   if (item.type === 'logs') {
     return (
       <div className={styles.enrichmentItem}>
         <Stack direction="column" gap={0.5}>
           <Stack direction="row" gap={1} alignItems="center">
             <Badge color="blue" text={t('alerting.notification-history.enrichment-type-logs', 'logs')} />
-            {item.exploreLink && (
-              <LinkButton size="sm" variant="secondary" icon="compass" href={item.exploreLink} target="_blank">
+            {exploreHref && (
+              <LinkButton size="sm" variant="secondary" icon="compass" href={exploreHref} target="_blank">
                 <Trans i18nKey="alerting.notification-history.enrichment-explore">View in Explore</Trans>
               </LinkButton>
             )}
