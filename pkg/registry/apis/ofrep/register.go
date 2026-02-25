@@ -240,7 +240,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if b.providerType == setting.GOFFProviderType {
-		if !b.validateNamespace(r) {
+               if !b.validateNamespace(w, r) {
 			b.logger.Error("stackId in evaluation context does not match requested namespace")
 			http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
 			return
@@ -257,7 +257,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	isAuthedReq := b.isAuthenticatedRequest(r)
 
 	if b.providerType == setting.GOFFProviderType {
-		if !b.validateNamespace(r) {
+               if !b.validateNamespace(w, r) {
 			b.logger.Error("stackId in evaluation context does not match requested namespace")
 			http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
 			return
@@ -310,7 +310,7 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 }
 
 // validateNamespace checks if the stackId in the evaluation context matches the namespace in the request
-func (b *APIBuilder) validateNamespace(r *http.Request) bool {
+func (b *APIBuilder) validateNamespace(w http.ResponseWriter, r *http.Request) bool {
 	// Extract namespace from request context or URL path
 	var namespace string
 	user, ok := types.AuthInfoFrom(r.Context())
@@ -330,8 +330,9 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 		return false
 	}
 
+       const mib = 1024 * 1024
 	// Extract stackId from feature flag evaluation context
-	body, err := io.ReadAll(r.Body)
+       body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, mib))
 	if err != nil {
 		b.logger.Error("Error reading evaluation request body", "error", err)
 		return false
