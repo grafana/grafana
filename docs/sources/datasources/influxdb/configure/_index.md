@@ -207,7 +207,7 @@ A successful test returns one of the following messages depending on your query 
 | InfluxQL       | `datasource is working. X measurements found` |
 | SQL            | `OK`                                          |
 
-If the test fails, refer to [Troubleshoot issues with the InfluxDB data source](../troubleshooting/) for help resolving common connection and authentication errors.
+If the test fails, refer to [Troubleshoot InfluxDB data source issues](../troubleshooting/) for help resolving common connection and authentication errors.
 
 ### Min time interval
 
