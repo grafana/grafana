@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
-import { DataFrame, Field, FieldNamePickerBaseNameMode, getFieldDisplayName, IconName } from '@grafana/data';
+import { DataFrame, Field, FieldNamePickerBaseNameMode, getFieldDisplayName } from '@grafana/data';
 
 import { getFieldTypeIcon } from '../../types/icon';
+import { ComboboxOption } from '../Combobox/types';
 
 /**
  * @internal
@@ -66,21 +67,19 @@ export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) 
     return getFrameFieldsDisplayNames(data, filter);
   }, [data, filter]);
 }
-
-type MatcherSelectOption = { value: string; label: string; icon?: IconName };
 /**
  * @internal
  */
 export function useSelectOptions(
   displayNames: FrameFieldsDisplayNames,
   currentName?: string,
-  firstItem?: MatcherSelectOption,
+  firstItem?: ComboboxOption,
   fieldType?: string,
   baseNameMode?: FieldNamePickerBaseNameMode
-): MatcherSelectOption[] {
+): ComboboxOption[] {
   return useMemo(() => {
     let found = false;
-    const options: MatcherSelectOption[] = [];
+    const options: ComboboxOption[] = [];
     if (firstItem) {
       options.push(firstItem);
     }
