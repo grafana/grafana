@@ -16,6 +16,7 @@ import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
+import { useSemanticSearchResults } from './actions/semanticSearchActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
 import { CommandPaletteAction } from './types';
@@ -57,6 +58,7 @@ function CommandPaletteContents() {
   // the currentRootActionId. Because these search results are manually added to the list later, they would show every
   // time.
   const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
+  const { semanticResults, isFetchingSemanticResults } = useSemanticSearchResults({ searchQuery, show: !currentRootActionId });
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
@@ -84,14 +86,15 @@ function CommandPaletteContents() {
                 className={styles.search}
               />
               <div className={styles.loadingBarContainer}>
-                {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
+                {(isFetchingSearchResults || isFetchingSemanticResults) && <LoadingBar width={500} delay={0} />}
               </div>
             </div>
             {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
             <div className={styles.resultsContainer}>
               <RenderResults
-                isFetchingSearchResults={isFetchingSearchResults}
+                isFetchingSearchResults={isFetchingSearchResults || isFetchingSemanticResults}
                 searchResults={searchResults}
+                semanticResults={semanticResults}
                 searchQuery={searchQuery}
               />
             </div>
@@ -136,10 +139,11 @@ function AncestorBreadcrumbs() {
 interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
+  semanticResults: CommandPaletteAction[];
   searchQuery: string;
 }
 
-const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: RenderResultsProps) => {
+const RenderResults = ({ isFetchingSearchResults, searchResults, semanticResults, searchQuery }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
   const { query } = useKBar();
   const { isAvailable: isAssistantAvailable } = useAssistant();
@@ -165,6 +169,12 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
     [searchResults]
   );
 
+  const semanticSectionTitle = 'Semantic Search';
+  const semanticResultItems = useMemo(
+    () => semanticResults.map((item) => new ActionImpl(item, { store: {} })),
+    [semanticResults]
+  );
+
   const items = useMemo(() => {
     const results = [...kbarResults];
     if (folderResultItems.length > 0) {
@@ -175,8 +185,12 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
       results.push(dashboardsSectionTitle);
       results.push(...dashboardResultItems);
     }
+    if (semanticResultItems.length > 0) {
+      results.push(semanticSectionTitle);
+      results.push(...semanticResultItems);
+    }
     return results;
-  }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
+  }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems, semanticSectionTitle, semanticResultItems]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
   useEffect(() => {

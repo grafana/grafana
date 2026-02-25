@@ -112,6 +112,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/semantic"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -224,6 +225,7 @@ type HTTPServer struct {
 	htmlHandlerRequestsDuration     *prometheus.HistogramVec
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
 	dsConnectionClient              datasource.ConnectionClient
+	SemanticSearchService           *semantic.Service
 }
 
 type TLSCerts struct {
@@ -391,6 +393,14 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
 	promRegister.MustRegister(hs.dsConfigHandlerRequestsDuration)
+
+	// Initialize semantic search if configured.
+	if svc, err := initSemanticSearch(cfg); err != nil {
+		hs.log.Warn("Failed to initialize semantic search", "error", err)
+	} else if svc != nil {
+		hs.SemanticSearchService = svc
+		hs.log.Info("Semantic search initialized")
+	}
 
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -1053,4 +1063,34 @@ func (hs *HTTPServer) updateMtimeOfServerCerts() error {
 	}
 
 	return nil
+}
+
+// initSemanticSearch creates a semantic.Service from the [semantic_search] config section.
+// Returns nil, nil if the section is missing or disabled.
+func initSemanticSearch(cfg *setting.Cfg) (*semantic.Service, error) {
+	sec := cfg.Raw.Section("semantic_search")
+	if sec == nil {
+		return nil, nil
+	}
+	pgURL := sec.Key("postgres_url").String()
+	if pgURL == "" {
+		return nil, nil
+	}
+
+	dims := sec.Key("embedding_dimensions").MustInt(768)
+
+	store, err := semantic.NewStore(pgURL, dims)
+	if err != nil {
+		return nil, fmt.Errorf("creating pgvector store: %w", err)
+	}
+
+	provider, err := semantic.NewVertexAIProvider(context.Background(), semantic.VertexAIConfig{
+		OutputDimensionality: int32(dims),
+	})
+	if err != nil {
+		store.Close()
+		return nil, fmt.Errorf("creating vertex AI provider: %w", err)
+	}
+
+	return semantic.NewService(provider, store), nil
 }

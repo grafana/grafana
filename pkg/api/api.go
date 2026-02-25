@@ -510,6 +510,9 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/search/sorting", routing.Wrap(hs.ListSortOptions))
 		apiRoute.Get("/search/", routing.Wrap(hs.Search))
 
+		// Semantic search
+		apiRoute.Post("/semantic-search", routing.Wrap(hs.SemanticSearch))
+
 		// metrics
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
