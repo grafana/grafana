@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -17,7 +18,7 @@ import (
 )
 
 // Convert git changes into resource file changes
-func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics) error {
+func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error {
 	syncStart := time.Now()
 	if previousRef == currentRef {
 		progress.SetFinalMessage(ctx, "same commit as last time")
@@ -49,7 +50,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -70,7 +71,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	return nil
 }
 
-func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span) (affectedFolders map[string]string, err error) {
+func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker) (affectedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
@@ -134,6 +135,14 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
+		if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
+			progress.Record(ctx, resultBuilder.
+				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
+				AsSkipped().
+				Build())
+			continue
+		}
+
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
@@ -150,6 +159,8 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			if err != nil {
 				removeSpan.RecordError(err)
 				resultBuilder.WithError(fmt.Errorf("removing resource from file %s: %w", change.Path, err))
+			} else {
+				quotaTracker.Release()
 			}
 			resultBuilder.WithName(name).WithGVK(gvk)
 
