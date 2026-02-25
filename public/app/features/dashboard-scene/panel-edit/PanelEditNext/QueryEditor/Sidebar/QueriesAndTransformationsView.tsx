@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
+
 import { t } from '@grafana/i18n';
 import { LoadingBar } from '@grafana/ui';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
-import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { AddCardButton } from './AddCardButton';
 import { DraggableList } from './DraggableList';
@@ -11,11 +14,34 @@ import { TransformationCard } from './TransformationCard';
 import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 export function QueriesAndTransformationsView() {
-  const { queries, isLoading } = useQueryRunnerContext();
+  const { queries } = useQueryRunnerContext();
+  const { activeContext, setActiveContext } = useQueryEditorUIContext();
   const { transformations } = usePanelContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
-  if (isLoading) {
+  // Select whichever card comes first — query or expression — when nothing is selected yet.
+  useEffect(() => {
+    if (activeContext.view !== 'data' || activeContext.selection.kind !== 'none') {
+      return;
+    }
+    const first = queries[0];
+    if (!first) {
+      return;
+    }
+    setActiveContext({
+      view: 'data',
+      selection: isExpressionQuery(first)
+        ? { kind: 'expression', refId: first.refId }
+        : { kind: 'query', refId: first.refId },
+    });
+  }, [queries, activeContext, setActiveContext]);
+
+  // Hold the loading bar only until the first card is selected. We intentionally
+  // do NOT gate on isLoading here — query data refreshes should not hide the
+  // sidebar card list. The content area handles loading state for data runs.
+  const isReady = activeContext.view !== 'data' || activeContext.selection.kind !== 'none' || queries.length === 0;
+
+  if (!isReady) {
     return (
       <LoadingBar
         width={400}

@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_COLORS, QueryEditorType, SidebarSize } from '../../constants';
+import { QUERY_EDITOR_COLORS, SidebarSize } from '../../constants';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 import { AlertIndicator } from './Alerts/AlertIndicator';
@@ -26,13 +26,13 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const isMini = sidebarSize === SidebarSize.Mini;
 
   const { alertRules } = useAlertingContext();
-  const { cardType } = useQueryEditorUIContext();
+  const { activeContext } = useQueryEditorUIContext();
 
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
   };
 
-  const isAlertView = cardType === QueryEditorType.Alert;
+  const isAlertView = activeContext.view === 'alerts';
   const sidebarHeaderTitle = isAlertView
     ? t('query-editor-next.sidebar.alerts', 'Alerts ({{count}})', { count: alertRules.length })
     : t('query-editor-next.sidebar.data', 'Data');

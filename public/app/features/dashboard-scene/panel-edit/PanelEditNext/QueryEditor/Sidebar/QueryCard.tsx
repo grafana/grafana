@@ -13,12 +13,15 @@ import { SidebarCard } from './SidebarCard';
 export const QueryCard = ({ query }: { query: DataQuery }) => {
   const editorType = getEditorType(query);
   const queryDsSettings = useDatasource(query.datasource);
-  const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
+  const { activeContext, setActiveContext } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const { data } = useQueryRunnerContext();
 
   const isError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
-  const isSelected = selectedQuery?.refId === query.refId;
+  const isSelected =
+    activeContext.view === 'data' &&
+    (activeContext.selection.kind === 'query' || activeContext.selection.kind === 'expression') &&
+    activeContext.selection.refId === query.refId;
   const isHidden = !!query.hide;
 
   const item = {
@@ -33,7 +36,15 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       id={query.refId}
       isSelected={isSelected}
       item={item}
-      onClick={() => setSelectedQuery(query)}
+      onClick={() =>
+        setActiveContext({
+          view: 'data',
+          selection:
+            editorType === QueryEditorType.Expression
+              ? { kind: 'expression', refId: query.refId }
+              : { kind: 'query', refId: query.refId },
+        })
+      }
       onDelete={() => deleteQuery(query.refId)}
       onDuplicate={() => duplicateQuery(query.refId)}
       onToggleHide={() => toggleQueryHide(query.refId)}

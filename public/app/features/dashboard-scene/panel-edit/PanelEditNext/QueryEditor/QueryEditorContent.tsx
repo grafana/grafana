@@ -3,8 +3,6 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { QueryEditorType } from '../constants';
-
 import { QueryEditorBody } from './Body/QueryEditorBody';
 import { QueryEditorFooter } from './Footer/QueryEditorFooter';
 import { ContentHeaderSceneWrapper } from './Header/ContentHeader';
@@ -14,11 +12,12 @@ import { useQueryEditorUIContext } from './QueryEditorContext';
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
-  const { cardType } = useQueryEditorUIContext();
-  const { queryOptions, showingDatasourceHelp, pendingExpression, pendingTransformation } = useQueryEditorUIContext();
+  const { activeContext, queryOptions, showingDatasourceHelp } = useQueryEditorUIContext();
   const { isQueryOptionsOpen } = queryOptions;
-  const hasPendingPicker = !!pendingExpression || !!pendingTransformation;
-  const isAlertView = cardType === QueryEditorType.Alert;
+  const hasPendingPicker =
+    activeContext.view === 'data' &&
+    (activeContext.selection.kind === 'expressionPicker' || activeContext.selection.kind === 'transformationPicker');
+  const isAlertView = activeContext.view === 'alerts';
 
   const shouldShowFooter = !hasPendingPicker && !isQueryOptionsOpen && !isAlertView;
   const shouldShowDatasourceHelp = !hasPendingPicker && showingDatasourceHelp;

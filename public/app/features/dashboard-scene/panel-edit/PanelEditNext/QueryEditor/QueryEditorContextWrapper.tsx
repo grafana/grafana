@@ -1,24 +1,30 @@
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionQueryType } from 'app/features/expressions/types';
+import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import { PendingExpression, PendingTransformation, QueryEditorProvider } from './QueryEditorContext';
+import {
+  ActiveContext,
+  CardRef,
+  DataSelection,
+  INITIAL_ACTIVE_CONTEXT,
+  QueryEditorProvider,
+} from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
-import { usePendingExpression } from './hooks/usePendingExpression';
-import { usePendingTransformation } from './hooks/usePendingTransformation';
 import { useQueryOptions } from './hooks/useQueryOptions';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
-import { AlertRule, QueryOptionField, Transformation } from './types';
-import { getEditorType, getTransformId } from './utils';
+import { QueryOptionField } from './types';
+import { getTransformId } from './utils';
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -35,16 +41,18 @@ export function QueryEditorContextWrapper({
   const panel = panelRef.resolve();
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
-  const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
-  const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
-  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+
+  const [activeContext, setActiveContextState] = useState<ActiveContext>(INITIAL_ACTIVE_CONTEXT);
+  const [selectedItemsState, setSelectedItemsState] = useState<CardRef[]>([]);
   const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
   const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
-  const [transformTogglesState, setTransformTogglesState] = useState({
-    showHelp: false,
-    showDebug: false,
-  });
+  const [transformTogglesState, setTransformTogglesState] = useState({ showHelp: false, showDebug: false });
+
+  // Always-fresh ref — lets the finalize callbacks read the current context in
+  // event handlers without taking activeContext as a dep (keeps them stable).
+  const activeContextRef = useRef(activeContext);
+  activeContextRef.current = activeContext;
 
   const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
   const transformations = useTransformations(dataTransformer);
@@ -59,6 +67,12 @@ export function QueryEditorContextWrapper({
     }),
     [datasource, dsSettings, dsError]
   );
+
+  const selectedQueryRefId =
+    activeContext.view === 'data' &&
+    (activeContext.selection.kind === 'query' || activeContext.selection.kind === 'expression')
+      ? activeContext.selection.refId
+      : null;
 
   const queryError = useMemo(() => {
     return queryRunnerState?.data?.errors?.find(({ refId }) => refId === selectedQueryRefId);
@@ -96,26 +110,43 @@ export function QueryEditorContextWrapper({
     setFocusedField(null);
   }, []);
 
-  // Transformation UI toggles
-  const toggleHelp = useCallback(() => {
-    setTransformTogglesState((prev) => ({ ...prev, showHelp: !prev.showHelp }));
-  }, []);
+  const toggleHelp = useCallback(() => setTransformTogglesState((prev) => ({ ...prev, showHelp: !prev.showHelp })), []);
+  const toggleDebug = useCallback(
+    () => setTransformTogglesState((prev) => ({ ...prev, showDebug: !prev.showDebug })),
+    []
+  );
+  const toggleDatasourceHelp = useCallback(() => setShowingDatasourceHelp((prev) => !prev), []);
 
-  const toggleDebug = useCallback(() => {
-    setTransformTogglesState((prev) => ({ ...prev, showDebug: !prev.showDebug }));
-  }, []);
+  /**
+   * Maps a DataSelection to a CardRef for the multi-selection set.
+   * Returns null for picker states and `none` since they have no focused card.
+   */
+  const selectionToCardRef = (selection: DataSelection): CardRef | null => {
+    if (selection.kind === 'query') {
+      return { kind: 'query', refId: selection.refId };
+    }
+    if (selection.kind === 'expression') {
+      return { kind: 'expression', refId: selection.refId };
+    }
+    if (selection.kind === 'transformation') {
+      return { kind: 'transformation', id: selection.id };
+    }
+    return null;
+  };
 
-  const onCardSelectionChange = useCallback((queryRefId: string | null, transformationId: string | null) => {
-    setSelectedQueryRefId(queryRefId);
-    setSelectedTransformationId(transformationId);
+  /**
+   * Primary navigation setter. Atomically resets transform toggles, the
+   * datasource help panel, and the multi-selection set so stale UI state
+   * never bleeds into the next card.
+   */
+  const setActiveContext = useCallback((ctx: ActiveContext) => {
+    setActiveContextState(ctx);
+    setTransformTogglesState({ showHelp: false, showDebug: false });
     setShowingDatasourceHelp(false);
+    const ref = ctx.view === 'data' ? selectionToCardRef(ctx.selection) : null;
+    setSelectedItemsState(ref ? [ref] : []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
-    usePendingExpression({
-      addQuery: dataPane.addQuery,
-      onCardSelectionChange,
-    });
 
   const findTransformationIndex = useCallback(
     (transformId: string) => {
@@ -136,65 +167,66 @@ export function QueryEditorContextWrapper({
     [dataPane, findTransformationIndex]
   );
 
-  const { pendingTransformation, setPendingTransformation, finalizePendingTransformation, clearPendingTransformation } =
-    usePendingTransformation({
-      addTransformation: addTransformationAction,
-      onCardSelectionChange,
-    });
+  /**
+   * Finalizes the expression picker: creates the expression query at the
+   * insertion point stored in activeContext.selection, then selects it.
+   * Uses activeContextRef so this callback stays stable across navigations.
+   */
+  const finalizeExpressionPicker = useCallback(
+    (type: ExpressionQueryType) => {
+      const ctx = activeContextRef.current;
+      const insertAfterRefId =
+        ctx.view === 'data' && ctx.selection.kind === 'expressionPicker' ? ctx.selection.insertAfter : undefined;
 
-  const { selectedQuery, selectedTransformation, selectedAlert } = useSelectedCard(
-    selectedQueryRefId,
-    selectedTransformationId,
-    selectedAlertId,
+      const baseQuery = expressionDatasource.newQuery();
+      const queryWithDefaults = getDefaults({ ...baseQuery, type });
+
+      const newRefId = dataPane.addQuery(queryWithDefaults, insertAfterRefId);
+      if (newRefId) {
+        setActiveContext({ view: 'data', selection: { kind: 'expression', refId: newRefId } });
+      }
+    },
+    [dataPane, setActiveContext]
+  );
+
+  /**
+   * Finalizes the transformation picker: creates the transformation at the
+   * insertion point stored in activeContext.selection, then selects it.
+   * Uses activeContextRef so this callback stays stable across navigations.
+   */
+  const finalizeTransformationPicker = useCallback(
+    (transformationId: string) => {
+      const ctx = activeContextRef.current;
+      const insertAfterTransformId =
+        ctx.view === 'data' && ctx.selection.kind === 'transformationPicker' ? ctx.selection.insertAfter : undefined;
+
+      const newTransformId = addTransformationAction(transformationId, insertAfterTransformId);
+      if (newTransformId) {
+        setActiveContext({ view: 'data', selection: { kind: 'transformation', id: newTransformId } });
+      }
+    },
+    [addTransformationAction, setActiveContext]
+  );
+
+  const { selectedQuery, selectedExpression, selectedTransformation, selectedAlert } = useSelectedCard(
+    activeContext,
     queryRunnerState?.queries ?? [],
     transformations,
-    alertingState.alertRules,
-    Boolean(pendingExpression) || Boolean(pendingTransformation)
+    alertingState.alertRules
   );
 
   const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
   const uiState = useMemo(
     () => ({
+      activeContext,
+      setActiveContext,
       selectedQuery,
+      selectedExpression,
       selectedTransformation,
       selectedAlert,
-      setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => {
-        setSelectedQueryRefId(query?.refId ?? null);
-        // Clear transformation and alert selection when selecting a query
-        setSelectedTransformationId(null);
-        setSelectedAlertId(null);
-        // Reset datasource help when switching queries
-        setShowingDatasourceHelp(false);
-        // Reset transformation-specific UI when switching to a query
-        setTransformTogglesState({ showHelp: false, showDebug: false });
-        // Abandon pending flows when selecting a card
-        clearPendingExpression();
-        clearPendingTransformation();
-      },
-      setSelectedTransformation: (transformation: Transformation | null) => {
-        setSelectedTransformationId(transformation?.transformId ?? null);
-        // Clear query and alert selection when selecting a transformation
-        setSelectedQueryRefId(null);
-        setSelectedAlertId(null);
-        // Reset transformation-specific UI when switching transformations
-        setTransformTogglesState({ showHelp: false, showDebug: false });
-
-        // Abandon pending flows when selecting a card
-        clearPendingExpression();
-        clearPendingTransformation();
-      },
-      setSelectedAlert: (alert: AlertRule | null) => {
-        setSelectedAlertId(alert?.alertId ?? null);
-        // Clear query and transformation selection when selecting an alert
-        setSelectedQueryRefId(null);
-        setSelectedTransformationId(null);
-        // Reset transformation-specific UI when switching transformations
-        setTransformTogglesState({ showHelp: false, showDebug: false });
-        // Abandon pending flows when selecting a card
-        clearPendingExpression();
-        clearPendingTransformation();
-      },
+      selectedItems: selectedItemsState,
+      setSelectedItems: setSelectedItemsState,
       queryOptions: {
         options: queryOptions,
         isQueryOptionsOpen,
@@ -205,38 +237,19 @@ export function QueryEditorContextWrapper({
       selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,
-      toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
-      cardType: getEditorType(
-        selectedQuery || selectedTransformation || selectedAlert,
-        pendingExpression,
-        pendingTransformation
-      ),
-      transformToggles: {
-        ...transformTogglesState,
-        toggleHelp,
-        toggleDebug,
-      },
-      pendingExpression,
-      setPendingExpression: (pending: PendingExpression | null) => {
-        if (pending) {
-          clearPendingTransformation();
-        }
-        setPendingExpression(pending);
-      },
-      finalizePendingExpression,
-      pendingTransformation,
-      setPendingTransformation: (pending: PendingTransformation | null) => {
-        if (pending) {
-          clearPendingExpression();
-        }
-        setPendingTransformation(pending);
-      },
-      finalizePendingTransformation,
+      toggleDatasourceHelp,
+      transformToggles: { ...transformTogglesState, toggleHelp, toggleDebug },
+      finalizeExpressionPicker,
+      finalizeTransformationPicker,
     }),
     [
+      activeContext,
+      setActiveContext,
       selectedQuery,
+      selectedExpression,
       selectedTransformation,
       selectedAlert,
+      selectedItemsState,
       queryOptions,
       isQueryOptionsOpen,
       openSidebar,
@@ -245,17 +258,12 @@ export function QueryEditorContextWrapper({
       selectedQueryDsData,
       selectedQueryDsLoading,
       showingDatasourceHelp,
+      toggleDatasourceHelp,
       transformTogglesState,
       toggleHelp,
       toggleDebug,
-      pendingExpression,
-      setPendingExpression,
-      finalizePendingExpression,
-      clearPendingExpression,
-      pendingTransformation,
-      setPendingTransformation,
-      finalizePendingTransformation,
-      clearPendingTransformation,
+      finalizeExpressionPicker,
+      finalizeTransformationPicker,
     ]
   );
 

@@ -5,13 +5,14 @@ import { ReactElement } from 'react';
 import { DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
+import { ExpressionQuery } from 'app/features/expressions/types';
 import { QueryGroupOptions } from 'app/types/query';
 
-import { QueryEditorType } from '../constants';
-
 import {
+  ActiveContext,
   AlertingState,
   DatasourceState,
+  INITIAL_ACTIVE_CONTEXT,
   PanelState,
   QueryEditorActions,
   QueryEditorProvider,
@@ -91,21 +92,6 @@ export const mockQueryOptionsState: QueryOptionsState = {
   focusedField: null,
 };
 
-export const mockUIStateBase = {
-  selectedQueryDsData: null,
-  selectedQueryDsLoading: false,
-  showingDatasourceHelp: false,
-  toggleDatasourceHelp: jest.fn(),
-  cardType: QueryEditorType.Query,
-  queryOptions: mockQueryOptionsState,
-  pendingExpression: null,
-  setPendingExpression: jest.fn(),
-  finalizePendingExpression: jest.fn(),
-  pendingTransformation: null,
-  setPendingTransformation: jest.fn(),
-  finalizePendingTransformation: jest.fn(),
-};
-
 export const mockTransformToggles = {
   showHelp: false,
   toggleHelp: jest.fn(),
@@ -113,10 +99,26 @@ export const mockTransformToggles = {
   toggleDebug: jest.fn(),
 };
 
+export const mockUIStateBase = {
+  activeContext: INITIAL_ACTIVE_CONTEXT as ActiveContext,
+  setActiveContext: jest.fn(),
+  selectedExpression: null,
+  selectedQueryDsData: null,
+  selectedQueryDsLoading: false,
+  showingDatasourceHelp: false,
+  toggleDatasourceHelp: jest.fn(),
+  queryOptions: mockQueryOptionsState,
+  finalizeExpressionPicker: jest.fn(),
+  finalizeTransformationPicker: jest.fn(),
+  selectedItems: [],
+  setSelectedItems: jest.fn(),
+};
+
 interface CreateQueryEditorProviderOptions {
   queries?: DataQuery[];
   transformations?: Transformation[];
   selectedQuery?: DataQuery | null;
+  selectedExpression?: ExpressionQuery | null;
   selectedTransformation?: Transformation | null;
   uiStateOverrides?: Partial<QueryEditorUIState>;
   actionsOverrides?: Partial<QueryEditorActions>;
@@ -141,6 +143,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     queries = [],
     transformations = [],
     selectedQuery = null,
+    selectedExpression = null,
     selectedTransformation = null,
     uiStateOverrides = {},
     actionsOverrides = {},
@@ -176,25 +179,22 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   };
 
   const defaultUiState: QueryEditorUIState = {
+    activeContext: INITIAL_ACTIVE_CONTEXT,
+    setActiveContext: jest.fn(),
     selectedQuery,
+    selectedExpression,
     selectedTransformation,
-    setSelectedQuery: jest.fn(),
-    setSelectedTransformation: jest.fn(),
+    selectedAlert: null,
+    selectedItems: [],
+    setSelectedItems: jest.fn(),
     queryOptions: mockQueryOptionsState,
     selectedQueryDsData: null,
     selectedQueryDsLoading: false,
     showingDatasourceHelp: false,
     toggleDatasourceHelp: jest.fn(),
     transformToggles: mockTransformToggles,
-    cardType: selectedTransformation ? QueryEditorType.Transformation : QueryEditorType.Query,
-    pendingExpression: null,
-    setPendingExpression: jest.fn(),
-    finalizePendingExpression: jest.fn(),
-    pendingTransformation: null,
-    setPendingTransformation: jest.fn(),
-    finalizePendingTransformation: jest.fn(),
-    selectedAlert: null,
-    setSelectedAlert: jest.fn(),
+    finalizeExpressionPicker: jest.fn(),
+    finalizeTransformationPicker: jest.fn(),
     ...uiStateOverrides,
   };
 

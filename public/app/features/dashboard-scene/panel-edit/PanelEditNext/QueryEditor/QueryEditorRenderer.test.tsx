@@ -5,9 +5,7 @@ import { DataSourceApi, DataSourceJsonData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
-import { QueryEditorType } from '../constants';
-
-import { QueryEditorProvider } from './QueryEditorContext';
+import { INITIAL_ACTIVE_CONTEXT, QueryEditorProvider } from './QueryEditorContext';
 import { QueryEditorRenderer } from './QueryEditorRenderer';
 import {
   ds1SettingsMock,
@@ -99,25 +97,22 @@ describe('QueryEditorRenderer', () => {
           panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
+            activeContext: INITIAL_ACTIVE_CONTEXT,
+            setActiveContext: jest.fn(),
             selectedQuery,
+            selectedExpression: null,
             selectedTransformation: null,
             selectedAlert: null,
-            setSelectedQuery: jest.fn(),
-            setSelectedTransformation: jest.fn(),
-            setSelectedAlert: jest.fn(),
+            selectedItems: [],
+            setSelectedItems: jest.fn(),
             queryOptions: mockQueryOptionsState,
             selectedQueryDsData,
             selectedQueryDsLoading: false,
             showingDatasourceHelp: false,
             toggleDatasourceHelp: jest.fn(),
             transformToggles: mockTransformToggles,
-            cardType: QueryEditorType.Query,
-            pendingExpression: null,
-            setPendingExpression: jest.fn(),
-            finalizePendingExpression: jest.fn(),
-            pendingTransformation: null,
-            setPendingTransformation: jest.fn(),
-            finalizePendingTransformation: jest.fn(),
+            finalizeExpressionPicker: jest.fn(),
+            finalizeTransformationPicker: jest.fn(),
           }}
           actions={mockActions}
         >

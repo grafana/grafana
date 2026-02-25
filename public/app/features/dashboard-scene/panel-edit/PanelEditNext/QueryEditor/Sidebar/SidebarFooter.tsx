@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_COLORS, QueryEditorType } from '../../constants';
+import { QUERY_EDITOR_COLORS } from '../../constants';
 import {
   useAlertingContext,
   usePanelContext,
@@ -16,10 +16,10 @@ export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { alertRules } = useAlertingContext();
-  const { cardType } = useQueryEditorUIContext();
+  const { activeContext } = useQueryEditorUIContext();
   const styles = useStyles2(getStyles);
 
-  const isAlertView = cardType === QueryEditorType.Alert;
+  const isAlertView = activeContext.view === 'alerts';
   const total = isAlertView ? alertRules.length : queries.length + transformations.length;
   const hidden = isAlertView
     ? 0

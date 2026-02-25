@@ -7,7 +7,7 @@ import { CardTitle } from '../CardTitle';
 import { SidebarCard } from '../SidebarCard';
 
 export const AlertCard = ({ alert }: { alert: AlertRule }) => {
-  const { selectedAlert, setSelectedAlert } = useQueryEditorUIContext();
+  const { selectedAlert, setActiveContext } = useQueryEditorUIContext();
   const theme = useTheme2();
   const isSelected = selectedAlert?.alertId === alert.alertId;
 
@@ -19,7 +19,12 @@ export const AlertCard = ({ alert }: { alert: AlertRule }) => {
   };
 
   return (
-    <SidebarCard id={alert.alertId} isSelected={isSelected} item={item} onClick={() => setSelectedAlert(alert)}>
+    <SidebarCard
+      id={alert.alertId}
+      isSelected={isSelected}
+      item={item}
+      onClick={() => setActiveContext({ view: 'alerts', alertId: alert.alertId })}
+    >
       <Icon
         name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Alert].icon}
         color={getAlertStateColor(theme, alert.state)}

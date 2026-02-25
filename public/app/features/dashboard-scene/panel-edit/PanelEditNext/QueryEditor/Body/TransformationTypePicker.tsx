@@ -16,7 +16,7 @@ import { useTransformationSearchAndFilter } from './useTransformationSearchAndFi
 export function TransformationTypePicker() {
   const styles = useStyles2(getStyles);
 
-  const { finalizePendingTransformation } = useQueryEditorUIContext();
+  const { finalizeTransformationPicker } = useQueryEditorUIContext();
   const { data } = useQueryRunnerContext();
 
   const [showIllustrations, setShowIllustrations] = useState(true);
@@ -30,7 +30,7 @@ export function TransformationTypePicker() {
     filteredTransformations,
     onSearchKeyDown,
     allTransformationsCount,
-  } = useTransformationSearchAndFilter(finalizePendingTransformation);
+  } = useTransformationSearchAndFilter(finalizeTransformationPicker);
 
   const searchBoxSuffix = useMemo(() => {
     if (filteredTransformations.length === allTransformationsCount) {
@@ -102,7 +102,7 @@ export function TransformationTypePicker() {
               key={item.id}
               transform={item}
               data={data?.series ?? []}
-              onClick={(id) => finalizePendingTransformation(id)}
+              onClick={(id) => finalizeTransformationPicker(id)}
               showIllustrations={showIllustrations}
               fullWidth
             />

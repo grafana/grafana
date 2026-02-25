@@ -9,8 +9,7 @@ import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
 const mockUpdateQueries = jest.fn();
 const mockReorderTransformations = jest.fn();
-const mockSetSelectedQuery = jest.fn();
-const mockSetSelectedTransformation = jest.fn();
+const mockSetActiveContext = jest.fn();
 
 const queries: DataQuery[] = [
   { refId: 'A', datasource: { type: 'prometheus', uid: 'prom1' } },
@@ -36,8 +35,7 @@ jest.mock('../QueryEditorContext', () => ({
     reorderTransformations: mockReorderTransformations,
   }),
   useQueryEditorUIContext: () => ({
-    setSelectedQuery: mockSetSelectedQuery,
-    setSelectedTransformation: mockSetSelectedTransformation,
+    setActiveContext: mockSetActiveContext,
   }),
 }));
 
@@ -72,7 +70,10 @@ describe('useSidebarDragAndDrop', () => {
 
       result.current.onQueryDragEnd(makeDropResult(0, 2));
 
-      expect(mockSetSelectedQuery).toHaveBeenCalledWith(queries[0]);
+      expect(mockSetActiveContext).toHaveBeenCalledWith({
+        view: 'data',
+        selection: { kind: 'query', refId: queries[0].refId },
+      });
     });
 
     it('should not reorder when dropped outside droppable area', () => {
@@ -110,9 +111,9 @@ describe('useSidebarDragAndDrop', () => {
 
       result.current.onTransformationDragEnd(makeDropResult(0, 2));
 
-      expect(mockSetSelectedTransformation).toHaveBeenCalledWith({
-        ...transformations[0],
-        transformId: `${transformations[0].transformConfig.id}-2`,
+      expect(mockSetActiveContext).toHaveBeenCalledWith({
+        view: 'data',
+        selection: { kind: 'transformation', id: `${transformations[0].transformConfig.id}-2` },
       });
     });
 

@@ -27,7 +27,7 @@ export function useSidebarDragAndDrop() {
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { updateQueries, reorderTransformations } = useActionsContext();
-  const { setSelectedQuery, setSelectedTransformation } = useQueryEditorUIContext();
+  const { setActiveContext } = useQueryEditorUIContext();
 
   const onQueryDragEnd = useCallback(
     (result: DropResult) => {
@@ -37,9 +37,9 @@ export function useSidebarDragAndDrop() {
       }
       const { startIndex, endIndex } = drop;
       updateQueries(reorder(queries, startIndex, endIndex));
-      setSelectedQuery(queries[startIndex]);
+      setActiveContext({ view: 'data', selection: { kind: 'query', refId: queries[startIndex].refId } });
     },
-    [queries, updateQueries, setSelectedQuery]
+    [queries, updateQueries, setActiveContext]
   );
 
   const onTransformationDragEnd = useCallback(
@@ -51,12 +51,15 @@ export function useSidebarDragAndDrop() {
       const { startIndex, endIndex } = drop;
       const draggedTransformation = transformations[startIndex];
       reorderTransformations(reorder(transformations, startIndex, endIndex).map((t) => t.transformConfig));
-      setSelectedTransformation({
-        ...draggedTransformation,
-        transformId: getTransformId(draggedTransformation.transformConfig.id, endIndex),
+      setActiveContext({
+        view: 'data',
+        selection: {
+          kind: 'transformation',
+          id: getTransformId(draggedTransformation.transformConfig.id, endIndex),
+        },
       });
     },
-    [transformations, reorderTransformations, setSelectedTransformation]
+    [transformations, reorderTransformations, setActiveContext]
   );
 
   return { onQueryDragEnd, onTransformationDragEnd };

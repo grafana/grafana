@@ -16,7 +16,7 @@ function hasDefinedValue(
 export function ExpressionTypePicker() {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const { finalizePendingExpression } = useQueryEditorUIContext();
+  const { finalizeExpressionPicker } = useQueryEditorUIContext();
 
   return (
     <div className={styles.grid}>
@@ -26,7 +26,7 @@ export function ExpressionTypePicker() {
         const label = item.label ?? '';
 
         return (
-          <Card key={item.value} onClick={() => finalizePendingExpression(item.value)} noMargin>
+          <Card key={item.value} onClick={() => finalizeExpressionPicker(item.value)} noMargin>
             <Card.Heading>{label}</Card.Heading>
             <Card.Description>
               <Text variant="bodySmall">{item.description ?? ''}</Text>

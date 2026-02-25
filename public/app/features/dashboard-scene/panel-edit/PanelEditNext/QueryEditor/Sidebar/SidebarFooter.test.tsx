@@ -3,14 +3,27 @@ import { screen } from '@testing-library/react';
 import { AlertState } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { QueryEditorType } from '../../constants';
 import { renderWithQueryEditorProvider } from '../testUtils';
-import { AlertRule, EMPTY_ALERT, Transformation } from '../types';
+import { AlertRule, Transformation } from '../types';
 
 import { SidebarFooter } from './SidebarFooter';
 
 function createAlertRule(overrides: Partial<AlertRule> = {}): AlertRule {
-  return { ...EMPTY_ALERT, alertId: `alert-${Math.random()}`, state: AlertState.OK, ...overrides };
+  return {
+    alertId: `alert-${Math.random()}`,
+    state: AlertState.OK,
+    rule: {
+      name: '',
+      query: '',
+      labels: {},
+      annotations: {},
+      group: { name: '', rules: [], totals: {} },
+      namespace: { rulesSource: 'grafana', name: '', groups: [] },
+      instanceTotals: {},
+      filteredInstanceTotals: {},
+    },
+    ...overrides,
+  };
 }
 
 describe('SidebarFooter', () => {
@@ -69,7 +82,7 @@ describe('SidebarFooter', () => {
 
       renderWithQueryEditorProvider(<SidebarFooter />, {
         alertingState: { alertRules },
-        uiStateOverrides: { cardType: QueryEditorType.Alert },
+        uiStateOverrides: { activeContext: { view: 'alerts', alertId: 'a1' } },
       });
 
       expect(screen.getByText('2 items')).toBeInTheDocument();
@@ -79,7 +92,7 @@ describe('SidebarFooter', () => {
 
     it('should show zero items when there are no alerts', () => {
       renderWithQueryEditorProvider(<SidebarFooter />, {
-        uiStateOverrides: { cardType: QueryEditorType.Alert },
+        uiStateOverrides: { activeContext: { view: 'alerts', alertId: null } },
       });
 
       expect(screen.getByText('0 items')).toBeInTheDocument();

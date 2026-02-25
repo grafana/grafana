@@ -1,71 +1,86 @@
 import { useMemo } from 'react';
 
 import { DataQuery } from '@grafana/schema';
+import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQuery } from 'app/features/expressions/types';
 
-import { AlertRule, EMPTY_ALERT, Transformation } from '../types';
+import { ActiveContext } from '../QueryEditorContext';
+import { AlertRule, Transformation } from '../types';
 
 /**
- * Hook to resolve the currently selected query, transformation, or alert.
- * They are mutually exclusive - only one type can be selected at a time.
+ * Resolves the currently selected query, transformation, or alert from the
+ * active context. They are mutually exclusive — enforced structurally by the
+ * DataSelection discriminated union on ActiveContext.
  *
- * @param hasPendingPicker - When true, suppresses the default fallback to the
- *   first query so no card appears selected while a picker (expression or
- *   transformation) is active.
+ * - expressionPicker / transformationPicker → no card selected (picker is active)
+ * - none → falls back to the first non-expression query so the editor is never blank
+ * - query → resolved by refId; falls back to first non-expression query
+ * - expression → resolved by refId; no fallback (expressions are explicit)
+ * - transformation / alert → resolved by id from the data arrays
  */
 export function useSelectedCard(
-  selectedQueryRefId: string | null,
-  selectedTransformationId: string | null,
-  selectedAlertId: string | null,
+  activeContext: ActiveContext,
   queries: DataQuery[],
   transformations: Transformation[],
-  alerts: AlertRule[],
-  hasPendingPicker = false
+  alerts: AlertRule[]
 ) {
-  const selectedQuery = useMemo(() => {
-    // If we have a selected query refId, try to find that query
-    if (selectedQueryRefId) {
-      const query = queries.find((q) => q.refId === selectedQueryRefId);
-      if (query) {
-        return query;
-      }
+  const selectedExpression = useMemo((): ExpressionQuery | null => {
+    if (activeContext.view !== 'data') {
+      return null;
     }
+    const { selection } = activeContext;
+    if (selection.kind !== 'expression') {
+      return null;
+    }
+    const found = queries.find((q) => q.refId === selection.refId);
+    return found && isExpressionQuery(found) ? (found as ExpressionQuery) : null;
+  }, [activeContext, queries]);
 
-    // If a transformation, alert, or picker is active, don't select any query
-    if (selectedTransformationId || selectedAlertId || hasPendingPicker) {
+  const selectedQuery = useMemo((): DataQuery | null => {
+    if (activeContext.view !== 'data') {
       return null;
     }
 
-    // Otherwise, default to the first query if available
-    return queries.length > 0 ? queries[0] : null;
-  }, [queries, selectedQueryRefId, selectedTransformationId, selectedAlertId, hasPendingPicker]);
+    const { selection } = activeContext;
+
+    if (selection.kind === 'expressionPicker' || selection.kind === 'transformationPicker') {
+      return null;
+    }
+
+    if (selection.kind === 'transformation' || selection.kind === 'expression') {
+      return null;
+    }
+
+    if (selection.kind === 'query') {
+      const found = queries.find((q) => q.refId === selection.refId);
+      if (found && !isExpressionQuery(found)) {
+        return found;
+      }
+      // Fall back to the first non-expression query if the selected refId was removed
+      return queries.find((q) => !isExpressionQuery(q)) ?? null;
+    }
+
+    // kind === 'none' — fall back to first non-expression query so editor is never blank
+    return queries.find((q) => !isExpressionQuery(q)) ?? null;
+  }, [activeContext, queries]);
 
   const selectedTransformation = useMemo(() => {
-    // If we have a selected transformation id, try to find that transformation
-    if (selectedTransformationId) {
-      const transformation = transformations.find((t) => t.transformId === selectedTransformationId);
-      if (transformation) {
-        return transformation;
-      }
+    if (activeContext.view !== 'data') {
+      return null;
     }
-
-    return null;
-  }, [transformations, selectedTransformationId]);
+    const { selection } = activeContext;
+    if (selection.kind !== 'transformation') {
+      return null;
+    }
+    return transformations.find((t) => t.transformId === selection.id) ?? null;
+  }, [activeContext, transformations]);
 
   const selectedAlert = useMemo(() => {
-    // If we have a selected alert id, try to find that alert
-    if (selectedAlertId) {
-      const alert = alerts.find((a) => a.alertId === selectedAlertId);
-      if (alert) {
-        return alert;
-      }
-      // Handle empty alert case when viewing alerts with no alerts
-      if (selectedAlertId === EMPTY_ALERT.alertId) {
-        return EMPTY_ALERT;
-      }
+    if (activeContext.view !== 'alerts' || !activeContext.alertId) {
+      return null;
     }
+    return alerts.find((a) => a.alertId === activeContext.alertId) ?? null;
+  }, [activeContext, alerts]);
 
-    return null;
-  }, [alerts, selectedAlertId]);
-
-  return { selectedQuery, selectedTransformation, selectedAlert };
+  return { selectedQuery, selectedExpression, selectedTransformation, selectedAlert };
 }

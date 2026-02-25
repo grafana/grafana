@@ -3,32 +3,17 @@ import { t } from '@grafana/i18n';
 import { CustomTransformerDefinition } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQuery } from 'app/features/expressions/types';
 
 import { getAlertStateColor, QUERY_EDITOR_COLORS, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../constants';
 
-import { PendingExpression, PendingTransformation } from './QueryEditorContext';
 import { AlertRule, Transformation } from './types';
 
 export function getEditorType(
-  card: DataQuery | Transformation | AlertRule | null,
-  pendingExpression?: PendingExpression | null,
-  pendingTransformation?: PendingTransformation | null
-): QueryEditorType {
-  if (pendingExpression) {
-    return QueryEditorType.Expression;
-  }
-
-  if (pendingTransformation) {
-    return QueryEditorType.Transformation;
-  }
-
+  card: DataQuery | ExpressionQuery | Transformation | null
+): Exclude<QueryEditorType, QueryEditorType.Alert> {
   if (!card) {
-    // Default to query type if no card is provided
     return QueryEditorType.Query;
-  }
-
-  if ('alertId' in card) {
-    return QueryEditorType.Alert;
   }
 
   if ('transformId' in card) {
@@ -73,6 +58,29 @@ export function getTransformId(transformConfigId: string, index: number): string
  * @param alertState - Optional alert state (only used when editorType is Alert)
  * @returns The border color string
  */
+/**
+ * Resolves the display type for the content header icon and border color.
+ * Alert takes priority — if an alert is selected we're in alert view regardless
+ * of what the data card type is.
+ */
+export function getDisplayType(
+  selectedAlert: AlertRule | null,
+  selectedTransformation: Transformation | null,
+  selectedQuery: DataQuery | null,
+  selectedExpression: ExpressionQuery | null
+): QueryEditorType {
+  if (selectedAlert) {
+    return QueryEditorType.Alert;
+  }
+  if (selectedTransformation) {
+    return QueryEditorType.Transformation;
+  }
+  if (selectedExpression) {
+    return QueryEditorType.Expression;
+  }
+  return QueryEditorType.Query;
+}
+
 export function getEditorBorderColor({
   theme,
   editorType,

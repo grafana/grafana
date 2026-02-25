@@ -8,7 +8,7 @@ import { CardTitle } from './CardTitle';
 import { SidebarCard } from './SidebarCard';
 
 export const TransformationCard = ({ transformation }: { transformation: Transformation }) => {
-  const { selectedTransformation, setSelectedTransformation } = useQueryEditorUIContext();
+  const { selectedTransformation, setActiveContext } = useQueryEditorUIContext();
   const { deleteTransformation, toggleTransformationDisabled } = useActionsContext();
   const isSelected = selectedTransformation?.transformId === transformation.transformId;
   const isHidden = !!transformation.transformConfig.disabled;
@@ -25,7 +25,7 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
       isSelected={isSelected}
       id={transformation.transformId}
       item={item}
-      onClick={() => setSelectedTransformation(transformation)}
+      onClick={() => setActiveContext({ view: 'data', selection: { kind: 'transformation', id: transformation.transformId } })}
       onDelete={() => deleteTransformation(transformation.transformId)}
       onToggleHide={() => toggleTransformationDisabled(transformation.transformId)}
     >

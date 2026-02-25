@@ -6,7 +6,6 @@ import { DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { QueryActionComponent, RowActionComponents } from 'app/features/query/components/QueryActionComponent';
 
-import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 interface PluginActionsProps {
@@ -23,7 +22,7 @@ interface PluginActionsProps {
 export function PluginActions({ app }: PluginActionsProps) {
   const { queries, data } = useQueryRunnerContext();
   const { addQuery } = useActionsContext();
-  const { selectedQuery, selectedQueryDsData, cardType } = useQueryEditorUIContext();
+  const { selectedQuery, selectedQueryDsData } = useQueryEditorUIContext();
 
   const extraActions = useMemo(() => {
     if (!selectedQuery) {
@@ -53,7 +52,7 @@ export function PluginActions({ app }: PluginActionsProps) {
 
   const telemetryComponents = useAdaptiveTelemetryComponents(selectedQuery);
 
-  if (!selectedQuery || cardType === QueryEditorType.Expression) {
+  if (!selectedQuery) {
     return null;
   }
 

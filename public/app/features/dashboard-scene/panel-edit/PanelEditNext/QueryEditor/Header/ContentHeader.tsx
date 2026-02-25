@@ -12,7 +12,7 @@ import { ExpressionQuery } from 'app/features/expressions/types';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { AlertRule, Transformation } from '../types';
-import { getEditorBorderColor } from '../utils';
+import { getDisplayType, getEditorBorderColor } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
@@ -63,10 +63,10 @@ function PendingPickerHeader({ editorType, label, onCancel, cancelLabel, styles 
  */
 export interface ContentHeaderProps {
   selectedAlert: AlertRule | null;
-  selectedQuery: DataQuery | ExpressionQuery | null;
+  selectedQuery: DataQuery | null;
+  selectedExpression: ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   queries: DataQuery[];
-  cardType: QueryEditorType;
   pendingExpression?: boolean;
   onCancelPendingExpression?: () => void;
   pendingTransformation?: boolean;
@@ -102,9 +102,9 @@ export interface ContentHeaderProps {
 export function ContentHeader({
   selectedAlert,
   selectedQuery,
+  selectedExpression,
   selectedTransformation,
   queries,
-  cardType,
   pendingExpression,
   onCancelPendingExpression,
   pendingTransformation,
@@ -118,7 +118,8 @@ export function ContentHeader({
   const internalContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = externalContainerRef || internalContainerRef;
 
-  const styles = useStyles2(getStyles, { cardType, selectedAlert });
+  const displayType = getDisplayType(selectedAlert, selectedTransformation, selectedQuery, selectedExpression);
+  const styles = useStyles2(getStyles, { cardType: displayType, selectedAlert });
 
   if (pendingExpression) {
     return (
@@ -144,16 +145,16 @@ export function ContentHeader({
     );
   }
 
-  if (!selectedQuery && !selectedTransformation && !selectedAlert) {
+  if (!selectedQuery && !selectedExpression && !selectedTransformation && !selectedAlert) {
     return null;
   }
 
   return (
     <div className={styles.container} ref={containerRef}>
       <div className={styles.leftSection}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
+        <Icon name={QUERY_EDITOR_TYPE_CONFIG[displayType].icon} size="sm" />
 
-        {cardType === QueryEditorType.Alert && selectedAlert && (
+        {selectedAlert && (
           <>
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
@@ -165,7 +166,7 @@ export function ContentHeader({
           </>
         )}
 
-        {cardType === QueryEditorType.Query && selectedQuery && (
+        {selectedQuery && (
           <>
             <DatasourceSection
               selectedQuery={selectedQuery}
@@ -175,16 +176,16 @@ export function ContentHeader({
           </>
         )}
 
-        {cardType === QueryEditorType.Expression && selectedQuery && 'type' in selectedQuery && (
+        {selectedExpression && (
           <>
             <Text weight="light" variant="body" color="primary">
-              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
+              {upperFirst(selectedExpression.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
             </Text>
             <Separator />
           </>
         )}
 
-        {cardType === QueryEditorType.Transformation && selectedTransformation && (
+        {selectedTransformation && (
           <>
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
@@ -196,9 +197,13 @@ export function ContentHeader({
           </>
         )}
 
-        {selectedQuery && cardType !== QueryEditorType.Alert && (
+        {(selectedQuery || selectedExpression) && (
           <>
-            <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={onUpdateQuery} />
+            <EditableQueryName
+              query={selectedQuery ?? selectedExpression!}
+              queries={queries}
+              onQueryUpdate={onUpdateQuery}
+            />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
         )}
@@ -221,30 +226,27 @@ export function ContentHeaderSceneWrapper({
 }: {
   renderHeaderExtras?: () => React.ReactNode;
 } = {}) {
-  const {
-    selectedAlert,
-    selectedQuery,
-    selectedTransformation,
-    cardType,
-    pendingExpression,
-    setPendingExpression,
-    pendingTransformation,
-    setPendingTransformation,
-  } = useQueryEditorUIContext();
+  const { activeContext, selectedAlert, selectedQuery, selectedExpression, selectedTransformation, setActiveContext } =
+    useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
+
+  const isExpressionPicker =
+    activeContext.view === 'data' && activeContext.selection.kind === 'expressionPicker';
+  const isTransformationPicker =
+    activeContext.view === 'data' && activeContext.selection.kind === 'transformationPicker';
 
   return (
     <ContentHeader
       selectedAlert={selectedAlert}
       selectedQuery={selectedQuery}
+      selectedExpression={selectedExpression}
       selectedTransformation={selectedTransformation}
       queries={queries}
-      cardType={cardType}
-      pendingExpression={!!pendingExpression}
-      onCancelPendingExpression={() => setPendingExpression(null)}
-      pendingTransformation={!!pendingTransformation}
-      onCancelPendingTransformation={() => setPendingTransformation(null)}
+      pendingExpression={isExpressionPicker}
+      onCancelPendingExpression={() => setActiveContext({ view: 'data', selection: { kind: 'none' } })}
+      pendingTransformation={isTransformationPicker}
+      onCancelPendingTransformation={() => setActiveContext({ view: 'data', selection: { kind: 'none' } })}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
       renderHeaderExtras={renderHeaderExtras}

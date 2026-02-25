@@ -7,24 +7,18 @@ import { RulesTable } from 'app/features/alerting/unified/components/rules/Rules
 import { ScenesNewRuleFromPanelButton } from '../../PanelDataPane/NewAlertRuleButton';
 
 import { useAlertingContext, usePanelContext, useQueryEditorUIContext } from './QueryEditorContext';
-import { EMPTY_ALERT } from './types';
 
 export function AlertEditorRenderer() {
   const { panel } = usePanelContext();
-  const { alertRules, isDashboardSaved } = useAlertingContext();
+  const { isDashboardSaved } = useAlertingContext();
   const { selectedAlert } = useQueryEditorUIContext();
 
   const rule = useMemo(() => {
-    const alertRule = alertRules.find(({ alertId }) => alertId === selectedAlert?.alertId);
-    return alertRule?.rule ? [alertRule.rule] : [];
-  }, [alertRules, selectedAlert]);
+    return selectedAlert ? [selectedAlert.rule] : [];
+  }, [selectedAlert]);
 
+  // selectedAlert is null when activeContext.alertId is null, which means no alerts exist for this panel
   if (!selectedAlert) {
-    return null;
-  }
-
-  // Show empty state when viewing alerts with no alerts
-  if (selectedAlert.alertId === EMPTY_ALERT.alertId) {
     if (!isDashboardSaved) {
       return (
         <EmptyState

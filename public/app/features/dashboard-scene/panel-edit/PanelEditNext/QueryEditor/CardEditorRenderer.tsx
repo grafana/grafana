@@ -1,7 +1,6 @@
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { EmptyTransformationsMessage } from '../../PanelDataPane/EmptyTransformationsMessage';
-import { QueryEditorType } from '../constants';
 
 import { AlertEditorRenderer } from './AlertEditorRenderer';
 import { ExpressionTypePicker } from './Body/ExpressionTypePicker';
@@ -17,34 +16,35 @@ import { TransformationEditorRenderer } from './TransformationEditorRenderer';
 
 export function CardEditorRenderer() {
   const {
-    cardType,
-    pendingExpression,
-    pendingTransformation,
-    setPendingTransformation,
-    finalizePendingTransformation,
-    finalizePendingExpression,
+    activeContext,
+    setActiveContext,
+    finalizeTransformationPicker,
+    finalizeExpressionPicker,
+    selectedTransformation,
   } = useQueryEditorUIContext();
   const { transformations } = usePanelContext();
   const { data, queries } = useQueryRunnerContext();
   const { dsSettings } = useDatasourceContext();
 
-  if (pendingExpression) {
+  if (activeContext.view === 'data' && activeContext.selection.kind === 'expressionPicker') {
     return <ExpressionTypePicker />;
   }
 
-  if (pendingTransformation) {
-    const shouldShowPicker = pendingTransformation.showPicker || transformations.length > 0;
+  if (activeContext.view === 'data' && activeContext.selection.kind === 'transformationPicker') {
+    const { insertAfter, showPicker } = activeContext.selection;
+    const shouldShowPicker = showPicker || transformations.length > 0;
 
     return shouldShowPicker ? (
       <TransformationTypePicker />
     ) : (
       <EmptyTransformationsMessage
         showHeaderText={false}
-        onShowPicker={() => setPendingTransformation({ showPicker: true })}
-        onAddTransformation={finalizePendingTransformation}
+        onShowPicker={() =>
+          setActiveContext({ view: 'data', selection: { kind: 'transformationPicker', insertAfter, showPicker: true } })
+        }
+        onAddTransformation={finalizeTransformationPicker}
         onGoToQueries={() => {
-          setPendingTransformation(null);
-          finalizePendingExpression(ExpressionQueryType.sql);
+          finalizeExpressionPicker(ExpressionQueryType.sql);
         }}
         data={data?.series ?? []}
         datasourceUid={dsSettings?.uid}
@@ -53,11 +53,11 @@ export function CardEditorRenderer() {
     );
   }
 
-  if (cardType === QueryEditorType.Alert) {
+  if (activeContext.view === 'alerts') {
     return <AlertEditorRenderer />;
   }
 
-  if (cardType === QueryEditorType.Transformation) {
+  if (selectedTransformation) {
     return <TransformationEditorRenderer />;
   }
 

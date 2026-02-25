@@ -4,7 +4,6 @@ import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
-import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 interface SaveButtonProps {
@@ -15,7 +14,7 @@ interface SaveButtonProps {
 // TODO: Confirm this works as expected once we get the query content work completed
 export function SaveButton({ parentRef }: SaveButtonProps) {
   const { queryLibraryEnabled, renderSavedQueryButtons, isEditingQuery, setIsEditingQuery } = useQueryLibraryContext();
-  const { selectedQuery, setSelectedQuery, cardType, selectedQueryDsData } = useQueryEditorUIContext();
+  const { selectedQuery, setActiveContext, selectedQueryDsData } = useQueryEditorUIContext();
   const { updateSelectedQuery, runQueries } = useActionsContext();
 
   const onUpdateSuccess = useCallback(() => {
@@ -40,22 +39,21 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
         originalRefId
       );
 
-      // Update selected query to the new query
-      setSelectedQuery({ ...query, refId: originalRefId });
+      // Navigate to the updated query
+      setActiveContext({ view: 'data', selection: { kind: 'query', refId: originalRefId } });
 
       // Run queries with the new query from library
       runQueries();
     },
-    [selectedQuery, updateSelectedQuery, setSelectedQuery, runQueries]
+    [selectedQuery, updateSelectedQuery, setActiveContext, runQueries]
   );
 
-  // Only queries can be saved to library (expressions/transformations can't)
-  if (cardType !== QueryEditorType.Query) {
+  // Only plain queries can be saved to library (not expressions, transformations, or alerts)
+  if (!selectedQuery) {
     return null;
   }
 
-  // Don't show if query library feature is disabled or no selected query
-  if (!queryLibraryEnabled || !selectedQuery) {
+  if (!queryLibraryEnabled) {
     return null;
   }
 

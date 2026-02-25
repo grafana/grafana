@@ -10,6 +10,7 @@ import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
 import { getDashboardSceneFor } from '../../../../utils/utils';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, usePanelContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { getEditorType } from '../utils';
 
 export function QueryActionsMenu() {
   const { duplicateQuery } = useActionsContext();
@@ -20,8 +21,8 @@ export function QueryActionsMenu() {
     selectedQueryDsLoading,
     showingDatasourceHelp,
     toggleDatasourceHelp,
-    cardType,
   } = useQueryEditorUIContext();
+  const cardType = getEditorType(selectedQuery);
 
   const styles = useStyles2(getStyles);
 

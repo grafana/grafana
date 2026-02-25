@@ -23,8 +23,7 @@ interface RenderSidebarCardProps {
   isSelected?: boolean;
   onClick?: jest.Mock;
   addQuery?: jest.Mock;
-  setSelectedQuery?: jest.Mock;
-  setPendingExpression?: jest.Mock;
+  setActiveContext?: jest.Mock;
 }
 
 function renderSidebarCard({
@@ -32,8 +31,7 @@ function renderSidebarCard({
   isSelected = false,
   onClick = jest.fn(),
   addQuery = jest.fn().mockReturnValue('B'),
-  setSelectedQuery = jest.fn(),
-  setPendingExpression = jest.fn(),
+  setActiveContext = jest.fn(),
 }: RenderSidebarCardProps = {}) {
   const queries: DataQuery[] = [{ refId: id, datasource: { type: 'test', uid: 'test' } }];
   const item = {
@@ -57,12 +55,12 @@ function renderSidebarCard({
     {
       queries,
       selectedQuery: queries[0],
-      uiStateOverrides: { setSelectedQuery, setPendingExpression },
+      uiStateOverrides: { setActiveContext },
       actionsOverrides: { addQuery },
     }
   );
 
-  return { ...result, addQuery, setSelectedQuery, setPendingExpression, onClick };
+  return { ...result, addQuery, setActiveContext, onClick };
 }
 
 describe('SidebarCard', () => {
@@ -70,7 +68,7 @@ describe('SidebarCard', () => {
     jest.clearAllMocks();
   });
 
-  it('should select query card and deselect transformation when clicking query card', async () => {
+  it('should call setActiveContext with query selection when clicking query card', async () => {
     const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
     const transformation: Transformation = {
       transformId: 'organize',
@@ -78,26 +76,23 @@ describe('SidebarCard', () => {
       transformConfig: { id: 'organize', options: {} },
     };
 
-    const setSelectedQuery = jest.fn();
-    const setSelectedTransformation = jest.fn();
-
+    const setActiveContext = jest.fn();
     const user = userEvent.setup();
 
     renderWithQueryEditorProvider(<QueryCard query={query} />, {
       queries: [query],
       transformations: [transformation],
       selectedTransformation: transformation,
-      uiStateOverrides: { setSelectedQuery, setSelectedTransformation },
+      uiStateOverrides: { setActiveContext },
     });
 
     const queryCard = screen.getByRole('button', { name: /select card A/i });
     await user.click(queryCard);
 
-    expect(setSelectedQuery).toHaveBeenCalledWith(query);
-    expect(setSelectedTransformation).not.toHaveBeenCalled();
+    expect(setActiveContext).toHaveBeenCalledWith({ view: 'data', selection: { kind: 'query', refId: 'A' } });
   });
 
-  it('should select transformation card and deselect query when clicking transformation card', async () => {
+  it('should call setActiveContext with transformation selection when clicking transformation card', async () => {
     const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
     const transformation: Transformation = {
       transformId: 'organize',
@@ -105,23 +100,23 @@ describe('SidebarCard', () => {
       transformConfig: { id: 'organize', options: {} },
     };
 
-    const setSelectedQuery = jest.fn();
-    const setSelectedTransformation = jest.fn();
-
+    const setActiveContext = jest.fn();
     const user = userEvent.setup();
 
     renderWithQueryEditorProvider(<TransformationCard transformation={transformation} />, {
       queries: [query],
       transformations: [transformation],
       selectedQuery: query,
-      uiStateOverrides: { setSelectedQuery, setSelectedTransformation },
+      uiStateOverrides: { setActiveContext },
     });
 
     const transformCard = screen.getByRole('button', { name: /select card organize/i });
     await user.click(transformCard);
 
-    expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
-    expect(setSelectedQuery).not.toHaveBeenCalled();
+    expect(setActiveContext).toHaveBeenCalledWith({
+      view: 'data',
+      selection: { kind: 'transformation', id: 'organize' },
+    });
   });
 
   describe('add button and menu', () => {
@@ -134,45 +129,48 @@ describe('SidebarCard', () => {
     });
 
     it('clicking "Add query" calls addQuery with the card refId as afterRefId', async () => {
-      const { user, addQuery, setSelectedQuery } = renderSidebarCard({ id: 'A' });
+      const { user, addQuery, setActiveContext } = renderSidebarCard({ id: 'A' });
 
       await user.click(screen.getByRole('button', { name: /add below A/i }));
       await user.click(screen.getByRole('menuitem', { name: /add query/i }));
 
       expect(addQuery).toHaveBeenCalledWith(undefined, 'A');
-      expect(setSelectedQuery).toHaveBeenCalledWith({ refId: 'B', hide: false });
+      expect(setActiveContext).toHaveBeenCalledWith({ view: 'data', selection: { kind: 'query', refId: 'B' } });
     });
 
     it('auto-selects the newly added query', async () => {
       const addQuery = jest.fn().mockReturnValue('C');
-      const { user, setSelectedQuery } = renderSidebarCard({ id: 'B', addQuery });
+      const { user, setActiveContext } = renderSidebarCard({ id: 'B', addQuery });
 
       await user.click(screen.getByRole('button', { name: /add below B/i }));
       await user.click(screen.getByRole('menuitem', { name: /add query/i }));
 
-      expect(setSelectedQuery).toHaveBeenCalledWith({ refId: 'C', hide: false });
+      expect(setActiveContext).toHaveBeenCalledWith({ view: 'data', selection: { kind: 'query', refId: 'C' } });
     });
 
-    it('does not call setSelectedQuery when addQuery returns undefined', async () => {
+    it('does not call setActiveContext when addQuery returns undefined', async () => {
       const addQuery = jest.fn().mockReturnValue(undefined);
-      const { user, setSelectedQuery } = renderSidebarCard({ addQuery });
+      const { user, setActiveContext } = renderSidebarCard({ addQuery });
 
       await user.click(screen.getByRole('button', { name: /add below A/i }));
       await user.click(screen.getByRole('menuitem', { name: /add query/i }));
 
       expect(addQuery).toHaveBeenCalled();
-      expect(setSelectedQuery).not.toHaveBeenCalled();
+      expect(setActiveContext).not.toHaveBeenCalled();
     });
   });
 
   describe('add expression', () => {
-    it('clicking "Add expression" calls setPendingExpression with insertAfter', async () => {
-      const { user, setPendingExpression } = renderSidebarCard({ id: 'A' });
+    it('clicking "Add expression" calls setActiveContext with expressionPicker selection', async () => {
+      const { user, setActiveContext } = renderSidebarCard({ id: 'A' });
 
       await user.click(screen.getByRole('button', { name: /add below A/i }));
       await user.click(screen.getByRole('menuitem', { name: /add expression/i }));
 
-      expect(setPendingExpression).toHaveBeenCalledWith({ insertAfter: 'A' });
+      expect(setActiveContext).toHaveBeenCalledWith({
+        view: 'data',
+        selection: { kind: 'expressionPicker', insertAfter: 'A' },
+      });
     });
   });
 });

@@ -6,7 +6,6 @@ import { GrafanaTheme2, QueryResultMetaNotice } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
-import { QueryEditorType } from '../../constants';
 import { useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 type SeverityType = 'warning' | 'info';
@@ -48,7 +47,7 @@ function SeverityBadge({ type, notices }: SeverityBadgeProps) {
 
 export function WarningBadges() {
   const { data } = useQueryRunnerContext();
-  const { selectedQuery, cardType } = useQueryEditorUIContext();
+  const { selectedQuery } = useQueryEditorUIContext();
   const queryRefId = selectedQuery?.refId;
 
   const severityGroups = useMemo<SeverityGroup[]>(() => {
@@ -82,7 +81,7 @@ export function WarningBadges() {
     return groups;
   }, [data, queryRefId]);
 
-  if (cardType === QueryEditorType.Transformation) {
+  if (!selectedQuery) {
     return null;
   }
 

@@ -34,7 +34,7 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
   const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
   const { addQuery } = useActionsContext();
-  const { setSelectedQuery, setPendingExpression, setPendingTransformation } = useQueryEditorUIContext();
+  const { setActiveContext } = useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -50,11 +50,10 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
     (query?: Partial<DataQuery>) => {
       const newRefId = addQuery(query, afterId);
       if (newRefId) {
-        const selectTarget: DataQuery = { refId: newRefId, hide: false };
-        setSelectedQuery(selectTarget);
+        setActiveContext({ view: 'data', selection: { kind: 'query', refId: newRefId } });
       }
     },
-    [addQuery, afterId, setSelectedQuery]
+    [addQuery, afterId, setActiveContext]
   );
 
   const handleMenuVisibleChange = useCallback((visible: boolean) => {
@@ -85,17 +84,17 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
           label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
           icon="calculator-alt"
           onClick={() => {
-            setPendingExpression({ insertAfter: afterId ?? '' });
+            setActiveContext({ view: 'data', selection: { kind: 'expressionPicker', insertAfter: afterId ?? '' } });
           }}
         />
       </Menu>
     ),
-    [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterId]
+    [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setActiveContext, afterId]
   );
 
   const handleTransformationClick = useCallback(() => {
-    setPendingTransformation({ insertAfter: afterId });
-  }, [afterId, setPendingTransformation]);
+    setActiveContext({ view: 'data', selection: { kind: 'transformationPicker', insertAfter: afterId } });
+  }, [afterId, setActiveContext]);
 
   const ariaLabel = getButtonAriaLabel(variant, afterId);
 

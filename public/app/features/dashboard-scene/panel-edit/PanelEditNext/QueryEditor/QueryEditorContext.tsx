@@ -12,18 +12,41 @@ import { DataQuery } from '@grafana/schema';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { QueryGroupOptions } from 'app/types/query';
 
-import { QueryEditorType } from '../constants';
-
 import { AlertRule, QueryOptionField, Transformation } from './types';
 
-export interface PendingExpression {
-  insertAfter: string;
-}
+/**
+ * The selected item within the data view.
+ * A fully discriminated union — every kind is mutually exclusive at the type level.
+ */
+export type DataSelection =
+  | { kind: 'none' }
+  | { kind: 'query'; refId: string }
+  | { kind: 'expression'; refId: string }
+  | { kind: 'transformation'; id: string }
+  | { kind: 'expressionPicker'; insertAfter: string }
+  | { kind: 'transformationPicker'; insertAfter?: string; showPicker?: boolean };
 
-export interface PendingTransformation {
-  insertAfter?: string;
-  showPicker?: boolean;
-}
+/**
+ * A typed reference to any card in the sidebar — used as the element type
+ * for the multi-selection set (`selectedItems`).
+ */
+export type CardRef =
+  | { kind: 'query'; refId: string }
+  | { kind: 'expression'; refId: string }
+  | { kind: 'transformation'; id: string }
+  | { kind: 'alert'; alertId: string };
+
+/**
+ * Discriminated union representing what the user is currently viewing.
+ * A single source of truth that encodes the selected card, active view,
+ * and any pending picker state — all as a single atomic value.
+ */
+export type ActiveContext = { view: 'data'; selection: DataSelection } | { view: 'alerts'; alertId: string | null };
+
+export const INITIAL_ACTIVE_CONTEXT: ActiveContext = {
+  view: 'data',
+  selection: { kind: 'none' },
+};
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -65,12 +88,14 @@ interface TransformationToggles {
 }
 
 export interface QueryEditorUIState {
-  selectedQuery: DataQuery | ExpressionQuery | null;
+  activeContext: ActiveContext;
+  setActiveContext: (ctx: ActiveContext) => void;
+  selectedQuery: DataQuery | null;
+  selectedExpression: ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
-  setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
-  setSelectedTransformation: (transformation: Transformation | null) => void;
-  setSelectedAlert: (alert: AlertRule | null) => void;
+  selectedItems: CardRef[];
+  setSelectedItems: (items: CardRef[]) => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
@@ -80,13 +105,10 @@ export interface QueryEditorUIState {
   showingDatasourceHelp: boolean;
   toggleDatasourceHelp: () => void;
   transformToggles: TransformationToggles;
-  cardType: QueryEditorType;
-  pendingExpression: PendingExpression | null;
-  setPendingExpression: (pending: PendingExpression | null) => void;
-  finalizePendingExpression: (type: ExpressionQueryType) => void;
-  pendingTransformation: PendingTransformation | null;
-  setPendingTransformation: (pending: PendingTransformation | null) => void;
-  finalizePendingTransformation: (transformationId: string) => void;
+  /** Finalizes the expression picker: creates the expression query and selects it. */
+  finalizeExpressionPicker: (type: ExpressionQueryType) => void;
+  /** Finalizes the transformation picker: creates the transformation and selects it. */
+  finalizeTransformationPicker: (transformationId: string) => void;
 }
 
 export interface QueryEditorActions {

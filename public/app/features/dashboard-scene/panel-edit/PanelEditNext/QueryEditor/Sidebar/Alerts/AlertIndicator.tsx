@@ -1,26 +1,23 @@
 import { t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
-import { QueryEditorType } from '../../../constants';
 import { useAlertingContext, useQueryEditorUIContext } from '../../QueryEditorContext';
-import { EMPTY_ALERT } from '../../types';
 
 export function AlertIndicator() {
   const { alertRules, loading } = useAlertingContext();
-  const { cardType, setSelectedAlert } = useQueryEditorUIContext();
+  const { activeContext, setActiveContext } = useQueryEditorUIContext();
 
   if (loading) {
     return null;
   }
 
-  const isAlertView = cardType === QueryEditorType.Alert;
-  const hasAlerts = alertRules.length > 0;
+  const isAlertView = activeContext.view === 'alerts';
 
   const handleClick = () => {
     if (isAlertView) {
-      setSelectedAlert(null);
+      setActiveContext({ view: 'data', selection: { kind: 'none' } });
     } else {
-      setSelectedAlert(hasAlerts ? alertRules[0] : EMPTY_ALERT);
+      setActiveContext({ view: 'alerts', alertId: alertRules[0]?.alertId ?? null });
     }
   };
 
