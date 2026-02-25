@@ -1,14 +1,9 @@
-import { css } from '@emotion/css';
 import { memo, useMemo, useState, useEffect } from 'react';
 
-import {
-  PreferencesSpec as UserPreferencesDTO,
-  PreferencesQueryHistoryPreference,
-  PreferencesNavbarPreference,
-} from '@grafana/api-clients/rtkq/preferences/v1alpha1';
-import { FeatureState, ThemeRegistryItem } from '@grafana/data';
+import { PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LANGUAGES, PSEUDO_LOCALE, t, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -25,112 +20,29 @@ import {
   WeekStart,
   WeekStartPicker,
 } from '@grafana/ui';
-import { LOCALES } from 'app/core/internationalization/locales';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-const getLanguageOptions = (): ComboboxOption[] => {
-  const languageOptions = LANGUAGES.map((v) => ({
-    value: v.code,
-    label: v.name,
-  })).sort((a, b) => {
-    if (a.value === PSEUDO_LOCALE) {
-      return 1;
-    }
+import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props, State } from './utils';
 
-    if (b.value === PSEUDO_LOCALE) {
-      return -1;
-    }
-
-    // eslint-disable-next-line no-restricted-syntax
-    return a.label.localeCompare(b.label);
+export const SharedPreferencesFunctional = memo((props: Props) => {
+  const [state, setState] = useState<UserPreferencesDTO & State>({
+    isLoading: false,
+    isSubmitting: false,
+    theme: '',
+    timezone: '',
+    weekStart: '',
+    language: '',
+    regionalFormat: '',
+    queryHistory: { homeTab: '' },
+    navbar: { bookmarkUrls: [] },
+    homeDashboardUID: '',
   });
 
-  if (process.env.NODE_ENV === 'development') {
-    languageOptions.push({
-      value: PSEUDO_LOCALE,
-      label: 'Pseudo-locale',
-    });
-  }
-
-  const options = [
-    {
-      value: '',
-      label: t('common.locale.default', 'Default'),
-    },
-    ...languageOptions,
-  ];
-
-  return options;
-};
-
-const getRegionalFormatOptions = (): ComboboxOption[] => {
-  const localeOptions = LOCALES.map((v) => ({
-    value: v.code,
-    label: v.name,
-  })).sort((a, b) => {
-    // eslint-disable-next-line no-restricted-syntax
-    return a.label.localeCompare(b.label);
-  });
-
-  const options = [
-    {
-      value: '',
-      label: t('common.locale.default', 'Default'),
-    },
-    ...localeOptions,
-  ];
-  return options;
-};
-
-const getTranslatedThemeName = (theme: ThemeRegistryItem) => {
-  switch (theme.id) {
-    case 'dark':
-      return t('shared.preferences.theme.dark-label', 'Dark');
-    case 'light':
-      return t('shared.preferences.theme.light-label', 'Light');
-    case 'system':
-      return t('shared.preferences.theme.system-label', 'System preference');
-    default:
-      return theme.name;
-  }
-};
-
-const getStyles = () => {
-  return {
-    labelText: css({
-      marginRight: '6px',
-    }),
-    form: css({
-      width: '100%',
-      maxWidth: '600px',
-    }),
-  };
-};
-
-export interface SharedPreferencesProps {
-  resourceUri: string;
-  disabled?: boolean;
-  preferenceType: 'org' | 'team' | 'user';
-  onConfirm?: () => Promise<boolean>;
-}
-
-export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [theme, setTheme] = useState<UserPreferencesDTO['theme']>('');
-  const [timezone, setTimezone] = useState<UserPreferencesDTO['timezone']>('');
-  const [weekStart, setWeekStart] = useState<UserPreferencesDTO['weekStart']>('');
-  const [language, setLanguage] = useState<UserPreferencesDTO['language']>('');
-  const [regionalFormat, setRegionalFormat] = useState<UserPreferencesDTO['regionalFormat']>('');
-  const [queryHistory, setQueryHistory] = useState<PreferencesQueryHistoryPreference | undefined>({ homeTab: '0' });
-  const [navbar, setNavbar] = useState<PreferencesNavbarPreference | undefined>({ bookmarkUrls: [] });
-  const [homeDashboardUID, setHomeDashboardUID] = useState<string | undefined>('');
   const themes = getSelectableThemes();
-
   const styles = useStyles2(getStyles);
 
   const service = useMemo(() => new PreferencesService(props.resourceUri), [props.resourceUri]);
@@ -150,58 +62,61 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
 
   useEffect(() => {
     const loadPreferences = async () => {
-      setIsLoading(true);
+      setState((prev) => ({ ...prev, isLoading: true }));
       try {
         const prefs = await service.load();
-        setHomeDashboardUID(prefs.homeDashboardUID);
-        setTheme(prefs.theme);
-        setTimezone(prefs.timezone);
-        setWeekStart(prefs.weekStart);
-        setLanguage(prefs.language);
-        setRegionalFormat(prefs.regionalFormat);
-        setQueryHistory(prefs.queryHistory);
-        setNavbar(prefs.navbar);
+        setState((prev) => ({
+          ...prev,
+          homeDashboardUID: prefs.homeDashboardUID ?? prev.homeDashboardUID,
+          theme: prefs.theme ?? prev.theme,
+          timezone: prefs.timezone ?? prev.timezone,
+          weekStart: prefs.weekStart ?? prev.weekStart,
+          language: prefs.language ?? prev.language,
+          regionalFormat: prefs.regionalFormat ?? prev.regionalFormat,
+          queryHistory: prefs.queryHistory ?? prev.queryHistory,
+          navbar: prefs.navbar ?? prev.navbar,
+        }));
       } catch (err) {
         console.error('Failed to load preferences', err);
       } finally {
-        setIsLoading(false);
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
     };
 
     loadPreferences();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [service]);
 
   const handleSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const confirmationResult = props.onConfirm ? await props.onConfirm() : true;
     reportInteraction('grafana_preferences_save_button_clicked', {
       preferenceType: props.preferenceType,
-      theme,
-      language,
+      theme: state.theme,
+      language: state.language,
     });
-    if (confirmationResult) {
-      setIsSubmitting(true);
-      await service
-        .update({
-          homeDashboardUID,
-          theme,
-          timezone,
-          weekStart,
-          language,
-          regionalFormat,
-          queryHistory,
-          navbar,
-        })
-        .finally(() => {
-          setIsSubmitting(false);
-        });
-      window.location.reload();
+    if (!confirmationResult) {
+      return;
     }
+    setState((prev) => ({ ...prev, isSubmitting: true }));
+    await service
+      .update({
+        homeDashboardUID: state.homeDashboardUID,
+        theme: state.theme,
+        timezone: state.timezone,
+        weekStart: state.weekStart,
+        language: state.language,
+        regionalFormat: state.regionalFormat,
+        queryHistory: state.queryHistory,
+        navbar: state.navbar,
+      })
+      .finally(() => {
+        setState((prev) => ({ ...prev, isSubmitting: false }));
+      });
+    window.location.reload();
   };
 
   const handleThemeChanged = (value: ComboboxOption<string>) => {
-    setTheme(value.value);
+    setState((prev) => ({ ...prev, theme: value.value }));
     reportInteraction('grafana_preferences_theme_changed', {
       toTheme: value.value,
       preferenceType: props.preferenceType,
@@ -215,19 +130,19 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
     if (typeof timezone !== 'string') {
       return;
     }
-    setTimezone(timezone);
+    setState((prev) => ({ ...prev, timezone }));
   };
 
   const handleWeekStartChanged = (weekStart?: WeekStart) => {
-    weekStart ? setWeekStart(weekStart) : setWeekStart('');
+    weekStart ? setState((prev) => ({ ...prev, weekStart })) : setState((prev) => ({ ...prev, weekStart: '' }));
   };
 
   const handleDashboardChanged = (dashboardUID: string) => {
-    setHomeDashboardUID(dashboardUID);
+    setState((prev) => ({ ...prev, homeDashboardUID: dashboardUID }));
   };
 
   const handleLanguageChanged = (language: string) => {
-    setLanguage(language);
+    setState((prev) => ({ ...prev, language }));
     reportInteraction('grafana_preferences_language_changed', {
       toLanguage: language,
       preferenceType: props.preferenceType,
@@ -235,22 +150,22 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
   };
 
   const handleRegionalFormatChanged = (regionalFormat: string) => {
-    setRegionalFormat(regionalFormat);
+    setState((prev) => ({ ...prev, regionalFormat }));
     reportInteraction('grafana_preferences_regional_format_changed', {
       toRegionalFormat: regionalFormat,
       preferenceType: props.preferenceType,
     });
   };
 
-  const currentThemeOption = themeOptions.find((x) => x.value === theme) ?? themeOptions[0];
+  const currentThemeOption = themeOptions.find((x) => x.value === state.theme) ?? themeOptions[0];
 
   return (
     <form onSubmit={handleSubmitForm} className={styles.form}>
       <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
         <Field
           noMargin
-          loading={isLoading}
-          disabled={isLoading}
+          loading={state.isLoading}
+          disabled={state.isLoading}
           label={t('shared-preferences.fields.theme-label', 'Interface theme')}
           description={
             config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
@@ -277,8 +192,8 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
 
         <Field
           noMargin
-          loading={isLoading}
-          disabled={isLoading}
+          loading={state.isLoading}
+          disabled={state.isLoading}
           label={
             <Label htmlFor="home-dashboard-select">
               <span className={styles.labelText}>
@@ -289,7 +204,7 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
           data-testid="User preferences home dashboard drop down"
         >
           <DashboardPicker
-            value={homeDashboardUID}
+            value={state.homeDashboardUID}
             onChange={(v) => handleDashboardChanged(v?.uid ?? '')}
             defaultOptions={true}
             isClearable={true}
@@ -300,13 +215,13 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
 
         <Field
           noMargin
-          disabled={isLoading}
+          disabled={state.isLoading}
           label={t('shared-dashboard.fields.timezone-label', 'Timezone')}
           data-testid={selectors.components.TimeZonePicker.containerV2}
         >
           <TimeZonePicker
             includeInternal={true}
-            value={timezone}
+            value={state.timezone}
             onChange={handleTimeZoneChanged}
             inputId="shared-preferences-timezone-picker"
           />
@@ -314,13 +229,13 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
 
         <Field
           noMargin
-          loading={isLoading}
-          disabled={isLoading}
+          loading={state.isLoading}
+          disabled={state.isLoading}
           label={t('shared-preferences.fields.week-start-label', 'Week start')}
           data-testid={selectors.components.WeekStartPicker.containerV2}
         >
           <WeekStartPicker
-            value={weekStart && isWeekStart(weekStart) ? weekStart : undefined}
+            value={state.weekStart && isWeekStart(state.weekStart) ? state.weekStart : undefined}
             onChange={handleWeekStartChanged}
             inputId="shared-preferences-week-start-picker"
           />
@@ -328,8 +243,8 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
 
         <Field
           noMargin
-          loading={isLoading}
-          disabled={isLoading}
+          loading={state.isLoading}
+          disabled={state.isLoading}
           label={
             <Label htmlFor="language-preference-select">
               <span className={styles.labelText}>
@@ -341,7 +256,7 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
           data-testid="User preferences language drop down"
         >
           <Combobox
-            value={languageOptions.find((lang) => lang.value === language)?.value || ''}
+            value={languageOptions.find((lang) => lang.value === state.language)?.value || ''}
             onChange={(lang: ComboboxOption | null) => handleLanguageChanged(lang?.value ?? '')}
             options={languageOptions}
             placeholder={t('shared-preferences.fields.language-preference-placeholder', 'Choose language')}
@@ -351,8 +266,8 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
         {config.featureToggles.localeFormatPreference && (
           <Field
             noMargin
-            loading={isLoading}
-            disabled={isLoading}
+            loading={state.isLoading}
+            disabled={state.isLoading}
             label={
               <Label htmlFor="locale-preference">
                 <span className={styles.labelText}>
@@ -368,7 +283,7 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
             data-testid="User preferences locale drop down"
           >
             <Combobox
-              value={regionalFormatOptions.find((loc) => loc.value === regionalFormat)?.value || ''}
+              value={regionalFormatOptions.find((loc) => loc.value === state.regionalFormat)?.value || ''}
               onChange={(locale: ComboboxOption | null) => handleRegionalFormatChanged(locale?.value ?? '')}
               options={regionalFormatOptions}
               placeholder={t('shared-preferences.fields.locale-preference-placeholder', 'Choose region')}
@@ -378,7 +293,7 @@ export const SharedPreferencesFunctional = memo((props: SharedPreferencesProps) 
         )}
       </FieldSet>
       <Button
-        disabled={isSubmitting}
+        disabled={state.isSubmitting}
         type="submit"
         variant="primary"
         data-testid={selectors.components.UserProfile.preferencesSaveButton}
