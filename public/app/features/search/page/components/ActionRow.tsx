@@ -110,7 +110,8 @@ export const ActionRow = ({
           <div className={styles.checkboxWrapper}>
             <Checkbox
               label={t('search.actions.created-by-me', 'Created by me')}
-              value={!!state.createdBy}
+              // Make sure the checkbox is checked if the createdBy is the current user
+              value={state.createdBy === `user:${contextSrv.user.uid}`}
               onChange={() => onCreatedByChange(state.createdBy ? undefined : `user:${contextSrv.user.uid}`)}
             />
           </div>

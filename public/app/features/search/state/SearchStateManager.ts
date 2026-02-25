@@ -27,6 +27,7 @@ export const initialState: SearchState = {
   prevSort: undefined,
   eventTrackingNamespace: 'dashboard_search',
   deleted: false,
+  createdBy: undefined,
 };
 
 export const defaultQueryParams: SearchQueryParams = {
