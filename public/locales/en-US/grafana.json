@@ -2328,6 +2328,9 @@
     "notifications-scene": {
       "annotations": "Annotations:",
       "description": "Description:",
+      "enrichment-explore": "View in Explore",
+      "enrichment-no-logs": "No log lines",
+      "enrichments": "Enrichments:",
       "filter": {
         "clear": "Clear filters"
       },
