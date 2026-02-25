@@ -778,6 +778,7 @@ export interface RowsLayoutRowSpec {
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: RowRepeatOptions;
 	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
+	variables?: VariableKind[];
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -965,6 +966,7 @@ export interface TabsLayoutTabSpec {
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: TabRepeatOptions;
+	variables?: VariableKind[];
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
