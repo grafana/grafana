@@ -58,7 +58,7 @@ This collapsible section displays issues requiring immediate attention. For each
 For each item, one or more buttons appear:
 
 - Fix the issue.
-- The [Grafana Assistant](#use-grafana-advisor-with-grafana-assistant) sparkle icon.
+- The [Grafana Assistant](#use-grafana-advisor-with-grafana-assistant) sparkle icon, which will take you to the Assistant.
 - Retry the check.
 - Hide the error. If you hide an error you can see it again by clicking the **Hide/Show silenced errors** eye icon on the top right corner.
 
@@ -74,6 +74,8 @@ This collapsible section provides more details about which checks have been perf
 
 You can use Advisor with the Grafana Assistant, a purpose-built LLM in Grafana Cloud that allows you to troubleshoot incidents, manage resources, and answer product questions in minutes. The Assistant removes manual operations and speeds up response time. Strong privacy and security controls ensure conversations respect RBAC, route through vetted service providers, and rely on your telemetry to produce action-ready results.
 
+Access the Assistant by clicking the sparkle icon next to each issue detected, or select the sparkle icon on the top right corner of the Grafana UI, next to your profile information.
+
 To learn more, refer to the [Grafana Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/).
 
 ## Advisor menu
@@ -81,38 +83,9 @@ To learn more, refer to the [Grafana Assistant documentation](https://grafana.co
 On the top right corner of the Advisor UI you have the following options and settings:
 
 - **Refresh** the report.
-- **Configure application**. Click the cogwheel button to access Grafana Advisor plugin settings, where you can enable or disable checks according to your preferences. See below for [the list of available checks](#available-checks).
+- **Configure application**. Click the cogwheel button to access Grafana Advisor plugin settings, where you can enable or disable checks according to your preferences. Available checks cover configuration, installed plugins and data sources, Grafana instance versions, or SSO settings.
 - **Hide/Show silenced issues**.
 - **Delete reports**.
-
-### Available checks
-
-You can enable the following checks:
-
-Configuration:
-
-- Security config check
-
-Data sources:
-
-- UID validation
-- Health check
-- Missing plugin check
-- Prometheus deprecated authentication check
-
-Instance:
-
-- Grafana Cloud version check
-
-Plugin:
-
-- Deprecation check
-- Update check
-- Plugin signature check
-
-SSO settings:
-
-- SSO List Setting format validation
 
 ## Address issues detected by Grafana Advisor
 
@@ -123,4 +96,4 @@ To maintain system reliability and keep your Grafana instance secure and up to d
 - **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass.
 - **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet.
 
-You can also set up your own alerts with Grafana Alerting, which allows you to monitor your incoming data and set up alerts for specific events or circumstances. You can then create, manage, and take action on your alerts from a single, consolidated view.Refer to the [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/index.md) for more information.
+You can also set up your own alerts with **Grafana Alerting**, which allows you to monitor your incoming data and set up alerts for specific events or circumstances. You can then create, manage, and take action on your alerts from a single, consolidated view.Refer to the [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/index.md) for more information.
