@@ -151,7 +151,10 @@ function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | n
 }
 
 describe('SaveProvisionedDashboardForm', () => {
+  let capturedRequest: { url: URL; body: unknown } | null = null;
+
   beforeEach(() => {
+    capturedRequest = null;
     jest.clearAllMocks();
     (getAppEvents as jest.Mock).mockReturnValue({ publish: jest.fn() });
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
@@ -185,7 +188,6 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should save a new dashboard successfully', async () => {
-    let capturedRequest: { url: URL; body: unknown } | null = null;
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -244,7 +246,6 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should update an existing dashboard successfully', async () => {
-    let capturedRequest: { url: URL; body: unknown } | null = null;
     server.use(
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -309,7 +310,6 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should send correct request body when save returns an error', async () => {
-    let capturedRequest: { url: URL; body: unknown } | null = null;
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -446,7 +446,6 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should save dashboard with raw JSON from editor', async () => {
-    let capturedRequest: { url: URL; body: unknown } | null = null;
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
