@@ -118,7 +118,9 @@ SSO settings:
 
 To maintain system reliability and keep your Grafana instance secure and up to date, regularly check the Advisor page to resolve issues flagged by Grafana Advisor:
 
-- **Regular Monitoring:** Check the Advisor page often to identify and address emerging issues
-- **Immediate Action:** Address "Action needed" items promptly to ensure system reliability
-- **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass
-- **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet
+- **Regular Monitoring:** Check the Advisor page often to identify and address emerging issues.
+- **Immediate Action:** Address "Action needed" items promptly to ensure system reliability.
+- **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass.
+- **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet.
+
+You can also set up your own alerts with Grafana Alerting, which allows you to monitor your incoming data and set up alerts for specific events or circumstances. You can then create, manage, and take action on your alerts from a single, consolidated view.Refer to the [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/index.md) for more information.

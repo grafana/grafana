@@ -19,7 +19,14 @@ keywords:
 
 This guide walks you through creating a Grafana alert that monitors Advisor check results and triggers when failures are detected.
 
-## Step 1: Create a service account and token
+Follow these steps:
+
+1. [Create a service account and token](#create-a-service-account-and-token)
+1. [Set up the Grafana Infinity data source](#set-up-the-grafana-infinity-data-source)
+1. [Create the alert rule](#create-the-alert-rule)
+1. [Save the alert rule](#save-the-alert-rule)
+
+## Create a service account and token
 
 1. Navigate to **Administration → Users and access → Service accounts** in your Grafana instance
 2. Click **Add service account**
@@ -34,10 +41,10 @@ This guide walks you through creating a Grafana alert that monitors Advisor chec
 Copy the token value immediately and store it securely - you won't be able to see it again.
 {{< /admonition >}}
 
-## Step 2: Set up the Grafana Infinity data source
+## Set up the Grafana Infinity data source
 
 {{< admonition type="note" >}}
-Use Infinity plugin >=v3.3.0 for the JQ parser used later.
+Use Infinity plugin v3.3.0 or higher for the JQ parser used later.
 {{< /admonition >}}
 
 1. Go to **Connections → Add new connection**
@@ -49,7 +56,7 @@ Use Infinity plugin >=v3.3.0 for the JQ parser used later.
    - **Setup Authentication**: In the **Auth type**, select **Bearer Token**. In the **Auth details** section, paste the service account token from Step 1 and in the **Allowed hosts** section, write your Grafana app URL and click the "Add" button (e.g., `https://your-grafana-host.com`).
 6. Click **Save & test** to verify the connection
 
-## Step 3: Create the alert rule
+## Create the alert rule
 
 Now you have everything you need to create an alert based on Advisor results.
 
@@ -110,7 +117,7 @@ If you want to alert only for specific check types:
 
 Select your preferred evaluation (e.g. every 24 hours) and notification settings.
 
-## Step 4: Save the alert rule
+## Save the alert rule
 
 Click **Save** and check the alert is being triggered.
 
