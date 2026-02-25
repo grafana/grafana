@@ -275,13 +275,13 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Step 2: Add 2 dashboards in new subfolders (each creates a folder + a dashboard).
 		// This would bring total to 9 (5 existing + 2 folders + 2 dashboards), exceeding limit of 6.
 		newDash1Content := helper.LoadFile("testdata/timeline-demo.json")
-		err = os.MkdirAll(filepath.Join(repoPath, "new_a"), 0o755)
+		err = os.MkdirAll(filepath.Join(repoPath, "new_a"), 0o750)
 		require.NoError(t, err)
 		err = os.WriteFile(filepath.Join(repoPath, "new_a", "dashboard_new1.json"), newDash1Content, 0o600)
 		require.NoError(t, err, "should be able to write new_a/dashboard_new1.json")
 
 		newDash2Content := strings.Replace(string(helper.LoadFile("testdata/timeline-demo.json")), `"uid": "mIJjFy8Kz"`, `"uid": "quota-nested-extra"`, 1)
-		err = os.MkdirAll(filepath.Join(repoPath, "new_b"), 0o755)
+		err = os.MkdirAll(filepath.Join(repoPath, "new_b"), 0o750)
 		require.NoError(t, err)
 		err = os.WriteFile(filepath.Join(repoPath, "new_b", "dashboard_new2.json"), []byte(newDash2Content), 0o600)
 		require.NoError(t, err, "should be able to write new_b/dashboard_new2.json")
