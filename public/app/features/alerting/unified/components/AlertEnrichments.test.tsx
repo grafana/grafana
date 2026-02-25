@@ -86,4 +86,44 @@ describe('AlertEnrichments', () => {
     expect(screen.getByText('valid line')).toBeInTheDocument();
     expect(screen.getByText('another line')).toBeInTheDocument();
   });
+
+  it('should not render explore link for a javascript: URL', () => {
+    const enrichments = {
+      items: [{ type: 'logs', exploreLink: 'javascript:alert(1)', lines: [] }],
+    };
+    render(<AlertEnrichments enrichments={enrichments} />);
+    expect(screen.queryByRole('link', { name: /View in Explore/i })).not.toBeInTheDocument();
+  });
+
+  it('should not render explore link for a data: URL', () => {
+    const enrichments = {
+      items: [{ type: 'logs', exploreLink: 'data:text/html,<script>alert(1)</script>', lines: [] }],
+    };
+    render(<AlertEnrichments enrichments={enrichments} />);
+    expect(screen.queryByRole('link', { name: /View in Explore/i })).not.toBeInTheDocument();
+  });
+
+  it('should not render explore link for a protocol-relative URL', () => {
+    const enrichments = {
+      items: [{ type: 'logs', exploreLink: '//evil.com/path', lines: [] }],
+    };
+    render(<AlertEnrichments enrichments={enrichments} />);
+    expect(screen.queryByRole('link', { name: /View in Explore/i })).not.toBeInTheDocument();
+  });
+
+  it('should discard items with non-string lines values', () => {
+    const enrichments = {
+      items: [{ type: 'logs', lines: [123, null] }],
+    };
+    const { container } = render(<AlertEnrichments enrichments={enrichments} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('should discard items with non-string exploreLink', () => {
+    const enrichments = {
+      items: [{ type: 'logs', exploreLink: 42, lines: ['a line'] }],
+    };
+    const { container } = render(<AlertEnrichments enrichments={enrichments} />);
+    expect(container).toBeEmptyDOMElement();
+  });
 });
