@@ -66,9 +66,11 @@ export const OwnerReferenceSelector = ({
   const teamIsMissingOrForbidden = isFetchError(selectedTeamError) && [404, 403].includes(selectedTeamError.status);
   const errorLevel = teamIsMissingOrForbidden ? 'warning' : 'error';
   const teamErrorMessage = teamIsMissingOrForbidden ? (
-    <Trans i18nKey="manage-owner-references.team-not-found">
-      Selected team not found, or you do not have the necessary permissions to view it.
-    </Trans>
+    <>
+      <Trans i18nKey="manage-owner-references.selected-team-not-found">
+        Selected team not found, or you do not have the necessary permissions to view it.
+      </Trans>
+    </>
   ) : (
     extractErrorMessage(selectedTeamError)
   );
