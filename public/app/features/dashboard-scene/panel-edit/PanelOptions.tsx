@@ -65,7 +65,8 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         searchQuery,
         (newConfig) => {
           panel.onFieldConfigChange(newConfig, true);
-        }
+        },
+        data?.annotations
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data, searchQuery, panel, fieldConfig]

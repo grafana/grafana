@@ -7,12 +7,12 @@ import { Input } from '../Input/Input';
 import { MultiSelect } from '../Select/Select';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
+import { useSelectOptions, frameHasName, useAllFieldDisplayNames } from './utils';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
-  const { data, options, onChange: onChangeFromProps } = props;
+  const { series, annotations = [], options, onChange: onChangeFromProps } = props;
   const { readOnly, prefix } = options;
-  const names = useFieldDisplayNames(data);
+  const names = useAllFieldDisplayNames(series, annotations);
   const selectOptions = useSelectOptions(names, undefined);
 
   const onChange = useCallback(

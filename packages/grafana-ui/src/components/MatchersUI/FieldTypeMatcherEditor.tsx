@@ -9,8 +9,8 @@ import { Select } from '../Select/Select';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { data, options, onChange: onChangeFromProps, id } = props;
-  const counts = useFieldCounts(data);
+  const { series, options, onChange: onChangeFromProps, id } = props;
+  const counts = useFieldCounts(series);
   const selectOptions = useSelectOptions(counts, options);
 
   const onChange = useCallback(

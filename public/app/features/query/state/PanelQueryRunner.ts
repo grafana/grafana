@@ -195,7 +195,7 @@ export class PanelQueryRunner {
                     ...fieldConfig!,
                     fieldConfig: {
                       defaults: {},
-                      overrides: [],
+                      overrides: [...fieldConfig.fieldConfig.overrides],
                     },
                   });
                 }
