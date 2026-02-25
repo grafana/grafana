@@ -527,8 +527,10 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 
 	obj.SetNamespace(namespace)
 	obj.SetAnnotations(map[string]string{}) // clear any annotations
+	obj.SetLabels(map[string]string{})      // clear any labels
 	delete(obj.Object, "status")
-	delete(obj.Object, "access") // sometimes copied from the /dto object
+	delete(obj.Object, "access") // can exist if you copied a /dto object
+	delete(obj.Object, "kind")   // copy from UI may have DashboardWithAccessInfo
 
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
