@@ -118,24 +118,6 @@ export function buildAssistantTitlePrompt(
 }
 
 /**
- * Build a combined system prompt for AITextInput (title field).
- * Merges instructions and panel/dashboard context into a single system prompt
- * so the user's typed text becomes the user prompt.
- */
-export function buildTitleInputSystemPrompt(panel: Panel, dashboard: Dashboard, data?: PanelData): string {
-  const { systemPrompt, prompt } = buildAssistantTitlePrompt(panel, dashboard, data);
-  return [systemPrompt, 'Panel context:', prompt].join('\n\n');
-}
-
-/**
- * Build a combined system prompt for AITextArea (description field).
- */
-export function buildDescriptionInputSystemPrompt(panel: Panel, dashboard: Dashboard, data?: PanelData): string {
-  const { systemPrompt, prompt } = buildAssistantDescriptionPrompt(panel, dashboard, data);
-  return [systemPrompt, 'Panel context:', prompt].join('\n\n');
-}
-
-/**
  * Build Assistant prompt for panel description generation.
  */
 export function buildAssistantDescriptionPrompt(
@@ -156,4 +138,18 @@ export function buildAssistantDescriptionPrompt(
     systemPrompt,
     prompt: buildFullContext(panel, dashboard, data),
   };
+}
+
+/**
+ * @deprecated Use buildAssistantTitlePrompt().systemPrompt
+ */
+export function buildTitleInputSystemPrompt(panel: Panel, dashboard: Dashboard, data?: PanelData): string {
+  return buildAssistantTitlePrompt(panel, dashboard, data).systemPrompt;
+}
+
+/**
+ * @deprecated Use buildAssistantDescriptionPrompt().systemPrompt
+ */
+export function buildDescriptionInputSystemPrompt(panel: Panel, dashboard: Dashboard, data?: PanelData): string {
+  return buildAssistantDescriptionPrompt(panel, dashboard, data).systemPrompt;
 }
