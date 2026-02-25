@@ -19,7 +19,16 @@ function isEnrichmentItem(value: unknown): value is EnrichmentItem {
     return false;
   }
   const obj: Record<string, unknown> = value;
-  return typeof obj.type === 'string';
+  if (typeof obj.type !== 'string') {
+    return false;
+  }
+  if (obj.exploreLink !== undefined && typeof obj.exploreLink !== 'string') {
+    return false;
+  }
+  if (obj.lines !== undefined && (!Array.isArray(obj.lines) || !obj.lines.every((l) => typeof l === 'string'))) {
+    return false;
+  }
+  return true;
 }
 
 interface AlertEnrichmentsProps {
