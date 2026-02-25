@@ -1608,8 +1608,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20260224103610-e1219c0c17ff h1:CMyPKLnrih56ptJ/d5MLNzz8jkLiOs1p7Yblb3jAQBo=
-github.com/grafana/alerting v0.0.0-20260224103610-e1219c0c17ff/go.mod h1:F3iGi5JTG18gmc0/rWqSf/JMnuCrpr7TLAF1sjScH04=
+github.com/grafana/alerting v0.0.0-20260225120847-33a34657b9b8 h1:nHRb8ho/8DYwvUoWyasP6MWfWYhzYSXu0iSkLjFmeS8=
+github.com/grafana/alerting v0.0.0-20260225120847-33a34657b9b8/go.mod h1:yJKl5oFNBlXSKag2OMWRwjCUi1mAuUD9Rr/CVVJ8LS8=
 github.com/grafana/authlib v0.0.0-20260218111514-582136a04938 h1:AhFyTtRZNnBQuXraNOl/f8kL77dcKZ4TbGu3SgGIblc=
 github.com/grafana/authlib v0.0.0-20260218111514-582136a04938/go.mod h1:TZHiNIUlZa3p1ElRPnSQaHK1fIm/nPdJvlvdWqThggU=
 github.com/grafana/authlib/types v0.0.0-20260218111514-582136a04938 h1:YoaMx0pRqjpe/s6I7utykv6Zw6zm6bqdD1QB4zXecAs=
@@ -1658,8 +1658,8 @@ github.com/grafana/nanogit v0.3.5 h1:GDQyGjjipfXb8IbUsP0i0tl7veHi9oWcSBlyQYvhD+4
 github.com/grafana/nanogit v0.3.5/go.mod h1:KP5MS9C2G3osIb3tgeJVIz+lFUaashbW1t13CcDClo4=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20260224102839-50afbe56d9b4 h1:YTNTeDrHrNwAUZzx1ajKjf/R/wbYIoXvmb8jLdAwKMI=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20260224102839-50afbe56d9b4/go.mod h1:sWX4vzxYuH91qFCd2Khubo61VjbksxRcb7SDHs5SDig=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c h1:xE7mhc2gIi1iWNCLctz9YjaiEsJ+A/hws8kwt3l7F94=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c/go.mod h1:sWX4vzxYuH91qFCd2Khubo61VjbksxRcb7SDHs5SDig=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.9 h1:c1Us8i6eSmkW+Ez05d3co8kasnuOY813tbMN8i/a3Og=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.9/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
 github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f h1:fTlIj5n4x5dU63XHItug7GLjtnaeJdPqBlqg4zlABq0=
