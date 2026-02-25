@@ -135,7 +135,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 
 		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv1
 			})
 		require.NoError(t, err)
@@ -190,7 +189,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 		rv2, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv1
 			})
 		require.NoError(t, err)
@@ -199,7 +197,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 		_, err = writeEvent(t, ctx, storageBackend, "resource2", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv3
 			})
 		require.NoError(t, err)
@@ -258,7 +255,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv1
 			})
 		require.NoError(t, err)
@@ -270,7 +266,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv2
 				o.Resource = "other-resource"
 			})
@@ -330,7 +325,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv1
 			})
 		require.NoError(t, err)
@@ -339,7 +333,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 		_, err = writeEvent(t, ctx, storageBackend, "resource2", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv2
 			})
 		require.NoError(t, err)
@@ -400,15 +393,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 
 		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv1
 			})
 		require.NoError(t, err)
 
-		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED,
-			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
-			})
+		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
@@ -459,7 +448,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.NoError(t, err)
 		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv1
 			})
 		require.NoError(t, err)
@@ -513,7 +501,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.NoError(t, err)
 		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv1
 			})
 		require.NoError(t, err)
@@ -582,7 +569,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.NoError(t, err)
 		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
 			func(o *writeEventOptions) {
-				o.Namespace = "namespace"
 				o.PreviousRV = rv2
 			})
 		require.NoError(t, err)
