@@ -1,39 +1,21 @@
 import { css } from '@emotion/css';
+import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
-import { SegmentedToggle, SegmentedToggleProps } from '../../SegmentedToggle';
-import { QUERY_EDITOR_COLORS, QueryEditorType, SidebarSize } from '../../constants';
-import { useAlertingContext } from '../QueryEditorContext';
+import { QUERY_EDITOR_COLORS, SidebarSize } from '../../constants';
 
 interface SidebarHeaderActionsProps {
   sidebarSize: SidebarSize;
   setSidebarSize: (size: SidebarSize) => void;
-  activeView: QueryEditorType;
-  onViewChange: (view: QueryEditorType) => void;
+  children?: ReactNode;
 }
 
-export function SidebarHeaderActions({
-  sidebarSize,
-  setSidebarSize,
-  activeView,
-  onViewChange,
-}: SidebarHeaderActionsProps) {
+export function SidebarHeaderActions({ sidebarSize, setSidebarSize, children }: SidebarHeaderActionsProps) {
   const styles = useStyles2(getStyles);
-  const { alertRules, loading } = useAlertingContext();
-
   const isMini = sidebarSize === SidebarSize.Mini;
-
-  const alertsLabel = loading
-    ? t('query-editor-next.sidebar.alerts-loading', 'Alerts')
-    : t('query-editor-next.sidebar.alerts', 'Alerts ({{count}})', { count: alertRules.length });
-
-  const options: SegmentedToggleProps<QueryEditorType>['options'] = [
-    { value: QueryEditorType.Query, label: t('query-editor-next.sidebar.data', 'Data'), icon: 'database' },
-    { value: QueryEditorType.Alert, label: alertsLabel, icon: 'bell' },
-  ];
 
   return (
     <div className={styles.header}>
@@ -45,13 +27,7 @@ export function SidebarHeaderActions({
           onClick={() => setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini)}
           aria-label={t('query-editor-next.sidebar.toggle-size', 'Toggle sidebar size')}
         />
-        <SegmentedToggle
-          options={options}
-          value={activeView}
-          onChange={onViewChange}
-          aria-label={t('query-editor-next.sidebar.view-toggle', 'View')}
-          showBackground={false}
-        />
+        {children}
       </div>
     </div>
   );

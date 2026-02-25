@@ -13365,11 +13365,6 @@
       "add-saved-query": "Add saved query",
       "add-transformation": "Add transformation",
       "add-transformation-below": "Add transformation below {{id}}",
-      "alert-indicator": {
-        "button-label": "View alert rules",
-        "button-label-hide": "Hide alert rules",
-        "close": "Close"
-      },
       "alerts_one": "Alerts ({{count}})",
       "alerts_other": "Alerts ({{count}})",
       "alerts-loading": "Alerts",
