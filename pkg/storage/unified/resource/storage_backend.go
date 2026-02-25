@@ -416,10 +416,6 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	//nolint:staticcheck
 	start := time.Now()
 
-	if !isSnowflake(cutoffTimestamp) {
-		cutoffTimestamp = rvmanager.SnowflakeFromRV(cutoffTimestamp)
-	}
-
 	totalDeleted := int64(0)
 
 	// get the start and end keys for the list operation based on the resource prefix
@@ -534,10 +530,16 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 }
 
 func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
+	cutoffTimestamp := defaultCutoff
+
 	if group == "dashboard.grafana.app" && resourceName == "dashboards" {
-		return time.Now().Add(-b.garbageCollection.DashboardsMaxAge).UnixMicro()
+		cutoffTimestamp = time.Now().Add(-b.garbageCollection.DashboardsMaxAge).UnixMicro()
 	}
-	return defaultCutoff
+
+	if !isSnowflake(cutoffTimestamp) {
+		cutoffTimestamp = rvmanager.SnowflakeFromRV(cutoffTimestamp)
+	}
+	return cutoffTimestamp
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.

@@ -153,7 +153,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 0, len(listResp.Items))
 
-		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // Everything eligible for deletion
+		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // Everything eligible for deletion
 		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
@@ -204,7 +204,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		cutoffTimestamp := rv2 + 1
+		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", rv2+1)
 		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
@@ -276,7 +276,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
 		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
@@ -359,7 +359,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
 		// require.Len(t, trashResp.Items, 2)
 
-		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
 		b.garbageCollection.BatchSize = 1
 		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
@@ -411,7 +411,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
 		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
