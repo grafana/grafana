@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,28 +23,33 @@ import (
 )
 
 type S3Uploader struct {
-	endpoint        string
-	region          string
-	bucket          string
-	path            string
-	acl             string
-	secretKey       string
-	accessKey       string
-	pathStyleAccess bool
-	log             log.Logger
+	endpoint                string
+	region                  string
+	bucket                  string
+	path                    string
+	acl                     string
+	secretKey               string
+	accessKey               string
+	pathStyleAccess         bool
+	enablePresignedURLs     bool
+	presignedURLExpiration  time.Duration
+	log                     log.Logger
 }
 
-func NewS3Uploader(endpoint, region, bucket, path, acl, accessKey, secretKey string, pathStyleAccess bool) *S3Uploader {
+func NewS3Uploader(endpoint, region, bucket, path, acl, accessKey, secretKey string, pathStyleAccess bool,
+	enablePresignedURLs bool, presignedURLExpiration time.Duration) *S3Uploader {
 	return &S3Uploader{
-		endpoint:        endpoint,
-		region:          region,
-		bucket:          bucket,
-		path:            path,
-		acl:             acl,
-		accessKey:       accessKey,
-		secretKey:       secretKey,
-		pathStyleAccess: pathStyleAccess,
-		log:             log.New("s3uploader"),
+		endpoint:               endpoint,
+		region:                 region,
+		bucket:                 bucket,
+		path:                   path,
+		acl:                    acl,
+		accessKey:              accessKey,
+		secretKey:              secretKey,
+		pathStyleAccess:        pathStyleAccess,
+		enablePresignedURLs:    enablePresignedURLs,
+		presignedURLExpiration: presignedURLExpiration,
+		log:                    log.New("s3uploader"),
 	}
 }
 
@@ -94,17 +100,31 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 		return "", err
 	}
 
-	uploader := s3manager.NewUploader(sess)
-	result, err := uploader.UploadWithContext(ctx, &s3manager.UploadInput{
+	uploadInput := &s3manager.UploadInput{
 		Bucket:      aws.String(u.bucket),
 		Key:         aws.String(key),
-		ACL:         aws.String(u.acl),
 		Body:        file,
 		ContentType: aws.String("image/png"),
-	})
+	}
+	if !u.enablePresignedURLs {
+		uploadInput.ACL = aws.String(u.acl)
+	}
+
+	uploader := s3manager.NewUploader(sess)
+	result, err := uploader.UploadWithContext(ctx, uploadInput)
 	if err != nil {
 		return "", err
 	}
+
+	if u.enablePresignedURLs {
+		svc := s3.New(sess)
+		req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+			Bucket: aws.String(u.bucket),
+			Key:    aws.String(key),
+		})
+		return req.Presign(u.presignedURLExpiration)
+	}
+
 	return result.Location, nil
 }
 
