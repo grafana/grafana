@@ -22,7 +22,7 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
-const mockGetTagKeys = jest.fn().mockReturnValue([
+const mockGetGroupByKeys = jest.fn().mockReturnValue([
   { text: 'job', value: 'job' },
   { text: 'instance', value: 'instance' },
 ]);
@@ -37,7 +37,7 @@ jest.mock('@grafana/runtime', () => ({
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
-      getTagKeys: mockGetTagKeys,
+      getGroupByKeys: mockGetGroupByKeys,
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
@@ -93,11 +93,11 @@ describe('GroupByVariableEditor', () => {
     expect(variable.state.defaultOptions).toEqual(undefined);
   });
 
-  it('should fetch tag keys from datasource', async () => {
+  it('should fetch group by keys from datasource', async () => {
     await setup();
 
     await waitFor(() => {
-      expect(mockGetTagKeys).toHaveBeenCalledWith({ filters: [] });
+      expect(mockGetGroupByKeys).toHaveBeenCalledWith({ filters: [] });
     });
   });
 
@@ -147,8 +147,9 @@ describe('GroupByVariableEditor', () => {
     render(descriptor.renderElement());
 
     await waitFor(() => {
-      // Check that some part of the component renders
-      expect(screen.getByText(/data source does not support/i)).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect)
+      ).toBeInTheDocument();
     });
   });
 });
