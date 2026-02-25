@@ -413,6 +413,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	span.SetAttributes(attribute.String("group", group), attribute.String("resource", resourceName), attribute.Int64("cutoffTimestamp", cutoffTimestamp), attribute.Int("batchSize", batchSize))
 	defer span.End()
 
+	//nolint:staticcheck
 	start := time.Now()
 
 	if !isSnowflake(cutoffTimestamp) {
