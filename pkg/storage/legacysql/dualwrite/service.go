@@ -297,6 +297,30 @@ func (m *service) logStorageModeComparison(gr schema.GroupResource, status Stora
 	)
 }
 
+// LogStorageModeComparison implements Service.
+func (m *service) LogStorageModeComparison(gr schema.GroupResource, configMode rest.DualWriterMode) {
+	if m.statusReader == nil {
+		return
+	}
+	newMode, err := m.statusReader.GetStorageMode(context.Background(), gr)
+	if err != nil {
+		logger.Warn("Failed to get storage mode from MigrationStatusReader",
+			"resource", gr.String(), "error", err)
+		return
+	}
+
+	currentMode := storageModeFromConfigMode(configMode)
+	if currentMode != newMode && m.metrics != nil {
+		m.metrics.ModeMismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
+	}
+
+	logger.Info("Storage mode comparison",
+		"resource", gr.String(),
+		"newMode", newMode.String(),
+		"currentMode", currentMode.String(),
+	)
+}
+
 // storageModeFromStatus derives a StorageMode from the current StorageStatus.
 func storageModeFromStatus(status StorageStatus) unifiedmigrations.StorageMode {
 	if status.ReadUnified && status.WriteUnified && !status.WriteLegacy {

@@ -24,6 +24,40 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 	return &MockService_Expecter{mock: &_m.Mock}
 }
 
+// LogStorageModeComparison provides a mock function with given fields: gr, configMode
+func (_m *MockService) LogStorageModeComparison(gr schema.GroupResource, configMode rest.DualWriterMode) {
+	_m.Called(gr, configMode)
+}
+
+// MockService_LogStorageModeComparison_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LogStorageModeComparison'
+type MockService_LogStorageModeComparison_Call struct {
+	*mock.Call
+}
+
+// LogStorageModeComparison is a helper method to define mock.On call
+//   - gr schema.GroupResource
+//   - configMode rest.DualWriterMode
+func (_e *MockService_Expecter) LogStorageModeComparison(gr interface{}, configMode interface{}) *MockService_LogStorageModeComparison_Call {
+	return &MockService_LogStorageModeComparison_Call{Call: _e.mock.On("LogStorageModeComparison", gr, configMode)}
+}
+
+func (_c *MockService_LogStorageModeComparison_Call) Run(run func(gr schema.GroupResource, configMode rest.DualWriterMode)) *MockService_LogStorageModeComparison_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(schema.GroupResource), args[1].(rest.DualWriterMode))
+	})
+	return _c
+}
+
+func (_c *MockService_LogStorageModeComparison_Call) Return() *MockService_LogStorageModeComparison_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockService_LogStorageModeComparison_Call) RunAndReturn(run func(schema.GroupResource, rest.DualWriterMode)) *MockService_LogStorageModeComparison_Call {
+	_c.Run(run)
+	return _c
+}
+
 // NewStorage provides a mock function with given fields: gr, legacy, storage
 func (_m *MockService) NewStorage(gr schema.GroupResource, legacy rest.Storage, storage rest.Storage) (rest.Storage, error) {
 	ret := _m.Called(gr, legacy, storage)
