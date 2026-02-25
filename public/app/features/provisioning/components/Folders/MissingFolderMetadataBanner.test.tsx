@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 
@@ -35,15 +35,10 @@ describe('MissingFolderMetadataBanner', () => {
 });
 
 describe('FolderPermissions', () => {
+  testWithFeatureToggles({ enable: ['provisioning', 'provisioningFolderMetadata'] });
+
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles.provisioning = true;
-    config.featureToggles.provisioningFolderMetadata = true;
-  });
-
-  afterEach(() => {
-    config.featureToggles.provisioning = false;
-    config.featureToggles.provisioningFolderMetadata = false;
   });
 
   it('renders permissions directly when folder is not provisioned', () => {
