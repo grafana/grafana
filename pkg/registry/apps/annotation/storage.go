@@ -21,6 +21,7 @@ type ListOptions struct {
 	To             int64
 	Limit          int64
 	Continue       string
+	UserID         int64
 	Tags           []string
 	TagsMatchAny   bool
 	Scopes         []string

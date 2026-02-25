@@ -9,6 +9,7 @@ type AnnotationSpec struct {
 	TimeEnd      *int64   `json:"timeEnd,omitempty"`
 	DashboardUID *string  `json:"dashboardUID,omitempty"`
 	PanelID      *int64   `json:"panelID,omitempty"`
+	UserID       *int64   `json:"userID,omitempty"`
 	Tags         []string `json:"tags,omitempty"`
 	Scopes       []string `json:"scopes,omitempty"`
 }

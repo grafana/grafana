@@ -67,6 +67,20 @@ var (
 					return fmt.Sprintf("%d", *cast.Spec.PanelID), nil
 				},
 			},
+			{
+				FieldSelector: "spec.userID",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*Annotation)
+					if !ok {
+						return "", errors.New("provided object must be of type *Annotation")
+					}
+					if cast.Spec.UserID == nil {
+						return "", nil
+					}
+
+					return fmt.Sprintf("%d", *cast.Spec.UserID), nil
+				},
+			},
 		}))
 	kindAnnotation = resource.Kind{
 		Schema: schemaAnnotation,

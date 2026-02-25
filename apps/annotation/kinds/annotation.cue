@@ -10,6 +10,7 @@ annotationv0alpha1: {
       timeEnd?: int64
       dashboardUID?: string
       panelID?: int64
+      userID?: int64
       tags?: [...string]
       scopes?: [...string]
 		}
@@ -19,6 +20,7 @@ annotationv0alpha1: {
     "spec.timeEnd",
     "spec.dashboardUID",
     "spec.panelID",
+    "spec.userID",
   ]
 }
 

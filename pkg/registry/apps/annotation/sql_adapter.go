@@ -102,6 +102,7 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		Limit:        queryLimit,
 		Offset:       offset,
 		AlertID:      -1,
+		UserID:       opts.UserID,
 		Tags:         opts.Tags,
 		MatchAny:     opts.TagsMatchAny,
 	}
@@ -232,6 +233,9 @@ func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) 
 	if item.PanelID != 0 {
 		anno.Spec.PanelID = &item.PanelID
 	}
+	if item.UserID != 0 {
+		anno.Spec.UserID = &item.UserID
+	}
 	if item.TimeEnd != 0 {
 		anno.Spec.TimeEnd = &item.TimeEnd
 	}
@@ -257,6 +261,9 @@ func (a *sqlAdapter) fromK8sResource(anno *annotationV0.Annotation) *annotations
 	}
 	if anno.Spec.PanelID != nil {
 		item.PanelID = *anno.Spec.PanelID
+	}
+	if anno.Spec.UserID != nil {
+		item.UserID = *anno.Spec.UserID
 	}
 	if anno.Spec.TimeEnd != nil {
 		item.EpochEnd = *anno.Spec.TimeEnd

@@ -229,6 +229,16 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 				} else {
 					return nil, fmt.Errorf("unsupported operator %s for spec.to (only = supported)", r.Operator)
 				}
+			case "spec.userID":
+				if r.Operator == selection.Equals || r.Operator == selection.DoubleEquals {
+					userID, err := strconv.ParseInt(r.Value, 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("invalid userID value %q: %w", r.Value, err)
+					}
+					opts.UserID = userID
+				} else {
+					return nil, fmt.Errorf("unsupported operator %s for spec.userID (only = supported)", r.Operator)
+				}
 			default:
 				return nil, fmt.Errorf("unsupported field selector: %s", r.Field)
 			}
