@@ -173,6 +173,15 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 
 	// Handle folders based on action type
 	if safepath.IsDir(change.Path) {
+		if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
+			progress.Record(ctx, jobs.NewFolderResult(change.Path).
+				WithAction(change.Action).
+				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
+				AsSkipped().
+				Build())
+			return
+		}
+
 		// For non-deletions, ensure folder exists
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 		resultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
@@ -196,7 +205,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
 		progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
 			WithAction(change.Action).
-			WithError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path)).
+			WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
 			AsSkipped().
 			Build())
 		return

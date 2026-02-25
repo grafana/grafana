@@ -235,9 +235,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
-	t.Run("full sync with nested folders counts folders toward quota and skips dashboards", func(t *testing.T) {
+	t.Run("full sync with nested folders counts folders toward quota and skips resources", func(t *testing.T) {
 		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			// Allow 6 total resources: 1 root folder + 2 nested folders + 2 dashboards + 1 new dashboard = 6
+			// Allow 6 total resources: 1 root folder + 2 nested folders + 2 dashboards + 1 new folder = 6
 			opts.ProvisioningMaxResourcesPerRepository = 6
 		})
 
@@ -272,14 +272,19 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		}
 		require.Equal(t, 3, managedFolderCount, "should have 3 folders: root + subfolder + subfolder/nested")
 
-		// Step 2: Add 2 more dashboards at root level (would bring total to 7, exceeding limit of 6).
+		// Step 2: Add 2 dashboards in new subfolders (each creates a folder + a dashboard).
+		// This would bring total to 9 (5 existing + 2 folders + 2 dashboards), exceeding limit of 6.
 		newDash1Content := helper.LoadFile("testdata/timeline-demo.json")
-		err = os.WriteFile(filepath.Join(repoPath, "dashboard_new1.json"), newDash1Content, 0o600)
-		require.NoError(t, err, "should be able to write dashboard_new1.json")
+		err = os.MkdirAll(filepath.Join(repoPath, "new_a"), 0o755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(repoPath, "new_a", "dashboard_new1.json"), newDash1Content, 0o600)
+		require.NoError(t, err, "should be able to write new_a/dashboard_new1.json")
 
-		newDash2Content := helper.LoadFile("testdata/piechart.json")
-		err = os.WriteFile(filepath.Join(repoPath, "dashboard_new2.json"), newDash2Content, 0o600)
-		require.NoError(t, err, "should be able to write dashboard_new2.json")
+		newDash2Content := strings.Replace(string(helper.LoadFile("testdata/timeline-demo.json")), `"uid": "mIJjFy8Kz"`, `"uid": "quota-nested-extra"`, 1)
+		err = os.MkdirAll(filepath.Join(repoPath, "new_b"), 0o755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(repoPath, "new_b", "dashboard_new2.json"), []byte(newDash2Content), 0o600)
+		require.NoError(t, err, "should be able to write new_b/dashboard_new2.json")
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
@@ -299,7 +304,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				s.Group, s.Kind, s.Create, s.Warning, s.Error, s.Warnings)
 		}
 
-		// Step 4: Verify job completed with warning (one dashboard skipped due to quota)
+		// Step 4: Verify job completed with warning (resources skipped due to quota)
 		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
 			"job should finish with warning when some resources are skipped due to quota")
 		require.Empty(t, jobObj.Status.Errors, "quota-skipped resources should produce warnings, not errors")
@@ -312,10 +317,10 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				quotaWarningCount++
 			}
 		}
-		require.Equal(t, 1, quotaWarningCount,
-			"exactly 1 of the 2 new dashboards should be skipped because nested folders consumed quota slots")
+		require.Equal(t, 3, quotaWarningCount,
+			"should have 3 quota warnings: 1 skipped folder + 2 skipped dashboards")
 
-		// Step 5: Verify partial sync — 1 new dashboard was created (total 3), 1 was skipped
+		// Step 5: Verify no new dashboards were created (both skipped because the new folder consumed the last quota slot)
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 			if !assert.NoError(collect, err) {
@@ -328,11 +333,24 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 					repoDashboardCount++
 				}
 			}
-			assert.Equal(collect, 3, repoDashboardCount,
-				"should have 3 dashboards: the original 2 + 1 new (the other was skipped due to nested folders consuming quota)")
+			assert.Equal(collect, 2, repoDashboardCount,
+				"should still have only 2 dashboards: both new dashboards were skipped due to quota")
 		}, waitTimeoutDefault, waitIntervalDefault)
 
-		// Step 6: Verify the repo is now at quota (3 folders + 3 dashboards = 6/6)
+		// Verify 1 new folder was created and 1 was skipped (4 total managed folders)
+		folders, err = helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		require.NoError(t, err)
+		managedFolderCount = 0
+		for _, f := range folders.Items {
+			managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if managerID == repo {
+				managedFolderCount++
+			}
+		}
+		require.Equal(t, 4, managedFolderCount,
+			"should have 4 folders: root + subfolder + subfolder/nested + 1 new (the other was skipped)")
+
+		// Step 6: Verify the repo is now at quota (4 folders + 2 dashboards = 6/6)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
