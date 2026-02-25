@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externe Alertmanagers",
-      "extra-config-warning": {
-        "content": "Dit toont de samengevoegde configuratie van Grafana alertmanager met geïmporteerde configuraties. Deze samengevoegde weergave is alleen-lezen in de gebruikersinterface.",
-        "title": "Geïmporteerde configuratie"
-      },
       "noOptionsMessage-no-datasources-found": "Geen gegevensbronnen gevonden"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "Te gebruiken kleur voor het markeren van gebeurtenisannotaties",
       "description-enabled-annotation-query-issued-every-dashboard": "Wanneer ingeschakeld, wordt de annotatiequery elke dashboardvernieuwing uitgegeven",
       "description-hidden": "Annotatiequery's kunnen bovenaan het dashboard worden in- of uitgeschakeld. Als deze optie is aangevinkt, wordt deze schakelaar verborgen.",
+      "error-loading-panels": "",
       "label-color": "Kleur",
       "label-data-source": "Gegevensbron",
       "label-enabled": "Ingeschakeld",
@@ -6444,6 +6441,7 @@
       "delete": "Verwijderen",
       "description-color-annotation-event-markers": "Te gebruiken kleur voor het markeren van gebeurtenisannotaties",
       "description-enabled-annotation-query-issued-every-dashboard": "Wanneer ingeschakeld, wordt de annotatiequery elke dashboardvernieuwing uitgegeven",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Annotatiebesturingselementen weergeven in",
       "label-color": "Kleur",
       "label-data-source": "Gegevensbron",
@@ -12900,6 +12898,7 @@
       "header-status": "Status",
       "header-title": "Titel",
       "header-type": "Type",
+      "missing-folder-metadata": "",
       "search-placeholder": "Zoeken op pad of titel",
       "source": "Bron",
       "status-pending": "In afwachting",
@@ -13364,6 +13363,7 @@
       },
       "card-click": "Kaart {{id}} selecteren",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
       "transformations": "Transformaties",
