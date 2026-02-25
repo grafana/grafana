@@ -5,11 +5,12 @@ import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dash
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { store } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { QUOTAS_USAGE_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DISMISS_STORAGE_KEY, QuotaLimitBanner } from './QuotaLimitBanner';
+
+const QUOTAS_USAGE_URL = '/apis/quotas.grafana.app/v0alpha1/namespaces/:namespace/usage';
 
 setBackendSrv(backendSrv);
 setupMockServer();
