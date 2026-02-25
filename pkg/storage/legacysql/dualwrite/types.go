@@ -69,6 +69,12 @@ type Service interface {
 
 	// change the status (finish migration etc)
 	Update(ctx context.Context, status StorageStatus) (StorageStatus, error)
+
+	// LogStorageModeComparison compares the config-based storage mode with the mode
+	// reported by MigrationStatusReader and emits metrics/logs for observability.
+	// This is used for non-managed resources that bypass NewStorage and go through
+	// NewStaticStorage directly.
+	LogStorageModeComparison(gr schema.GroupResource, configMode grafanarest.DualWriterMode)
 }
 
 type SearchAdapter struct {
