@@ -130,7 +130,8 @@ func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
 	}
 
 	// TODO have a way of including enterprise manifests
-	if !slices.ContainsFunc(AppManifests(), func(m app.Manifest) bool {
+	manifests := AppManifestsWithKinds(AppManifests())
+	if !slices.ContainsFunc(manifests, func(m app.Manifest) bool {
 		return m.ManifestData.Group == req.Options.Key.Group
 	}) {
 		return false

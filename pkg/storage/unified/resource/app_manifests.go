@@ -31,7 +31,7 @@ import (
 
 func AppManifests() []app.Manifest {
 	// TODO: don't use hardcoded list of manifests when possible.
-	all := []app.Manifest{
+	return []app.Manifest{
 		advisor.LocalManifest(),
 		alerting_historian.LocalManifest(),
 		alerting_notifications.LocalManifest(),
@@ -55,23 +55,4 @@ func AppManifests() []app.Manifest {
 		secret.LocalManifest(),
 		shorturl.LocalManifest(),
 	}
-
-	// Include manifests with kinds in any version.
-	filtered := make([]app.Manifest, 0, len(all))
-	for _, m := range all {
-		if m.ManifestData == nil {
-			continue
-		}
-		hasKinds := false
-		for _, v := range m.ManifestData.Versions {
-			if len(v.Kinds) > 0 {
-				hasKinds = true
-				break
-			}
-		}
-		if hasKinds {
-			filtered = append(filtered, m)
-		}
-	}
-	return filtered
 }
