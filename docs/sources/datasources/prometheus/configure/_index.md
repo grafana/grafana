@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure the Prometheus data source
+menuTitle: Configure 
 title: Configure the Prometheus data source
 weight: 200
 ---

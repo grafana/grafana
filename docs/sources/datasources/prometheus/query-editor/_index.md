@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Prometheus query editor
+menuTitle: Query editor
 title: Prometheus query editor
 weight: 300
 ---

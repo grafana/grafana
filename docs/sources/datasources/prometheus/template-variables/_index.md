@@ -13,7 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Prometheus template variables
+menuTitle: Template variables
 title: Prometheus template variables
 weight: 400
 ---
