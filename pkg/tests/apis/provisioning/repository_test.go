@@ -170,6 +170,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			if extensions.IsEnterprise {
 				assert.ElementsMatch(collect, []provisioning.RepositoryType{
 					provisioning.LocalRepositoryType,
+					provisioning.GitRepositoryType,
 					provisioning.GitHubRepositoryType,
 					provisioning.BitbucketRepositoryType,
 					provisioning.GitLabRepositoryType,
@@ -177,6 +178,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			} else {
 				assert.ElementsMatch(collect, []provisioning.RepositoryType{
 					provisioning.LocalRepositoryType,
+					provisioning.GitRepositoryType,
 					provisioning.GitHubRepositoryType,
 				}, settings.AvailableRepositoryTypes)
 			}

@@ -742,7 +742,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	}
 
 	if extensions.IsEnterprise {
-		opts.ProvisioningRepositoryTypes = []string{"local", "github", "gitlab", "bitbucket"}
+		opts.ProvisioningRepositoryTypes = []string{"local", "git", "github", "gitlab", "bitbucket"}
 	}
 
 	for _, o := range options {

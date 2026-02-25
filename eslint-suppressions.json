@@ -2180,7 +2180,7 @@
   },
   "public/app/features/dashboard/state/DashboardModel.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
+      "count": 2
     }
   },
   "public/app/features/dashboard/state/DashboardModel.ts": {
@@ -2188,7 +2188,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 22
+      "count": 23
     }
   },
   "public/app/features/dashboard/state/PanelModel.test.ts": {
