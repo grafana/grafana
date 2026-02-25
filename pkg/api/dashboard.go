@@ -428,6 +428,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 				delete(obj.Object, "uid")
 				obj.SetName(uid) // overwrite the incoming name -- this can happen from TF providers
 			}
+			hs.log.Warn("Accepting k8s style dashboard in legacy /api/dashboards/db.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", "dashboard", obj.GetName())
 			return hs.saveDashboardViaK8s(c, cmd, obj)
 		}
 		return response.Error(http.StatusBadRequest, "Dashboard appears to be a full k8s style resource.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", nil)
@@ -526,6 +527,8 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 
 	obj.SetNamespace(namespace)
 	obj.SetAnnotations(map[string]string{}) // clear any annotations
+	delete(obj.Object, "status")
+	delete(obj.Object, "access") // sometimes copied from the /dto object
 
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
@@ -536,7 +539,6 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	meta.SetMessage(cmd.Message)
 	meta.SetUID("")
 	meta.SetResourceVersion("") // remove
-	_ = meta.SetStatus(nil)
 	meta.SetFinalizers(nil)
 	meta.SetManagedFields(nil)
 
