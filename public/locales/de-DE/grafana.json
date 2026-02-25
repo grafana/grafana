@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externe Alertmanager",
-      "extra-config-warning": {
-        "content": "Hier sehen Sie die verbundene Konfiguration von Grafana Alertmanager mit importierten Konfigurationen. Diese verbundene Ansicht ist in der Benutzeroberfläche schreibgeschützt.",
-        "title": "Importierte Konfiguration"
-      },
       "noOptionsMessage-no-datasources-found": "Keine Datenquellen gefunden"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "Farbe, die für Ereignismarkierungen von Anmerkungen verwendet werden soll",
       "description-enabled-annotation-query-issued-every-dashboard": "Wenn dies aktiviert ist, wird bei jeder Aktualisierung des Dashboards eine Anmerkungsabfrage ausgegeben",
       "description-hidden": "Anmerkungsabfragen können im oberen Bereich des Dashboards ein- oder ausgeschaltet werden. Wenn diese Option aktiviert ist, wird dieser Schalter ausgeblendet.",
+      "error-loading-panels": "",
       "label-color": "Farbe",
       "label-data-source": "Datenquelle",
       "label-enabled": "Aktiviert",
@@ -6444,6 +6441,7 @@
       "delete": "Löschen",
       "description-color-annotation-event-markers": "Farbe, die für Ereignismarkierungen von Anmerkungen verwendet werden soll",
       "description-enabled-annotation-query-issued-every-dashboard": "Wenn dies aktiviert ist, wird bei jeder Aktualisierung des Dashboards eine Anmerkungsabfrage ausgegeben",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Anmerkungssteuerung anzeigen in",
       "label-color": "Farbe",
       "label-data-source": "Datenquelle",
@@ -12900,6 +12898,7 @@
       "header-status": "Status",
       "header-title": "Titel",
       "header-type": "Typ",
+      "missing-folder-metadata": "",
       "search-placeholder": "Nach Pfad oder Titel suchen",
       "source": "Quelle",
       "status-pending": "Ausstehend",
@@ -13364,6 +13363,7 @@
       },
       "card-click": "Karte {{id}} auswählen",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
       "transformations": "Transformationen",

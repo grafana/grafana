@@ -482,7 +482,8 @@ func (m *MockBroadcastChannel) Broadcasts() [][]byte {
 
 // MockClusterPeer implements alertingNotify.ClusterPeer for testing.
 type MockClusterPeer struct {
-	Channel *MockBroadcastChannel
+	Channel     *MockBroadcastChannel
+	LastOptions []alertingCluster.ChannelOption
 }
 
 // Position implements alertingNotify.ClusterPeer.
@@ -496,7 +497,8 @@ func (m *MockClusterPeer) WaitReady(context.Context) error {
 }
 
 // AddState implements alertingNotify.ClusterPeer.
-func (m *MockClusterPeer) AddState(_ string, _ alertingCluster.State, _ prometheus.Registerer, _ ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
+func (m *MockClusterPeer) AddState(_ string, _ alertingCluster.State, _ prometheus.Registerer, opts ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
+	m.LastOptions = opts
 	return m.Channel
 }
 

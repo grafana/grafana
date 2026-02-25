@@ -15,11 +15,13 @@ import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/
 
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { ContactPointsState } from '../../types/alerting';
+import { CONTACT_POINTS_STATE_INTERVAL_MS } from '../../utils/constants';
 import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
 import { routeAdapter } from '../../utils/routeAdapter';
 
 import { alertmanagerApi } from './../../api/alertmanagerApi';
-import { useGetContactPointsState } from './../../api/receiversApi';
+import { contactPointsStateDtoToModel } from './../../api/grafana';
 import { useRouteGroupsMatcher } from './../../useRouteGroupsMatcher';
 import { InsertPosition } from './../../utils/routeTree';
 import { NotificationPoliciesFilter, findRoutesByMatchers, findRoutesMatchingPredicate } from './Filters';
@@ -51,10 +53,14 @@ export const PoliciesTree = ({ routeName }: PoliciesTreeProps) => {
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
 
   const shouldFetchContactPoints = contactPointsSupported && canSeeContactPoints;
-  const contactPointsState = useGetContactPointsState(
-    // Workaround to not try and call this API when we don't have access to the policies tab
-    shouldFetchContactPoints ? (selectedAlertmanager ?? '') : ''
-  );
+  const { currentData: contactPointsStatusData } = alertmanagerApi.useGetContactPointsStatusQuery(undefined, {
+    skip: !shouldFetchContactPoints,
+    pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS,
+  });
+  const contactPointsState = useMemo<ContactPointsState>(() => {
+    const emptyState = { receivers: {}, errorCount: 0 };
+    return contactPointsStatusData ? contactPointsStateDtoToModel(contactPointsStatusData) : emptyState;
+  }, [contactPointsStatusData]);
 
   const {
     currentData: defaultPolicy,
