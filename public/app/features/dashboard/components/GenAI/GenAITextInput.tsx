@@ -7,8 +7,7 @@ import { Input, useStyles2 } from '@grafana/ui';
 
 import { useIsAssistantAvailable } from './hooks';
 
-const TITLE_USER_PROMPT_INSTRUCTION =
-  'Generate a title - no markdown, no description or reasoning, just the title.';
+const TITLE_USER_PROMPT_INSTRUCTION = 'Generate a title - no markdown, no description or reasoning, just the title.';
 
 export interface GenAITextInputProps {
   value: string;
