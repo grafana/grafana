@@ -54,11 +54,11 @@ describe('QueryEditorDetailsSidebar', () => {
   });
 
   it('should close sidebar when clicking outside', async () => {
-    renderSidebar();
+    const { user } = renderSidebar();
 
     // ClickOutsideWrapper calls closeSidebar when a click lands outside the sidebar.
     // Simulate by clicking the document body directly.
-    fireEvent.click(document.body);
+    await user.click(document.body);
 
     expect(mockCloseSidebar).toHaveBeenCalled();
   });
