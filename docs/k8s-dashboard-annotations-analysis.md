@@ -6,37 +6,37 @@ This document catalogs every annotation that can exist on a dashboard k8s resour
 
 ## Summary Table
 
-| # | Annotation Key | Constant | Category | Can Remove? | Replacement Strategy |
-|---|---|---|---|---|---|
-| 1 | `grafana.app/createdBy` | `AnnoKeyCreatedBy` | Core metadata | **No** | Already maps to standard audit info; keep as annotation |
-| 2 | `grafana.app/updatedTimestamp` | `AnnoKeyUpdatedTimestamp` | Core metadata | **Yes** | Move to `status` subresource or use `metadata.managedFields` |
-| 3 | `grafana.app/updatedBy` | `AnnoKeyUpdatedBy` | Core metadata | **Yes** | Move to `status` subresource or use `metadata.managedFields` |
-| 4 | `grafana.app/folder` | `AnnoKeyFolder` | Core metadata | **Yes** | Move to a label, or a dedicated `spec` field, or use k8s namespace hierarchy |
-| 5 | `grafana.app/blob` | `AnnoKeyBlob` | Storage impl. detail | **Yes** | Move to `status` subresource; this is server-side state |
-| 6 | `grafana.app/message` | `AnnoKeyMessage` | Input-only | **Yes (partially)** | Already stripped on read; could become a query parameter or request header |
-| 7 | `grafana.app/grant-permissions` | `AnnoKeyGrantPermissions` | Input-only | **Yes** | Already stripped before storage; should become a query parameter or separate API call |
-| 8 | `grafana.app/managedBy` | `AnnoKeyManagerKind` | Manager props | **No** | Reasonable use of annotation for external tooling metadata |
-| 9 | `grafana.app/managerId` | `AnnoKeyManagerIdentity` | Manager props | **No** | Reasonable use of annotation for external tooling metadata |
-| 10 | `grafana.app/managerAllowsEdits` | `AnnoKeyManagerAllowsEdits` | Manager props | **No** | Reasonable use of annotation for external tooling metadata |
-| 11 | `grafana.app/managerSuspended` | `AnnoKeyManagerSuspended` | Manager props | **No** | Reasonable use of annotation for external tooling metadata |
-| 12 | `grafana.app/sourcePath` | `AnnoKeySourcePath` | Source props | **No** | Reasonable use of annotation for provisioning source tracking |
-| 13 | `grafana.app/sourceChecksum` | `AnnoKeySourceChecksum` | Source props | **No** | Reasonable use of annotation for provisioning source tracking |
-| 14 | `grafana.app/sourceTimestamp` | `AnnoKeySourceTimestamp` | Source props | **No** | Reasonable use of annotation for provisioning source tracking |
-| 15 | `grafana.app/fullpath` | `AnnoKeyFullpath` | Legacy shim | **Yes** | Legacy modes 0-2 only; should be resolved via folder API lookup |
-| 16 | `grafana.app/fullpathUIDs` | `AnnoKeyFullpathUIDs` | Legacy shim | **Yes** | Legacy modes 0-2 only; should be resolved via folder API lookup |
-| 17 | `grafana.app/saved-from-ui` | `AnnoKeySavedFromUI` | Client audit | **Yes** | Move to commit message or `grafana.app/message`; not useful as persisted annotation |
-| 18 | `grafana.app/slug` | `AnnoKeySlug` | FE-only shim | **Yes** | Already deprecated; compute client-side from title |
-| 19 | `grafana.app/dashboard-is-snapshot` | `AnnoKeyDashboardIsSnapshot` | FE-only shim | **Yes** | Already deprecated; determine from resource type (Snapshot vs Dashboard) |
-| 20 | `grafana.app/dashboard-snapshot-original-url` | `AnnoKeyDashboardSnapshotOriginalUrl` | FE-only shim | **Yes** | Already deprecated; move to snapshot spec |
-| 21 | `grafana.app/dashboard-gnet-id` | `AnnoKeyDashboardGnetId` | FE-only shim | **Yes** | Already deprecated; move to `spec` or `status` |
-| 22 | `grafana.app/folderTitle` | `AnnoKeyFolderTitle` | FE-only shim | **Yes** | Already deprecated; resolved from folder API via `grafana.app/folder` UID |
-| 23 | `grafana.app/folderUrl` | `AnnoKeyFolderUrl` | FE-only shim | **Yes** | Already deprecated; resolved from folder API via `grafana.app/folder` UID |
-| 24 | `grafana.app/embedded` | `AnnoKeyEmbedded` | FE-only shim | **Yes** | Already deprecated; should be a scene/context flag, not persisted |
-| 25 | `grafana.app/reloadOnParamsChange` | `AnnoReloadOnParamsChange` | Experimental | **Yes** | Experimental, will be removed; should be feature flag + proxy behavior |
-| 26 | `grafana.app/deprecatedInternalID` | `LabelKeyDeprecatedInternalID` | Legacy (label) | **Yes** | Already deprecated; scheduled for removal in Grafana 13 |
-| 27 | `grafana.app/originName` | (none, legacy) | Legacy | **Yes** | Superseded by manager/source properties |
-| 28 | `grafana.app/originPath` | (none, legacy) | Legacy | **Yes** | Superseded by manager/source properties |
-| 29 | `grafana.app/originHash` | (none, legacy) | Legacy | **Yes** | Superseded by manager/source properties |
+| #   | Annotation Key                                | Constant                              | Category             | Can Remove?         | Replacement Strategy                                                                  |
+| --- | --------------------------------------------- | ------------------------------------- | -------------------- | ------------------- | ------------------------------------------------------------------------------------- |
+| 1   | `grafana.app/createdBy`                       | `AnnoKeyCreatedBy`                    | Core metadata        | **No**              | Already maps to standard audit info; keep as annotation                               |
+| 2   | `grafana.app/updatedTimestamp`                | `AnnoKeyUpdatedTimestamp`             | Core metadata        | **Yes**             | Move to `status` subresource or use `metadata.managedFields`                          |
+| 3   | `grafana.app/updatedBy`                       | `AnnoKeyUpdatedBy`                    | Core metadata        | **Yes**             | Move to `status` subresource or use `metadata.managedFields`                          |
+| 4   | `grafana.app/folder`                          | `AnnoKeyFolder`                       | Core metadata        | **Yes**             | Move to a label, or a dedicated `spec` field, or use k8s namespace hierarchy          |
+| 5   | `grafana.app/blob`                            | `AnnoKeyBlob`                         | Storage impl. detail | **Yes**             | Move to `status` subresource; this is server-side state                               |
+| 6   | `grafana.app/message`                         | `AnnoKeyMessage`                      | Input-only           | **Yes (partially)** | Already stripped on read; could become a query parameter or request header            |
+| 7   | `grafana.app/grant-permissions`               | `AnnoKeyGrantPermissions`             | Input-only           | **Yes**             | Already stripped before storage; should become a query parameter or separate API call |
+| 8   | `grafana.app/managedBy`                       | `AnnoKeyManagerKind`                  | Manager props        | **No**              | Reasonable use of annotation for external tooling metadata                            |
+| 9   | `grafana.app/managerId`                       | `AnnoKeyManagerIdentity`              | Manager props        | **No**              | Reasonable use of annotation for external tooling metadata                            |
+| 10  | `grafana.app/managerAllowsEdits`              | `AnnoKeyManagerAllowsEdits`           | Manager props        | **No**              | Reasonable use of annotation for external tooling metadata                            |
+| 11  | `grafana.app/managerSuspended`                | `AnnoKeyManagerSuspended`             | Manager props        | **No**              | Reasonable use of annotation for external tooling metadata                            |
+| 12  | `grafana.app/sourcePath`                      | `AnnoKeySourcePath`                   | Source props         | **No**              | Reasonable use of annotation for provisioning source tracking                         |
+| 13  | `grafana.app/sourceChecksum`                  | `AnnoKeySourceChecksum`               | Source props         | **No**              | Reasonable use of annotation for provisioning source tracking                         |
+| 14  | `grafana.app/sourceTimestamp`                 | `AnnoKeySourceTimestamp`              | Source props         | **No**              | Reasonable use of annotation for provisioning source tracking                         |
+| 15  | `grafana.app/fullpath`                        | `AnnoKeyFullpath`                     | Legacy shim          | **Yes**             | Legacy modes 0-2 only; should be resolved via folder API lookup                       |
+| 16  | `grafana.app/fullpathUIDs`                    | `AnnoKeyFullpathUIDs`                 | Legacy shim          | **Yes**             | Legacy modes 0-2 only; should be resolved via folder API lookup                       |
+| 17  | `grafana.app/saved-from-ui`                   | `AnnoKeySavedFromUI`                  | Client audit         | **Yes**             | Move to commit message or `grafana.app/message`; not useful as persisted annotation   |
+| 18  | `grafana.app/slug`                            | `AnnoKeySlug`                         | FE-only shim         | **Yes**             | Already deprecated; compute client-side from title                                    |
+| 19  | `grafana.app/dashboard-is-snapshot`           | `AnnoKeyDashboardIsSnapshot`          | FE-only shim         | **Yes**             | Already deprecated; determine from resource type (Snapshot vs Dashboard)              |
+| 20  | `grafana.app/dashboard-snapshot-original-url` | `AnnoKeyDashboardSnapshotOriginalUrl` | FE-only shim         | **Yes**             | Already deprecated; move to snapshot spec                                             |
+| 21  | `grafana.app/dashboard-gnet-id`               | `AnnoKeyDashboardGnetId`              | FE-only shim         | **Yes**             | Already deprecated; move to `spec` or `status`                                        |
+| 22  | `grafana.app/folderTitle`                     | `AnnoKeyFolderTitle`                  | FE-only shim         | **Yes**             | Already deprecated; resolved from folder API via `grafana.app/folder` UID             |
+| 23  | `grafana.app/folderUrl`                       | `AnnoKeyFolderUrl`                    | FE-only shim         | **Yes**             | Already deprecated; resolved from folder API via `grafana.app/folder` UID             |
+| 24  | `grafana.app/embedded`                        | `AnnoKeyEmbedded`                     | FE-only shim         | **Yes**             | Already deprecated; should be a scene/context flag, not persisted                     |
+| 25  | `grafana.app/reloadOnParamsChange`            | `AnnoReloadOnParamsChange`            | Experimental         | **Yes**             | Experimental, will be removed; should be feature flag + proxy behavior                |
+| 26  | `grafana.app/deprecatedInternalID`            | `LabelKeyDeprecatedInternalID`        | Legacy (label)       | **Yes**             | Already deprecated; scheduled for removal in Grafana 13                               |
+| 27  | `grafana.app/originName`                      | (none, legacy)                        | Legacy               | **Yes**             | Superseded by manager/source properties                                               |
+| 28  | `grafana.app/originPath`                      | (none, legacy)                        | Legacy               | **Yes**             | Superseded by manager/source properties                                               |
+| 29  | `grafana.app/originHash`                      | (none, legacy)                        | Legacy               | **Yes**             | Superseded by manager/source properties                                               |
 
 ---
 
@@ -115,7 +115,7 @@ These annotations follow standard Kubernetes patterns for external tooling metad
 
 - **Set by**: Provisioning, repo sync, terraform, kubectl
 - **Read by**: Write guards (prevent UI edits to repo-managed resources), frontend display
-- **Verdict**: **Keep.** These follow standard k8s annotation patterns for external controller/operator metadata (similar to `app.kubernetes.io/managed-by`). They describe *who manages this resource* which is classic annotation territory.
+- **Verdict**: **Keep.** These follow standard k8s annotation patterns for external controller/operator metadata (similar to `app.kubernetes.io/managed-by`). They describe _who manages this resource_ which is classic annotation territory.
 
 #### 12-14. Source Properties (`sourcePath`, `sourceChecksum`, `sourceTimestamp`)
 
@@ -206,10 +206,10 @@ These annotations follow standard Kubernetes patterns for external tooling metad
 
 The generated `dashboard_object_gen.go` files (via `grafana-app-sdk`) use a different prefix:
 
-| Generated Key | Equivalent `grafana.app/` Key |
-|---|---|
-| `grafana.com/createdBy` | `grafana.app/createdBy` |
-| `grafana.com/updatedBy` | `grafana.app/updatedBy` |
+| Generated Key                 | Equivalent `grafana.app/` Key  |
+| ----------------------------- | ------------------------------ |
+| `grafana.com/createdBy`       | `grafana.app/createdBy`        |
+| `grafana.com/updatedBy`       | `grafana.app/updatedBy`        |
 | `grafana.com/updateTimestamp` | `grafana.app/updatedTimestamp` |
 
 This is a **prefix mismatch** between the App SDK generated code (`grafana.com/`) and the runtime utils (`grafana.app/`). The runtime `GrafanaMetaAccessor` (which is what the storage layer uses) reads/writes `grafana.app/*`. The generated object methods are not currently used by the storage/prepare layer — `MetaAccessor()` wraps the raw object and uses its own annotation keys.
@@ -247,15 +247,15 @@ This mismatch should be resolved by aligning the generated code to use `grafana.
 
 After all removals, the dashboard resource should ideally have only these annotations:
 
-| Annotation | Purpose |
-|---|---|
-| `grafana.app/createdBy` | Audit: who created this resource |
-| `grafana.app/managedBy` | External tool management kind |
-| `grafana.app/managerId` | External tool identity |
+| Annotation                       | Purpose                                  |
+| -------------------------------- | ---------------------------------------- |
+| `grafana.app/createdBy`          | Audit: who created this resource         |
+| `grafana.app/managedBy`          | External tool management kind            |
+| `grafana.app/managerId`          | External tool identity                   |
 | `grafana.app/managerAllowsEdits` | Whether managed resource allows UI edits |
-| `grafana.app/managerSuspended` | Whether management is suspended |
-| `grafana.app/sourcePath` | Provisioning source file path |
-| `grafana.app/sourceChecksum` | Provisioning source content hash |
-| `grafana.app/sourceTimestamp` | Provisioning source last modified time |
+| `grafana.app/managerSuspended`   | Whether management is suspended          |
+| `grafana.app/sourcePath`         | Provisioning source file path            |
+| `grafana.app/sourceChecksum`     | Provisioning source content hash         |
+| `grafana.app/sourceTimestamp`    | Provisioning source last modified time   |
 
 Everything else either belongs in `spec`, `status`, labels, request parameters, or client-side state.
