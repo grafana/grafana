@@ -7,14 +7,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 func TestEvaluatePullCondition(t *testing.T) {
 	tests := []struct {
 		name           string
 		jobState       provisioning.JobState
-		warningReasons []jobs.JobWarningReason
+		resultReasons  []provisioning.JobResultReason
 		expectedType   string
 		expectedStatus metav1.ConditionStatus
 		expectedReason string
@@ -39,7 +38,7 @@ func TestEvaluatePullCondition(t *testing.T) {
 		{
 			name:           "warning state with quota exceeded",
 			jobState:       provisioning.JobStateWarning,
-			warningReasons: []jobs.JobWarningReason{jobs.WarningQuotaExceeded},
+			resultReasons:  []provisioning.JobResultReason{provisioning.WarningQuotaExceeded},
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonQuotaExceeded,
@@ -56,7 +55,7 @@ func TestEvaluatePullCondition(t *testing.T) {
 		{
 			name:           "error state with quota reason still uses PullFailed reason",
 			jobState:       provisioning.JobStateError,
-			warningReasons: []jobs.JobWarningReason{jobs.WarningQuotaExceeded},
+			resultReasons:  []provisioning.JobResultReason{provisioning.WarningQuotaExceeded},
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonPullFailed,
@@ -66,7 +65,7 @@ func TestEvaluatePullCondition(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			condition := EvaluatePullCondition(tt.jobState, tt.warningReasons)
+			condition := EvaluatePullCondition(tt.jobState, tt.resultReasons)
 
 			assert.Equal(t, tt.expectedType, condition.Type)
 			assert.Equal(t, tt.expectedStatus, condition.Status)

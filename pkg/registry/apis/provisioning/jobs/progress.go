@@ -53,7 +53,7 @@ type jobProgressRecorder struct {
 	summaries           map[string]*provisioning.JobResourceSummary
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
-	warningReasons      map[JobWarningReason]struct{}
+	resultReasons       map[provisioning.JobResultReason]struct{}
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
@@ -63,7 +63,7 @@ func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
-		warningReasons:      make(map[JobWarningReason]struct{}),
+		resultReasons:       make(map[provisioning.JobResultReason]struct{}),
 	}
 }
 
@@ -113,7 +113,7 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		}
 
 		if reason := result.WarningReason(); reason != "" {
-			r.warningReasons[reason] = struct{}{}
+			r.resultReasons[reason] = struct{}{}
 		}
 
 		shouldLogWarning = true
@@ -156,7 +156,7 @@ func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 	r.summaries = summaries
 
 	if !keepWarnings {
-		r.warningReasons = make(map[JobWarningReason]struct{})
+		r.resultReasons = make(map[provisioning.JobResultReason]struct{})
 	}
 }
 
@@ -355,15 +355,15 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	return jobStatus
 }
 
-func (r *jobProgressRecorder) WarningReasons() []JobWarningReason {
+func (r *jobProgressRecorder) ResultReasons() []provisioning.JobResultReason {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if len(r.warningReasons) == 0 {
+	if len(r.resultReasons) == 0 {
 		return nil
 	}
-	reasons := make([]JobWarningReason, 0, len(r.warningReasons))
-	for reason := range r.warningReasons {
+	reasons := make([]provisioning.JobResultReason, 0, len(r.resultReasons))
+	for reason := range r.resultReasons {
 		reasons = append(reasons, reason)
 	}
 	return reasons

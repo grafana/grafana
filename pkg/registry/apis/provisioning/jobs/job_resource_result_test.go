@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -254,7 +255,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithError(quotaErr).Build()
 
-		assert.Equal(t, WarningQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.WarningQuotaExceeded, result.WarningReason())
 	})
 
 	t.Run("wrapped QuotaExceededError returns WarningQuotaExceeded", func(t *testing.T) {
@@ -262,14 +263,14 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("sync failed: %w", quotaErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, WarningQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.WarningQuotaExceeded, result.WarningReason())
 	})
 
 	t.Run("ResourceValidationError returns WarningValidationError", func(t *testing.T) {
 		validationErr := resources.NewResourceValidationError(errors.New("bad field"))
 		result := NewResourceResult().WithError(validationErr).Build()
 
-		assert.Equal(t, WarningValidationError, result.WarningReason())
+		assert.Equal(t, provisioning.WarningValidationError, result.WarningReason())
 	})
 
 	t.Run("ResourceOwnershipConflictError returns WarningOwnershipConflict", func(t *testing.T) {
@@ -279,7 +280,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		)
 		result := NewResourceResult().WithError(ownershipErr).Build()
 
-		assert.Equal(t, WarningOwnershipConflict, result.WarningReason())
+		assert.Equal(t, provisioning.WarningOwnershipConflict, result.WarningReason())
 	})
 
 	t.Run("nil warning returns empty reason", func(t *testing.T) {
@@ -296,6 +297,6 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithWarning(quotaErr).Build()
 
-		assert.Equal(t, WarningQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.WarningQuotaExceeded, result.WarningReason())
 	})
 }

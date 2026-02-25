@@ -276,7 +276,7 @@ func TestJobProgressRecorderWarningStatus(t *testing.T) {
 	assert.Empty(t, finalStatus.Errors)
 
 	// No typed warning reasons (these are generic string warnings, not job-level)
-	assert.Empty(t, recorder.WarningReasons())
+	assert.Empty(t, recorder.ResultReasons())
 }
 
 func TestJobProgressRecorderWarningWithErrors(t *testing.T) {
@@ -673,7 +673,7 @@ func TestJobProgressRecorderIgnoredActionsDontCountAsErrors(t *testing.T) {
 	recorder.mu.RUnlock()
 }
 
-func TestJobProgressRecorderWarningReasons(t *testing.T) {
+func TestJobProgressRecorderResultReasons(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Record accumulates warning reasons from results", func(t *testing.T) {
@@ -683,7 +683,7 @@ func TestJobProgressRecorderWarningReasons(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
 
-		assert.Contains(t, recorder.WarningReasons(), WarningQuotaExceeded)
+		assert.Contains(t, recorder.ResultReasons(), provisioning.WarningQuotaExceeded)
 	})
 
 	t.Run("duplicate warning reasons are deduplicated", func(t *testing.T) {
@@ -695,9 +695,9 @@ func TestJobProgressRecorderWarningReasons(t *testing.T) {
 		recorder.Record(ctx, NewResourceResult().WithError(quotaErr1).Build())
 		recorder.Record(ctx, NewResourceResult().WithError(quotaErr2).Build())
 
-		reasons := recorder.WarningReasons()
+		reasons := recorder.ResultReasons()
 		assert.Len(t, reasons, 1)
-		assert.Contains(t, reasons, WarningQuotaExceeded)
+		assert.Contains(t, reasons, provisioning.WarningQuotaExceeded)
 	})
 
 	t.Run("Complete with warning error does not set Error state", func(t *testing.T) {
@@ -709,7 +709,7 @@ func TestJobProgressRecorderWarningReasons(t *testing.T) {
 
 		finalStatus := recorder.Complete(ctx, quotaErr)
 		assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
-		assert.Contains(t, recorder.WarningReasons(), WarningQuotaExceeded)
+		assert.Contains(t, recorder.ResultReasons(), provisioning.WarningQuotaExceeded)
 	})
 
 	t.Run("Complete with real error still sets Error state", func(t *testing.T) {
@@ -718,7 +718,7 @@ func TestJobProgressRecorderWarningReasons(t *testing.T) {
 
 		finalStatus := recorder.Complete(ctx, errors.New("network failure"))
 		assert.Equal(t, provisioning.JobStateError, finalStatus.State)
-		assert.Empty(t, recorder.WarningReasons())
+		assert.Empty(t, recorder.ResultReasons())
 	})
 
 	t.Run("ResetResults with keepWarnings=true preserves warning reasons", func(t *testing.T) {
@@ -731,7 +731,7 @@ func TestJobProgressRecorderWarningReasons(t *testing.T) {
 		recorder.ResetResults(true)
 
 		recorder.mu.RLock()
-		assert.Len(t, recorder.warningReasons, 1)
+		assert.Len(t, recorder.resultReasons, 1)
 		recorder.mu.RUnlock()
 	})
 
@@ -745,7 +745,7 @@ func TestJobProgressRecorderWarningReasons(t *testing.T) {
 		recorder.ResetResults(false)
 
 		recorder.mu.RLock()
-		assert.Empty(t, recorder.warningReasons)
+		assert.Empty(t, recorder.resultReasons)
 		recorder.mu.RUnlock()
 	})
 }

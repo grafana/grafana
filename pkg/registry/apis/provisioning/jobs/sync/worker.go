@@ -163,8 +163,8 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
-	warningReasons := progress.WarningReasons()
-	isQuotaWarning := slices.Contains(warningReasons, jobs.WarningQuotaExceeded)
+	resultReasons := progress.ResultReasons()
+	isQuotaWarning := slices.Contains(resultReasons, provisioning.WarningQuotaExceeded)
 
 	if syncError != nil {
 		logger.Debug("failed to sync the repository", "error", syncError)
@@ -229,7 +229,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    not just what the controller thinks should exist.
 	quotaStatus := repo.Config().Status.Quota
 	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
-	syncCondition := EvaluatePullCondition(jobStatus.State, warningReasons)
+	syncCondition := EvaluatePullCondition(jobStatus.State, resultReasons)
 	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
 		patchOperations = append(patchOperations, conditionOps...)
 	}

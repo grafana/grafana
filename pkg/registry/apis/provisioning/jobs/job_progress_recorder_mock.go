@@ -230,6 +230,53 @@ func (_c *MockJobProgressRecorder_ResetResults_Call) RunAndReturn(run func(bool)
 	return _c
 }
 
+// ResultReasons provides a mock function with no fields
+func (_m *MockJobProgressRecorder) ResultReasons() []v0alpha1.JobResultReason {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResultReasons")
+	}
+
+	var r0 []v0alpha1.JobResultReason
+	if rf, ok := ret.Get(0).(func() []v0alpha1.JobResultReason); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]v0alpha1.JobResultReason)
+		}
+	}
+
+	return r0
+}
+
+// MockJobProgressRecorder_ResultReasons_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResultReasons'
+type MockJobProgressRecorder_ResultReasons_Call struct {
+	*mock.Call
+}
+
+// ResultReasons is a helper method to define mock.On call
+func (_e *MockJobProgressRecorder_Expecter) ResultReasons() *MockJobProgressRecorder_ResultReasons_Call {
+	return &MockJobProgressRecorder_ResultReasons_Call{Call: _e.mock.On("ResultReasons")}
+}
+
+func (_c *MockJobProgressRecorder_ResultReasons_Call) Run(run func()) *MockJobProgressRecorder_ResultReasons_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_ResultReasons_Call) Return(_a0 []v0alpha1.JobResultReason) *MockJobProgressRecorder_ResultReasons_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_ResultReasons_Call) RunAndReturn(run func() []v0alpha1.JobResultReason) *MockJobProgressRecorder_ResultReasons_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetFinalMessage provides a mock function with given fields: ctx, msg
 func (_m *MockJobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
 	_m.Called(ctx, msg)
@@ -485,53 +532,6 @@ func (_c *MockJobProgressRecorder_TooManyErrors_Call) Return(_a0 error) *MockJob
 }
 
 func (_c *MockJobProgressRecorder_TooManyErrors_Call) RunAndReturn(run func() error) *MockJobProgressRecorder_TooManyErrors_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WarningReasons provides a mock function with no fields
-func (_m *MockJobProgressRecorder) WarningReasons() []JobWarningReason {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for WarningReasons")
-	}
-
-	var r0 []JobWarningReason
-	if rf, ok := ret.Get(0).(func() []JobWarningReason); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]JobWarningReason)
-		}
-	}
-
-	return r0
-}
-
-// MockJobProgressRecorder_WarningReasons_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WarningReasons'
-type MockJobProgressRecorder_WarningReasons_Call struct {
-	*mock.Call
-}
-
-// WarningReasons is a helper method to define mock.On call
-func (_e *MockJobProgressRecorder_Expecter) WarningReasons() *MockJobProgressRecorder_WarningReasons_Call {
-	return &MockJobProgressRecorder_WarningReasons_Call{Call: _e.mock.On("WarningReasons")}
-}
-
-func (_c *MockJobProgressRecorder_WarningReasons_Call) Run(run func()) *MockJobProgressRecorder_WarningReasons_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockJobProgressRecorder_WarningReasons_Call) Return(_a0 []JobWarningReason) *MockJobProgressRecorder_WarningReasons_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockJobProgressRecorder_WarningReasons_Call) RunAndReturn(run func() []JobWarningReason) *MockJobProgressRecorder_WarningReasons_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -35,6 +35,17 @@ func (JobList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "JobList"
 }
 
+// JobResultReason represents a typed warning reason for a job resource result.
+// +enum
+type JobResultReason string
+
+const (
+	WarningQuotaExceeded     JobResultReason = "QuotaExceeded"
+	WarningValidationError   JobResultReason = "ValidationError"
+	WarningOwnershipConflict JobResultReason = "OwnershipConflict"
+	NoWarning                JobResultReason = ""
+)
+
 // +enum
 type JobAction string
 

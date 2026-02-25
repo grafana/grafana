@@ -3,26 +3,17 @@ package jobs
 import (
 	"errors"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// JobWarningReason represents a typed warning reason for a job resource result.
-type JobWarningReason string
-
-const (
-	WarningQuotaExceeded     JobWarningReason = "QuotaExceeded"
-	WarningValidationError   JobWarningReason = "ValidationError"
-	WarningOwnershipConflict JobWarningReason = "OwnershipConflict"
-	NoWarning                JobWarningReason = ""
-)
-
 // classifyWarning returns the warning reason for err, or "" if it is not a warning.
-func classifyWarning(err error) JobWarningReason {
+func classifyWarning(err error) provisioning.JobResultReason {
 	if err == nil {
-		return NoWarning
+		return provisioning.NoWarning
 	}
 
 	var validationErr *resources.ResourceValidationError
@@ -31,19 +22,19 @@ func classifyWarning(err error) JobWarningReason {
 
 	switch {
 	case errors.As(err, &quotaExceededErr):
-		return WarningQuotaExceeded
+		return provisioning.WarningQuotaExceeded
 	case errors.As(err, &validationErr):
-		return WarningValidationError
+		return provisioning.WarningValidationError
 	case errors.As(err, &ownershipErr):
-		return WarningOwnershipConflict
+		return provisioning.WarningOwnershipConflict
 	default:
-		return NoWarning
+		return provisioning.NoWarning
 	}
 }
 
 // isWarningError checks if the given error should be treated as a warning.
 func isWarningError(err error) bool {
-	return classifyWarning(err) != NoWarning
+	return classifyWarning(err) != provisioning.NoWarning
 }
 
 // JobResourceResult represents the result of a resource operation in a job.
@@ -216,6 +207,6 @@ func (r JobResourceResult) Warning() error {
 }
 
 // WarningReason returns the warning reason for this result's warning, or "" if none.
-func (r JobResourceResult) WarningReason() JobWarningReason {
+func (r JobResourceResult) WarningReason() provisioning.JobResultReason {
 	return classifyWarning(r.warning)
 }
