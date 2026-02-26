@@ -312,7 +312,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._changeTracker.stopTrackingChanges();
 
     this.setState({
-      id: result.id,
       version: result.version,
       isDirty: false,
       uid: result.uid,
