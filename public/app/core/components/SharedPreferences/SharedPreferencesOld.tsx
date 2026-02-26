@@ -1,17 +1,15 @@
-import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { FeatureState, ThemeRegistryItem } from '@grafana/data';
+import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PSEUDO_LOCALE, t, Trans } from '@grafana/i18n';
+import {t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Field,
   FieldSet,
   Label,
-  stylesFactory,
   TimeZonePicker,
   WeekStartPicker,
   FeatureBadge,
