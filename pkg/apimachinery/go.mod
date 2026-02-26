@@ -4,8 +4,8 @@ go 1.25.7
 
 require (
 	github.com/go-jose/go-jose/v4 v4.1.3
-	github.com/grafana/authlib v0.0.0-20260218111514-582136a04938 // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20260218111514-582136a04938 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20260226130908-b01d89f85c4d // @grafana/identity-access-team
 	github.com/stretchr/testify v1.11.1
 	go.yaml.in/yaml/v3 v3.0.4
 	k8s.io/apimachinery v0.35.1

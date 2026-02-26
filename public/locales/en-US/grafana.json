@@ -13396,6 +13396,8 @@
       "data": "Data",
       "footer-items_one": "{{count}} item",
       "footer-items_other": "{{count}} items",
+      "footer-items-alert_one": "{{count}} alerts",
+      "footer-items-alert_other": "{{count}} alerts",
       "loading-queries-transformations": "Loading queries and transformations",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",

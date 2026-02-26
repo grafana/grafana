@@ -3302,6 +3302,7 @@
                   "summary": "Pull (incremental)",
                   "description": "look for changes since the last sync",
                   "value": {
+                    "action": "",
                     "pull": {
                       "incremental": true
                     }
@@ -3311,6 +3312,7 @@
                   "summary": "Pull from repository",
                   "description": "pull all files",
                   "value": {
+                    "action": "",
                     "pull": {
                       "incremental": false
                     }
@@ -5025,10 +5027,14 @@
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobSpec": {
         "type": "object",
+        "required": [
+          "action"
+        ],
         "properties": {
           "action": {
             "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
             "type": "string",
+            "default": "",
             "enum": [
               "delete",
               "fixFolderMetadata",
