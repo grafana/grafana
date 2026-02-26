@@ -5682,10 +5682,7 @@
       "empty-state-message": "Futtasson egy lekérdezést, hogy itt megjelenítse, vagy lépjen az összes megjelenítéshez, hogy hozzáadjon más paneltípusokat",
       "menu-open-panel-editor": "Konfigurálás",
       "menu-use-library-panel": "Könyvtárpanel használata",
-      "missing-config": "Hiányzó panelkonfiguráció",
-      "suggestions": {
-        "empty-state-message": "Futtasson egy lekérdezést a javasolt vizualizációk megtekintéséhez"
-      }
+      "missing-config": "Hiányzó panelkonfiguráció"
     },
     "new-panel-title": "Új panel",
     "on-create-new-row": {
@@ -6920,11 +6917,11 @@
       "static-options-legend": "Statikus opciók"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Speciális beállítások",
         "classic": "Klasszikus",
         "json": "JSON",
-        "v1-resource": "V1 erőforrás",
         "v2-resource": "V2 erőforrás",
         "yaml": "YAML"
       },
@@ -11924,6 +11921,10 @@
         "title": "Hiba",
         "try-again-button": "Próbálja újra"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Ismeretlen vizualizációtípus"
     },
     "viz-type-picker": {
@@ -12634,6 +12635,9 @@
       "label-read-only": "Csak olvasható",
       "label-sync-interval": "Szinkronizálási intervallum (másodperc)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nincs találat a lekérdezésre",
       "partial-managed": "{{resourceCount}}/{{managedCount}} erőforrást a Git-szinkronizálás felügyel.",
@@ -12767,6 +12771,12 @@
       "show-less": "kevesebb megjelenítése",
       "show-more": "több megjelenítése",
       "truncated": "Üzenet rövidítve"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13300,7 +13310,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13310,9 +13321,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13356,17 +13368,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "{{id}} kártya kiválasztása",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Lekérdezések és kifejezések",
       "toggle-size": "Oldalsáv méretének átváltása",
       "transformations": "Transzformációk",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
@@ -13567,6 +13576,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Panelekkel együtt",
       "remove-datasource-filter": "Adatforrás: {{datasource}}",
       "sort-placeholder": "Rendezés",

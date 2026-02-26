@@ -210,6 +210,23 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           tooltip: '',
           type: 'link',
         },
+        // This link is was added by a datasource, we wouldn't like it to end up in the JSON schema
+        {
+          title: 'Default link',
+          url: 'http://test.com',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          type: 'link',
+          origin: {
+            type: 'datasource',
+            group: 'datasource',
+          },
+        },
       ],
       body: new DefaultGridLayoutManager({
         grid: new SceneGridLayout({
@@ -455,6 +472,78 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.links).toHaveLength(2);
     expect(result.links![0]).toHaveProperty('placement', 'inControlsMenu');
     expect(result.links![1]).not.toHaveProperty('placement');
+  });
+
+  it('should omit links with origin from serialized save model', () => {
+    const sceneWithOriginLink = new DashboardScene({
+      links: [
+        {
+          title: 'Editable Link',
+          url: 'http://example.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+        {
+          title: 'Default link',
+          url: 'http://ds.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource', group: 'loki' },
+        },
+      ],
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithOriginLink);
+
+    expect(result.links).toHaveLength(1);
+    expect(result.links![0].title).toBe('Editable Link');
+    expect(result.links![0].origin).toBeUndefined();
+  });
+
+  it('should omit variables with origin from serialized save model', () => {
+    const sceneWithOriginVariable = new DashboardScene({
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({
+            name: 'editableVar',
+            label: 'Editable',
+            query: 'a,b',
+            value: 'a',
+            text: 'a',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+          }),
+          new CustomVariable({
+            name: 'dsVar',
+            label: 'From datasource',
+            query: 'x,y',
+            value: 'x',
+            text: 'x',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            origin: { type: 'datasource', group: 'loki' },
+          }),
+        ],
+      }),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithOriginVariable);
+
+    expect(result.variables).toHaveLength(1);
+    expect(result.variables![0].spec.name).toBe('editableVar');
+    expect(result.variables![0].spec.origin).toBeUndefined();
   });
 
   it('should transform the minimum scene to save model schema v2', () => {

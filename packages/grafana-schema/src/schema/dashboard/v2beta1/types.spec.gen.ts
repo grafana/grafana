@@ -983,6 +983,61 @@ export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
 	value: "",
 });
 
+// Links with references to other dashboards or external resources
+export type ControlSourceRef = DatasourceControlSourceRef;
+
+export const defaultControlSourceRef = (): ControlSourceRef => (defaultDatasourceControlSourceRef());
+
+// Source information for controls (e.g. variables or links)
+export interface DatasourceControlSourceRef {
+	type: "datasource";
+	// The plugin type-id
+	group: string;
+}
+
+export const defaultDatasourceControlSourceRef = (): DatasourceControlSourceRef => ({
+	type: "datasource",
+	group: "",
+});
+
+// Time configuration
+// It defines the default time config for the time picker, the refresh picker for the specific dashboard.
+export interface TimeSettingsSpec {
+	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
+	timezone?: string;
+	// Start time range for dashboard.
+	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
+	from: string;
+	// End time range for dashboard.
+	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
+	to: string;
+	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
+	// v1: refresh
+	autoRefresh: string;
+	// Interval options available in the refresh picker dropdown.
+	// v1: timepicker.refresh_intervals
+	autoRefreshIntervals: string[];
+	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+	// v1: timepicker.quick_ranges , not exposed in the UI
+	quickRanges?: TimeRangeOption[];
+	// Whether timepicker is visible or not.
+	// v1: timepicker.hidden
+	hideTimepicker: boolean;
+	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
+	weekStart?: "saturday" | "monday" | "sunday";
+	// The month that the fiscal year starts on. 0 = January, 11 = December
+	fiscalYearStartMonth: number;
+	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
+	// v1: timepicker.nowDelay
+	nowDelay?: string;
+}
+
+export interface TimeRangeOption {
+	display: string;
+	from: string;
+	to: string;
+}
+
 export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind | SwitchVariableKind;
 
 export const defaultVariableKind = (): VariableKind => (defaultQueryVariableKind());
@@ -1020,6 +1075,7 @@ export interface QueryVariableSpec {
 	allowCustomValue: boolean;
 	staticOptions?: VariableOption[];
 	staticOptionsOrder?: "before" | "after" | "sorted";
+	origin?: ControlSourceRef;
 }
 
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
@@ -1111,6 +1167,7 @@ export interface TextVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultTextVariableSpec = (): TextVariableSpec => ({
@@ -1141,6 +1198,7 @@ export interface ConstantVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
@@ -1178,6 +1236,7 @@ export interface DatasourceVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	origin?: ControlSourceRef;
 }
 
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
@@ -1219,6 +1278,7 @@ export interface IntervalVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
@@ -1260,6 +1320,7 @@ export interface CustomVariableSpec {
 	description?: string;
 	allowCustomValue: boolean;
 	valuesFormat?: "csv" | "json";
+	origin?: ControlSourceRef;
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1301,6 +1362,7 @@ export interface GroupByVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
@@ -1339,6 +1401,7 @@ export interface AdhocVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	origin?: ControlSourceRef;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1406,6 +1469,7 @@ export interface SwitchVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({

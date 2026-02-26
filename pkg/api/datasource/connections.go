@@ -12,6 +12,7 @@ import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -79,4 +80,52 @@ func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, u
 	}
 
 	return &conn, nil
+}
+
+// legacyConnectionClientImpl implements ConnectionClient
+//
+// This client is a temporary implementation so we reroute datasource CRUD requests
+// without relying on the query.grafana.app API group. We're using the legacy
+// datasource service just to get the datasource type, then forwarding the request
+// to the new APIs.
+type legacyConnectionClientImpl struct {
+	datasourceService datasources.DataSourceService
+}
+
+var _ ConnectionClient = (*legacyConnectionClientImpl)(nil)
+
+// NewLegacyConnectionClient creates a new ConnectionClient that relies on the legacy datasource service.
+func NewLegacyConnectionClient(datasourceService datasources.DataSourceService) ConnectionClient {
+	return &legacyConnectionClientImpl{
+		datasourceService: datasourceService,
+	}
+}
+
+func (cl *legacyConnectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*dsV0.DataSourceConnectionList, error) {
+	query := datasources.GetDataSourceQuery{
+		UID:   uid,
+		OrgID: c.OrgID,
+	}
+
+	conn, err := cl.datasourceService.GetDataSource(c.Req.Context(), &query)
+	if err != nil {
+		return nil, err
+	}
+
+	if conn == nil {
+		return &dsV0.DataSourceConnectionList{
+			Items: []dsV0.DataSourceConnection{},
+		}, nil
+	}
+
+	return &dsV0.DataSourceConnectionList{
+		Items: []dsV0.DataSourceConnection{
+			{
+				APIGroup:   conn.Type + ".datasource.grafana.app",
+				APIVersion: "v0alpha1",
+				Name:       conn.UID,
+				Plugin:     conn.Type,
+			},
+		},
+	}, nil
 }

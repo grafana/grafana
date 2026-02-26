@@ -312,6 +312,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	search := &slowSearchBackendWithCache{
 		mockSearchBackend: mockSearchBackend{},
 	}
+
 	supplier := &TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"group": "resource",

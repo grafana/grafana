@@ -38,9 +38,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"testdata/all-panels.json":   "dashboard1.json",
 				"testdata/text-options.json": "dashboard2.json",
 			},
-			SkipResourceAssertions: true, // We'll check quota condition instead
+			SkipSync:               true, // Prevent controller auto-sync racing with file copy
+			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to be exceeded
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
@@ -54,6 +56,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Verify the deletion succeeded by checking that only 1 dashboard remains
 		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		// Verify pull status condition is successful after deletion sync
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 	})
 
 	t.Run("within limit repo syncs successfully and allows adding more resources", func(t *testing.T) {
@@ -70,15 +75,20 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 1 dashboard was created
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Verify quota condition is WithinQuota
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
+
+		// Verify pull status condition is successful after initial sync
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 
 		// Add a second dashboard (still within limit of 5)
 		dashboard2Content := helper.LoadFile("testdata/text-options.json")
@@ -93,6 +103,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Verify quota condition is still WithinQuota
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
+
+		// Verify pull status condition is still successful after second sync
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 	})
 
 	// Is only possible to set the first sync to exceed quota when the repo is created.
@@ -113,9 +126,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"testdata/all-panels.json":   "dashboard1.json",
 				"testdata/text-options.json": "dashboard2.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to be exceeded after initial sync
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
@@ -150,6 +165,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		require.Contains(t, jobObj.Status.Message, "sync skipped: repository is already over quota and incoming changes do not free enough resources", "Sync job should fail due to quota when adding resources over limit")
 		// Verify only 2 dashboards exist (3rd was not created)
 		helper.RequireRepoDashboardCount(t, repo, 2)
+
+		// Verify pull status condition reflects quota exceeded after blocked sync
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonQuotaExceeded)
 	})
 	t.Run("full sync that exceeds quota creates some resources and skips others with warnings", func(t *testing.T) {
 		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
@@ -168,9 +186,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -253,9 +273,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"testdata/all-panels.json":   "subfolder/dashboard1.json",
 				"testdata/text-options.json": "subfolder/nested/dashboard2.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -373,9 +395,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"testdata/text-options.json":  "dashboard2.json",
 				"testdata/timeline-demo.json": "dashboard3.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to be exceeded after initial sync
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
@@ -393,7 +417,10 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Verify the deletion succeeded - only 2 dashboards should remain
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
-		// Repository is still over quota (2 dashboards + 1 folder = 3 > limit of 2)
+		// Repository is still over quota (2 dashboards + 1 folder = 3 = limit of 3)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
+
+		// Verify pull status condition is successful after deletion sync (delete-only syncs succeed)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 	})
 }

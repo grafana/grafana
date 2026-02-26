@@ -12,6 +12,7 @@ import (
 	"sync"
 	"testing"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -21,6 +22,34 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
+
+func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+
+	const repo = "empty-files-repo"
+	helper.CreateRepo(t, TestRepo{
+		Name:               repo,
+		Path:               helper.ProvisioningPath,
+		Target:             "instance",
+		ExpectedDashboards: 0,
+		ExpectedFolders:    0,
+	})
+
+	rsp := helper.AdminREST.Get().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		Suffix("files/").
+		Do(context.Background())
+	require.NoError(t, rsp.Error())
+
+	fileList := &provisioning.FileList{}
+	require.NoError(t, rsp.Into(fileList))
+	require.NotNil(t, fileList.Items, "items should be an empty list, not nil")
+	require.Empty(t, fileList.Items, "items should be empty for a repository with no files")
+}
 
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
