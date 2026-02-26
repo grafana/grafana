@@ -58,7 +58,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Verify pull status condition is successful after deletion sync
-		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonPullSuccessful)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 	})
 
 	t.Run("within limit repo syncs successfully and allows adding more resources", func(t *testing.T) {
@@ -88,7 +88,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
 		// Verify pull status condition is successful after initial sync
-		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonPullSuccessful)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 
 		// Add a second dashboard (still within limit of 5)
 		dashboard2Content := helper.LoadFile("testdata/text-options.json")
@@ -105,7 +105,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
 		// Verify pull status condition is still successful after second sync
-		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonPullSuccessful)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 	})
 
 	// Is only possible to set the first sync to exceed quota when the repo is created.
@@ -421,6 +421,6 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		// Verify pull status condition is successful after deletion sync (delete-only syncs succeed)
-		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonPullSuccessful)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 	})
 }

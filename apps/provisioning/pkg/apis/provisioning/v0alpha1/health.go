@@ -61,12 +61,14 @@ const (
 
 // Condition reasons for the PullStatus condition
 const (
-	// ReasonPullSuccessful indicates the last pull completed successfully.
-	ReasonPullSuccessful = "PullSuccessful"
-	// ReasonPullFailed indicates the last pull failed due to an error.
-	ReasonPullFailed = "PullFailed"
-	// ReasonPullCompletedWithWarnings indicates the last pull completed but with non-critical issues.
-	ReasonPullCompletedWithWarnings = "PullCompletedWithWarnings"
+	// ReasonSuccess indicates the operation completed successfully.
+	ReasonSuccess = "Success"
+	// ReasonFailure indicates the operation failed due to an error.
+	ReasonFailure = "Failure"
+	// ReasonCompletedWithWarnings indicates the operation completed but with non-critical issues.
+	ReasonCompletedWithWarnings = "CompletedWithWarnings"
+	// ReasonResourceInvalid indicates a resource-level issue such as validation errors or ownership conflicts.
+	ReasonResourceInvalid = "ResourceInvalid"
 )
 
 // Condition reasons for the Quota condition

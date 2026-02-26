@@ -13,7 +13,7 @@ func TestEvaluatePullCondition(t *testing.T) {
 	tests := []struct {
 		name           string
 		jobState       provisioning.JobState
-		resultReasons  []provisioning.JobResultReason
+		resultReasons  []string
 		expectedType   string
 		expectedStatus metav1.ConditionStatus
 		expectedReason string
@@ -24,7 +24,7 @@ func TestEvaluatePullCondition(t *testing.T) {
 			jobState:       provisioning.JobStateSuccess,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionTrue,
-			expectedReason: provisioning.ReasonPullSuccessful,
+			expectedReason: provisioning.ReasonSuccess,
 			expectedMsg:    "Pull completed successfully",
 		},
 		{
@@ -32,13 +32,13 @@ func TestEvaluatePullCondition(t *testing.T) {
 			jobState:       provisioning.JobStateWarning,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonPullCompletedWithWarnings,
+			expectedReason: provisioning.ReasonCompletedWithWarnings,
 			expectedMsg:    "Pull completed with warnings",
 		},
 		{
 			name:           "warning state with quota exceeded",
 			jobState:       provisioning.JobStateWarning,
-			resultReasons:  []provisioning.JobResultReason{provisioning.WarningQuotaExceeded},
+			resultReasons:  []string{provisioning.ReasonQuotaExceeded},
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonQuotaExceeded,
@@ -49,16 +49,16 @@ func TestEvaluatePullCondition(t *testing.T) {
 			jobState:       provisioning.JobStateError,
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonPullFailed,
+			expectedReason: provisioning.ReasonFailure,
 			expectedMsg:    "Pull completed with errors",
 		},
 		{
-			name:           "error state with quota reason still uses PullFailed reason",
+			name:           "error state with quota reason still uses Failure reason",
 			jobState:       provisioning.JobStateError,
-			resultReasons:  []provisioning.JobResultReason{provisioning.WarningQuotaExceeded},
+			resultReasons:  []string{provisioning.ReasonQuotaExceeded},
 			expectedType:   provisioning.ConditionTypePullStatus,
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonPullFailed,
+			expectedReason: provisioning.ReasonFailure,
 			expectedMsg:    "Pull completed with errors",
 		},
 	}

@@ -164,7 +164,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
 	resultReasons := progress.ResultReasons()
-	isQuotaWarning := slices.Contains(resultReasons, provisioning.WarningQuotaExceeded)
+	isQuotaWarning := slices.Contains(resultReasons, provisioning.ReasonQuotaExceeded)
 
 	if syncError != nil {
 		logger.Debug("failed to sync the repository", "error", syncError)

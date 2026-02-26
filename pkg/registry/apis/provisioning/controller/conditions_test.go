@@ -267,7 +267,7 @@ func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
 				{
 					Type:    provisioning.ConditionTypePullStatus,
 					Status:  metav1.ConditionTrue,
-					Reason:  provisioning.ReasonPullSuccessful,
+					Reason:  provisioning.ReasonSuccess,
 					Message: "Pull completed successfully",
 				},
 			},
@@ -288,7 +288,7 @@ func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
 				{
 					Type:               provisioning.ConditionTypePullStatus,
 					Status:             metav1.ConditionTrue,
-					Reason:             provisioning.ReasonPullSuccessful,
+					Reason:             provisioning.ReasonSuccess,
 					Message:            "Pull completed successfully",
 					ObservedGeneration: 1,
 					LastTransitionTime: fixedTime,
@@ -305,7 +305,7 @@ func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
 				{
 					Type:    provisioning.ConditionTypePullStatus,
 					Status:  metav1.ConditionTrue,
-					Reason:  provisioning.ReasonPullSuccessful,
+					Reason:  provisioning.ReasonSuccess,
 					Message: "Pull completed successfully",
 				},
 			},
@@ -325,7 +325,7 @@ func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
 				{
 					Type:               provisioning.ConditionTypePullStatus,
 					Status:             metav1.ConditionTrue,
-					Reason:             provisioning.ReasonPullSuccessful,
+					Reason:             provisioning.ReasonSuccess,
 					Message:            "Pull completed successfully",
 					ObservedGeneration: 1,
 					LastTransitionTime: fixedTime,
@@ -342,7 +342,7 @@ func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
 				{
 					Type:    provisioning.ConditionTypePullStatus,
 					Status:  metav1.ConditionFalse,
-					Reason:  provisioning.ReasonPullFailed,
+					Reason:  provisioning.ReasonFailure,
 					Message: "network error",
 				},
 			},
@@ -372,7 +372,7 @@ func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
 				{
 					Type:    provisioning.ConditionTypePullStatus,
 					Status:  metav1.ConditionTrue,
-					Reason:  provisioning.ReasonPullSuccessful,
+					Reason:  provisioning.ReasonSuccess,
 					Message: "Pull completed successfully",
 				},
 			},

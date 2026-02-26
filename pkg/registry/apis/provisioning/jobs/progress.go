@@ -53,7 +53,7 @@ type jobProgressRecorder struct {
 	summaries           map[string]*provisioning.JobResourceSummary
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
-	resultReasons       map[provisioning.JobResultReason]struct{}
+	resultReasons       map[string]struct{}
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
@@ -63,7 +63,7 @@ func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
-		resultReasons:       make(map[provisioning.JobResultReason]struct{}),
+		resultReasons:       make(map[string]struct{}),
 	}
 }
 
@@ -156,7 +156,7 @@ func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 	r.summaries = summaries
 
 	if !keepWarnings {
-		r.resultReasons = make(map[provisioning.JobResultReason]struct{})
+		r.resultReasons = make(map[string]struct{})
 	}
 }
 
@@ -355,14 +355,14 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	return jobStatus
 }
 
-func (r *jobProgressRecorder) ResultReasons() []provisioning.JobResultReason {
+func (r *jobProgressRecorder) ResultReasons() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	if len(r.resultReasons) == 0 {
 		return nil
 	}
-	reasons := make([]provisioning.JobResultReason, 0, len(r.resultReasons))
+	reasons := make([]string, 0, len(r.resultReasons))
 	for reason := range r.resultReasons {
 		reasons = append(reasons, reason)
 	}

@@ -251,36 +251,36 @@ func TestNewJobResourceResult_WithErrorAsRegularError(t *testing.T) {
 }
 
 func TestJobResourceResult_WarningReason(t *testing.T) {
-	t.Run("QuotaExceededError returns WarningQuotaExceeded", func(t *testing.T) {
+	t.Run("QuotaExceededError returns ReasonQuotaExceeded", func(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithError(quotaErr).Build()
 
-		assert.Equal(t, provisioning.WarningQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
 	})
 
-	t.Run("wrapped QuotaExceededError returns WarningQuotaExceeded", func(t *testing.T) {
+	t.Run("wrapped QuotaExceededError returns ReasonQuotaExceeded", func(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		wrapped := fmt.Errorf("sync failed: %w", quotaErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.WarningQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
 	})
 
-	t.Run("ResourceValidationError returns WarningValidationError", func(t *testing.T) {
+	t.Run("ResourceValidationError returns ReasonResourceInvalid", func(t *testing.T) {
 		validationErr := resources.NewResourceValidationError(errors.New("bad field"))
 		result := NewResourceResult().WithError(validationErr).Build()
 
-		assert.Equal(t, provisioning.WarningValidationError, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
 	})
 
-	t.Run("ResourceOwnershipConflictError returns WarningOwnershipConflict", func(t *testing.T) {
+	t.Run("ResourceOwnershipConflictError returns ReasonResourceInvalid", func(t *testing.T) {
 		ownershipErr := resources.NewResourceOwnershipConflictError("res",
 			utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "a"},
 			utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "b"},
 		)
 		result := NewResourceResult().WithError(ownershipErr).Build()
 
-		assert.Equal(t, provisioning.WarningOwnershipConflict, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
 	})
 
 	t.Run("nil warning returns empty reason", func(t *testing.T) {
@@ -297,6 +297,6 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithWarning(quotaErr).Build()
 
-		assert.Equal(t, provisioning.WarningQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
 	})
 }

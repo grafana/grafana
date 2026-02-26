@@ -231,19 +231,19 @@ func (_c *MockJobProgressRecorder_ResetResults_Call) RunAndReturn(run func(bool)
 }
 
 // ResultReasons provides a mock function with no fields
-func (_m *MockJobProgressRecorder) ResultReasons() []v0alpha1.JobResultReason {
+func (_m *MockJobProgressRecorder) ResultReasons() []string {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for ResultReasons")
 	}
 
-	var r0 []v0alpha1.JobResultReason
-	if rf, ok := ret.Get(0).(func() []v0alpha1.JobResultReason); ok {
+	var r0 []string
+	if rf, ok := ret.Get(0).(func() []string); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]v0alpha1.JobResultReason)
+			r0 = ret.Get(0).([]string)
 		}
 	}
 
@@ -267,12 +267,12 @@ func (_c *MockJobProgressRecorder_ResultReasons_Call) Run(run func()) *MockJobPr
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_ResultReasons_Call) Return(_a0 []v0alpha1.JobResultReason) *MockJobProgressRecorder_ResultReasons_Call {
+func (_c *MockJobProgressRecorder_ResultReasons_Call) Return(_a0 []string) *MockJobProgressRecorder_ResultReasons_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockJobProgressRecorder_ResultReasons_Call) RunAndReturn(run func() []v0alpha1.JobResultReason) *MockJobProgressRecorder_ResultReasons_Call {
+func (_c *MockJobProgressRecorder_ResultReasons_Call) RunAndReturn(run func() []string) *MockJobProgressRecorder_ResultReasons_Call {
 	_c.Call.Return(run)
 	return _c
 }

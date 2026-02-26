@@ -10,10 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// classifyWarning returns the warning reason for err, or "" if it is not a warning.
-func classifyWarning(err error) provisioning.JobResultReason {
+// classifyWarning returns the warning reason for err and whether it is a warning.
+func classifyWarning(err error) (string, bool) {
 	if err == nil {
-		return provisioning.NoWarning
+		return "", false
 	}
 
 	var validationErr *resources.ResourceValidationError
@@ -22,19 +22,20 @@ func classifyWarning(err error) provisioning.JobResultReason {
 
 	switch {
 	case errors.As(err, &quotaExceededErr):
-		return provisioning.WarningQuotaExceeded
+		return provisioning.ReasonQuotaExceeded, true
 	case errors.As(err, &validationErr):
-		return provisioning.WarningValidationError
+		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &ownershipErr):
-		return provisioning.WarningOwnershipConflict
+		return provisioning.ReasonResourceInvalid, true
 	default:
-		return provisioning.NoWarning
+		return "", false
 	}
 }
 
 // isWarningError checks if the given error should be treated as a warning.
 func isWarningError(err error) bool {
-	return classifyWarning(err) != provisioning.NoWarning
+	_, ok := classifyWarning(err)
+	return ok
 }
 
 // JobResourceResult represents the result of a resource operation in a job.
@@ -207,6 +208,7 @@ func (r JobResourceResult) Warning() error {
 }
 
 // WarningReason returns the warning reason for this result's warning, or "" if none.
-func (r JobResourceResult) WarningReason() provisioning.JobResultReason {
-	return classifyWarning(r.warning)
+func (r JobResourceResult) WarningReason() string {
+	reason, _ := classifyWarning(r.warning)
+	return reason
 }
