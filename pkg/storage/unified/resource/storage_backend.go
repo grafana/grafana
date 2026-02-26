@@ -466,7 +466,8 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			}
 
 			// update the next end key for pagination. We will use this to continue scanning in the next batch
-			nextEndKey = k.Prefix()
+			// the next end key is the immediate previous key for the current key
+			nextEndKey = previousKey(dataKey)
 
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
@@ -525,6 +526,23 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	}
 
 	return nil
+}
+
+// previousKey returns the immediate previous key for the given key
+// for example, if the key is "unified/data/dashboard.grafana.app/dashboards/123-bbb",
+// the previous key will be "unified/data/dashboard.grafana.app/dashboards/123-bba"
+func previousKey(key string) string {
+	keyBuf := []byte(key)
+	buf := make([]byte, len(keyBuf))
+	copy(buf, keyBuf)
+	for i := len(buf) - 1; i >= 0; i-- {
+		if buf[i] > 0x00 {
+			buf[i] = buf[i] - 1
+			buf = buf[:i+1]
+			return string(buf)
+		}
+	}
+	return string(buf)
 }
 
 func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
