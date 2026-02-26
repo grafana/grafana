@@ -161,7 +161,7 @@ describe('GroupByVariableForm', () => {
     const combobox = screen.getByRole('combobox');
     await user.click(combobox);
     await user.click(await screen.findByRole('option', { name: 'job' }));
-    expect(mockOnDefaultValueChange).toHaveBeenCalledWith([{ label: 'job', value: 'job' }]);
+    expect(mockOnDefaultValueChange).toHaveBeenCalledWith([expect.objectContaining({ label: 'job', value: 'job' })]);
   });
 
   it('should call onDefaultValueChange when removing a default value via pill', async () => {
@@ -175,7 +175,7 @@ describe('GroupByVariableForm', () => {
       onDefaultValueChange: mockOnDefaultValueChange,
     });
 
-    await user.click(screen.getByRole('button', { name: 'Remove job' }));
+    await user.click(screen.getByRole('button', { name: 'Remove' }));
     expect(mockOnDefaultValueChange).toHaveBeenCalledWith([]);
   });
 

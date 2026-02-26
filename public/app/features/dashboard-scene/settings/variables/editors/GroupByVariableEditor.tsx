@@ -2,10 +2,9 @@ import { noop } from 'lodash';
 import { FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
+import { DataSourceInstanceSettings, MetricFindValue, SelectableValue, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GroupByVariable, SceneVariable } from '@grafana/scenes';
-import { ComboboxOption } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { GroupByVariableForm } from '../components/GroupByVariableForm';
@@ -49,21 +48,21 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     onRunQuery();
   };
 
-  const onDefaultValueChange = (options: Array<ComboboxOption<string>>) => {
+  const onDefaultValueChange = (options: Array<SelectableValue<string>>) => {
     if (options.length === 0) {
       variable.setState({ defaultValue: undefined });
     } else {
       variable.setState({
         defaultValue: {
-          value: options.map((opt) => opt.value),
-          text: options.map((opt) => opt.label ?? opt.value),
+          value: options.map((opt) => opt.value!),
+          text: options.map((opt) => opt.label ?? opt.value ?? ''),
         },
       });
     }
     onRunQuery();
   };
 
-  const defaultValueSelection: Array<ComboboxOption<string>> = defaultValue
+  const defaultValueSelection: Array<SelectableValue<string>> = defaultValue
     ? Array.isArray(defaultValue.value)
       ? defaultValue.value.map((v, i) => {
           const texts = defaultValue.text;

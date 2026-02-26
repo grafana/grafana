@@ -1,11 +1,11 @@
 import { FormEvent, useCallback } from 'react';
 
-import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
+import { DataSourceInstanceSettings, MetricFindValue, SelectableValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { DataSourceRef } from '@grafana/schema';
-import { Alert, ComboboxOption, Stack, CodeEditor, Field, Switch } from '@grafana/ui';
+import { Alert, Stack, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DefaultValueEditor } from './DefaultValueEditor';
@@ -20,9 +20,9 @@ export interface GroupByVariableFormProps {
   defaultOptions?: MetricFindValue[];
   allowCustomValue: boolean;
   onAllowCustomValueChange: (event: FormEvent<HTMLInputElement>) => void;
-  defaultValue?: Array<ComboboxOption<string>>;
-  defaultValueOptions?: Array<ComboboxOption<string>>;
-  onDefaultValueChange?: (options: Array<ComboboxOption<string>>) => void;
+  defaultValue?: Array<SelectableValue<string>>;
+  defaultValueOptions?: Array<SelectableValue<string>>;
+  onDefaultValueChange?: (options: Array<SelectableValue<string>>) => void;
   inline?: boolean;
   datasourceSupported: boolean;
 }

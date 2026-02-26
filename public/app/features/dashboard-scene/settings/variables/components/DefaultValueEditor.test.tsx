@@ -47,7 +47,7 @@ describe('DefaultValueEditor', () => {
       ],
     });
     expect(screen.getByText('job')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remove job' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Remove' })).toHaveLength(1);
   });
 
   it('should show options in dropdown', async () => {
@@ -77,7 +77,7 @@ describe('DefaultValueEditor', () => {
     await user.click(combobox);
     await user.click(await screen.findByRole('option', { name: 'job' }));
 
-    expect(onChange).toHaveBeenCalledWith([{ label: 'job', value: 'job' }]);
+    expect(onChange).toHaveBeenCalledWith([expect.objectContaining({ label: 'job', value: 'job' })]);
   });
 
   it('should call onChange when removing a value via pill', async () => {
@@ -94,9 +94,9 @@ describe('DefaultValueEditor', () => {
       onChange,
     });
 
-    const removeButton = screen.getByRole('button', { name: 'Remove job' });
-    await user.click(removeButton);
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove' });
+    await user.click(removeButtons[0]);
 
-    expect(onChange).toHaveBeenCalledWith([{ label: 'instance', value: 'instance' }]);
+    expect(onChange).toHaveBeenCalledWith([expect.objectContaining({ label: 'instance', value: 'instance' })]);
   });
 });

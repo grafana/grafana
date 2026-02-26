@@ -123,7 +123,7 @@ describe('GroupByVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection
     );
     expect(within(section).getByText('job')).toBeInTheDocument();
-    expect(within(section).getByRole('button', { name: 'Remove job' })).toBeInTheDocument();
+    expect(within(section).getByRole('button', { name: 'Remove' })).toBeInTheDocument();
   });
 
   it('should update variable defaultValue when selecting a value from dropdown', async () => {
