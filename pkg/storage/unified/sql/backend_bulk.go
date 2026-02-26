@@ -139,8 +139,14 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 	}
 	defer b.bulkLock.Finish(setting.Collection)
 
-	// We may want to first write parquet, then read parquet
-	if b.dialect.DialectName() == "sqlite" {
+	// Use a temporary Parquet file to separate read and write for SQLite.
+	// Enabled via config (migration_parquet_buffer) or context (automatic retry on failure).
+	useParquet := b.migrationParquetBuffer
+	clientCtx := inprocgrpc.ClientContext(ctx) // inprocgrpc contains the migrator context
+	if !useParquet && clientCtx != nil {
+		useParquet = resource.ParquetBufferFromContext(clientCtx)
+	}
+	if useParquet && b.dialect.DialectName() == "sqlite" {
 		file, err := os.CreateTemp("", "grafana-bulk-export-*.parquet")
 		if err != nil {
 			return &resourcepb.BulkResponse{
@@ -172,8 +178,7 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 		}
 	}
 
-	// If provided, reuse the inproc transaction for SQLite
-	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil && b.dialect.DialectName() == "sqlite" {
+	if clientCtx != nil && b.dialect.DialectName() == "sqlite" {
 		if externalTx := resource.TransactionFromContext(clientCtx); externalTx != nil {
 			b.log.Info("Using SQLite transaction from client context")
 			rsp := &resourcepb.BulkResponse{}
