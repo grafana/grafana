@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "name": "@grafana/api-clients",
-  "version": "12.4.0-pre",
+  "version": "13.0.0-pre",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",

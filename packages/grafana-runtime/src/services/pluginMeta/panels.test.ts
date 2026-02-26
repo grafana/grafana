@@ -6,6 +6,7 @@ import {
   getListedPanelPluginIds,
   getPanelPluginMeta,
   getPanelPluginMetas,
+  getPanelPluginMetasMap,
   getPanelPluginVersion,
   isPanelPluginInstalled,
   refetchPanelPluginMetas,
@@ -44,6 +45,13 @@ describe('when useMTPlugins flag is enabled', () => {
       const panels = await getPanelPluginMetas();
 
       expect(panels).toEqual([]);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('getPanelPluginMetasMap should call initPluginMetas and return correct result', async () => {
+      const panels = await getPanelPluginMetasMap();
+
+      expect(panels).toEqual({});
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
@@ -89,10 +97,27 @@ describe('when useMTPlugins flag is enabled', () => {
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
+    it('getPanelPluginMetasMap should not call initPluginMetas and return correct result', async () => {
+      const panels = await getPanelPluginMetasMap();
+
+      expect(panels).toEqual({ 'grafana-test-panel': panel });
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
     it('getPanelPluginMeta should not call initPluginMetas and return correct result', async () => {
       const result = await getPanelPluginMeta('grafana-test-panel');
 
       expect(result).toEqual(panel);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getPanelPluginMeta should not call initPluginMetas and return correct result for correct aliasIDs', async () => {
+      const aliased = { ...panel, aliasIDs: ['some-alias'] };
+      setPanelPluginMetas({ 'aliased-test-panel': aliased });
+
+      const result = await getPanelPluginMeta('some-alias');
+
+      expect(result).toEqual(aliased);
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
@@ -102,8 +127,18 @@ describe('when useMTPlugins flag is enabled', () => {
       expect(result).toEqual(null);
     });
 
-    it('isPanelPluginInstalled should not call initPluginMetas and return true', async () => {
+    it('isPanelPluginInstalled should not call initPluginMetas and return true for correct id', async () => {
       const installed = await isPanelPluginInstalled('grafana-test-panel');
+
+      expect(installed).toEqual(true);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('isPanelPluginInstalled should not call initPluginMetas and return true for correct aliasIDs', async () => {
+      const aliased = { ...panel, aliasIDs: ['some-alias'] };
+      setPanelPluginMetas({ 'aliased-test-panel': aliased });
+
+      const installed = await isPanelPluginInstalled('some-alias');
 
       expect(installed).toEqual(true);
       expect(initPluginMetasMock).not.toHaveBeenCalled();
@@ -115,8 +150,18 @@ describe('when useMTPlugins flag is enabled', () => {
       expect(result).toEqual(false);
     });
 
-    it('getPanelPluginVersion should not call initPluginMetas and return correct result', async () => {
+    it('getPanelPluginVersion should not call initPluginMetas and return correct result for correct id', async () => {
       const result = await getPanelPluginVersion('grafana-test-panel');
+
+      expect(result).toEqual('1.0.0');
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getPanelPluginVersion should not call initPluginMetas and return correct result for correct aliasIDs', async () => {
+      const aliased = { ...panel, aliasIDs: ['some-alias'] };
+      setPanelPluginMetas({ 'aliased-test-panel': aliased });
+
+      const result = await getPanelPluginVersion('some-alias');
 
       expect(result).toEqual('1.0.0');
       expect(initPluginMetasMock).not.toHaveBeenCalled();
@@ -217,6 +262,13 @@ describe('when useMTPlugins flag is disabled', () => {
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
+    it('getPanelPluginMetasMap should not call initPluginMetas and return correct result', async () => {
+      const panels = await getPanelPluginMetasMap();
+
+      expect(panels).toEqual({});
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
     it('getPanelPluginMeta should not call initPluginMetas and return correct result', async () => {
       const result = await getPanelPluginMeta('grafana-test-panel');
 
@@ -256,6 +308,13 @@ describe('when useMTPlugins flag is disabled', () => {
       const panels = await getPanelPluginMetas();
 
       expect(panels).toEqual([panel]);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getPanelPluginMetasMap should not call initPluginMetas and return correct result', async () => {
+      const panels = await getPanelPluginMetasMap();
+
+      expect(panels).toEqual({ 'grafana-test-panel': panel });
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
@@ -395,6 +454,31 @@ describe('immutability', () => {
     // assert that we have not mutated the source
     expect(panels[0].info.author.name).toEqual('Grafana');
     expect(panels[0].info.links).toHaveLength(0);
+  });
+
+  it('getPanelPluginMetasMap should return a deep clone', async () => {
+    const mutatedPanels = await getPanelPluginMetasMap();
+
+    // assert we have correct props
+    expect(mutatedPanels).toEqual({ 'grafana-test-panel': panel });
+    expect(mutatedPanels['grafana-test-panel'].info.author.name).toEqual('Grafana');
+    expect(mutatedPanels['grafana-test-panel'].info.links).toHaveLength(0);
+
+    // mutate deep props
+    mutatedPanels['grafana-test-panel'].info.author.name = '';
+    mutatedPanels['grafana-test-panel'].info.links.push({ name: '', url: '' });
+
+    // assert we have mutated props
+    expect(mutatedPanels['grafana-test-panel'].info.author.name).toEqual('');
+    expect(mutatedPanels['grafana-test-panel'].info.links).toHaveLength(1);
+    expect(mutatedPanels['grafana-test-panel'].info.links[0]).toEqual({ name: '', url: '' });
+
+    const panels = await getPanelPluginMetasMap();
+
+    // assert that we have not mutated the source
+    expect(panels).toEqual({ 'grafana-test-panel': panel });
+    expect(panels['grafana-test-panel'].info.author.name).toEqual('Grafana');
+    expect(panels['grafana-test-panel'].info.links).toHaveLength(0);
   });
 
   it('getPanelPluginMeta should return a deep clone', async () => {

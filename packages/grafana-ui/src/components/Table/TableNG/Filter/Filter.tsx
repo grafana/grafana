@@ -59,6 +59,8 @@ export const Filter = memo(
         className={styles.headerFilter}
         ref={ref}
         type="button"
+        aria-haspopup="dialog"
+        aria-pressed={isPopoverVisible}
         aria-label={t('grafana-ui.table.filter.button', `Filter {{name}}`, {
           name: field ? getDisplayName(field) : '',
         })}

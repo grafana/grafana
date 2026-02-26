@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
 // NewStaticStorage -- temporary shim
@@ -23,7 +24,9 @@ func NewStaticStorage(
 }
 
 type staticService struct {
-	cfg *setting.Cfg
+	cfg          *setting.Cfg
+	statusReader unifiedmigrations.MigrationStatusReader
+	metrics      *Metrics
 }
 
 // Used in tests
@@ -41,6 +44,9 @@ func (m *staticService) SetMode(gr schema.GroupResource, mode rest.DualWriterMod
 
 func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
 	config := m.cfg.UnifiedStorage[gr.String()]
+
+	m.LogStorageModeComparison(gr, config.DualWriterMode)
+
 	switch config.DualWriterMode {
 	case rest.Mode1:
 		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true}, nil
@@ -54,6 +60,23 @@ func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.Storage,
 		fallthrough
 	default:
 		return legacy, nil
+	}
+}
+
+// LogStorageModeComparison implements Service.
+func (m *staticService) LogStorageModeComparison(gr schema.GroupResource, configMode rest.DualWriterMode) {
+	logModeComparison(m.statusReader, m.metrics, gr, storageModeFromConfigMode(configMode))
+}
+
+// storageModeFromConfigMode maps a DualWriterMode config value to a StorageMode.
+func storageModeFromConfigMode(mode rest.DualWriterMode) unifiedmigrations.StorageMode {
+	switch {
+	case mode >= rest.Mode4:
+		return unifiedmigrations.StorageModeUnified
+	case mode >= rest.Mode1:
+		return unifiedmigrations.StorageModeDualWrite
+	default:
+		return unifiedmigrations.StorageModeLegacy
 	}
 }
 

@@ -3,17 +3,17 @@ import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_COLORS, SidebarSize } from '../../constants';
-import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { SegmentedToggle, SegmentedToggleProps } from '../../SegmentedToggle';
+import { QueryEditorType, SidebarSize } from '../../constants';
+import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { EMPTY_ALERT } from '../types';
 
-import { AlertIndicator } from './AlertIndicator';
-import { DraggableList } from './DraggableList';
-import { QueryCard } from './QueryCard';
-import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
-import { TransformationCard } from './TransformationCard';
-import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
+import { AlertsView } from './Alerts/AlertsView';
+import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
+import { SidebarFooter } from './SidebarFooter';
+import { SidebarHeaderActions } from './SidebarHeaderActions';
 
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;
@@ -25,76 +25,50 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   setSidebarSize,
 }: QueryEditorSidebarProps) {
   const styles = useStyles2(getStyles);
-  const isMini = sidebarSize === SidebarSize.Mini;
-  const { queries } = useQueryRunnerContext();
-  const { transformations } = usePanelContext();
-  const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
+  const { setSelectedAlert, cardType } = useQueryEditorUIContext();
+  const { alertRules, loading } = useAlertingContext();
 
-  const toggleSize = () => {
-    setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
+  const handleViewChange = (view: QueryEditorType) => {
+    setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
   };
+
+  const alertsLabel = loading
+    ? t('query-editor-next.sidebar.alerts-loading', 'Alerts')
+    : t('query-editor-next.sidebar.alerts', 'Alerts ({{count}})', { count: alertRules.length });
+
+  const viewOptions: SegmentedToggleProps<QueryEditorType>['options'] = [
+    { value: QueryEditorType.Query, label: t('query-editor-next.sidebar.data', 'Data'), icon: 'database' },
+    { value: QueryEditorType.Alert, label: alertsLabel, icon: 'bell' },
+  ];
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <Stack direction="row" alignItems="center" gap={1} justifyContent="space-between">
-          <Stack direction="row" alignItems="center" gap={1}>
-            <IconButton
-              name={isMini ? 'maximize-left' : 'compress-alt-left'}
-              size="sm"
-              variant="secondary"
-              onClick={toggleSize}
-              aria-label={t('query-editor-next.sidebar.toggle-size', 'Toggle sidebar size')}
-            />
-            <Text weight="medium" variant="h6">
-              {t('query-editor-next.sidebar.data', 'Data')}
-            </Text>
-          </Stack>
-          <AlertIndicator />
-        </Stack>
-      </div>
+      <SidebarHeaderActions sidebarSize={sidebarSize} setSidebarSize={setSidebarSize}>
+        <SegmentedToggle
+          options={viewOptions}
+          value={cardType}
+          onChange={handleViewChange}
+          aria-label={t('query-editor-next.sidebar.view-toggle', 'View')}
+          showBackground={false}
+        />
+      </SidebarHeaderActions>
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
       <ScrollContainer overflowX="hidden">
         <div className={styles.content}>
-          <QuerySidebarCollapsableHeader
-            label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
-          >
-            <DraggableList
-              droppableId="query-sidebar-queries"
-              items={queries}
-              keyExtractor={(query) => query.refId}
-              renderItem={(query) => <QueryCard query={query} />}
-              onDragEnd={onQueryDragEnd}
-            />
-          </QuerySidebarCollapsableHeader>
-          {transformations.length > 0 && (
-            <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
-              <DraggableList
-                droppableId="query-sidebar-transformations"
-                items={transformations}
-                keyExtractor={(t) => t.transformId}
-                renderItem={(t) => <TransformationCard transformation={t} />}
-                onDragEnd={onTransformationDragEnd}
-              />
-            </QuerySidebarCollapsableHeader>
+          {cardType === QueryEditorType.Alert ? (
+            <AlertsView alertRules={alertRules} />
+          ) : (
+            <QueriesAndTransformationsView />
           )}
         </div>
       </ScrollContainer>
-      <div className={styles.footer}>
-        <Text weight="medium" variant="bodySmall">
-          {t('query-editor-next.sidebar.data-mode', 'Data Mode')}
-        </Text>
-      </div>
+      <SidebarFooter />
     </div>
   );
 });
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    header: css({
-      background: QUERY_EDITOR_COLORS.card.headerBg,
-      padding: theme.spacing(1, 1.5),
-    }),
     container: css({
       height: '100%',
       display: 'flex',
@@ -106,11 +80,6 @@ function getStyles(theme: GrafanaTheme2) {
     content: css({
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
-    }),
-    footer: css({
-      marginTop: 'auto',
-      background: QUERY_EDITOR_COLORS.card.headerBg,
-      padding: theme.spacing(1, 1.5),
     }),
   };
 }

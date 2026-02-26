@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -6,6 +7,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import {
   getNotificationConfigNavId,
+  isTabActive,
   useContactPointsNav,
   useNotificationConfigNav,
   useNotificationPoliciesNav,
@@ -15,8 +17,14 @@ import {
 
 // Mock dependencies
 jest.mock('react-router-dom-v5-compat', () => ({
-  useLocation: jest.fn(() => ({ pathname: '/alerting/notifications' })),
+  useLocation: jest.fn(),
 }));
+
+const mockUseLocation = jest.mocked(useLocation);
+
+function mockLocation(pathname: string) {
+  mockUseLocation.mockReturnValue({ pathname, search: '', hash: '', state: null, key: 'default' });
+}
 
 jest.mock('app/types/store', () => ({
   useSelector: jest.fn((selector) =>
@@ -45,6 +53,7 @@ describe('useNotificationConfigNav', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLocation('/alerting/notifications');
   });
 
   afterEach(() => {
@@ -101,6 +110,76 @@ describe('useNotificationConfigNav', () => {
       expect(result.current.pageNav?.children?.[1].id).toBe('notification-config-templates');
     });
 
+    it('should only mark the time intervals tab as active when on time intervals path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/routes/mute-timing');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-time-intervals');
+    });
+
+    it('should only mark the templates tab as active when on templates path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/notifications/templates');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-templates');
+    });
+
+    it('should only mark the contact points tab as active when on contact points path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/notifications');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-contact-points');
+    });
+
+    it('should only mark the notification policies tab as active when on routes path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/routes');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-policies');
+    });
+
+    it('should correctly activate tabs when URL has extra segments beyond the tab path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/routes/mute-timing/new/123');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-time-intervals');
+    });
+
     it('should not show tabs bar when only one tab is visible', () => {
       // Only allow contact points
       mockHasPermission.mockImplementation((action: AccessControlAction) => {
@@ -146,11 +225,49 @@ describe('getNotificationConfigNavId', () => {
   });
 });
 
+describe('isTabActive', () => {
+  it('should return true when the location exactly matches the tab path', () => {
+    expect(isTabActive('/alerting/routes', '/alerting/routes')).toBe(true);
+    expect(isTabActive('/alerting/notifications', '/alerting/notifications')).toBe(true);
+  });
+
+  it('should return true when the location is a deeper URL under the tab path', () => {
+    expect(isTabActive('/alerting/routes/edit/123', '/alerting/routes')).toBe(true);
+    expect(isTabActive('/alerting/routes/mute-timing/new/456', '/alerting/routes/mute-timing')).toBe(true);
+  });
+
+  it('should return false when the location does not match the tab path', () => {
+    expect(isTabActive('/alerting/notifications', '/alerting/routes')).toBe(false);
+    expect(isTabActive('/alerting/alerts', '/alerting/routes')).toBe(false);
+  });
+
+  it('should return false when a more specific sub-path matches instead', () => {
+    // /alerting/routes/mute-timing is a sub-path of /alerting/routes
+    expect(isTabActive('/alerting/routes/mute-timing', '/alerting/routes')).toBe(false);
+    expect(isTabActive('/alerting/routes/mute-timing/new', '/alerting/routes')).toBe(false);
+
+    // /alerting/notifications/templates is a sub-path of /alerting/notifications
+    expect(isTabActive('/alerting/notifications/templates', '/alerting/notifications')).toBe(false);
+    expect(isTabActive('/alerting/notifications/templates/edit', '/alerting/notifications')).toBe(false);
+  });
+
+  it('should not treat a path sharing the same prefix but without a segment boundary as a match', () => {
+    expect(isTabActive('/alerting/routesx', '/alerting/routes')).toBe(false);
+    expect(isTabActive('/alerting/notificationsx', '/alerting/notifications')).toBe(false);
+  });
+
+  it('should not treat a sub-path prefix without a segment boundary as a more specific match', () => {
+    expect(isTabActive('/alerting/routes/mute-timingx', '/alerting/routes')).toBe(true);
+    expect(isTabActive('/alerting/notifications/templatesx', '/alerting/notifications')).toBe(true);
+  });
+});
+
 describe('consolidated navigation hooks', () => {
   const originalFeatureToggles = config.featureToggles;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLocation('/alerting/notifications');
     mockHasPermission.mockReturnValue(true);
   });
 

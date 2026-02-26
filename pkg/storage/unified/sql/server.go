@@ -8,22 +8,16 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 type QOSEnqueueDequeuer interface {
@@ -36,7 +30,6 @@ type QOSEnqueueDequeuer interface {
 type ServerOptions struct {
 	Backend          resource.StorageBackend
 	OverridesService *resource.OverridesService
-	DB               infraDB.DB
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
 	Reg              prometheus.Registerer
@@ -162,90 +155,14 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 }
 
 func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	if opts.Backend != nil {
-		// TODO: we should probably have a proper interface for diagnostics/lifecycle
-		resourceOpts.Backend = opts.Backend
-		return nil
+	if opts.Backend == nil {
+		return fmt.Errorf("missing storage backend")
 	}
 
-	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
-	if err != nil {
-		return err
+	resourceOpts.Backend = opts.Backend
+	if diagnostics, ok := opts.Backend.(resourcepb.DiagnosticsServer); ok {
+		resourceOpts.Diagnostics = diagnostics
 	}
-
-	isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-		opts.Cfg.SectionWithEnvOverrides("resource_api"))
-
-	if !opts.Cfg.EnableSQLKVBackend {
-		backend, err := NewBackend(BackendOptions{
-			DBProvider:           eDB,
-			Reg:                  opts.Reg,
-			IsHA:                 isHA,
-			storageMetrics:       opts.StorageMetrics,
-			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge,
-			GarbageCollection: GarbageCollectionConfig{
-				Enabled:          opts.Cfg.EnableGarbageCollection,
-				Interval:         opts.Cfg.GarbageCollectionInterval,
-				BatchSize:        opts.Cfg.GarbageCollectionBatchSize,
-				MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
-				DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
-			},
-			DisableStorageServices: opts.DisableStorageServices,
-		})
-		if err != nil {
-			return err
-		}
-		resourceOpts.Backend = backend
-		resourceOpts.Diagnostics = backend
-		resourceOpts.Lifecycle = backend
-		return nil
-	}
-
-	// Initialize database connection first
-	ctx := context.Background()
-	dbConn, err := eDB.Init(ctx)
-	if err != nil {
-		return fmt.Errorf("error initializing DB: %w", err)
-	}
-	dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
-	if dialect == nil {
-		return fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
-	}
-
-	// Create sqlkv with the standard library DB
-	sqlkv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
-	if err != nil {
-		return fmt.Errorf("error creating sqlkv: %s", err)
-	}
-
-	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:              sqlkv,
-		Tracer:               opts.Tracer,
-		Reg:                  opts.Reg,
-		UseChannelNotifier:   !isHA,
-		Log:                  log.New("storage-backend"),
-		DBKeepAlive:          eDB,
-		LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge,
-	}
-
-	if opts.Cfg.EnableSQLKVCompatibilityMode {
-		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-			Dialect: dialect,
-			DB:      dbConn,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create resource version manager: %w", err)
-		}
-
-		kvBackendOpts.RvManager = rvManager
-	}
-
-	kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
-	if err != nil {
-		return err
-	}
-	resourceOpts.Backend = kvBackend
-	resourceOpts.Diagnostics = kvBackend
 	return nil
 }
 

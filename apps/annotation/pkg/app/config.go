@@ -7,10 +7,12 @@ import (
 )
 
 // AnnotationConfig is the app-specific config for the annotation app. The
-// registry can pass a TagHandler implementation here to wire the /tags
-// resource route into the app without importing registry types.
+// registry can pass handler implementations here to wire custom resource
+// routes into the app without importing registry types.
+// Function signatures must match app.CustomRouteHandler from the app-sdk.
 type AnnotationConfig struct {
 	// TagHandler is the handler function for the GET /tags custom route.
-	// The function signature matches app.CustomRouteHandler from the app-sdk.
 	TagHandler func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error
+	// SearchHandler is the handler function for the GET /search custom route.
+	SearchHandler func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error
 }

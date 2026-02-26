@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -30,7 +29,7 @@ type ConnectionClient interface {
 	// as we cannot guarantee which resource the caller intended to get.
 	//
 	// Deprecated: Use /apis/<type>.datasource.grafana.app/v0alpha1/namespaces/{ns}/datasources/{uid} instead.
-	GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnectionList, error)
+	GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*dsV0.DataSourceConnectionList, error)
 }
 
 var _ ConnectionClient = (*connectionClientImpl)(nil)
@@ -49,21 +48,21 @@ func NewConnectionClient(cfg *setting.Cfg, provider grafanaapiserver.DirectRestC
 	}
 }
 
-// GetConnectionByUID queries GET /apis/query.grafana.app/v0alpha1/namespaces/{ns}/connections/{uid}
+// GetConnectionByUID queries GET /apis/datasource.grafana.app/v0alpha1/namespaces/{ns}/connections/{uid}
 // Deprecated: Use GetConnectionByTypeAndUID when type is known.
-func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnectionList, error) {
+func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*dsV0.DataSourceConnectionList, error) {
 	namespace := cl.namespaceMapper(c.OrgID)
 
 	cfg := cl.clientConfigProvider.GetDirectRestConfig(c)
 	cfg = dynamic.ConfigFor(cfg) // This sets NegotiatedSerializer, required for RESTClientFor
-	cfg.GroupVersion = &schema.GroupVersion{Group: "query.grafana.app", Version: "v0alpha1"}
+	cfg.GroupVersion = &dsV0.SchemeGroupVersion
 	rest, err := rest.RESTClientFor(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rest client: %w", err)
 	}
 
 	var statusCode int
-	result := rest.Get().AbsPath("apis", "query.grafana.app", "v0alpha1", "namespaces", namespace, "connections").Param("name", uid).Do(c.Req.Context()).StatusCode(&statusCode)
+	result := rest.Get().AbsPath("apis", dsV0.GROUP, dsV0.VERSION, "namespaces", namespace, "connections").Param("name", uid).Do(c.Req.Context()).StatusCode(&statusCode)
 	err = result.Error()
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -74,7 +73,7 @@ func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, u
 
 	body, _ := result.Raw() // err has already been checked
 
-	var conn queryV0.DataSourceConnectionList
+	var conn dsV0.DataSourceConnectionList
 	if err := json.Unmarshal(body, &conn); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal connection: %w", err)
 	}

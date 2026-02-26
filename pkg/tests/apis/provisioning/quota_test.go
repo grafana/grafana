@@ -69,10 +69,12 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 		}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should be set to QuotaUnlimited")
 	})
 
+	// Is only possible to set the first sync to exceed quota when the repo is created.
+	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
 	t.Run("quota condition is ResourceQuotaExceeded when limit is exceeded", func(t *testing.T) {
 		// Set a low resource limit
 		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 1 // Only allow 1 resource
+			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 2 resources
 		})
 		ctx := context.Background()
 
@@ -81,7 +83,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				// Adding 2 dashboards will exceed the limit of 1
+				// Adding 2 dashboards + 1 root folder will exceed the limit of 2
 				"testdata/all-panels.json":   "dashboard1.json",
 				"testdata/text-options.json": "dashboard2.json",
 			},

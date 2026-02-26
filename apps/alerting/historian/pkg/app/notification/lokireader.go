@@ -31,10 +31,6 @@ const (
 	maxLimit           = 1000
 	Namespace          = "grafana"
 	Subsystem          = "alerting"
-
-	// LogQL field path for alert rule UID after JSON parsing.
-	// Loki flattens nested JSON fields with underscores: alert.labels.__alert_rule_uid__ -> alert_labels___alert_rule_uid__
-	lokiAlertRuleUIDField = "alert_labels___alert_rule_uid__"
 )
 
 var (
@@ -42,6 +38,7 @@ var (
 	ErrInvalidQuery = errors.New("invalid query")
 
 	validLabelKeyRegex = regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]*$")
+	validRuleUIDRegex  = regexp.MustCompile(`^[a-zA-Z0-9\-\_]*$`)
 )
 
 type lokiClient interface {
@@ -104,6 +101,11 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 		return QueryResult{}, err
 	}
 
+	// Prune entries to the requested limit
+	if int64(len(entries)) > limit {
+		entries = entries[:limit]
+	}
+
 	return QueryResult{
 		Entries: entries,
 	}, nil
@@ -115,17 +117,25 @@ func buildQuery(query Query) (string, error) {
 		fmt.Sprintf(`%s=%q`, historian.LabelFrom, historian.LabelFromValue),
 	}
 
-	logql := fmt.Sprintf(`{%s} | json`, strings.Join(selectors, `,`))
+	logql := fmt.Sprintf(`{%s}`, strings.Join(selectors, `,`))
 
-	// Add ruleUID filter as JSON line filter if specified.
+	// RuleUID filtering can be performed using the comma separated structured metadata fields.
+	// We can match the uid exactly by anchoring the match to a comma or start/end.
 	if query.RuleUID != nil && *query.RuleUID != "" {
-		logql += fmt.Sprintf(` | %s = %q`, lokiAlertRuleUIDField, *query.RuleUID)
+		// Validate the uid close to where it is used to form the query,
+		// to reduce the risk of introducing a query injection bug.
+		if !validRuleUIDRegex.MatchString(*query.RuleUID) {
+			return "", fmt.Errorf("%w: rule uid: %q", ErrInvalidQuery, *query.RuleUID)
+		}
+		logql += fmt.Sprintf(` | rule_uids =~ "(^|.*,)%s($|,.*)"`, *query.RuleUID)
 	}
 
-	// Add receiver filter if specified.
+	// Receiver filtering can be done entirely using structured metadata fields.
 	if query.Receiver != nil && *query.Receiver != "" {
 		logql += fmt.Sprintf(` | receiver = %q`, *query.Receiver)
 	}
+
+	logql += ` | json`
 
 	// Add status filter if specified.
 	if query.Status != nil && *query.Status != "" {
@@ -149,23 +159,6 @@ func buildQuery(query Query) (string, error) {
 		}
 	}
 
-	// Add alert labels filter if specified.
-	if query.Labels != nil {
-		for _, matcher := range *query.Labels {
-			// Validate the matcher close to where it is used to form the query,
-			// to reduce the risk of introducing a query injection bug.
-			if !validLabelKeyRegex.MatchString(matcher.Label) {
-				return "", fmt.Errorf("%w: alert label: %q", ErrInvalidQuery, matcher.Label)
-			}
-			switch matcher.Type {
-			case "=", "!=", "=~", "!~":
-			default:
-				return "", fmt.Errorf("%w: matcher type: %s", ErrInvalidQuery, matcher.Type)
-			}
-			logql += fmt.Sprintf(` | alert_labels_%s %s %q`, matcher.Label, matcher.Type, matcher.Value)
-		}
-	}
-
 	// Add outcome filter if specified.
 	if query.Outcome != nil && *query.Outcome != "" {
 		switch *query.Outcome {
@@ -179,7 +172,7 @@ func buildQuery(query Query) (string, error) {
 	return logql, nil
 }
 
-// runQuery runs the query and collects results.
+// runQuery runs the query and collects results, grouping alerts into notifications.
 func (l *LokiReader) runQuery(ctx context.Context, logql string, from, to time.Time, limit int64) ([]Entry, error) {
 	entries := make([]Entry, 0)
 	r, err := l.client.RangeQuery(ctx, logql, from.UnixNano(), to.UnixNano(), limit)
@@ -198,12 +191,12 @@ func (l *LokiReader) runQuery(ctx context.Context, logql string, from, to time.T
 		}
 	}
 
-	// We need to sort as results might be from a combination of streams.
+	// Sort entries by timestamp (descending - newest first)
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Timestamp.After(entries[j].Timestamp)
 	})
 
-	l.logger.Debug("Notification history query complete", "entries", len(entries))
+	l.logger.Debug("Notification history query complete", "notifications", len(entries))
 
 	return entries, nil
 }
@@ -216,7 +209,7 @@ func parseLokiEntry(s lokiclient.Sample) (Entry, error) {
 		return Entry{}, fmt.Errorf("failed to unmarshal entry [%s]: %w", s.T, err)
 	}
 
-	if lokiEntry.SchemaVersion != 1 {
+	if lokiEntry.SchemaVersion != 2 {
 		return Entry{}, fmt.Errorf("unsupported schema version [%s]: %d", s.T, lokiEntry.SchemaVersion)
 	}
 
@@ -232,14 +225,6 @@ func parseLokiEntry(s lokiclient.Sample) (Entry, error) {
 		groupLabels = make(map[string]string)
 	}
 
-	alerts := []EntryAlert{{
-		Status:      lokiEntry.Alert.Status,
-		Labels:      lokiEntry.Alert.Labels,
-		Annotations: lokiEntry.Alert.Annotations,
-		StartsAt:    lokiEntry.Alert.StartsAt,
-		EndsAt:      lokiEntry.Alert.EndsAt,
-	}}
-
 	return Entry{
 		Timestamp:    s.T,
 		Receiver:     lokiEntry.Receiver,
@@ -247,7 +232,7 @@ func parseLokiEntry(s lokiclient.Sample) (Entry, error) {
 		Outcome:      outcome,
 		GroupKey:     lokiEntry.GroupKey,
 		GroupLabels:  groupLabels,
-		Alerts:       alerts,
+		Alerts:       []EntryAlert{},
 		Retry:        lokiEntry.Retry,
 		Error:        entryError,
 		Duration:     lokiEntry.Duration,

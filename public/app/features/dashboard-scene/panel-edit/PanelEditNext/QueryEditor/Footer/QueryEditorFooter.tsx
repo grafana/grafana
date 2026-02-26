@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
 
 import { QUERY_EDITOR_COLORS, TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
@@ -20,7 +20,7 @@ export function QueryEditorFooter() {
   const styles = useStyles2(getStyles);
 
   const { queryOptions } = useQueryEditorUIContext();
-  const { options, openSidebar } = queryOptions;
+  const { options, openSidebar, closeSidebar, isQueryOptionsOpen } = queryOptions;
   const { data } = useQueryRunnerContext();
   const { datasource } = useDatasourceContext();
 
@@ -72,13 +72,29 @@ export function QueryEditorFooter() {
     // Don't focus interval since it's read-only
     if (fieldId && fieldId !== QueryOptionField.interval) {
       openSidebar(fieldId);
-    } else {
+    } else if (!isQueryOptionsOpen) {
       openSidebar();
+    } else {
+      closeSidebar();
     }
   };
 
   return (
     <div className={styles.container}>
+      <div className={styles.queryOptionsWrapper}>
+        <Button
+          fill="text"
+          size="sm"
+          onClick={(e) => handleItemClick(e)}
+          aria-label={t('query-editor-next.footer.query-options', 'Query Options')}
+        >
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <Trans i18nKey="query-editor-next.footer.query-options">Query Options</Trans>
+            <Icon name="angle-down" className={cx(styles.chevron, { [styles.chevronOpen]: isQueryOptionsOpen })} />
+          </Stack>
+        </Button>
+      </div>
+
       <ul className={styles.itemsList}>
         {items.map((item) => (
           <li key={item.id}>
@@ -96,18 +112,6 @@ export function QueryEditorFooter() {
           </li>
         ))}
       </ul>
-      <div className={styles.queryOptionsWrapper}>
-        <Button
-          fill="text"
-          size="sm"
-          icon="angle-left"
-          iconPlacement="right"
-          onClick={(e) => handleItemClick(e)}
-          aria-label={t('query-editor-next.footer.query-options', 'Query Options')}
-        >
-          <Trans i18nKey="query-editor-next.footer.query-options">Query Options</Trans>
-        </Button>
-      </div>
     </div>
   );
 }
@@ -119,6 +123,7 @@ function getStyles(theme: GrafanaTheme2) {
       bottom: 0,
       display: 'flex',
       alignItems: 'center',
+      gap: theme.spacing(1),
       backgroundColor: QUERY_EDITOR_COLORS.footerBackground,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
@@ -166,6 +171,17 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.circle,
       backgroundColor: theme.colors.success.text,
       flexShrink: 0,
+    }),
+    chevron: css({
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('transform', {
+          duration: theme.transitions.duration.shorter,
+          easing: theme.transitions.easing.easeInOut,
+        }),
+      },
+    }),
+    chevronOpen: css({
+      transform: 'rotate(180deg)',
     }),
     queryOptionsWrapper: css({
       position: 'relative',

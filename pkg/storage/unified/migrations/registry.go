@@ -27,9 +27,9 @@ type MigratorFunc = func(ctx context.Context, orgId int64, opts MigrateOptions, 
 // ResourceInfo extends GroupResource with additional metadata needed for migration.
 type ResourceInfo struct {
 	schema.GroupResource
-	// LockTable is the legacy database table to lock during migration.
-	// This is required for all migrations that modify data.
-	LockTable string
+	// LockTables are the legacy database tables to lock during migration.
+	// This must include every table the migrator reads from.
+	LockTables []string
 }
 
 // MigrationDefinition defines a resource migration.
@@ -70,14 +70,20 @@ func (d MigrationDefinition) GetGroupResources() []schema.GroupResource {
 	return result
 }
 
-// GetLockTable returns the lock table for a given GroupResource, or empty string if not found.
-func (d MigrationDefinition) GetLockTable(gr schema.GroupResource) string {
-	for _, ri := range d.Resources {
-		if ri.GroupResource == gr {
-			return ri.LockTable
+// GetLockTables returns all lock tables across all resources in the definition.
+func (d MigrationDefinition) GetLockTables() []string {
+	tables := make([]string, 0, len(d.Resources))
+	seen := make(map[string]struct{})
+	for _, res := range d.Resources {
+		for _, table := range res.LockTables {
+			if _, ok := seen[table]; ok {
+				continue
+			}
+			seen[table] = struct{}{}
+			tables = append(tables, table)
 		}
 	}
-	return ""
+	return tables
 }
 
 // GetMigratorFunc returns the migrator function for a given resource.

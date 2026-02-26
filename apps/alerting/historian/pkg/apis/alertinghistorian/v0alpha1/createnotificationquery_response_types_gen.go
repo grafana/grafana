@@ -78,6 +78,7 @@ type CreateNotificationqueryNotificationEntryAlert struct {
 	Annotations map[string]string `json:"annotations"`
 	StartsAt    time.Time         `json:"startsAt"`
 	EndsAt      time.Time         `json:"endsAt"`
+	Enrichments interface{}       `json:"enrichments,omitempty"`
 }
 
 // NewCreateNotificationqueryNotificationEntryAlert creates a new CreateNotificationqueryNotificationEntryAlert object.

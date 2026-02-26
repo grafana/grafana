@@ -295,6 +295,63 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 			},
 		},
 		{
+			name: "expression query with template variable UID keeps expression ref when panel has different datasource",
+			createV1beta1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":   1,
+									"type": "timeseries",
+									"datasource": map[string]interface{}{
+										"type": "prometheus",
+										"uid":  "${ds}",
+									},
+									"targets": []interface{}{
+										map[string]interface{}{
+											"refId": "failed_all",
+											"datasource": map[string]interface{}{
+												"type": "prometheus",
+												"uid":  "${ds}",
+											},
+											"expr": "sum(failed_metric)",
+										},
+										map[string]interface{}{
+											"refId": "Failure rate",
+											"datasource": map[string]interface{}{
+												"type": "__expr__",
+												"uid":  "${DS_EXPRESSION}",
+											},
+											"expression": "$failed_all / $all * 100",
+											"type":       "math",
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.NotNil(t, v2alpha1.Spec.Elements["panel-1"])
+				panel := v2alpha1.Spec.Elements["panel-1"].PanelKind
+				require.NotNil(t, panel)
+
+				require.Len(t, panel.Spec.Data.Spec.Queries, 2)
+				// Query A: prometheus → uses panel ref
+				require.NotNil(t, panel.Spec.Data.Spec.Queries[0].Spec.Datasource)
+				assert.Equal(t, "prometheus", *panel.Spec.Data.Spec.Queries[0].Spec.Datasource.Type)
+				assert.Equal(t, "${ds}", *panel.Spec.Data.Spec.Queries[0].Spec.Datasource.Uid)
+				// Query B: expression with template variable UID → not overwritten by panel
+				require.NotNil(t, panel.Spec.Data.Spec.Queries[1].Spec.Datasource)
+				assert.Equal(t, "__expr__", *panel.Spec.Data.Spec.Queries[1].Spec.Datasource.Type)
+				assert.Equal(t, "${DS_EXPRESSION}", *panel.Spec.Data.Spec.Queries[1].Spec.Datasource.Uid)
+				assert.Equal(t, "__expr__", panel.Spec.Data.Spec.Queries[1].Spec.Query.Kind)
+			},
+		},
+		{
 			name: "panel datasource null and target has no datasource field - no default set",
 			createV1beta1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{

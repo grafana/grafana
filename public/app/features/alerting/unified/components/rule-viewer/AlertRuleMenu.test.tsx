@@ -73,7 +73,7 @@ const ui = {
     export: byRole('menuitem', { name: /Export/i }),
     delete: byRole('menuitem', { name: /Delete/i }),
     manageEnrichments: byRole('menuitem', { name: /Manage enrichments/i }),
-    declareIncident: byRole('link', { name: /Declare incident/i }),
+    declareIncident: byRole('menuitem', { name: /Declare incident/i }),
     analyzeRule: byRole('menuitem', { name: /Analyze rule/i }),
   },
 };

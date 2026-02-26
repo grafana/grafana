@@ -282,7 +282,9 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 
 	if existing, found := r.findResource(id); found {
-		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName)
+		return "", parsed.GVK, NewResourceValidationError(
+			fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName),
+		)
 	}
 	r.addResource(id, path)
 

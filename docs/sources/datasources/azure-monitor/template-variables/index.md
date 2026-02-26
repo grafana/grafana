@@ -24,22 +24,6 @@ menuTitle: Template variables
 title: Azure Monitor template variables
 weight: 400
 last_reviewed: 2025-12-04
-refs:
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  add-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-  configure-azure-monitor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/
 ---
 
 # Azure Monitor template variables
@@ -48,11 +32,11 @@ Instead of hard-coding details such as resource group or resource name values in
 This helps you create more interactive, dynamic, and reusable dashboards.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables).
+For an introduction to templating and template variables, refer to the [Templating](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) and [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/).
 
 ## Before you begin
 
-- Ensure you have [configured the Azure Monitor data source](ref:configure-azure-monitor).
+- Ensure you have [configured the Azure Monitor data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/).
 - If you want template variables to auto-populate subscriptions, set a **Default Subscription** in the data source configuration.
 
 ## Create a template variable
