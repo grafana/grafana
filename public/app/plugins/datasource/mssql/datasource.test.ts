@@ -11,7 +11,7 @@ import {
   TimeRange,
   CustomVariableModel,
 } from '@grafana/data';
-import { BackendSrv, FetchResponse, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { BackendSrv, FetchResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { SQLQuery } from '@grafana/sql';
 
 import { MssqlDatasource } from './datasource';
@@ -35,7 +35,7 @@ const customVariableModel: CustomVariableModel = {
   index: -1,
   state: 'NotStarted' as any,
   name: '',
-  label: null,
+  label: undefined,
   hide: 0,
   skipUrlSync: false,
   type: 'custom',
@@ -46,6 +46,8 @@ const customVariableModel: CustomVariableModel = {
   current: {} as any,
   query: '',
   rootStateKey: null,
+  error: null,
+  description: null,
 };
 
 // mock uuidv4 to give back the same value every time
@@ -438,7 +440,6 @@ describe('MSSQLDatasource', () => {
 
   describe('targetContainsTemplate', () => {
     it('given query that contains template variable it should return true', () => {
-      const templateSrv = new TemplateSrv();
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$summarize') as time,
       avg(value) as value,
@@ -455,10 +456,9 @@ describe('MSSQLDatasource', () => {
         rawSql,
         refId: 'A',
       };
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
+      const templateSrv = {
+        containsTemplate: (_text: string) => true,
+      };
       const ds = new MssqlDatasource(instanceSettings);
 
       Reflect.set(ds, 'templateSrv', templateSrv);
@@ -466,7 +466,6 @@ describe('MSSQLDatasource', () => {
     });
 
     it('given query that only contains global template variable it should return false', () => {
-      const templateSrv: TemplateSrv = new TemplateSrv();
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$__interval') as time,
       avg(value) as value,
@@ -482,10 +481,9 @@ describe('MSSQLDatasource', () => {
         rawSql,
         refId: 'A',
       };
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
+      const templateSrv = {
+        containsTemplate: (_text: string) => false,
+      };
       const ds = new MssqlDatasource(instanceSettings);
       Reflect.set(ds, 'templateSrv', templateSrv);
 
