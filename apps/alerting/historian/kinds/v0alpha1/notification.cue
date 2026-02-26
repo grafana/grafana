@@ -36,15 +36,25 @@ import (
 #NotificationEntry: {
     // Timestamp is the time at which the notification attempt completed.
     timestamp: time.Time
+    // Uuid is a unique identifier for the notification attempt.
+    uuid: string
     // Receiver is the receiver (contact point) title.
     receiver: string
+    // Integration is the integration (contact point type) name.
+    integration: string
+    // IntegrationIndex is the index of the integration within the receiver.
+    integrationIndex: int
     // Status indicates if the notification contains one or more firing alerts.
     status: #NotificationStatus
     // Outcome indicaes if the notificaion attempt was successful or if it failed.
     outcome: #NotificationOutcome
     // GroupLabels are the labels uniquely identifying the alert group within a route.
     groupLabels: [string]: string
-    // Alerts are the alerts grouped into the notification.
+    // RuleUIDs are the unique identifiers of the alert rules included in the notification.
+    ruleUIDs: [...string]
+    // AlertCount is the total number of alerts included in the notification.
+    alertCount: int
+    // Alerts are the alerts grouped into the notification. Deprecated: not populated, will be removed.
     alerts: [...#NotificationEntryAlert]
     // Retry indicates if the attempt was a retried attempt.
     retry: bool
@@ -56,6 +66,21 @@ import (
     pipelineTime: time.Time
     // GroupKey uniquely idenifies the dispatcher alert group.
     groupKey: string
+}
+
+#AlertQuery: {
+    // From is the starting timestamp for the query.
+    from?: time.Time
+    // To is the ending timestamp for the query.
+    to?: time.Time
+    // UUID filters the alerts to those belonging to a specific alert rule.
+    uuid?: string
+    // Limit is the maximum number of entries to return.
+    limit?: int64
+}
+
+#AlertQueryResult: {
+    alerts: [...#NotificationEntryAlert]
 }
 
 #NotificationEntryAlert: {

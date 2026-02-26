@@ -49,12 +49,10 @@ func (r *parquetReader) Next() bool {
 	r.req = nil
 	for r.err == nil && r.reader != nil {
 		if r.bufferIndex >= r.bufferSize && r.value.reader.HasNext() {
-			r.bufferIndex = 0
 			r.err = r.readBulk()
 			if r.err != nil {
 				return false
 			}
-			r.bufferIndex = r.value.count
 		}
 
 		if r.bufferSize > r.bufferIndex {
@@ -146,6 +144,7 @@ func newResourceReader(inputPath string, batchSize int64) (*parquetReader, error
 		reader.group,
 		reader.resource,
 		reader.name,
+		reader.folder,
 		reader.action,
 		reader.value,
 	}

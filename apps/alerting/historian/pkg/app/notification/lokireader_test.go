@@ -272,14 +272,18 @@ func TestParseLokiEntry(t *testing.T) {
 			sample: lokiclient.Sample{
 				T: timestamp,
 				V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
-					SchemaVersion: 2,
-					Receiver:      "test-receiver",
-					Status:        "firing",
-					Error:         "",
-					GroupKey:      "key:thing",
+					SchemaVersion:  2,
+					UUID:           "test-uuid",
+					Receiver:       "test-receiver",
+					Integration:    "email",
+					IntegrationIdx: 0,
+					Status:         "firing",
+					Error:          "",
+					GroupKey:       "key:thing",
 					GroupLabels: map[string]string{
 						"alertname": "test-alert",
 					},
+					RuleUIDs:     []string{"rule-uid-1"},
 					AlertCount:   1,
 					Retry:        false,
 					Duration:     100,
@@ -288,14 +292,19 @@ func TestParseLokiEntry(t *testing.T) {
 			},
 			wantErr: false,
 			want: Entry{
-				Timestamp: timestamp,
-				Receiver:  "test-receiver",
-				Status:    Status("firing"),
-				Outcome:   OutcomeSuccess,
-				GroupKey:  "key:thing",
+				Timestamp:        timestamp,
+				Uuid:             "test-uuid",
+				Receiver:         "test-receiver",
+				Integration:      "email",
+				IntegrationIndex: 0,
+				Status:           Status("firing"),
+				Outcome:          OutcomeSuccess,
+				GroupKey:         "key:thing",
 				GroupLabels: map[string]string{
 					"alertname": "test-alert",
 				},
+				RuleUIDs:     []string{"rule-uid-1"},
+				AlertCount:   1,
 				Alerts:       []EntryAlert{},
 				Retry:        false,
 				Error:        nil,
@@ -309,6 +318,7 @@ func TestParseLokiEntry(t *testing.T) {
 				T: timestamp,
 				V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
 					SchemaVersion: 2,
+					UUID:          "test-uuid-2",
 					Receiver:      "test-receiver",
 					Status:        "firing",
 					Error:         "notification failed",
@@ -321,11 +331,14 @@ func TestParseLokiEntry(t *testing.T) {
 			wantErr: false,
 			want: Entry{
 				Timestamp:    timestamp,
+				Uuid:         "test-uuid-2",
 				Receiver:     "test-receiver",
 				Status:       Status("firing"),
 				Outcome:      OutcomeError,
 				GroupKey:     "key:thing",
 				GroupLabels:  map[string]string{},
+				RuleUIDs:     []string{},
+				AlertCount:   1,
 				Alerts:       []EntryAlert{},
 				Error:        stringPtr("notification failed"),
 				PipelineTime: now,
@@ -344,6 +357,8 @@ func TestParseLokiEntry(t *testing.T) {
 				Status:       Status("firing"),
 				Outcome:      OutcomeSuccess,
 				GroupLabels:  map[string]string{},
+				RuleUIDs:     []string{},
+				AlertCount:   1,
 				Alerts:       []EntryAlert{},
 				PipelineTime: now,
 			},
@@ -380,11 +395,17 @@ func TestParseLokiEntry(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.want.Timestamp, got.Timestamp)
+			assert.Equal(t, tt.want.Uuid, got.Uuid)
 			assert.Equal(t, tt.want.Receiver, got.Receiver)
+			assert.Equal(t, tt.want.Integration, got.Integration)
+			assert.Equal(t, tt.want.IntegrationIndex, got.IntegrationIndex)
 			assert.Equal(t, tt.want.Status, got.Status)
 			assert.Equal(t, tt.want.Outcome, got.Outcome)
 			assert.Equal(t, tt.want.GroupKey, got.GroupKey)
 			assert.Equal(t, tt.want.GroupLabels, got.GroupLabels)
+			assert.Equal(t, tt.want.RuleUIDs, got.RuleUIDs)
+			assert.Equal(t, tt.want.AlertCount, got.AlertCount)
+			assert.Equal(t, tt.want.Alerts, got.Alerts)
 			assert.Equal(t, tt.want.Retry, got.Retry)
 			assert.Equal(t, tt.want.Duration, got.Duration)
 			assert.Equal(t, tt.want.PipelineTime, got.PipelineTime)
@@ -394,16 +415,6 @@ func TestParseLokiEntry(t *testing.T) {
 				assert.Equal(t, *tt.want.Error, *got.Error)
 			} else {
 				assert.Nil(t, got.Error)
-			}
-
-			assert.Equal(t, len(tt.want.Alerts), len(got.Alerts))
-			for i := range tt.want.Alerts {
-				assert.Equal(t, tt.want.Alerts[i].Status, got.Alerts[i].Status)
-				assert.Equal(t, tt.want.Alerts[i].Labels, got.Alerts[i].Labels)
-				assert.Equal(t, tt.want.Alerts[i].Annotations, got.Alerts[i].Annotations)
-				assert.Equal(t, tt.want.Alerts[i].StartsAt, got.Alerts[i].StartsAt)
-				assert.Equal(t, tt.want.Alerts[i].EndsAt, got.Alerts[i].EndsAt)
-				assert.Equal(t, tt.want.Alerts[i].Enrichments, got.Alerts[i].Enrichments)
 			}
 		})
 	}
@@ -425,6 +436,7 @@ func TestLokiReader_RunQuery(t *testing.T) {
 							T: entry1Time,
 							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
 								SchemaVersion: 2,
+								UUID:          "uuid-1",
 								Receiver:      "receiver-1",
 								Status:        "firing",
 								GroupKey:      "group1",
@@ -437,6 +449,7 @@ func TestLokiReader_RunQuery(t *testing.T) {
 							T: entry3Time,
 							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
 								SchemaVersion: 2,
+								UUID:          "uuid-3",
 								Receiver:      "receiver-3",
 								Status:        "firing",
 								GroupKey:      "group3",
@@ -453,6 +466,7 @@ func TestLokiReader_RunQuery(t *testing.T) {
 							T: entry2Time,
 							V: createLokiEntryJSON(t, historian.NotificationHistoryLokiEntry{
 								SchemaVersion: 2,
+								UUID:          "uuid-2",
 								Receiver:      "receiver-2",
 								Status:        "firing",
 								GroupKey:      "group2",
@@ -490,6 +504,241 @@ func TestLokiReader_RunQuery(t *testing.T) {
 	assert.Equal(t, entries[2].Timestamp, entry1Time)
 }
 
+func TestLokiReader_QueryAlerts(t *testing.T) {
+	now := time.Now().UTC()
+	testTimestamp := now.Add(-1 * time.Hour)
+
+	tests := []struct {
+		name          string
+		query         AlertQuery
+		lokiResponse  lokiclient.QueryRes
+		responseError error
+		experr        error
+		validateFn    func(t *testing.T, result AlertQueryResult)
+	}{
+		{
+			name:         "successful query with results",
+			query:        AlertQuery{Uuid: stringPtr("test-uuid")},
+			lokiResponse: createMockAlertLokiResponse(testTimestamp),
+			validateFn: func(t *testing.T, result AlertQueryResult) {
+				assert.Len(t, result.Alerts, 1)
+				assert.Equal(t, "firing", result.Alerts[0].Status)
+				assert.Equal(t, map[string]string{"alertname": "test-alert"}, result.Alerts[0].Labels)
+			},
+		},
+		{
+			name: "query with custom time range",
+			query: AlertQuery{
+				Uuid: stringPtr("test-uuid"),
+				From: timePtr(now.Add(-2 * time.Hour)),
+				To:   timePtr(now),
+			},
+			lokiResponse: createMockAlertLokiResponse(testTimestamp),
+		},
+		{
+			name: "query with custom limit",
+			query: AlertQuery{
+				Uuid:  stringPtr("test-uuid"),
+				Limit: int64Ptr(10),
+			},
+			lokiResponse: createMockAlertLokiResponse(testTimestamp),
+		},
+		{
+			name: "query with over max limit",
+			query: AlertQuery{
+				Uuid:  stringPtr("test-uuid"),
+				Limit: int64Ptr(1001),
+			},
+			lokiResponse: createMockAlertLokiResponse(testTimestamp),
+			experr:       ErrInvalidQuery,
+		},
+		{
+			name:          "loki error is propagated",
+			query:         AlertQuery{Uuid: stringPtr("test-uuid")},
+			lokiResponse:  lokiclient.QueryRes{},
+			responseError: fmt.Errorf("loki unavailable"),
+			experr:        fmt.Errorf("loki unavailable"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mockLokiClient{}
+			mockClient.On("RangeQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(tt.lokiResponse, tt.responseError)
+
+			reader := &LokiReader{
+				client: mockClient,
+				logger: &logging.NoOpLogger{},
+			}
+
+			result, err := reader.QueryAlerts(context.Background(), tt.query)
+			if tt.experr != nil {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			if tt.validateFn != nil {
+				tt.validateFn(t, result)
+			}
+
+			mockClient.AssertExpectations(t)
+		})
+	}
+}
+
+func TestBuildAlertQuery(t *testing.T) {
+	tests := []struct {
+		name     string
+		query    AlertQuery
+		expected string
+	}{
+		{
+			name:  "query with no filters",
+			query: AlertQuery{},
+			expected: fmt.Sprintf(`{%s=%q} | json`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:  "query with uuid filter",
+			query: AlertQuery{Uuid: stringPtr("test-uuid-123")},
+			expected: fmt.Sprintf(`{%s=%q} | uuid = "test-uuid-123" | json`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:  "query with empty uuid is ignored",
+			query: AlertQuery{Uuid: stringPtr("")},
+			expected: fmt.Sprintf(`{%s=%q} | json`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := buildAlertQuery(tt.query)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestParseLokiAlertEntry(t *testing.T) {
+	now := time.Now().UTC().Truncate(time.Second)
+	startsAt := now.Add(-30 * time.Minute)
+	endsAt := now.Add(-5 * time.Minute)
+
+	tests := []struct {
+		name    string
+		sample  lokiclient.Sample
+		wantErr bool
+		want    AlertEntry
+	}{
+		{
+			name: "valid firing alert entry",
+			sample: lokiclient.Sample{
+				T: now,
+				V: createLokiAlertEntryJSON(t, historian.NotificationHistoryLokiEntryAlert{
+					SchemaVersion: 2,
+					UUID:          "test-uuid",
+					AlertIndex:    0,
+					Status:        "firing",
+					Labels:        map[string]string{"alertname": "test-alert", "severity": "critical"},
+					Annotations:   map[string]string{"summary": "something is on fire"},
+					StartsAt:      startsAt,
+					EndsAt:        endsAt,
+				}),
+			},
+			want: AlertEntry{
+				Status:      "firing",
+				Labels:      map[string]string{"alertname": "test-alert", "severity": "critical"},
+				Annotations: map[string]string{"summary": "something is on fire"},
+				StartsAt:    startsAt,
+				EndsAt:      endsAt,
+			},
+		},
+		{
+			name: "valid resolved alert entry",
+			sample: lokiclient.Sample{
+				T: now,
+				V: createLokiAlertEntryJSON(t, historian.NotificationHistoryLokiEntryAlert{
+					SchemaVersion: 2,
+					UUID:          "test-uuid-2",
+					Status:        "resolved",
+					Labels:        map[string]string{"alertname": "test-alert"},
+					Annotations:   map[string]string{},
+					StartsAt:      startsAt,
+					EndsAt:        endsAt,
+				}),
+			},
+			want: AlertEntry{
+				Status:      "resolved",
+				Labels:      map[string]string{"alertname": "test-alert"},
+				Annotations: map[string]string{},
+				StartsAt:    startsAt,
+				EndsAt:      endsAt,
+			},
+		},
+		{
+			name: "nil labels and annotations are replaced with empty maps",
+			sample: lokiclient.Sample{
+				T: now,
+				V: createLokiAlertEntryJSON(t, historian.NotificationHistoryLokiEntryAlert{
+					SchemaVersion: 2,
+					Status:        "firing",
+					Labels:        nil,
+					Annotations:   nil,
+					StartsAt:      startsAt,
+					EndsAt:        endsAt,
+				}),
+			},
+			want: AlertEntry{
+				Status:      "firing",
+				Labels:      map[string]string{},
+				Annotations: map[string]string{},
+				StartsAt:    startsAt,
+				EndsAt:      endsAt,
+			},
+		},
+		{
+			name: "invalid JSON",
+			sample: lokiclient.Sample{
+				T: now,
+				V: "not valid json",
+			},
+			wantErr: true,
+		},
+		{
+			name: "unsupported schema version",
+			sample: lokiclient.Sample{
+				T: now,
+				V: createLokiAlertEntryJSON(t, historian.NotificationHistoryLokiEntryAlert{
+					SchemaVersion: 99,
+					Status:        "firing",
+				}),
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseLokiAlertEntry(tt.sample)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want.Status, got.Status)
+			assert.Equal(t, tt.want.Labels, got.Labels)
+			assert.Equal(t, tt.want.Annotations, got.Annotations)
+			assert.Equal(t, tt.want.StartsAt, got.StartsAt)
+			assert.Equal(t, tt.want.EndsAt, got.EndsAt)
+		})
+	}
+}
+
 // Helper functions
 
 func stringPtr(s string) *string {
@@ -522,6 +771,7 @@ func createMockLokiResponse(timestamp time.Time) lokiclient.QueryRes {
 							T: timestamp,
 							V: createLokiEntryJSON(nil, historian.NotificationHistoryLokiEntry{
 								SchemaVersion: 2,
+								UUID:          "test-uuid",
 								Receiver:      "test-receiver",
 								Status:        "firing",
 								Error:         "",
@@ -529,6 +779,7 @@ func createMockLokiResponse(timestamp time.Time) lokiclient.QueryRes {
 								GroupLabels: map[string]string{
 									"alertname": "test-alert",
 								},
+								RuleUIDs:     []string{"rule-uid-1"},
 								AlertCount:   1,
 								Retry:        false,
 								Duration:     100,
@@ -550,10 +801,47 @@ func createLokiEntryJSON(t *testing.T, entry historian.NotificationHistoryLokiEn
 	return string(data)
 }
 
+func createLokiAlertEntryJSON(t *testing.T, entry historian.NotificationHistoryLokiEntryAlert) string {
+	data, err := json.Marshal(entry)
+	if err != nil {
+		t.Fatalf("failed to marshal alert entry: %v", err)
+	}
+	return string(data)
+}
+
+func createMockAlertLokiResponse(timestamp time.Time) lokiclient.QueryRes {
+	startsAt := timestamp.Add(-30 * time.Minute)
+	endsAt := timestamp.Add(-5 * time.Minute)
+	return lokiclient.QueryRes{
+		Data: lokiclient.QueryData{
+			Result: []lokiclient.Stream{
+				{
+					Values: []lokiclient.Sample{
+						{
+							T: timestamp,
+							V: createLokiAlertEntryJSON(nil, historian.NotificationHistoryLokiEntryAlert{
+								SchemaVersion: 2,
+								UUID:          "test-uuid",
+								AlertIndex:    0,
+								Status:        "firing",
+								Labels:        map[string]string{"alertname": "test-alert"},
+								Annotations:   map[string]string{},
+								StartsAt:      startsAt,
+								EndsAt:        endsAt,
+							}),
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func createLokiEntryJSONWithNilLabels(t *testing.T, timestamp time.Time) string {
 	// Create JSON with explicit null for group_labels
 	jsonStr := fmt.Sprintf(`{
 		"schemaVersion": 2,
+		"uuid": "",
 		"receiver": "test-receiver",
 		"status": "firing",
 		"error": "",

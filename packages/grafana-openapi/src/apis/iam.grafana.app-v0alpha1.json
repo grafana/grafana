@@ -971,6 +971,14 @@
             "example": 0
           },
           {
+            "name": "accesscontrol",
+            "in": "query",
+            "description": "when true, includes access control metadata in the response",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "description": "sortable field",
