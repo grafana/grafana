@@ -806,6 +806,10 @@ const (
 	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
 
+	// FlagKubernetesUsersApi
+	// Enables user APIs in the app platform
+	FlagKubernetesUsersApi = "kubernetesUsersApi"
+
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
 	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"

@@ -389,7 +389,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Name:      "ds_config_handler_requests_duration_seconds",
 			Help:      "Duration of requests handled by datasource configuration handlers",
 		}, []string{"handler"}),
-		dsConnectionClient: datasource.NewConnectionClient(cfg, clientConfigProvider),
+		dsConnectionClient: datasource.NewLegacyConnectionClient(dataSourcesService),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)

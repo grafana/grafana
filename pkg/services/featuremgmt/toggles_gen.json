@@ -2645,6 +2645,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUsersApi",
+        "resourceVersion": "1772099076728",
+        "creationTimestamp": "2026-02-26T09:44:36Z"
+      },
+      "spec": {
+        "description": "Enables user APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "liveAPIServer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"

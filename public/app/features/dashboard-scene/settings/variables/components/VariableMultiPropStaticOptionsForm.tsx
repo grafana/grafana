@@ -16,7 +16,7 @@ type Option = VariableValueOption & {
   properties: VariableValueOptionProperties;
 };
 
-type VariableMultiPropStaticOptionsFormProps = {
+export type VariableMultiPropStaticOptionsFormProps = {
   options: VariableValueOption[];
   properties: string[];
   onChange: (options: VariableValueOption[]) => void;
@@ -30,7 +30,7 @@ const useVariableMultiPropStaticOptionsForm = ({
   onChange,
 }: VariableMultiPropStaticOptionsFormProps) => {
   const [internalOptions, setInternalOptions] = useState<Option[]>(() =>
-    options.map((o) => ({ id: uuidv4(), ...o, properties: o.properties ?? {} }))
+    options.map((o) => ({ id: uuidv4(), ...o, properties: { ...o.properties, value: o.value, text: o.label } }))
   );
 
   // track id of newly added option for auto-focus
