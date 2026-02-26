@@ -38,24 +38,35 @@ describe('DefaultValueEditor', () => {
     jest.clearAllMocks();
   });
 
-  it('should render a row for each value', () => {
-    setup({ values: [{ value: 'foo' }, { value: 'bar' }, { value: 'baz' }] });
-    expect(screen.getAllByRole('button', { name: 'Remove default value' })).toHaveLength(3);
-    expect(screen.getAllByRole('combobox')).toHaveLength(3);
+  it('should render selected values as pills', () => {
+    setup({
+      values: [{ value: 'job', label: 'job' }],
+      options: [
+        { value: 'job', label: 'job' },
+        { value: 'instance', label: 'instance' },
+      ],
+    });
+    expect(screen.getByText('job')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove job' })).toBeInTheDocument();
   });
 
-  it('should call onChange with the value removed when remove is clicked', async () => {
-    const onChange = jest.fn();
-    const { user } = setup({ values: [{ value: 'a' }, { value: 'b' }, { value: 'c' }], onChange });
-    const removeButtons = screen.getAllByRole('button', { name: 'Remove default value' });
-    await user.click(removeButtons[1]);
-    expect(onChange).toHaveBeenCalledWith([{ value: 'a' }, { value: 'c' }]);
+  it('should show options in dropdown', async () => {
+    const { user } = setup({
+      options: [
+        { label: 'job', value: 'job' },
+        { label: 'instance', value: 'instance' },
+      ],
+    });
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByRole('option', { name: 'job' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'instance' })).toBeInTheDocument();
   });
 
-  it('should call onChange with updated option when a combobox option is selected', async () => {
+  it('should call onChange when selecting an option', async () => {
     const onChange = jest.fn();
     const { user } = setup({
-      values: [{ value: '' }],
       options: [
         { label: 'job', value: 'job' },
         { label: 'instance', value: 'instance' },
@@ -64,20 +75,28 @@ describe('DefaultValueEditor', () => {
     });
     const combobox = screen.getByRole('combobox');
     await user.click(combobox);
-    await user.click(screen.getByRole('option', { name: 'job' }));
-    expect(onChange).toHaveBeenCalledWith([{ value: 'job', label: 'job' }]);
+    await user.click(await screen.findByRole('option', { name: 'job' }));
+
+    expect(onChange).toHaveBeenCalledWith([{ label: 'job', value: 'job' }]);
   });
 
-  it('should call onChange with updated option when a custom value is typed', async () => {
+  it('should call onChange when removing a value via pill', async () => {
     const onChange = jest.fn();
     const { user } = setup({
-      values: [{ value: '' }],
-      options: [],
+      values: [
+        { value: 'job', label: 'job' },
+        { value: 'instance', label: 'instance' },
+      ],
+      options: [
+        { value: 'job', label: 'job' },
+        { value: 'instance', label: 'instance' },
+      ],
       onChange,
     });
-    const combobox = screen.getByRole('combobox');
-    await user.type(combobox, 'custom-val');
-    await user.keyboard('{Enter}');
-    expect(onChange).toHaveBeenCalledWith([{ value: 'custom-val', label: 'custom-val' }]);
+
+    const removeButton = screen.getByRole('button', { name: 'Remove job' });
+    await user.click(removeButton);
+
+    expect(onChange).toHaveBeenCalledWith([{ label: 'instance', value: 'instance' }]);
   });
 });

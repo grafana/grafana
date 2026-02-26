@@ -147,32 +147,42 @@ describe('GroupByVariableForm', () => {
     expect(onDefaultOptionsChangeMock).toHaveBeenCalledWith(undefined);
   });
 
-  it('should call onDefaultValueChange when adding a new default value', async () => {
+  it('should call onDefaultValueChange when selecting a default value', async () => {
     const mockOnDefaultValueChange = jest.fn();
     const { user } = setup({
       defaultValue: [],
+      defaultValueOptions: [
+        { label: 'job', value: 'job' },
+        { label: 'instance', value: 'instance' },
+      ],
       onDefaultValueChange: mockOnDefaultValueChange,
     });
 
-    await user.click(screen.getByRole('button', { name: 'Add default value' }));
-    expect(mockOnDefaultValueChange).toHaveBeenCalledWith([{ value: '' }]);
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+    await user.click(await screen.findByRole('option', { name: 'job' }));
+    expect(mockOnDefaultValueChange).toHaveBeenCalledWith([{ label: 'job', value: 'job' }]);
   });
 
-  it('should call onDefaultValueChange when removing a default value', async () => {
+  it('should call onDefaultValueChange when removing a default value via pill', async () => {
     const mockOnDefaultValueChange = jest.fn();
     const { user } = setup({
       defaultValue: [{ value: 'job', label: 'job' }],
+      defaultValueOptions: [
+        { label: 'job', value: 'job' },
+        { label: 'instance', value: 'instance' },
+      ],
       onDefaultValueChange: mockOnDefaultValueChange,
     });
 
-    await user.click(screen.getByRole('button', { name: 'Remove default value' }));
+    await user.click(screen.getByRole('button', { name: 'Remove job' }));
     expect(mockOnDefaultValueChange).toHaveBeenCalledWith([]);
   });
 
   it('should show defaultValueOptions in combobox dropdown', async () => {
     const mockOnDefaultValueChange = jest.fn();
     const { user } = setup({
-      defaultValue: [{ value: '' }],
+      defaultValue: [],
       defaultValueOptions: [
         { label: 'job', value: 'job' },
         { label: 'instance', value: 'instance' },
@@ -183,7 +193,7 @@ describe('GroupByVariableForm', () => {
     const combobox = screen.getByRole('combobox');
     await user.click(combobox);
 
-    expect(screen.getByRole('option', { name: 'job' })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: 'job' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'instance' })).toBeInTheDocument();
   });
 

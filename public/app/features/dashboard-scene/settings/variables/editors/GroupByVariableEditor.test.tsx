@@ -45,6 +45,21 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('GroupByVariableEditor', () => {
+  beforeAll(() => {
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: jest.fn(() => ({
+        width: 1000,
+        height: 1000,
+        x: 0,
+        y: 0,
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+      })),
+    });
+  });
+
   it('renders GroupByVariableForm with correct props', async () => {
     const { renderer } = await setup();
     const dataSourcePicker = renderer.getByTestId(
@@ -101,19 +116,17 @@ describe('GroupByVariableEditor', () => {
     });
   });
 
-  it('should render provided default values as inputs', async () => {
-    const { renderer } = await setup(undefined, { value: ['job', 'instance'], text: ['job', 'instance'] });
+  it('should render provided default values as pills', async () => {
+    const { renderer } = await setup(undefined, { value: ['job'], text: ['job'] });
 
     const section = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection
     );
-    const inputs = within(section).getAllByRole('combobox');
-    expect(inputs).toHaveLength(2);
-    expect(inputs[0]).toHaveValue('job');
-    expect(inputs[1]).toHaveValue('instance');
+    expect(within(section).getByText('job')).toBeInTheDocument();
+    expect(within(section).getByRole('button', { name: 'Remove job' })).toBeInTheDocument();
   });
 
-  it('should update variable defaultValue when adding a default value', async () => {
+  it('should update variable defaultValue when selecting a value from dropdown', async () => {
     const { renderer, variable, user } = await setup();
 
     await waitFor(() => {
@@ -122,9 +135,13 @@ describe('GroupByVariableEditor', () => {
       ).toBeInTheDocument();
     });
 
-    await user.click(renderer.getByRole('button', { name: 'Add default value' }));
+    const combobox = within(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection)
+    ).getByRole('combobox');
+    await user.click(combobox);
+    await user.click(await screen.findByRole('option', { name: 'job' }));
 
-    expect(variable.state.defaultValue).toEqual({ value: [''], text: [''] });
+    expect(variable.state.defaultValue).toEqual({ value: ['job'], text: ['job'] });
   });
 
   it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
@@ -166,6 +183,12 @@ async function setup(defaultOptions?: MetricFindValue[], defaultValue?: { value:
   });
   const renderer = render(<GroupByVariableEditor variable={variable} onRunQuery={onRunQuery} />);
 
+  // Flush first useAsync (datasource)
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
+  // Flush second useAsync (groupByKeys, depends on datasource)
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
