@@ -102,7 +102,8 @@ export function buildAssistantPrompt(): string {
 }
 
 /**
- * Important check, because both flags can be enabled in the specific wave/environment, but the assistant may not be available.
+ * Async function to check if the template dashboard assistant is enabled.
+ * Both flags can be enabled in the specific wave/environment, but the assistant may not be available.
  * For example, cloud users without assistant access.
  */
 export function isTemplateDashboardAssistantEnabled(): Promise<boolean> {
