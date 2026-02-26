@@ -475,10 +475,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externí správci výstrah",
-      "extra-config-warning": {
-        "content": "Zobrazuje sloučenou konfiguraci správců výstrah Grafana s importovanými konfiguracemi. Toto sloučené zobrazení je v uživatelském rozhraní jen pro čtení.",
-        "title": "Importovaná konfigurace"
-      },
       "noOptionsMessage-no-datasources-found": "Nebyly nalezeny žádné zdroje dat"
     },
     "alert-menu": {
@@ -5055,6 +5051,7 @@
       "description-color-annotation-event-markers": "Barva, která bude použita pro značky vysvětlivek události",
       "description-enabled-annotation-query-issued-every-dashboard": "Je-li povoleno, při každém obnovení nástěnky bude aktivován dotaz na vysvětlivky",
       "description-hidden": "Dotazy na vysvětlivky lze zapnout nebo vypnout v horní části nástěnky. Pokud je tato možnost zaškrtnuta, bude tento přepínač skrytý.",
+      "error-loading-panels": "",
       "label-color": "Barva",
       "label-data-source": "Zdroj dat",
       "label-enabled": "Povoleno",
@@ -5737,10 +5734,7 @@
       "empty-state-message": "Spusťte dotaz a vizualizujte jej zde nebo přejděte na všechny vizualizace a přidejte další typy panelů",
       "menu-open-panel-editor": "Konfigurovat",
       "menu-use-library-panel": "Použít panel knihovny",
-      "missing-config": "Chybějící konfigurace panelu",
-      "suggestions": {
-        "empty-state-message": "Spusťte dotaz a začněte zobrazovat navrhované vizualizace"
-      }
+      "missing-config": "Chybějící konfigurace panelu"
     },
     "new-panel-title": "Nový panel",
     "on-create-new-row": {
@@ -6500,6 +6494,7 @@
       "delete": "Odstranit",
       "description-color-annotation-event-markers": "Barva, která bude použita pro značky vysvětlivek události",
       "description-enabled-annotation-query-issued-every-dashboard": "Je-li povoleno, při každém obnovení nástěnky bude aktivován dotaz na vysvětlivky",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Zobrazit ovládací prvky vysvětlivek v",
       "label-color": "Barva",
       "label-data-source": "Zdroj dat",
@@ -6980,11 +6975,11 @@
       "static-options-legend": "Statické možnosti"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Pokročilé možnosti",
         "classic": "Klasický",
         "json": "JSON",
-        "v1-resource": "Zdroj V1",
         "v2-resource": "Zdroj V2",
         "yaml": "YAML"
       },
@@ -12034,6 +12029,10 @@
         "title": "Chyba",
         "try-again-button": "Zkusit znovu"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Neznámý typ vizualizace"
     },
     "viz-type-picker": {
@@ -12752,6 +12751,9 @@
       "label-read-only": "Jen pro čtení",
       "label-sync-interval": "Interval synchronizace (sekundy)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
       "partial-managed": "{{managedCount}}/{{resourceCount}} zdrojů je spravováno synchronizací Git.",
@@ -12890,6 +12892,12 @@
       "show-more": "zobrazit více",
       "truncated": "Zpráva byla zkrácena"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "Úplná synchronizace instancí je zakázána, protože jiná složka je již synchronizována s úložištěm.",
@@ -13020,6 +13028,7 @@
       "header-status": "Stav",
       "header-title": "Název",
       "header-type": "Typ",
+      "missing-folder-metadata": "",
       "search-placeholder": "Hledat podle cesty nebo názvu",
       "source": "Zdroj",
       "status-pending": "Nevyřízeno",
@@ -13423,7 +13432,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13433,9 +13443,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13479,16 +13490,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Vybrat kartu {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
       "transformations": "Transformace",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_few": "",
       "alerts_many": "",
@@ -13697,6 +13706,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Zahrnout panely",
       "remove-datasource-filter": "Zdroj dat: {{datasource}}",
       "sort-placeholder": "Třídit",

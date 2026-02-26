@@ -424,6 +424,12 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 	if err != nil {
 		return err
 	}
+
+	// Enable field selectors for User
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, UserKind())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

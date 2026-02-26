@@ -308,33 +308,50 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     ungroupLayout(this, firstTab.state.layout, true);
   }
 
-  public removeTab(tabToRemove: TabItem, skipUndo?: boolean) {
-    const tabIndex = this.state.tabs.findIndex((t) => t === tabToRemove);
+  public removeTab(tab: TabItem, skipUndo?: boolean) {
+    const tabsBeforeRemoval = [...this.state.tabs];
+    let tabIndex = 0;
+    const tabsAfterRemoval = tabsBeforeRemoval.filter((r, i) => {
+      if (r !== tab) {
+        return true;
+      }
+      tabIndex = i;
+      return false;
+    });
+    const parent = this.parent!;
+    if (!isLayoutParent(parent)) {
+      throw new Error('Parent object is not a LayoutParent');
+    }
 
     const perform = () => {
-      const tabs = this.state.tabs;
-      const tabIndex = tabs.findIndex((t) => t === tabToRemove);
-      const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
-
-      const newTabsState = tabs.filter((t) => t !== tabToRemove);
-
-      this.setState({
-        tabs: newTabsState,
-        currentTabSlug: newTabsState[newCurrentTabIndex]?.getSlug(),
-      });
+      if (!tabsAfterRemoval.length) {
+        parent.switchLayout(AutoGridLayoutManager.createEmpty());
+      } else {
+        const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
+        this.setState({
+          tabs: tabsAfterRemoval,
+          currentTabSlug: tabsAfterRemoval[newCurrentTabIndex]?.getSlug(),
+        });
+      }
     };
 
+    const thisLayout = this;
     const undo = () => {
-      const tabs = [...this.state.tabs];
-      tabs.splice(tabIndex, 0, tabToRemove);
-      this.setState({ tabs, currentTabSlug: tabToRemove.getSlug() });
+      if (!tabsAfterRemoval.length) {
+        parent.switchLayout(thisLayout);
+      } else {
+        this.setState({
+          tabs: tabsBeforeRemoval,
+          currentTabSlug: tab.getSlug(),
+        });
+      }
     };
 
     if (skipUndo) {
       perform();
     } else {
       dashboardEditActions.removeElement({
-        removedObject: tabToRemove,
+        removedObject: tab,
         source: this,
         perform,
         undo,

@@ -5,12 +5,12 @@ import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
+import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
@@ -194,7 +194,11 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
           onClose={() => setShowPermissionsDrawer(false)}
           size="md"
         >
-          <Permissions resource="folders" resourceId={folder.uid} canSetPermissions={canSetPermissions} />
+          <FolderPermissions
+            folderUID={folder.uid}
+            canSetPermissions={canSetPermissions}
+            isProvisionedFolder={isProvisionedFolder}
+          />
         </Drawer>
       )}
       {showManageOwnersModal && (

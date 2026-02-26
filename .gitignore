@@ -211,6 +211,7 @@ compilation-stats.json
 # a11y tests
 /pa11y-ci-results.json
 /pa11y-ci-report
+/axe-ci-report.json
 
 # report dumping the whole system env
 /report.*.json
