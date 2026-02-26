@@ -360,6 +360,7 @@ func TestIntegrationUserSearch_AccessControl(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
 				UnifiedStorageEnableSearch: true,
 			})
