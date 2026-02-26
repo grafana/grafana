@@ -266,7 +266,7 @@ describe('locationUtil', () => {
       const redirectUri = '/a/custom-home-plugin?tab=recent';
       const currentLocation = { ...mockLocation, search: '?doc=some-query-value' };
       const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
-      expect(result).toBe('/a/custom-home-plugin?doc=some-query-value&tab=recent');
+      expect(result).toBe('/a/custom-home-plugin?tab=recent&doc=some-query-value');
     });
 
     test('redirect URI params take precedence over current params', () => {
@@ -311,6 +311,13 @@ describe('locationUtil', () => {
       expect(result).toBe('/a/custom-home-plugin?tab=recent&tab=starred');
     });
 
+    test('redirect URI can be an absolute URL', () => {
+      const redirectUri = 'http://www.domain.com:1234/a/custom-home-plugin?tab=recent';
+      const currentLocation = { ...mockLocation, search: '?doc=some-query-value' };
+      const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+      expect(result).toBe('http://www.domain.com:1234/a/custom-home-plugin?tab=recent&doc=some-query-value');
+    });
+
     describe('with appSubUrl configured', () => {
       beforeEach(() => {
         locationUtil.initialize({
@@ -324,7 +331,14 @@ describe('locationUtil', () => {
         const redirectUri = '/grafana/a/custom-home-plugin?tab=overview';
         const currentLocation = { ...mockLocation, search: '?theme=dark' };
         const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
-        expect(result).toBe('/a/custom-home-plugin?theme=dark&tab=overview');
+        expect(result).toBe('/a/custom-home-plugin?tab=overview&theme=dark');
+      });
+
+      test('does not strip base from redirect URI when an absolute URL is provided', () => {
+        const redirectUri = 'http://www.domain.com:1234/grafana/a/custom-home-plugin?tab=overview';
+        const currentLocation = { ...mockLocation, search: '?theme=dark' };
+        const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+        expect(result).toBe('http://www.domain.com:1234/grafana/a/custom-home-plugin?tab=overview&theme=dark');
       });
     });
   });
