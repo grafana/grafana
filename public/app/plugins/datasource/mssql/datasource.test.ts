@@ -6,6 +6,7 @@ import {
   type DataSourceInstanceSettings,
   dateTime,
   FieldType,
+  LoadingState,
   type MetricFindValue,
   createDataFrame,
   TimeRange,
@@ -33,7 +34,9 @@ const customVariableModel: CustomVariableModel = {
   id: '',
   global: false,
   index: -1,
-  state: 'NotStarted' as any,
+  state: LoadingState.NotStarted,
+  error: null,
+  description: null,
   name: '',
   label: undefined,
   hide: 0,
@@ -43,11 +46,9 @@ const customVariableModel: CustomVariableModel = {
   includeAll: false,
   allValue: null,
   options: [],
-  current: {} as any,
+  current: {},
   query: '',
   rootStateKey: null,
-  error: null,
-  description: null,
 };
 
 // mock uuidv4 to give back the same value every time
@@ -457,10 +458,12 @@ describe('MSSQLDatasource', () => {
         refId: 'A',
       };
       const templateSrv = {
-        containsTemplate: (_text: string) => true,
+        getVariables: () => [],
+        replace: (text?: string) => text || '',
+        containsTemplate: (text?: string) => text?.includes('$summarize') || text?.includes('$host') || false,
+        updateTimeRange: () => {},
       };
       const ds = new MssqlDatasource(instanceSettings);
-
       Reflect.set(ds, 'templateSrv', templateSrv);
       expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
@@ -482,7 +485,10 @@ describe('MSSQLDatasource', () => {
         refId: 'A',
       };
       const templateSrv = {
-        containsTemplate: (_text: string) => false,
+        getVariables: () => [],
+        replace: (text?: string) => text || '',
+        containsTemplate: () => false,
+        updateTimeRange: () => {},
       };
       const ds = new MssqlDatasource(instanceSettings);
       Reflect.set(ds, 'templateSrv', templateSrv);
