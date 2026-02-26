@@ -417,7 +417,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	totalDeleted := int64(0)
 
 	// get the start and end keys for the list operation based on the resource prefix
-	// for example, for datashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
+	// for example, for dashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
 	// and the end key will be "unified/data/dashboard.grafana.app/dashboards0"
 	key := ListRequestKey{
 		Group:    group,
