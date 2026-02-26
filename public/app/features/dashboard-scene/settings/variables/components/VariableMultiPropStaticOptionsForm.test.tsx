@@ -78,10 +78,27 @@ describe('<VariableMultiPropStaticOptionsForm />', () => {
       expect(deleteButtons).toHaveLength(2);
     });
 
-    test('when options have no properties, derives input values from label and value', () => {
+    test('when options have undefined properties, derives input values from label and value', () => {
       const options = [
         { label: 'Red', value: 'red', properties: undefined },
         { label: 'Blue', value: 'blue', properties: undefined },
+      ];
+      const { elements } = renderForm({ properties: ['text', 'value'], options });
+
+      const rows = elements.rows();
+      expect(rows).toHaveLength(2);
+
+      const inputValues = elements.rowInputs().map((inputs) => inputs.map((input) => input.value));
+      expect(inputValues).toEqual([
+        ['Red', 'red'],
+        ['Blue', 'blue'],
+      ]);
+    });
+
+    test('when options have no properties, derives input values from label and value', () => {
+      const options = [
+        { label: 'Red', value: 'red', properties: {} },
+        { label: 'Blue', value: 'blue', properties: {} },
       ];
       const { elements } = renderForm({ properties: ['text', 'value'], options });
 
