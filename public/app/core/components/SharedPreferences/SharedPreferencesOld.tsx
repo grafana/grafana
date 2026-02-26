@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {t, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
