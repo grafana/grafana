@@ -219,7 +219,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20260225130907-d8127a1d3c5d // indirect
+	github.com/grafana/alerting v0.0.0-20260225144157-3c6f7441f804 // indirect
 	github.com/grafana/authlib v0.0.0-20260218111514-582136a04938 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260218111514-582136a04938 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
@@ -297,6 +297,7 @@ require (
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
+	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect

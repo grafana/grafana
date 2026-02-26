@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
-import { Combobox, Field, useStyles2 } from '@grafana/ui';
+import { Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import {
@@ -82,8 +82,12 @@ export function TransformationFilterDisplay() {
 
   return (
     <div className={styles.wrapper}>
-      <Field noMargin label={t('query-editor-next.transformation-filter.label', 'Apply transformation to')}>
-        <>
+      <Field
+        className={styles.field}
+        noMargin
+        label={t('query-editor-next.transformation-filter.label', 'Apply transformation to')}
+      >
+        <Stack direction="column" gap={1}>
           {filterOptions.showTopic && (
             <Combobox
               isClearable={true}
@@ -105,7 +109,7 @@ export function TransformationFilterDisplay() {
               onChange={(filter) => onChange({ ...config, filter })}
             />
           )}
-        </>
+        </Stack>
       </Field>
     </div>
   );
@@ -117,5 +121,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `2px solid ${theme.colors.background.secondary}`,
     borderRadius: theme.shape.radius.default,
     marginBottom: theme.spacing(2),
+  }),
+  field: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
   }),
 });
