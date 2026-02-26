@@ -4,10 +4,11 @@ import { useDebounce } from 'react-use';
 import { AlertLabels } from '@grafana/alerting/unstable';
 import {
   CreateNotificationqueryNotificationEntry,
-  CreateNotificationqueryNotificationEntryAlert,
   CreateNotificationqueryNotificationOutcome,
   CreateNotificationqueryNotificationStatus,
+  CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
+  useCreateNotificationsqueryalertsMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { dateTime } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,6 +21,7 @@ import {
   Label,
   LoadingPlaceholder,
   RadioButtonGroup,
+  Spinner,
   Stack,
   Text,
   Tooltip,
@@ -354,10 +356,21 @@ interface NotificationExpandedContentProps {
 }
 
 const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps) => {
-  const firingAlerts =
-    entry.alerts?.filter((alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'firing') ?? [];
-  const resolvedAlerts =
-    entry.alerts?.filter((alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'resolved') ?? [];
+  const [queryAlerts, { data: alertsData, isLoading: alertsLoading }] = useCreateNotificationsqueryalertsMutation();
+
+  useEffect(() => {
+    const from = entry.timestamp;
+    const to = new Date(new Date(entry.timestamp).getTime() + 1000).toISOString();
+    queryAlerts({ createNotificationsqueryalertsRequestBody: { uuid: entry.uuid, from, to, limit: 10 } });
+  }, [entry.uuid, entry.timestamp, queryAlerts]);
+
+  const alerts = alertsData?.alerts ?? [];
+  const firingAlerts = alerts.filter(
+    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'firing'
+  );
+  const resolvedAlerts = alerts.filter(
+    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'resolved'
+  );
 
   return (
     <Box padding={2}>
@@ -367,13 +380,21 @@ const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps
             {entry.error}
           </Alert>
         )}
-        {firingAlerts.length > 0 && (
-          <Stack direction="column" gap={2}>
-            <Text variant="h6">
-              {t('alerting.notification-history.firing-alerts', 'Firing Alerts ({{count}})', {
-                count: firingAlerts.length,
+        {alertsLoading && <Spinner />}
+        {!alertsLoading && alerts.length < entry.alertCount && (
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <Icon name="info-circle" size="xs" />
+            <Text variant="bodySmall" color="secondary">
+              {t('alerting.notification-history.showing-alerts', 'Showing {{showing}} out of {{total}} alerts', {
+                showing: alerts.length,
+                total: entry.alertCount,
               })}
             </Text>
+          </Stack>
+        )}
+        {firingAlerts.length > 0 && (
+          <Stack direction="column" gap={2}>
+            <Text variant="h6">{t('alerting.notification-history.firing-alerts', 'Firing Alerts')}</Text>
             {firingAlerts.map((alert, index) => (
               <AlertDetail key={index} alert={alert} groupLabels={entry.groupLabels} />
             ))}
@@ -381,11 +402,7 @@ const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps
         )}
         {resolvedAlerts.length > 0 && (
           <Stack direction="column" gap={2}>
-            <Text variant="h6">
-              {t('alerting.notification-history.resolved-alerts', 'Resolved Alerts ({{count}})', {
-                count: resolvedAlerts.length,
-              })}
-            </Text>
+            <Text variant="h6">{t('alerting.notification-history.resolved-alerts', 'Resolved Alerts')}</Text>
             {resolvedAlerts.map((alert, index) => (
               <AlertDetail key={index} alert={alert} groupLabels={entry.groupLabels} />
             ))}
@@ -397,7 +414,7 @@ const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps
 };
 
 interface AlertDetailProps {
-  alert: CreateNotificationqueryNotificationEntryAlert;
+  alert: CreateNotificationsqueryalertsNotificationEntryAlert;
   groupLabels: Record<string, string>;
 }
 

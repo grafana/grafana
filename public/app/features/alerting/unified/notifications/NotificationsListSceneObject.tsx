@@ -7,8 +7,9 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import {
   CreateNotificationqueryMatcher,
   CreateNotificationqueryNotificationEntry,
-  CreateNotificationqueryNotificationEntryAlert,
+  CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
+  useCreateNotificationsqueryalertsMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -24,8 +25,10 @@ import {
 import {
   Alert,
   Badge,
+  Icon,
   LoadingBar,
   Pagination,
+  Spinner,
   Stack,
   Text,
   TextLink,
@@ -94,7 +97,7 @@ export const NotificationsList = React.memo(function NotificationsList({
         createNotificationqueryRequestBody: {
           from: fromDate,
           to: toDate,
-          limit: 1000,
+          limit: 100,
           status: isNotificationStatus(statusFilter) ? statusFilter : undefined,
           outcome: isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
           receiver: receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
@@ -258,7 +261,7 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
-          <NotificationDetails record={record} />
+          <NotificationDetails record={record} uuid={record.uuid} />
         </div>
       )}
     </Stack>
@@ -280,20 +283,31 @@ function NotificationState({ status }: NotificationStateProps) {
 
 interface NotificationDetailsProps {
   record: NotificationEntry;
+  uuid: string;
 }
 
-function NotificationDetails({ record }: NotificationDetailsProps) {
+function NotificationDetails({ record, uuid }: NotificationDetailsProps) {
   const styles = useStyles2(getStyles);
 
+  const [queryAlerts, { data: alertsData, isLoading: alertsLoading }] = useCreateNotificationsqueryalertsMutation();
+
+  React.useEffect(() => {
+    const from = record.timestamp;
+    const to = new Date(new Date(record.timestamp).getTime() + 1000).toISOString();
+    queryAlerts({ createNotificationsqueryalertsRequestBody: { uuid, from, to, limit: 10 } });
+  }, [uuid, record.timestamp, queryAlerts]);
+
+  const alerts = alertsData?.alerts ?? [];
+
   // Split alerts into firing and resolved
-  const firingAlerts = record.alerts.filter(
-    (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'firing'
+  const firingAlerts = alerts.filter(
+    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'firing'
   );
-  const resolvedAlerts = record.alerts.filter(
-    (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'resolved'
+  const resolvedAlerts = alerts.filter(
+    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'resolved'
   );
 
-  const renderAlert = (alert: CreateNotificationqueryNotificationEntryAlert, index: number) => {
+  const renderAlert = (alert: CreateNotificationsqueryalertsNotificationEntryAlert, index: number) => {
     const ruleUid = alert.labels?.__alert_rule_uid__;
     const alertName = alert.labels?.alertname || 'Alert';
     const folderName = alert.labels?.grafana_folder || '';
@@ -395,13 +409,25 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
           {record.error}
         </Alert>
       )}
+      {alertsLoading && <Spinner />}
+      {!alertsLoading && alerts.length < record.alertCount && (
+        <Stack direction="row" gap={0.5} alignItems="center">
+          <Icon name="info-circle" size="xs" />
+          <Text variant="bodySmall" color="secondary">
+            <Trans
+              i18nKey="alerting.notifications-scene.showing-alerts"
+              values={{ showing: alerts.length, total: record.alertCount }}
+            >
+              {'Showing {{ showing }} out of {{ total }} alerts'}
+            </Trans>
+          </Text>
+        </Stack>
+      )}
       {/* Firing alerts section */}
       {firingAlerts.length > 0 && (
         <Stack direction="column" gap={2}>
           <Text variant="h6">
-            <Trans i18nKey="alerting.notifications-scene.firing-alerts" values={{ count: firingAlerts.length }}>
-              Firing Alerts ({{ count: firingAlerts.length }})
-            </Trans>
+            <Trans i18nKey="alerting.notifications-scene.firing-alerts">Firing Alerts</Trans>
           </Text>
           {firingAlerts.map(renderAlert)}
         </Stack>
@@ -410,9 +436,7 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
       {resolvedAlerts.length > 0 && (
         <Stack direction="column" gap={2}>
           <Text variant="h6">
-            <Trans i18nKey="alerting.notifications-scene.resolved-alerts" values={{ count: resolvedAlerts.length }}>
-              Resolved Alerts ({{ count: resolvedAlerts.length }})
-            </Trans>
+            <Trans i18nKey="alerting.notifications-scene.resolved-alerts">Resolved Alerts</Trans>
           </Text>
           {resolvedAlerts.map(renderAlert)}
         </Stack>
