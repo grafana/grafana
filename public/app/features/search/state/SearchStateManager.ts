@@ -27,6 +27,7 @@ export const initialState: SearchState = {
   prevSort: undefined,
   eventTrackingNamespace: 'dashboard_search',
   deleted: false,
+  createdBy: undefined,
 };
 
 export const defaultQueryParams: SearchQueryParams = {
@@ -35,6 +36,7 @@ export const defaultQueryParams: SearchQueryParams = {
   query: null,
   tag: null,
   layout: null,
+  createdBy: null,
 };
 
 const getLocalStorageLayout = () => {
@@ -56,7 +58,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
     // Force list view when conditions are specified from the URL
-    if (stateFromUrl.query || stateFromUrl.datasource || stateFromUrl.panel_type) {
+    if (stateFromUrl.query || stateFromUrl.datasource || stateFromUrl.panel_type || stateFromUrl.createdBy) {
       stateFromUrl.layout = SearchLayout.List;
     }
 
@@ -95,6 +97,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tag: this.state.tag,
       datasource: this.state.datasource,
       panel_type: this.state.panel_type,
+      createdBy: this.state.createdBy ?? null,
       starred: this.state.starred ? this.state.starred : null,
       sort: this.state.sort,
     });
@@ -120,6 +123,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       datasource: undefined,
       tag: [],
       panel_type: undefined,
+      createdBy: undefined,
       starred: undefined,
       sort: undefined,
     });
@@ -143,6 +147,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     }
 
     this.setStateAndDoSearch({ tag: [...this.state.tag, newTag] });
+  };
+
+  onCreatedByChange = (createdBy: string | undefined) => {
+    this.setStateAndDoSearch({ createdBy });
   };
 
   onDatasourceChange = (datasource: string | undefined) => {
@@ -205,6 +213,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
         this.state.tag.length ||
         this.state.starred ||
         this.state.panel_type ||
+        this.state.createdBy ||
         this.state.sort ||
         this.state.deleted ||
         this.state.layout === SearchLayout.List
@@ -217,6 +226,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tags: this.state.tag,
       ds_uid: this.state.datasource,
       panel_type: this.state.panel_type,
+      createdBy: this.state.createdBy,
       location: this.state.folderUid, // This will scope all results to the prefix
       sort: this.state.sort,
       explain: this.state.explain,

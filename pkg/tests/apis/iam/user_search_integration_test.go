@@ -338,6 +338,62 @@ func TestIntegrationUserSearch_Paging(t *testing.T) {
 	}
 }
 
+func TestIntegrationUserSearch_AccessControl(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesAuthnMutation,
+				},
+				UnifiedStorageEnableSearch: true,
+			})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			setupUsers(t, helper)
+
+			t.Run("accesscontrol=true includes permissions on hits", func(t *testing.T) {
+				res := searchUsersWithAccessControl(t, helper, "TestUser", true)
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.NotNil(t, hit.AccessControl, "expected AccessControl map on hit %s", hit.Login)
+					require.True(t, hit.AccessControl["org.users:read"], "admin should have org.users:read on %s", hit.Login)
+				}
+			})
+
+			t.Run("accesscontrol absent omits permissions from hits", func(t *testing.T) {
+				res := searchUsers(t, helper, "TestUser")
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.Empty(t, hit.AccessControl, "expected no AccessControl on hit %s when param absent", hit.Login)
+				}
+			})
+
+			t.Run("accesscontrol=false omits permissions from hits", func(t *testing.T) {
+				res := searchUsersWithAccessControl(t, helper, "TestUser", false)
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.Empty(t, hit.AccessControl, "expected no AccessControl on hit %s when param is false", hit.Login)
+				}
+			})
+		})
+	}
+}
+
 func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 	ctx := context.Background()
 	userClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -426,6 +482,25 @@ func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string,
 		q.Set("sort", sort)
 	}
 	q.Set("limit", "100")
+
+	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
+
+	res := &iamv0.GetSearchUsersResponse{}
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: "GET",
+		Path:   path,
+	}, res)
+
+	require.Equal(t, 200, rsp.Response.StatusCode)
+	return res
+}
+
+func searchUsersWithAccessControl(t *testing.T, helper *apis.K8sTestHelper, query string, accessControl bool) *iamv0.GetSearchUsersResponse {
+	q := url.Values{}
+	q.Set("query", query)
+	q.Set("limit", "100")
+	q.Set("accesscontrol", fmt.Sprintf("%t", accessControl))
 
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 

@@ -231,20 +231,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     window.__grafanaSceneContext = this;
 
-    // SECURITY: The mutation client is intentionally NOT stored as a field on
-    // this scene instance. window.__grafanaSceneContext exposes the scene to
-    // all plugins. Storing the client here would let any plugin bypass the
-    // RestrictedGrafanaApis access control. The client reference lives only in
-    // the module-level store (dashboardMutationApi.ts), which plugins cannot
-    // import. Do not add a _mutationClient property to this class.
-    let mutationClient: DashboardMutationClient | undefined;
-    try {
-      mutationClient = new DashboardMutationClient(this);
-      setDashboardMutationClient(mutationClient);
-    } catch (error) {
-      console.error('Failed to register Dashboard Mutation API:', error);
-    }
-
     this._initializePanelSearch();
 
     if (this.state.isEditing) {
@@ -270,11 +256,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
+    let mutationClient: DashboardMutationClient | undefined;
+    try {
+      mutationClient = new DashboardMutationClient(this);
+      setDashboardMutationClient(mutationClient);
+    } catch (error) {
+      console.error('Failed to register Dashboard Mutation API:', error);
+    }
+
     // Deactivation logic
     return () => {
-      window.__grafanaSceneContext = prevSceneContext;
       setDashboardMutationClient(null);
       mutationClient = undefined;
+      window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
       oldDashboardWrapper.destroy();

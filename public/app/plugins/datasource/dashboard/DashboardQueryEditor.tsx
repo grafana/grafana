@@ -5,9 +5,10 @@ import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataQuery, GrafanaTheme2, SelectableValue, DataTopic, QueryEditorProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { OperationsEditorRow } from '@grafana/plugin-ui';
-import { Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
-import config from 'app/core/config';
+import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
+import { Alert, Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -45,6 +46,7 @@ export const INVALID_PANEL_DESCRIPTION = 'Contains a shared dashboard query';
 
 export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Props) {
   const { value: defaultDatasource } = useAsync(() => getDatasourceSrv().get());
+  const { value: panelPluginMetas, error: panelPluginMetasError } = usePanelPluginMetasMap();
 
   const panel = useMemo(() => {
     const dashboard = getDashboardSrv().getCurrent();
@@ -138,7 +140,10 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     () =>
       dashboard?.panels
         .filter(
-          (panel) => config.panels[panel.type] && panel.targets && !isPanelInEdit(panel.id, dashboard.panelInEdit?.id)
+          (panel) =>
+            Boolean(panelPluginMetas?.[panel.type]) &&
+            panel.targets &&
+            !isPanelInEdit(panel.id, dashboard.panelInEdit?.id)
         )
         .map((panel) => {
           let description = getPanelDescription(panel);
@@ -151,16 +156,24 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
           return {
             value: panel.id,
             label: panel.title ?? 'Panel ' + panel.id,
-            imgUrl: config.panels[panel.type].info.logos.small,
+            imgUrl: panelPluginMetas?.[panel.type]?.info.logos.small,
             description,
             isDisabled,
           };
         }) ?? [],
-    [dashboard, getPanelDescription]
+    [dashboard, getPanelDescription, panelPluginMetas]
   );
 
   const styles = useStyles2(getStyles);
   const selectId = useId();
+
+  if (panelPluginMetasError) {
+    return (
+      <Alert severity="error" title={t('dashboard.query-editor.load-error', 'Failed to load panel plugins')}>
+        {panelPluginMetasError.message}
+      </Alert>
+    );
+  }
 
   if (!dashboard) {
     return null;

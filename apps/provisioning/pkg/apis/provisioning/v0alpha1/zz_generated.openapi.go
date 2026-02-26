@@ -1837,6 +1837,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RefItem(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"protected": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether this ref is protected (e.g. branch protection rules)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"name"},
 			},

@@ -5,13 +5,14 @@ import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { Permissions } from 'app/core/components/AccessControl/Permissions';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
+import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 
@@ -39,8 +40,6 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const isProvisionedInstance = useIsProvisionedInstance();
   const deleteFolder = useDeleteFolderMutationFacade();
 
-  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
-
   const {
     canEditFolders,
     canDeleteFolders: canDeleteFoldersPermissions,
@@ -54,8 +53,9 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
   // Can only delete folders when the folder has the right permission and is not provisioned root folder
   const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo;
-  // Show permissions only if the folder is not provisioned
-  const canShowPermissions = canViewPermissions && !isProvisionedFolder;
+  // Show permissions only if the folder is not provisioned, or if the provisioningFolderMetadata flag is enabled
+  const canShowPermissions =
+    canViewPermissions && (!isProvisionedFolder || !!config.featureToggles.provisioningFolderMetadata);
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID: destinationUID });
@@ -143,14 +143,16 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 
-  // For now, only admins can manage folder owners
-  const showManageOwners = config.featureToggles.teamFolders && isAdmin && !isProvisionedFolder;
+  // If user can set permissions for the folder and read teams, they can manage folder owners
+  const showManageOwners =
+    config.featureToggles.teamFolders &&
+    canSetPermissions &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRead) &&
+    !isProvisionedFolder;
 
   const menu = (
     <Menu>
-      {canViewPermissions && !isProvisionedFolder && (
-        <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />
-      )}
+      {canShowPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
       {showManageOwners && (
         <MenuItem
           onClick={() => {
@@ -195,7 +197,11 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
           onClose={() => setShowPermissionsDrawer(false)}
           size="md"
         >
-          <Permissions resource="folders" resourceId={folder.uid} canSetPermissions={canSetPermissions} />
+          <FolderPermissions
+            folderUID={folder.uid}
+            canSetPermissions={canSetPermissions}
+            isProvisionedFolder={isProvisionedFolder}
+          />
         </Drawer>
       )}
       {showManageOwnersModal && (

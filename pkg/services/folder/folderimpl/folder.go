@@ -64,6 +64,7 @@ type Service struct {
 	features               featuremgmt.FeatureToggles
 	accessControl          accesscontrol.AccessControl
 	k8sclient              client.K8sHandler
+	maxNestedFolderDepth   int
 	dashboardK8sClient     client.K8sHandler
 	publicDashboardService publicdashboards.ServiceWrapper
 	// bus is currently used to publish event in case of folder full path change.
@@ -97,7 +98,7 @@ func ProvideService(
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
 		dashboardStore:         dashboardStore,
-		dashboardFolderStore:   newDashboardFolderStore(db),
+		dashboardFolderStore:   newDashboardFolderStore(db, cfg.MaxNestedFolderDepth),
 		store:                  store,
 		features:               features,
 		accessControl:          ac,
@@ -107,6 +108,7 @@ func ProvideService(
 		metrics:                newFoldersMetrics(r),
 		tracer:                 tracer,
 		publicDashboardService: publicDashboardService,
+		maxNestedFolderDepth:   cfg.MaxNestedFolderDepth,
 	}
 	srv.DBMigration(db)
 
@@ -127,7 +129,7 @@ func ProvideService(
 		features,
 	)
 
-	unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
+	unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer, cfg)
 
 	srv.unifiedStore = unifiedStore
 	srv.k8sclient = k8sHandler
@@ -1073,8 +1075,8 @@ func (s *Service) MoveLegacy(ctx context.Context, cmd *folder.MoveFolderCommand)
 		return nil, err
 	}
 
-	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal MaxNestedFolderDepth
-	if folderHeight+len(parents)+1 > folder.MaxNestedFolderDepth {
+	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal maxNestedFolderDepth
+	if folderHeight+len(parents)+1 > s.maxNestedFolderDepth {
 		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
 	}
 
@@ -1396,7 +1398,7 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 		return fmt.Errorf("failed to get parents: %w", err)
 	}
 
-	if len(ancestors) >= folder.MaxNestedFolderDepth {
+	if len(ancestors) >= s.maxNestedFolderDepth {
 		return folder.ErrMaximumDepthReached.Errorf("failed to validate parent folder")
 	}
 

@@ -5293,6 +5293,10 @@
             "type": "string",
             "default": ""
           },
+          "protected": {
+            "description": "Whether this ref is protected (e.g. branch protection rules)",
+            "type": "boolean"
+          },
           "refURL": {
             "description": "The URL to the reference (branch or tag)",
             "type": "string"

@@ -7,6 +7,12 @@ SELECT o.org_id, u.id, u.uid, u.login, u.email, u.name,
 {{ if .Query.UID }}
    AND u.uid = {{ .Arg .Query.UID }}
 {{ end }}
+{{ if .Query.Email }}
+   AND u.email = {{ .Arg .Query.Email }}
+{{ end }}
+{{ if .Query.Login }}
+   AND u.login = {{ .Arg .Query.Login }}
+{{ end }}
 {{ if .Query.Pagination.Continue }}
    AND u.id >= {{ .Arg .Query.Pagination.Continue }}
 {{ end }}

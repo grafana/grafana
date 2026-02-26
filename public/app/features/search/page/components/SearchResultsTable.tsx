@@ -9,6 +9,7 @@ import { Observable } from 'rxjs';
 import { Field, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useTableStyles, TableCell } from '@grafana/ui/internal';
@@ -39,6 +40,7 @@ export type TableColumn = Column & {
 };
 
 const ROW_HEIGHT = 36; // pixels
+const EMPTY_PANEL_PLUGIN_METAS = {};
 
 export const SearchResultsTable = React.memo(
   ({
@@ -60,6 +62,7 @@ export const SearchResultsTable = React.memo(
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const [listEl, setListEl] = useState<FixedSizeList | null>(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
+    const { value: panelPluginMetas = EMPTY_PANEL_PLUGIN_METAS } = usePanelPluginMetasMap();
 
     const memoizedData = useMemo(() => {
       if (!response?.view?.dataFrame.fields.length) {
@@ -93,9 +96,20 @@ export const SearchResultsTable = React.memo(
         columnStyles,
         onTagSelected,
         onDatasourceChange,
-        response.view?.length >= response.totalRows
+        response.view?.length >= response.totalRows,
+        panelPluginMetas
       );
-    }, [response, width, columnStyles, selection, selectionToggle, clearSelection, onTagSelected, onDatasourceChange]);
+    }, [
+      response,
+      width,
+      columnStyles,
+      selection,
+      selectionToggle,
+      clearSelection,
+      onTagSelected,
+      onDatasourceChange,
+      panelPluginMetas,
+    ]);
 
     const options: TableOptions<{}> = useMemo(
       () => ({

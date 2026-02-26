@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -8,14 +7,17 @@ interface QuerySidebarCollapsableHeaderProps {
   label: string;
   children: React.ReactNode;
   headerAction?: React.ReactNode;
+  isOpen: boolean;
+  onToggle: (isOpen: boolean) => void;
 }
 
 export const QuerySidebarCollapsableHeader = ({
   label,
   children,
   headerAction,
+  isOpen,
+  onToggle,
 }: QuerySidebarCollapsableHeaderProps) => {
-  const [isOpen, setIsOpen] = useState(true);
   const styles = useStyles2(getStyles);
 
   return (
@@ -34,7 +36,7 @@ export const QuerySidebarCollapsableHeader = ({
         </Stack>
       }
       isOpen={isOpen}
-      onToggle={setIsOpen}
+      onToggle={onToggle}
       className={styles.collapsableSection}
       contentClassName={styles.contentArea}
     >

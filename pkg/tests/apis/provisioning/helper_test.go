@@ -672,6 +672,25 @@ func (h *provisioningTestHelper) WaitForQuotaReconciliation(t *testing.T, repoNa
 	}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should have reason %s", expectedReason)
 }
 
+// WaitForConditionReason waits for the repository's condition of the given type to match the expected reason.
+func (h *provisioningTestHelper) WaitForConditionReason(t *testing.T, repoName string, conditionType string, expectedReason string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := h.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := unstructuredToRepository(t, repoObj)
+		condition := findCondition(repo.Status.Conditions, conditionType)
+		if !assert.NotNil(collect, condition, "%s condition not found", conditionType) {
+			return
+		}
+
+		assert.Equal(collect, expectedReason, condition.Reason, "%s condition reason mismatch", conditionType)
+	}, waitTimeoutDefault, waitIntervalDefault, "%s condition should have reason %s", conditionType, expectedReason)
+}
+
 // RequireRepoDashboardCount performs a one-off check that the number of dashboards managed by the given repo matches the expected count.
 func (h *provisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
 	t.Helper()
@@ -720,6 +739,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	opts := testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagProvisioningExport,
 		},
 		// Provisioning requires resources to be fully migrated to unified storage.
 		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
@@ -741,7 +761,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	}
 
 	if extensions.IsEnterprise {
-		opts.ProvisioningRepositoryTypes = []string{"local", "github", "gitlab", "bitbucket"}
+		opts.ProvisioningRepositoryTypes = []string{"local", "git", "github", "gitlab", "bitbucket"}
 	}
 
 	for _, o := range options {
@@ -1238,4 +1258,16 @@ func findCondition(conditions []metav1.Condition, conditionType string) *metav1.
 		}
 	}
 	return nil
+}
+
+// withoutExportFeatureFlag disables the provisioningExport feature flag
+func withoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
+	// Remove provisioningExport from the enabled feature toggles
+	filtered := []string{}
+	for _, flag := range opts.EnableFeatureToggles {
+		if flag != "provisioningExport" {
+			filtered = append(filtered, flag)
+		}
+	}
+	opts.EnableFeatureToggles = filtered
 }

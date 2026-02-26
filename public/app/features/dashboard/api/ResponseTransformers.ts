@@ -104,10 +104,10 @@ export function ensureV2Response(
 
   if (isDashboardResource(dto)) {
     accessMeta = dto.access;
-    annotationsMeta = {
-      ...dto.metadata.annotations,
-      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-    };
+    annotationsMeta = { ...dto.metadata.annotations };
+    if (dashboard.gnetId) {
+      annotationsMeta[AnnoKeyDashboardGnetId] = `${dashboard.gnetId}`;
+    }
     creationTimestamp = dto.metadata.creationTimestamp;
     labelsMeta = {
       [DeprecatedInternalId]: dto.metadata.labels?.[DeprecatedInternalId],
@@ -132,7 +132,7 @@ export function ensureV2Response(
       [AnnoKeySlug]: dto.meta.slug,
     };
     if (dashboard.gnetId) {
-      annotationsMeta[AnnoKeyDashboardGnetId] = dashboard.gnetId;
+      annotationsMeta[AnnoKeyDashboardGnetId] = `${dashboard.gnetId}`;
     }
     if (dto.meta.isSnapshot) {
       // FIXME -- lets not put non-annotation data in annotations!
@@ -1409,6 +1409,7 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
 export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
   const annotations = spec.annotations.map(transformV2ToV1AnnotationQuery);
 
+  const gnetId = metadata.annotations?.[AnnoKeyDashboardGnetId];
   const variables = getVariablesV1(spec.variables);
   const panels = getPanelsV1(spec.elements, spec.layout);
   return {
@@ -1421,7 +1422,7 @@ export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: Ob
     preload: spec.preload,
     liveNow: spec.liveNow,
     editable: spec.editable,
-    gnetId: metadata.annotations?.[AnnoKeyDashboardGnetId],
+    gnetId: gnetId?.length ? +gnetId : undefined,
     revision: spec.revision,
     time: {
       from: spec.timeSettings.from,
