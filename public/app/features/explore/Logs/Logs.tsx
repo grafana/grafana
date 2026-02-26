@@ -15,7 +15,6 @@ import {
   EventBus,
   ExploreLogsPanelState,
   ExplorePanelsState,
-  FieldConfigSource,
   GrafanaTheme2,
   LoadingState,
   LogLevel,
@@ -90,7 +89,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { LogsVisualisationType } from './constants';
+import { exploreLogsTableFieldConfigDefaults, LogsVisualisationType } from './constants';
 import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
 import { getDefaultTableSortBy } from './utils/table/logsTable';
@@ -252,7 +251,19 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const updatePanelState = useCallback(
     (logsPanelState: Partial<ExploreLogsPanelState>) => {
       const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
+
       if (state?.panelsState) {
+        console.log('panelState', {
+          ...state.panelsState.logs,
+          columns: logsPanelState.columns ?? panelState?.logs?.columns,
+          visualisationType: logsPanelState.visualisationType ?? visualisationType,
+          labelFieldName: logsPanelState.labelFieldName,
+          refId: logsPanelState.refId ?? panelState?.logs?.refId,
+          displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
+          tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
+          tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
+          tableFieldConfig: logsPanelState.tableFieldConfig ?? panelState?.logs?.tableFieldConfig,
+        });
         dispatch(
           changePanelState(exploreId, 'logs', {
             ...state.panelsState.logs,
@@ -263,6 +274,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
             tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
             tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
+            tableFieldConfig: logsPanelState.tableFieldConfig ?? panelState?.logs?.tableFieldConfig,
           })
         );
       }
@@ -275,6 +287,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       panelState?.logs?.refId,
       panelState?.logs?.tableSortBy,
       panelState?.logs?.tableSortDir,
+      panelState?.logs?.tableFieldConfig,
       visualisationType,
     ]
   );
@@ -646,6 +659,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           visualisationType: visualisationType ?? getDefaultVisualisationType(),
           displayedFields,
           sortOrder: logsSortOrder,
+          tableFieldConfig: panelState?.logs?.tableFieldConfig ?? exploreLogsTableFieldConfigDefaults,
         },
       };
       urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
@@ -684,6 +698,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           visualisationType: visualisationType ?? getDefaultVisualisationType(),
           displayedFields,
           sortOrder: logsSortOrder,
+          tableFieldConfig: panelState?.logs?.tableFieldConfig ?? exploreLogsTableFieldConfigDefaults,
         },
       };
 
@@ -1097,6 +1112,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
           {enableNewLogsTable && visualisationType === 'table' && (
             <ExploreLogsTable
+              tableFieldConfig={panelState?.logs?.tableFieldConfig}
+              updatePanelState={updatePanelState}
               eventBus={eventBus}
               data={panelData}
               timeZone={timeZone}
@@ -1142,9 +1159,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     updatePanelState({ refId });
                   }
                 }
-              }}
-              onFieldConfigChange={function (config: FieldConfigSource): void {
-                // @todo save field overrides somewhere (e.g. column widths)
               }}
               onChangeTimeRange={onChangeTime}
             />

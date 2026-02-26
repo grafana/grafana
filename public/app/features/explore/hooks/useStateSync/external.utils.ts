@@ -18,6 +18,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
 }
 
 /**
+ * @todo this has zero test coverage and it doesn't work as expected, objects with values are pruned
  * recursively walks an object, removing keys where the value is undefined
  * if the resulting object is empty, returns undefined
  **/
@@ -35,7 +36,12 @@ function pruneObject(obj: object): object | undefined {
     }
     return value;
   });
-  pruned = omitBy<typeof pruned>(pruned, isEmpty);
+
+  // @todo this will fail to prune sub-objects that have a mix of null and non null values
+  if (Object.values(pruned).filter((a) => a !== undefined && a !== null).length === 0) {
+    pruned = omitBy<typeof pruned>(pruned, isEmpty);
+  }
+
   if (isEmpty(pruned)) {
     return undefined;
   }

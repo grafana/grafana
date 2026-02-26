@@ -21,6 +21,7 @@ import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virt
 import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
 import { DownloadFormat, downloadLogs as download } from 'app/features/logs/utils';
 
+import { exploreLogsTableFieldConfigDefaults } from '../../../features/explore/Logs/constants';
 import { TablePanel } from '../table/TablePanel';
 
 import { Options } from './options/types';
@@ -110,6 +111,22 @@ export function TableNGWrap({
             sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
             setSortOrder={handleSortOrderChange}
             downloadLogs={downloadLogs}
+            // @todo clean up
+            setWrapLogMessage={(wrapText: boolean) =>
+              handleTableOnFieldConfigChange({
+                ...fieldConfig,
+                defaults: {
+                  ...exploreLogsTableFieldConfigDefaults,
+                  ...fieldConfig.defaults,
+                  custom: {
+                    ...exploreLogsTableFieldConfigDefaults.custom,
+                    ...fieldConfig.defaults.custom,
+                    wrapText,
+                  },
+                },
+              })
+            }
+            wrapLogMessage={fieldConfig.defaults.custom.wrapText}
           />
         </div>
       )}
