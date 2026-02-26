@@ -348,10 +348,8 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 
 	go func() {
 		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
-		if b.garbageCollection.Interval > 0 {
-			jitter := time.Duration(rand.Int64N(b.garbageCollection.Interval.Nanoseconds()))
-			<-time.After(jitter)
-		}
+		jitter := time.Duration(rand.Int64N(b.garbageCollection.Interval.Nanoseconds()))
+		<-time.After(jitter)
 
 		ticker := time.NewTicker(b.garbageCollection.Interval)
 		defer ticker.Stop()
