@@ -5682,10 +5682,7 @@
       "empty-state-message": "Burada görselleştirmek için bir sorgu çalıştırın ya da diğer panel türlerini eklemek için tüm görselleştirmelere gidin.",
       "menu-open-panel-editor": "Yapılandır",
       "menu-use-library-panel": "Kütüphane panelini kullan",
-      "missing-config": "Eksik panel yapılandırması",
-      "suggestions": {
-        "empty-state-message": "Önerilen görselleştirmeleri görmek için bir sorgu çalıştırın"
-      }
+      "missing-config": "Eksik panel yapılandırması"
     },
     "new-panel-title": "Yeni panel",
     "on-create-new-row": {
@@ -6920,11 +6917,11 @@
       "static-options-legend": "Statik seçenekler"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Gelişmiş seçenekler",
         "classic": "Klasik",
         "json": "JSON",
-        "v1-resource": "V1 Kaynağı",
         "v2-resource": "V2 Kaynağı",
         "yaml": "YAML"
       },
@@ -11924,6 +11921,10 @@
         "title": "Hata",
         "try-again-button": "Tekrar deneyin"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Bilinmeyen görselleştirme türü"
     },
     "viz-type-picker": {
@@ -12634,6 +12635,9 @@
       "label-read-only": "Salt okunur",
       "label-sync-interval": "Eşitleme Aralığı (saniye)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Sorgunuzla eşleşen sonuç yok",
       "partial-managed": "{{resourceCount}} kaynağın {{managedCount}} tanesi Git senkronizasyonu ile yönetiliyor.",
@@ -12767,6 +12771,12 @@
       "show-less": "daha az göster",
       "show-more": "daha fazla göster",
       "truncated": "İleti kısaltıldı"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13300,7 +13310,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13310,9 +13321,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13356,17 +13368,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "{{id}} kartını seçin",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Sorgular ve İfadeler",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
       "transformations": "Dönüşümler",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
@@ -13567,6 +13576,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Panelleri dâhil et",
       "remove-datasource-filter": "Veri kaynağı: {{datasource}}",
       "sort-placeholder": "Sırala",

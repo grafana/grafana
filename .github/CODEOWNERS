@@ -967,7 +967,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/notifications/ @grafana/grafana-frontend-navigation
 /public/app/features/org/ @grafana/grafana-frontend-navigation
 /public/app/features/panel/ @grafana/dashboards-squad
-/public/app/features/panel/components/VizTypePicker/VisualizationSuggestions.tsx @grafana/dataviz-squad
+/public/app/features/panel/components/VizTypePicker/VisualizationSuggestions*.tsx @grafana/dataviz-squad
 /public/app/features/panel/suggestions/ @grafana/dataviz-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/grafana-frontend-platform
