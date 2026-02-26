@@ -986,6 +986,14 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "accesscontrol",
+            "in": "query",
+            "description": "when true, includes access control metadata in the response",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
