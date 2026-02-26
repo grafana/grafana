@@ -5,11 +5,13 @@ export type LogsLogsDefaultLabelsRecords = LogsLogsDefaultLabelsRecord[];
 export const defaultLogsLogsDefaultLabelsRecords = (): LogsLogsDefaultLabelsRecords => ([]);
 
 export interface LogsLogsDefaultLabelsRecord {
-	labels: string[];
+	label: string;
+	values: string[];
 }
 
 export const defaultLogsLogsDefaultLabelsRecord = (): LogsLogsDefaultLabelsRecord => ({
-	labels: [],
+	label: "",
+	values: [],
 });
 
 export interface Spec {
