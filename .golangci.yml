@@ -105,6 +105,8 @@ linters:
             - '**/pkg/tsdb/cloud-monitoring/**/*'
             - '**/pkg/tsdb/graphite/*'
             - '**/pkg/tsdb/graphite/**/*'
+            - '**/pkg/tsdb/mssql/*'
+            - '**/pkg/tsdb/mssql/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
             - '**/pkg/tsdb/opentsdb/*'
