@@ -23,10 +23,10 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/youmark/pkcs8"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/datasource"

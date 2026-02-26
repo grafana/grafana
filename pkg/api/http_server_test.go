@@ -338,7 +338,7 @@ func TestHTTPServer_getListeners(t *testing.T) {
 
 		hs := &HTTPServer{
 			Cfg:     cfg,
-			httpSrv: &http.Server{},
+			httpSrv: &http.Server{}, //nolint:gosec
 		}
 		hs.httpSrv.Addr = net.JoinHostPort(cfg.HTTPAddr, cfg.HTTPPort)
 
@@ -359,7 +359,7 @@ func TestHTTPServer_getListeners(t *testing.T) {
 
 		hs := &HTTPServer{
 			Cfg:     cfg,
-			httpSrv: &http.Server{},
+			httpSrv: &http.Server{}, //nolint:gosec
 		}
 		hs.httpSrv.Addr = net.JoinHostPort(cfg.HTTPAddr, cfg.HTTPPort)
 
@@ -380,7 +380,7 @@ func TestHTTPServer_getListeners(t *testing.T) {
 
 		hs := &HTTPServer{
 			Cfg:     cfg,
-			httpSrv: &http.Server{},
+			httpSrv: &http.Server{}, //nolint:gosec
 		}
 
 		listeners, err := hs.getListeners()
