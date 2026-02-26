@@ -74,6 +74,9 @@ type BackendOptions struct {
 
 	DisableStorageServices bool
 
+	// When true, bulk migrations buffer data through a temporary Parquet file
+	MigrationParquetBuffer bool
+
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
 
@@ -106,6 +109,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
+		migrationParquetBuffer:  opts.MigrationParquetBuffer,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       opts.GarbageCollection,
 	}, nil
@@ -150,6 +154,9 @@ type backend struct {
 	historyPruner resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
+
+	// When true, bulk migrations buffer data through a temporary Parquet file
+	migrationParquetBuffer bool
 
 	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration

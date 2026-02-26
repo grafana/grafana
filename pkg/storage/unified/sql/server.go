@@ -191,6 +191,7 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 				DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
 			},
 			DisableStorageServices: opts.DisableStorageServices,
+			MigrationParquetBuffer: opts.Cfg.MigrationParquetBuffer,
 		})
 		if err != nil {
 			return err
