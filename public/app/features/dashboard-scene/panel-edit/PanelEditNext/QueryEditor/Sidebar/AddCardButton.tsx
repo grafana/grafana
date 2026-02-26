@@ -31,7 +31,7 @@ interface AddCardButtonProps {
   onAdd?: () => void;
 }
 
-export const AddCardButton = ({ variant, afterId, alwaysVisible = false, onAdd }: AddCardButtonProps) => {
+export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }: AddCardButtonProps) => {
   const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
   const { addQuery } = useActionsContext();
