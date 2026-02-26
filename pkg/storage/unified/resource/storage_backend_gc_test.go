@@ -419,6 +419,58 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 1)
 	})
+
+	t.Run("pagination does not delete resources that were recreated", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+		cfg := gcConfig
+		cfg.BatchSize = 3
+		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.GarbageCollection = cfg
+		})
+		b := storageBackend
+
+		// other-dash: 2 keys (created, deleted)
+		rv1, err := writeEvent(t, ctx, storageBackend, "other-dash", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		_, err = writeEvent(t, ctx, storageBackend, "other-dash", resourcepb.WatchEvent_DELETED,
+			func(o *writeEventOptions) { o.PreviousRV = rv1 })
+		require.NoError(t, err)
+
+		// my-dash: 5 keys (created, updated, deleted, created again and updated again) — first batch ends with a my-dash key
+		rv1, err = writeEvent(t, ctx, storageBackend, "my-dash", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		rv2, err := writeEvent(t, ctx, storageBackend, "my-dash", resourcepb.WatchEvent_MODIFIED,
+			func(o *writeEventOptions) { o.PreviousRV = rv1 })
+		require.NoError(t, err)
+		_, err = writeEvent(t, ctx, storageBackend, "my-dash", resourcepb.WatchEvent_DELETED,
+			func(o *writeEventOptions) { o.PreviousRV = rv2 })
+		require.NoError(t, err)
+		rv4, err := writeEvent(t, ctx, storageBackend, "my-dash", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		_, err = writeEvent(t, ctx, storageBackend, "my-dash", resourcepb.WatchEvent_MODIFIED,
+			func(o *writeEventOptions) { o.PreviousRV = rv4 })
+		require.NoError(t, err)
+
+		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro())
+		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		require.NoError(t, err)
+
+		// Both resources should be fully GC'd; no history keys left
+		historyResp := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})
+		count := 0
+		historyResp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		require.Equal(t, 2, count)
+	})
 }
 
 func TestIntegrationGarbageCollectionLoop(t *testing.T) {
@@ -521,7 +573,7 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		cutoffTimestamp := time.Now().Add(-time.Hour).UnixMicro() // nothing eligible for deletion
 		b.runGarbageCollection(ctx, cutoffTimestamp)
 
-		// count how many history entries there are after GC runs - should be 0
+		// count how many history entries there are after GC runs - should still be 2
 		historyResp = storageBackend.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: "group/resource/namespace/",
 			EndKey:   "group/resource/namespace0",
