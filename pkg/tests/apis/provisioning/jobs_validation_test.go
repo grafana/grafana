@@ -93,8 +93,8 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 					Do(ctx).StatusCode(&statusCode)
 
 				require.Error(t, result.Error(), "write job should be rejected for read-only repository")
-				require.Equal(t, http.StatusMethodNotAllowed, statusCode, "should return 405 Method Not Allowed")
-				require.True(t, apierrors.IsMethodNotSupported(result.Error()), "error should be method not supported")
+				require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+				require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
 			})
 		}
 	})

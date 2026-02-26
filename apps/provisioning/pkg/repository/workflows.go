@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -11,7 +12,7 @@ import (
 
 func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 	if len(repo.Spec.Workflows) == 0 {
-		return apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), "write")
+		return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "", fmt.Errorf("write operations are not allowed for this repository"))
 	}
 
 	var supportsWrite, supportsBranch bool
@@ -36,9 +37,9 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 
 	switch {
 	case ref == "" && !supportsWrite:
-		return apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), "write")
+		return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "", fmt.Errorf("write operations are not allowed for this repository"))
 	case ref != "" && !supportsBranch:
-		return apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), "branch")
+		return apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "", fmt.Errorf("branch workflow is not allowed for this repository"))
 	default:
 		return nil
 	}
