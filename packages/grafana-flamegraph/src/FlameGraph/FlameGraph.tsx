@@ -19,10 +19,11 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ButtonGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { ColorSchemeButton } from '../ColorSchemeButton';
+import { alignOptions } from '../FlameGraphHeader';
 import { PIXELS_PER_LEVEL } from '../constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, SelectedView, ViewMode, TextAlign } from '../types';
 
@@ -201,11 +202,6 @@ const FlameGraph = ({
   }
 
   if (isNewUI) {
-    const alignOptions: Array<SelectableValue<TextAlign>> = [
-      { value: 'left', description: 'Align text left', icon: 'align-left' },
-      { value: 'right', description: 'Align text right', icon: 'align-right' },
-    ];
-
     return (
       <div className={newStyles.graph}>
         <div className={newStyles.toolbar}>

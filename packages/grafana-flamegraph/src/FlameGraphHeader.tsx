@@ -317,7 +317,7 @@ const FlameGraphHeader = (props: Props) => {
   );
 };
 
-const alignOptions: Array<SelectableValue<TextAlign>> = [
+export const alignOptions: Array<SelectableValue<TextAlign>> = [
   { value: 'left', description: 'Align text left', icon: 'align-left' },
   { value: 'right', description: 'Align text right', icon: 'align-right' },
 ];
