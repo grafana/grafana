@@ -1,19 +1,19 @@
 import { ReactElement } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Combobox, ComboboxOption, Field, Stack } from '@grafana/ui';
 
 export interface DefaultValueEditorProps {
-  values: string[];
+  values: Array<ComboboxOption<string>>;
   options?: Array<ComboboxOption<string>>;
-  onChange: (values: string[]) => void;
-  'data-testid'?: string;
+  onChange: (values: Array<ComboboxOption<string>>) => void;
 }
 
 interface DefaultValueRowProps {
-  value: string;
+  value: ComboboxOption<string>;
   options: Array<ComboboxOption<string>>;
-  onChange: (value: string) => void;
+  onChange: (option: ComboboxOption<string>) => void;
   onRemove: () => void;
 }
 
@@ -23,9 +23,9 @@ function DefaultValueRow({ value, options, onChange, onRemove }: DefaultValueRow
       <Combobox
         aria-label={t('dashboard-scene.default-value-row.value-aria-label', 'Default value')}
         placeholder={t('dashboard-scene.default-value-row.value-placeholder', 'Value')}
-        value={value || null}
+        value={value.value || null}
         options={options}
-        onChange={(option) => onChange(option.value)}
+        onChange={(option) => onChange({ value: option.value, label: option.label ?? option.value })}
         createCustomValue
       />
       <Button
@@ -42,7 +42,7 @@ function DefaultValueRow({ value, options, onChange, onRemove }: DefaultValueRow
 
 export function DefaultValueEditor({ values, options = [], onChange, ...rest }: DefaultValueEditorProps): ReactElement {
   const onAddValue = () => {
-    onChange([...values, '']);
+    onChange([...values, { value: '' }]);
   };
 
   const onRemoveValue = (index: number) => {
@@ -51,14 +51,18 @@ export function DefaultValueEditor({ values, options = [], onChange, ...rest }: 
     onChange(newValues);
   };
 
-  const onChangeValue = (index: number, value: string) => {
+  const onChangeValue = (index: number, option: ComboboxOption<string>) => {
     const newValues = [...values];
-    newValues[index] = value;
+    newValues[index] = option;
     onChange(newValues);
   };
 
   return (
-    <Stack direction="column" gap={1} data-testid={rest['data-testid']}>
+    <Stack
+      direction="column"
+      gap={1}
+      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.infoText}
+    >
       <Field
         label={t('dashboard-scene.default-value-editor.label', 'Default value')}
         description={t('dashboard-scene.default-value-editor.description', 'Values that are pre-selected by default.')}
@@ -70,7 +74,7 @@ export function DefaultValueEditor({ values, options = [], onChange, ...rest }: 
               key={index}
               value={value}
               options={options}
-              onChange={(updatedValue) => onChangeValue(index, updatedValue)}
+              onChange={(updatedOption) => onChangeValue(index, updatedOption)}
               onRemove={() => onRemoveValue(index)}
             />
           ))}

@@ -39,23 +39,23 @@ describe('DefaultValueEditor', () => {
   });
 
   it('should render a row for each value', () => {
-    setup({ values: ['foo', 'bar', 'baz'] });
+    setup({ values: [{ value: 'foo' }, { value: 'bar' }, { value: 'baz' }] });
     expect(screen.getAllByRole('button', { name: 'Remove default value' })).toHaveLength(3);
     expect(screen.getAllByRole('combobox')).toHaveLength(3);
   });
 
   it('should call onChange with the value removed when remove is clicked', async () => {
     const onChange = jest.fn();
-    const { user } = setup({ values: ['a', 'b', 'c'], onChange });
+    const { user } = setup({ values: [{ value: 'a' }, { value: 'b' }, { value: 'c' }], onChange });
     const removeButtons = screen.getAllByRole('button', { name: 'Remove default value' });
     await user.click(removeButtons[1]);
-    expect(onChange).toHaveBeenCalledWith(['a', 'c']);
+    expect(onChange).toHaveBeenCalledWith([{ value: 'a' }, { value: 'c' }]);
   });
 
-  it('should call onChange with updated value when a combobox option is selected', async () => {
+  it('should call onChange with updated option when a combobox option is selected', async () => {
     const onChange = jest.fn();
     const { user } = setup({
-      values: [''],
+      values: [{ value: '' }],
       options: [
         { label: 'job', value: 'job' },
         { label: 'instance', value: 'instance' },
@@ -65,19 +65,19 @@ describe('DefaultValueEditor', () => {
     const combobox = screen.getByRole('combobox');
     await user.click(combobox);
     await user.click(screen.getByRole('option', { name: 'job' }));
-    expect(onChange).toHaveBeenCalledWith(['job']);
+    expect(onChange).toHaveBeenCalledWith([{ value: 'job', label: 'job' }]);
   });
 
-  it('should call onChange with updated value when a custom value is typed', async () => {
+  it('should call onChange with updated option when a custom value is typed', async () => {
     const onChange = jest.fn();
     const { user } = setup({
-      values: [''],
+      values: [{ value: '' }],
       options: [],
       onChange,
     });
     const combobox = screen.getByRole('combobox');
     await user.type(combobox, 'custom-val');
     await user.keyboard('{Enter}');
-    expect(onChange).toHaveBeenCalledWith(['custom-val']);
+    expect(onChange).toHaveBeenCalledWith([{ value: 'custom-val', label: 'custom-val' }]);
   });
 });

@@ -20,9 +20,9 @@ export interface GroupByVariableFormProps {
   defaultOptions?: MetricFindValue[];
   allowCustomValue: boolean;
   onAllowCustomValueChange: (event: FormEvent<HTMLInputElement>) => void;
-  defaultValue?: string[];
+  defaultValue?: Array<ComboboxOption<string>>;
   defaultValueOptions?: Array<ComboboxOption<string>>;
-  onDefaultValueChange?: (values: string[]) => void;
+  onDefaultValueChange?: (options: Array<ComboboxOption<string>>) => void;
   inline?: boolean;
   datasourceSupported: boolean;
 }

@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GroupByVariable, SceneVariable } from '@grafana/scenes';
+import { ComboboxOption } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { GroupByVariableForm } from '../components/GroupByVariableForm';
@@ -48,23 +49,28 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     onRunQuery();
   };
 
-  const onDefaultValueChange = (values: string[]) => {
-    if (values.length === 0) {
+  const onDefaultValueChange = (options: Array<ComboboxOption<string>>) => {
+    if (options.length === 0) {
       variable.setState({ defaultValue: undefined });
     } else {
       variable.setState({
         defaultValue: {
-          value: values,
-          text: values,
+          value: options.map((opt) => opt.value),
+          text: options.map((opt) => opt.label ?? opt.value),
         },
       });
     }
+    onRunQuery();
   };
 
-  const defaultValueStrings: string[] = defaultValue
+  const defaultValueSelection: Array<ComboboxOption<string>> = defaultValue
     ? Array.isArray(defaultValue.value)
-      ? defaultValue.value.map(String)
-      : [String(defaultValue.value)]
+      ? defaultValue.value.map((v, i) => {
+          const texts = defaultValue.text;
+          const label = Array.isArray(texts) ? String(texts[i]) : String(texts);
+          return { value: String(v), label };
+        })
+      : [{ value: String(defaultValue.value), label: String(defaultValue.text ?? defaultValue.value) }]
     : [];
 
   const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
@@ -78,7 +84,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
       infoText={datasourceRef ? message : undefined}
       onDataSourceChange={onDataSourceChange}
       onDefaultOptionsChange={onDefaultOptionsChange}
-      defaultValue={defaultValueStrings}
+      defaultValue={defaultValueSelection}
       defaultValueOptions={groupByKeys}
       onDefaultValueChange={onDefaultValueChange}
       allowCustomValue={allowCustomValue}

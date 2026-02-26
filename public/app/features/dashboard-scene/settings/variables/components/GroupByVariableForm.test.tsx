@@ -155,13 +155,13 @@ describe('GroupByVariableForm', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'Add default value' }));
-    expect(mockOnDefaultValueChange).toHaveBeenCalledWith(['']);
+    expect(mockOnDefaultValueChange).toHaveBeenCalledWith([{ value: '' }]);
   });
 
   it('should call onDefaultValueChange when removing a default value', async () => {
     const mockOnDefaultValueChange = jest.fn();
     const { user } = setup({
-      defaultValue: ['job'],
+      defaultValue: [{ value: 'job', label: 'job' }],
       onDefaultValueChange: mockOnDefaultValueChange,
     });
 
@@ -172,7 +172,7 @@ describe('GroupByVariableForm', () => {
   it('should show defaultValueOptions in combobox dropdown', async () => {
     const mockOnDefaultValueChange = jest.fn();
     const { user } = setup({
-      defaultValue: [''],
+      defaultValue: [{ value: '' }],
       defaultValueOptions: [
         { label: 'job', value: 'job' },
         { label: 'instance', value: 'instance' },
