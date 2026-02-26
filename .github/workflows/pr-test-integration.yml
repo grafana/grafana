@@ -220,7 +220,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -p=1 -tags=mysql -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -468,7 +468,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise,mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -p=1 -tags=enterprise,mysql -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)

@@ -886,6 +886,11 @@ export type DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLay
   RowsLayoutKind?: DashboardRowsLayoutKind;
   TabsLayoutKind?: DashboardTabsLayoutKind;
 };
+export type DashboardDatasourceControlSourceRef = {
+  /** The plugin type-id */
+  group: string;
+  type: string;
+};
 export type DashboardDashboardLink = {
   /** If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards */
   asDropdown: boolean;
@@ -895,6 +900,8 @@ export type DashboardDashboardLink = {
   includeVars: boolean;
   /** If true, includes current time range in the link as query params */
   keepTime: boolean;
+  /** The source that registered the link (if any) */
+  origin?: DashboardDatasourceControlSourceRef;
   /** Placement can be used to display the link somewhere else on the dashboard other than above the visualisations. */
   placement?: string;
   /** List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards */
@@ -971,6 +978,7 @@ export type DashboardAdhocVariableSpec = {
   hide: string;
   label?: string;
   name: string;
+  origin?: DashboardDatasourceControlSourceRef;
   skipUrlSync: boolean;
 };
 export type DashboardAdhocVariableKind = {
@@ -1001,6 +1009,7 @@ export type DashboardConstantVariableSpec = {
   hide: string;
   label?: string;
   name: string;
+  origin?: DashboardDatasourceControlSourceRef;
   query: string;
   skipUrlSync: boolean;
 };
@@ -1019,6 +1028,7 @@ export type DashboardCustomVariableSpec = {
   multi: boolean;
   name: string;
   options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
   query: string;
   skipUrlSync: boolean;
   valuesFormat?: string;
@@ -1038,6 +1048,7 @@ export type DashboardDatasourceVariableSpec = {
   multi: boolean;
   name: string;
   options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
   pluginId: string;
   refresh: string;
   regex: string;
@@ -1059,6 +1070,7 @@ export type DashboardGroupByVariableSpec = {
   multi: boolean;
   name: string;
   options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
   skipUrlSync: boolean;
 };
 export type DashboardGroupByVariableKind = {
@@ -1077,6 +1089,7 @@ export type DashboardIntervalVariableSpec = {
   label?: string;
   name: string;
   options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
   query: string;
   refresh: string;
   skipUrlSync: boolean;
@@ -1097,6 +1110,7 @@ export type DashboardQueryVariableSpec = {
   multi: boolean;
   name: string;
   options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
   placeholder?: string;
   query: DashboardDataQueryKind;
   refresh: string;
@@ -1119,6 +1133,7 @@ export type DashboardSwitchVariableSpec = {
   hide: string;
   label?: string;
   name: string;
+  origin?: DashboardDatasourceControlSourceRef;
   skipUrlSync: boolean;
 };
 export type DashboardSwitchVariableKind = {
@@ -1131,6 +1146,7 @@ export type DashboardTextVariableSpec = {
   hide: string;
   label?: string;
   name: string;
+  origin?: DashboardDatasourceControlSourceRef;
   query: string;
   skipUrlSync: boolean;
 };

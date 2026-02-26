@@ -31,6 +31,7 @@ export interface DatasourceInstanceK8sSpec {
   basicAuth: boolean;
   basicAuthUser: string;
   isDefault?: boolean;
+  readOnly?: boolean;
 }
 
 export interface DatasourceAccessK8s {
@@ -87,7 +88,7 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
   let k8sMetadata: K8sMetadata = {
     name: dsSettings.uid,
     namespace: namespace,
-    resourceVersion: 'fortytwo',
+    resourceVersion: '',
     labels: { 'grafana.app/deprecatedInternalID': dsSettings.id.toString() },
     annotations: {},
   };
@@ -99,6 +100,7 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
     basicAuth: dsSettings.basicAuth,
     basicAuthUser: dsSettings.basicAuthUser,
     isDefault: dsSettings.isDefault,
+    readOnly: dsSettings.readOnly,
   };
   let dsK8sSettings: DataSourceSettingsK8s = {
     kind: 'DataSource',
@@ -142,7 +144,7 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
     isDefault: dsK8sSettings.spec.isDefault ? true : false,
     jsonData: dsK8sSettings.spec.jsonData,
     secureJsonFields: {},
-    readOnly: false,
+    readOnly: dsK8sSettings.spec.readOnly ? dsK8sSettings.spec.readOnly : false,
     withCredentials: false,
   };
   if (dsK8sSettings.secure) {

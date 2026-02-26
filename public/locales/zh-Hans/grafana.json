@@ -466,10 +466,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "外部 Alertmanager",
-      "extra-config-warning": {
-        "content": "这里显示了 Grafana alertmanager 与导入配置的合并配置。此合并视图在用户界面中是只读的。",
-        "title": "导入的配置"
-      },
       "noOptionsMessage-no-datasources-found": "未找到数据源"
     },
     "alert-menu": {
@@ -4977,6 +4973,7 @@
       "description-color-annotation-event-markers": "用于注释事件标记的颜色",
       "description-enabled-annotation-query-issued-every-dashboard": "启用后，每次数据面板刷新时都会发出注释查询",
       "description-hidden": "可在数据面板顶部打开或关闭注释查询。选中此选项后，此切换开关将被隐藏。",
+      "error-loading-panels": "",
       "label-color": "颜色",
       "label-data-source": "数据源",
       "label-enabled": "已启用",
@@ -5659,10 +5656,7 @@
       "empty-state-message": "运行查询以在此处可视化，或转到所有可视化以添加其他面板类型",
       "menu-open-panel-editor": "配置",
       "menu-use-library-panel": "使用库面板",
-      "missing-config": "缺少面板配置",
-      "suggestions": {
-        "empty-state-message": "运行查询以开始查看建议的可视化"
-      }
+      "missing-config": "缺少面板配置"
     },
     "new-panel-title": "新面板",
     "on-create-new-row": {
@@ -6416,6 +6410,7 @@
       "delete": "删除",
       "description-color-annotation-event-markers": "用于注释事件标记的颜色",
       "description-enabled-annotation-query-issued-every-dashboard": "启用后，每次数据面板刷新时都会发出注释查询",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "显示此范围内的注释控件",
       "label-color": "颜色",
       "label-data-source": "数据源",
@@ -6893,11 +6888,11 @@
       "static-options-legend": "静态选项"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "高级选项",
         "classic": "经典版",
         "json": "JSON",
-        "v1-resource": "V1 资源",
         "v2-resource": "V2 资源",
         "yaml": "YAML"
       },
@@ -11872,6 +11867,10 @@
         "title": "错误",
         "try-again-button": "重试"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "未知可视化类型"
     },
     "viz-type-picker": {
@@ -12578,6 +12577,9 @@
       "label-read-only": "只读",
       "label-sync-interval": "间隔（秒）"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "没有找到与您的查询匹配的结果",
       "partial-managed": "{{managedCount}}/{{resourceCount}} 个资源由 Git 同步管理。",
@@ -12710,6 +12712,12 @@
       "show-more": "展开",
       "truncated": "消息已截断"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "完整实例同步已禁用，因为另一个文件夹已与存储库同步。",
@@ -12840,6 +12848,7 @@
       "header-status": "状态",
       "header-title": "标题",
       "header-type": "类型",
+      "missing-folder-metadata": "",
       "search-placeholder": "按路径或标题搜索",
       "source": "来源",
       "status-pending": "待处理",
@@ -13240,7 +13249,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13250,9 +13260,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13296,16 +13307,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "选择卡片 {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "查询和表达式",
       "toggle-size": "切换侧边栏大小",
       "transformations": "转换",
+      "view-toggle": "",
       "alerts_other": "",
       "footer-items_other": ""
     },
@@ -13502,6 +13511,7 @@
       "panel-type": "面板：{{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "包括面板",
       "remove-datasource-filter": "数据源：{{datasource}}",
       "sort-placeholder": "排序",

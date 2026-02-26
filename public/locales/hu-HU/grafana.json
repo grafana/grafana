@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Külső riasztáskezelők",
-      "extra-config-warning": {
-        "content": "Ez a nézet mutatja a Grafana Alertmanager és az importált konfigurációk egyesített beállításait. Az összevont nézet csak olvasható a felhasználói felületen.",
-        "title": "Importált konfiguráció"
-      },
       "noOptionsMessage-no-datasources-found": "Nem található adatforrás"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "A jegyzetesemény-jelölőkhöz használandó szín",
       "description-enabled-annotation-query-issued-every-dashboard": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
       "description-hidden": "A jegyzetlekérdezések be- és kikapcsolhatók az irányítópult tetején. Ha ez a lehetőség be van jelölve, ez a kapcsoló el lesz rejtve.",
+      "error-loading-panels": "",
       "label-color": "Szín",
       "label-data-source": "Adatforrás",
       "label-enabled": "Engedélyezve",
@@ -5685,10 +5682,7 @@
       "empty-state-message": "Futtasson egy lekérdezést, hogy itt megjelenítse, vagy lépjen az összes megjelenítéshez, hogy hozzáadjon más paneltípusokat",
       "menu-open-panel-editor": "Konfigurálás",
       "menu-use-library-panel": "Könyvtárpanel használata",
-      "missing-config": "Hiányzó panelkonfiguráció",
-      "suggestions": {
-        "empty-state-message": "Futtasson egy lekérdezést a javasolt vizualizációk megtekintéséhez"
-      }
+      "missing-config": "Hiányzó panelkonfiguráció"
     },
     "new-panel-title": "Új panel",
     "on-create-new-row": {
@@ -6444,6 +6438,7 @@
       "delete": "Törlés",
       "description-color-annotation-event-markers": "A jegyzetesemény-jelölőkhöz használandó szín",
       "description-enabled-annotation-query-issued-every-dashboard": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Jegyzetvezérlők megjelenítése itt:",
       "label-color": "Szín",
       "label-data-source": "Adatforrás",
@@ -6922,11 +6917,11 @@
       "static-options-legend": "Statikus opciók"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Speciális beállítások",
         "classic": "Klasszikus",
         "json": "JSON",
-        "v1-resource": "V1 erőforrás",
         "v2-resource": "V2 erőforrás",
         "yaml": "YAML"
       },
@@ -11926,6 +11921,10 @@
         "title": "Hiba",
         "try-again-button": "Próbálja újra"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Ismeretlen vizualizációtípus"
     },
     "viz-type-picker": {
@@ -12636,6 +12635,9 @@
       "label-read-only": "Csak olvasható",
       "label-sync-interval": "Szinkronizálási intervallum (másodperc)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nincs találat a lekérdezésre",
       "partial-managed": "{{resourceCount}}/{{managedCount}} erőforrást a Git-szinkronizálás felügyel.",
@@ -12770,6 +12772,12 @@
       "show-more": "több megjelenítése",
       "truncated": "Üzenet rövidítve"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "A teljes példányszinkronizálás le van tiltva, mert egy másik mappa már szinkronizálva van egy adattárral.",
@@ -12900,6 +12908,7 @@
       "header-status": "Állapot",
       "header-title": "Cím",
       "header-type": "Típus",
+      "missing-folder-metadata": "",
       "search-placeholder": "Keresés útvonal vagy cím alapján",
       "source": "Forrás",
       "status-pending": "Függőben",
@@ -13301,7 +13310,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13311,9 +13321,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13357,16 +13368,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "{{id}} kártya kiválasztása",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Lekérdezések és kifejezések",
       "toggle-size": "Oldalsáv méretének átváltása",
       "transformations": "Transzformációk",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
@@ -13567,6 +13576,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Panelekkel együtt",
       "remove-datasource-filter": "Adatforrás: {{datasource}}",
       "sort-placeholder": "Rendezés",

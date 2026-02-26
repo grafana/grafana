@@ -1134,6 +1134,20 @@
     },
     {
       "metadata": {
+        "name": "createdByMeSearchFilter",
+        "resourceVersion": "1771965456951",
+        "creationTimestamp": "2026-02-24T20:37:36Z"
+      },
+      "spec": {
+        "description": "Enables the created by me search filter on the browse dashboards page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardAdHocAndGroupByWrapper",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-12-18T18:58:21Z"
@@ -1470,6 +1484,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dsAbstractionApp",
+        "resourceVersion": "1771859936935",
+        "creationTimestamp": "2026-02-23T15:18:56Z"
+      },
+      "spec": {
+        "description": "Registers the dsabstraction app for querying datasources via unified SQL",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2617,6 +2645,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUsersApi",
+        "resourceVersion": "1772099076728",
+        "creationTimestamp": "2026-02-26T09:44:36Z"
+      },
+      "spec": {
+        "description": "Enables user APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "liveAPIServer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -2804,6 +2846,20 @@
         "description": "Pick the dual write mode from database configs",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "managedPluginsV2",
+        "resourceVersion": "1772014398973",
+        "creationTimestamp": "2026-02-25T10:13:18Z"
+      },
+      "spec": {
+        "description": "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3658,6 +3714,20 @@
     },
     {
       "metadata": {
+        "name": "rememberUserOrgForSso",
+        "resourceVersion": "1772028086169",
+        "creationTimestamp": "2026-02-25T14:01:26Z"
+      },
+      "spec": {
+        "description": "Remember the last viewed organization for users using SSO",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "renderAuthJWT",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-04-03T16:53:38Z"
@@ -4007,7 +4077,8 @@
       "metadata": {
         "name": "tabularNumbers",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-06-24T11:52:03Z"
+        "creationTimestamp": "2025-06-24T11:52:03Z",
+        "deletionTimestamp": "2026-02-24T18:16:36Z"
       },
       "spec": {
         "description": "Use fixed-width numbers globally in the UI",

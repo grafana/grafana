@@ -3,6 +3,7 @@ package testcases
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
@@ -14,10 +15,11 @@ import (
 
 // foldersAndDashboardsTestCase tests the "folders-dashboards" ResourceMigration
 type foldersAndDashboardsTestCase struct {
-	parentFolderUID string
-	childFolderUID  string
-	dashboardUID    string
-	libPanelUID     string
+	parentFolderUID   string
+	childFolderUID    string
+	dashboardUID      string
+	largeDashboardUID string
+	libPanelUID       string
 }
 
 // NewFoldersAndDashboardsTestCase creates a test case for the compound folders+dashboards migrator
@@ -65,6 +67,11 @@ func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTest
 	// Create library panel in child folder
 	tc.libPanelUID = createTestLibraryPanel(t, helper, "Test Library Panel", child.UID)
 
+	// Create a large dashboard (~3MB) to test migration performance with big resources.
+	// On SQLite without sufficient cache_size, large inserts cause cache spills that
+	// escalate to EXCLUSIVE locks and deadlock with concurrent readers.
+	tc.largeDashboardUID = createLargeDashboard(t, helper, child.UID, 3*1024*1024)
+
 	// Create dashboard with library panel in child folder
 	tc.dashboardUID = createTestDashboardWithLibraryPanel(t, helper, "dashboard-with-library-panel",
 		tc.libPanelUID, "Test LP in dashboard", child.UID)
@@ -75,7 +82,7 @@ func (tc *foldersAndDashboardsTestCase) Verify(t *testing.T, helper *apis.K8sTes
 
 	// Build maps of UIDs by resource type
 	folderUIDs := []string{tc.parentFolderUID, tc.childFolderUID}
-	dashboardUIDs := []string{tc.dashboardUID}
+	dashboardUIDs := []string{tc.dashboardUID, tc.largeDashboardUID}
 
 	expectedFolderCount := 0
 	if shouldExist {
@@ -208,5 +215,43 @@ func createTestDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelpe
 
 	dashUID := (*dashCreate.Result)["uid"].(string)
 	require.NotEmpty(t, dashUID)
+	return dashUID
+}
+
+// createLargeDashboard creates a dashboard with padded description to reach targetBytes.
+func createLargeDashboard(t *testing.T, helper *apis.K8sTestHelper, folderUID string, targetBytes int) string {
+	t.Helper()
+
+	// Generate padding to reach the target size. Each panel has ~100 bytes of overhead,
+	// so we use a single panel with a large description field.
+	padding := strings.Repeat("x", targetBytes)
+	dashPayload := fmt.Sprintf(`{
+		"dashboard": {
+			"title": "large-dashboard-for-migration-test",
+			"panels": [{
+				"id": 1,
+				"type": "text",
+				"title": "padding",
+				"options": {"content": "%s"}
+			}]
+		},
+		"folderUid": "%s",
+		"overwrite": false
+	}`, padding, folderUID)
+
+	dashCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   "/api/dashboards/db",
+		Body:   []byte(dashPayload),
+	}, &map[string]interface{}{})
+
+	require.NotNil(t, dashCreate.Response)
+	require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode,
+		"failed to create large dashboard (%d bytes)", targetBytes)
+
+	dashUID := (*dashCreate.Result)["uid"].(string)
+	require.NotEmpty(t, dashUID)
+	t.Logf("Created large dashboard %s (%d bytes)", dashUID, targetBytes)
 	return dashUID
 }

@@ -27,6 +27,8 @@ var _ authn.Client = new(ExtendedJWT)
 const (
 	ExtJWTAuthenticationHeaderName = "X-Access-Token"
 	ExtJWTAuthorizationHeaderName  = "X-Grafana-Id"
+
+	grafanaAppPrefix = "grafana.app"
 )
 
 var (
@@ -136,6 +138,15 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
+	fetchPermissionsParams := authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}}
+	for _, perm := range accessTokenClaims.Rest.DelegatedPermissions {
+		if strings.Contains(perm, grafanaAppPrefix) {
+			fetchPermissionsParams.K8sRestrictedActions = append(fetchPermissionsParams.K8sRestrictedActions, perm)
+		} else {
+			fetchPermissionsParams.RestrictedActions = append(fetchPermissionsParams.RestrictedActions, perm)
+		}
+	}
+
 	identity := &authn.Identity{
 		ID:                id,
 		Type:              t,
@@ -146,11 +157,9 @@ func (s *ExtendedJWT) authenticateAsUser(
 		AuthID:            accessTokenClaims.Subject,
 		Namespace:         idTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
-			SyncPermissions: true,
-			FetchPermissionsParams: authn.FetchPermissionsParams{
-				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
-			},
-			FetchSyncedUser: true,
+			SyncPermissions:        true,
+			FetchPermissionsParams: fetchPermissionsParams,
+			FetchSyncedUser:        true,
 		},
 	}
 
@@ -197,7 +206,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		for i := range permissions {
 			if strings.HasPrefix(permissions[i], "fixed:") {
 				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
-			} else if strings.Contains(permissions[i], "grafana.app") {
+			} else if strings.Contains(permissions[i], grafanaAppPrefix) {
 				// Check for pattern <resource>.grafana.app/<resource>:<action>
 				fetchPermissionsParams.K8s = append(fetchPermissionsParams.K8s, permissions[i])
 			} else {

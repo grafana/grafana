@@ -14,25 +14,16 @@ userKind: {
 }
 
 userv0alpha1: userKind & {
-	// TODO: Uncomment this when User will be added to ManagedKinds 
-	// validation: {
-	// 	operations: [
-	// 		"CREATE",
-	// 		"UPDATE",
-	// 	]
-	// }
-	// mutation: {
-	// 	operations: [
-	// 		"CREATE",
-	// 		"UPDATE",
-	// 	]
-	// }
 	schema: {
 		spec: v0alpha1.UserSpec
 		status: {
 			lastSeenAt: int64 | 0
 		}
 	}
+	selectableFields: [
+		"spec.email",
+		"spec.login",
+	]
 	routes: {
 		"/teams": {
 			"GET": {

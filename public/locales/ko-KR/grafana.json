@@ -466,10 +466,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "외부 경보 관리자",
-      "extra-config-warning": {
-        "content": "Grafana 경보 관리자와 가져온 구성이 병합된 구성 상태를 보여줍니다. 이 병합된 보기는 UI에서 읽기 전용으로 표시됩니다.",
-        "title": "가져온 구성"
-      },
       "noOptionsMessage-no-datasources-found": "데이터 소스를 찾을 수 없습니다"
     },
     "alert-menu": {
@@ -4977,6 +4973,7 @@
       "description-color-annotation-event-markers": "주석 이벤트 마커에 사용할 색상",
       "description-enabled-annotation-query-issued-every-dashboard": "활성화되면 대시보드를 새로 고칠 때마다 주석 쿼리가 실행됩니다",
       "description-hidden": "주석 쿼리는 대시보드 상단에서 토글하여 켜거나 끌 수 있습니다. 이 옵션을 선택하면 이 토글이 숨겨집니다.",
+      "error-loading-panels": "",
       "label-color": "색상",
       "label-data-source": "데이터 소스",
       "label-enabled": "활성화됨",
@@ -5659,10 +5656,7 @@
       "empty-state-message": "쿼리를 실행해 여기에서 시각화하거나 모든 시각화로 이동해 다른 패널 유형을 추가하세요",
       "menu-open-panel-editor": "구성",
       "menu-use-library-panel": "라이브러리 패널 사용",
-      "missing-config": "패널 구성 누락",
-      "suggestions": {
-        "empty-state-message": "제안된 시각화를 보려면 쿼리를 실행하세요."
-      }
+      "missing-config": "패널 구성 누락"
     },
     "new-panel-title": "새 패널",
     "on-create-new-row": {
@@ -6416,6 +6410,7 @@
       "delete": "삭제",
       "description-color-annotation-event-markers": "주석 이벤트 마커에 사용할 색상",
       "description-enabled-annotation-query-issued-every-dashboard": "활성화되면 대시보드를 새로 고칠 때마다 주석 쿼리가 실행됩니다",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "다음에서 주석 제어 표시",
       "label-color": "색상",
       "label-data-source": "데이터 소스",
@@ -6893,11 +6888,11 @@
       "static-options-legend": "정적 옵션"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "고급 옵션",
         "classic": "클래식",
         "json": "JSON",
-        "v1-resource": "V1 리소스",
         "v2-resource": "V2 리소스",
         "yaml": "YAML"
       },
@@ -11872,6 +11867,10 @@
         "title": "오류",
         "try-again-button": "다시 시도"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "알 수 없는 시각화 유형"
     },
     "viz-type-picker": {
@@ -12578,6 +12577,9 @@
       "label-read-only": "읽기 전용",
       "label-sync-interval": "동기화 간격(초)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "쿼리와 일치하는 결과가 없습니다",
       "partial-managed": "{{managedCount}}/{{resourceCount}}개 리소스는 Git 동기화로 관리됩니다.",
@@ -12710,6 +12712,12 @@
       "show-more": "더 보기",
       "truncated": "메시지 잘림"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "다른 폴더가 이미 리포지토리와 동기화되어 있으므로 전체 인스턴스에 대한 동기화가 비활성화되었습니다.",
@@ -12840,6 +12848,7 @@
       "header-status": "상태",
       "header-title": "제목",
       "header-type": "유형",
+      "missing-folder-metadata": "",
       "search-placeholder": "경로 또는 제목으로 검색",
       "source": "소스",
       "status-pending": "대기 중",
@@ -13240,7 +13249,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13250,9 +13260,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13296,16 +13307,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "{{id}} 카드 선택",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "쿼리 및 표현식",
       "toggle-size": "사이드바 크기 토글",
       "transformations": "변환",
+      "view-toggle": "",
       "alerts_other": "",
       "footer-items_other": ""
     },
@@ -13502,6 +13511,7 @@
       "panel-type": "패널: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "패널 포함",
       "remove-datasource-filter": "데이터 소스: {{datasource}}",
       "sort-placeholder": "정렬",

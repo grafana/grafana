@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
@@ -273,6 +274,9 @@ func TestJobProgressRecorderWarningStatus(t *testing.T) {
 
 	// Verify no errors were recorded
 	assert.Empty(t, finalStatus.Errors)
+
+	// No typed warning reasons (these are generic string warnings, not job-level)
+	assert.Empty(t, recorder.ResultReasons())
 }
 
 func TestJobProgressRecorderWarningWithErrors(t *testing.T) {
@@ -667,4 +671,81 @@ func TestJobProgressRecorderIgnoredActionsDontCountAsErrors(t *testing.T) {
 	assert.Equal(t, 1, recorder.errorCount, "ignored actions should not be counted as errors")
 	assert.Len(t, recorder.errors, 1, "ignored action errors should not be in error list")
 	recorder.mu.RUnlock()
+}
+
+func TestJobProgressRecorderResultReasons(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("Record accumulates warning reasons from results", func(t *testing.T) {
+		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+		recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
+
+		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
+		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
+
+		assert.Contains(t, recorder.ResultReasons(), provisioning.ReasonQuotaExceeded)
+	})
+
+	t.Run("duplicate warning reasons are deduplicated", func(t *testing.T) {
+		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+		recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
+
+		quotaErr1 := quotas.NewQuotaExceededError(errors.New("over quota 1"))
+		quotaErr2 := quotas.NewQuotaExceededError(errors.New("over quota 2"))
+		recorder.Record(ctx, NewResourceResult().WithError(quotaErr1).Build())
+		recorder.Record(ctx, NewResourceResult().WithError(quotaErr2).Build())
+
+		reasons := recorder.ResultReasons()
+		assert.Len(t, reasons, 1)
+		assert.Contains(t, reasons, provisioning.ReasonQuotaExceeded)
+	})
+
+	t.Run("Complete with warning error does not set Error state", func(t *testing.T) {
+		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+		recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
+
+		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
+		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
+
+		finalStatus := recorder.Complete(ctx, quotaErr)
+		assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
+		assert.Contains(t, recorder.ResultReasons(), provisioning.ReasonQuotaExceeded)
+	})
+
+	t.Run("Complete with real error still sets Error state", func(t *testing.T) {
+		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+		recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
+
+		finalStatus := recorder.Complete(ctx, errors.New("network failure"))
+		assert.Equal(t, provisioning.JobStateError, finalStatus.State)
+		assert.Empty(t, recorder.ResultReasons())
+	})
+
+	t.Run("ResetResults with keepWarnings=true preserves warning reasons", func(t *testing.T) {
+		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+		recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
+
+		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
+		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
+
+		recorder.ResetResults(true)
+
+		recorder.mu.RLock()
+		assert.Len(t, recorder.resultReasons, 1)
+		recorder.mu.RUnlock()
+	})
+
+	t.Run("ResetResults with keepWarnings=false clears warning reasons", func(t *testing.T) {
+		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+		recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
+
+		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
+		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
+
+		recorder.ResetResults(false)
+
+		recorder.mu.RLock()
+		assert.Empty(t, recorder.resultReasons)
+		recorder.mu.RUnlock()
+	})
 }

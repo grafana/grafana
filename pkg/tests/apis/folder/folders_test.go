@@ -257,9 +257,6 @@ func TestIntegrationFolderDeletionBlockedByAlertRules(t *testing.T) {
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				folders.RESOURCEGROUP: {DualWriterMode: grafanarest.Mode5},
-				setting.DashboardResource: {
-					DualWriterMode: grafanarest.Mode5,
-				},
 			},
 			UnifiedStorageEnableSearch: true,
 		})
@@ -1839,9 +1836,6 @@ func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
 		APIServerStorageType: "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			folders.RESOURCEGROUP: {
-				DualWriterMode: grafanarest.Mode5,
-			},
-			setting.DashboardResource: {
 				DualWriterMode: grafanarest.Mode5,
 			},
 		},

@@ -24,6 +24,7 @@ import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
+import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
@@ -160,6 +161,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
+        <QuotaLimitBanner />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>

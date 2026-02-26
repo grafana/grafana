@@ -1183,6 +1183,11 @@ export interface FeatureToggles {
   */
   experimentRecentlyViewedDashboards?: boolean;
   /**
+  * Enables the created by me search filter on the browse dashboards page
+  * @default false
+  */
+  createdByMeSearchFilter?: boolean;
+  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1222,11 +1227,6 @@ export interface FeatureToggles {
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
-  /**
-  * Use fixed-width numbers globally in the UI
-  * @default false
-  */
-  tabularNumbers?: boolean;
   /**
   * Enables new design for the InfluxDB data source configuration page
   * @default false
@@ -1508,6 +1508,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamsHandlerRedirect?: boolean;
   /**
+  * Enables user APIs in the app platform
+  * @default false
+  */
+  kubernetesUsersApi?: boolean;
+  /**
   * Enables external group mapping APIs in the app platform
   * @default false
   */
@@ -1557,4 +1562,19 @@ export interface FeatureToggles {
   * @default false
   */
   functionalSharedPreferences?: boolean;
+  /**
+  * Enables managed plugins v2 (expanded rollout, community plugin coverage)
+  * @default false
+  */
+  managedPluginsV2?: boolean;
+  /**
+  * Remember the last viewed organization for users using SSO
+  * @default true
+  */
+  rememberUserOrgForSso?: boolean;
+  /**
+  * Registers the dsabstraction app for querying datasources via unified SQL
+  * @default false
+  */
+  dsAbstractionApp?: boolean;
 }

@@ -21,6 +21,8 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_CGO),-cgo-enabled=$(GO_BUILD_CGO))
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
+CUE = cue
+
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
 
@@ -125,7 +127,13 @@ OAPI_SPEC_TARGET = public/openapi3.json
 
 .PHONY: openapi3-gen
 openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
+	$(GO) run $(GO_RACE_FLAG) scripts/openapi3/openapi3conv.go cleanup $(ENTERPRISE_SPEC_TARGET) $(MERGED_SPEC_TARGET)
 	$(GO) run $(GO_RACE_FLAG) scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+
+.PHONY: generate-openapi
+generate-openapi: openapi3-gen
+	$(GO) test ./pkg/tests/apis || true
+	yarn workspace @grafana/openapi process-specs
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
@@ -252,8 +260,8 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"
-	$(cue) fix kinds/**/*.cue
-	$(cue) fix public/app/plugins/**/**/*.cue
+	$(CUE) fix kinds/**/*.cue
+	$(CUE) fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:

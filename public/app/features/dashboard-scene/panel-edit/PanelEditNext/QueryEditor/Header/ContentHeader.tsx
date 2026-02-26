@@ -5,7 +5,7 @@ import { RefObject, useRef } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { Button, useStyles2, Icon, Text } from '@grafana/ui';
+import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
@@ -198,7 +198,12 @@ export function ContentHeader({
 
         {selectedQuery && cardType !== QueryEditorType.Alert && (
           <>
-            <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={onUpdateQuery} />
+            <EditableQueryName
+              key={selectedQuery.refId}
+              query={selectedQuery}
+              queries={queries}
+              onQueryUpdate={onUpdateQuery}
+            />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
         )}
@@ -261,7 +266,7 @@ const getStyles = (
   theme: GrafanaTheme2,
   { cardType, selectedAlert }: { cardType: QueryEditorType; selectedAlert: AlertRule | null }
 ) => {
-  const borderColor = getEditorBorderColor(theme, cardType, selectedAlert?.state);
+  const borderColor = getEditorBorderColor({ theme, editorType: cardType, alertState: selectedAlert?.state });
 
   return {
     container: css({

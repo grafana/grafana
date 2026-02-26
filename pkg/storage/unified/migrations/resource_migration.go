@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -18,20 +19,34 @@ import (
 // MigrationRunnerOption is a functional option for configuring MigrationRunner.
 type MigrationRunnerOption func(*MigrationRunner)
 
+// WithAutoEnableMode5 configures the runner to auto-enable mode 5 after successful migration.
+func WithAutoEnableMode5(cfg *setting.Cfg) MigrationRunnerOption {
+	return func(r *MigrationRunner) {
+		r.cfg = cfg
+		r.autoEnableMode5 = true
+	}
+}
+
 // MigrationRunner executes migrations without implementing the SQL migration interface.
 type MigrationRunner struct {
 	unifiedMigrator UnifiedMigrator
+	tableLocker     MigrationTableLocker
+	definition      MigrationDefinition
+	cfg             *setting.Cfg
+	autoEnableMode5 bool
 	log             log.Logger
 	resources       []schema.GroupResource
 	validators      []Validator
 }
 
 // NewMigrationRunner creates a new migration runner.
-func NewMigrationRunner(unifiedMigrator UnifiedMigrator, migrationID string, resources []schema.GroupResource, validators []Validator, opts ...MigrationRunnerOption) *MigrationRunner {
+func NewMigrationRunner(unifiedMigrator UnifiedMigrator, tableLocker MigrationTableLocker, def MigrationDefinition, validators []Validator, opts ...MigrationRunnerOption) *MigrationRunner {
 	r := &MigrationRunner{
 		unifiedMigrator: unifiedMigrator,
-		log:             log.New("storage.unified.migration_runner." + migrationID),
-		resources:       resources,
+		tableLocker:     tableLocker,
+		definition:      def,
+		log:             log.New("storage.unified.migration_runner." + def.ID),
+		resources:       def.GetGroupResources(),
 		validators:      validators,
 	}
 	for _, opt := range opts {
@@ -47,7 +62,7 @@ type RunOptions struct {
 }
 
 // Run executes the migration logic for all organizations.
-func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, opts RunOptions) error {
+func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, opts RunOptions) error {
 	orgs, err := r.getAllOrgs(sess)
 	if err != nil {
 		r.log.Error("failed to get organizations", "error", err)
@@ -68,10 +83,57 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, opts RunO
 			r.log.Error("Failed to get transaction from session", "error", err)
 			return fmt.Errorf("failed to get transaction: %w", err)
 		}
+		// Increase page cache to prevent cache spill during bulk inserts.
+		// When the cache spills, SQLite needs an EXCLUSIVE lock which deadlocks with the
+		// SHARED lock held by the legacy database rows cursor on another connection.
+		// Configurable via [unified_storage] migration_cache_size_kb (default: 50MB).
+		cacheKB := 50000
+		if r.cfg.MigrationCacheSizeKB > 0 {
+			cacheKB = r.cfg.MigrationCacheSizeKB
+		}
+		if _, err := tx.ExecContext(ctx, fmt.Sprintf("PRAGMA cache_size = -%d", cacheKB)); err != nil {
+			r.log.Warn("Failed to set SQLite cache_size for migration", "error", err)
+		}
 		ctx = resource.ContextWithTransaction(ctx, tx.Tx)
 		r.log.Info("Stored migrator transaction in context for bulk operations (SQLite compatibility)")
 	}
 
+	lockTables := r.definition.GetLockTables()
+	unlockTables, err := r.tableLocker.LockMigrationTables(ctx, sess, lockTables)
+	if err != nil {
+		return fmt.Errorf("failed to lock tables for migration: %w", err)
+	}
+	defer func() {
+		if err := unlockTables(ctx); err != nil {
+			r.log.Error("error unlocking legacy tables", "error", err)
+		}
+	}()
+
+	if err := r.migrateAllOrgs(ctx, sess, orgs, opts); err != nil {
+		if opts.DriverName != migrator.SQLite {
+			return err
+		}
+		r.log.Warn("SQLite migration failed, retrying with parquet buffer", "error", err)
+		ctx = resource.ContextWithParquetBuffer(ctx)
+		if err := r.migrateAllOrgs(ctx, sess, orgs, opts); err != nil {
+			return err
+		}
+	}
+
+	// Auto-enable mode 5 for resources after successful migration
+	if r.autoEnableMode5 && r.cfg != nil {
+		for _, gr := range r.resources {
+			r.log.Info("Auto-enabling mode 5 for resource", "resource", gr.Resource+"."+gr.Group)
+			r.cfg.EnableMode5(gr.Resource + "." + gr.Group)
+		}
+	}
+
+	r.log.Info("Migration completed successfully for all organizations", "org_count", len(orgs))
+
+	return nil
+}
+
+func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session, orgs []orgInfo, opts RunOptions) error {
 	for _, org := range orgs {
 		info, err := types.ParseNamespace(types.OrgNamespaceFormatter(org.ID))
 		if err != nil {
@@ -82,9 +144,6 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, opts RunO
 			return err
 		}
 	}
-
-	r.log.Info("Migration completed successfully for all organizations", "org_count", len(orgs))
-
 	return nil
 }
 
@@ -181,25 +240,36 @@ type ResourceMigration struct {
 	runner      *MigrationRunner
 	resources   []schema.GroupResource
 	migrationID string
+	autoMigrate bool // If true, auto-migrate resource if count is below threshold
+	hadErrors   bool // Tracks if errors occurred during migration (used with ignoreErrors)
 }
 
 // ResourceMigrationOption is a functional option for configuring ResourceMigration.
 type ResourceMigrationOption func(*ResourceMigration, *MigrationRunner)
 
+// WithAutoMigrate configures the migration to auto-migrate resource if count is below threshold.
+func WithAutoMigrate(cfg *setting.Cfg) ResourceMigrationOption {
+	return func(m *ResourceMigration, r *MigrationRunner) {
+		m.autoMigrate = true
+		r.cfg = cfg
+		r.autoEnableMode5 = true
+	}
+}
+
 // NewResourceMigration creates a new migration for the specified resources.
 // It internally creates a MigrationRunner to handle the actual migration logic.
 func NewResourceMigration(
 	unifiedMigrator UnifiedMigrator,
-	resources []schema.GroupResource,
-	migrationID string,
+	tableLocker MigrationTableLocker,
+	def MigrationDefinition,
 	validators []Validator,
 	opts ...ResourceMigrationOption,
 ) *ResourceMigration {
-	runner := NewMigrationRunner(unifiedMigrator, migrationID, resources, validators)
+	runner := NewMigrationRunner(unifiedMigrator, tableLocker, def, validators)
 	m := &ResourceMigration{
 		runner:      runner,
-		resources:   resources,
-		migrationID: migrationID,
+		resources:   def.GetGroupResources(),
+		migrationID: def.ID,
 	}
 	for _, opt := range opts {
 		opt(m, runner)
@@ -208,7 +278,8 @@ func NewResourceMigration(
 }
 
 func (m *ResourceMigration) SkipMigrationLog() bool {
-	return false
+	// Skip populating the log table if auto-migrate is enabled and errors occurred
+	return m.autoMigrate && m.hadErrors
 }
 
 var _ migrator.CodeMigration = (*ResourceMigration)(nil)
@@ -220,10 +291,26 @@ func (m *ResourceMigration) SQL(_ migrator.Dialect) string {
 
 // Exec implements migrator.CodeMigration interface. Executes the migration across all organizations.
 // It delegates to the internal MigrationRunner for the actual migration logic.
-func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) (err error) {
+	// Track any errors that occur during migration
+	defer func() {
+		if err != nil {
+			if m.autoMigrate {
+				m.runner.log.Warn(
+					`[WARN] Resource migration failed and is currently skipped.
+This migration will be enforced in the next major Grafana release, where failures will block startup or resource loading.
+
+This warning is intended to help you detect and report issues early.
+Please investigate the failure and report it to the Grafana team so it can be addressed before the next major release.`,
+					"error", err)
+			}
+			m.hadErrors = true
+		}
+	}()
+
 	ctx := context.Background()
 
-	return m.runner.Run(ctx, sess, RunOptions{
+	return m.runner.Run(ctx, sess, mg, RunOptions{
 		DriverName: mg.Dialect.DriverName(),
 	})
 }

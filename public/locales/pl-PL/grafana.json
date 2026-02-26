@@ -475,10 +475,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Zewnętrzne menedżery alertów",
-      "extra-config-warning": {
-        "content": "Pokazuje scaloną konfigurację menedżera alertów Grafana z zaimportowanymi konfiguracjami. Ten scalony widok jest tylko do odczytu w interfejsie użytkownika.",
-        "title": "Zaimportowana konfiguracja"
-      },
       "noOptionsMessage-no-datasources-found": "Nie znaleziono źródeł danych"
     },
     "alert-menu": {
@@ -5055,6 +5051,7 @@
       "description-color-annotation-event-markers": "Kolor używany dla znaczników zdarzeń związanych z adnotacją",
       "description-enabled-annotation-query-issued-every-dashboard": "Po włączeniu zapytanie dotyczące adnotacji jest wysyłane przy każdym odświeżeniu pulpitu",
       "description-hidden": "Zapytania dotyczące adnotacji można włączyć lub wyłączyć u góry pulpitu. Po zaznaczeniu tej opcji przełącznik zostanie ukryty.",
+      "error-loading-panels": "",
       "label-color": "Kolor",
       "label-data-source": "Źródło danych",
       "label-enabled": "Włączone",
@@ -5737,10 +5734,7 @@
       "empty-state-message": "Uruchom zapytanie, aby je tutaj zwizualizować, lub przejdź do wszystkich wizualizacji, aby dodać inne typy paneli",
       "menu-open-panel-editor": "Konfiguruj",
       "menu-use-library-panel": "Użyj panelu biblioteki",
-      "missing-config": "Brak konfiguracji panelu",
-      "suggestions": {
-        "empty-state-message": "Uruchom zapytanie, aby zobaczyć sugerowane wizualizacje"
-      }
+      "missing-config": "Brak konfiguracji panelu"
     },
     "new-panel-title": "Nowy panel",
     "on-create-new-row": {
@@ -6500,6 +6494,7 @@
       "delete": "Usuń",
       "description-color-annotation-event-markers": "Kolor używany dla znaczników zdarzeń związanych z adnotacją",
       "description-enabled-annotation-query-issued-every-dashboard": "Po włączeniu zapytanie dotyczące adnotacji jest wysyłane przy każdym odświeżeniu pulpitu",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Pokaż opcje adnotacji w:",
       "label-color": "Kolor",
       "label-data-source": "Źródło danych",
@@ -6980,11 +6975,11 @@
       "static-options-legend": "Opcje statyczne"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Opcje zaawansowane",
         "classic": "Klasyczny",
         "json": "JSON",
-        "v1-resource": "Zasób V1",
         "v2-resource": "Zasób V2",
         "yaml": "YAML"
       },
@@ -12034,6 +12029,10 @@
         "title": "Błąd",
         "try-again-button": "Spróbuj ponownie"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Nieznany typ wizualizacji"
     },
     "viz-type-picker": {
@@ -12752,6 +12751,9 @@
       "label-read-only": "Tylko do odczytu",
       "label-sync-interval": "Odstęp czasu synchronizacji (sekundy)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Brak wyników pasujących do zapytania",
       "partial-managed": "{{managedCount}}/{{resourceCount}} zasobów jest objętych zarządzaniem przez synchronizację z usługą Git.",
@@ -12890,6 +12892,12 @@
       "show-more": "pokaż więcej",
       "truncated": "Wiadomość obcięta"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "Pełna synchronizacja instancji jest wyłączona, ponieważ inny folder jest już synchronizowany z repozytorium.",
@@ -13020,6 +13028,7 @@
       "header-status": "Status",
       "header-title": "Tytuł",
       "header-type": "Typ",
+      "missing-folder-metadata": "",
       "search-placeholder": "Szukaj według ścieżki lub tytułu",
       "source": "Źródło",
       "status-pending": "Oczekuje",
@@ -13423,7 +13432,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13433,9 +13443,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13479,16 +13490,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Wybierz kartę {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Zapytania i wyrażenia",
       "toggle-size": "Przełącz rozmiar paska bocznego",
       "transformations": "Transformacje",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_few": "",
       "alerts_many": "",
@@ -13697,6 +13706,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Uwzględnij panele",
       "remove-datasource-filter": "Źródło danych: {{datasource}}",
       "sort-placeholder": "Sortuj",
