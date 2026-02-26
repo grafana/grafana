@@ -23,6 +23,15 @@ v0alpha1: {
                     }
                 }
             }
+            "/search": {
+                "GET": {
+                    response: {
+                        apiVersion: string
+                        kind: string
+                        items: [..._]
+                    }
+                }
+            }
         }
     }
     codegen: {

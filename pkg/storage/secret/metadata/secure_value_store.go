@@ -81,90 +81,81 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 		s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	// Set inside the transaction callback
-	var row *secureValueDB
+	latest, err := s.getLatestVersionAndCreated(ctx, xkube.Namespace(sv.Namespace), sv.Name)
+	if err != nil {
+		return nil, fmt.Errorf("fetching latest secure value version: %w", err)
+	}
 
-	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		latest, err := s.getLatestVersionAndCreated(ctx, xkube.Namespace(sv.Namespace), sv.Name)
+	version := int64(1)
+	if latest.version > 0 {
+		version = latest.version + 1
+	}
+
+	// Some other concurrent request may have created the version we're trying to create,
+	// if that's the case, we'll retry with a new version up to max attempts.
+	maxAttempts := 3
+	attempts := 0
+	for {
+		sv.Status.Version = version
+
+		now := s.clock.Now().UTC().Unix()
+
+		createdAt := now
+		if latest.createdAt > 0 {
+			createdAt = latest.createdAt
+		}
+		updatedAt := now
+
+		createdBy := actorUID
+		if latest.createdBy != "" {
+			createdBy = latest.createdBy
+		}
+		updatedBy := actorUID
+
+		row, err := toCreateRow(createdAt, updatedAt, keeper, sv, createdBy, updatedBy)
 		if err != nil {
-			return fmt.Errorf("fetching latest secure value version: %w", err)
+			return nil, fmt.Errorf("to create row: %w", err)
 		}
 
-		version := int64(1)
-		if latest.version > 0 {
-			version = latest.version + 1
+		req := createSecureValue{
+			SQLTemplate: sqltemplate.New(s.dialect),
+			Row:         row,
 		}
 
-		// Some other concurrent request may have created the version we're trying to create,
-		// if that's the case, we'll retry with a new version up to max attempts.
-		maxAttempts := 3
-		attempts := 0
-		for {
-			sv.Status.Version = version
+		query, err := sqltemplate.Execute(sqlSecureValueCreate, req)
+		if err != nil {
+			return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
+		}
 
-			now := s.clock.Now().UTC().Unix()
-
-			createdAt := now
-			if latest.createdAt > 0 {
-				createdAt = latest.createdAt
-			}
-			updatedAt := now
-
-			createdBy := actorUID
-			if latest.createdBy != "" {
-				createdBy = latest.createdBy
-			}
-			updatedBy := actorUID
-
-			row, err = toCreateRow(createdAt, updatedAt, keeper, sv, createdBy, updatedBy)
-			if err != nil {
-				return fmt.Errorf("to create row: %w", err)
-			}
-
-			req := createSecureValue{
-				SQLTemplate: sqltemplate.New(s.dialect),
-				Row:         row,
-			}
-
-			query, err := sqltemplate.Execute(sqlSecureValueCreate, req)
-			if err != nil {
-				return fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
-			}
-
-			res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
-			if err != nil {
-				if sql.IsRowAlreadyExistsError(err) {
-					if attempts < maxAttempts {
-						attempts += 1
-						version += 1
-						continue
-					}
-					return fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
+		res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+		if err != nil {
+			if sql.IsRowAlreadyExistsError(err) {
+				if attempts < maxAttempts {
+					attempts += 1
+					version += 1
+					continue
 				}
-				return fmt.Errorf("inserting row: %w", err)
+				return nil, fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
 			}
-
-			rowsAffected, err := res.RowsAffected()
-			if err != nil {
-				return fmt.Errorf("getting rows affected: %w", err)
-			}
-
-			if rowsAffected != 1 {
-				return fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, row.Name, row.Namespace)
-			}
-			return nil
+			return nil, fmt.Errorf("inserting row: %w", err)
 		}
-	})
-	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
-	}
 
-	createdSecureValue, err := row.toKubernetes()
-	if err != nil {
-		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
-	}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return nil, fmt.Errorf("getting rows affected: %w", err)
+		}
 
-	return createdSecureValue, nil
+		if rowsAffected != 1 {
+			return nil, fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, row.Name, row.Namespace)
+		}
+
+		createdSecureValue, err := row.toKubernetes()
+		if err != nil {
+			return nil, fmt.Errorf("convert to kubernetes object: %w", err)
+		}
+
+		return createdSecureValue, nil
+	}
 }
 
 type versionAndCreated struct {

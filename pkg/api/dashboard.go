@@ -403,6 +403,26 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for saving folders.", nil)
 	}
 
+	spec, err := cmd.Dashboard.Map()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to read dashboard", err)
+	}
+
+	// Items with v2 schema elements must set v2 properties
+	if dashboards.LooksLikeV2Spec(spec) {
+		return response.Error(http.StatusBadRequest, dashboards.LooksLikeV2SpecMessage, nil)
+	}
+
+	// Items with metadata, spec, etc
+	if dashboards.LooksLikeK8sResource(spec) {
+		return response.Error(http.StatusBadRequest, "Dashboard appears to be a full k8s style resource.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", nil)
+	}
+
+	_, found := spec["title"]
+	if !found {
+		return response.Error(http.StatusBadRequest, "Dashboard is missing required title property", nil)
+	}
+
 	ctx = c.Req.Context()
 
 	var userID int64

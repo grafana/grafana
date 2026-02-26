@@ -355,7 +355,10 @@ export class DashboardModel implements TimeModel {
     const currentVariables = this.getVariablesFromState(this.uid);
 
     const saveModels = currentVariables.map((variable) => {
-      const variableSaveModel = variableAdapters.get(variable.type).getSaveModel(variable, options.saveVariables);
+      // Group by variables has no adapter. Use the model as-is. This is safe to do as in scenes from which dashboard can be serialised,
+      // the variable model is provided through getVariablesCompatibility.
+      const adapter = variableAdapters.getIfExists(variable.type);
+      const variableSaveModel: any = adapter ? adapter.getSaveModel(variable, options.saveVariables) : variable;
 
       if (!options.saveVariables) {
         const original = originalVariables.find(

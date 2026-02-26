@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -10,6 +10,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -69,7 +70,8 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//nolint:staticcheck // not migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
-			http.Error(w, "functionality not available", http.StatusForbidden)
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
+				name, errors.New("functionality not available")))
 			return
 		}
 
@@ -84,7 +86,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 
 		requester, err := identity.GetRequester(ctx)
 		if err != nil {
-			responder.Error(fmt.Errorf("no identity found for request: %w", err))
+			responder.Error(apierrors.NewUnauthorized("no identity found"))
 			return
 		}
 
@@ -138,20 +140,19 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 
 		result, err := s.client.Search(ctx, searchRequest)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(apierrors.NewInternalError(err))
 			return
 		}
 
 		searchResults, err := parseResults(result, searchRequest.Offset)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(apierrors.NewInternalError(err))
 			return
 		}
 
-		if err := json.NewEncoder(w).Encode(searchResults); err != nil {
-			responder.Error(err)
-			return
-		}
+		responder.Object(http.StatusOK, &iamv0alpha1.GetTeamsResponse{
+			GetTeamsBody: searchResults,
+		})
 	}), nil
 }
 

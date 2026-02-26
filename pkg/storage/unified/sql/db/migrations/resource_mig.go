@@ -233,6 +233,16 @@ func initResourceTables(mg *migrator.Migrator) string {
 
 	mg.AddMigration("Fix small resource versions", &SmallRVFixMigration{})
 
+	pending_tenant_deletions_table := migrator.Table{
+		Name: "pending_tenant_deletions",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_MediumText, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+pending_tenant_deletions_table.Name, migrator.NewAddTableMigration(pending_tenant_deletions_table))
+	mg.AddMigration("Change key_path collation of pending_tenant_deletions in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE pending_tenant_deletions ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
 	return marker
 }
 
