@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationProvisioning_JobValidation(t *testing.T) {
+func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
