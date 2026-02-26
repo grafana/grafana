@@ -519,7 +519,6 @@ const NewUIContainer = ({
     showFlameGraphOnly,
     disableCollapsing,
     getExtraContextMenuButtons,
-    theme,
     setSearch,
     resetKey,
     keepFocusOnDataChange,

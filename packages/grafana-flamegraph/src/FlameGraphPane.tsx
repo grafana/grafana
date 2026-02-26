@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-import { GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
+import { escapeStringForRegex } from '@grafana/data';
 
 import FlameGraphCallTreeContainer from './CallTree/FlameGraphCallTreeContainer';
 import FlameGraph from './FlameGraph/FlameGraph';
@@ -25,7 +25,6 @@ export type FlameGraphPaneProps = {
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   viewMode: ViewMode;
   paneViewForContextMenu: PaneView;
-  theme: GrafanaTheme2;
   setSearch: (search: string) => void;
   resetKey?: number;
   keepFocusOnDataChange?: boolean;
@@ -48,7 +47,6 @@ const FlameGraphPane = ({
   getExtraContextMenuButtons,
   viewMode,
   paneViewForContextMenu,
-  theme,
   setSearch,
   resetKey,
   keepFocusOnDataChange,
@@ -78,7 +76,7 @@ const FlameGraphPane = ({
   const [collapsedMap, setCollapsedMap] = useState(() => dataContainer.getCollapsedMap());
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
 
-  const styles = useMemo(() => getStyles(theme), [theme]);
+  const styles = getStyles();
 
   useLayoutEffect(() => {
     setCollapsedMap(dataContainer.getCollapsedMap());
@@ -314,7 +312,7 @@ const FlameGraphPane = ({
   return <div className={styles.paneWrapper}>{content}</div>;
 };
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles() {
   return {
     paneWrapper: css({
       width: '100%',
