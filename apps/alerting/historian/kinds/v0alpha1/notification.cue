@@ -68,6 +68,21 @@ import (
     groupKey: string
 }
 
+#AlertQuery: {
+    // From is the starting timestamp for the query.
+    from?: time.Time
+    // To is the ending timestamp for the query.
+    to?: time.Time
+    // UUID filters the alerts to those belonging to a specific alert rule.
+    uuid?: string
+    // Limit is the maximum number of entries to return.
+    limit?: int64
+}
+
+#AlertQueryResult: {
+    alerts: [...#NotificationEntryAlert]
+}
+
 #NotificationEntryAlert: {
     status: string
     labels: [string]: string
