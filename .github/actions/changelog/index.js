@@ -51,6 +51,7 @@ const graphql = async (ghtoken, query, variables) => {
     JSON.stringify({
       status: results.status,
       text: results.statusText,
+      errors: res.errors,
     })
   );
 
@@ -164,6 +165,7 @@ const getChangeLogItems = async (name, owner, from, to) => {
   const hasLabel = ({labels}, label) => labels.nodes.some(({name}) => name === label);
   // get all the PRs between the two "commitish" items
   const history = await getHistory(name, owner, from, to);
+  LOG(`History for ${owner}/${name} between ${from} and ${to}: ${history.length} commits`);
 
   const items = history.flatMap((node) => {
     // discard PRs without a "changelog" label
