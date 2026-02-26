@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,6 +9,11 @@ import config from 'app/core/config';
 import { SqlExpressionsBanner } from 'app/features/dashboard/components/TransformationsEditor/SqlExpressions/SqlExpressionsBanner';
 import { TransformationCard } from 'app/features/dashboard/components/TransformationsEditor/TransformationCard';
 
+import {
+  trackTransformationFilterChanged,
+  trackTransformationSearch,
+  trackTransformationSelected,
+} from '../../tracking';
 import { useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { useTransformationSearchAndFilter } from './useTransformationSearchAndFilter';
@@ -31,6 +36,13 @@ export function TransformationTypePicker() {
     onSearchKeyDown,
     allTransformationsCount,
   } = useTransformationSearchAndFilter(finalizePendingTransformation);
+
+  useEffect(() => {
+    trackTransformationSearch(search, filteredTransformations.length);
+    return () => {
+      trackTransformationSearch.cancel();
+    };
+  }, [search, filteredTransformations.length]);
 
   const searchBoxSuffix = useMemo(() => {
     if (filteredTransformations.length === allTransformationsCount) {
@@ -78,14 +90,21 @@ export function TransformationTypePicker() {
         <FilterPill
           label={t('dashboard.transformation-picker-ng.view-all', 'View all')}
           selected={selectedFilter === null}
-          onClick={() => setSelectedFilter(null)}
+          onClick={() => {
+            setSelectedFilter(null);
+            trackTransformationFilterChanged(null);
+          }}
         />
         {categories.map(({ slug, label }) => (
           <FilterPill
             key={slug}
             label={label}
             selected={selectedFilter === slug}
-            onClick={() => setSelectedFilter(selectedFilter === slug ? null : slug)}
+            onClick={() => {
+              const next = selectedFilter === slug ? null : slug;
+              setSelectedFilter(next);
+              trackTransformationFilterChanged(next);
+            }}
           />
         ))}
       </Stack>
@@ -102,7 +121,10 @@ export function TransformationTypePicker() {
               key={item.id}
               transform={item}
               data={data?.series ?? []}
-              onClick={(id) => finalizePendingTransformation(id)}
+              onClick={(id) => {
+                trackTransformationSelected(id);
+                finalizePendingTransformation(id);
+              }}
               showIllustrations={showIllustrations}
               fullWidth
             />

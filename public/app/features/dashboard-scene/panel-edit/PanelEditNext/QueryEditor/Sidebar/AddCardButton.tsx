@@ -10,6 +10,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { trackAddExpressionInitiated, trackAddQuery, trackAddTransformationInitiated } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 function getButtonAriaLabel(variant: 'query' | 'transformation', afterId?: string) {
@@ -70,13 +71,17 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
         <Menu.Item
           label={t('query-editor-next.sidebar.add-query', 'Add query')}
           icon="question-circle"
-          onClick={() => addAndSelectQuery()}
+          onClick={() => {
+            trackAddQuery('new_query');
+            addAndSelectQuery();
+          }}
         />
         {queryLibraryEnabled && canReadQueries && (
           <Menu.Item
             label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
             icon="book-open"
             onClick={() => {
+              trackAddQuery('saved_query');
               setPendingSavedQuery({ insertAfter: afterId ?? '' });
               openDrawer({
                 onSelectQuery: (query) => addAndSelectQuery(query),
@@ -89,6 +94,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
           label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
           icon="calculator-alt"
           onClick={() => {
+            trackAddExpressionInitiated();
             setPendingExpression({ insertAfter: afterId ?? '' });
             onAdd?.();
           }}
@@ -108,6 +114,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
   );
 
   const handleTransformationClick = useCallback(() => {
+    trackAddTransformationInitiated();
     setPendingTransformation({ insertAfter: afterId });
     onAdd?.();
   }, [afterId, setPendingTransformation, onAdd]);
