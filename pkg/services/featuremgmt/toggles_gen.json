@@ -4341,6 +4341,21 @@
     },
     {
       "metadata": {
+        "name": "useScopeDepthPrefetch",
+        "resourceVersion": "1772084331657",
+        "creationTimestamp": "2026-02-26T05:38:51Z"
+      },
+      "spec": {
+        "description": "Use depth and rootScope parameters for scope node prefetching to reduce API calls during tree navigation",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "useScopeSingleNodeEndpoint",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-31T14:32:41Z"

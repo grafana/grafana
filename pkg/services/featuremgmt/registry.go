@@ -822,6 +822,15 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "useScopeDepthPrefetch",
+			Description:  "Use depth and rootScope parameters for scope node prefetching to reduce API calls during tree navigation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "logQLScope",
 			Description:  "In-development feature that will allow injection of labels into loki queries.",
 			Stage:        FeatureStagePrivatePreview,

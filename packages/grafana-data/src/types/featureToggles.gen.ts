@@ -529,6 +529,11 @@ export interface FeatureToggles {
   */
   useMultipleScopeNodesEndpoint?: boolean;
   /**
+  * Use depth and rootScope parameters for scope node prefetching to reduce API calls during tree navigation
+  * @default false
+  */
+  useScopeDepthPrefetch?: boolean;
+  /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
   */
