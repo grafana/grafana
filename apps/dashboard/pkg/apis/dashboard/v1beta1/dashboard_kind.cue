@@ -37,7 +37,7 @@ lineage: schemas: [{
 			revision?: int64
 
 			// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
-			gnetId?: string
+			gnetId?: int64
 
 			// Tags associated with dashboard.
 			tags?: [...string]
@@ -305,6 +305,8 @@ lineage: schemas: [{
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
+			// The source that registered the link (if any)
+			origin?: #ControlSourceRef
 
 		} @cuetsy(kind="interface")
 
@@ -852,6 +854,14 @@ lineage: schemas: [{
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		#DatasourceControlSourceRef: {
+			type: "datasource"
+			// The plugin type-id
+			group: string
+		} 
+
+		#ControlSourceRef: #DatasourceControlSourceRef
 	}
 },
 ]

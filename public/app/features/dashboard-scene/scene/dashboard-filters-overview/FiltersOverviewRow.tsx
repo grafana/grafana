@@ -193,7 +193,7 @@ const getRowStyles = (theme: GrafanaTheme2) => {
     labelCell: css({
       ...cellLayering,
       flex: '1 1 auto',
-      minWidth: 0,
+      minWidth: '25%',
     }),
     operatorCell: css({
       ...cellLayering,

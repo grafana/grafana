@@ -467,6 +467,9 @@ func withPeer(peer alertingNotify.ClusterPeer) Option {
 	}
 }
 
+// ReliableDelivery implements alertingCluster.ClusterChannel.
+func (m *MockBroadcastChannel) ReliableDelivery([]byte) bool { return true }
+
 // Broadcast implements alertingCluster.ClusterChannel.
 func (m *MockBroadcastChannel) Broadcast(b []byte) {
 	m.broadcasts = append(m.broadcasts, b)
@@ -479,7 +482,8 @@ func (m *MockBroadcastChannel) Broadcasts() [][]byte {
 
 // MockClusterPeer implements alertingNotify.ClusterPeer for testing.
 type MockClusterPeer struct {
-	Channel *MockBroadcastChannel
+	Channel     *MockBroadcastChannel
+	LastOptions []alertingCluster.ChannelOption
 }
 
 // Position implements alertingNotify.ClusterPeer.
@@ -493,7 +497,8 @@ func (m *MockClusterPeer) WaitReady(context.Context) error {
 }
 
 // AddState implements alertingNotify.ClusterPeer.
-func (m *MockClusterPeer) AddState(_ string, _ alertingCluster.State, _ prometheus.Registerer) alertingCluster.ClusterChannel {
+func (m *MockClusterPeer) AddState(_ string, _ alertingCluster.State, _ prometheus.Registerer, opts ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
+	m.LastOptions = opts
 	return m.Channel
 }
 

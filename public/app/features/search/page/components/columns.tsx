@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { type PanelPluginMetas } from '@grafana/runtime/internal';
 import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
@@ -38,7 +39,8 @@ export const generateColumns = (
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
   onDatasourceChange?: (datasource?: string) => void,
-  showingEverything?: boolean
+  showingEverything?: boolean,
+  panelPluginMetas: PanelPluginMetas = {}
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const access = response.view.fields;
@@ -154,7 +156,7 @@ export const generateColumns = (
     availableWidth -= width;
   } else {
     width = TYPE_COLUMN_WIDTH;
-    columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
+    columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles, panelPluginMetas));
     availableWidth -= width;
   }
 
@@ -418,7 +420,8 @@ function makeTypeColumn(
   kindField: Field<string>,
   typeField: Field<string>,
   width: number,
-  styles: Record<string, string>
+  styles: Record<string, string>,
+  panelPluginMetas: PanelPluginMetas
 ): TableColumn {
   return {
     id: `column-type`,
@@ -446,7 +449,7 @@ function makeTypeColumn(
             const type = typeField.values[i];
             if (type) {
               txt = type;
-              const info = config.panels[txt];
+              const info = panelPluginMetas[txt];
               if (info?.name) {
                 txt = info.name;
               } else {

@@ -720,6 +720,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	opts := testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagProvisioningExport,
 		},
 		// Provisioning requires resources to be fully migrated to unified storage.
 		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
@@ -741,7 +742,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	}
 
 	if extensions.IsEnterprise {
-		opts.ProvisioningRepositoryTypes = []string{"local", "github", "gitlab", "bitbucket"}
+		opts.ProvisioningRepositoryTypes = []string{"local", "git", "github", "gitlab", "bitbucket"}
 	}
 
 	for _, o := range options {
@@ -1238,4 +1239,16 @@ func findCondition(conditions []metav1.Condition, conditionType string) *metav1.
 		}
 	}
 	return nil
+}
+
+// withoutExportFeatureFlag disables the provisioningExport feature flag
+func withoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
+	// Remove provisioningExport from the enabled feature toggles
+	filtered := []string{}
+	for _, flag := range opts.EnableFeatureToggles {
+		if flag != "provisioningExport" {
+			filtered = append(filtered, flag)
+		}
+	}
+	opts.EnableFeatureToggles = filtered
 }

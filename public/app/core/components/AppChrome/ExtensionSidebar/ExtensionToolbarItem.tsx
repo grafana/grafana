@@ -97,13 +97,17 @@ export function ExtensionToolbarItem({ compact }: Props) {
   return (
     <>
       {/* renders a single `ExtensionToolbarItemButton` for each plugin; if a plugin has multiple components, it renders them inside a `Dropdown` */}
-      {Array.from(availableComponents.entries()).map(
-        ([pluginId, { addedComponents }]: [string, { addedComponents: ExtensionInfo[] }]) =>
+      {Array.from(availableComponents.entries())
+        .map(([pluginId, { addedComponents }]: [string, { addedComponents: ExtensionInfo[] }]) =>
           renderPluginButton(
             pluginId,
             addedComponents.map((c: ExtensionInfo) => ({ ...c, pluginId }))
           )
-      )}
+        )
+        .filter(Boolean)
+        .flatMap((button, index, arr) =>
+          index < arr.length - 1 ? [button, <NavToolbarSeparator key={`sep-${index}`} />] : [button]
+        )}
       <NavToolbarSeparator />
     </>
   );

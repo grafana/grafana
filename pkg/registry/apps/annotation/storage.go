@@ -15,12 +15,16 @@ type Store interface {
 }
 
 type ListOptions struct {
-	DashboardUID string
-	PanelID      int64
-	From         int64
-	To           int64
-	Limit        int64
-	Continue     string
+	DashboardUID   string
+	PanelID        int64
+	From           int64
+	To             int64
+	Limit          int64
+	Continue       string
+	Tags           []string
+	TagsMatchAny   bool
+	Scopes         []string
+	ScopesMatchAny bool
 }
 
 type AnnotationList struct {

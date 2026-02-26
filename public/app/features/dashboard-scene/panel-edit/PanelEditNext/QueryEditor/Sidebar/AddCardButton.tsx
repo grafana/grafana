@@ -28,9 +28,10 @@ interface AddCardButtonProps {
   variant: 'query' | 'transformation';
   afterId?: string;
   alwaysVisible?: boolean;
+  onAdd?: () => void;
 }
 
-export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCardButtonProps) => {
+export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }: AddCardButtonProps) => {
   const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
   const { addQuery } = useActionsContext();
@@ -52,9 +53,10 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
       if (newRefId) {
         const selectTarget: DataQuery = { refId: newRefId, hide: false };
         setSelectedQuery(selectTarget);
+        onAdd?.();
       }
     },
-    [addQuery, afterId, setSelectedQuery]
+    [addQuery, afterId, setSelectedQuery, onAdd]
   );
 
   const handleMenuVisibleChange = useCallback((visible: boolean) => {
@@ -86,16 +88,18 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
           icon="calculator-alt"
           onClick={() => {
             setPendingExpression({ insertAfter: afterId ?? '' });
+            onAdd?.();
           }}
         />
       </Menu>
     ),
-    [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterId]
+    [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterId, onAdd]
   );
 
   const handleTransformationClick = useCallback(() => {
     setPendingTransformation({ insertAfter: afterId });
-  }, [afterId, setPendingTransformation]);
+    onAdd?.();
+  }, [afterId, setPendingTransformation, onAdd]);
 
   const ariaLabel = getButtonAriaLabel(variant, afterId);
 
