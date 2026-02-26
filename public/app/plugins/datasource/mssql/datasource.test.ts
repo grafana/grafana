@@ -6,6 +6,7 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
+  LoadingState,
   MetricFindValue,
   createDataFrame,
   TimeRange,
@@ -33,9 +34,11 @@ const customVariableModel: CustomVariableModel = {
   id: '',
   global: false,
   index: -1,
-  state: 'NotStarted' as any,
+  state: LoadingState.NotStarted,
+  error: null,
+  description: null,
   name: '',
-  label: null,
+  label: undefined,
   hide: 0,
   skipUrlSync: false,
   type: 'custom',
@@ -43,7 +46,7 @@ const customVariableModel: CustomVariableModel = {
   includeAll: false,
   allValue: null,
   options: [],
-  current: {} as any,
+  current: {},
   query: '',
   rootStateKey: null,
 };
@@ -438,7 +441,12 @@ describe('MSSQLDatasource', () => {
 
   describe('targetContainsTemplate', () => {
     it('given query that contains template variable it should return true', () => {
-      const templateSrv = new TemplateSrv();
+      const templateSrv: TemplateSrv = {
+        getVariables: () => [],
+        replace: (text?: string) => text || '',
+        containsTemplate: (text?: string) => text?.includes('$summarize') || text?.includes('$host') || false,
+        updateTimeRange: () => {},
+      };
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$summarize') as time,
       avg(value) as value,
@@ -455,18 +463,18 @@ describe('MSSQLDatasource', () => {
         rawSql,
         refId: 'A',
       };
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
       const ds = new MssqlDatasource(instanceSettings);
-
       Reflect.set(ds, 'templateSrv', templateSrv);
       expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
 
     it('given query that only contains global template variable it should return false', () => {
-      const templateSrv: TemplateSrv = new TemplateSrv();
+      const templateSrv: TemplateSrv = {
+        getVariables: () => [],
+        replace: (text?: string) => text || '',
+        containsTemplate: () => false,
+        updateTimeRange: () => {},
+      };
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$__interval') as time,
       avg(value) as value,
@@ -482,10 +490,6 @@ describe('MSSQLDatasource', () => {
         rawSql,
         refId: 'A',
       };
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
       const ds = new MssqlDatasource(instanceSettings);
       Reflect.set(ds, 'templateSrv', templateSrv);
 
