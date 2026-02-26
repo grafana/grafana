@@ -2,7 +2,7 @@
  * @alpha
  */
 
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '../../analytics/utils';
 
 import { Event, EventProperty } from './types';
 
