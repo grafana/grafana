@@ -587,6 +587,47 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 			currentRef:  "new-ref",
 		},
 		{
+			name:         "creation before deletion in diff still succeeds at quota limit due to sorting",
+			quotaTracker: quotas.NewInMemoryQuotaTracker(10, 10),
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "dashboards/new.json",
+						Ref:    "new-ref",
+					},
+					{
+						Action:      repository.FileActionDeleted,
+						Path:        "dashboards/old.json",
+						PreviousRef: "old-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 2).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "dashboards/new.json").Return(false)
+
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+
+				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/new.json", "new-ref").
+					Return("new-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionDeleted && result.Path() == "dashboards/old.json"
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionCreated && result.Path() == "dashboards/new.json" && result.Error() == nil
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
 			name:         "failed deletion does not release quota",
 			quotaTracker: quotas.NewInMemoryQuotaTracker(10, 10),
 			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
@@ -630,6 +671,53 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 			currentRef:  "new-ref",
 		},
 	})
+}
+
+func TestSortChangesByActionPriority(t *testing.T) {
+	diff := []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "dashboards/new1.json"},
+		{Action: repository.FileActionIgnored, Path: "dashboards/ignored.json"},
+		{Action: repository.FileActionDeleted, Path: "dashboards/old1.json"},
+		{Action: repository.FileActionUpdated, Path: "dashboards/updated.json"},
+		{Action: repository.FileActionCreated, Path: "dashboards/new2.json"},
+		{Action: repository.FileActionRenamed, Path: "dashboards/renamed.json"},
+		{Action: repository.FileActionDeleted, Path: "dashboards/old2.json"},
+	}
+
+	sortChangesByActionPriority(diff)
+
+	expectedOrder := []repository.FileAction{
+		repository.FileActionDeleted,
+		repository.FileActionDeleted,
+		repository.FileActionRenamed,
+		repository.FileActionUpdated,
+		repository.FileActionCreated,
+		repository.FileActionCreated,
+		repository.FileActionIgnored,
+	}
+	for i, change := range diff {
+		require.Equal(t, expectedOrder[i], change.Action, "index %d: expected %s, got %s", i, expectedOrder[i], change.Action)
+	}
+}
+
+func TestSortChangesByActionPriority_StableOrder(t *testing.T) {
+	diff := []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "dashboards/b.json"},
+		{Action: repository.FileActionCreated, Path: "dashboards/a.json"},
+		{Action: repository.FileActionDeleted, Path: "dashboards/d.json"},
+		{Action: repository.FileActionDeleted, Path: "dashboards/c.json"},
+	}
+
+	sortChangesByActionPriority(diff)
+
+	require.Equal(t, repository.FileActionDeleted, diff[0].Action)
+	require.Equal(t, "dashboards/d.json", diff[0].Path)
+	require.Equal(t, repository.FileActionDeleted, diff[1].Action)
+	require.Equal(t, "dashboards/c.json", diff[1].Path)
+	require.Equal(t, repository.FileActionCreated, diff[2].Action)
+	require.Equal(t, "dashboards/b.json", diff[2].Path)
+	require.Equal(t, repository.FileActionCreated, diff[3].Action)
+	require.Equal(t, "dashboards/a.json", diff[3].Path)
 }
 
 type compositeRepo struct {

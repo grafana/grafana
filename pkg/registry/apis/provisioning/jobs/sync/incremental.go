@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -77,6 +78,8 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 	// after cleaning up all resources, we will look to see if the foldrs are
 	// now empty, and if so, delete them.
 	affectedFolders = make(map[string]string)
+
+	sortChangesByActionPriority(diff)
 
 	for _, change := range diff {
 		if ctx.Err() != nil {
@@ -190,6 +193,28 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 	}
 
 	return affectedFolders, nil
+}
+
+// sortChangesByActionPriority reorders changes so deletions are processed before creations.
+func sortChangesByActionPriority(diff []repository.VersionedFileChange) {
+	slices.SortStableFunc(diff, func(a, b repository.VersionedFileChange) int {
+		return actionPriority(a.Action) - actionPriority(b.Action)
+	})
+}
+
+func actionPriority(action repository.FileAction) int {
+	switch action {
+	case repository.FileActionDeleted:
+		return 0
+	case repository.FileActionRenamed:
+		return 1
+	case repository.FileActionUpdated:
+		return 2
+	case repository.FileActionCreated:
+		return 3
+	default:
+		return 4
+	}
 }
 
 // cleanupOrphanedFolders removes folders that no longer contain any resources in git after deletions have occurred.
