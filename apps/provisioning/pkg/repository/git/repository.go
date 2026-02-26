@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/nanogit/log"
 	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
+	"github.com/grafana/nanogit/protocol/client"
 	"github.com/grafana/nanogit/protocol/hash"
 	"github.com/grafana/nanogit/retry"
 )
@@ -185,7 +186,36 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		r.SetBranch(branch)
 	}
 
+	// Check authorization
 	if ok, err := r.client.IsAuthorized(ctx); err != nil || !ok {
+		// Map nanogit errors to repository errors for proper HTTP status codes
+		if err != nil {
+			err = mapNanogitError(err)
+
+			if errors.Is(err, repository.ErrUnauthorized) {
+				return &provisioning.TestResults{
+					Code:    http.StatusUnauthorized,
+					Success: false,
+					Errors: []provisioning.ErrorDetails{{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "authentication failed",
+					}},
+				}, nil
+			}
+			if errors.Is(err, repository.ErrServerUnavailable) {
+				return &provisioning.TestResults{
+					Code:    http.StatusServiceUnavailable,
+					Success: false,
+					Errors: []provisioning.ErrorDetails{{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: fmt.Sprintf("server unavailable: %v", err),
+					}},
+				}, nil
+			}
+		}
+
 		detail := "not authorized"
 		if err != nil {
 			detail = fmt.Sprintf("failed check if authorized: %v", err)
@@ -202,7 +232,47 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		}, nil
 	}
 
+	// Check if repository exists
 	if ok, err := r.client.RepoExists(ctx); err != nil || !ok {
+		// Map nanogit errors to repository errors for proper HTTP status codes
+		if err != nil {
+			err = mapNanogitError(err)
+
+			if errors.Is(err, repository.ErrUnauthorized) {
+				return &provisioning.TestResults{
+					Code:    http.StatusUnauthorized,
+					Success: false,
+					Errors: []provisioning.ErrorDetails{{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "authentication failed",
+					}},
+				}, nil
+			}
+			if errors.Is(err, repository.ErrPermissionDenied) {
+				return &provisioning.TestResults{
+					Code:    http.StatusForbidden,
+					Success: false,
+					Errors: []provisioning.ErrorDetails{{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "permission denied",
+					}},
+				}, nil
+			}
+			if errors.Is(err, repository.ErrServerUnavailable) {
+				return &provisioning.TestResults{
+					Code:    http.StatusServiceUnavailable,
+					Success: false,
+					Errors: []provisioning.ErrorDetails{{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", t, "url").String(),
+						Detail: fmt.Sprintf("server unavailable: %v", err),
+					}},
+				}, nil
+			}
+		}
+
 		detail := "repository not found"
 		if err != nil {
 			detail = fmt.Sprintf("failed check if repository exists: %v", err)
@@ -222,7 +292,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	// Test basic connectivity by getting the branch reference
 	_, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
-		detail := "branch not found"
+		// Check for branch not found first (before mapping)
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return &provisioning.TestResults{
 				Code:    http.StatusBadRequest,
@@ -230,12 +300,49 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("spec", t, "branch").String(),
-					Detail: detail,
+					Detail: "branch not found",
 				}},
 			}, nil
 		}
 
-		detail = fmt.Sprintf("failed to check if branch exists: %v", err)
+		// Map nanogit errors to repository errors for proper HTTP status codes
+		err = mapNanogitError(err)
+
+		if errors.Is(err, repository.ErrUnauthorized) {
+			return &provisioning.TestResults{
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("secure", "token").String(),
+					Detail: "authentication failed",
+				}},
+			}, nil
+		}
+		if errors.Is(err, repository.ErrPermissionDenied) {
+			return &provisioning.TestResults{
+				Code:    http.StatusForbidden,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("secure", "token").String(),
+					Detail: "permission denied",
+				}},
+			}, nil
+		}
+		if errors.Is(err, repository.ErrServerUnavailable) {
+			return &provisioning.TestResults{
+				Code:    http.StatusServiceUnavailable,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("spec", t, "branch").String(),
+					Detail: fmt.Sprintf("server unavailable: %v", err),
+				}},
+			}, nil
+		}
+
+		detail := fmt.Sprintf("failed to check if branch exists: %v", err)
 
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
@@ -918,4 +1025,27 @@ func (r *gitRepository) withGitContext(ctx context.Context, ref string) (context
 	ctx = log.ToContext(ctx, logger)
 
 	return ctx, logger
+}
+
+// mapNanogitError converts nanogit-specific errors to repository errors.
+// This maintains the abstraction boundary and allows proper HTTP status code handling.
+func mapNanogitError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// Map structured nanogit errors to repository errors using the sentinel errors
+	// from the client package (nanogit re-exports error types but not sentinel errors)
+	if errors.Is(err, client.ErrUnauthorized) {
+		return repository.ErrUnauthorized
+	}
+	if errors.Is(err, client.ErrPermissionDenied) {
+		return repository.ErrPermissionDenied
+	}
+	if errors.Is(err, client.ErrServerUnavailable) {
+		return repository.ErrServerUnavailable
+	}
+
+	// Return original error if not a known nanogit error
+	return err
 }
