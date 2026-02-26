@@ -1986,9 +1986,11 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	protocolStr := valueAsString(server, "protocol", "http")
 
 	cfg.ServeOnSocket = server.Key("serve_on_socket").MustBool(false)
-	cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
-	cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
-	cfg.SocketPath = server.Key("socket").String()
+	if cfg.ServeOnSocket && (protocolStr == "http" || protocolStr == "https" || protocolStr == "h2") {
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+	}
 
 	switch protocolStr {
 	case "https":
@@ -2003,8 +2005,14 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.CertPassword = server.Key("cert_pass").String()
 	case "socket":
 		cfg.Protocol = SocketScheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
 	case "socket_h2":
 		cfg.Protocol = SocketHTTP2Scheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
 		cfg.CertPassword = server.Key("cert_pass").String()

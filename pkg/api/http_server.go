@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/youmark/pkcs8"
@@ -497,13 +496,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	errg, _ := errgroup.WithContext(ctx)
 
 	for _, listener := range listeners {
-		l := listener
 		errg.Go(func() error {
 			switch hs.Cfg.Protocol {
 			case setting.HTTPScheme, setting.SocketScheme:
 				// If serving on socket concurrently with HTTPScheme, the unix listener needs Serve too.
 				// Serve handles both tcp and unix listeners exactly the same.
-				if err := hs.httpSrv.Serve(l); err != nil {
+				if err := hs.httpSrv.Serve(listener); err != nil {
 					if errors.Is(err, http.ErrServerClosed) {
 						hs.log.Debug("server was shutdown gracefully")
 						return nil
@@ -512,7 +510,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 				}
 			case setting.HTTP2Scheme, setting.HTTPSScheme, setting.SocketHTTP2Scheme:
 				// Similarly for ServeTLS
-				if err := hs.httpSrv.ServeTLS(l, "", ""); err != nil {
+				if err := hs.httpSrv.ServeTLS(listener, "", ""); err != nil {
 					if errors.Is(err, http.ErrServerClosed) {
 						hs.log.Debug("server was shutdown gracefully")
 						return nil
@@ -520,7 +518,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 					return err
 				}
 			default:
-				panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
+				return fmt.Errorf("unhandled protocol %q", hs.Cfg.Protocol)
 			}
 			return nil
 		})
@@ -549,6 +547,12 @@ func (hs *HTTPServer) getListeners() ([]net.Listener, error) {
 			return nil, fmt.Errorf("failed to open listener on address %s: %w", hs.httpSrv.Addr, err)
 		}
 		listeners = append(listeners, listener)
+
+		// if `serve_on_socket` is configured, fall through and listen on a unix socket as well
+		if !hs.Cfg.ServeOnSocket {
+			break
+		}
+		fallthrough
 	case setting.SocketScheme, setting.SocketHTTP2Scheme:
 		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
@@ -573,29 +577,6 @@ func (hs *HTTPServer) getListeners() ([]net.Listener, error) {
 	default:
 		hs.log.Error("Invalid protocol", "protocol", hs.Cfg.Protocol)
 		return nil, fmt.Errorf("invalid protocol %q", hs.Cfg.Protocol)
-	}
-
-	if hs.Cfg.ServeOnSocket && (hs.Cfg.Protocol == setting.HTTPScheme || hs.Cfg.Protocol == setting.HTTPSScheme || hs.Cfg.Protocol == setting.HTTP2Scheme) {
-		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
-		if err != nil {
-			return nil, fmt.Errorf("failed to open listener for socket %s: %w", hs.Cfg.SocketPath, err)
-		}
-
-		// Make socket writable by group
-		// nolint:gosec
-		if err := os.Chmod(hs.Cfg.SocketPath, os.FileMode(hs.Cfg.SocketMode)); err != nil {
-			return nil, fmt.Errorf("failed to change socket mode %d: %w", hs.Cfg.SocketMode, err)
-		}
-
-		// golang.org/pkg/os does not have chgrp
-		// Changing the gid of a file without privileges requires that the target group is in the group of the process and that the process is the file owner
-		if hs.Cfg.SocketGid != -1 {
-			if err := os.Chown(hs.Cfg.SocketPath, -1, hs.Cfg.SocketGid); err != nil {
-				return nil, fmt.Errorf("failed to change socket group id %d: %w", hs.Cfg.SocketGid, err)
-			}
-		}
-
-		listeners = append(listeners, listener)
 	}
 
 	return listeners, nil

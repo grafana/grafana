@@ -355,8 +355,7 @@ func TestHTTPServer_getListeners(t *testing.T) {
 		cfg.ServeOnSocket = true
 		cfg.SocketGid = -1
 		cfg.SocketPath = os.TempDir() + "/grafana_test.sock"
-		_ = os.Remove(cfg.SocketPath)
-		defer func() { _ = os.Remove(cfg.SocketPath) }()
+		t.Cleanup(func() { _ = os.Remove(cfg.SocketPath) })
 
 		hs := &HTTPServer{
 			Cfg:     cfg,
@@ -377,8 +376,7 @@ func TestHTTPServer_getListeners(t *testing.T) {
 		cfg.Protocol = setting.SocketScheme
 		cfg.SocketGid = -1
 		cfg.SocketPath = os.TempDir() + "/grafana_test_only.sock"
-		_ = os.Remove(cfg.SocketPath)
-		defer func() { _ = os.Remove(cfg.SocketPath) }()
+		t.Cleanup(func() { _ = os.Remove(cfg.SocketPath) })
 
 		hs := &HTTPServer{
 			Cfg:     cfg,
