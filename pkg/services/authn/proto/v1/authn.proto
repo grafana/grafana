@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package authn.v1;
+
+option go_package = "github.com/grafana/grafana/pkg/services/authn/proto/v1";
+
+service AuthnService {
+  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+}
+
+message AuthenticateRequest {
+  string stack_id = 1;
+  map<string, string> http_headers = 2;
+}
+
+message AuthenticateResponse {
+  string user_id = 1;
+  string org_id = 2;
+  string org_role = 3;
+  string namespace = 4;
+  string obo_token = 5;
+}
