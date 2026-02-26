@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import Skeleton from 'react-loading-skeleton';
 
 import { VariableHide, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,8 +20,9 @@ import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
-  const { isEditing } = dashboard.useState();
+  const { isEditing, defaultControlsLoading } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const styles = useStyles2(getStyles);
 
   const visibleVariables = variables.filter(
     (v: SceneVariable) =>
@@ -41,6 +43,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   return (
     <>
       {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
+      {defaultControlsLoading && <Skeleton width={150} height={32} containerClassName={styles.skeletonContainer} />}
 
       {variablesToRender.length > 0 &&
         variablesToRender.map((variable) => (
@@ -230,5 +233,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
+  }),
+  skeletonContainer: css({
+    display: 'inline-flex',
+    lineHeight: 1,
+    marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(1),
   }),
 });

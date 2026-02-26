@@ -1720,6 +1720,66 @@ describe('DashboardScene', () => {
       expect(result).toEqual({ sql: 1 });
     });
   });
+
+  describe('addDefaultControls', () => {
+    it('should prepend default variables to existing variables', () => {
+      const scene = buildTestScene();
+
+      const defaultVariables = [
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'defaultVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ];
+
+      const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
+      scene.addDefaultControls(defaultVariables, []);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      expect(variables.length).toBe(existingVarCount + 1);
+      expect(variables[0].state.name).toBe('defaultVar');
+    });
+
+    it('should prepend default links to existing links', () => {
+      const scene = buildTestScene();
+      const existingLinkCount = scene.state.links.length;
+
+      const defaultLinks = [
+        {
+          title: 'Default Link',
+          url: 'http://example.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'prometheus' },
+        },
+      ];
+
+      scene.addDefaultControls([], defaultLinks);
+
+      expect(scene.state.links.length).toBe(existingLinkCount + 1);
+      expect(scene.state.links[0].title).toBe('Default Link');
+    });
+
+    it('should not modify links when no default links are provided', () => {
+      const scene = buildTestScene();
+      const originalLinks = scene.state.links;
+
+      scene.addDefaultControls([], []);
+
+      expect(scene.state.links).toBe(originalLinks);
+    });
+  });
 });
 
 function createV1DashboardWithExpressions(expressionTypes: string[]): Dashboard {

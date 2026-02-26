@@ -440,11 +440,25 @@ abstract class DashboardScenePageStateManagerBase<T>
       return null;
     }
 
-    const { defaultVariables, defaultLinks } = await this.getDefaultControls(rsp);
-    options.defaultVariables = defaultVariables;
-    options.defaultLinks = defaultLinks;
+    const scene = this.transformResponseToScene(rsp, options);
 
-    return this.transformResponseToScene(rsp, options);
+    if (scene) {
+      scene.setState({ defaultControlsLoading: true });
+      this.loadAndApplyDefaultControls(rsp, scene);
+    }
+
+    return scene;
+  }
+
+  private async loadAndApplyDefaultControls(rsp: T, scene: DashboardScene): Promise<void> {
+    try {
+      const { defaultVariables, defaultLinks } = await this.getDefaultControls(rsp);
+      scene.addDefaultControls(defaultVariables, defaultLinks);
+    } catch (e) {
+      console.warn('Failed to load default controls', e);
+    } finally {
+      scene.setState({ defaultControlsLoading: false });
+    }
   }
 
   public getDashboardFromCache(cacheKey: string): T | null {
