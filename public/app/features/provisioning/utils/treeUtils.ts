@@ -1,8 +1,9 @@
 import { IconName } from '@grafana/ui';
 import { ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FOLDER_METADATA_FILE } from '../constants';
 import { FileDetails, FlatTreeItem, ItemType, SyncStatus, TreeItem } from '../types';
+
+import { getFolderMetadataPath } from './folderMetadata';
 
 const collator = new Intl.Collator();
 
@@ -138,7 +139,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   // Detect provisioned folders missing _folder.json metadata
   for (const [path, node] of nodeMap) {
     if (node.type === 'Folder' && node.resourceName) {
-      const metadataPath = path ? `${path}/${FOLDER_METADATA_FILE}` : FOLDER_METADATA_FILE;
+      const metadataPath = getFolderMetadataPath(path);
       node.missingFolderMetadata = !nodeMap.has(metadataPath);
     }
   }

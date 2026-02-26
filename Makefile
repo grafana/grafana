@@ -129,6 +129,11 @@ OAPI_SPEC_TARGET = public/openapi3.json
 openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
 	$(GO) run $(GO_RACE_FLAG) scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
+.PHONY: generate-openapi
+generate-openapi: openapi3-gen
+	$(GO) test ./pkg/tests/apis || true
+	yarn workspace @grafana/openapi process-specs
+
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
 ENTERPRISE_FE_EXT_FILE = public/app/extensions/index.ts

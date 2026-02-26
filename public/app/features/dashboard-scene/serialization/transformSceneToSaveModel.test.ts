@@ -148,8 +148,8 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
-  setPluginExtensionGetter: jest.fn(),
-  getPluginLinkExtensions: jest.fn(),
+  setGetObservablePluginLinks: jest.fn(),
+  getObservablePluginLinks: jest.fn().mockReturnValue(of([])),
 }));
 
 jest.mock('@grafana/data', () => ({
