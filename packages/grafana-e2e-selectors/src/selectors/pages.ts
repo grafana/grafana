@@ -608,7 +608,7 @@ export const versionedPages = {
               '10.4.0': 'data-testid group by variable mode toggle',
             },
             defaultValueSection: {
-              '12.5.0': 'data-testid group by variable default value',
+              '13.0.0': 'data-testid group by variable default value',
             },
           },
           AdHocFiltersVariable: {
