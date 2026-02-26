@@ -50,6 +50,9 @@ config_file = /etc/grafana/ldap.toml
 # Allow sign-up should be `true` (default) to allow Grafana to create users on successful LDAP authentication.
 # If set to `false` only already existing Grafana users will be able to login.
 allow_sign_up = true
+
+# By default, users are linked by LDAP DN only. Set to `true` to also allow linking by email/login (insecure).
+allow_insecure_email_lookup = false
 ```
 
 ## Disable org role synchronization
@@ -71,6 +74,26 @@ allow_sign_up = true
 
 # Prevent synchronizing ldap users organization roles
 skip_org_role_sync = true
+
+allow_insecure_email_lookup = false
+```
+
+## User lookup by email or login (insecure)
+
+By default, Grafana links LDAP users to Grafana accounts only by their LDAP distinguished name (DN). A user is identified by the same DN on each login, so existing Grafana users are matched by DN and new DNs create new users. This prevents account takeover via email or username collision.
+
+{{< admonition type="warning" >}}
+Enabling `allow_insecure_email_lookup` can allow account takeover. A malicious LDAP user whose email or username matches an existing Grafana user (for example, an admin) can gain access to that account. Only enable this option when necessary and when you have tight control over LDAP attributes and who can authenticate.
+{{< /admonition >}}
+
+```ini
+[auth.ldap]
+enabled = true
+config_file = /etc/grafana/ldap.toml
+allow_sign_up = true
+skip_org_role_sync = false
+# Allow linking existing users by email/login; disabled by default for security
+allow_insecure_email_lookup = false
 ```
 
 ## Grafana LDAP Configuration

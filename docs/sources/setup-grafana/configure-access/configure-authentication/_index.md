@@ -80,6 +80,8 @@ If users want to use the same email address with multiple identity providers (fo
 
 To enable this option, refer to the [Enable email lookup](#enable-email-lookup) section.
 
+For LDAP, a separate option `allow_insecure_email_lookup` in the `[auth.ldap]` section controls whether existing users can be linked by email or login; it is disabled by default. Refer to [LDAP authentication](ldap/#user-lookup-by-email-or-login-insecure) for details.
+
 ## Multi-factor authentication (MFA/2FA)
 
 Grafana and the Grafana Cloud portal currently do not include built-in support for multi-factor authentication (MFA).
