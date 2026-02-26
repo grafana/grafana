@@ -30,10 +30,37 @@ func validateGroupLabels(r *model.RecordingRule, oldObject resource.Object, acti
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+			var (
+				r       *model.RecordingRule
+				oldRule *model.RecordingRule
+				ok      bool
+			)
+
+			if req.Action == resource.AdmissionActionDelete {
+				r, ok = req.OldObject.(*model.RecordingRule)
+				if !ok {
+					return fmt.Errorf("old object is not of type *v0alpha1.RecordingRule")
+				}
+				if cfg.ResolveRuleChainMemberships != nil {
+					memberships, err := cfg.ResolveRuleChainMemberships(ctx, []string{r.Name})
+					if err != nil {
+						return fmt.Errorf("failed to resolve chain membership for rule %q: %w", r.Name, err)
+					}
+					membership := memberships[r.Name]
+					if membership.Found {
+						return fmt.Errorf("cannot delete rule %q because it belongs to rulechain %q", r.Name, membership.ChainUID)
+					}
+				}
+				return nil
+			}
+
 			// Cast to specific type
-			r, ok := req.Object.(*model.RecordingRule)
+			r, ok = req.Object.(*model.RecordingRule)
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.RecordingRule")
+			}
+			if req.OldObject != nil {
+				oldRule, _ = req.OldObject.(*model.RecordingRule)
 			}
 
 			sourceProv := r.GetProvenanceStatus()
@@ -59,6 +86,23 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				}
 				if !ok {
 					return fmt.Errorf("folder does not exist: %s", folderUID)
+				}
+			}
+
+			if req.Action == resource.AdmissionActionUpdate && oldRule != nil && cfg.ResolveRuleChainMemberships != nil {
+				oldFolderUID := ""
+				if oldRule.Annotations != nil {
+					oldFolderUID = oldRule.Annotations[model.FolderAnnotationKey]
+				}
+				if oldFolderUID != folderUID {
+					memberships, err := cfg.ResolveRuleChainMemberships(ctx, []string{r.Name})
+					if err != nil {
+						return fmt.Errorf("failed to resolve chain membership for rule %q: %w", r.Name, err)
+					}
+					membership := memberships[r.Name]
+					if membership.Found {
+						return fmt.Errorf("cannot move rule %q to folder %q because it belongs to rulechain %q", r.Name, folderUID, membership.ChainUID)
+					}
 				}
 			}
 

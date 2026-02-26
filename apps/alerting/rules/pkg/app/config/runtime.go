@@ -8,6 +8,16 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
 
+type RuleRef struct {
+	UID       string
+	FolderUID string
+}
+
+type RuleChainMembership struct {
+	ChainUID string
+	Found    bool
+}
+
 var (
 	ErrInvalidRuntimeConfig = errors.New("invalid runtime config provided to alerting/rules app")
 )
@@ -21,4 +31,9 @@ type RuntimeConfig struct {
 	// set of strings which are illegal for label keys on rules
 	ReservedLabelKeys             map[string]struct{}
 	NotificationSettingsValidator func(ctx context.Context, notificationSettings v0alpha1.AlertRuleNotificationSettings) error
+	ResolveRuleRef                func(ctx context.Context, uid string) (RuleRef, bool, error)
+	// ResolveRuleChainMemberships is used by RuleChain CREATE/UPDATE admission validation to
+	// resolve membership for all rule refs in the incoming RuleChain object in one call.
+	// This avoids repeating expensive membership scans per referenced UID.
+	ResolveRuleChainMemberships func(ctx context.Context, uids []string) (map[string]RuleChainMembership, error)
 }
