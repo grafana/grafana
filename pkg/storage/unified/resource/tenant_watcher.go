@@ -123,15 +123,9 @@ func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
 		BearerToken: tokenResp.Token,
 	}
 
-	switch {
-	case cfg.AllowInsecure && cfg.CAFile == "":
-		restCfg.TLSClientConfig = rest.TLSClientConfig{
-			Insecure: true,
-		}
-	case cfg.CAFile != "":
-		restCfg.TLSClientConfig = rest.TLSClientConfig{
-			CAFile: cfg.CAFile,
-		}
+	restCfg.TLSClientConfig = rest.TLSClientConfig{
+		CAFile:   cfg.CAFile,
+		Insecure: cfg.AllowInsecure && cfg.CAFile == "",
 	}
 
 	return restCfg, nil
