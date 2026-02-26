@@ -1,29 +1,32 @@
-import { DropResult } from '@hello-pangea/dnd';
-
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { LoadingBar } from '@grafana/ui';
 
-import { Transformation } from '../types';
+import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { AddCardButton } from './AddCardButton';
 import { DraggableList } from './DraggableList';
 import { QueryCard } from './QueryCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
 import { TransformationCard } from './TransformationCard';
+import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
-interface QueriesAndTransformationsViewProps {
-  queries: DataQuery[];
-  transformations: Transformation[];
-  onQueryDragEnd: (result: DropResult) => void;
-  onTransformationDragEnd: (result: DropResult) => void;
-}
+export function QueriesAndTransformationsView() {
+  const { queries, isLoading } = useQueryRunnerContext();
+  const { transformations } = usePanelContext();
+  const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
-export function QueriesAndTransformationsView({
-  queries,
-  transformations,
-  onQueryDragEnd,
-  onTransformationDragEnd,
-}: QueriesAndTransformationsViewProps) {
+  if (isLoading) {
+    return (
+      <LoadingBar
+        width={400}
+        ariaLabel={t(
+          'query-editor-next.sidebar.loading-queries-transformations',
+          'Loading queries and transformations'
+        )}
+      />
+    );
+  }
+
   return (
     <>
       <QuerySidebarCollapsableHeader

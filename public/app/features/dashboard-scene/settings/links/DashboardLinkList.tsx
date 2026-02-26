@@ -23,7 +23,6 @@ export function DashboardLinkList({
   onDelete,
 }: DashboardLinkListProps) {
   const styles = useStyles2(getStyles);
-
   const isEmptyList = links.length === 0;
 
   if (isEmptyList) {

@@ -33,6 +33,11 @@ export const shouldUseFullyCompatibleBackendFilters = () =>
 export const shouldUseSavedSearches = () => config.featureToggles.alertingSavedSearches ?? false;
 
 /**
+ * Saved searches feature for Alert Activity (Triage) page.
+ */
+export const shouldUseTriageSavedSearches = () => config.featureToggles.alertingTriageSavedSearches ?? false;
+
+/**
  * Alerts Activity Banner - shows a promotional banner on the Rule List page
  * directing users to try the new Alerts Activity (triage) view.
  *

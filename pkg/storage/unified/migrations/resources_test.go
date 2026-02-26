@@ -135,7 +135,7 @@ func TestRegisterMigrations(t *testing.T) {
 		_ = sqlstoremigrator.CheckExpectedMigrations(sqlstoremigrator.SQLite,
 			[]sqlstoremigrator.ExpectedMigration{},
 			func(mg *sqlstoremigrator.Migrator) {
-				capturedErr = registerMigrations(context.Background(), cfg, mg, nil, nil, nil, registry)
+				capturedErr = registerMigrations(context.Background(), cfg, mg, nil, nil, nil, nil, registry)
 				ids = mg.GetMigrationIDs(false)
 			})
 		return ids, capturedErr
@@ -267,14 +267,21 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Build schema.GroupResource from resource strings
-			resources := make([]schema.GroupResource, 0, len(tt.resources))
+			// Build ResourceInfo from resource strings
+			resourceInfos := make([]ResourceInfo, 0, len(tt.resources))
 			for _, r := range tt.resources {
 				parts := strings.SplitN(r, ".", 2)
-				resources = append(resources, schema.GroupResource{
-					Resource: parts[0],
-					Group:    parts[1],
+				resourceInfos = append(resourceInfos, ResourceInfo{
+					GroupResource: schema.GroupResource{
+						Resource: parts[0],
+						Group:    parts[1],
+					},
 				})
+			}
+
+			def := MigrationDefinition{
+				ID:        "test-auto-migrate",
+				Resources: resourceInfos,
 			}
 
 			// Create the migration with options
@@ -283,7 +290,7 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 				opts = append(opts, WithAutoMigrate(tt.cfg))
 			}
 
-			m := NewResourceMigration(nil, resources, "test-auto-migrate", nil, opts...)
+			m := NewResourceMigration(nil, nil, def, nil, opts...)
 
 			// Simulate what happens at the end of a successful migration
 			// This is the logic from MigrationRunner.Run() that we're testing

@@ -83,8 +83,6 @@ describe('dashboardMutationApi', () => {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- checking window global doesn't leak
       expect((window as Record<string, unknown>).__grafanaDashboardMutationAPI).toBeUndefined();
-
-      setDashboardMutationClient(null);
     });
   });
 });

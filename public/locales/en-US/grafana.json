@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "External Alertmanagers",
-      "extra-config-warning": {
-        "content": "This shows the merged configuration of Grafana alertmanager with imported configurations. This merged view is read-only in the UI.",
-        "title": "Imported configuration"
-      },
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -1839,10 +1835,18 @@
       "apply": "Apply"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "The selected time range is shorter than the rule's query evaluation window so a graph may not be available.",
+        "title": "Time range shorter than evaluation window"
+      },
       "history-error": "Failed to load state history",
       "history-error-desc": "Unable to fetch state transition history for this instance.",
       "no-history": "No recent state changes",
-      "state-history": "Recent State Changes"
+      "state-error-description": "This instance is in <strong>Error</strong> state. An evaluation error occurred, so a graph may not be available.",
+      "state-history": "Recent State Changes",
+      "state-nodata": {
+        "description": "This instance is in <strong>No data</strong> state. The alert fired because the query returned no data in the evaluation window, so a graph may not be available."
+      }
     },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
@@ -4995,6 +4999,7 @@
       "description-color-annotation-event-markers": "Color to use for the annotation event markers",
       "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
       "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
+      "error-loading-panels": "Failed to load panel plugins",
       "label-color": "Color",
       "label-data-source": "Data source",
       "label-enabled": "Enabled",
@@ -5027,7 +5032,7 @@
           }
         }
       },
-      "name": "Auto grid",
+      "name": "Auto",
       "options": {
         "custom-min-height": {
           "clear": "Clear"
@@ -5049,7 +5054,7 @@
     "canvas-actions": {
       "add-panel": "Add panel",
       "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
-      "disabled-nested-grouping": "Grouping is limited to 2 levels",
+      "disabled-nested-grouping": "Grouping is limited to 3 levels",
       "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
@@ -5677,10 +5682,7 @@
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
-      "missing-config": "Missing panel configuration",
-      "suggestions": {
-        "empty-state-message": "Run a query to start seeing suggested visualizations"
-      }
+      "missing-config": "Missing panel configuration"
     },
     "new-panel-title": "New panel",
     "on-create-new-row": {
@@ -6135,6 +6137,8 @@
       "title-transformations": "Transformations"
     },
     "transformation-picker-ng": {
+      "clear-search": "Clear search",
+      "no-transformations-found": "No transformations found",
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
       "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
@@ -6272,11 +6276,12 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
+      "customize-with-assistant-button": "Customize with Assistant",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available",
       "use-dashboard-button": "Use dashboard",
-      "use-template-button": "Use template"
+      "view-template-button": "View template"
     },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
@@ -6386,10 +6391,12 @@
         "new-panel": "New panel"
       }
     },
+    "add-variable": {
+      "label-variable": "Variable"
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "Add event data to graphs",
-      "label-annotation-query": "Annotation query",
-      "tooltip-add-new-annotation-query": "Add new annotation query"
+      "label-annotation-query": "Annotation query"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6431,6 +6438,7 @@
       "delete": "Delete",
       "description-color-annotation-event-markers": "Color to use for the annotation event markers",
       "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
+      "error-loading-panels": "Failed to load panel plugins",
       "label-annotation-controls-display": "Show annotation controls in",
       "label-color": "Color",
       "label-data-source": "Data source",
@@ -6909,11 +6917,11 @@
       "static-options-legend": "Static options"
     },
     "resource-export": {
+      "classic-v2-warning": "This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the classic format and may be lost.",
       "label": {
         "advanced-options": "Advanced options",
         "classic": "Classic",
         "json": "JSON",
-        "v1-resource": "V1 Resource",
         "v2-resource": "V2 Resource",
         "yaml": "YAML"
       },
@@ -11913,6 +11921,10 @@
         "title": "Error",
         "try-again-button": "Try again"
       },
+      "or-divider": "OR",
+      "run-query-hint": "Run a query to start seeing suggested visualizations",
+      "start-without-data-description": "Add panels that don't require a query",
+      "start-without-data-title": "Start without data",
       "unknown-viz-type": "Unknown visualization type"
     },
     "viz-type-picker": {
@@ -12372,6 +12384,7 @@
       "placeholder-branch": "Select or enter branch name",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
+      "suffix-new-branch": "New branch",
       "suffix-pr-branch": "Pull request branch",
       "suffix-read-only-branch": " (read-only)"
     }
@@ -12437,9 +12450,6 @@
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
       "upgrade-action": "Upgrade account"
-    },
-    "check-repository": {
-      "check": "Check"
     },
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
@@ -12625,6 +12635,9 @@
       "label-read-only": "Read only",
       "label-sync-interval": "Sync Interval (seconds)"
     },
+    "folder-permissions": {
+      "loading": "Loading..."
+    },
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
@@ -12759,6 +12772,12 @@
       "show-more": "show more",
       "truncated": "Message truncated"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
+      "error-title": "Unable to check folder metadata status.",
+      "message": "Since this folder doesn't contain a metadata file, the folder ID is based on the folder path. If you move or rename the folder, the folder ID will change, and permissions may no longer apply to the folder.",
+      "title": "This folder is missing metadata."
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "Full instance synchronization is disabled because another folder is already synced with a repository.",
@@ -12827,6 +12846,7 @@
       "no-repositories": "No repositories configured"
     },
     "repository-overview": {
+      "branch": "Branch:",
       "checked": "Checked:",
       "connection-status": "Connection status:",
       "finished": "Last successful pull:",
@@ -12836,7 +12856,9 @@
       "last-ref": "Last Ref:",
       "messages": "Messages:",
       "not-available": "N/A",
+      "path": "Path:",
       "pull-status": "Pull status",
+      "repo-url": "Repository URL:",
       "resources": "Resources",
       "status": "Status:",
       "unhealthy": "Unhealthy",
@@ -12886,6 +12908,7 @@
       "header-status": "Status",
       "header-title": "Title",
       "header-type": "Type",
+      "missing-folder-metadata": "Missing folder metadata file",
       "search-placeholder": "Search by path or title",
       "source": "Source",
       "status-pending": "Pending",
@@ -13287,7 +13310,8 @@
       "cache-timeout-tooltip": "If your time series store has a query cache this option can override the default cache timeout. Specify a numeric value in seconds.",
       "cache-ttl": "Cache TTL",
       "cache-ttl-tooltip": "Cache time-to-live: How long results from the queries in this panel will be cached, in milliseconds.",
-      "collapse": "Collapse query options sidebar",
+      "hide-time-override": "Hide time info",
+      "hide-time-override-tooltip": "Hides the time override displayed in the panel header when relative time or time shift is set.",
       "interval": "Interval",
       "interval-tooltip": "The evaluated interval that is sent to data source and is used in $__interval and $__interval_ms.",
       "max-data-points": "Max data points",
@@ -13297,9 +13321,10 @@
       "no-limit": "No limit",
       "relative-time": "Relative time",
       "relative-time-tooltip": "Overrides the relative time range for individual panels. For example, to configure the Last 5 minutes use now-5m.",
+      "time-range-max-data-points": "Time range / max data points",
       "time-shift": "Time shift",
       "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker.",
-      "title": "Query Options"
+      "width-of-panel": "Width of panel"
     },
     "edit-query-name": "Edit query name",
     "footer": {
@@ -13343,20 +13368,18 @@
       "add-saved-query": "Add saved query",
       "add-transformation": "Add transformation",
       "add-transformation-below": "Add transformation below {{id}}",
-      "alert-indicator": {
-        "button-label": "View alert rules",
-        "button-label-hide": "Hide alert rules",
-        "close": "Close"
-      },
       "alerts_one": "Alerts ({{count}})",
       "alerts_other": "Alerts ({{count}})",
+      "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
       "data": "Data",
       "footer-items_one": "{{count}} item",
       "footer-items_other": "{{count}} items",
+      "loading-queries-transformations": "Loading queries and transformations",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
-      "transformations": "Transformations"
+      "transformations": "Transformations",
+      "view-toggle": "View"
     },
     "transformation-debug": {
       "input-data": "Input data",
@@ -13553,6 +13576,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "Created by me",
       "include-panels": "Include panels",
       "remove-datasource-filter": "Datasource: {{datasource}}",
       "sort-placeholder": "Sort",
@@ -14345,9 +14369,18 @@
       "columns": {
         "aria-label-delete-button": "Delete team {{teamName}}",
         "aria-label-edit-team": "Edit team {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "Delete",
+          "title": "Delete"
+        },
+        "delete-modal-invalid-text": "This team is the owner of one or more folders. Remove ownership first in order to proceed.",
+        "delete-modal-invalid-title": "Cannot delete team",
+        "delete-modal-text": "This action will delete the team \"<1>{{ teamName }}</1> \".",
         "title-edit-team": "Edit team",
+        "tooltip-delete-button": "Delete {{teamName}}",
         "tooltip-edit-team": "Edit team"
       },
+      "failed-to-check-folders": "Failed to check if the team owns folders. Please try again.",
       "loading-teams": "Loading teams...",
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"
