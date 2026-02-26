@@ -139,19 +139,6 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 	}
 	defer b.bulkLock.Finish(setting.Collection)
 
-	// If provided, reuse the inproc transaction for SQLite
-	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil && b.dialect.DialectName() == "sqlite" {
-		if externalTx := resource.TransactionFromContext(clientCtx); externalTx != nil {
-			b.log.Info("Using SQLite transaction from client context")
-			rsp := &resourcepb.BulkResponse{}
-			err := b.processBulkWithTx(ctx, dbimpl.NewTx(externalTx), setting, iter, rsp)
-			if err != nil {
-				rsp.Error = resource.AsErrorResult(err)
-			}
-			return rsp
-		}
-	}
-
 	// We may want to first write parquet, then read parquet
 	if b.dialect.DialectName() == "sqlite" {
 		file, err := os.CreateTemp("", "grafana-bulk-export-*.parquet")
@@ -182,6 +169,19 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 			return &resourcepb.BulkResponse{
 				Error: resource.AsErrorResult(err),
 			}
+		}
+	}
+
+	// If provided, reuse the inproc transaction for SQLite
+	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil && b.dialect.DialectName() == "sqlite" {
+		if externalTx := resource.TransactionFromContext(clientCtx); externalTx != nil {
+			b.log.Info("Using SQLite transaction from client context")
+			rsp := &resourcepb.BulkResponse{}
+			err := b.processBulkWithTx(ctx, dbimpl.NewTx(externalTx), setting, iter, rsp)
+			if err != nil {
+				rsp.Error = resource.AsErrorResult(err)
+			}
+			return rsp
 		}
 	}
 
