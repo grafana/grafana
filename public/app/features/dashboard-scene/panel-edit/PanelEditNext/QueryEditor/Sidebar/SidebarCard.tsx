@@ -91,6 +91,7 @@ export const SidebarCard = ({
         onBlur={handleBlur}
         role="button"
         tabIndex={0}
+        data-query-sidebar-card={id}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >

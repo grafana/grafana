@@ -61,6 +61,7 @@ async function runChecks(page: Page) {
     .catch(() => false);
   await expect(page.getByRole('button', { name: 'Running checks...' })).not.toBeVisible({ timeout: 30000 });
   await expect(page.getByText('Last checked')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Running checks...' })).not.toBeVisible({ timeout: 30000 });
 }
 
 async function createEmptyDatasource(page: Page): Promise<string> {
@@ -78,14 +79,13 @@ test.describe(
     tag: ['@various'],
   },
   () => {
-    // Skip until flakiness is resolved
-    test.skip('should detect an issue and fix it', async ({ page }) => {
+    test('should detect an issue and fix it', async ({ page }) => {
       await expectEmptyReport(page);
       const dsName = await createEmptyDatasource(page);
       await runChecks(page);
 
       // Page should now show a report with the failing health check
-      await page.getByText('Action needed').first().click();
+      await page.getByText('Action needed', { exact: true }).first().click();
       await page.getByText('Health check failed').click();
       // Click on the "Fix me" button
       await page.getByTestId(testIds.CheckDrillDown.actionLink(dsName, 'fix me')).click();
@@ -96,7 +96,7 @@ test.describe(
 
       // Now retrigger the report
       await loadAndWait(page);
-      await page.getByText('Action needed').first().click();
+      await page.getByText('Action needed', { exact: true }).first().click();
       await page.getByText('Health check failed').click();
       await page.getByTestId(testIds.CheckDrillDown.retryButton(dsName)).click();
       // The issue should be fixed

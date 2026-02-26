@@ -607,7 +607,11 @@ type Cfg struct {
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
 	// Larger values reduce lock contention. Default: 50000 (50MB).
 	MigrationCacheSizeKB int
-	MaxPageSizeBytes     int
+	// MigrationParquetBuffer enables bulk migration data through a temporary Parquet file.
+	// This separates the read phase (legacy DB) from the write phase (unified storage)
+	// Default: false.
+	MigrationParquetBuffer bool
+	MaxPageSizeBytes       int
 	// IndexPath the directory where index files are stored.
 	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
