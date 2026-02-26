@@ -487,7 +487,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					keysToDelete = append(keysToDelete, deleteKey)
 				}
 
-				// if not in dry run mode, batch delete the keys and return the number of deleted entries
+				// if not in dry run mode, batch delete the keys
 				if !b.garbageCollection.DryRun {
 					err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
 					if err != nil {
