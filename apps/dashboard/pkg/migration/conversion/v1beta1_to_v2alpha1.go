@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	expr "github.com/grafana/grafana/pkg/expr"
 )
 
 // getDefaultDatasourceType gets the default datasource type using the datasource provider
@@ -2262,7 +2263,7 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 	panelHasUID := panelDatasource != nil && panelDatasource.Uid != nil && *panelDatasource.Uid != "" && *panelDatasource.Uid != "-- Mixed --"
 	applyPanelRef := panelHasUID &&
 		(queryDatasourceUID == "" && queryDatasourceType == "" ||
-			(queryDatasourceUID != "__expr__" && queryDatasourceUID != *panelDatasource.Uid))
+			(queryDatasourceUID != expr.DatasourceUID && queryDatasourceType != expr.DatasourceType && queryDatasourceUID != *panelDatasource.Uid))
 
 	if applyPanelRef {
 		if panelDatasource.Type != nil {

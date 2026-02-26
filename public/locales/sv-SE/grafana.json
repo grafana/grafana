@@ -5682,10 +5682,7 @@
       "empty-state-message": "Kör en fråga för att visualisera den här eller gå till alla visualiseringar för att lägga till andra paneltyper",
       "menu-open-panel-editor": "Konfigurera",
       "menu-use-library-panel": "Använd bibliotekspanel",
-      "missing-config": "Panelkonfiguration saknas",
-      "suggestions": {
-        "empty-state-message": "Kör en fråga för att börja se föreslagna visualiseringar"
-      }
+      "missing-config": "Panelkonfiguration saknas"
     },
     "new-panel-title": "Ny panel",
     "on-create-new-row": {
@@ -6920,11 +6917,11 @@
       "static-options-legend": "Statiska alternativ"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Avancerade alternativ",
         "classic": "Classic",
         "json": "JSON",
-        "v1-resource": "V1-resurs",
         "v2-resource": "V2-resurs",
         "yaml": "YAML"
       },
@@ -11924,6 +11921,10 @@
         "title": "Fel",
         "try-again-button": "Försök igen"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Okänd visualiseringstyp"
     },
     "viz-type-picker": {
@@ -12634,6 +12635,9 @@
       "label-read-only": "Skrivskyddad",
       "label-sync-interval": "Synkroniseringsintervall (sekunder)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Inga resultat som matchar din fråga",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resurser hanteras av Git Sync.",
@@ -12767,6 +12771,12 @@
       "show-less": "visa mindre",
       "show-more": "visa mer",
       "truncated": "Meddelandet är avkortat"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13300,7 +13310,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13310,9 +13321,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13356,17 +13368,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Välj kort {{id}}",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
       "transformations": "Omvandlingar",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
@@ -13567,6 +13576,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Inkludera paneler",
       "remove-datasource-filter": "Datakälla: {{datasource}}",
       "sort-placeholder": "Sortera",

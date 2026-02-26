@@ -5682,10 +5682,7 @@
       "empty-state-message": "Esegui una query per visualizzarlo qui o vai a tutte le visualizzazioni per aggiungere altri tipi di pannello",
       "menu-open-panel-editor": "Configura",
       "menu-use-library-panel": "Usa il pannello della libreria",
-      "missing-config": "Configurazione del pannello mancante",
-      "suggestions": {
-        "empty-state-message": "Esegui una query per iniziare a vedere le visualizzazioni suggerite"
-      }
+      "missing-config": "Configurazione del pannello mancante"
     },
     "new-panel-title": "Nuovo pannello",
     "on-create-new-row": {
@@ -6920,11 +6917,11 @@
       "static-options-legend": "Opzioni statiche"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Opzioni avanzate",
         "classic": "Classico",
         "json": "JSON",
-        "v1-resource": "Risorsa V1",
         "v2-resource": "Risorsa V2",
         "yaml": "YAML"
       },
@@ -11924,6 +11921,10 @@
         "title": "Errore",
         "try-again-button": "Riprova"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Tipo di visualizzazione sconosciuto"
     },
     "viz-type-picker": {
@@ -12634,6 +12635,9 @@
       "label-read-only": "Solo lettura",
       "label-sync-interval": "Intervallo di sincronizzazione (secondi)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nessun risultato corrisponde alla tua query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} risorse gestite da Git Sync.",
@@ -12767,6 +12771,12 @@
       "show-less": "mostra meno",
       "show-more": "mostra di più",
       "truncated": "Messaggio troncato"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13300,7 +13310,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13310,9 +13321,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13356,17 +13368,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Seleziona scheda {{id}}",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
       "transformations": "Trasformazioni",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
@@ -13567,6 +13576,7 @@
       "panel-type": "Pannello: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Includi pannelli",
       "remove-datasource-filter": "Origine dati: {{datasource}}",
       "sort-placeholder": "Ordina",

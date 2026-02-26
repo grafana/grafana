@@ -198,7 +198,12 @@ export function ContentHeader({
 
         {selectedQuery && cardType !== QueryEditorType.Alert && (
           <>
-            <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={onUpdateQuery} />
+            <EditableQueryName
+              key={selectedQuery.refId}
+              query={selectedQuery}
+              queries={queries}
+              onQueryUpdate={onUpdateQuery}
+            />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
         )}

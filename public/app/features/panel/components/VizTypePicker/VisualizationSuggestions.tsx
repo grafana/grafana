@@ -17,12 +17,14 @@ import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
-import { getAllPanelPluginMeta } from '../../state/util';
+import { getAllPanelPluginMeta, filterPluginList } from '../../state/util';
 import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
+import { panelsWithoutData } from '../../suggestions/consts';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
+import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
 import { VizTypeChangeDetails } from './types';
 
@@ -210,17 +212,8 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     );
   }
 
-  if (isNewVizSuggestionsEnabled && (!data || !hasData(data))) {
-    return (
-      <div className={styles.emptyStateWrapper}>
-        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
-        <Text element="p" textAlignment="center" color="secondary">
-          <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
-            Run a query to start seeing suggested visualizations
-          </Trans>
-        </Text>
-      </div>
-    );
+  if (isNewVizSuggestionsEnabled && !hasData(data)) {
+    return <NoDataPanelList searchQuery={searchQuery} panel={panel} onChange={onChange} />;
   }
 
   return (
@@ -315,6 +308,64 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   );
 }
 
+interface NoDataPanelListProps {
+  searchQuery?: string;
+  panel?: PanelModel;
+  onChange: (options: VizTypeChangeDetails) => void;
+}
+
+function NoDataPanelList({ searchQuery, panel, onChange }: NoDataPanelListProps) {
+  const styles = useStyles2(getStyles);
+  const noDataPanels = useMemo(() => {
+    const panels = getAllPanelPluginMeta().filter((p) => panelsWithoutData.has(p.id));
+    return filterPluginList(panels, searchQuery ?? '', panel?.type);
+  }, [searchQuery, panel?.type]);
+
+  return (
+    <>
+      <div className={styles.emptyStateSection}>
+        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
+        <Text element="p" textAlignment="center" color="secondary">
+          <Trans i18nKey="panel.visualization-suggestions.run-query-hint">
+            Run a query to start seeing suggested visualizations
+          </Trans>
+        </Text>
+      </div>
+      <div className={styles.orDivider}>
+        <div className={styles.orDividerLine} />
+        <Text color="secondary" variant="body">
+          <Trans i18nKey="panel.visualization-suggestions.or-divider">OR</Trans>
+        </Text>
+        <div className={styles.orDividerLine} />
+      </div>
+      <div className={styles.startWithoutDataSection}>
+        <Text element="p" textAlignment="center" color="secondary" variant="body">
+          <Trans i18nKey="panel.visualization-suggestions.start-without-data-title">Start without data</Trans>
+        </Text>
+        <Text element="p" textAlignment="center" color="secondary" variant="bodySmall">
+          <Trans i18nKey="panel.visualization-suggestions.start-without-data-description">
+            Add panels that don&apos;t require a query
+          </Trans>
+        </Text>
+      </div>
+      {noDataPanels.map((plugin) => (
+        <VizTypePickerPlugin
+          key={plugin.id}
+          isCurrent={plugin.id === panel?.type}
+          plugin={plugin}
+          disabled={false}
+          onSelect={(withModKey) =>
+            onChange({
+              pluginId: plugin.id,
+              withModKey,
+            })
+          }
+        />
+      ))}
+    </>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     loadingContainer: css({
@@ -348,18 +399,35 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(1),
       justifyContent: 'space-evenly',
     }),
-    emptyStateWrapper: css({
+    emptyStateSection: css({
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: theme.spacing(4),
+      padding: theme.spacing(4, 2, 2),
       textAlign: 'center',
-      minHeight: '200px',
     }),
     emptyStateIcon: css({
       color: theme.colors.text.secondary,
       marginBottom: theme.spacing(2),
+    }),
+    orDivider: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+      padding: theme.spacing(1, 2),
+    }),
+    orDividerLine: css({
+      flex: 1,
+      height: '1px',
+      background: theme.colors.border.weak,
+    }),
+    startWithoutDataSection: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(1, 2, 2),
     }),
     cardContainer: css({
       position: 'relative',
