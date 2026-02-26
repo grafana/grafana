@@ -25,6 +25,7 @@ import {
   Alert,
   Badge,
   Icon,
+  LinkButton,
   LoadingBar,
   Pagination,
   Spinner,
@@ -202,6 +203,7 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
         </Text>
       </div>
+      <div className={styles.viewCol}>{/* View link column */}</div>
     </div>
   );
 }
@@ -257,6 +259,16 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
         </div>
         <div className={styles.receiverCol}>
           <Text>{record.receiver || '-'}</Text>
+        </div>
+        <div className={styles.viewCol}>
+          <LinkButton
+            href={`/alerting/notifications-history/view/${record.uuid}/${encodeURIComponent(record.timestamp)}`}
+            size="sm"
+            variant="secondary"
+            icon="eye"
+          >
+            <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
+          </LinkButton>
         </div>
       </div>
       {!isCollapsed && (
@@ -496,7 +508,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     receiverCol: css({
-      width: '250px',
+      width: '200px',
+    }),
+    viewCol: css({
+      width: '80px',
     }),
     expandedRow: css({
       padding: theme.spacing(2),
