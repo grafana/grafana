@@ -904,7 +904,7 @@ describe('DashboardScenePageStateManager v2', () => {
           const loader = new DashboardScenePageStateManagerV2({});
           await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
-          expect(mockLocationService.replace).toHaveBeenCalledWith('/d/custom-home?doc=some-query-value&tab=recent');
+          expect(mockLocationService.replace).toHaveBeenCalledWith('/d/custom-home?tab=recent&doc=some-query-value');
           expect(loader.state.dashboard).toBeUndefined();
         } finally {
           locationService.replace = originalReplace;
@@ -1667,7 +1667,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
         expect(mockLocationService.replace).toHaveBeenCalledWith(
-          '/a/custom-home-plugin?doc=some-query-value&tab=recent'
+          '/a/custom-home-plugin?tab=recent&doc=some-query-value'
         );
         expect(loader.state.dashboard).toBeUndefined();
       } finally {
