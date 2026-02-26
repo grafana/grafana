@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -88,6 +89,28 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 	}
 
 	return nil, nil, "", ErrUnableToReadResourceBytes
+}
+
+// DecodeFileResource attempts to decode file data as a Kubernetes resource, falling back to
+// classic Grafana resource formats (e.g. dashboards with panels/schemaVersion/tags).
+// This is the single entry point for all code paths that need to extract an object and GVK
+// from repository file data.
+func DecodeFileResource(ctx context.Context, info *repository.FileInfo) (*unstructured.Unstructured, *schema.GroupVersionKind, provisioning.ClassicFileType, error) {
+	obj, gvk, err := DecodeYAMLObject(bytes.NewReader(info.Data))
+	if err == nil && obj != nil && gvk != nil {
+		return obj, gvk, "", nil
+	}
+
+	logging.FromContext(ctx).Debug("failed to decode as k8s resource, trying classic format", "error", err)
+	obj, gvk, classic, classicErr := ReadClassicResource(ctx, info)
+	if obj != nil && gvk != nil {
+		return obj, gvk, classic, nil
+	}
+
+	if classicErr != nil {
+		return nil, nil, "", classicErr
+	}
+	return nil, nil, "", err
 }
 
 // DecodeYAMLObject reads the input as YAML and outputs its Kubernetes resource, if it is one.
