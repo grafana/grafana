@@ -4,7 +4,7 @@ go 1.25.7
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/grafana/authlib/types v0.0.0-20260218111514-582136a04938
+	github.com/grafana/authlib/types v0.0.0-20260226130908-b01d89f85c4d
 	github.com/grafana/grafana-app-sdk/logging v0.51.4
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/stretchr/testify v1.11.1
@@ -53,7 +53,7 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260218111514-582136a04938 // indirect
+	github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // indirect
