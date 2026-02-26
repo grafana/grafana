@@ -18789,6 +18789,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "dataSourceType",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -18816,6 +18823,13 @@
             "in": "path",
             "name": "dataSourceUID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dataSourceType",
             "schema": {
               "type": "string"
             }
@@ -18897,6 +18911,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "dataSourceType",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -18926,6 +18947,13 @@
             "in": "path",
             "name": "dataSourceUID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dataSourceType",
             "schema": {
               "type": "string"
             }

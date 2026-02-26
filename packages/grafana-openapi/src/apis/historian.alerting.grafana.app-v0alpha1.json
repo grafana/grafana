@@ -1180,6 +1180,10 @@
             "type": "string",
             "format": "date-time"
           },
+          "enrichments": {
+            "type": "object",
+            "additionalProperties": {}
+          },
           "labels": {
             "type": "object",
             "additionalProperties": {
