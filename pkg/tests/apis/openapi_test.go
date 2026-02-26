@@ -40,6 +40,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
 			featuremgmt.FlagKubernetesUnifiedStorageQuotas,
+			featuremgmt.FlagKubernetesUsersApi,
 		},
 		// Explicitly configure with mode 5 the resources supported by provisioning.
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
