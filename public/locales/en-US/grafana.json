@@ -12374,6 +12374,11 @@
       "text-loading-teams": "Loading teams..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "Folder pushed to repository",
+    "sync-needed": "The folder has been successfully pushed to the repository but is not yet available in Grafana. It will appear once changes are synced from the repository",
+    "view-folder": "View repository status"
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
