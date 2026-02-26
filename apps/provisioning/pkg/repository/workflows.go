@@ -11,7 +11,7 @@ import (
 
 func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 	if len(repo.Spec.Workflows) == 0 {
-		return apierrors.NewBadRequest("this repository is read only")
+		return apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), "write")
 	}
 
 	var supportsWrite, supportsBranch bool
@@ -36,9 +36,9 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 
 	switch {
 	case ref == "" && !supportsWrite:
-		return apierrors.NewBadRequest("this repository does not support the write workflow")
+		return apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), "write")
 	case ref != "" && !supportsBranch:
-		return apierrors.NewBadRequest("this repository does not support the branch workflow")
+		return apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), "branch")
 	default:
 		return nil
 	}
