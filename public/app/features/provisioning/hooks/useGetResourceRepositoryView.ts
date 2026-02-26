@@ -21,6 +21,7 @@ interface RepositoryViewData {
   repoType?: RepoType;
   folder?: Folder;
   isLoading?: boolean;
+  isFetching?: boolean;
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
 }
@@ -37,25 +38,33 @@ export const useGetResourceRepositoryView = ({
   const shouldSkipSettings = !provisioningEnabled || skipQuery || hasNoRole || (!name && !folderName);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
-  const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(settingsQueryArg);
+  const {
+    data: settingsData,
+    isLoading: isSettingsLoading,
+    isFetching: isSettingsFetching,
+  } = useGetFrontendSettingsQuery(settingsQueryArg);
 
   const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery || hasNoRole;
-  const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(
-    skipFolderQuery ? skipToken : { name: folderName }
-  );
+  const {
+    data: folder,
+    isLoading: isFolderLoading,
+    isFetching: isFolderFetching,
+  } = useGetFolderQuery(skipFolderQuery ? skipToken : { name: folderName });
+
+  const isFetching = isSettingsFetching || isFolderFetching;
 
   if (!provisioningEnabled) {
-    return { isLoading: false, isInstanceManaged: false, isReadOnlyRepo: false };
+    return { isLoading: false, isFetching: false, isInstanceManaged: false, isReadOnlyRepo: false };
   }
 
   if (isSettingsLoading || isFolderLoading) {
-    return { isLoading: true, isInstanceManaged: false, isReadOnlyRepo: false };
+    return { isLoading: true, isFetching: true, isInstanceManaged: false, isReadOnlyRepo: false };
   }
 
   const items = settingsData?.items ?? [];
 
   if (!items.length) {
-    return { folder, isInstanceManaged: false, isReadOnlyRepo: false };
+    return { folder, isFetching, isInstanceManaged: false, isReadOnlyRepo: false };
   }
 
   const instanceRepo = items.find((repo) => repo.target === 'instance');
@@ -67,6 +76,7 @@ export const useGetResourceRepositoryView = ({
       return {
         repository,
         folder,
+        isFetching,
         isInstanceManaged,
         isReadOnlyRepo: getIsReadOnlyRepo(repository),
       };
@@ -81,6 +91,7 @@ export const useGetResourceRepositoryView = ({
       return {
         repository,
         folder,
+        isFetching,
         isInstanceManaged,
         isReadOnlyRepo: getIsReadOnlyRepo(repository),
       };
@@ -94,6 +105,7 @@ export const useGetResourceRepositoryView = ({
         return {
           repository,
           folder,
+          isFetching,
           isInstanceManaged,
           isReadOnlyRepo: getIsReadOnlyRepo(repository),
         };
@@ -104,6 +116,7 @@ export const useGetResourceRepositoryView = ({
   return {
     repository: instanceRepo,
     folder,
+    isFetching,
     isInstanceManaged,
     isReadOnlyRepo: getIsReadOnlyRepo(instanceRepo),
     repoType: instanceRepo?.type,

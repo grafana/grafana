@@ -58,8 +58,8 @@ const expandOptions = async () => {
 };
 
 describe('ResourceExport', () => {
-  describe('export mode options for v1 dashboard', () => {
-    it('should show three export mode options in correct order: Classic, V1 Resource, V2 Resource', async () => {
+  describe('export mode options', () => {
+    it('should show two export mode options: Classic and V2 Resource', async () => {
       render(<ResourceExport {...createDefaultProps()} />);
       await expandOptions();
 
@@ -68,11 +68,11 @@ describe('ResourceExport', () => {
         .getAllByRole('radio')
         .map((radio) => radio.parentElement?.textContent?.trim());
 
-      expect(labels).toHaveLength(3);
-      expect(labels).toEqual(['Classic', 'V1 Resource', 'V2 Resource']);
+      expect(labels).toHaveLength(2);
+      expect(labels).toEqual(['Classic', 'V2 Resource']);
     });
 
-    it('should have first option selected by default when exportMode is Classic', async () => {
+    it('should have Classic selected by default when exportMode is Classic', async () => {
       render(<ResourceExport {...createDefaultProps({ exportFormat: ExportFormat.Classic })} />);
       await expandOptions();
 
@@ -88,17 +88,21 @@ describe('ResourceExport', () => {
 
       const radioGroup = screen.getByRole('radiogroup', { name: /model/i });
       const radios = within(radioGroup).getAllByRole('radio');
-      await userEvent.click(radios[1]); // V1 Resource
-      expect(onExportFormatChange).toHaveBeenCalledWith(ExportFormat.V1Resource);
+      await userEvent.click(radios[1]); // V2 Resource
+      expect(onExportFormatChange).toHaveBeenCalledWith(ExportFormat.V2Resource);
     });
-  });
 
-  describe('export mode options for v2 dashboard', () => {
-    it('should not show export mode options', async () => {
+    it('should show export mode options for v2 dashboards', async () => {
       render(<ResourceExport {...createDefaultProps({ dashboardJson: createV2DashboardJson() })} />);
       await expandOptions();
 
-      expect(screen.queryByRole('radiogroup', { name: /model/i })).not.toBeInTheDocument();
+      const radioGroup = screen.getByRole('radiogroup', { name: /model/i });
+      const labels = within(radioGroup)
+        .getAllByRole('radio')
+        .map((radio) => radio.parentElement?.textContent?.trim());
+
+      expect(labels).toHaveLength(2);
+      expect(labels).toEqual(['Classic', 'V2 Resource']);
     });
   });
 
@@ -111,42 +115,39 @@ describe('ResourceExport', () => {
       expect(screen.queryByRole('radiogroup', { name: /format/i })).not.toBeInTheDocument();
     });
 
-    it.each([ExportFormat.V1Resource, ExportFormat.V2Resource])(
-      'should show format options when export mode is %s',
-      async (exportFormat) => {
-        render(<ResourceExport {...createDefaultProps({ exportFormat })} />);
-        await expandOptions();
-
-        expect(screen.getByRole('radiogroup', { name: /model/i })).toBeInTheDocument();
-        expect(screen.getByRole('radiogroup', { name: /format/i })).toBeInTheDocument();
-      }
-    );
-
-    it('should have first format option selected when isViewingYAML is false', async () => {
-      render(
-        <ResourceExport {...createDefaultProps({ exportFormat: ExportFormat.V1Resource, isViewingYAML: false })} />
-      );
+    it('should show format options when export mode is V2Resource', async () => {
+      render(<ResourceExport {...createDefaultProps({ exportFormat: ExportFormat.V2Resource })} />);
       await expandOptions();
 
-      const formatGroup = screen.getByRole('radiogroup', { name: /format/i });
-      const formatRadios = within(formatGroup).getAllByRole('radio');
-      expect(formatRadios[0]).toBeChecked(); // JSON
+      expect(screen.getByRole('radiogroup', { name: /model/i })).toBeInTheDocument();
+      expect(screen.getByRole('radiogroup', { name: /format/i })).toBeInTheDocument();
     });
 
-    it('should have second format option selected when isViewingYAML is true', async () => {
+    it('should have JSON selected when isViewingYAML is false', async () => {
       render(
-        <ResourceExport {...createDefaultProps({ exportFormat: ExportFormat.V1Resource, isViewingYAML: true })} />
+        <ResourceExport {...createDefaultProps({ exportFormat: ExportFormat.V2Resource, isViewingYAML: false })} />
       );
       await expandOptions();
 
       const formatGroup = screen.getByRole('radiogroup', { name: /format/i });
       const formatRadios = within(formatGroup).getAllByRole('radio');
-      expect(formatRadios[1]).toBeChecked(); // YAML
+      expect(formatRadios[0]).toBeChecked();
+    });
+
+    it('should have YAML selected when isViewingYAML is true', async () => {
+      render(
+        <ResourceExport {...createDefaultProps({ exportFormat: ExportFormat.V2Resource, isViewingYAML: true })} />
+      );
+      await expandOptions();
+
+      const formatGroup = screen.getByRole('radiogroup', { name: /format/i });
+      const formatRadios = within(formatGroup).getAllByRole('radio');
+      expect(formatRadios[1]).toBeChecked();
     });
 
     it('should call onViewYAML when format is changed', async () => {
       const onViewYAML = jest.fn();
-      render(<ResourceExport {...createDefaultProps({ exportFormat: ExportFormat.V1Resource, onViewYAML })} />);
+      render(<ResourceExport {...createDefaultProps({ exportFormat: ExportFormat.V2Resource, onViewYAML })} />);
       await expandOptions();
 
       const formatGroup = screen.getByRole('radiogroup', { name: /format/i });

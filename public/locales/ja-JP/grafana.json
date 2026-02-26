@@ -5656,10 +5656,7 @@
       "empty-state-message": "クエリを実行してここで可視化するか、すべての視覚化に移動して他のパネルタイプを追加します",
       "menu-open-panel-editor": "構成",
       "menu-use-library-panel": "ライブラリパネルを使用",
-      "missing-config": "パネル構成がありません",
-      "suggestions": {
-        "empty-state-message": "クエリを実行して、推奨される視覚化を確認できます"
-      }
+      "missing-config": "パネル構成がありません"
     },
     "new-panel-title": "新規パネル",
     "on-create-new-row": {
@@ -6891,11 +6888,11 @@
       "static-options-legend": "スタティックオプション"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "詳細オプション",
         "classic": "クラシック",
         "json": "JSON",
-        "v1-resource": "V1リソース",
         "v2-resource": "V2リソース",
         "yaml": "YAML"
       },
@@ -11870,6 +11867,10 @@
         "title": "エラー",
         "try-again-button": "もう一度試す"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "不明な視覚化タイプ"
     },
     "viz-type-picker": {
@@ -12576,6 +12577,9 @@
       "label-read-only": "読み出しのみ",
       "label-sync-interval": "同期間隔 (秒)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "クエリに一致する結果なし",
       "partial-managed": "{{managedCount}}/{{resourceCount}}件のリソースがGit同期によって管理されています。",
@@ -12707,6 +12711,12 @@
       "show-less": "折りたたむ",
       "show-more": "さらに表示する",
       "truncated": "メッセージが切り捨てられました"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13239,7 +13249,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13249,9 +13260,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13295,17 +13307,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "カード{{id}}を選択",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
       "transformations": "変換",
+      "view-toggle": "",
       "alerts_other": "",
       "footer-items_other": ""
     },
@@ -13502,6 +13511,7 @@
       "panel-type": "パネル：{{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "パネルを含める",
       "remove-datasource-filter": "データソース：{{datasource}}",
       "sort-placeholder": "並べ替え",
