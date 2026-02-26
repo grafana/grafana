@@ -7,13 +7,14 @@ type LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecords []LogsDrilldownDefau
 
 // +k8s:openapi-gen=true
 type LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord struct {
-	Labels []string `json:"labels"`
+	Label  string   `json:"label"`
+	Values []string `json:"values"`
 }
 
 // NewLogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord creates a new LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord object.
 func NewLogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord() *LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord {
 	return &LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord{
-		Labels: []string{},
+		Values: []string{},
 	}
 }
 
