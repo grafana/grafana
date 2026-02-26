@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -1265,6 +1266,107 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
 		}
 	}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+}
+
+func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	t.Run("remove-orphan-resources finalizer deletes classic dashboards", func(t *testing.T) {
+		const repo = "finalizer-remove-classic"
+		repoPath := filepath.Join(helper.ProvisioningPath, repo)
+
+		classicDashboard := []byte(`{
+			"uid": "finalizer-remove-classic-uid",
+			"title": "Classic Dashboard for Remove Finalizer",
+			"schemaVersion": 39,
+			"panels": [],
+			"tags": []
+		}`)
+
+		require.NoError(t, os.MkdirAll(repoPath, 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(repoPath, "classic.json"), classicDashboard, 0o600))
+
+		helper.CreateRepo(t, TestRepo{
+			Name:                   repo,
+			Path:                   repoPath,
+			Target:                 "folder",
+			SkipResourceAssertions: true,
+		})
+
+		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
+		require.NoError(t, err, "classic dashboard should exist after initial sync")
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerKind)
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+
+		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		require.NoError(t, err, "should delete repository")
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+
+		_, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
+		require.Error(t, err, "classic dashboard should be deleted by remove-orphan-resources finalizer")
+		require.True(t, apierrors.IsNotFound(err))
+	})
+
+	t.Run("release-orphan-resources finalizer releases classic dashboards", func(t *testing.T) {
+		const repo = "finalizer-release-classic"
+		repoPath := filepath.Join(helper.ProvisioningPath, repo)
+
+		classicDashboard := []byte(`{
+			"uid": "finalizer-release-classic-uid",
+			"title": "Classic Dashboard for Release Finalizer",
+			"schemaVersion": 39,
+			"panels": [],
+			"tags": []
+		}`)
+
+		require.NoError(t, os.MkdirAll(repoPath, 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(repoPath, "classic.json"), classicDashboard, 0o600))
+
+		helper.CreateRepo(t, TestRepo{
+			Name:                   repo,
+			Path:                   repoPath,
+			Target:                 "folder",
+			SkipResourceAssertions: true,
+		})
+
+		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
+		require.NoError(t, err, "classic dashboard should exist after initial sync")
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerKind)
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+
+		_, err = helper.Repositories.Resource.Patch(ctx, repo, types.JSONPatchType, []byte(`[
+			{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
+		]`), metav1.PatchOptions{})
+		require.NoError(t, err, "should successfully patch finalizers")
+
+		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		require.NoError(t, err, "should delete repository")
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+
+		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
+		require.NoError(t, err, "classic dashboard should still exist after release")
+
+		annotations := dashboard.GetAnnotations()
+		require.NotContains(t, annotations, utils.AnnoKeyManagerKind, "managedBy annotation should be removed")
+		require.NotContains(t, annotations, utils.AnnoKeyManagerIdentity, "managerId annotation should be removed")
+		require.NotContains(t, annotations, utils.AnnoKeySourcePath, "sourcePath annotation should be removed")
+		require.NotContains(t, annotations, utils.AnnoKeySourceChecksum, "sourceChecksum annotation should be removed")
+	})
 }
 
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {

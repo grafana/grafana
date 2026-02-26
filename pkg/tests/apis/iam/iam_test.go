@@ -45,6 +45,7 @@ func TestIntegrationIdentity(t *testing.T) {
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagKubernetesUsersApi,
 		},
 	})
 	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("iam.grafana.app/v0alpha1")
