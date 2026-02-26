@@ -68,7 +68,7 @@ export interface ScopeMeta {
 
 export class DashboardModel implements TimeModel {
   /** @deprecated use UID */
-  id?: number | null;
+  id?: any;
 
   // TODO: use proper type and fix all the places where uid is set to null
   uid: any;
