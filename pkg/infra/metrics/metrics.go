@@ -820,6 +820,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		MAccessEvaluationCount,
 		MAccessPermissionsCacheUsage,
 		MAccessSearchUserPermissionsCacheUsage,
+		MAccessResourcePermissionsBackend,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,
