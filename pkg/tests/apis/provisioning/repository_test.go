@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -402,8 +403,8 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		})
 	}
 
-	// Test Git repository path validation - ensure child paths are rejected
-	t.Run("Git repository path validation", func(t *testing.T) {
+	// Test Git repository path validation - ensure child paths are rejected when sync is enabled
+	t.Run("Git repository path validation with sync enabled", func(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-path-validation"
 
 		pathTests := []struct {
@@ -445,7 +446,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 					"Name":        repoName,
 					"URL":         baseURL,
 					"Path":        test.path,
-					"SyncEnabled": false, // Disable sync to avoid external dependencies
+					"SyncEnabled": true, // Sync enabled triggers path conflict checks
 					"SyncTarget":  "folder",
 				})
 
@@ -464,6 +465,91 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	// Test that path conflicts are skipped when sync is disabled (wizard onboarding flow).
+	// The wizard creates repositories without sync first, then the user configures the path
+	// and enables sync in a later step. Conflict checks should only fire when sync is enabled.
+	t.Run("Git repository path validation allows conflicting paths when sync is disabled", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-path-sync-disabled"
+
+		// Create an initial repo with sync disabled and a specific path
+		firstRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-sync-disabled-1",
+			"URL":         baseURL,
+			"Path":        "demo/nested",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "First repository should be created successfully")
+
+		// Create a second repo pointing to same URL with a child path and sync disabled.
+		// This simulates the wizard onboarding flow where sync is not yet enabled.
+		secondRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-sync-disabled-2",
+			"URL":         baseURL,
+			"Path":        "demo/nested/child",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
+
+		// Create a third repo with the same path (duplicate) and sync disabled
+		thirdRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-sync-disabled-3",
+			"URL":         baseURL,
+			"Path":        "demo/nested",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Third repository with duplicate path should succeed when sync is disabled")
+
+		// Create a fourth repo with empty path (root) and sync disabled - wizard step 1 scenario
+		fourthRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-sync-disabled-4",
+			"URL":         baseURL,
+			"Path":        "",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Fourth repository with empty path should succeed when sync is disabled")
+	})
+
+	// Test that enabling sync on a repo with a conflicting path is rejected
+	t.Run("Git repository path conflict detected when enabling sync", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-enable-sync-conflict"
+
+		// Create an initial repo with sync enabled and a specific path
+		firstRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-enable-sync-1",
+			"URL":         baseURL,
+			"Path":        "demo/nested",
+			"SyncEnabled": true,
+			"SyncTarget":  "folder",
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "First repository should be created successfully")
+
+		// Create second repo with conflicting child path but sync disabled (should succeed)
+		secondRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-enable-sync-2",
+			"URL":         baseURL,
+			"Path":        "demo/nested/child",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		created, err := helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
+
+		// Now try to enable sync on the second repo - this should fail due to parent/child conflict
+		created.Object["spec"].(map[string]interface{})["sync"].(map[string]interface{})["enabled"] = true
+		_, err = helper.Repositories.Resource.Update(ctx, created, metav1.UpdateOptions{FieldValidation: "Strict"})
+		require.Error(t, err, "Enabling sync should fail due to parent/child path conflict")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())
 	})
 
 	t.Run("should update sync interval", func(t *testing.T) {
@@ -1180,6 +1266,107 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 			assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
 		}
 	}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+}
+
+func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	t.Run("remove-orphan-resources finalizer deletes classic dashboards", func(t *testing.T) {
+		const repo = "finalizer-remove-classic"
+		repoPath := filepath.Join(helper.ProvisioningPath, repo)
+
+		classicDashboard := []byte(`{
+			"uid": "finalizer-remove-classic-uid",
+			"title": "Classic Dashboard for Remove Finalizer",
+			"schemaVersion": 39,
+			"panels": [],
+			"tags": []
+		}`)
+
+		require.NoError(t, os.MkdirAll(repoPath, 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(repoPath, "classic.json"), classicDashboard, 0o600))
+
+		helper.CreateRepo(t, TestRepo{
+			Name:                   repo,
+			Path:                   repoPath,
+			Target:                 "folder",
+			SkipResourceAssertions: true,
+		})
+
+		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
+		require.NoError(t, err, "classic dashboard should exist after initial sync")
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerKind)
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+
+		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		require.NoError(t, err, "should delete repository")
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+
+		_, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
+		require.Error(t, err, "classic dashboard should be deleted by remove-orphan-resources finalizer")
+		require.True(t, apierrors.IsNotFound(err))
+	})
+
+	t.Run("release-orphan-resources finalizer releases classic dashboards", func(t *testing.T) {
+		const repo = "finalizer-release-classic"
+		repoPath := filepath.Join(helper.ProvisioningPath, repo)
+
+		classicDashboard := []byte(`{
+			"uid": "finalizer-release-classic-uid",
+			"title": "Classic Dashboard for Release Finalizer",
+			"schemaVersion": 39,
+			"panels": [],
+			"tags": []
+		}`)
+
+		require.NoError(t, os.MkdirAll(repoPath, 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(repoPath, "classic.json"), classicDashboard, 0o600))
+
+		helper.CreateRepo(t, TestRepo{
+			Name:                   repo,
+			Path:                   repoPath,
+			Target:                 "folder",
+			SkipResourceAssertions: true,
+		})
+
+		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
+		require.NoError(t, err, "classic dashboard should exist after initial sync")
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerKind)
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+
+		_, err = helper.Repositories.Resource.Patch(ctx, repo, types.JSONPatchType, []byte(`[
+			{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
+		]`), metav1.PatchOptions{})
+		require.NoError(t, err, "should successfully patch finalizers")
+
+		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		require.NoError(t, err, "should delete repository")
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+
+		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
+		require.NoError(t, err, "classic dashboard should still exist after release")
+
+		annotations := dashboard.GetAnnotations()
+		require.NotContains(t, annotations, utils.AnnoKeyManagerKind, "managedBy annotation should be removed")
+		require.NotContains(t, annotations, utils.AnnoKeyManagerIdentity, "managerId annotation should be removed")
+		require.NotContains(t, annotations, utils.AnnoKeySourcePath, "sourcePath annotation should be removed")
+		require.NotContains(t, annotations, utils.AnnoKeySourceChecksum, "sourceChecksum annotation should be removed")
+	})
 }
 
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {

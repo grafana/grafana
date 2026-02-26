@@ -868,6 +868,7 @@ github.com/eapache/go-resiliency v1.7.0/go.mod h1:5yPzW0MIvSe0JDsv0v+DvcjEv2FyD6
 github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 h1:Oy0F4ALJ04o5Qqpdz8XLIpNA3WM/iSIXqxtqo7UGVws=
 github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3/go.mod h1:YvSRo5mw33fLEx1+DlK6L2VV43tJt5Eyel9n9XBcR+0=
 github.com/eapache/queue v1.1.0 h1:YOEu7KNc61ntiQlcEeUIoDTJ2o8mQznoNvUhiigpIqc=
+github.com/ebitengine/purego v0.8.2/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI0mRfJZTmQ=
 github.com/efficientgo/tools/core v0.0.0-20220225185207-fe763185946b h1:ZHiD4/yE4idlbqvAO6iYCOYRzOMRpxkW+FKasRA3tsQ=
 github.com/efficientgo/tools/core v0.0.0-20220225185207-fe763185946b/go.mod h1:OmVcnJopJL8d3X3sSXTiypGoUSgFq1aDGmlrdi9dn/M=
 github.com/elastic/elastic-transport-go/v8 v8.6.1 h1:h2jQRqH6eLGiBSN4eZbQnJLtL4bC5b4lfVFRjw2R4e4=
@@ -1069,6 +1070,7 @@ github.com/grafana/alerting v0.0.0-20260112172717-98a49ed9557f/go.mod h1:Ji0SfJC
 github.com/grafana/alerting v0.0.0-20260203165836-8b17916e8173/go.mod h1:Ji0SfJChcwjgq8ljy6Y5CcYfHfAYKXjKYeysOoDS/6s=
 github.com/grafana/alerting v0.0.0-20260206150146-b5f69c55f91a/go.mod h1:Ji0SfJChcwjgq8ljy6Y5CcYfHfAYKXjKYeysOoDS/6s=
 github.com/grafana/alerting v0.0.0-20260224103610-e1219c0c17ff/go.mod h1:F3iGi5JTG18gmc0/rWqSf/JMnuCrpr7TLAF1sjScH04=
+github.com/grafana/alerting v0.0.0-20260225130907-d8127a1d3c5d/go.mod h1:yJKl5oFNBlXSKag2OMWRwjCUi1mAuUD9Rr/CVVJ8LS8=
 github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f/go.mod h1:axY0cdOg3q0TZHwpHnIz5x16xZ8ZBxJHShsSHHXcHQg=
 github.com/grafana/authlib v0.0.0-20260119104241-f33edcf42077/go.mod h1:dm+zBTQC9ZRGlitzO4+O5voMcpsFHQp4pgCf6MZ+JPA=
 github.com/grafana/authlib v0.0.0-20260203092119-c346f8341c0b h1:IB54BE71NYfi6W4a4qT4GNkSWSftpV0Bzr+utEKfJWg=
@@ -1106,6 +1108,7 @@ github.com/grafana/grafana/apps/example v0.0.0-20260119093047-426e55f358f5/go.mo
 github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2/go.mod h1:M7bV60iRB61y0ISPG1HX/oNLZtlh0ZF22rUYwNkAKjo=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/nanogit v0.3.0/go.mod h1:6s6CCTpyMOHPpcUZaLGI+rgBEKdmxVbhqSGgCK13j7Y=
+github.com/grafana/nanogit v0.3.5/go.mod h1:KP5MS9C2G3osIb3tgeJVIz+lFUaashbW1t13CcDClo4=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f h1:9tRhudagkQO2s61SLFLSziIdCm7XlkfypVKDxpcHokg=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f/go.mod h1:AsVdCBeDFN9QbgpJg+8voDAcgsW0RmNvBd70ecMMdC0=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260224102839-50afbe56d9b4 h1:YTNTeDrHrNwAUZzx1ajKjf/R/wbYIoXvmb8jLdAwKMI=
@@ -1220,8 +1223,6 @@ github.com/klauspost/cpuid v1.3.1 h1:5JNjFYYQrZeKRJ0734q51WCEEn2huer72Dc7K+R/b6s
 github.com/klauspost/cpuid v1.3.1/go.mod h1:bYW4mA6ZgKPob1/Dlai2LviZJO7KGI3uoWLd42rAQw4=
 github.com/klauspost/cpuid/v2 v2.0.10/go.mod h1:g2LTdtYhdyuGPqyWyv7qRAmj1WBqxuObKfj5c0PQa7c=
 github.com/klauspost/cpuid/v2 v2.0.12/go.mod h1:g2LTdtYhdyuGPqyWyv7qRAmj1WBqxuObKfj5c0PQa7c=
-github.com/klauspost/pgzip v1.2.6 h1:8RXeL5crjEUFnR2/Sn6GJNWtSQ3Dk8pq4CL3jvdDyjU=
-github.com/klauspost/pgzip v1.2.6/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
 github.com/knadh/koanf v1.5.0 h1:q2TSd/3Pyc/5yP9ldIrSdIz26MCcyNQzW0pEAugLPNs=
 github.com/knadh/koanf v1.5.0/go.mod h1:Hgyjp4y8v44hpZtPzs7JZfRAW5AhN7KfZcwv1RYggDs=
 github.com/knadh/koanf/maps v0.1.1 h1:G5TjmUh2D7G2YWf5SQQqSiHRJEjaicvU0KpypqB3NIs=
@@ -1529,6 +1530,7 @@ github.com/sergi/go-diff v1.2.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNX
 github.com/shirou/gopsutil/v3 v3.23.12 h1:z90NtUkp3bMtmICZKpC4+WaknU1eXtp5vtbQ11DgpE4=
 github.com/shirou/gopsutil/v3 v3.23.12/go.mod h1:1FrWgea594Jp7qmjHUUPlJDTPgcsb9mGnXDxavtikzM=
 github.com/shirou/gopsutil/v4 v4.25.1/go.mod h1:RoUCUpndaJFtT+2zsZzzmhvbfGoDCJ7nFXKJf8GqJbI=
+github.com/shirou/gopsutil/v4 v4.25.3/go.mod h1:xbuxyoZj+UsgnZrENu3lQivsngRR5BdjbJwf2fv4szA=
 github.com/shoenig/go-m1cpu v0.1.6 h1:nxdKQNcEB6vzgA2E2bvzKIYRuNj7XNJ4S/aRSwKzFtM=
 github.com/shoenig/go-m1cpu v0.1.6/go.mod h1:1JJMcUBvfNwpq05QDQVAnx3gUHr9IYF7GNg9SUEw2VQ=
 github.com/shoenig/test v0.6.4 h1:kVTaSd7WLz5WZ2IaoM0RSzRsUD+m8wRR+5qvntpn4LU=
@@ -1559,6 +1561,7 @@ github.com/spiffe/go-spiffe/v2 v2.5.0/go.mod h1:P+NxobPc6wXhVtINNtFjNWGBTreew1GB
 github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad h1:fiWzISvDn0Csy5H0iwgAuJGQTUpVfEMJJd4nRFXogbc=
 github.com/stoewer/go-strcase v1.2.0/go.mod h1:IBiWB2sKIp3wVVQ3Y035++gc+knqhUQag1KpM8ahLw8=
 github.com/stoewer/go-strcase v1.3.0/go.mod h1:fAH5hQ5pehh+j3nZfvwdk2RgEgQjAoM8wodgtPmh1xo=
+github.com/stretchr/testify v1.11.0/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/substrait-io/substrait v0.75.0 h1:26l61irh5kQBLeDUcgDLnm+p4s2dJloHU6PPK0RAiB0=
 github.com/substrait-io/substrait v0.75.0/go.mod h1:MPFNw6sToJgpD5Z2rj0rQrdP/Oq8HG7Z2t3CAEHtkHw=
 github.com/substrait-io/substrait v0.78.1 h1:Dsn+kvFQdC2k/2XRVE2+aD88WNbE4miWed2AZTtkBoQ=
@@ -1584,6 +1587,7 @@ github.com/tdewolff/minify/v2 v2.12.8/go.mod h1:YRgk7CC21LZnbuke2fmYnCTq+zhCgpb0
 github.com/tdewolff/parse/v2 v2.6.7 h1:WrFllrqmzAcrKHzoYgMupqgUBIfBVOb0yscFzDf8bBg=
 github.com/tdewolff/parse/v2 v2.6.7/go.mod h1:XHDhaU6IBgsryfdnpzUXBlT6leW/l25yrFBTEb4eIyM=
 github.com/testcontainers/testcontainers-go v0.35.0/go.mod h1:oEVBj5zrfJTrgjwONs1SsRbnBtH9OKl+IGl3UMcr2B4=
+github.com/testcontainers/testcontainers-go v0.36.0/go.mod h1:yk73GVJ0KUZIHUtFna6MO7QS144qYpoY8lEEtU9Hed0=
 github.com/testcontainers/testcontainers-go/modules/azurite v0.35.0 h1:gUZ25e1DVE/0+ZZ0nupsIo+C1j7UNloN7Pkg3w6tceI=
 github.com/testcontainers/testcontainers-go/modules/azurite v0.35.0/go.mod h1:2Fc67EpyOEexLAF99zhSuzu9H22zd83pkjxEHHTtHf4=
 github.com/testcontainers/testcontainers-go/modules/mongodb v0.35.0 h1:i1Kh9fmXgHG9z3uzJv5Arz7pDKVaaNpLrqyd+0xhYMA=

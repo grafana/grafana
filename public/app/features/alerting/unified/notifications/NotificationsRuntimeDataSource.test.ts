@@ -139,10 +139,15 @@ describe('notificationsToDataFrame', () => {
 function makeEntry(timestamp: string) {
   return {
     timestamp,
+    uuid: 'test-uuid',
     receiver: 'slack',
+    integration: 'slack',
+    integrationIndex: 0,
     status: 'firing' as const,
     outcome: 'success' as const,
     groupLabels: { alertname: 'test' },
+    ruleUIDs: [],
+    alertCount: 1,
     alerts: [],
     retry: false,
     duration: 100,

@@ -1103,6 +1103,9 @@
             "type": "string",
             "default": ""
           },
+          "origin": {
+            "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
+          },
           "skipUrlSync": {
             "type": "boolean",
             "default": false
@@ -1523,6 +1526,9 @@
             "type": "string",
             "default": ""
           },
+          "origin": {
+            "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
+          },
           "query": {
             "type": "string",
             "default": ""
@@ -1639,6 +1645,9 @@
               ]
             }
           },
+          "origin": {
+            "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
+          },
           "query": {
             "type": "string",
             "default": ""
@@ -1686,6 +1695,14 @@
             "description": "If true, includes current time range in the link as query params",
             "type": "boolean",
             "default": false
+          },
+          "origin": {
+            "description": "The source that registered the link (if any)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
+              }
+            ]
           },
           "placement": {
             "description": "Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.",
@@ -1806,6 +1823,22 @@
           }
         }
       },
+      "DashboardDatasourceControlSourceRef": {
+        "description": "Source information for controls (e.g. variables or links)",
+        "type": "object",
+        "required": ["type", "group"],
+        "properties": {
+          "group": {
+            "description": "The plugin type-id",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "DashboardDatasourceVariableKind": {
         "description": "Datasource variable kind",
         "type": "object",
@@ -1889,6 +1922,9 @@
                 }
               ]
             }
+          },
+          "origin": {
+            "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
           },
           "pluginId": {
             "type": "string",
@@ -2327,6 +2363,9 @@
               ]
             }
           },
+          "origin": {
+            "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
+          },
           "skipUrlSync": {
             "type": "boolean",
             "default": false
@@ -2455,6 +2494,9 @@
                 }
               ]
             }
+          },
+          "origin": {
+            "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
           },
           "query": {
             "type": "string",
@@ -2929,6 +2971,9 @@
               ]
             }
           },
+          "origin": {
+            "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
+          },
           "placeholder": {
             "type": "string"
           },
@@ -3341,6 +3386,9 @@
             "type": "string",
             "default": ""
           },
+          "origin": {
+            "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
+          },
           "skipUrlSync": {
             "type": "boolean",
             "default": false
@@ -3477,6 +3525,9 @@
           "name": {
             "type": "string",
             "default": ""
+          },
+          "origin": {
+            "$ref": "#/components/schemas/DashboardDatasourceControlSourceRef"
           },
           "query": {
             "type": "string",
