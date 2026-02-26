@@ -167,6 +167,16 @@ const injectedRtkApi = api
           body: queryArg.createNotificationqueryRequestBody,
         }),
       }),
+      createNotificationsqueryalerts: build.mutation<
+        CreateNotificationsqueryalertsApiResponse,
+        CreateNotificationsqueryalertsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/notifications/queryalerts`,
+          method: 'POST',
+          body: queryArg.createNotificationsqueryalertsRequestBody,
+        }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -380,6 +390,10 @@ export type UpdateDummyStatusApiArg = {
 export type CreateNotificationqueryApiResponse = /** status 200 OK */ CreateNotificationqueryResponse;
 export type CreateNotificationqueryApiArg = {
   createNotificationqueryRequestBody: CreateNotificationqueryRequestBody;
+};
+export type CreateNotificationsqueryalertsApiResponse = /** status 200 OK */ CreateNotificationsqueryalertsResponse;
+export type CreateNotificationsqueryalertsApiArg = {
+  createNotificationsqueryalertsRequestBody: CreateNotificationsqueryalertsRequestBody;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -680,6 +694,33 @@ export type CreateNotificationqueryRequestBody = {
   /** To is the starting timestamp for the query. */
   to?: string;
 };
+export type CreateNotificationsqueryalertsNotificationEntryAlert = {
+  annotations: {
+    [key: string]: string;
+  };
+  endsAt: string;
+  enrichments?: {
+    [key: string]: any;
+  };
+  labels: {
+    [key: string]: string;
+  };
+  startsAt: string;
+  status: string;
+};
+export type CreateNotificationsqueryalertsResponse = {
+  alerts: CreateNotificationsqueryalertsNotificationEntryAlert[];
+};
+export type CreateNotificationsqueryalertsRequestBody = {
+  /** From is the starting timestamp for the query. */
+  from?: string;
+  /** Limit is the maximum number of entries to return. */
+  limit?: number;
+  /** To is the ending timestamp for the query. */
+  to?: string;
+  /** UUID filters the alerts to those belonging to a specific alert rule. */
+  uuid?: string;
+};
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
@@ -699,4 +740,5 @@ export const {
   useReplaceDummyStatusMutation,
   useUpdateDummyStatusMutation,
   useCreateNotificationqueryMutation,
+  useCreateNotificationsqueryalertsMutation,
 } = injectedRtkApi;
