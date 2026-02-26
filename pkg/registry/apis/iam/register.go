@@ -818,8 +818,14 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
+	client := openfeature.NewDefaultClient()
+	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancelFn()
+
+	enableUserApi := client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
+
 	searchRoutes := make([]*builder.APIRoutes, 0, 3)
-	if b.userSearchHandler != nil {
+	if enableUserApi && b.userSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.userSearchHandler.GetAPIRoutes(defs))
 	}
 
