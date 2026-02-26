@@ -95,6 +95,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 				require.Error(t, result.Error(), "write job should be rejected for read-only repository")
 				require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
 				require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
+				require.Contains(t, result.Error().Error(), "write operations are not allowed for this repository", "error message should indicate write operations not allowed")
 			})
 		}
 	})
