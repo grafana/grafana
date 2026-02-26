@@ -27,7 +27,7 @@ export function SidebarFooter() {
   const visible = total - hidden;
 
   const suffixText = isAlertView
-    ? t('query-editor-next.sidebar.footer-items-alert', '{{count}} alerts', { count: alertRules.length })
+    ? t('query-editor-next.sidebar.footer-items-alert', '{{count}} alerts', { count: total })
     : t('query-editor-next.sidebar.footer-items', '{{count}} items', { count: total });
 
   return (
