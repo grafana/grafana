@@ -234,6 +234,33 @@ func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructu
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
 }
 
+// CreateFolderWithUID creates a Grafana folder using a caller-provided stable UID
+// instead of the path-derived hash UID produced by ParseFolder.
+// It ensures all ancestor folders exist first, then creates the leaf folder.
+// Used when _folder.json has already been written to the repository.
+func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, stableUID string) error {
+	cfg := fm.repo.Config()
+
+	// Determine the parent folder ID, ensuring ancestor folders exist.
+	parentPath := safepath.Dir(folderPath)
+	var parentFolderID string
+	if parentPath == "" {
+		parentFolderID = RootFolder(cfg)
+	} else {
+		var err error
+		parentFolderID, err = fm.EnsureFolderPathExist(ctx, parentPath)
+		if err != nil {
+			return fmt.Errorf("ensure parent folder path: %w", err)
+		}
+	}
+
+	// Build the leaf folder struct but replace the hash-derived ID with the stable UID.
+	leaf := ParseFolder(folderPath, cfg.GetName())
+	leaf.ID = stableUID
+
+	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
+}
+
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
 }

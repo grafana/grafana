@@ -1,13 +1,21 @@
 package resources
 
 import (
+	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestGetPathType(t *testing.T) {
@@ -224,4 +232,81 @@ func TestShouldUpdateGrafanaDB(t *testing.T) {
 			assert.Equal(t, tt.expect, update, "Should correctly determine if we should update")
 		})
 	}
+}
+
+func newTestRepoConfig(name string) *provisioning.Repository {
+	return &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.LocalRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+	}
+}
+
+func TestCreateFolder_FolderMetadata_FlagDisabled(t *testing.T) {
+	ctx := context.Background()
+
+	config := newTestRepoConfig("test-repo")
+	rw := repository.NewMockReaderWriter(t)
+	rw.On("Config").Return(config)
+	// Flag disabled: expect Create called with dir path and nil data (legacy .keep behavior)
+	rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+
+	accessMock := auth.NewMockAccessChecker(t)
+	accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	dw := &DualReadWriter{
+		repo:     rw,
+		access:   accessMock,
+		features: featuremgmt.WithFeatures(),
+	}
+
+	result, err := dw.CreateFolder(ctx, DualWriteOptions{Path: "newfolder/"})
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "newfolder/", result.Path)
+}
+
+func TestCreateFolder_FolderMetadata_FlagEnabled(t *testing.T) {
+	ctx := context.Background()
+
+	config := newTestRepoConfig("test-repo")
+	rw := repository.NewMockReaderWriter(t)
+	rw.On("Config").Return(config)
+
+	// Flag enabled: expect Create called with _folder.json path and valid Folder resource JSON
+	var capturedUID string
+	rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+		var res folders.Folder
+		if err := json.Unmarshal(b, &res); err != nil {
+			return false
+		}
+		capturedUID = res.Name
+		return res.APIVersion == "folder.grafana.app/v1beta1" &&
+			res.Kind == "Folder" &&
+			res.Name != "" &&
+			res.Spec.Title == "newfolder"
+	}), "").Return(nil)
+
+	accessMock := auth.NewMockAccessChecker(t)
+	accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	dw := &DualReadWriter{
+		repo:     rw,
+		access:   accessMock,
+		features: featuremgmt.WithFeatures(featuremgmt.FlagProvisioningFolderMetadata),
+	}
+
+	result, err := dw.CreateFolder(ctx, DualWriteOptions{Path: "newfolder/"})
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "newfolder/", result.Path)
+	assert.NotEmpty(t, capturedUID, "_folder.json should have been written with a non-empty metadata.name")
 }

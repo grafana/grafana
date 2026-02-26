@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
 	"sync"
 	"testing"
 
@@ -1008,4 +1010,59 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			defer deleteResp.Body.Close()
 		})
 	})
+}
+
+func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t, withProvisioningFolderMetadata)
+	ctx := context.Background()
+
+	const repo = "folder-metadata-test-repo"
+	helper.CreateRepo(t, TestRepo{
+		Name:                   repo,
+		Target:                 "instance",
+		SkipResourceAssertions: true,
+	})
+
+	// POST to create a folder via the files endpoint
+	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/meta-test-folder/", addr, repo)
+	req, err := http.NewRequest(http.MethodPost, url, nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	// nolint:errcheck
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
+
+	// Verify _folder.json was created in the filesystem instead of .keep
+	metadataPath := filepath.Join(helper.ProvisioningPath, "meta-test-folder", "_folder.json")
+	require.FileExists(t, metadataPath, "_folder.json should have been created when flag is enabled")
+
+	keepPath := filepath.Join(helper.ProvisioningPath, "meta-test-folder", ".keep")
+	require.NoFileExists(t, keepPath, ".keep should not have been created when flag is enabled")
+
+	// Verify _folder.json has valid content with a full Folder resource
+	content, err := os.ReadFile(metadataPath)
+	require.NoError(t, err)
+	var folderRes struct {
+		APIVersion string `json:"apiVersion"`
+		Kind       string `json:"kind"`
+		Metadata   struct {
+			Name string `json:"name"`
+		} `json:"metadata"`
+		Spec struct {
+			Title string `json:"title"`
+		} `json:"spec"`
+	}
+	require.NoError(t, json.Unmarshal(content, &folderRes))
+	require.Equal(t, "folder.grafana.app/v1beta1", folderRes.APIVersion)
+	require.Equal(t, "Folder", folderRes.Kind)
+	require.NotEmpty(t, folderRes.Metadata.Name, "_folder.json should contain a non-empty metadata.name (stable UID)")
+	require.Equal(t, "meta-test-folder", folderRes.Spec.Title)
+
+	// Verify the Grafana folder was created with the stable UID from _folder.json
+	_, err = helper.Folders.Resource.Get(ctx, folderRes.Metadata.Name, metav1.GetOptions{})
+	require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
 }

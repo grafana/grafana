@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -18,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // DualReadWriter is a wrapper around a repository that can read from and write resources
@@ -30,10 +33,11 @@ import (
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo    repository.ReaderWriter
-	parser  Parser
-	folders *FolderManager
-	access  auth.AccessChecker
+	repo     repository.ReaderWriter
+	parser   Parser
+	folders  *FolderManager
+	access   auth.AccessChecker
+	features featuremgmt.FeatureToggles
 }
 
 type DualWriteOptions struct {
@@ -49,8 +53,8 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker, features featuremgmt.FeatureToggles) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access, features: features}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -169,9 +173,25 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	// Now actually create the folder
-	if err := r.repo.Create(ctx, opts.Path, opts.Ref, nil, opts.Message); err != nil {
-		return nil, fmt.Errorf("failed to create folder: %w", err)
+	// When the feature flag is enabled, write a _folder.json with a stable UID
+	// instead of the legacy .keep placeholder created by the git layer.
+	var stableUID string
+	if r.features.IsEnabled(ctx, featuremgmt.FlagProvisioningFolderMetadata) {
+		stableUID = util.GenerateShortUID()
+		title := safepath.Base(opts.Path)
+		metadataBytes, err := json.Marshal(NewFolderManifest(stableUID, title))
+		if err != nil {
+			return nil, fmt.Errorf("marshal folder metadata: %w", err)
+		}
+		metadataPath := safepath.Join(opts.Path, FolderMetadataFileName)
+		if err := r.repo.Create(ctx, metadataPath, opts.Ref, metadataBytes, opts.Message); err != nil {
+			return nil, fmt.Errorf("failed to create folder metadata: %w", err)
+		}
+	} else {
+		// Existing behavior: git layer creates .keep when data is nil and path ends with /
+		if err := r.repo.Create(ctx, opts.Path, opts.Ref, nil, opts.Message); err != nil {
+			return nil, fmt.Errorf("failed to create folder: %w", err)
+		}
 	}
 
 	cfg := r.repo.Config()
@@ -196,17 +216,31 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	wrap.URLs = urls
 
 	if r.shouldUpdateGrafanaDB(opts, nil) {
-		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
-		if err != nil {
-			return nil, err
-		}
-
-		current, err := r.folders.GetFolder(ctx, folderName)
-		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, err // unable to check if the folder exists
-		}
-		wrap.Resource.Upsert = v0alpha1.Unstructured{
-			Object: current.Object,
+		if stableUID != "" {
+			// Flag was enabled: create the Grafana folder with the stable UID from _folder.json
+			if err := r.folders.CreateFolderWithUID(ctx, opts.Path, stableUID); err != nil {
+				return nil, err
+			}
+			current, err := r.folders.GetFolder(ctx, stableUID)
+			if err != nil && !apierrors.IsNotFound(err) {
+				return nil, err
+			}
+			if current != nil {
+				wrap.Resource.Upsert = v0alpha1.Unstructured{Object: current.Object}
+			}
+		} else {
+			// Flag was disabled: use the existing hash-based UID path
+			folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
+			if err != nil {
+				return nil, err
+			}
+			current, err := r.folders.GetFolder(ctx, folderName)
+			if err != nil && !apierrors.IsNotFound(err) {
+				return nil, err // unable to check if the folder exists
+			}
+			wrap.Resource.Upsert = v0alpha1.Unstructured{
+				Object: current.Object,
+			}
 		}
 	}
 

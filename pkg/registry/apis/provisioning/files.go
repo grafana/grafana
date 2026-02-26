@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const (
@@ -27,14 +28,15 @@ const (
 )
 
 type filesConnector struct {
-	getter  RepoGetter
-	access  auth.AccessChecker
-	parsers resources.ParserFactory
-	clients resources.ClientFactory
+	getter   RepoGetter
+	access   auth.AccessChecker
+	parsers  resources.ParserFactory
+	clients  resources.ClientFactory
+	features featuremgmt.FeatureToggles
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker) *filesConnector {
-	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access}
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, features featuremgmt.FeatureToggles) *filesConnector {
+	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access, features: features}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -166,7 +168,7 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 	}
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-	return resources.NewDualReadWriter(readWriter, parser, folders, c.access), nil
+	return resources.NewDualReadWriter(readWriter, parser, folders, c.access, c.features), nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.
