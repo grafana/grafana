@@ -56,7 +56,8 @@ type Props = {
   // Legacy props
   selectedView?: SelectedView;
 
-  // New UI props (when viewMode is provided, renders toolbar with controls)
+  // New UI props (when enableNewUI is true, renders toolbar with controls)
+  enableNewUI?: boolean;
   viewMode?: ViewMode;
   paneView?: PaneView;
   onTextAlignChange?: (align: TextAlign) => void;
@@ -86,13 +87,14 @@ const FlameGraph = ({
   collapsedMap,
   setCollapsedMap,
   selectedView,
+  enableNewUI,
   viewMode,
   paneView,
   onTextAlignChange,
   onColorSchemeChange,
   isDiffMode,
 }: Props) => {
-  const isNewUI = viewMode !== undefined;
+  const isNewUI = enableNewUI === true;
   const newStyles = useStyles2(getStylesNew);
   const legacyStyles = getStylesLegacy();
 
