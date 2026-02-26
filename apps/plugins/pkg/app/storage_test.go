@@ -26,7 +26,7 @@ func TestMetaStorage_List_Parallel(t *testing.T) {
 		meta: pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{Id: "test"},
 		},
-		active:         &active,
+		active:     &active,
 		concurrent: &concurrent,
 	})
 
@@ -136,9 +136,9 @@ func (s *stubProvider) GetMeta(_ context.Context, _ meta.PluginRef) (*meta.Resul
 // slowProvider simulates latency per GetMeta call and tracks whether
 // multiple goroutines were ever active at the same time.
 type slowProvider struct {
-	delay          time.Duration
-	meta           pluginsv0alpha1.MetaSpec
-	active         *atomic.Int32
+	delay      time.Duration
+	meta       pluginsv0alpha1.MetaSpec
+	active     *atomic.Int32
 	concurrent *atomic.Bool
 }
 
