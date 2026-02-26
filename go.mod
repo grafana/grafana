@@ -707,6 +707,10 @@ replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 	github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
+	// Use moby v28.5.2 for docker/docker to fix compatibility with testcontainers-go v0.40.0
+	// which requires github.com/docker/docker/api/types/build package
+	github.com/docker/docker => github.com/moby/moby v28.5.2+incompatible
+
 	// Use our fork of dolthub/go-mysql-server which makes non-cgo the default
 	// since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.1-grafana1
