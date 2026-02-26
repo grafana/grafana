@@ -136,6 +136,7 @@ func RegisterAPIService(
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService, tracing), unified, features),
 		tracing:    tracing,
+		cfg:        cfg,
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg, accessClient)
 
@@ -486,7 +487,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	if err != nil {
 		return err
 	}
-	storage[userResource.StoragePath()] = userUniStore
 
 	if enableZanzanaSync {
 		b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
@@ -495,14 +495,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		userUniStore.AfterDelete = b.AfterUserDelete
 	}
 
+	var userStore storewrapper.K8sStorage = userUniStore
+
 	if b.userLegacyStore != nil {
 		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), b.userLegacyStore, userUniStore)
 		if err != nil {
 			return err
 		}
 
-		storage[userResource.StoragePath()] = dw
+		var ok bool
+		userStore, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
 	}
+
+	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfg))
 
 	legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
 

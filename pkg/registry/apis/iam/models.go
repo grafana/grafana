@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -104,4 +105,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	features featuremgmt.FeatureToggles
 
 	tracing *tracing.TracingService
+
+	cfg *setting.Cfg
 }

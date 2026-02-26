@@ -46,6 +46,7 @@ func TestIntegrationUsers(t *testing.T) {
 			})
 
 			doUserCRUDTestsUsingTheNewAPIs(t, helper)
+			doHiddenUsersTests(t, helper)
 			doUserFieldSelectorTests(t, helper)
 
 			if mode < 3 {
@@ -372,6 +373,55 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		_, err = userClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not found")
+	})
+}
+
+func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should hide users from the hidden users list on Get and List", func(t *testing.T) {
+		ctx := context.Background()
+
+		const hiddenLogin = "hidden-integration-user"
+
+		// Register the hidden login in the live Cfg so UserFilter picks it up.
+		helper.GetEnv().Cfg.HiddenUsers[hiddenLogin] = struct{}{}
+		t.Cleanup(func() {
+			delete(helper.GetEnv().Cfg.HiddenUsers, hiddenLogin)
+		})
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// Create a user whose login is in the hidden list.
+		obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+		spec := obj.Object["spec"].(map[string]interface{})
+		spec["login"] = hiddenLogin
+		spec["email"] = hiddenLogin + "@example.com"
+		obj.Object["spec"] = spec
+
+		created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		createdUID := created.GetName()
+		t.Cleanup(func() {
+			_ = adminClient.Resource.Delete(context.Background(), createdUID, metav1.DeleteOptions{})
+		})
+
+		// Get should return 404 when the requester is not the hidden user.
+		_, err = adminClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+
+		// List should not include the hidden user.
+		list, err := adminClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			itemSpec := item.Object["spec"].(map[string]interface{})
+			require.NotEqual(t, hiddenLogin, itemSpec["login"])
+		}
 	})
 }
 
