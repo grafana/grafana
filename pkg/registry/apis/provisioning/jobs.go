@@ -157,6 +157,10 @@ func (c *jobsConnector) Connect(
 			case provisioning.JobActionMigrate:
 				// Migrate operates on the default branch (no ref)
 				targetRef = ""
+			default:
+				// Read-only operations (Pull, PullRequest, FixFolderMetadata) don't reach here
+				// due to requiresWrite check, but include default for exhaustive linter
+				targetRef = ""
 			}
 
 			if err := repository.IsWriteAllowed(cfg, targetRef); err != nil {
