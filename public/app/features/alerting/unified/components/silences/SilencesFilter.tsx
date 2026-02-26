@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { AdHocFilterWithLabels, AdHocFiltersComboboxRenderer, AdHocFiltersController } from '@grafana/scenes';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 
@@ -74,6 +74,35 @@ export function SilencesFilter({ silences }: SilencesFilterProps) {
       <div className={styles.comboboxWrapper}>
         <AdHocFiltersComboboxRenderer controller={controller} />
       </div>
+      <Tooltip
+        content={
+          <div>
+            <p>
+              <Trans i18nKey="alerting.silences.filter.tooltip-description">
+                Search silences by matcher label and value.
+              </Trans>
+            </p>
+            <p>
+              <Trans i18nKey="alerting.silences.filter.tooltip-exact">
+                Exact match: <code>severity=&quot;critical&quot;</code>
+              </Trans>
+            </p>
+            <p>
+              <Trans i18nKey="alerting.silences.filter.tooltip-regex">
+                Regex match: <code>env=~&quot;prod.*&quot;</code>
+              </Trans>
+            </p>
+            <p>
+              <Trans i18nKey="alerting.silences.filter.tooltip-note">
+                Searches by label name and value only. For example, foo=&quot;bar&quot; finds all silences with label
+                foo and value bar — both foo=&quot;bar&quot; and foo!=&quot;bar&quot;.
+              </Trans>
+            </p>
+          </div>
+        }
+      >
+        <Icon name="info-circle" size="sm" />
+      </Tooltip>
       {hasFilters && (
         <Button variant="secondary" icon="times" onClick={clearFilters}>
           <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>

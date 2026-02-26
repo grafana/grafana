@@ -3172,7 +3172,11 @@
     "silences": {
       "affected-instances": "Affected alert instances",
       "filter": {
-        "search-by-matchers": "Search by matchers"
+        "search-by-matchers": "Search by matchers",
+        "tooltip-description": "Search silences by matcher label and value.",
+        "tooltip-exact": "Exact match:",
+        "tooltip-note": "Searches by label name and value only. For example, foo=\"bar\" finds all silences with label foo and value bar — both foo=\"bar\" and foo!=\"bar\".",
+        "tooltip-regex": "Regex match:"
       },
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "operator": {
