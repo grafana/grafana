@@ -6606,16 +6606,10 @@
       }
     },
     "default-value-editor": {
-      "add-aria-label": "Add default value",
-      "add-button": "Add value",
+      "aria-label": "Default value",
       "description": "Values that are pre-selected by default.",
-      "label": "Default value"
-    },
-    "default-value-row": {
-      "remove-aria-label": "Remove default value",
-      "remove-tooltip": "Remove value",
-      "value-aria-label": "Default value",
-      "value-placeholder": "Value"
+      "label": "Default value",
+      "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Failed to delete dashboard",
