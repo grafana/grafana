@@ -22,6 +22,7 @@ export interface RadioButtonProps {
   onChange: () => void;
   onClick: () => void;
   fullWidth?: boolean;
+  title?: string;
   'aria-label'?: StringSelector;
   children?: React.ReactNode;
 }
@@ -39,11 +40,13 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
       name = undefined,
       description,
       fullWidth,
+      title,
       'aria-label': ariaLabel,
     },
     ref
   ) => {
     const styles = useStyles2(getRadioButtonStyles, size, fullWidth);
+    const adjustedTitle = title ?? description ?? ariaLabel;
 
     const inputRadioButton = (
       <input
@@ -56,6 +59,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
         checked={active}
         name={name}
         aria-label={ariaLabel}
+        title={adjustedTitle}
         ref={ref}
       />
     );
@@ -64,14 +68,14 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
         <Tooltip content={description} placement="bottom">
           {inputRadioButton}
         </Tooltip>
-        <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
+        <label className={styles.radioLabel} htmlFor={id} title={adjustedTitle}>
           {children}
         </label>
       </div>
     ) : (
       <div className={styles.radioOption} data-testid={selectors.components.RadioButton.container}>
         {inputRadioButton}
-        <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
+        <label className={styles.radioLabel} htmlFor={id} title={adjustedTitle}>
           {children}
         </label>
       </div>
@@ -94,7 +98,8 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       display: 'flex',
       justifyContent: 'space-between',
       position: 'relative',
-      flex: fullWidth ? `1 0 0` : 'none',
+      flex: fullWidth ? '1 1 0' : '0 1 auto',
+      minWidth: 0,
       textAlign: 'center',
     }),
     radio: css({
@@ -137,6 +142,8 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       userSelect: 'none',
       whiteSpace: 'nowrap',
       flexGrow: 1,
+      minWidth: 0,
+      overflow: 'hidden',
 
       '&:hover': {
         color: textColorHover,
