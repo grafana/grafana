@@ -317,10 +317,11 @@ interface NoDataPanelListProps {
 
 function NoDataPanelList({ searchQuery, panel, onChange }: NoDataPanelListProps) {
   const styles = useStyles2(getStyles);
+  const { value: meta = [] } = useListedPanelPluginMetas();
   const noDataPanels = useMemo(() => {
-    const panels = getAllPanelPluginMeta().filter((p) => panelsWithoutData.has(p.id));
+    const panels = meta.filter((p) => panelsWithoutData.has(p.id));
     return filterPluginList(panels, searchQuery ?? '', panel?.type);
-  }, [searchQuery, panel?.type]);
+  }, [searchQuery, panel?.type, meta]);
 
   return (
     <>
