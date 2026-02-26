@@ -337,12 +337,9 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	obj, gvk, _, decodeErr := DecodeFileResource(ctx, info)
-	if obj == nil || gvk == nil {
-		if decodeErr != nil {
-			return "", "", schema.GroupVersionKind{}, fmt.Errorf("no object found: %w", decodeErr)
-		}
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
+	obj, gvk, _, err := ParseFileResource(ctx, info)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, err
 	}
 
 	objName := obj.GetName()

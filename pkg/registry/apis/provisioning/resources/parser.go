@@ -137,9 +137,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	var gvk *schema.GroupVersionKind
-	parsed.Obj, gvk, parsed.Classic, err = DecodeFileResource(ctx, info)
-	if err != nil || gvk == nil {
-		return nil, NewResourceValidationError(err)
+	parsed.Obj, gvk, parsed.Classic, err = ParseFileResource(ctx, info)
+	if err != nil {
+		return nil, err
 	}
 
 	parsed.GVK = *gvk
