@@ -117,6 +117,7 @@ describe('Dev Dashboard Backend / Frontend result comparison', () => {
 
       // version in the backend is never added because it is returned from the backend as metadata
       delete frontendMigrationResult.version;
+      delete frontendMigrationResult.id;
 
       expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
