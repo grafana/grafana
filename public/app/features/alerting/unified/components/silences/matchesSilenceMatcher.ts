@@ -7,7 +7,7 @@ export function matchesSilenceMatcher(filter: Matcher, silenceMatcher: Matcher):
 
   if (filter.isRegex) {
     try {
-      const re = new RegExp(filter.value);
+      const re = new RegExp(`^(?:${filter.value})$`);
       const valueMatches = re.test(silenceMatcher.value);
       return filter.isEqual ? valueMatches : !valueMatches;
     } catch {

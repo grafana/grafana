@@ -68,6 +68,12 @@ describe('matchesSilenceMatcher', () => {
       const filter: Matcher = { name: 'foo', value: 'b.*', isRegex: true, isEqual: true };
       expect(matchesSilenceMatcher(filter, notEqualSilenceMatcher)).toBe(true);
     });
+
+    it('does not partial-match (regex is anchored like Prometheus)', () => {
+      const filter: Matcher = { name: 'foo', value: 'ba', isRegex: true, isEqual: true };
+      const matcher: Matcher = { name: 'foo', value: 'bar', isRegex: false, isEqual: true };
+      expect(matchesSilenceMatcher(filter, matcher)).toBe(false);
+    });
   });
 
   describe('negative regex filter (!~)', () => {
