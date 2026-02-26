@@ -29,7 +29,7 @@ export const MOCK_TEAMS = [
       resourceVersion: '1737038862000',
       creationTimestamp: '2025-01-16T14:47:42Z',
       labels: {
-        'grafana.app/deprecatedInternalID': 'team-a',
+        'grafana.app/deprecatedInternalID': '1234567',
       },
       annotations: {
         'grafana.app/updatedTimestamp': '2025-01-16T14:47:42Z',
