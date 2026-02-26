@@ -299,7 +299,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
                   suggestion={suggestion}
                   width={width}
                   tabIndex={index}
-                  onClick={() => applySuggestion(suggestion, index)}
+                  onClick={() => applySuggestion(suggestion, index, false, true)}
                 />
               </div>
             ))}
