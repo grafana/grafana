@@ -5656,10 +5656,7 @@
       "empty-state-message": "쿼리를 실행해 여기에서 시각화하거나 모든 시각화로 이동해 다른 패널 유형을 추가하세요",
       "menu-open-panel-editor": "구성",
       "menu-use-library-panel": "라이브러리 패널 사용",
-      "missing-config": "패널 구성 누락",
-      "suggestions": {
-        "empty-state-message": "제안된 시각화를 보려면 쿼리를 실행하세요."
-      }
+      "missing-config": "패널 구성 누락"
     },
     "new-panel-title": "새 패널",
     "on-create-new-row": {
@@ -6891,11 +6888,11 @@
       "static-options-legend": "정적 옵션"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "고급 옵션",
         "classic": "클래식",
         "json": "JSON",
-        "v1-resource": "V1 리소스",
         "v2-resource": "V2 리소스",
         "yaml": "YAML"
       },
@@ -11870,6 +11867,10 @@
         "title": "오류",
         "try-again-button": "다시 시도"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "알 수 없는 시각화 유형"
     },
     "viz-type-picker": {
@@ -12576,6 +12577,9 @@
       "label-read-only": "읽기 전용",
       "label-sync-interval": "동기화 간격(초)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "쿼리와 일치하는 결과가 없습니다",
       "partial-managed": "{{managedCount}}/{{resourceCount}}개 리소스는 Git 동기화로 관리됩니다.",
@@ -12707,6 +12711,12 @@
       "show-less": "간략 보기",
       "show-more": "더 보기",
       "truncated": "메시지 잘림"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13239,7 +13249,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13249,9 +13260,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13295,17 +13307,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "{{id}} 카드 선택",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "쿼리 및 표현식",
       "toggle-size": "사이드바 크기 토글",
       "transformations": "변환",
+      "view-toggle": "",
       "alerts_other": "",
       "footer-items_other": ""
     },
@@ -13502,6 +13511,7 @@
       "panel-type": "패널: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "패널 포함",
       "remove-datasource-filter": "데이터 소스: {{datasource}}",
       "sort-placeholder": "정렬",

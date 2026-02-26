@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -177,6 +178,32 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 		var result map[string]interface{}
 		require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
 		assert.Contains(t, result["message"].(string), "Cannot update permissions for folders managed by provisioning")
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should be able to update permissions for provisioned folder when provisioningFolderMetadata is enabled", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagProvisioningFolderMetadata)
+			fakeFolderService := foldertest.NewFakeService()
+			fakeFolderService.ExpectedFolder = &folder.Folder{
+				ID:        1,
+				OrgID:     1,
+				UID:       "1",
+				ManagedBy: utils.ManagerKindRepo,
+			}
+			hs.folderService = fakeFolderService
+			hs.folderPermissionsService = &actest.FakePermissionsService{
+				ExpectedPermissions: []accesscontrol.ResourcePermission{},
+			}
+		})
+
+		body := `{"items": [{"role": "Viewer", "permission": 1}]}`
+		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
 

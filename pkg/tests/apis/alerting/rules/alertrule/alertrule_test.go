@@ -423,7 +423,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		}
 
 		created, err := adminClient.Create(ctx, alertRule, v1.CreateOptions{})
-		require.ErrorContains(t, err, "no query marked as source")
+		require.ErrorContains(t, err, "one expression must be marked as source")
 		require.Nil(t, created)
 	})
 	t.Run("should not be able to create rule with interval less than base", func(t *testing.T) {

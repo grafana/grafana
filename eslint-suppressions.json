@@ -1716,11 +1716,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/PanelSearchLayout.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2226,19 +2221,6 @@
   },
   "public/app/features/dashboard/utils/dashboard.ts": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/getPanelMenu.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/getPanelMenu.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
