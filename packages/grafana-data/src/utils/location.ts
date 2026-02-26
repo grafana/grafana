@@ -157,18 +157,20 @@ export const locationUtil = {
    * @internal
    */
   processRedirectUri: (redirectUri: string, currentLocation: Location): string => {
-    const [path, queryString] = redirectUri.split('?');
-    const newUrl = stripBaseFromUrl(path);
+    try {
+      const redirectUrl = new URL(redirectUri, window.location.origin);
+      const redirectParams = new Set(redirectUrl.searchParams.keys());
 
-    // Parse current location's query params
-    const currentParams = urlUtil.parseKeyValue(
-      currentLocation.search.startsWith('?') ? currentLocation.search.substring(1) : currentLocation.search
-    );
+      const currentParams = new URLSearchParams(currentLocation.search);
+      currentParams.forEach((value, key) => {
+        if (!redirectParams.has(key)) {
+          redirectUrl.searchParams.append(key, value);
+        }
+      });
 
-    // Parse redirect URI query params
-    const redirectParams = urlUtil.parseKeyValue(queryString || '');
-
-    // Build final URL with merged params (original redirect params take precedence)
-    return urlUtil.renderUrl(newUrl, { ...currentParams, ...redirectParams });
+      return stripBaseFromUrl(redirectUrl.href);
+    } catch {
+      return stripBaseFromUrl(redirectUri);
+    }
   },
 };
