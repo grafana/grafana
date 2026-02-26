@@ -26,6 +26,9 @@ var (
 	rawSchemaRecordingRulev0alpha1     = []byte(`{"DatasourceUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"Expression":{"additionalProperties":false,"properties":{"datasourceUID":{"$ref":"#/components/schemas/DatasourceUID","description":"The UID of the datasource to run this expression against. If omitted, the expression will be run against the ` + "`" + `__expr__` + "`" + ` datasource"},"model":{"additionalProperties":{},"type":"object"},"queryType":{"description":"The type of query if this is a query expression","type":"string"},"relativeTimeRange":{"$ref":"#/components/schemas/RelativeTimeRange"},"source":{"description":"Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded","type":"boolean"}},"required":["model"],"type":"object"},"ExpressionMap":{"additionalProperties":{"$ref":"#/components/schemas/Expression"},"description":"TODO: validate that only one can specify source=true\n\u0026 struct.MinFields(1) This doesn't work in Cue \u003cv0.12.0 as per","type":"object"},"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"MetricName":{"description":"TODO(@moustafab): validate the metric name regex","pattern":"^[a-zA-Z_:][a-zA-Z0-9_:]*$","type":"string"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"PromDurationWMillis":{"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$","type":"string"},"RecordingRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"RelativeTimeRange":{"additionalProperties":false,"properties":{"from":{"$ref":"#/components/schemas/PromDurationWMillis"},"to":{"$ref":"#/components/schemas/PromDurationWMillis"}},"required":["from","to"],"type":"object"},"TemplateString":{"type":"string"},"spec":{"additionalProperties":false,"properties":{"expressions":{"$ref":"#/components/schemas/ExpressionMap"},"labels":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"metric":{"$ref":"#/components/schemas/MetricName"},"paused":{"type":"boolean"},"targetDatasourceUID":{"$ref":"#/components/schemas/DatasourceUID"},"title":{"type":"string"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["title","trigger","metric","expressions","targetDatasourceUID"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaRecordingRulev0alpha1 app.VersionSchema
 	_                                  = json.Unmarshal(rawSchemaRecordingRulev0alpha1, &versionSchemaRecordingRulev0alpha1)
+	rawSchemaRuleChainv0alpha1         = []byte(`{"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"type":"string"},"RuleChain":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"RuleRef":{"additionalProperties":false,"properties":{"uid":{"$ref":"#/components/schemas/RuleUID"}},"required":["uid"],"type":"object"},"RuleUID":{"type":"string"},"spec":{"additionalProperties":false,"properties":{"alertingRules":{"items":{"$ref":"#/components/schemas/RuleRef"},"type":"array"},"recordingRules":{"description":"Non-empty constraint is enforced in Go admission validation (validator.go),\nnot in CUE. Using [...#RuleRef] instead of [#RuleRef, ...#RuleRef] avoids\na codegen bug where the CUE default generates invalid Go/TS defaults\n(empty-UID RuleRef in Go, ` + "`" + `uid: \u003cnil\u003e` + "`" + ` in TypeScript).","items":{"$ref":"#/components/schemas/RuleRef"},"type":"array"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["trigger","recordingRules"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaRuleChainv0alpha1     app.VersionSchema
+	_                                  = json.Unmarshal(rawSchemaRuleChainv0alpha1, &versionSchemaRuleChainv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -48,6 +51,7 @@ var appManifestData = app.ManifestData{
 							Operations: []app.AdmissionOperation{
 								app.AdmissionOperationCreate,
 								app.AdmissionOperationUpdate,
+								app.AdmissionOperationDelete,
 							},
 						},
 						Mutation: &app.MutationCapability{
@@ -76,6 +80,7 @@ var appManifestData = app.ManifestData{
 							Operations: []app.AdmissionOperation{
 								app.AdmissionOperationCreate,
 								app.AdmissionOperationUpdate,
+								app.AdmissionOperationDelete,
 							},
 						},
 						Mutation: &app.MutationCapability{
@@ -90,6 +95,28 @@ var appManifestData = app.ManifestData{
 						"spec.title",
 						"spec.paused",
 					},
+				},
+
+				{
+					Kind:       "RuleChain",
+					Plural:     "RuleChains",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaRuleChainv0alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -112,6 +139,7 @@ func RemoteManifest() app.Manifest {
 var kindVersionToGoType = map[string]resource.Kind{
 	"AlertRule/v0alpha1":     v0alpha1.AlertRuleKind(),
 	"RecordingRule/v0alpha1": v0alpha1.RecordingRuleKind(),
+	"RuleChain/v0alpha1":     v0alpha1.RuleChainKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

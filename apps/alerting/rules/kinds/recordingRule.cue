@@ -17,6 +17,7 @@ recordingRulev0alpha1: recordingRuleKind & {
 		operations: [
 			"CREATE",
 			"UPDATE",
+			"DELETE",
 		]
 	}
 	mutation: {

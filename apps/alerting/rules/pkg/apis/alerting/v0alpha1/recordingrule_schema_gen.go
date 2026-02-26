@@ -14,7 +14,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaRecordingRule = resource.NewSimpleSchema("rules.alerting.grafana.app", "v0alpha1", NewRecordingRule(), &RecordingRuleList{}, resource.WithKind("RecordingRule"),
-		resource.WithPlural("recordingrules"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+		resource.WithPlural("recordingrules"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
 			FieldSelector: "spec.title",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*RecordingRule)
@@ -25,7 +25,7 @@ var (
 				return cast.Spec.Title, nil
 			},
 		},
-			{
+			resource.SelectableField{
 				FieldSelector: "spec.paused",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*RecordingRule)
