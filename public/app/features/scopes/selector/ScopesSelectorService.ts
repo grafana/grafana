@@ -254,10 +254,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string) => {
+  private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string, depth?: number) => {
     this.updateState({ loadingNodeName: treeNode.scopeNodeId });
 
-    const childNodes = await this.apiClient.fetchNodes({ parent: treeNode.scopeNodeId, query });
+    const childNodes = await this.apiClient.fetchNodes({ parent: treeNode.scopeNodeId, query, depth });
 
     const newNodes = { ...this.state.nodes };
 

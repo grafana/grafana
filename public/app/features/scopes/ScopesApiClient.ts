@@ -132,9 +132,10 @@ export class ScopesApiClient {
    * @param {string|undefined} options.parent The parent node identifier to fetch children for, or undefined if no parent scope is required.
    * @param {string|undefined} options.query A query string to filter the nodes, or undefined for no filtering.
    * @param {number|undefined} options.limit The maximum number of nodes to fetch, defaults to 1000 if undefined. Must be between 1 and 10000.
+   * @param {number|undefined} options.depth Extra levels of descendants to return beyond direct children. 0 or undefined = direct children only (current behavior). 1 = children + grandchildren. Requires backend support (scope_node_children depth param).
    * @return {Promise<ScopeNode[]>} A promise that resolves to a map of fetched nodes. Returns an empty object if an error occurs.
    */
-  async fetchNodes(options: { parent?: string; query?: string; limit?: number }): Promise<ScopeNode[]> {
+  async fetchNodes(options: { parent?: string; query?: string; limit?: number; depth?: number }): Promise<ScopeNode[]> {
     const limit = options.limit ?? 1000;
 
     if (!(0 < limit && limit <= 10000)) {
