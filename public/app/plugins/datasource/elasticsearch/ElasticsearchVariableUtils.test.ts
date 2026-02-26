@@ -171,7 +171,7 @@ describe('ElasticsearchVariableUtils', () => {
       expect(result[0].values).toEqual(['a', 'b', 'c']);
     });
 
-    it('should deduplicate values in fallback', () => {
+    it('should preserve duplicate values in fallback (deduplication is left to Grafana core)', () => {
       const fields = [
         { name: 'field1', type: FieldType.string, config: {}, values: ['a', 'b', 'a'] },
         { name: 'field2', type: FieldType.string, config: {}, values: ['b', 'c'] },
@@ -179,7 +179,7 @@ describe('ElasticsearchVariableUtils', () => {
 
       const result = convertFieldsToVariableFields(fields);
 
-      expect(result[0].values).toEqual(['a', 'b', 'c']);
+      expect(result[0].values).toEqual(['a', 'b', 'a', 'b', 'c']);
     });
   });
 

@@ -1,5 +1,3 @@
-import { uniq } from 'lodash';
-
 import { DataFrame, Field, FieldType } from '@grafana/data';
 
 import { ElasticsearchDataQuery } from './dataquery.gen';
@@ -71,7 +69,6 @@ export const convertFieldsToVariableFields = (
       }
     }
   }
-  values = uniq(values);
   return [
     { name: 'text', type: FieldType.string, config: {}, values },
     { name: 'value', type: FieldType.string, config: {}, values },
