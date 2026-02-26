@@ -1,5 +1,6 @@
 import { reportInteraction } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+
+import { isTemplateDashboardAssistantEnabled } from './utils/assistantHelpers';
 
 const SCHEMA_VERSION = 1;
 
@@ -147,41 +148,24 @@ export const DashboardLibraryInteractions = {
 
 export const TemplateDashboardInteractions = {
   ...DashboardLibraryInteractions,
-  itemClicked: (
+  itemClicked: async (
     properties: ItemClickedInteractionProperties & {
       /** Which button was clicked (template modal only): View template vs Customize with Assistant */
       action?: 'view_template' | 'assistant';
     }
   ) => {
-    const isDashboardTemplatesAssistantButtonEnabled = getFeatureFlagClient().getBooleanValue(
-      'dashboardTemplatesAssistantButton',
-      false
-    );
-    const isDashboardTemplatesAssistantToolEnabled = getFeatureFlagClient().getBooleanValue(
-      'assistant.frontend.tools.dashboardTemplates',
-      false
-    );
+    const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
 
     reportDashboardLibraryInteraction('item_clicked', {
       ...properties,
-      isDashboardTemplatesAssistantEnabled:
-        isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled,
+      isDashboardTemplatesAssistantEnabled,
     });
   },
-  loaded: (properties: LoadedInteractionProperties) => {
-    const isDashboardTemplatesAssistantButtonEnabled = getFeatureFlagClient().getBooleanValue(
-      'dashboardTemplatesAssistantButton',
-      false
-    );
-    const isDashboardTemplatesAssistantToolEnabled = getFeatureFlagClient().getBooleanValue(
-      'assistant.frontend.tools.dashboardTemplates',
-      false
-    );
-
+  loaded: async (properties: LoadedInteractionProperties) => {
+    const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
     reportDashboardLibraryInteraction('loaded', {
       ...properties,
-      isDashboardTemplatesAssistantEnabled:
-        isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled,
+      isDashboardTemplatesAssistantEnabled,
     });
   },
 };
