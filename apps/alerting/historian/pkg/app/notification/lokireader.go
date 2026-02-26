@@ -111,6 +111,126 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 	}, nil
 }
 
+// QueryAlerts retrieves individual alert entries from an external Loki instance.
+func (h *LokiReader) QueryAlerts(ctx context.Context, query AlertQuery) (AlertQueryResult, error) {
+	logql, err := buildAlertQuery(query)
+	if err != nil {
+		return AlertQueryResult{}, err
+	}
+
+	now := time.Now().UTC()
+	from := now.Add(-defaultQueryRange)
+	if query.From != nil {
+		from = *query.From
+	}
+	to := now
+	if query.To != nil {
+		to = *query.To
+	}
+
+	limit := int64(defaultLimit)
+	if query.Limit != nil {
+		limit = *query.Limit
+	}
+
+	if limit > maxLimit {
+		return AlertQueryResult{}, fmt.Errorf("%w: limit (%d) over maximum allowed (%d)", ErrInvalidQuery, limit, maxLimit)
+	}
+
+	alerts, err := h.runAlertQuery(ctx, logql, from, to, limit)
+	if err != nil {
+		return AlertQueryResult{}, err
+	}
+
+	// Prune alerts to the requested limit.
+	if int64(len(alerts)) > limit {
+		alerts = alerts[:limit]
+	}
+
+	return AlertQueryResult{
+		Alerts: alerts,
+	}, nil
+}
+
+// buildAlertQuery creates the LogQL to perform the requested alert query.
+func buildAlertQuery(query AlertQuery) (string, error) {
+	selectors := []string{
+		fmt.Sprintf(`%s=%q`, historian.LabelFrom, historian.LabelFromValueAlerts),
+	}
+
+	logql := fmt.Sprintf(`{%s}`, strings.Join(selectors, `,`))
+
+	// UUID filtering uses structured metadata.
+	if query.Uuid != nil && *query.Uuid != "" {
+		logql += fmt.Sprintf(` | uuid = %q`, *query.Uuid)
+	}
+
+	logql += ` | json`
+
+	return logql, nil
+}
+
+// runAlertQuery runs the query and collects alert results.
+func (l *LokiReader) runAlertQuery(ctx context.Context, logql string, from, to time.Time, limit int64) ([]AlertEntry, error) {
+	alerts := make([]AlertEntry, 0)
+	r, err := l.client.RangeQuery(ctx, logql, from.UnixNano(), to.UnixNano(), limit)
+	if err != nil {
+		return nil, fmt.Errorf("loki range query: %w", err)
+	}
+
+	for _, stream := range r.Data.Result {
+		for _, s := range stream.Values {
+			alert, err := parseLokiAlertEntry(s)
+			if err != nil {
+				l.logger.Warn("Ignoring alert history entry", "err", err)
+				continue
+			}
+			alerts = append(alerts, alert)
+		}
+	}
+
+	// Sort entries by timestamp (descending - newest first).
+	sort.Slice(alerts, func(i, j int) bool {
+		return alerts[i].StartsAt.After(alerts[j].StartsAt)
+	})
+
+	l.logger.Debug("Alert history query complete", "alerts", len(alerts))
+
+	return alerts, nil
+}
+
+// parseLokiAlertEntry unmarshals the JSON stored in an alert entry.
+func parseLokiAlertEntry(s lokiclient.Sample) (AlertEntry, error) {
+	var lokiEntry historian.NotificationHistoryLokiEntryAlert
+	err := json.Unmarshal([]byte(s.V), &lokiEntry)
+	if err != nil {
+		return AlertEntry{}, fmt.Errorf("failed to unmarshal alert entry [%s]: %w", s.T, err)
+	}
+
+	if lokiEntry.SchemaVersion != historian.SchemaVersion {
+		return AlertEntry{}, fmt.Errorf("unsupported schema version [%s]: %d", s.T, lokiEntry.SchemaVersion)
+	}
+
+	labels := lokiEntry.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+
+	annotations := lokiEntry.Annotations
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	return AlertEntry{
+		Status:      lokiEntry.Status,
+		Labels:      labels,
+		Annotations: annotations,
+		StartsAt:    lokiEntry.StartsAt,
+		EndsAt:      lokiEntry.EndsAt,
+		Enrichments: lokiEntry.ExtraData,
+	}, nil
+}
+
 // buildQuery creates the LogQL to perform the requested query.
 func buildQuery(query Query) (string, error) {
 	selectors := []string{

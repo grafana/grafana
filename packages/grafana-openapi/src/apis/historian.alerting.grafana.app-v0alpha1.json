@@ -1063,6 +1063,49 @@
         }
       },
       "parameters": []
+    },
+    "/notifications/queryalerts": {
+      "post": {
+        "operationId": "createNotificationsqueryalerts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotificationsqueryalertsRequestBody"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotificationsqueryalertsRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNotificationsqueryalertsResponse"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNotificationsqueryalertsResponse"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNotificationsqueryalertsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": []
     }
   },
   "components": {
@@ -1302,6 +1345,74 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CreateNotificationqueryNotificationEntry"
+            }
+          }
+        }
+      },
+      "CreateNotificationsqueryalertsNotificationEntryAlert": {
+        "type": "object",
+        "required": ["status", "labels", "annotations", "startsAt", "endsAt"],
+        "properties": {
+          "annotations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "enrichments": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateNotificationsqueryalertsRequestBody": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "description": "From is the starting timestamp for the query.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "limit": {
+            "description": "Limit is the maximum number of entries to return.",
+            "type": "integer"
+          },
+          "to": {
+            "description": "To is the ending timestamp for the query.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "uuid": {
+            "description": "UUID filters the alerts to those belonging to a specific alert rule.",
+            "type": "string"
+          }
+        }
+      },
+      "CreateNotificationsqueryalertsResponse": {
+        "type": "object",
+        "required": ["alerts"],
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateNotificationsqueryalertsNotificationEntryAlert"
             }
           }
         }

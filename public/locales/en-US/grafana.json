@@ -10965,7 +10965,9 @@
     "manage-folder-owner-alert-text": "Folders owned by teams that you belong to will be prioritised for you in the folder picker and other locations.",
     "manage-folder-owner-alert-title": "Select a team to own this folder to help organise your resources.",
     "save-owner": "Save owner",
-    "select-owner": "Select an owner"
+    "select-owner": "Select an owner",
+    "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
+    "team-not-found": "[Unknown team]"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"

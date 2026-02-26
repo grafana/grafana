@@ -402,8 +402,8 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		})
 	}
 
-	// Test Git repository path validation - ensure child paths are rejected
-	t.Run("Git repository path validation", func(t *testing.T) {
+	// Test Git repository path validation - ensure child paths are rejected when sync is enabled
+	t.Run("Git repository path validation with sync enabled", func(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-path-validation"
 
 		pathTests := []struct {
@@ -445,7 +445,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 					"Name":        repoName,
 					"URL":         baseURL,
 					"Path":        test.path,
-					"SyncEnabled": false, // Disable sync to avoid external dependencies
+					"SyncEnabled": true, // Sync enabled triggers path conflict checks
 					"SyncTarget":  "folder",
 				})
 
@@ -464,6 +464,91 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	// Test that path conflicts are skipped when sync is disabled (wizard onboarding flow).
+	// The wizard creates repositories without sync first, then the user configures the path
+	// and enables sync in a later step. Conflict checks should only fire when sync is enabled.
+	t.Run("Git repository path validation allows conflicting paths when sync is disabled", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-path-sync-disabled"
+
+		// Create an initial repo with sync disabled and a specific path
+		firstRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-sync-disabled-1",
+			"URL":         baseURL,
+			"Path":        "demo/nested",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "First repository should be created successfully")
+
+		// Create a second repo pointing to same URL with a child path and sync disabled.
+		// This simulates the wizard onboarding flow where sync is not yet enabled.
+		secondRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-sync-disabled-2",
+			"URL":         baseURL,
+			"Path":        "demo/nested/child",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
+
+		// Create a third repo with the same path (duplicate) and sync disabled
+		thirdRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-sync-disabled-3",
+			"URL":         baseURL,
+			"Path":        "demo/nested",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Third repository with duplicate path should succeed when sync is disabled")
+
+		// Create a fourth repo with empty path (root) and sync disabled - wizard step 1 scenario
+		fourthRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-sync-disabled-4",
+			"URL":         baseURL,
+			"Path":        "",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		_, err = helper.Repositories.Resource.Create(ctx, fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Fourth repository with empty path should succeed when sync is disabled")
+	})
+
+	// Test that enabling sync on a repo with a conflicting path is rejected
+	t.Run("Git repository path conflict detected when enabling sync", func(t *testing.T) {
+		baseURL := "https://github.com/grafana/test-repo-enable-sync-conflict"
+
+		// Create an initial repo with sync enabled and a specific path
+		firstRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-enable-sync-1",
+			"URL":         baseURL,
+			"Path":        "demo/nested",
+			"SyncEnabled": true,
+			"SyncTarget":  "folder",
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "First repository should be created successfully")
+
+		// Create second repo with conflicting child path but sync disabled (should succeed)
+		secondRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+			"Name":        "git-enable-sync-2",
+			"URL":         baseURL,
+			"Path":        "demo/nested/child",
+			"SyncEnabled": false,
+			"SyncTarget":  "folder",
+		})
+		created, err := helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
+
+		// Now try to enable sync on the second repo - this should fail due to parent/child conflict
+		created.Object["spec"].(map[string]interface{})["sync"].(map[string]interface{})["enabled"] = true
+		_, err = helper.Repositories.Resource.Update(ctx, created, metav1.UpdateOptions{FieldValidation: "Strict"})
+		require.Error(t, err, "Enabling sync should fail due to parent/child path conflict")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())
 	})
 
 	t.Run("should update sync interval", func(t *testing.T) {
