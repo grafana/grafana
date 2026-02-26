@@ -113,10 +113,16 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       })
     );
 
+    let dashId = 0;
+    if (v.metadata.labels?.[DeprecatedInternalId]) {
+      dashId = parseInt(v.metadata.labels[DeprecatedInternalId], 10);
+    }
+
     return {
       uid: v.metadata.name,
       version: v.metadata.generation ?? 0,
       status: 'success',
+      id: dashId,
       url,
       slug,
     };

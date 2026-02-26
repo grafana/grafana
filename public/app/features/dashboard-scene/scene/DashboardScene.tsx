@@ -112,6 +112,9 @@ type CopiedPanelStyles = {
 };
 
 export interface DashboardSceneState extends SceneObjectState {
+  /** @deprecated */
+  id?: number | undefined;
+
   /** The title */
   title: string;
   /** The description */
@@ -247,7 +250,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       dashboardWatcher.watch(this.state.uid);
     }
 
-    let clearKeyBindings = () => {};
+    let clearKeyBindings = () => { };
     if (!config.publicDashboardAccessToken) {
       clearKeyBindings = setupKeyboardShortcuts(this);
     }
@@ -1226,7 +1229,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
   private _emptySet = new Set<string>();
 
-  public constructor(private _dashboard: DashboardScene) {}
+  public constructor(private _dashboard: DashboardScene) { }
 
   getNames(): Set<string> {
     return this._emptySet;
