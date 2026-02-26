@@ -16,7 +16,6 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -61,7 +60,7 @@ func TestGetConnectionByUID(t *testing.T) {
 		statusCode    int
 		responseBody  []byte
 		expectedError string
-		expectedItems []queryV0.DataSourceConnection
+		expectedItems []dsV0.DataSourceConnection
 	}{
 		{
 			name:          "connection not found returns error",
@@ -81,19 +80,19 @@ func TestGetConnectionByUID(t *testing.T) {
 			name:       "multiple connections returned",
 			uid:        "test-uid",
 			statusCode: http.StatusOK,
-			responseBody: mustMarshal(t, queryV0.DataSourceConnectionList{
-				Items: []queryV0.DataSourceConnection{{Name: "conn1"}, {Name: "conn2"}},
+			responseBody: mustMarshal(t, dsV0.DataSourceConnectionList{
+				Items: []dsV0.DataSourceConnection{{Name: "conn1"}, {Name: "conn2"}},
 			}),
-			expectedItems: []queryV0.DataSourceConnection{{Name: "conn1"}, {Name: "conn2"}},
+			expectedItems: []dsV0.DataSourceConnection{{Name: "conn1"}, {Name: "conn2"}},
 		},
 		{
 			name:       "single connection returned",
 			uid:        "test-uid",
 			statusCode: http.StatusOK,
-			responseBody: mustMarshal(t, queryV0.DataSourceConnectionList{
-				Items: []queryV0.DataSourceConnection{{Name: "test-uid"}},
+			responseBody: mustMarshal(t, dsV0.DataSourceConnectionList{
+				Items: []dsV0.DataSourceConnection{{Name: "test-uid"}},
 			}),
-			expectedItems: []queryV0.DataSourceConnection{{Name: "test-uid"}},
+			expectedItems: []dsV0.DataSourceConnection{{Name: "test-uid"}},
 		},
 	}
 
