@@ -1,4 +1,5 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { LoadingState, PanelData, PanelModel, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
@@ -10,6 +11,22 @@ import { VisualizationSuggestions } from './VisualizationSuggestions';
 jest.mock('../../suggestions/getAllSuggestions');
 jest.mock('./VisualizationSuggestionCard', () => ({
   VisualizationSuggestionCard: () => <div data-testid="suggestion-card">Mocked Card</div>,
+}));
+jest.mock('./VizTypePickerPlugin', () => ({
+  VizTypePickerPlugin: ({ plugin, onSelect }: { plugin: { id: string; name: string }; onSelect: () => void }) => (
+    <button data-testid={`no-data-panel-${plugin.id}`} onClick={() => onSelect()}>
+      {plugin.name}
+    </button>
+  ),
+}));
+jest.mock('../../state/util', () => ({
+  ...jest.requireActual('../../state/util'),
+  getAllPanelPluginMeta: () => [
+    { id: 'timeseries', name: 'Time series', sort: 0, hideFromList: false },
+    { id: 'text', name: 'Text', sort: 1, hideFromList: false },
+    { id: 'dashlist', name: 'Dashboard list', sort: 2, hideFromList: false },
+    { id: 'alertlist', name: 'Alert list', sort: 3, hideFromList: false },
+  ],
 }));
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -325,6 +342,91 @@ describe('VisualizationSuggestions', () => {
 
     await waitFor(() => {
       expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ pluginId: 'timeseries' }));
+    });
+  });
+
+  describe('no-data panel list', () => {
+    const emptyData: PanelData = {
+      series: [],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+    };
+
+    async function waitForSuggestionsToLoad() {
+      await waitFor(() => {
+        expect(mockGetAllSuggestions).toHaveBeenCalled();
+      });
+    }
+
+    it('should show panels without data when there is no data', async () => {
+      render(<VisualizationSuggestions onChange={jest.fn()} data={emptyData} panel={undefined} searchQuery="" />);
+
+      await waitForSuggestionsToLoad();
+
+      await waitFor(() => {
+        expect(screen.getByText('Run a query to start seeing suggested visualizations')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('OR')).toBeInTheDocument();
+      expect(screen.getByText('Start without data')).toBeInTheDocument();
+      expect(screen.getByText('Text')).toBeInTheDocument();
+      expect(screen.getByText('Dashboard list')).toBeInTheDocument();
+      expect(screen.getByText('Alert list')).toBeInTheDocument();
+    });
+
+    it('should not show panels without data when data has series', async () => {
+      const dataWithSeries: PanelData = {
+        series: [
+          toDataFrame({
+            fields: [
+              { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+              { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+            ],
+          }),
+        ],
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+        structureRev: 1,
+      };
+
+      render(<VisualizationSuggestions onChange={jest.fn()} data={dataWithSeries} panel={undefined} searchQuery="" />);
+
+      await waitForSuggestionsToLoad();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('suggestion-card')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText('Start without data')).not.toBeInTheDocument();
+    });
+
+    it('should call onChange when a no-data panel is clicked', async () => {
+      const mockOnChange = jest.fn();
+
+      render(<VisualizationSuggestions onChange={mockOnChange} data={emptyData} panel={undefined} searchQuery="" />);
+
+      await waitForSuggestionsToLoad();
+
+      await waitFor(() => {
+        expect(screen.getByText('Text')).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByText('Text'));
+
+      expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ pluginId: 'text' }));
+    });
+
+    it('should filter no-data panels by search query', async () => {
+      render(<VisualizationSuggestions onChange={jest.fn()} data={emptyData} panel={undefined} searchQuery="text" />);
+
+      await waitForSuggestionsToLoad();
+
+      await waitFor(() => {
+        expect(screen.getByText('Text')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText('Dashboard list')).not.toBeInTheDocument();
+      expect(screen.queryByText('Alert list')).not.toBeInTheDocument();
     });
   });
 });

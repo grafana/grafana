@@ -21,6 +21,18 @@ import { AlertRule, QueryOptionField, Transformation } from './types';
 import { getEditorType, getTransformId } from './utils';
 
 /**
+ * Keeps query selection stable across refId renames.
+ * When the currently selected query is renamed, selection should follow the new refId.
+ */
+export function getNextSelectedQueryRefId(
+  currentSelectedRefId: string | null,
+  originalRefId: string,
+  updatedRefId: string
+) {
+  return currentSelectedRefId === originalRefId ? updatedRefId : currentSelectedRefId;
+}
+
+/**
  * Bridge component that subscribes to Scene state and provides it via React Context.
  * Wraps children with QueryEditorProvider so both sidebar and editor can access context.
  */
@@ -264,6 +276,9 @@ export function QueryEditorContextWrapper({
       updateQueries: dataPane.updateQueries,
       updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
         dataPane.updateSelectedQuery(updatedQuery, originalRefId);
+        setSelectedQueryRefId((currentSelectedRefId) =>
+          getNextSelectedQueryRefId(currentSelectedRefId, originalRefId, updatedQuery.refId)
+        );
       },
       addQuery: dataPane.addQuery,
       deleteQuery: dataPane.deleteQuery,

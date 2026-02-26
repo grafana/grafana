@@ -5682,10 +5682,7 @@
       "empty-state-message": "Führen Sie eine Abfrage aus, um sie hier zu visualisieren, oder gehen Sie weiter zu allen Visualisierungen, um andere Panel-Typen hinzuzufügen",
       "menu-open-panel-editor": "Konfigurieren",
       "menu-use-library-panel": "Bibliotheks-Panel verwenden",
-      "missing-config": "Fehlende Panel-Konfiguration",
-      "suggestions": {
-        "empty-state-message": "Führen Sie eine Abfrage aus, um vorgeschlagene Visualisierungen anzuzeigen"
-      }
+      "missing-config": "Fehlende Panel-Konfiguration"
     },
     "new-panel-title": "Neues Panel",
     "on-create-new-row": {
@@ -6920,11 +6917,11 @@
       "static-options-legend": "Statische Optionen"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Erweiterte Optionen",
         "classic": "Klassisch",
         "json": "JSON",
-        "v1-resource": "V1-Ressource",
         "v2-resource": "V2-Ressource",
         "yaml": "YAML"
       },
@@ -11924,6 +11921,10 @@
         "title": "Fehler",
         "try-again-button": "Erneut versuchen"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Unbekannter Visualisierungstyp"
     },
     "viz-type-picker": {
@@ -12634,6 +12635,9 @@
       "label-read-only": "Nur lesen",
       "label-sync-interval": "Synchronisierungsintervall (Sekunden)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Keine passenden Ergebnisse zu Ihrer Abfrage",
       "partial-managed": "{{managedCount}}/{{resourceCount}} Ressourcen werden von Git sync verwaltet.",
@@ -12767,6 +12771,12 @@
       "show-less": "weniger anzeigen",
       "show-more": "mehr anzeigen",
       "truncated": "Nachricht gekürzt"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13300,7 +13310,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13310,9 +13321,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13356,17 +13368,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Karte {{id}} auswählen",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
       "transformations": "Transformationen",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
@@ -13567,6 +13576,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Panels einschließen",
       "remove-datasource-filter": "Datenquelle: {{datasource}}",
       "sort-placeholder": "Sortieren",

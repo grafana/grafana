@@ -5734,10 +5734,7 @@
       "empty-state-message": "Выполните запрос, чтобы запустить визуализацию здесь, или перейдите ко всем визуализациям, чтобы добавить другие типы панелей",
       "menu-open-panel-editor": "Настроить",
       "menu-use-library-panel": "Использовать панель библиотеки",
-      "missing-config": "Отсутствует конфигурация панели",
-      "suggestions": {
-        "empty-state-message": "Выполните запрос, чтобы посмотреть предлагаемые визуализации"
-      }
+      "missing-config": "Отсутствует конфигурация панели"
     },
     "new-panel-title": "Новая панель",
     "on-create-new-row": {
@@ -6978,11 +6975,11 @@
       "static-options-legend": "Статические параметры"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Дополнительные параметры",
         "classic": "Классический",
         "json": "JSON",
-        "v1-resource": "Ресурс V1",
         "v2-resource": "Ресурс V2",
         "yaml": "YAML"
       },
@@ -12032,6 +12029,10 @@
         "title": "Ошибка",
         "try-again-button": "Повторить попытку"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Неизвестный тип визуализации"
     },
     "viz-type-picker": {
@@ -12750,6 +12751,9 @@
       "label-read-only": "Только для чтения",
       "label-sync-interval": "Интервал синхронизации (в секундах)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "По вашему запросу ничего не найдено",
       "partial-managed": "{{managedCount}} из {{resourceCount}} ресурсов управляются процессом Git Sync.",
@@ -12887,6 +12891,12 @@
       "show-less": "меньше",
       "show-more": "больше",
       "truncated": "Сообщение усечено"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13422,7 +13432,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13432,9 +13443,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13478,17 +13490,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Выбрать карту {{id}}",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
       "transformations": "Преобразования",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_few": "",
       "alerts_many": "",
@@ -13697,6 +13706,7 @@
       "panel-type": "Панель: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Включить панели",
       "remove-datasource-filter": "Источник данных: {{datasource}} ",
       "sort-placeholder": "Сортировать",

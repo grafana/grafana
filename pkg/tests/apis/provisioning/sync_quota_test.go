@@ -38,9 +38,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"testdata/all-panels.json":   "dashboard1.json",
 				"testdata/text-options.json": "dashboard2.json",
 			},
-			SkipResourceAssertions: true, // We'll check quota condition instead
+			SkipSync:               true, // Prevent controller auto-sync racing with file copy
+			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to be exceeded
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
@@ -70,9 +72,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 1 dashboard was created
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -113,9 +117,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"testdata/all-panels.json":   "dashboard1.json",
 				"testdata/text-options.json": "dashboard2.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to be exceeded after initial sync
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
@@ -168,9 +174,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -253,9 +261,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"testdata/all-panels.json":   "subfolder/dashboard1.json",
 				"testdata/text-options.json": "subfolder/nested/dashboard2.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -373,9 +383,11 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 				"testdata/text-options.json":  "dashboard2.json",
 				"testdata/timeline-demo.json": "dashboard3.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to be exceeded after initial sync
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
