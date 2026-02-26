@@ -7,6 +7,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import {
   getNotificationConfigNavId,
+  isTabActive,
   useContactPointsNav,
   useNotificationConfigNav,
   useNotificationPoliciesNav,
@@ -123,6 +124,34 @@ describe('useNotificationConfigNav', () => {
       expect(activeTabs?.[0].id).toBe('notification-config-time-intervals');
     });
 
+    it('should only mark the templates tab as active when on templates path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/notifications/templates');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-templates');
+    });
+
+    it('should only mark the contact points tab as active when on contact points path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/notifications');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-contact-points');
+    });
+
     it('should only mark the notification policies tab as active when on routes path', () => {
       mockHasPermission.mockReturnValue(true);
       mockLocation('/alerting/routes');
@@ -135,6 +164,20 @@ describe('useNotificationConfigNav', () => {
 
       expect(activeTabs).toHaveLength(1);
       expect(activeTabs?.[0].id).toBe('notification-config-policies');
+    });
+
+    it('should correctly activate tabs when URL has extra segments beyond the tab path', () => {
+      mockHasPermission.mockReturnValue(true);
+      mockLocation('/alerting/routes/mute-timing/new/123');
+
+      const { result } = renderHook(() => useNotificationConfigNav());
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const tabs = result.current.pageNav?.children;
+      const activeTabs = tabs?.filter((tab) => tab.active);
+
+      expect(activeTabs).toHaveLength(1);
+      expect(activeTabs?.[0].id).toBe('notification-config-time-intervals');
     });
 
     it('should not show tabs bar when only one tab is visible', () => {
@@ -179,6 +222,43 @@ describe('getNotificationConfigNavId', () => {
   it('should return receivers when V2 is disabled', () => {
     config.featureToggles = { ...originalFeatureToggles, alertingNavigationV2: false };
     expect(getNotificationConfigNavId()).toBe('receivers');
+  });
+});
+
+describe('isTabActive', () => {
+  it('should return true when the location exactly matches the tab path', () => {
+    expect(isTabActive('/alerting/routes', '/alerting/routes')).toBe(true);
+    expect(isTabActive('/alerting/notifications', '/alerting/notifications')).toBe(true);
+  });
+
+  it('should return true when the location is a deeper URL under the tab path', () => {
+    expect(isTabActive('/alerting/routes/edit/123', '/alerting/routes')).toBe(true);
+    expect(isTabActive('/alerting/routes/mute-timing/new/456', '/alerting/routes/mute-timing')).toBe(true);
+  });
+
+  it('should return false when the location does not match the tab path', () => {
+    expect(isTabActive('/alerting/notifications', '/alerting/routes')).toBe(false);
+    expect(isTabActive('/alerting/alerts', '/alerting/routes')).toBe(false);
+  });
+
+  it('should return false when a more specific sub-path matches instead', () => {
+    // /alerting/routes/mute-timing is a sub-path of /alerting/routes
+    expect(isTabActive('/alerting/routes/mute-timing', '/alerting/routes')).toBe(false);
+    expect(isTabActive('/alerting/routes/mute-timing/new', '/alerting/routes')).toBe(false);
+
+    // /alerting/notifications/templates is a sub-path of /alerting/notifications
+    expect(isTabActive('/alerting/notifications/templates', '/alerting/notifications')).toBe(false);
+    expect(isTabActive('/alerting/notifications/templates/edit', '/alerting/notifications')).toBe(false);
+  });
+
+  it('should not treat a path sharing the same prefix but without a segment boundary as a match', () => {
+    expect(isTabActive('/alerting/routesx', '/alerting/routes')).toBe(false);
+    expect(isTabActive('/alerting/notificationsx', '/alerting/notifications')).toBe(false);
+  });
+
+  it('should not treat a sub-path prefix without a segment boundary as a more specific match', () => {
+    expect(isTabActive('/alerting/routes/mute-timingx', '/alerting/routes')).toBe(true);
+    expect(isTabActive('/alerting/notifications/templatesx', '/alerting/notifications')).toBe(true);
   });
 });
 

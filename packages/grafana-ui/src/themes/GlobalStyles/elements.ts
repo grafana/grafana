@@ -2,7 +2,6 @@ import { css } from '@emotion/react';
 
 import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 
-import { getFeatureToggle } from '../../utils/featureToggle';
 import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2) {
@@ -60,7 +59,6 @@ export function getElementStyles(theme: GrafanaTheme2) {
       // see https://github.com/rsms/inter/issues/222
       fontVariantLigatures: 'no-contextual',
       ...theme.typography.body,
-      fontVariantNumeric: getFeatureToggle('tabularNumbers') ? 'tabular-nums' : 'initial',
     },
 
     'body *': {

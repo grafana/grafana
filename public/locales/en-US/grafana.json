@@ -5682,10 +5682,7 @@
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
-      "missing-config": "Missing panel configuration",
-      "suggestions": {
-        "empty-state-message": "Run a query to start seeing suggested visualizations"
-      }
+      "missing-config": "Missing panel configuration"
     },
     "new-panel-title": "New panel",
     "on-create-new-row": {
@@ -6920,11 +6917,11 @@
       "static-options-legend": "Static options"
     },
     "resource-export": {
+      "classic-v2-warning": "This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the classic format and may be lost.",
       "label": {
         "advanced-options": "Advanced options",
         "classic": "Classic",
         "json": "JSON",
-        "v1-resource": "V1 Resource",
         "v2-resource": "V2 Resource",
         "yaml": "YAML"
       },
@@ -11924,6 +11921,10 @@
         "title": "Error",
         "try-again-button": "Try again"
       },
+      "or-divider": "OR",
+      "run-query-hint": "Run a query to start seeing suggested visualizations",
+      "start-without-data-description": "Add panels that don't require a query",
+      "start-without-data-title": "Start without data",
       "unknown-viz-type": "Unknown visualization type"
     },
     "viz-type-picker": {
@@ -12634,6 +12635,9 @@
       "label-read-only": "Read only",
       "label-sync-interval": "Sync Interval (seconds)"
     },
+    "folder-permissions": {
+      "loading": "Loading..."
+    },
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
@@ -12767,6 +12771,12 @@
       "show-less": "show less",
       "show-more": "show more",
       "truncated": "Message truncated"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
+      "error-title": "Unable to check folder metadata status.",
+      "message": "Since this folder doesn't contain a metadata file, the folder ID is based on the folder path. If you move or rename the folder, the folder ID will change, and permissions may no longer apply to the folder.",
+      "title": "This folder is missing metadata."
     },
     "mode-options": {
       "disabled": {
@@ -13300,7 +13310,8 @@
       "cache-timeout-tooltip": "If your time series store has a query cache this option can override the default cache timeout. Specify a numeric value in seconds.",
       "cache-ttl": "Cache TTL",
       "cache-ttl-tooltip": "Cache time-to-live: How long results from the queries in this panel will be cached, in milliseconds.",
-      "collapse": "Collapse query options sidebar",
+      "hide-time-override": "Hide time info",
+      "hide-time-override-tooltip": "Hides the time override displayed in the panel header when relative time or time shift is set.",
       "interval": "Interval",
       "interval-tooltip": "The evaluated interval that is sent to data source and is used in $__interval and $__interval_ms.",
       "max-data-points": "Max data points",
@@ -13310,9 +13321,10 @@
       "no-limit": "No limit",
       "relative-time": "Relative time",
       "relative-time-tooltip": "Overrides the relative time range for individual panels. For example, to configure the Last 5 minutes use now-5m.",
+      "time-range-max-data-points": "Time range / max data points",
       "time-shift": "Time shift",
       "time-shift-tooltip": "Overrides the time range for individual panels by shifting its start and end relative to the time picker.",
-      "title": "Query Options"
+      "width-of-panel": "Width of panel"
     },
     "edit-query-name": "Edit query name",
     "footer": {
@@ -13356,13 +13368,9 @@
       "add-saved-query": "Add saved query",
       "add-transformation": "Add transformation",
       "add-transformation-below": "Add transformation below {{id}}",
-      "alert-indicator": {
-        "button-label": "View alert rules",
-        "button-label-hide": "Hide alert rules",
-        "close": "Close"
-      },
       "alerts_one": "Alerts ({{count}})",
       "alerts_other": "Alerts ({{count}})",
+      "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
       "data": "Data",
       "footer-items_one": "{{count}} item",
@@ -13370,7 +13378,8 @@
       "loading-queries-transformations": "Loading queries and transformations",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
-      "transformations": "Transformations"
+      "transformations": "Transformations",
+      "view-toggle": "View"
     },
     "transformation-debug": {
       "input-data": "Input data",
@@ -13567,6 +13576,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "Created by me",
       "include-panels": "Include panels",
       "remove-datasource-filter": "Datasource: {{datasource}}",
       "sort-placeholder": "Sort",

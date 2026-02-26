@@ -37,7 +37,6 @@ export function ResourceExport({
   onViewYAML,
 }: Props) {
   const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
-  const initialSaveModelVersion = dashboardJson.value?.initialSaveModelVersion;
   const isV2Dashboard =
     dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
   const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
@@ -59,10 +58,6 @@ export function ResourceExport({
       value: ExportFormat.Classic,
     },
     {
-      label: t('dashboard-scene.resource-export.label.v1-resource', 'V1 Resource'),
-      value: ExportFormat.V1Resource,
-    },
-    {
       label: t('dashboard-scene.resource-export.label.v2-resource', 'V2 Resource'),
       value: ExportFormat.V2Resource,
     },
@@ -78,17 +73,15 @@ export function ResourceExport({
       >
         <Box marginTop={2}>
           <Stack gap={1} direction="column">
-            {initialSaveModelVersion === 'v1' && (
-              <Stack gap={1} alignItems="center">
-                <Label>{switchExportModeLabel}</Label>
-                <RadioButtonGroup
-                  options={exportResourceOptions}
-                  value={exportFormat}
-                  onChange={(value) => onExportFormatChange(value)}
-                  aria-label={switchExportModeLabel}
-                />
-              </Stack>
-            )}
+            <Stack gap={1} alignItems="center">
+              <Label>{switchExportModeLabel}</Label>
+              <RadioButtonGroup
+                options={exportResourceOptions}
+                value={exportFormat}
+                onChange={(value) => onExportFormatChange(value)}
+                aria-label={switchExportModeLabel}
+              />
+            </Stack>
 
             {exportFormat !== ExportFormat.Classic && (
               <Stack gap={1} alignItems="center">
@@ -108,9 +101,7 @@ export function ResourceExport({
         </Box>
       </QueryOperationRow>
 
-      {(isV2Dashboard ||
-        exportFormat === ExportFormat.Classic ||
-        (initialSaveModelVersion === 'v2' && exportFormat === ExportFormat.V1Resource)) && (
+      {(isV2Dashboard || exportFormat === ExportFormat.Classic || exportFormat === ExportFormat.V2Resource) && (
         <Stack gap={1} alignItems="start">
           <Label>
             <Stack gap={0.5} alignItems="center">
@@ -127,6 +118,15 @@ export function ResourceExport({
             data-testid={selector.exportExternallyToggle}
           />
         </Stack>
+      )}
+
+      {dashboardJson.value?.initialSaveModelVersion === 'v2' && exportFormat === ExportFormat.Classic && (
+        <Alert title="" severity="warning" topSpacing={2}>
+          <Trans i18nKey="dashboard-scene.resource-export.classic-v2-warning">
+            This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the
+            classic format and may be lost.
+          </Trans>
+        </Alert>
       )}
 
       {showV2LibPanelAlert && (

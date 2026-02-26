@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externes",
-      "extra-config-warning": {
-        "content": "Cette vue présente la configuration fusionnée de l’Alertmanager Grafana avec les configurations importées. Cette vue fusionnée est en lecture seule dans l’interface utilisateur.",
-        "title": "Configuration importée"
-      },
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
     "alert-menu": {
@@ -5003,6 +4999,7 @@
       "description-color-annotation-event-markers": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
       "description-enabled-annotation-query-issued-every-dashboard": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
       "description-hidden": "Les requêtes d’annotation peuvent être activées ou désactivées en haut du tableau de bord. Lorsque cette option est cochée, ce bouton sera masqué.",
+      "error-loading-panels": "",
       "label-color": "Couleur",
       "label-data-source": "Source de données",
       "label-enabled": "Activé",
@@ -5685,10 +5682,7 @@
       "empty-state-message": "Exécutez une requête pour la visualiser ici ou accédez à toutes les visualisations, afin d’ajouter d’autres types de panneaux",
       "menu-open-panel-editor": "Configurer",
       "menu-use-library-panel": "Utiliser le panneau de bibliothèque",
-      "missing-config": "Configuration de panneau manquante",
-      "suggestions": {
-        "empty-state-message": "Exécutez une requête pour commencer à voir les visualisations suggérées"
-      }
+      "missing-config": "Configuration de panneau manquante"
     },
     "new-panel-title": "Nouveau panneau",
     "on-create-new-row": {
@@ -6444,6 +6438,7 @@
       "delete": "Supprimer",
       "description-color-annotation-event-markers": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
       "description-enabled-annotation-query-issued-every-dashboard": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Afficher les contrôles d’annotation dans",
       "label-color": "Couleur",
       "label-data-source": "Source de données",
@@ -6922,11 +6917,11 @@
       "static-options-legend": "Options statiques"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Options avancées",
         "classic": "Classique",
         "json": "JSON",
-        "v1-resource": "Ressource V1",
         "v2-resource": "Ressource V2",
         "yaml": "YAML"
       },
@@ -11926,6 +11921,10 @@
         "title": "Erreur",
         "try-again-button": "Réessayer"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Type de visualisation inconnu"
     },
     "viz-type-picker": {
@@ -12636,6 +12635,9 @@
       "label-read-only": "Lecture seule",
       "label-sync-interval": "Intervalle de synchronisation (secondes)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Aucun résultat ne correspond à votre requête",
       "partial-managed": "{{managedCount}} ressources sur {{resourceCount}} sont gérées par la synchronisation Git.",
@@ -12770,6 +12772,12 @@
       "show-more": "afficher plus",
       "truncated": "Message tronqué"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "La synchronisation complète de l’instance est désactivée, car un autre dossier est déjà synchronisé avec un référentiel.",
@@ -12900,6 +12908,7 @@
       "header-status": "Statut",
       "header-title": "Titre",
       "header-type": "Type",
+      "missing-folder-metadata": "",
       "search-placeholder": "Rechercher par chemin ou par titre",
       "source": "Source",
       "status-pending": "En attente",
@@ -13301,7 +13310,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13311,9 +13321,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13357,16 +13368,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Sélectionner la carte {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
       "transformations": "Transformations",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
@@ -13567,6 +13576,7 @@
       "panel-type": "Panneau : {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Inclure des panneaux",
       "remove-datasource-filter": "Source de données : {{datasource}}",
       "sort-placeholder": "Trier",

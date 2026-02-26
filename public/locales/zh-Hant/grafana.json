@@ -466,10 +466,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "外部 Alertmanager",
-      "extra-config-warning": {
-        "content": "這顯示了 Grafana alertmanager 與匯入設定的合併設定。此合併檢視在使用者介面中是唯讀的。",
-        "title": "已匯入設定"
-      },
       "noOptionsMessage-no-datasources-found": "未找到資料來源"
     },
     "alert-menu": {
@@ -4977,6 +4973,7 @@
       "description-color-annotation-event-markers": "用於註解事件標記的顏色",
       "description-enabled-annotation-query-issued-every-dashboard": "啟用後，每次儀表板重新整理時都會發出註解查詢",
       "description-hidden": "可以在儀表板頂部開啟或關閉註解查詢。選擇此選項後，此切換選項將被隱藏。",
+      "error-loading-panels": "",
       "label-color": "顏色",
       "label-data-source": "資料來源",
       "label-enabled": "已啟用",
@@ -5659,10 +5656,7 @@
       "empty-state-message": "執行查詢以便在此處視覺化呈現，或前往所有視覺化呈現以新增其他面板類型",
       "menu-open-panel-editor": "設定",
       "menu-use-library-panel": "使用資料庫面板",
-      "missing-config": "缺少面板設定",
-      "suggestions": {
-        "empty-state-message": "執行查詢以開始查看建議的視覺化呈現"
-      }
+      "missing-config": "缺少面板設定"
     },
     "new-panel-title": "新的面板",
     "on-create-new-row": {
@@ -6416,6 +6410,7 @@
       "delete": "刪除",
       "description-color-annotation-event-markers": "用於註解事件標記的顏色",
       "description-enabled-annotation-query-issued-every-dashboard": "啟用後，每次儀表板重新整理時都會發出註解查詢",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "在以下方地方顯示註解控制項",
       "label-color": "顏色",
       "label-data-source": "資料來源",
@@ -6893,11 +6888,11 @@
       "static-options-legend": "靜態選項"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "進階選項",
         "classic": "經典",
         "json": "JSON",
-        "v1-resource": "V1 資源",
         "v2-resource": "V2 資源",
         "yaml": "YAML"
       },
@@ -11872,6 +11867,10 @@
         "title": "錯誤",
         "try-again-button": "再試一次"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "未知的視覺化類型"
     },
     "viz-type-picker": {
@@ -12578,6 +12577,9 @@
       "label-read-only": "唯讀",
       "label-sync-interval": "同步間隔（秒）"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "沒有符合您查詢的結果",
       "partial-managed": "{{managedCount}}/{{resourceCount}} 個資源由 Git 同步管理。",
@@ -12710,6 +12712,12 @@
       "show-more": "顯示更多",
       "truncated": "訊息已截斷"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "完整執行個體同步已停用，因為另一個資料夾已與儲存庫同步。",
@@ -12840,6 +12848,7 @@
       "header-status": "狀態",
       "header-title": "標題",
       "header-type": "類型",
+      "missing-folder-metadata": "",
       "search-placeholder": "按路徑或標題搜尋",
       "source": "來源",
       "status-pending": "待處理",
@@ -13240,7 +13249,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13250,9 +13260,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13296,16 +13307,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "選取卡片 {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
       "transformations": "轉換",
+      "view-toggle": "",
       "alerts_other": "",
       "footer-items_other": ""
     },
@@ -13502,6 +13511,7 @@
       "panel-type": "面板：{{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "包含面板",
       "remove-datasource-filter": "資料來源：{{datasource}}",
       "sort-placeholder": "排序",

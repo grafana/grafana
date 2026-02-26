@@ -43,12 +43,21 @@ export const CREATION_ORIGINS = {
   DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD: 'dashboard_library_template_dashboard',
 } as const;
 
+// Which experiment variant the user saw on the empty dashboard page:
+// - SUGGESTED_DASHBOARDS: inline cards with provisioned + community dashboards (suggestedDashboards + dashboardLibrary flags)
+// - BASIC_PROVISIONED_DASHBOARDS: provisioned dashboards only (dashboardLibrary flag, no suggestedDashboards)
+export const FEATURE_VARIANTS = {
+  SUGGESTED_DASHBOARDS: 'suggested_dashboards',
+  BASIC_PROVISIONED_DASHBOARDS: 'basic_provisioned_dashboards',
+} as const;
+
 // Derive types from constant maps for single source of truth
 export type EventLocation = (typeof EVENT_LOCATIONS)[keyof typeof EVENT_LOCATIONS];
 export type ContentKind = (typeof CONTENT_KINDS)[keyof typeof CONTENT_KINDS];
 export type SourceEntryPoint = (typeof SOURCE_ENTRY_POINTS)[keyof typeof SOURCE_ENTRY_POINTS];
 export type DiscoveryMethod = (typeof DISCOVERY_METHODS)[keyof typeof DISCOVERY_METHODS];
 export type CreationOrigin = (typeof CREATION_ORIGINS)[keyof typeof CREATION_ORIGINS];
+export type FeatureVariant = (typeof FEATURE_VARIANTS)[keyof typeof FEATURE_VARIANTS];
 
 type LoadedInteractionProperties = {
   numberOfItems: number;
@@ -173,6 +182,38 @@ export const TemplateDashboardInteractions = {
       ...properties,
       isDashboardTemplatesAssistantEnabled:
         isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled,
+    });
+  },
+};
+
+export const SuggestedDashboardInteractions = {
+  ...DashboardLibraryInteractions,
+  loaded: (properties: LoadedInteractionProperties) => {
+    reportDashboardLibraryInteraction('loaded', {
+      ...properties,
+      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
+    });
+  },
+  itemClicked: (properties: ItemClickedInteractionProperties) => {
+    reportDashboardLibraryInteraction('item_clicked', {
+      ...properties,
+      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
+    });
+  },
+};
+
+export const BasicProvisionedDashboardInteractions = {
+  ...DashboardLibraryInteractions,
+  loaded: (properties: LoadedInteractionProperties) => {
+    reportDashboardLibraryInteraction('loaded', {
+      ...properties,
+      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
+    });
+  },
+  itemClicked: (properties: ItemClickedInteractionProperties) => {
+    reportDashboardLibraryInteraction('item_clicked', {
+      ...properties,
+      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
     });
   },
 };

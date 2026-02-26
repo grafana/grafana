@@ -14,9 +14,9 @@ import (
 )
 
 //go:generate mockery --name FullSyncFn --structname MockFullSyncFn --inpackage --filename full_sync_fn_mock.go --with-expecter
-type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics) error
+type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error
 
-//go:generate mockery -name CompareFn --structname MockCompareFn --inpackage --filename compare_fn_mock.go --with-expecter
+//go:generate mockery --name CompareFn --structname MockCompareFn --inpackage --filename compare_fn_mock.go --with-expecter
 type CompareFn func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, error)
 
 //go:generate mockery --name IncrementalSyncFn --structname MockIncrementalSyncFn --inpackage --filename incremental_sync_fn_mock.go --with-expecter
@@ -51,6 +51,9 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx)
 
+	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
+	quotaTracker := quotas.NewInMemoryQuotaTracker(usage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository)
+
 	var currentRef string
 	versionedRepo, ok := repo.(repository.Versioned)
 	if ok && versionedRepo != nil {
@@ -70,5 +73,5 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 		}
 	}
 	progress.SetMessage(ctx, "full sync")
-	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers, r.metrics)
+	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers, r.metrics, quotaTracker)
 }

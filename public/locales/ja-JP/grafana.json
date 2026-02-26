@@ -466,10 +466,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "外部アラートマネージャー",
-      "extra-config-warning": {
-        "content": "これは、Grafanaアラートマネージャーとインポートされた設定をマージした設定を示しています。このマージされたビューは、UIでは読み取り専用です。",
-        "title": "インポートされた設定"
-      },
       "noOptionsMessage-no-datasources-found": "データソースが見つかりません"
     },
     "alert-menu": {
@@ -4977,6 +4973,7 @@
       "description-color-annotation-event-markers": "注釈イベントマーカーに使用する色",
       "description-enabled-annotation-query-issued-every-dashboard": "有効にすると、ダッシュボードの更新ごとに注釈クエリが発行されます",
       "description-hidden": "ダッシュボード上部で、注釈クエリのオン/オフを切り替えられます。このオプションをオンにすると、このトグルは非表示になります。",
+      "error-loading-panels": "",
       "label-color": "色",
       "label-data-source": "データソース",
       "label-enabled": "有効化",
@@ -5659,10 +5656,7 @@
       "empty-state-message": "クエリを実行してここで可視化するか、すべての視覚化に移動して他のパネルタイプを追加します",
       "menu-open-panel-editor": "構成",
       "menu-use-library-panel": "ライブラリパネルを使用",
-      "missing-config": "パネル構成がありません",
-      "suggestions": {
-        "empty-state-message": "クエリを実行して、推奨される視覚化を確認できます"
-      }
+      "missing-config": "パネル構成がありません"
     },
     "new-panel-title": "新規パネル",
     "on-create-new-row": {
@@ -6416,6 +6410,7 @@
       "delete": "削除",
       "description-color-annotation-event-markers": "注釈イベントマーカーに使用する色",
       "description-enabled-annotation-query-issued-every-dashboard": "有効にすると、ダッシュボードの更新ごとに注釈クエリが発行されます",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "注釈コントロールの表示場所",
       "label-color": "色",
       "label-data-source": "データソース",
@@ -6893,11 +6888,11 @@
       "static-options-legend": "スタティックオプション"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "詳細オプション",
         "classic": "クラシック",
         "json": "JSON",
-        "v1-resource": "V1リソース",
         "v2-resource": "V2リソース",
         "yaml": "YAML"
       },
@@ -11872,6 +11867,10 @@
         "title": "エラー",
         "try-again-button": "もう一度試す"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "不明な視覚化タイプ"
     },
     "viz-type-picker": {
@@ -12578,6 +12577,9 @@
       "label-read-only": "読み出しのみ",
       "label-sync-interval": "同期間隔 (秒)"
     },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "クエリに一致する結果なし",
       "partial-managed": "{{managedCount}}/{{resourceCount}}件のリソースがGit同期によって管理されています。",
@@ -12710,6 +12712,12 @@
       "show-more": "さらに表示する",
       "truncated": "メッセージが切り捨てられました"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "別のフォルダがすでにリポジトリと同期されているため、完全なインスタンス同期は無効になっています。",
@@ -12840,6 +12848,7 @@
       "header-status": "ステータス",
       "header-title": "タイトル",
       "header-type": "タイプ",
+      "missing-folder-metadata": "",
       "search-placeholder": "パスまたはタイトルで検索",
       "source": "ソース",
       "status-pending": "保留中",
@@ -13240,7 +13249,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13250,9 +13260,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13296,16 +13307,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "カード{{id}}を選択",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
       "transformations": "変換",
+      "view-toggle": "",
       "alerts_other": "",
       "footer-items_other": ""
     },
@@ -13502,6 +13511,7 @@
       "panel-type": "パネル：{{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "パネルを含める",
       "remove-datasource-filter": "データソース：{{datasource}}",
       "sort-placeholder": "並べ替え",

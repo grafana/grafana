@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { getAPINamespace } from '@grafana/api-clients';
 import { getDefaultTimeRange, TimeRange } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
@@ -66,7 +66,6 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
     setError(null);
 
     try {
-      // Filter out Dashboard datasource queries - they are frontend-only and can't be processed by backend
       const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
 
       if (nonDashboardQueries.length === 0) {
@@ -75,13 +74,21 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
         return;
       }
 
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+      const resolvedQueries = nonDashboardQueries.map((query) => {
+        if (!query.datasource && defaultDs) {
+          return { ...query, datasource: { uid: defaultDs.uid, type: defaultDs.type } };
+        }
+        return query;
+      });
+
       const namespace = getAPINamespace();
       const currentTimeRange = timeRange || getDefaultTimeRange();
 
       const response = await getBackendSrv().post<SQLSchemasResponse>(
         `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas`,
         {
-          queries: nonDashboardQueries,
+          queries: resolvedQueries,
           from: currentTimeRange.from.toISOString(),
           to: currentTimeRange.to.toISOString(),
         }
