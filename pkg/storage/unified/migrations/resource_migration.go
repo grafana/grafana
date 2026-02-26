@@ -82,8 +82,8 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, opts RunO
 		// Increase page cache to prevent cache spill during bulk inserts.
 		// When the cache spills, SQLite needs an EXCLUSIVE lock which deadlocks with the
 		// SHARED lock held by the legacy database rows cursor on another connection.
-		// Configurable via [unified_storage] migration_cache_size_kb (default: 50MB).
-		cacheKB := 50000
+		// Configurable via [unified_storage] migration_cache_size_kb (default: 1GB).
+		cacheKB := 1000000
 		if r.cfg.MigrationCacheSizeKB > 0 {
 			cacheKB = r.cfg.MigrationCacheSizeKB
 		}
