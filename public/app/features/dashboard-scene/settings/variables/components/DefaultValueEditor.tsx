@@ -1,4 +1,5 @@
-import { ReactElement } from 'react';
+import { uniqueId } from 'lodash';
+import { ReactElement, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -40,7 +41,13 @@ function DefaultValueRow({ value, options, onChange, onRemove }: DefaultValueRow
   );
 }
 
-export function DefaultValueEditor({ values, options = [], onChange, ...rest }: DefaultValueEditorProps): ReactElement {
+export function DefaultValueEditor({ values, options = [], onChange }: DefaultValueEditorProps): ReactElement {
+  const rowIds = useRef<string[]>([]);
+
+  while (rowIds.current.length < values.length) {
+    rowIds.current.push(uniqueId('default-value-'));
+  }
+
   const onAddValue = () => {
     onChange([...values, { value: '' }]);
   };
@@ -48,6 +55,7 @@ export function DefaultValueEditor({ values, options = [], onChange, ...rest }: 
   const onRemoveValue = (index: number) => {
     const newValues = [...values];
     newValues.splice(index, 1);
+    rowIds.current.splice(index, 1);
     onChange(newValues);
   };
 
@@ -71,7 +79,7 @@ export function DefaultValueEditor({ values, options = [], onChange, ...rest }: 
         <Stack direction="column" gap={0.5}>
           {values.map((value, index) => (
             <DefaultValueRow
-              key={index}
+              key={rowIds.current[index]}
               value={value}
               options={options}
               onChange={(updatedOption) => onChangeValue(index, updatedOption)}
