@@ -63,6 +63,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
         !isTopLevel && styles.rowTitleNested,
         isCollapsed && styles.rowTitleCollapsed
       )}
+      data-testid={selectors.components.DashboardRow.title(title)}
     >
       {!model.hasUniqueTitle() && (
         <Tooltip content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}>
@@ -138,7 +139,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                     ? t('dashboard.rows-layout.row.expand', 'Expand row')
                     : t('dashboard.rows-layout.row.collapse', 'Collapse row')
                 }
-                data-testid={selectors.components.DashboardRow.title(title!)}
+                data-testid={selectors.components.DashboardRow.toggle(title)}
               >
                 <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
                 {!isEditing && titleElement}

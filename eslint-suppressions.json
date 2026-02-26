@@ -509,33 +509,8 @@
       "count": 2
     }
   },
-  "packages/grafana-sql/src/components/configuration/ConnectionLimits.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "packages/grafana-sql/src/components/configuration/MaxLifetimeField.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-sql/src/components/configuration/MaxOpenConnectionsField.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-sql/src/components/configuration/TLSSecretsConfig.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "packages/grafana-sql/src/components/visual-query-builder/Preview.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/BarGauge/BarGauge.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -670,9 +645,6 @@
   "packages/grafana-ui/src/components/Modal/ModalsContext.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Monaco/CodeEditor.tsx": {
@@ -1105,11 +1077,6 @@
   },
   "public/app/core/components/ThemeSelector/ThemeSelectorDrawer.tsx": {
     "react/no-unescaped-entities": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/TimeSeries/TimeSeries.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -1749,11 +1716,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/PanelSearchLayout.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2084,11 +2046,6 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard/components/ShareModal/ShareModal.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard.tsx": {
     "no-restricted-syntax": {
       "count": 3
@@ -2215,7 +2172,7 @@
   },
   "public/app/features/dashboard/state/DashboardModel.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
+      "count": 2
     }
   },
   "public/app/features/dashboard/state/DashboardModel.ts": {
@@ -2223,7 +2180,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 22
+      "count": 23
     }
   },
   "public/app/features/dashboard/state/PanelModel.test.ts": {
@@ -2261,19 +2218,6 @@
   },
   "public/app/features/dashboard/utils/dashboard.ts": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/getPanelMenu.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/getPanelMenu.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -2364,9 +2308,6 @@
   },
   "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2606,11 +2547,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/components/LogDetails.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/logs/components/LogDetailsRow.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2709,11 +2645,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/admin/components/PluginDashboards.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/admin/helpers.ts": {
     "no-restricted-syntax": {
       "count": 2
@@ -2734,11 +2665,6 @@
   },
   "public/app/features/plugins/admin/types.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/components/AppRootPage.test.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2858,11 +2784,6 @@
   "public/app/features/query/state/updateQueries.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    }
-  },
-  "public/app/features/scopes/tests/utils/render.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/search/page/components/columns.tsx": {
@@ -2991,11 +2912,6 @@
   },
   "public/app/features/transformers/editors/ReduceTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/editors/RenameByRegexTransformer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3177,9 +3093,6 @@
   },
   "public/app/features/variables/pickers/shared/VariableOptions.tsx": {
     "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3447,7 +3360,7 @@
   },
   "public/app/plugins/datasource/dashboard/DashboardQueryEditor.tsx": {
     "no-restricted-syntax": {
-      "count": 6
+      "count": 4
     }
   },
   "public/app/plugins/datasource/dashboard/runSharedRequest.ts": {
@@ -3501,11 +3414,6 @@
   "public/app/plugins/datasource/elasticsearch/hooks/useStatelessReducer.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/plugins/datasource/grafana-postgresql-datasource/configuration/ConfigurationEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 12
     }
   },
   "public/app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/EditorField.tsx": {
@@ -3806,11 +3714,6 @@
   "public/app/plugins/datasource/mssql/configuration/Kerberos.tsx": {
     "no-restricted-syntax": {
       "count": 8
-    }
-  },
-  "public/app/plugins/datasource/mysql/configuration/ConfigurationEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 10
     }
   },
   "public/app/plugins/datasource/opentsdb/components/OpenTsdbDetails.tsx": {

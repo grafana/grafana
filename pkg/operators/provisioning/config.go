@@ -529,7 +529,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
 	repoTypes := provisioningSec.Key("repository_types").Strings("|")
 	if len(repoTypes) == 0 {
-		repoTypes = []string{"github"}
+		repoTypes = []string{"git", "github"}
 	}
 
 	extras := make([]repository.Extra, 0)

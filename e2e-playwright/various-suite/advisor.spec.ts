@@ -59,7 +59,7 @@ async function runChecks(page: Page) {
     .getByRole('button', { name: 'Running checks...' })
     .isVisible({ timeout: 2000 })
     .catch(() => false);
-  await expect(page.getByRole('button', { name: 'Running checks...' })).not.toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('button', { name: 'Running checks...' })).not.toBeVisible({ timeout: 30000 });
   await expect(page.getByText('Last checked')).toBeVisible();
 }
 

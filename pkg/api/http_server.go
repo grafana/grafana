@@ -89,6 +89,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -224,6 +225,7 @@ type HTTPServer struct {
 	htmlHandlerRequestsDuration     *prometheus.HistogramVec
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
 	dsConnectionClient              datasource.ConnectionClient
+	publicDashboardsService         publicdashboards.Service
 }
 
 type TLSCerts struct {
@@ -273,7 +275,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
-	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall,
+	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -376,6 +378,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
+		publicDashboardsService:      publicDashboardsService,
 		htmlHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "grafana",
 			Name:      "html_handler_requests_duration_seconds",

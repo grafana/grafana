@@ -87,7 +87,6 @@
 /apps/quotas/ @grafana/grafana-search-and-storage
 /apps/live/ @grafana/grafana-app-platform-squad
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
-/apps/dashboard/pkg/migration/testdata/dev-dashboards-output/panel-logstable/logs-table.v42.json @grafana/observability-logs
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/plugins/ @grafana/plugins-platform-backend
@@ -766,6 +765,10 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-frontend-navigation
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
 
+# @grafana/openapi
+/packages/grafana-openapi/ @grafana/grafana-search-navigate-organise @grafana/grafana-frontend-platform
+
+
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
@@ -968,7 +971,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/notifications/ @grafana/grafana-frontend-navigation
 /public/app/features/org/ @grafana/grafana-frontend-navigation
 /public/app/features/panel/ @grafana/dashboards-squad
-/public/app/features/panel/components/VizTypePicker/VisualizationSuggestions.tsx @grafana/dataviz-squad
+/public/app/features/panel/components/VizTypePicker/VisualizationSuggestions*.tsx @grafana/dataviz-squad
 /public/app/features/panel/suggestions/ @grafana/dataviz-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/grafana-frontend-platform

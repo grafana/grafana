@@ -11,6 +11,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -117,6 +118,19 @@ type KVBackendOptions struct {
 	TenantWatcherConfig *TenantWatcherConfig
 }
 
+var (
+	snowflakeOnce sync.Once
+	snowflakeNode *snowflake.Node
+	snowflakeErr  error
+)
+
+func getSnowflakeNode() (*snowflake.Node, error) {
+	snowflakeOnce.Do(func() {
+		snowflakeNode, snowflakeErr = snowflake.NewNode(rand.Int64N(1024))
+	})
+	return snowflakeNode, snowflakeErr
+}
+
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	ctx := context.Background()
 	kv := opts.KvStore
@@ -126,7 +140,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		logger = log.NewNopLogger()
 	}
 
-	s, err := snowflake.NewNode(rand.Int64N(1024))
+	s, err := getSnowflakeNode()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
 	}
