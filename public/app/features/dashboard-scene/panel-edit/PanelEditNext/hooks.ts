@@ -16,7 +16,7 @@ import { QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
 const CONTROLS_ROW_HEIGHT = 'auto';
 const MIN_SIDEBAR_RATIO = 0.1;
 const MAX_SIDEBAR_RATIO = 0.5;
-const MIN_SIDEBAR_PIXELS = 200;
+const MIN_SIDEBAR_PIXELS = 220;
 const vizResizerClassName = css({ height: 2, width: '100%' });
 // Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
 const FALLBACK_SIDEBAR_RATIO = 0.25;
