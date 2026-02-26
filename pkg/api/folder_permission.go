@@ -96,6 +96,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 
 	// Block permission changes for folders managed by provisioning,
 	// unless the provisioningFolderMetadata feature flag is enabled.
+	//nolint:staticcheck
 	if folder.ManagedBy == utils.ManagerKindRepo && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagProvisioningFolderMetadata) {
 		return response.Error(http.StatusForbidden, "Cannot update permissions for folders managed by provisioning.", nil)
 	}
