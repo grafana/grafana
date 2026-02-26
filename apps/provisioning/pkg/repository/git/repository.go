@@ -191,28 +191,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
 			err = mapNanogitError(err)
-
-			if errors.Is(err, repository.ErrUnauthorized) {
-				return &provisioning.TestResults{
-					Code:    http.StatusUnauthorized,
-					Success: false,
-					Errors: []provisioning.ErrorDetails{{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("secure", "token").String(),
-						Detail: "authentication failed",
-					}},
-				}, nil
-			}
-			if errors.Is(err, repository.ErrServerUnavailable) {
-				return &provisioning.TestResults{
-					Code:    http.StatusServiceUnavailable,
-					Success: false,
-					Errors: []provisioning.ErrorDetails{{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("secure", "token").String(),
-						Detail: fmt.Sprintf("server unavailable: %v", err),
-					}},
-				}, nil
+			if result := checkHTTPError(err, field.NewPath("secure", "token")); result != nil {
+				return result, nil
 			}
 		}
 
@@ -237,39 +217,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
 			err = mapNanogitError(err)
-
-			if errors.Is(err, repository.ErrUnauthorized) {
-				return &provisioning.TestResults{
-					Code:    http.StatusUnauthorized,
-					Success: false,
-					Errors: []provisioning.ErrorDetails{{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("secure", "token").String(),
-						Detail: "authentication failed",
-					}},
-				}, nil
-			}
-			if errors.Is(err, repository.ErrPermissionDenied) {
-				return &provisioning.TestResults{
-					Code:    http.StatusForbidden,
-					Success: false,
-					Errors: []provisioning.ErrorDetails{{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("secure", "token").String(),
-						Detail: "permission denied",
-					}},
-				}, nil
-			}
-			if errors.Is(err, repository.ErrServerUnavailable) {
-				return &provisioning.TestResults{
-					Code:    http.StatusServiceUnavailable,
-					Success: false,
-					Errors: []provisioning.ErrorDetails{{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", t, "url").String(),
-						Detail: fmt.Sprintf("server unavailable: %v", err),
-					}},
-				}, nil
+			if result := checkHTTPError(err, field.NewPath("spec", t, "url")); result != nil {
+				return result, nil
 			}
 		}
 
@@ -307,39 +256,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		err = mapNanogitError(err)
-
-		if errors.Is(err, repository.ErrUnauthorized) {
-			return &provisioning.TestResults{
-				Code:    http.StatusUnauthorized,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("secure", "token").String(),
-					Detail: "authentication failed",
-				}},
-			}, nil
-		}
-		if errors.Is(err, repository.ErrPermissionDenied) {
-			return &provisioning.TestResults{
-				Code:    http.StatusForbidden,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("secure", "token").String(),
-					Detail: "permission denied",
-				}},
-			}, nil
-		}
-		if errors.Is(err, repository.ErrServerUnavailable) {
-			return &provisioning.TestResults{
-				Code:    http.StatusServiceUnavailable,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("spec", t, "branch").String(),
-					Detail: fmt.Sprintf("server unavailable: %v", err),
-				}},
-			}, nil
+		if result := checkHTTPError(err, field.NewPath("spec", t, "branch")); result != nil {
+			return result, nil
 		}
 
 		detail := fmt.Sprintf("failed to check if branch exists: %v", err)
@@ -1048,4 +966,50 @@ func mapNanogitError(err error) error {
 
 	// Return original error if not a known nanogit error
 	return err
+}
+
+// checkHTTPError checks if the error is a known HTTP error (401, 403, 503) and returns
+// the appropriate TestResults. Returns nil if the error is not a known HTTP error.
+func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults {
+	if err == nil {
+		return nil
+	}
+
+	if errors.Is(err, repository.ErrUnauthorized) {
+		return &provisioning.TestResults{
+			Code:    http.StatusUnauthorized,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("secure", "token").String(),
+				Detail: "authentication failed",
+			}},
+		}
+	}
+
+	if errors.Is(err, repository.ErrPermissionDenied) {
+		return &provisioning.TestResults{
+			Code:    http.StatusForbidden,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("secure", "token").String(),
+				Detail: "permission denied",
+			}},
+		}
+	}
+
+	if errors.Is(err, repository.ErrServerUnavailable) {
+		return &provisioning.TestResults{
+			Code:    http.StatusServiceUnavailable,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  fieldPath.String(),
+				Detail: fmt.Sprintf("server unavailable: %v", err),
+			}},
+		}
+	}
+
+	return nil
 }
