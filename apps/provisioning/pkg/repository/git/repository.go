@@ -766,7 +766,7 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return hash.Zero, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
 		}
-		return hash.Zero, fmt.Errorf("get ref %s: %w", ref, err)
+		return hash.Zero, fmt.Errorf("get ref %s: %w", ref, mapNanogitError(err))
 	}
 
 	return branchRef.Hash, nil
