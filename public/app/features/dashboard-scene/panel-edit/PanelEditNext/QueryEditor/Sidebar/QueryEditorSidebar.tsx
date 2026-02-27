@@ -83,7 +83,6 @@ function getStyles(theme: GrafanaTheme2) {
     content: css({
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
-      paddingRight: theme.spacing(1),
     }),
   };
 }
