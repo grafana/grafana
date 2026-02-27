@@ -27,7 +27,7 @@ type BenchmarkOptions struct {
 	NumResourceTypes       int           // number of different resource types
 	NumHistoryVersions     int           // history depth per resource for list seed (default 10)
 	NumListIterations      int           // number of List calls to measure (default 100)
-	IndexMinUpdateInterval time.Duration // minimum time between index updates (default 0, no throttle)
+	IndexMinUpdateInterval time.Duration // minimum time between index updates (default 100ms)
 }
 
 // DefaultBenchmarkOptions returns the default benchmark options
