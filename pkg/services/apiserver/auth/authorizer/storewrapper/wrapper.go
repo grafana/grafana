@@ -68,7 +68,11 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 	// Override the identity to use service identity for the underlying store operation
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
 
-	return w.inner.Create(srvCtx, obj, createValidation, options)
+	// Wrap createValidation to run with the original user context so that admission
+	// webhooks (e.g. duplicate-email/login checks) see the real requester identity.
+	validationInUserCtx := validationWithUserContext(ctx, createValidation)
+
+	return w.inner.Create(srvCtx, obj, validationInUserCtx, options)
 }
 
 func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
@@ -166,7 +170,12 @@ func (w *Wrapper) Update(
 	// Override the identity to use service identity for the underlying store operation
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
 
-	return w.inner.Update(srvCtx, name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
+	// Wrap validation callbacks to run with the original user context so that admission
+	// webhooks see the real requester identity.
+	wrappedCreate := validationWithUserContext(ctx, createValidation)
+	wrappedUpdate := updateValidationWithUserContext(ctx, updateValidation)
+
+	return w.inner.Update(srvCtx, name, wrappedObjInfo, wrappedCreate, wrappedUpdate, forceAllowCreate, options)
 }
 
 type authorizedUpdateInfo struct {
@@ -192,6 +201,29 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	}
 
 	return updatedObj, nil
+}
+
+// validationWithUserContext returns a ValidateObjectFunc that always runs fn with userCtx
+// instead of whatever context the inner store passes in. This ensures that
+// admission webhooks (e.g. duplicate email/login checks) see the real requester
+// identity even after the storage context has been replaced with service identity.
+func validationWithUserContext(userCtx context.Context, fn k8srest.ValidateObjectFunc) k8srest.ValidateObjectFunc {
+	if fn == nil {
+		return nil
+	}
+	return func(_ context.Context, obj runtime.Object) error {
+		return fn(userCtx, obj)
+	}
+}
+
+// updateValidationWithUserContext is the same as validationWithUserContext but for ValidateObjectUpdateFunc.
+func updateValidationWithUserContext(userCtx context.Context, fn k8srest.ValidateObjectUpdateFunc) k8srest.ValidateObjectUpdateFunc {
+	if fn == nil {
+		return nil
+	}
+	return func(_ context.Context, newObj, oldObj runtime.Object) error {
+		return fn(userCtx, newObj, oldObj)
+	}
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
