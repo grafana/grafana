@@ -179,7 +179,7 @@ require (
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260226210840-9640967a1c7f // indirect
+	github.com/grafana/alerting v0.0.0-20260227101159-7334f7d59bdd // indirect
 	github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
