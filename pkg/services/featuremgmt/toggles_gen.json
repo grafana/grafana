@@ -793,6 +793,20 @@
     },
     {
       "metadata": {
+        "name": "analyticsFramework",
+        "resourceVersion": "1772205128141",
+        "creationTimestamp": "2026-02-27T15:12:08Z"
+      },
+      "spec": {
+        "description": "Enables new analytics framework",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "annotationPermissionUpdate",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-10-31T13:30:13Z"
