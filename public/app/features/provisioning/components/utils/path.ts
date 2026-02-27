@@ -53,5 +53,6 @@ export function splitPath(path: string): { directory: string; filename: string }
  */
 export function joinPath(directory: string, filename: string): string {
   const cleanDir = directory.replace(/\/+$/, '');
-  return cleanDir ? `${cleanDir}/${filename}` : filename;
+  const cleanFile = filename.replace(/^\/+/, '');
+  return cleanDir ? `${cleanDir}/${cleanFile}` : cleanFile;
 }

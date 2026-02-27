@@ -57,13 +57,12 @@ export function useGetRepositoryFolders({ repositoryName, ref }: UseGetRepositor
   return {
     options,
     loading: isFilesLoading || isRepoLoading || healthStatusNotReady,
-    error: filesError
-      ? getErrorMessage(filesError)
-      : repositoryName
-        ? null
-        : t(
-            'provisioning.connect-step.text-folders-not-available',
-            'Folder suggestions will be available after the repository is connected.'
-          ),
+    error: filesError ? getErrorMessage(filesError) : null,
+    hint: repositoryName
+      ? null
+      : t(
+          'provisioning.connect-step.text-folders-not-available',
+          'Folder suggestions will be available after the repository is connected.'
+        ),
   };
 }

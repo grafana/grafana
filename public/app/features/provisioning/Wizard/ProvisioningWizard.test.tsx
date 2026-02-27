@@ -114,8 +114,9 @@ async function fillConnectionForm(
   });
 
   if (type !== 'local' && data.branch) {
-    const comboboxes = screen.getAllByRole('combobox');
-    const branchCombobox = comboboxes[0];
+    // Index-based: Combobox uses downshift-generated IDs so Field's htmlFor
+    // doesn't associate and getByRole({ name }) can't match the label.
+    const branchCombobox = screen.getAllByRole('combobox')[0];
     await user.click(branchCombobox);
     await user.clear(branchCombobox);
     await user.paste(data.branch);
@@ -126,8 +127,7 @@ async function fillConnectionForm(
     if (type === 'local') {
       await pasteIntoInput(user, screen.getByRole('textbox', { name: /Path/i }), data.path);
     } else {
-      const comboboxes = screen.getAllByRole('combobox');
-      const pathCombobox = comboboxes[1];
+      const pathCombobox = screen.getAllByRole('combobox')[1];
       await user.click(pathCombobox);
       await user.clear(pathCombobox);
       await user.paste(data.path);

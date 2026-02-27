@@ -289,6 +289,8 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.body).toEqual({ title: 'Branch Folder', type: 'folder' });
   });
 
+  // Error response handling (alertError publish, onDismiss) is tested in useProvisionedRequestHandler.test.ts.
+  // This test verifies the correct request is sent; the handler mock prevents response side-effects.
   it('should send correct request body when folder creation fails', async () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {

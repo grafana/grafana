@@ -40,6 +40,7 @@ export const ConnectStep = memo(function ConnectStep() {
     options: folderOptions,
     loading: isFoldersLoading,
     error: foldersError,
+    hint: foldersHint,
   } = useGetRepositoryFolders({
     repositoryName: repositoryName || undefined,
     ref: branch || undefined,
@@ -91,9 +92,9 @@ export const ConnectStep = memo(function ConnectStep() {
           <Field
             noMargin
             label={gitFields.pathConfig.label}
-            description={gitFields.pathConfig.description}
+            description={foldersHint || gitFields.pathConfig.description}
             error={errors?.repository?.path?.message || foldersError}
-            invalid={!!errors?.repository?.path?.message}
+            invalid={Boolean(errors?.repository?.path?.message || foldersError)}
             required={gitFields.pathConfig.required}
           >
             <Controller
