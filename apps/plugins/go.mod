@@ -110,7 +110,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.3 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.289.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.290.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
@@ -198,11 +198,11 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.6.7 // indirect
 	go.etcd.io/etcd/client/v3 v3.6.7 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.64.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.64.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.64.0 // indirect
-	go.opentelemetry.io/contrib/propagators/jaeger v1.39.0 // indirect
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.33.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.65.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.65.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.40.0 // indirect
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.34.0 // indirect
 	go.opentelemetry.io/otel v1.40.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.40.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.40.0 // indirect
