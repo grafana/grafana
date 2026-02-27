@@ -1,5 +1,3 @@
-//go:build !cgo
-
 package sqlite
 
 import (
@@ -113,7 +111,7 @@ func init() {
 }
 
 func DriverType() string {
-	return "modernc.org/sqlite (CGO disabled)"
+	return "modernc.org/sqlite"
 }
 
 func IsBusyOrLocked(err error) bool {
@@ -146,5 +144,5 @@ func ErrorMessage(err error) string {
 	if errors.As(err, &sqliteErr) {
 		return sqliteErr.Error()
 	}
-	return ""
+	return err.Error()
 }
