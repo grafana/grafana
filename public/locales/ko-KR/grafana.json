@@ -4159,6 +4159,16 @@
       "clear": "검색 및 필터 초기화",
       "text": "쿼리에 대해 찾은 결과 없음"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "기록 지우기",
       "error": "최근 조회한 대시보드를 불러올 수 없습니다.",
@@ -4827,6 +4837,10 @@
       "view-json-diff": "모든 변경 내용을 보려면 JSON 차이를 확인하세요."
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "새로 추가",
     "alert": {
@@ -5028,7 +5042,7 @@
     "canvas-actions": {
       "add-panel": "패널 추가",
       "disabled-child-contains-tabs": "행에 탭이 이미 포함되어 탭으로 변경할 수 없습니다",
-      "disabled-nested-grouping": "그룹화는 2단계로 제한됩니다",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "탭은 다른 탭 안에 중첩될 수 없습니다",
       "group-into-row": "행으로 그룹화",
       "group-into-tab": "탭으로 그룹화",
@@ -10914,7 +10928,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "옵션을 찾을 수 없습니다"
@@ -12314,6 +12330,11 @@
       "text-loading-teams": "팀 로딩 중..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "변경 사항을 설명하는 메모 추가(선택 사항)",
@@ -13316,7 +13337,8 @@
       "transformations": "변환",
       "view-toggle": "",
       "alerts_other": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",

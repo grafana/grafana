@@ -4182,6 +4182,16 @@
       "clear": "Limpar a pesquisa e os filtros",
       "text": "Não foram encontrados resultados para a sua consulta"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Limpar histórico",
       "error": "Não foi possível carregar os painéis de controlo vistos recentemente.",
@@ -4853,6 +4863,10 @@
       "view-json-diff": "Ver diferenças JSON para ver todas as alterações"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Adicionar novo",
     "alert": {
@@ -5054,7 +5068,7 @@
     "canvas-actions": {
       "add-panel": "Adicionar painel",
       "disabled-child-contains-tabs": "Não é possível mudar para separadores porque uma linha já contém separadores",
-      "disabled-nested-grouping": "O agrupamento está limitado a 2 níveis",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Os separadores não podem ser aninhados dentro de outros separadores",
       "group-into-row": "Agrupar em linha",
       "group-into-tab": "Agrupar em separador",
@@ -10965,7 +10979,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nenhuma opção encontrada"
@@ -12368,6 +12384,11 @@
       "text-loading-teams": "A carregar equipas..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Adicione uma nota para descrever as suas alterações (opcional)",
@@ -13379,7 +13400,9 @@
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",

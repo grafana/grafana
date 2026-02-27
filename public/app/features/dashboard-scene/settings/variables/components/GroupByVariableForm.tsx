@@ -60,7 +60,13 @@ export function GroupByVariableForm({
         htmlFor="data-source-picker"
         tooltip={infoText}
       >
-        <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
+        <DataSourcePicker
+          current={datasource}
+          onChange={onDataSourceChange}
+          width={inline ? undefined : 30}
+          variables={true}
+          noDefault
+        />
       </EditorField>
 
       {!datasourceSupported ? (

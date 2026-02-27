@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Failed to fetch contact points"
     },
     "contact-points": {
-      "create": "Create contact point",
+      "create": "New contact point",
       "custom-template-value": "Custom template value",
       "delete-reasons": {
         "heading": "Contact point cannot be deleted for the following reasons:",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Add time interval"
+        "add-time-interval": "New time interval"
       }
     },
     "new-rule-from-panel-button": {
@@ -2252,7 +2252,7 @@
       "title-failed-to-fetch-notification-templates": "Failed to fetch notification templates"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Add notification template group",
+      "add-notification-template-group": "New notification template",
       "create-notification-templates-customize-notifications": "Create notification templates to customize your notifications."
     },
     "notifications-list": {
@@ -3317,7 +3317,7 @@
       "misconfigured-warning-details": "Templates must be defined in both the <2></2> and <5></5> sections of your alertmanager configuration."
     },
     "templates-page": {
-      "add-template": "Add notification template group",
+      "add-template": "New notification template",
       "description": "Create notification templates to customize your notifications."
     },
     "templates-picker": {
@@ -3350,7 +3350,7 @@
       "stop-alerting-when": "Stop alerting (or pending state) when"
     },
     "time-interval": {
-      "add-time-interval": "Add time interval",
+      "add-time-interval": "New time interval",
       "save": "Save time interval",
       "saving": "Saving time interval"
     },
@@ -12656,6 +12656,12 @@
       "label-read-only": "Read only",
       "label-sync-interval": "Sync Interval (seconds)"
     },
+    "fix-folder-metadata": {
+      "button": "Fix folder IDs",
+      "error-fixing": "Error fixing folder metadata",
+      "fixing": "Fixing...",
+      "success": "Folder metadata fix started. This will continue in the background."
+    },
     "folder-permissions": {
       "loading": "Loading..."
     },
@@ -12797,6 +12803,8 @@
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
       "error-title": "Unable to check folder metadata status.",
       "message": "Since this folder doesn't contain a metadata file, the folder ID is based on the folder path. If you move or rename the folder, the folder ID will change, and permissions may no longer apply to the folder.",
+      "repo-message": "Folders without metadata files use path-based IDs. If moved or renamed, their IDs will change and permissions may break.",
+      "repo-title": "Some folders are missing metadata in this repository.",
       "title": "This folder is missing metadata."
     },
     "mode-options": {

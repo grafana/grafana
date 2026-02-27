@@ -31,8 +31,8 @@ var WireSetExts = wire.NewSet(
 	iam.ProvideNoopRoleApiInstaller,
 	iam.ProvideNoopGlobalRoleApiInstaller,
 	iam.ProvideNoopTeamLBACApiInstaller,
+	iam.ProvideNoopExternalGroupMappingApiInstaller,
 	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
-	wire.Bind(new(iam.ExternalGroupMappingStorageBackend), new(*noopstorage.StorageBackendImpl)),
 
 	externalgroupmapping.ProvideNoopTeamGroupsREST,
 	wire.Bind(new(externalgroupmapping.TeamGroupsHandler), new(*externalgroupmapping.NoopTeamGroupsREST)),

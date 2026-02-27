@@ -21,12 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// Expression datasource constants. Must match pkg/expr.DatasourceUID and pkg/expr.DatasourceType.
-const (
-	exprDatasourceUID  = "__expr__"
-	exprDatasourceType = "__expr__"
-)
-
 // getDefaultDatasourceType gets the default datasource type using the datasource provider
 func getDefaultDatasourceType(ctx context.Context, provider schemaversion.DataSourceIndexProvider) string {
 	ctx, span := TracingStart(ctx, "dashboard.conversion.get_default_datasource")
@@ -2268,7 +2262,7 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 	panelHasUID := panelDatasource != nil && panelDatasource.Uid != nil && *panelDatasource.Uid != "" && *panelDatasource.Uid != "-- Mixed --"
 	applyPanelRef := panelHasUID &&
 		(queryDatasourceUID == "" && queryDatasourceType == "" ||
-			(queryDatasourceUID != exprDatasourceUID && queryDatasourceType != exprDatasourceType && queryDatasourceUID != *panelDatasource.Uid))
+			(queryDatasourceUID != "__expr__" && queryDatasourceType != "__expr__" && queryDatasourceUID != *panelDatasource.Uid))
 
 	if applyPanelRef {
 		if panelDatasource.Type != nil {
