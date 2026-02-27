@@ -4237,7 +4237,13 @@
         }
       },
       "FixFolderMetadataJobOptions": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "ref": {
+            "description": "Ref to the branch to create the empty commit on (defaults to \"main\" if not specified)",
+            "type": "string"
+          }
+        }
       },
       "GitHubConnectionConfig": {
         "type": "object",
