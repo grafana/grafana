@@ -64,10 +64,8 @@ export function DashboardSchemaEditor({
   schemaRef.current = schema;
 
   const formatOptions: Array<{ label: string; value: SchemaEditorFormat }> = [
-    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-    { label: 'JSON', value: 'json' },
-    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-    { label: 'YAML', value: 'yaml' },
+    { label: t('dashboard-scene.resource-export.label.json', 'JSON'), value: 'json' },
+    { label: t('dashboard-scene.resource-export.label.yaml', 'YAML'), value: 'yaml' },
   ];
 
   const jsonInvalid = format === 'json' && !isValidJson(value);
