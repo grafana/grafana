@@ -37,9 +37,19 @@ const FieldMapping = (props: FieldMappingProps) => {
 
   // Only re-run the query when the query content changes, not when meta (valueField/textField) changes
   const queryKey = useMemo(
-    () => JSON.stringify({ query: query.query, metrics: query.metrics, bucketAggs: query.bucketAggs }),
-    [query.query, query.metrics, query.bucketAggs]
+    () => JSON.stringify({ query: query.query, metrics: query.metrics, bucketAggs: query.bucketAggs, queryType: query.queryType }),
+    [query.query, query.metrics, query.bucketAggs, query.queryType]
   );
+
+  // Reset field mappings when the query type changes — the available fields may be completely different
+  const prevQueryTypeRef = useRef(query.queryType);
+  useEffect(() => {
+    const prevQueryType = prevQueryTypeRef.current;
+    prevQueryTypeRef.current = query.queryType;
+    if (prevQueryType !== undefined && prevQueryType !== query.queryType) {
+      onChange({ ...queryRef.current, meta: {} });
+    }
+  }, [query.queryType, onChange]);
 
   useEffect(() => {
     let isActive = true;

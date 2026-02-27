@@ -173,4 +173,40 @@ describe('ElasticsearchVariableEditor', () => {
     // Should trigger new query since query content changed
     expect((defaultProps.datasource.query as jest.Mock).mock.calls.length).toBeGreaterThan(initialCallCount);
   });
+
+  it('should trigger new query when queryType changes', () => {
+    const { rerender } = render(<ElasticsearchVariableEditor {...defaultProps} />);
+
+    const initialCallCount = (defaultProps.datasource.query as jest.Mock).mock.calls.length;
+
+    const updatedQuery: ElasticsearchDataQuery = {
+      ...defaultProps.query,
+      queryType: 'lucene',
+    };
+
+    rerender(<ElasticsearchVariableEditor {...defaultProps} query={updatedQuery} />);
+
+    expect((defaultProps.datasource.query as jest.Mock).mock.calls.length).toBeGreaterThan(initialCallCount);
+  });
+
+  it('should reset meta fields when queryType changes', async () => {
+    const onChange = jest.fn();
+    const queryWithMeta: ElasticsearchDataQuery = {
+      ...defaultProps.query,
+      queryType: 'lucene',
+      meta: { textField: 'name', valueField: 'id' },
+    };
+    const props = { ...defaultProps, query: queryWithMeta, onChange };
+
+    const { rerender } = render(<ElasticsearchVariableEditor {...props} />);
+
+    const updatedQuery: ElasticsearchDataQuery = { ...queryWithMeta, queryType: 'dsl' };
+    rerender(<ElasticsearchVariableEditor {...props} query={updatedQuery} />);
+
+    await waitFor(() => {
+      const calls = onChange.mock.calls;
+      const resetCall = calls.find((call) => call[0].meta && Object.keys(call[0].meta).length === 0);
+      expect(resetCall).toBeDefined();
+    });
+  });
 });
