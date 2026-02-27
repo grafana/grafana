@@ -231,7 +231,8 @@ export const trackDeletedRuleRestoreFail = async () => {
 };
 
 export const trackImportToGMASuccess = async (payload: {
-  importSource: 'yaml' | 'datasource';
+  notificationsSource?: 'yaml' | 'datasource';
+  rulesSource?: 'yaml' | 'datasource';
   isRootFolder: boolean;
   namespace?: string;
   ruleGroup?: string;
@@ -241,7 +242,10 @@ export const trackImportToGMASuccess = async (payload: {
   reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
 };
 
-export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'datasource' }) => {
+export const trackImportToGMAError = async (payload: {
+  notificationsSource?: 'yaml' | 'datasource';
+  rulesSource?: 'yaml' | 'datasource';
+}) => {
   reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
 };
 

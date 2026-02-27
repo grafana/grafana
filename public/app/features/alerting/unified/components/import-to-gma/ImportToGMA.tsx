@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -98,12 +98,8 @@ const ImportToGMA = () => {
 function ImportWizardContent() {
   const { activeStep, setStepErrors } = useStepperState();
 
-  const wizardStartedTracked = useRef(false);
   useEffect(() => {
-    if (!wizardStartedTracked.current) {
-      trackImportToGMAWizardStarted();
-      wizardStartedTracked.current = true;
-    }
+    trackImportToGMAWizardStarted();
   }, []);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -272,7 +268,6 @@ function ImportWizardContent() {
     const values = getValues();
     const willImportNotifications = values.step1Completed && !values.step1Skipped;
     const willImportRules = values.step2Completed && !values.step2Skipped;
-    const importSource = willImportNotifications ? values.notificationsSource : values.rulesSource;
 
     try {
       // Import notifications first (if step 1 was completed)
@@ -317,7 +312,8 @@ function ImportWizardContent() {
       const isRootFolder = isEmpty(targetFolder?.uid);
 
       trackImportToGMASuccess({
-        importSource,
+        notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
+        rulesSource: willImportRules ? values.rulesSource : undefined,
         isRootFolder,
         namespace: values.namespace,
         ruleGroup: values.ruleGroup,
@@ -337,7 +333,10 @@ function ImportWizardContent() {
       }, 1500);
     } catch (err) {
       setImportStatus('error');
-      trackImportToGMAError({ importSource });
+      trackImportToGMAError({
+        notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
+        rulesSource: willImportRules ? values.rulesSource : undefined,
+      });
       notifyApp.error(t('alerting.import-to-gma.error', 'Failed to import resources'), stringifyErrorLike(err));
     }
   }, [getValues, importNotifications, importRules, rulesFromDatasource, notifyApp]);
