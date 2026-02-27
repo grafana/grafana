@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const FolderMetadataFileName = "_folder.json"
@@ -17,6 +19,20 @@ func NewFolderManifest(uid, title string) *folders.Folder {
 	f.Name = uid
 	f.Spec.Title = title
 	return f
+}
+
+// MarshalFolderManifest generates a stable UID and marshals a _folder.json manifest
+// for the given folderPath. The title is derived from the last path segment.
+// Returns the uid, the JSON bytes, and any error.
+func MarshalFolderManifest(folderPath string) (uid string, data []byte, err error) {
+	uid = util.GenerateShortUID()
+	title := safepath.Base(folderPath)
+	manifest := NewFolderManifest(uid, title)
+	data, err = json.Marshal(manifest)
+	if err != nil {
+		return "", nil, fmt.Errorf("marshal folder manifest: %w", err)
+	}
+	return uid, data, nil
 }
 
 // FolderManifestUID parses a _folder.json byte slice and returns the stable UID

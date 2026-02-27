@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -19,8 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // DualReadWriter is a wrapper around a repository that can read from and write resources
@@ -33,11 +30,11 @@ import (
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo     repository.ReaderWriter
-	parser   Parser
-	folders  *FolderManager
-	access   auth.AccessChecker
-	features featuremgmt.FeatureToggles
+	repo                 repository.ReaderWriter
+	parser               Parser
+	folders              *FolderManager
+	access               auth.AccessChecker
+	folderMetadataEnabled bool
 }
 
 type DualWriteOptions struct {
@@ -53,8 +50,8 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker, features featuremgmt.FeatureToggles) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access, features: features}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker, folderMetadataEnabled bool) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access, folderMetadataEnabled: folderMetadataEnabled}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -176,10 +173,12 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	// When the feature flag is enabled, write a _folder.json with a stable UID
 	// instead of the legacy .keep placeholder created by the git layer.
 	var stableUID string
-	if r.features.IsEnabled(ctx, featuremgmt.FlagProvisioningFolderMetadata) {
-		stableUID = util.GenerateShortUID()
-		title := safepath.Base(opts.Path)
-		metadataBytes, err := json.Marshal(NewFolderManifest(stableUID, title))
+	if r.folderMetadataEnabled {
+		var (
+			metadataBytes []byte
+			err           error
+		)
+		stableUID, metadataBytes, err = MarshalFolderManifest(opts.Path)
 		if err != nil {
 			return nil, fmt.Errorf("marshal folder metadata: %w", err)
 		}
@@ -216,35 +215,43 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	wrap.URLs = urls
 
 	if r.shouldUpdateGrafanaDB(opts, nil) {
-		if stableUID != "" {
-			// Flag was enabled: create the Grafana folder with the stable UID from _folder.json
-			if err := r.folders.CreateFolderWithUID(ctx, opts.Path, stableUID); err != nil {
-				return nil, err
-			}
-			current, err := r.folders.GetFolder(ctx, stableUID)
-			if err != nil && !apierrors.IsNotFound(err) {
-				return nil, err
-			}
-			if current != nil {
-				wrap.Resource.Upsert = v0alpha1.Unstructured{Object: current.Object}
-			}
-		} else {
-			// Flag was disabled: use the existing hash-based UID path
-			folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
-			if err != nil {
-				return nil, err
-			}
-			current, err := r.folders.GetFolder(ctx, folderName)
-			if err != nil && !apierrors.IsNotFound(err) {
-				return nil, err // unable to check if the folder exists
-			}
-			wrap.Resource.Upsert = v0alpha1.Unstructured{
-				Object: current.Object,
-			}
+		if err := r.syncFolderToGrafana(ctx, opts, stableUID, wrap); err != nil {
+			return nil, err
 		}
 	}
 
 	return wrap, nil
+}
+
+// syncFolderToGrafana synchronizes the newly created folder into the Grafana database.
+func (r *DualReadWriter) syncFolderToGrafana(ctx context.Context, opts DualWriteOptions, stableUID string, wrap *provisioning.ResourceWrapper) error {
+	if stableUID != "" {
+		// Flag was enabled: create the Grafana folder with the stable UID from _folder.json
+		if err := r.folders.CreateFolderWithUID(ctx, opts.Path, stableUID); err != nil {
+			return err
+		}
+		current, err := r.folders.GetFolder(ctx, stableUID)
+		if err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+		if current != nil {
+			wrap.Resource.Upsert = v0alpha1.Unstructured{Object: current.Object}
+		}
+	} else {
+		// Flag was disabled: use the existing hash-based UID path
+		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
+		if err != nil {
+			return err
+		}
+		current, err := r.folders.GetFolder(ctx, folderName)
+		if err != nil && !apierrors.IsNotFound(err) {
+			return err // unable to check if the folder exists
+		}
+		wrap.Resource.Upsert = v0alpha1.Unstructured{
+			Object: current.Object,
+		}
+	}
+	return nil
 }
 
 // CreateResource creates a new resource in the repository

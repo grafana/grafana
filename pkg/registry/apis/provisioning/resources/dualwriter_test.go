@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestGetPathType(t *testing.T) {
@@ -261,9 +260,8 @@ func TestCreateFolder_FolderMetadata_FlagDisabled(t *testing.T) {
 	accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	dw := &DualReadWriter{
-		repo:     rw,
-		access:   accessMock,
-		features: featuremgmt.WithFeatures(),
+		repo:   rw,
+		access: accessMock,
 	}
 
 	result, err := dw.CreateFolder(ctx, DualWriteOptions{Path: "newfolder/"})
@@ -298,9 +296,9 @@ func TestCreateFolder_FolderMetadata_FlagEnabled(t *testing.T) {
 	accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	dw := &DualReadWriter{
-		repo:     rw,
-		access:   accessMock,
-		features: featuremgmt.WithFeatures(featuremgmt.FlagProvisioningFolderMetadata),
+		repo:                  rw,
+		access:                accessMock,
+		folderMetadataEnabled: true,
 	}
 
 	result, err := dw.CreateFolder(ctx, DualWriteOptions{Path: "newfolder/"})

@@ -28,15 +28,21 @@ const (
 )
 
 type filesConnector struct {
-	getter   RepoGetter
-	access   auth.AccessChecker
-	parsers  resources.ParserFactory
-	clients  resources.ClientFactory
-	features featuremgmt.FeatureToggles
+	getter                RepoGetter
+	access                auth.AccessChecker
+	parsers               resources.ParserFactory
+	clients               resources.ClientFactory
+	folderMetadataEnabled bool
 }
 
 func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, features featuremgmt.FeatureToggles) *filesConnector {
-	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access, features: features}
+	return &filesConnector{
+		getter:                getter,
+		parsers:               parsers,
+		clients:               clients,
+		access:                access,
+		folderMetadataEnabled: features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata),
+	}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -168,7 +174,7 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 	}
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-	return resources.NewDualReadWriter(readWriter, parser, folders, c.access, c.features), nil
+	return resources.NewDualReadWriter(readWriter, parser, folders, c.access, c.folderMetadataEnabled), nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.
