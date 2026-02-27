@@ -667,6 +667,15 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
+	// We're unblocking the repository. Here - we should set the condition correctly, to match this case.
+	if forceProcessForUnblock {
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
+		); conditionPatchOps != nil {
+			patchOperations = append(patchOperations, conditionPatchOps...)
+		}
+	}
+
 	if shouldGenerateToken {
 		logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
 
