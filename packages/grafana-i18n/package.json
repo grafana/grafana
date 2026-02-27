@@ -65,7 +65,7 @@
     "@types/react": "18.3.18",
     "rollup": "^4.22.4",
     "rollup-plugin-copy": "3.5.0",
-    "typescript": "5.9.2"
+    "typescript": "6.0.0-beta"
   },
   "peerDependencies": {
     "react": ">=18"

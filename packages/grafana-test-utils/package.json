@@ -68,6 +68,6 @@
     "@types/lodash": "4.17.20",
     "@types/node": "24.10.1",
     "jest": "29.7.0",
-    "typescript": "5.9.2"
+    "typescript": "6.0.0-beta"
   }
 }

@@ -94,7 +94,7 @@
     "storybook": "^10.1.11",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
-    "typescript": "5.9.2"
+    "typescript": "6.0.0-beta"
   },
   "peerDependencies": {
     "@grafana/assistant": "^0.1.1",
