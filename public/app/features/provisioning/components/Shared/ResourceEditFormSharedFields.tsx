@@ -63,8 +63,6 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     });
 
     const showFolderFilename = isNew && resourceType === 'dashboard';
-    const currentPath = watch('path') || '';
-    const { directory, filename } = splitPath(currentPath);
 
     const { options: folderOptions, loading: isFoldersLoading } = useGetRepositoryFolders({
       repositoryName: showFolderFilename ? repository?.name : undefined,
@@ -155,52 +153,63 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
 
         {/* Path — split into folder + filename for new dashboards */}
         {!hiddenFields?.includes('path') && showFolderFilename && (
-          <>
-            <input type="hidden" {...register('path')} />
-            <Field
-              noMargin
-              htmlFor="folder-path"
-              label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-folder', 'Folder')}
-              description={t(
-                'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
-                'Folder inside the repository'
-              )}
-            >
-              <Combobox
-                id="folder-path"
-                value={directory}
-                onChange={(option) => {
-                  setValue('path', joinPath(option?.value ?? '', filename));
-                }}
-                options={folderOptions}
-                loading={isFoldersLoading}
-                createCustomValue
-                isClearable
-                placeholder={t(
-                  'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
-                  'Select or enter folder path'
-                )}
-              />
-            </Field>
-            <Field
-              noMargin
-              htmlFor="dashboard-filename"
-              label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-filename', 'Filename')}
-              description={t(
-                'provisioned-resource-form.save-or-delete-resource-shared-fields.description-filename',
-                'File name for the dashboard (.json or .yaml)'
-              )}
-            >
-              <Input
-                id="dashboard-filename"
-                type="text"
-                value={filename}
-                onChange={(e) => {
-                  setValue('path', joinPath(directory, e.currentTarget.value));
-                }}
-              />
-            </Field>
-          </>
+          <Controller
+            name="path"
+            control={control}
+            render={({ field: { ref, onChange, value } }) => {
+              const { directory: dir, filename: file } = splitPath(value || '');
+              return (
+                <>
+                  <Field
+                    noMargin
+                    htmlFor="folder-path"
+                    label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-folder', 'Folder')}
+                    description={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
+                      'Folder inside the repository'
+                    )}
+                  >
+                    <Combobox
+                      id="folder-path"
+                      value={dir}
+                      onChange={(option) => {
+                        onChange(joinPath(option?.value ?? '', file));
+                      }}
+                      options={folderOptions}
+                      loading={isFoldersLoading}
+                      createCustomValue
+                      isClearable
+                      placeholder={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
+                        'Select or enter folder path'
+                      )}
+                    />
+                  </Field>
+                  <Field
+                    noMargin
+                    htmlFor="dashboard-filename"
+                    label={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.label-filename',
+                      'Filename'
+                    )}
+                    description={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-filename',
+                      'File name for the dashboard (.json or .yaml)'
+                    )}
+                  >
+                    <Input
+                      id="dashboard-filename"
+                      type="text"
+                      value={file}
+                      onChange={(e) => {
+                        onChange(joinPath(dir, e.currentTarget.value));
+                      }}
+                    />
+                  </Field>
+                </>
+              );
+            }}
+          />
         )}
 
         {/* Path — single read-only field for existing resources */}
