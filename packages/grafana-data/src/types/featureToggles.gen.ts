@@ -1577,4 +1577,9 @@ export interface FeatureToggles {
   * @default false
   */
   dsAbstractionApp?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
 }

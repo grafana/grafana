@@ -33,15 +33,19 @@ import { onSortOrderChange } from './options/onSortOrderChange';
 import { Options } from './options/types';
 import { Options as LogsTableOptions } from './panelcfg.gen';
 import { getInitialRowIndex } from './props/getInitialRowIndex';
-import { BuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
+import {
+  BuildLinkToLogLine,
+  isBuildLinkToLogLine,
+  isOnLogsTableOptionsChange,
+  OnLogsTableOptionsChange,
+} from './types';
 
-interface LogsTablePanelProps extends PanelProps<Options> {}
+interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}
 
 export const LogsTable = ({
   data,
   width,
   height,
-  timeRange,
   fieldConfig,
   options,
   eventBus,
@@ -56,7 +60,6 @@ export const LogsTable = ({
   renderCounter,
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
-  const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
   const styles = useStyles2(getStyles, height, width);
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
@@ -66,7 +69,7 @@ export const LogsTable = ({
   );
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
-  const permalinkedLogId = getLogsPanelState()?.logs?.id ?? undefined;
+  const permalinkedLogId = options.permalinkedLogId ?? getLogsPanelState()?.logs?.id ?? undefined;
   const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
 
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
@@ -106,12 +109,15 @@ export const LogsTable = ({
   );
 
   const supportsPermalink = useCallback(() => {
-    return !(
-      data?.request?.app !== CoreApp.Dashboard &&
-      data?.request?.app !== CoreApp.PanelEditor &&
-      data?.request?.app !== CoreApp.PanelViewer
+    return (
+      !!options.buildLinkToLogLine ||
+      !(
+        data?.request?.app !== CoreApp.Dashboard &&
+        data?.request?.app !== CoreApp.PanelEditor &&
+        data?.request?.app !== CoreApp.PanelViewer
+      )
     );
-  }, [data?.request?.app]);
+  }, [data?.request?.app, options.buildLinkToLogLine]);
 
   const onPermalinkClick: BuildLinkToLogLine = useCallback(
     (logId: string) => {
@@ -130,8 +136,9 @@ export const LogsTable = ({
     bodyFieldName,
     logsFrame,
     supportsPermalink: supportsPermalink(),
-    onPermalinkClick,
+    onPermalinkClick: isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : onPermalinkClick,
     options,
+    fieldConfig,
   });
 
   // Build panel data
@@ -183,11 +190,11 @@ export const LogsTable = ({
             width={width}
             height={height}
             id={id}
-            timeRange={timeRange}
             timeZone={timeZone}
             options={{
               sortOrder: LogsSortOrder.Descending,
               sortBy: [{ displayName: timeFieldName, desc: true }],
+              fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
               ...options,
             }}
             transparent={transparent}
@@ -200,7 +207,6 @@ export const LogsTable = ({
             replaceVariables={replaceVariables}
             onChangeTimeRange={onChangeTimeRange}
             logOptionsStorageKey={SETTING_KEY_ROOT}
-            fieldSelectorWidth={fieldSelectorWidth}
           />
         </>
       )}
