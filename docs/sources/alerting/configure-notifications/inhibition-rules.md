@@ -41,7 +41,7 @@ Available in Grafana 13 or higher.
 
 An inhibition rule suppresses notifications for target alerts when source alerts with matching label values are already firing. This lets you reduce noise when a root-cause alert makes dependent alerts redundant.
 
-For example, if a node is down (*source*), you can inhibit all alerts for services running on that node (*target*). This prevents your team from receiving individual alerts for each affected service when the underlying cause is already captured in the source alert.
+For example, if a node is down (the **source*), you can inhibit all alerts for services running on that node (the **target**). This prevents your team from receiving individual alerts for each affected service when the underlying cause is already captured in the source alert.
 
 {{< admonition type="note" >}}
 Inhibition rules are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
