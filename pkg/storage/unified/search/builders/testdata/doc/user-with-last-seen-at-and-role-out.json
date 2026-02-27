@@ -12,5 +12,9 @@
     "lastSeenAt": 1698321600,
     "login": "user.three",
     "role": "Editor"
+  },
+  "selectableFields": {
+    "spec.email": "user.three@test.com",
+    "spec.login": "user.three"
   }
 }

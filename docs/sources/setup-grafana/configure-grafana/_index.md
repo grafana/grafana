@@ -335,6 +335,10 @@ Mode where the socket should be set when `protocol=socket`. Make sure that Grafa
 
 Path where the socket should be created when `protocol=socket`. Make sure Grafana has appropriate permissions for that path before you change this setting.
 
+#### `serve_on_socket`
+
+If set to `true` and the primary `protocol` is `http`, `https`, or `h2`, Grafana will additionally serve on the Unix domain socket configured via `socket`. Defaults to `false`.
+
 #### `cdn_url`
 
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana adds edition and version paths.
@@ -2568,6 +2572,10 @@ The `callback_url` can also be configured to support usage of the image renderer
 
 Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
 which this setting can help protect against by only allowing a certain number of concurrent requests. Default is `30`.
+
+#### `ca_cert_file_path`
+
+Path to the PEM-encoded CA certificate file from the Image Renderer server.
 
 #### `default_image_width`
 

@@ -40,6 +40,7 @@ export const QUERY_EDITOR_COLORS = {
     hoverBg: '#1D293D',
     headerBg: '#20262F',
   },
+  error: '#D10E5C',
 };
 
 export interface QueryEditorTypeConfig {
@@ -108,9 +109,15 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
  */
 export const TIME_OPTION_PLACEHOLDER = '1h';
 
+export const SIDEBAR_CARD_HEIGHT = 30;
+export const SIDEBAR_CARD_SPACING = 1;
+export const SIDEBAR_CARD_INDENT = 2;
+
 export const CONTENT_SIDE_BAR = {
-  width: 300,
+  fieldLabelWidth: 130,
   labelWidth: 80,
+  sidebarTransitionMs: 150,
+  width: 500,
 } as const;
 
 export interface QueryOptionFieldConfig {
@@ -163,6 +170,14 @@ export const QUERY_OPTION_FIELD_CONFIG: Record<QueryOptionField, QueryOptionFiel
       ),
     getLabel: () => t('query-editor-next.details-sidebar.time-shift', 'Time shift'),
     placeholder: TIME_OPTION_PLACEHOLDER,
+  },
+  [QueryOptionField.hideTimeOverride]: {
+    getTooltip: () =>
+      t(
+        'query-editor-next.details-sidebar.hide-time-override-tooltip',
+        'Hides the time override displayed in the panel header when relative time or time shift is set.'
+      ),
+    getLabel: () => t('query-editor-next.details-sidebar.hide-time-override', 'Hide time info'),
   },
   [QueryOptionField.cacheTimeout]: {
     getTooltip: () =>

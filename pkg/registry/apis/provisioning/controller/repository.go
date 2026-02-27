@@ -163,7 +163,7 @@ func repoKeyFunc(obj any) (string, error) {
 //
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
 // until shutdown. Individual processing operations already have their own spans.
-func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
+func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func()) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
 
@@ -182,6 +182,8 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
 	}
 
 	logger.Info("Started workers")
+	onStarted()
+
 	<-ctx.Done()
 	logger.Info("Shutting down workers")
 }
@@ -580,6 +582,9 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
 
+	hasQuotaChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository
+
 	var shouldGenerateToken bool
 	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
 		shouldGenerateToken = rc.shouldGenerateTokenFromConnection(obj)
@@ -601,6 +606,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		logger.Info("repository was blocked but now within quota, processing to unblock")
 	case shouldGenerateToken:
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
+	case hasQuotaChanged:
+		logger.Info("quota changed", "quota", newQuota)
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
@@ -617,8 +624,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Set quota information from configuration (only if changed)
-	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
-		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
+	if hasQuotaChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/quota",

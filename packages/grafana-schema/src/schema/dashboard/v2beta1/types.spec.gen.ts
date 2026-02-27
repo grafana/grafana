@@ -1006,6 +1006,8 @@ export interface DashboardLink {
 	keepTime: boolean;
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 	placement?: "inControlsMenu";
+	// The source that registered the link (if any)
+	origin?: ControlSourceRef;
 }
 
 export const defaultDashboardLink = (): DashboardLink => ({
@@ -1029,6 +1031,22 @@ export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
 // Dashboard Link placement. Defines where the link should be displayed.
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 export const DashboardLinkPlacement = "inControlsMenu";
+
+export type ControlSourceRef = DatasourceControlSourceRef;
+
+export const defaultControlSourceRef = (): ControlSourceRef => (defaultDatasourceControlSourceRef());
+
+// Source information for controls (e.g. variables or links)
+export interface DatasourceControlSourceRef {
+	type: "datasource";
+	// The plugin type-id
+	group: string;
+}
+
+export const defaultDatasourceControlSourceRef = (): DatasourceControlSourceRef => ({
+	type: "datasource",
+	group: "",
+});
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
@@ -1132,6 +1150,7 @@ export interface QueryVariableSpec {
 	allowCustomValue: boolean;
 	staticOptions?: VariableOption[];
 	staticOptionsOrder?: "before" | "after" | "sorted";
+	origin?: ControlSourceRef;
 }
 
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
@@ -1223,6 +1242,7 @@ export interface TextVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultTextVariableSpec = (): TextVariableSpec => ({
@@ -1253,6 +1273,7 @@ export interface ConstantVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
@@ -1290,6 +1311,7 @@ export interface DatasourceVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	origin?: ControlSourceRef;
 }
 
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
@@ -1331,6 +1353,7 @@ export interface IntervalVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
@@ -1372,6 +1395,7 @@ export interface CustomVariableSpec {
 	description?: string;
 	allowCustomValue: boolean;
 	valuesFormat?: "csv" | "json";
+	origin?: ControlSourceRef;
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1413,6 +1437,7 @@ export interface GroupByVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
@@ -1451,6 +1476,7 @@ export interface AdhocVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	origin?: ControlSourceRef;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1518,6 +1544,7 @@ export interface SwitchVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	origin?: ControlSourceRef;
 }
 
 export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({

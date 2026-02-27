@@ -8,10 +8,11 @@ export interface SqlExpressionCardProps {
   imageUrl?: string;
   onClick: () => void;
   testId?: string;
+  fullWidth?: boolean;
 }
 
-export function SqlExpressionCard({ name, description, imageUrl, onClick, testId }: SqlExpressionCardProps) {
-  const styles = useStyles2(getCardStyles);
+export function SqlExpressionCard({ name, description, imageUrl, onClick, testId, fullWidth }: SqlExpressionCardProps) {
+  const styles = useStyles2(getCardStyles, fullWidth);
 
   return (
     <Card className={styles.baseCard} data-testid={testId} onClick={onClick} noMargin>

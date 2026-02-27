@@ -5,7 +5,8 @@ go 1.25.7
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v28.0.1+incompatible
+// Updated to v28.5.2 to fix compatibility with testcontainers-go v0.40.0
+replace github.com/docker/docker => github.com/moby/moby v28.5.2+incompatible
 
 replace (
 	// TODO: remove these - the build system should not depend on Grafana code.
@@ -20,7 +21,7 @@ require (
 	go.opentelemetry.io/otel v1.40.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.40.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.50.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.51.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
 	golang.org/x/text v0.34.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/grpc v1.79.1 // indirect; @grafana/plugins-platform-backend
@@ -35,8 +36,8 @@ require (
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/otel/metric v1.40.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260203192932-546029d2fa20 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260203192932-546029d2fa20 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260209200024-4cfbd4190f57 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect
 )
 
 require (
@@ -55,7 +56,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.7 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.8 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

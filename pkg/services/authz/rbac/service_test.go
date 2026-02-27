@@ -324,7 +324,8 @@ func TestService_checkPermission(t *testing.T) {
 
 			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			tc.check.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
-			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check)
+			ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check, s.newFolderTreeGetter(context.Background(), ns, false))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
@@ -430,7 +431,8 @@ func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
 		Namespace:    types.NamespaceInfo{Value: "default", OrgID: 1},
 	}
 
-	got, err := s.checkPermission(ctx, userPermissions, &check)
+	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+	got, err := s.checkPermission(ctx, userPermissions, &check, s.newFolderTreeGetter(ctx, ns, false))
 	require.NoError(t, err)
 	assert.True(t, got)
 
@@ -2413,9 +2415,9 @@ func TestService_BatchCheck(t *testing.T) {
 		require.True(t, resp.Results["check2"].Allowed)
 		require.True(t, resp.Results["check3"].Allowed)
 
-		// Should have called GetUserPermissions only once (plus GetBasicRoles and GetUserIdentifiers once each)
-		// Total calls should be 3: GetUserIdentifiers(1), GetBasicRoles(1), GetUserPermissions(1)
-		assert.LessOrEqual(t, fStore.calls, 3, "Should batch permission lookups efficiently")
+		// Should have called GetUserPermissions only once (plus GetBasicRoles, GetUserIdentifiers, and GetFolders once each)
+		// Total calls should be 4: GetUserIdentifiers(1), GetBasicRoles(1), GetUserPermissions(1), GetFolders(1)
+		assert.LessOrEqual(t, fStore.calls, 4, "Should batch permission lookups efficiently")
 	})
 
 	t.Run("should skip cache when freshness_timestamp is recent", func(t *testing.T) {

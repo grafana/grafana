@@ -18,6 +18,7 @@ const (
 	DataSection           = "unified/data"
 	EventsSection         = "unified/events"
 	LastImportTimeSection = "unified/lastimport"
+	PendingDeleteSection  = "unified/pendingdelete"
 )
 
 var _ KV = &SqlKV{}
@@ -57,6 +58,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "resource_events"
 	case DataSection:
 		tableName = "resource_history"
+	case PendingDeleteSection:
+		tableName = "pending_tenant_deletions"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
@@ -215,7 +218,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if section == LastImportTimeSection {
 		return k.saveLastImportTime(ctx, key)
 	}
-	if section != DataSection && section != EventsSection {
+	if section != DataSection && section != EventsSection && section != PendingDeleteSection {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -266,8 +269,8 @@ func (w *sqlWriteCloser) Close() error {
 	keyPath := getKeyPath(w.section, w.key)
 
 	// do regular kv save: simple key_path + value insert with conflict check.
-	// can only do this on resource_events for now, until we drop the columns in resource_history
-	if w.section == EventsSection {
+	// can only do this on resource_events and pending_tenant_deletions for now, until we drop the columns in resource_history
+	if w.section == EventsSection || w.section == PendingDeleteSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
 		_, err := w.kv.db.ExecContext(w.ctx, query, args...)
 		if err != nil {

@@ -273,6 +273,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "provisioningExport",
+			Description:     "Enable export functionality for provisioned resources",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -1003,6 +1011,14 @@ var (
 		{
 			Name:         "alertingSavedSearches",
 			Description:  "Enables saved searches for alert rules list",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingTriageSavedSearches",
+			Description:  "Enables saved searches for the Alert Activity page",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
@@ -1842,6 +1858,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "createdByMeSearchFilter",
+			Description:  "Enables the created by me search filter on the browse dashboards page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,
@@ -1902,13 +1926,6 @@ var (
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "tabularNumbers",
-			Description: "Use fixed-width numbers globally in the UI",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
 		{
@@ -2371,6 +2388,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesUsersApi",
+			Description:  "Enables user APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesExternalGroupMappingsApi",
 			Description:  "Enables external group mapping APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2448,6 +2473,30 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "managedPluginsV2",
+			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "rememberUserOrgForSso",
+			Description:  "Remember the last viewed organization for users using SSO",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "true", // enabled by default
+		},
+		{
+			Name:         "dsAbstractionApp",
+			Description:  "Registers the dsabstraction app for querying datasources via unified SQL",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
 			Expression:   "false",
 		},
 	}

@@ -837,6 +837,8 @@ type RefItem struct {
 	Hash string `json:"hash,omitempty"`
 	// The URL to the reference (branch or tag)
 	RefURL string `json:"refURL,omitempty"`
+	// Whether this ref is protected (e.g. branch protection rules)
+	Protected bool `json:"protected,omitempty"`
 }
 
 func (RefItem) OpenAPIModelName() string {

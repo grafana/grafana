@@ -9,24 +9,6 @@
  * interfaces via RestrictedGrafanaApis in @grafana/data.
  */
 
-import type { SceneObject, SceneObjectState } from '@grafana/scenes';
-
-/**
- * Minimal subset of DashboardSceneState that the mutation system needs.
- */
-export interface MutableDashboardSceneState extends SceneObjectState {
-  isEditing?: boolean;
-}
-
-/**
- * Minimal subset of DashboardScene that the mutation system needs.
- * DashboardScene satisfies this interface via structural typing.
- */
-export interface MutableDashboardScene extends SceneObject<MutableDashboardSceneState> {
-  canEditDashboard(): boolean;
-  onEnterEditMode(): void;
-}
-
 export interface MutationRequest {
   type: string;
   payload: unknown;
