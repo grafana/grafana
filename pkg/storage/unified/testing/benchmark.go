@@ -483,7 +483,9 @@ func runStorageAndSearchBenchmark(
 ) *StorageAndSearchBenchmarkResults {
 	ctx := t.Context()
 
-	const benchNamespace = "bench-search-ns"
+	if opts.NumGroups != opts.NumResourceTypes {
+		t.Logf("WARNING: benchmark only supports NumGroups=NumResourceTypes, one resource type per group")
+	}
 
 	// Discover group/resource pairs from the configured document builders
 	builders, err := searchOpts.Resources.GetDocumentBuilders()
@@ -507,10 +509,11 @@ func runStorageAndSearchBenchmark(
 	require.NoError(t, err)
 
 	type searchJob struct {
-		group    string
-		resource string
-		title    string
-		idx      int // index into searchLatencies
+		namespace string
+		group     string
+		resource  string
+		title     string
+		idx       int // index into searchLatencies
 	}
 
 	searchCh := make(chan searchJob, opts.NumResources)
@@ -524,7 +527,7 @@ func runStorageAndSearchBenchmark(
 			req := &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
-						Namespace: benchNamespace,
+						Namespace: job.namespace,
 						Group:     job.group,
 						Resource:  job.resource,
 					},
@@ -573,10 +576,11 @@ func runStorageAndSearchBenchmark(
 			case <-time.After(50 * time.Millisecond):
 			}
 			pair := pairs[i%len(pairs)]
+			namespace := fmt.Sprintf("ns-%d", i%opts.NumNamespaces)
 			_, err := searchServer.Search(bgSearchCtx, &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
-						Namespace: benchNamespace,
+						Namespace: namespace,
 						Group:     pair.group,
 						Resource:  pair.resource,
 					},
@@ -608,13 +612,14 @@ func runStorageAndSearchBenchmark(
 		g.Go(func() error {
 			for jobID := range jobs {
 				pair := pairs[jobID%len(pairs)]
+				namespace := fmt.Sprintf("ns-%d", jobID%opts.NumNamespaces)
 				name := fmt.Sprintf("item-%d", jobID)
 				title := fmt.Sprintf("%s %d", name, time.Now().Unix())
 				opStart := time.Now()
 				_, err := WriteEvent(groupCtx, backend, name, resourcepb.WatchEvent_ADDED,
 					WithGroup(pair.group),
 					WithResource(pair.resource),
-					WithNamespace(benchNamespace),
+					WithNamespace(namespace),
 					WithValueAndTitle(value, title),
 				)
 				if err != nil {
@@ -628,10 +633,11 @@ func runStorageAndSearchBenchmark(
 				}
 				// Make sure we are able to search the resource just created.
 				searchCh <- searchJob{
-					group:    pair.group,
-					resource: pair.resource,
-					title:    title,
-					idx:      jobID,
+					namespace: namespace,
+					group:     pair.group,
+					resource:  pair.resource,
+					title:     title,
+					idx:       jobID,
 				}
 			}
 			return nil
