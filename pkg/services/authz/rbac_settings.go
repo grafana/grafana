@@ -32,7 +32,8 @@ type authzClientSettings struct {
 	tokenExchangeURL string
 	tokenNamespace   string
 
-	cacheTTL time.Duration
+	cacheTTL            time.Duration
+	localFolderCacheTTL time.Duration
 }
 
 func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
@@ -47,6 +48,7 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 	s := &authzClientSettings{}
 	// Cache duration applies to the server cache in proc, so it's relevant for both modes.
 	s.cacheTTL = authzSection.Key("cache_ttl").MustDuration(30 * time.Second)
+	s.localFolderCacheTTL = authzSection.Key("local_folder_cache_ttl").MustDuration(0)
 
 	s.mode = mode
 	if s.mode == clientModeInproc {
@@ -70,8 +72,9 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 }
 
 type RBACServerSettings struct {
-	Folder   FolderAPISettings
-	CacheTTL time.Duration
+	Folder              FolderAPISettings
+	CacheTTL            time.Duration
+	LocalFolderCacheTTL time.Duration
 }
 
 type FolderAPISettings struct {
