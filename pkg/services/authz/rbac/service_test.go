@@ -324,7 +324,8 @@ func TestService_checkPermission(t *testing.T) {
 
 			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			tc.check.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
-			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check, nil)
+			ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check, s.newFolderTreeGetter(context.Background(), ns, false))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
@@ -430,7 +431,8 @@ func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
 		Namespace:    types.NamespaceInfo{Value: "default", OrgID: 1},
 	}
 
-	got, err := s.checkPermission(ctx, userPermissions, &check, nil)
+	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+	got, err := s.checkPermission(ctx, userPermissions, &check, s.newFolderTreeGetter(ctx, ns, false))
 	require.NoError(t, err)
 	assert.True(t, got)
 
