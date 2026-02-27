@@ -18,15 +18,14 @@ func newTestCache() libcache.Cache {
 }
 
 func TestCacheWrap_LocalTTL(t *testing.T) {
-	c := newCacheWrap[string](newTestCache(), log.NewNopLogger(), tracing.NewNoopTracerService(), 30*time.Second, 50*time.Millisecond)
+	remote := newTestCache()
+	c := newCacheWrap[string](remote, log.NewNopLogger(), tracing.NewNoopTracerService(), 30*time.Second, 50*time.Millisecond)
 	ctx := context.Background()
 
-	// Miss returns zero value
 	v, ok := c.Get(ctx, "key")
 	assert.False(t, ok)
 	assert.Equal(t, "", v)
 
-	// Set populates both local and remote
 	c.Set(ctx, "key", "value1")
 
 	v, ok = c.Get(ctx, "key")
@@ -34,7 +33,7 @@ func TestCacheWrap_LocalTTL(t *testing.T) {
 	assert.Equal(t, "value1", v)
 
 	// Overwrite remote directly — local should still serve stale value until TTL expires
-	c.(*cacheWrapImpl[string]).cache.Set(ctx, "key", []byte(`"value2"`), 5*time.Minute)
+	remote.Set(ctx, "key", []byte(`"value2"`), 5*time.Minute)
 
 	v, ok = c.Get(ctx, "key")
 	require.True(t, ok)
@@ -49,13 +48,14 @@ func TestCacheWrap_LocalTTL(t *testing.T) {
 }
 
 func TestCacheWrap_NoLocalTTL(t *testing.T) {
-	c := newCacheWrap[string](newTestCache(), log.NewNopLogger(), tracing.NewNoopTracerService(), 30*time.Second)
+	remote := newTestCache()
+	c := newCacheWrap[string](remote, log.NewNopLogger(), tracing.NewNoopTracerService(), 30*time.Second)
 	ctx := context.Background()
 
 	c.Set(ctx, "key", "value1")
 
 	// Overwrite remote directly — should be visible immediately without local layer
-	c.(*cacheWrapImpl[string]).cache.Set(ctx, "key", []byte(`"value2"`), 5*time.Minute)
+	remote.Set(ctx, "key", []byte(`"value2"`), 5*time.Minute)
 
 	v, ok := c.Get(ctx, "key")
 	require.True(t, ok)
