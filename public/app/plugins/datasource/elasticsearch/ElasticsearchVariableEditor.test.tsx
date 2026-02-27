@@ -67,20 +67,6 @@ describe('ElasticsearchVariableEditor', () => {
     });
   });
 
-  it('should call onChange when text field is selected', async () => {
-    const onChange = jest.fn();
-    const props = { ...defaultProps, onChange };
-
-    render(<ElasticsearchVariableEditor {...props} />);
-
-    await waitFor(() => {
-      expect(defaultProps.datasource.query).toHaveBeenCalled();
-    });
-
-    // Note: Testing Combobox interactions would require more complex setup
-    // This is a basic structure that can be expanded with more detailed interaction tests
-  });
-
   it('should preserve existing meta values', () => {
     const queryWithMeta: ElasticsearchDataQuery = {
       ...defaultProps.query,
@@ -90,19 +76,19 @@ describe('ElasticsearchVariableEditor', () => {
       },
     };
 
-    const props = { ...defaultProps, query: queryWithMeta };
-    render(<ElasticsearchVariableEditor {...props} />);
+    render(<ElasticsearchVariableEditor {...{ ...defaultProps, query: queryWithMeta }} />);
 
-    expect(screen.getByTestId('query-editor')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('name')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('id')).toBeInTheDocument();
   });
 
   it('should migrate string query to object query', () => {
     const stringQuery = 'test string query' as unknown as ElasticsearchDataQuery;
-    const props = { ...defaultProps, query: stringQuery };
 
-    render(<ElasticsearchVariableEditor {...props} />);
+    render(<ElasticsearchVariableEditor {...{ ...defaultProps, query: stringQuery }} />);
 
-    expect(screen.getByTestId('query-editor')).toBeInTheDocument();
+    // migrateVariableQuery should have converted the string into an object query
+    expect(screen.getByText('Query: test string query')).toBeInTheDocument();
   });
 
   it('should handle query errors gracefully', async () => {
