@@ -41,6 +41,7 @@ const USE_THEME_COLORS = true;
 
 export function getQueryEditorColors(theme: GrafanaTheme2) {
   return {
+    contentHeaderBackground: theme.colors.background.secondary,
     footerBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#1e2939',
     sidebarFooterBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#141820',
     sidebarHeaderBackground: USE_THEME_COLORS ? theme.colors.background.secondary : '#20262F',

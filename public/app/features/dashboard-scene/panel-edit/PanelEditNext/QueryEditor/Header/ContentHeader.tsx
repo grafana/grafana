@@ -272,7 +272,7 @@ const getStyles = (
   return {
     container: css({
       position: 'relative',
-      backgroundColor: theme.colors.background.secondary,
+      backgroundColor: themeColors.contentHeaderBackground,
       padding: theme.spacing(0.5),
       paddingLeft: `calc(${theme.spacing(0.5)} + 4px)`,
       borderTopLeftRadius: theme.shape.radius.default,
