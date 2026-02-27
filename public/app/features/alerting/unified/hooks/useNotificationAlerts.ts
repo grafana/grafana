@@ -1,9 +1,6 @@
 import { useEffect } from 'react';
 
-import {
-  CreateNotificationsqueryalertsNotificationEntryAlert,
-  useCreateNotificationsqueryalertsMutation,
-} from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+import { useCreateNotificationsqueryalertsMutation } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 
 const QUERY_ALERTS_LIMIT = 10;
 const QUERY_ALERTS_TIME_WINDOW_MS = 1000;
@@ -19,12 +16,8 @@ export function useNotificationAlerts(uuid: string, timestamp: string) {
 
   const alerts = alertsData?.alerts ?? [];
 
-  const firingAlerts = alerts.filter(
-    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'firing'
-  );
-  const resolvedAlerts = alerts.filter(
-    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'resolved'
-  );
+  const firingAlerts = alerts.filter((alert) => alert.status === 'firing');
+  const resolvedAlerts = alerts.filter((alert) => alert.status === 'resolved');
 
   return { alerts, firingAlerts, resolvedAlerts, isLoading };
 }
