@@ -188,6 +188,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
 
+      // TODO: Add this back once all the new colors are finalized
       // '&::before': {
       //   content: '""',
       //   position: 'absolute',

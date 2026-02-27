@@ -98,23 +98,10 @@ function getStyles(theme: GrafanaTheme2) {
     dropIndicator: css({
       position: 'absolute',
       left: theme.spacing(SIDEBAR_CARD_INDENT),
-      right: theme.spacing(SIDEBAR_CARD_INDENT),
+      right: 0,
       background: theme.colors.primary.transparent,
-      //borderLeft: `1px solid ${theme.colors.primary.border}`,
+      borderLeft: `1px solid ${theme.colors.primary.border}`,
       pointerEvents: 'none',
-      borderRadius: theme.shape.radius.default,
-
-      overflow: 'hidden',
-
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: 3,
-        background: theme.colors.primary.border,
-      },
     }),
   };
 }

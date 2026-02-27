@@ -282,6 +282,7 @@ const getStyles = (
       gap: theme.spacing(1),
       minHeight: theme.spacing(5),
 
+      // psuedo-element to show the border color on the left of the header
       '&::before': {
         content: '""',
         position: 'absolute',
