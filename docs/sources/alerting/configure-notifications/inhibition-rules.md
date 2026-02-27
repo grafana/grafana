@@ -129,5 +129,5 @@ The following example defines an inhibition rule that suppresses all `warning`-s
 In this example:
 
 - The *source* matcher selects `critical` alerts. When one fires, the rule becomes active.
-- The *target* matcher selects `warning` alerts. These are suppressed while the rule is active.
+- The *target* matcher selects `warning` alerts. The rule suppresses these while the source alert fires.
 - The `equal` field ensures suppression only applies when source and target share the same `cluster` and `namespace` label values.
