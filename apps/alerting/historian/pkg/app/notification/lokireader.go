@@ -45,6 +45,7 @@ var (
 type lokiClient interface {
 	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (lokiclient.QueryRes, error)
 	MetricsQuery(ctx context.Context, logQL string, ts int64, limit int64) (lokiclient.MetricsQueryRes, error)
+	MetricsRangeQuery(ctx context.Context, logQL string, start, end, limit, step int64) (lokiclient.MetricsRangeQueryRes, error)
 }
 
 type LokiReader struct {
@@ -149,6 +150,23 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 
 		return QueryResult{Counts: counts}, nil
 
+	case v0alpha1.CreateNotificationqueryRequestBodyTypeRangeCounts:
+		// Default to no grouping (all false).
+		groupBy := QueryGroupBy{}
+		if query.GroupBy != nil {
+			groupBy = *query.GroupBy
+		}
+		step := defaultStep(from, to)
+		if query.Step != nil && *query.Step > 0 {
+			step = time.Duration(*query.Step) * time.Second
+		}
+		rangeCounts, err := h.runMetricsRangeQuery(ctx, logql, from, to, limit, step, groupBy)
+		if err != nil {
+			return QueryResult{}, err
+		}
+
+		return QueryResult{Counts: rangeCounts}, nil
+
 	default:
 		return QueryResult{}, fmt.Errorf("%w: unknown query type (%s)", ErrInvalidQuery, string(qtype))
 	}
@@ -198,6 +216,13 @@ func (h *LokiReader) QueryAlerts(ctx context.Context, query AlertQuery) (AlertQu
 // buildMetricsQuery constructs the LogQL metrics query that wraps a log filter in a
 // topk(sum(count_over_time(...))) aggregation.
 func buildMetricsQuery(logqlInner string, from, to time.Time, limit int64, groupBy QueryGroupBy) string {
+	inner := buildMetricsRangeQuery(logqlInner, to.Sub(from), groupBy)
+	return fmt.Sprintf(`topk(%d, %s)`, limit, inner)
+}
+
+// buildMetricsRangeQuery constructs a LogQL sum(count_over_time(...)) expression
+// with the given step as the range selector.
+func buildMetricsRangeQuery(logqlInner string, step time.Duration, groupBy QueryGroupBy) string {
 	// Additional expressions for the inner query if needed.
 	logqlInnerExtra := ""
 
@@ -231,9 +256,9 @@ func buildMetricsQuery(logqlInner string, from, to time.Time, limit int64, group
 		sumBy = fmt.Sprintf(" by (%s) ", strings.Join(labels, ","))
 	}
 
-	rangeSeconds := int64(to.Sub(from).Seconds())
-	return fmt.Sprintf(`topk(%d, sum%s(count_over_time(%s%s[%ds])))`,
-		limit, sumBy, logqlInner, logqlInnerExtra, rangeSeconds)
+	stepSeconds := int64(step.Seconds())
+	return fmt.Sprintf(`sum%s(count_over_time(%s%s[%ds]))`,
+		sumBy, logqlInner, logqlInnerExtra, stepSeconds)
 }
 
 // runMetricsQuery executes a sum(count_over_time(...)) instant query against Loki and
@@ -264,6 +289,69 @@ func (h *LokiReader) runMetricsQuery(ctx context.Context, logqlInner string, fro
 	return counts, nil
 }
 
+// defaultStep returns a sensible default step interval for a range query over the given time range.
+// It targets roughly 100 data points across the range.
+func defaultStep(from, to time.Time) time.Duration {
+	d := to.Sub(from) / 100
+	if d < time.Minute {
+		d = time.Minute
+	}
+	return d
+}
+
+// runMetricsRangeQuery executes a sum(count_over_time(...)) range query against Loki and
+// converts the metric matrix results into RangeCount values.
+func (h *LokiReader) runMetricsRangeQuery(ctx context.Context, logqlInner string, from, to time.Time, limit int64, step time.Duration, groupBy QueryGroupBy) ([]Count, error) {
+	logql := buildMetricsRangeQuery(logqlInner, step, groupBy)
+
+	res, err := h.client.MetricsRangeQuery(ctx, logql, from.UnixNano(), to.UnixNano(), limit, int64(step.Seconds()))
+	if err != nil {
+		return nil, fmt.Errorf("loki metrics range query: %w", err)
+	}
+
+	rangeCounts := make([]Count, 0, len(res.Data.Result))
+	for _, sample := range res.Data.Result {
+		rangeCount, err := parseRangeCount(sample)
+		if err != nil {
+			h.logger.Warn("Ignoring metric range sample", "err", err)
+			continue
+		}
+		rangeCounts = append(rangeCounts, rangeCount)
+	}
+
+	return rangeCounts, nil
+}
+
+// parseRangeCount converts a single Loki MetricRangeSample into a Count.
+func parseRangeCount(sample lokiclient.MetricRangeSample) (Count, error) {
+	entry, err := parseCountLabels(sample.Metric)
+	if err != nil {
+		return Count{}, err
+	}
+
+	entry.Values = make([]RangeValue, 0, len(sample.Values))
+	for _, sv := range sample.Values {
+		ts, err := sv.Timestamp()
+		if err != nil {
+			return Count{}, fmt.Errorf("unparseable timestamp: %w", err)
+		}
+		countStr, err := sv.Value()
+		if err != nil {
+			return Count{}, fmt.Errorf("unparseable value: %w", err)
+		}
+		count, err := strconv.ParseInt(countStr, 10, 64)
+		if err != nil {
+			return Count{}, fmt.Errorf("non-integer count %q: %w", countStr, err)
+		}
+		entry.Values = append(entry.Values, RangeValue{
+			Timestamp: int64(ts),
+			Count:     count,
+		})
+	}
+
+	return entry, nil
+}
+
 // parseCount converts a single Loki MetricSample into a Count.
 func parseCount(sample lokiclient.MetricSample) (Count, error) {
 	countStr, err := sample.Value.Value()
@@ -275,8 +363,18 @@ func parseCount(sample lokiclient.MetricSample) (Count, error) {
 		return Count{}, fmt.Errorf("non-integer count %q: %w", countStr, err)
 	}
 
-	entry := Count{Count: count}
-	m := sample.Metric
+	entry, err := parseCountLabels(sample.Metric)
+	if err != nil {
+		return Count{}, err
+	}
+	entry.Count = count
+
+	return entry, nil
+}
+
+// parseCountLabels converts a single Loki MetricSample into a Count.
+func parseCountLabels(m map[string]string) (Count, error) {
+	entry := Count{}
 	if v, ok := m["receiver"]; ok {
 		entry.Receiver = &v
 	}
