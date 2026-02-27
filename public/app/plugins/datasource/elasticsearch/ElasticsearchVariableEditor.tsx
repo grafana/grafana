@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataQueryRequest, dateTime, Field } from '@grafana/data';
 import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
-import { Combobox, ComboboxOption } from '@grafana/ui';
+import { Combobox, ComboboxOption, Text } from '@grafana/ui';
 
 import { ElasticsearchVariableQuery, migrateVariableQuery, refId } from './ElasticsearchVariableUtils';
 import { ElasticQueryEditorProps, QueryEditor } from './components/QueryEditor';
@@ -37,7 +37,13 @@ const FieldMapping = (props: FieldMappingProps) => {
 
   // Only re-run the query when the query content changes, not when meta (valueField/textField) changes
   const queryKey = useMemo(
-    () => JSON.stringify({ query: query.query, metrics: query.metrics, bucketAggs: query.bucketAggs, queryType: query.queryType }),
+    () =>
+      JSON.stringify({
+        query: query.query,
+        metrics: query.metrics,
+        bucketAggs: query.bucketAggs,
+        queryType: query.queryType,
+      }),
     [query.query, query.metrics, query.bucketAggs, query.queryType]
   );
 
@@ -90,6 +96,11 @@ const FieldMapping = (props: FieldMappingProps) => {
     };
   }, [datasource, queryKey]);
 
+  const isRawDocumentQuery =
+    !query.metrics ||
+    query.metrics.length === 0 ||
+    query.metrics.every((m) => m.type === 'raw_document' || m.type === 'raw_data');
+
   const onMetaPropChange = (key: 'textField' | 'valueField', value: string | undefined) => {
     const meta = query.meta || {};
     onChange({ ...query, meta: { ...meta, [key]: value } });
@@ -97,6 +108,14 @@ const FieldMapping = (props: FieldMappingProps) => {
 
   return (
     <EditorRows>
+      {isRawDocumentQuery && (
+        <EditorRow>
+          <Text color="secondary" variant="bodySmall">
+            Raw document queries do not return named column fields — this is expected. For field mapping, use an
+            aggregation query type, or type a field name directly below.
+          </Text>
+        </EditorRow>
+      )}
       <EditorRow>
         <EditorField label="Value Field">
           <Combobox
