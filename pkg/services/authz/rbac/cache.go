@@ -93,8 +93,13 @@ func (c *cacheWrapImpl[T]) Get(ctx context.Context, key string) (T, bool) {
 		c.mu.RLock()
 		entry, ok := c.local[key]
 		c.mu.RUnlock()
-		if ok && time.Now().Before(entry.expiresAt) {
-			return entry.value, true
+		if ok {
+			if time.Now().Before(entry.expiresAt) {
+				return entry.value, true
+			}
+			c.mu.Lock()
+			delete(c.local, key)
+			c.mu.Unlock()
 		}
 	}
 
