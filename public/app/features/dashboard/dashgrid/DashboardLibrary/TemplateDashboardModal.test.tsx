@@ -46,10 +46,6 @@ jest.mock('@grafana/assistant', () => ({
   isAssistantAvailable: jest.fn(() => of(true)),
 }));
 
-beforeAll(() => {
-  setTestFlags({ dashboardTemplatesAssistantButton: true, 'assistant.frontend.tools.dashboardTemplates': true });
-});
-
 describe('TemplateDashboardModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -163,12 +159,14 @@ describe('TemplateDashboardModal', () => {
 
   describe('Assistant button', () => {
     describe('when feature flags are false', () => {
-      it('should not render Customize with Assistant button when both feature flags are false', async () => {
+      beforeEach(() => {
         setTestFlags({
           dashboardTemplatesAssistantButton: false,
           'assistant.frontend.tools.dashboardTemplates': false,
         });
+      });
 
+      it('should not render Customize with Assistant button when both feature flags are false', async () => {
         render(<TemplateDashboardModal />, {
           historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
         });
