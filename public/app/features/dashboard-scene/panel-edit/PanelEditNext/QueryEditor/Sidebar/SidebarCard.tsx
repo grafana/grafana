@@ -166,7 +166,7 @@ function getStyles(
     paddingRight: theme.spacing(1),
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
-    background: `linear-gradient(270deg, ${backgroundColor} 80%, rgba(32, 38, 47, 0.00) 100%)`,
+    background: `linear-gradient(270deg, ${backgroundColor} 80%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
