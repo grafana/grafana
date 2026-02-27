@@ -59,7 +59,7 @@ Both inhibition rules and [silences](ref:shared-silences) suppress alert notific
 
 ## Manage inhibition rules
 
-You can manage inhibition rules via the Grafana App Platform API. There is no dedicated UI for creating or editing inhibition rules.
+You can manage inhibition rules by using the Grafana App Platform API. There is no dedicated UI for creating or editing inhibition rules.
 
 The API resource is:
 
