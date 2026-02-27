@@ -30,18 +30,26 @@ export enum SidebarSize {
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
 
 export const QUERY_EDITOR_COLORS = {
-  footerBackground: '#1e2939',
-  sidebarFooterBackground: '#141820',
   query: '#FF8904',
   expression: '#C27AFF',
   transformation: '#00D492',
-  card: {
-    activeBg: '#314158',
-    hoverBg: '#1D293D',
-    headerBg: '#20262F',
-  },
   error: '#E7000B',
 };
+
+// TODO: Remove this once all the new colors are finalized
+const USE_THEME_COLORS = true;
+
+export function getQueryEditorColors(theme: GrafanaTheme2) {
+  return {
+    footerBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#1e2939',
+    sidebarFooterBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#141820',
+    sidebarHeaderBackground: USE_THEME_COLORS ? theme.colors.background.secondary : '#20262F',
+    card: {
+      activeBg: '#314158',
+      hoverBg: '#1D293D',
+    },
+  };
+}
 
 export interface QueryEditorTypeConfig {
   icon: IconName;

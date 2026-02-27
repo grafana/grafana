@@ -196,7 +196,7 @@ function getStyles(theme: GrafanaTheme2) {
       //   top: 0,
       //   bottom: 0,
       //   width: theme.spacing(4),
-      //   background: `linear-gradient(to right, transparent, ${QUERY_EDITOR_COLORS.footerBackground})`,
+      //   background: `linear-gradient(to right, transparent, ${getQueryEditorColors(theme).footerBackground})`,
       //   pointerEvents: 'none',
       // },
     }),
