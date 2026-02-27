@@ -2207,9 +2207,12 @@
       },
       "LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord": {
         "type": "object",
-        "required": ["labels"],
+        "required": ["label", "values"],
         "properties": {
-          "labels": {
+          "label": {
+            "type": "string"
+          },
+          "values": {
             "type": "array",
             "items": {
               "type": "string"

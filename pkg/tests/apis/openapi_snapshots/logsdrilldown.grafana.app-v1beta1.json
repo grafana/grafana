@@ -2341,10 +2341,14 @@
       "com.github.grafana.grafana.apps.logsdrilldown.pkg.apis.logsdrilldown.v1beta1.LogsDrilldownDefaultLabelsLogsLogsDefaultLabelsRecord": {
         "type": "object",
         "required": [
-          "labels"
+          "label",
+          "values"
         ],
         "properties": {
-          "labels": {
+          "label": {
+            "type": "string"
+          },
+          "values": {
             "type": "array",
             "items": {
               "type": "string"
