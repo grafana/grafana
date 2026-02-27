@@ -133,3 +133,30 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 - **Config**: Defaults in `conf/defaults.ini`, overrides in `conf/custom.ini`.
 - **Database migrations**: Live in `pkg/services/sqlstore/migrations/`. Test with `make devenv sources=postgres_tests,mysql_tests` then `make test-go-integration-postgres`.
 - **CI sharding**: Backend tests use `SHARD`/`SHARDS` env vars for parallelization.
+
+## Cursor Cloud specific instructions
+
+### Node.js version
+
+The repo requires Node.js v24 (see `.nvmrc`). The VM update script installs and activates it via `nvm`. After that, `corepack enable` activates Yarn 4.11.0 (pinned in `.yarnrc.yml`).
+
+### Running the application
+
+Two processes are needed for full dev mode:
+
+1. **Backend**: `make run` (hot-reloading via `air`, serves API + static assets on `:3000`, default login `admin`/`admin`). Alternatively, build first with `make build-backend` then run `./bin/linux-amd64/grafana server --homepath=. --config=conf/defaults.ini`.
+2. **Frontend**: `yarn start` (webpack in watch mode; writes compiled assets to `public/build/` for the backend to serve — it is **not** a standalone dev server).
+
+No external database is required — SQLite3 is the default (auto-created at `data/grafana.db`).
+
+### Frontend tests
+
+`yarn test` spawns an interactive Jest watcher that can hang. For non-interactive / CI usage, call Jest directly:
+
+```bash
+yarn jest --maxWorkers=2 path/to/file.test.ts
+```
+
+### Lint / typecheck / test commands
+
+See the **Commands** section above — all standard commands (`yarn lint`, `yarn typecheck`, `make lint-go`, `go test ...`) work as documented.
