@@ -143,6 +143,7 @@ func (n *Notification) QueryHandler(ctx context.Context, writer app.CustomRouteR
 
 	n.logger.Debug("Notification history query success",
 		"entries", len(response.Entries),
+		"counts", len(response.Counts),
 		"duration", time.Since(start))
 
 	writer.Header().Add("Content-Type", "application/json")

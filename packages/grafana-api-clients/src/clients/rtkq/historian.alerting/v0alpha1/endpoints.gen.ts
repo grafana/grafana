@@ -613,6 +613,18 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
+export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
+export type CreateNotificationqueryNotificationCount = {
+  /** Count is the number of notification attempts in the time period. */
+  count: number;
+  error?: string;
+  integration?: string;
+  integrationIndex?: number;
+  outcome?: CreateNotificationqueryNotificationOutcome;
+  receiver?: string;
+  status?: CreateNotificationqueryNotificationStatus;
+};
 export type CreateNotificationqueryNotificationEntryAlert = {
   annotations: {
     [key: string]: string;
@@ -627,8 +639,6 @@ export type CreateNotificationqueryNotificationEntryAlert = {
   startsAt: string;
   status: string;
 };
-export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
-export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
 export type CreateNotificationqueryNotificationEntry = {
   /** AlertCount is the total number of alerts included in the notification. */
   alertCount: number;
@@ -666,6 +676,7 @@ export type CreateNotificationqueryNotificationEntry = {
   uuid: string;
 };
 export type CreateNotificationqueryResponse = {
+  counts: CreateNotificationqueryNotificationCount[];
   entries: CreateNotificationqueryNotificationEntry[];
 };
 export type CreateNotificationqueryMatcher = {
@@ -677,6 +688,15 @@ export type CreateNotificationqueryMatchers = CreateNotificationqueryMatcher[];
 export type CreateNotificationqueryRequestBody = {
   /** From is the starting timestamp for the query. */
   from?: string;
+  /** GroupBy specifies how to aggregate counts queries. */
+  groupBy?: {
+    error: boolean;
+    integration: boolean;
+    integrationIndex: boolean;
+    outcome: boolean;
+    receiver: boolean;
+    status: boolean;
+  };
   /** GroupLabels optionally filters the entries by matching group labels. */
   groupLabels?: CreateNotificationqueryMatchers;
   /** Labels optionally filters the entries by matching alert labels. */
@@ -693,6 +713,8 @@ export type CreateNotificationqueryRequestBody = {
   status?: CreateNotificationqueryNotificationStatus;
   /** To is the starting timestamp for the query. */
   to?: string;
+  /** Type of query to perform (default: entries) */
+  type?: 'entries' | 'counts';
 };
 export type CreateNotificationsqueryalertsNotificationEntryAlert = {
   annotations: {

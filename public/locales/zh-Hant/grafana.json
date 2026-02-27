@@ -4159,6 +4159,16 @@
       "clear": "清除搜尋和篩選條件",
       "text": "未找到您的查詢結果"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "清除歷史紀錄",
       "error": "無法載入最近瀏覽的儀表板。",
@@ -4827,6 +4837,10 @@
       "view-json-diff": "檢視 JSON diff 以查看所有變更"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "新增",
     "alert": {
@@ -5028,7 +5042,7 @@
     "canvas-actions": {
       "add-panel": "新增面板",
       "disabled-child-contains-tabs": "無法變更為分頁，因為列已包含分頁",
-      "disabled-nested-grouping": "分組限制為 2 個層級",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "分頁不能嵌套在其他分頁中",
       "group-into-row": "將群組分成列",
       "group-into-tab": "將群組分成分頁",
@@ -10914,7 +10928,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到選項"
@@ -12314,6 +12330,11 @@
       "text-loading-teams": "正在載入團隊…"
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "新增備註以描述您的變更（選填）",
@@ -13316,7 +13337,8 @@
       "transformations": "轉換",
       "view-toggle": "",
       "alerts_other": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",

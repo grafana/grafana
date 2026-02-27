@@ -4182,6 +4182,16 @@
       "clear": "Suche und Filter löschen",
       "text": "Keine Ergebnisse für deine Abfrage gefunden"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Verlauf löschen",
       "error": "Zuletzt angesehene Dashboards konnten nicht geladen werden.",
@@ -4853,6 +4863,10 @@
       "view-json-diff": "JSON-Diff anzeigen, um alle Änderungen zu sehen"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Neu",
     "alert": {
@@ -5054,7 +5068,7 @@
     "canvas-actions": {
       "add-panel": "Panel hinzufügen",
       "disabled-child-contains-tabs": "Kann nicht zu Tabs geändert werden, da eine Zeile bereits Tabs enthält",
-      "disabled-nested-grouping": "Die Gruppierung ist auf 2 Ebenen beschränkt",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Tabs können nicht in andere Tabs verschachtelt werden",
       "group-into-row": "In Zeile gruppieren",
       "group-into-tab": "In Registerkarte gruppieren",
@@ -10965,7 +10979,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Keine Optionen gefunden"
@@ -12368,6 +12384,11 @@
       "text-loading-teams": "Teams werden geladen ..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Fügen Sie eine Notiz hinzu, um Ihre Änderungen zu beschreiben (optional)",
@@ -13379,7 +13400,9 @@
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",

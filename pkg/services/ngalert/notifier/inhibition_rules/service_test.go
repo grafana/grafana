@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/alerting/definition"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -377,7 +378,7 @@ func buildMimirAMConfigWithInhibitRules(t *testing.T, rules []definitions.Inhibi
 		},
 		Receivers: []*definition.PostableApiReceiver{
 			{
-				Receiver: config.Receiver{
+				Receiver: definitions.Receiver{
 					Name: "default",
 				},
 			},

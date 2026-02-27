@@ -4182,6 +4182,16 @@
       "clear": "Cancella ricerca e filtri",
       "text": "Nessun risultato trovato per la ricerca"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Cancella cronologia",
       "error": "Impossibile caricare le dashboard visualizzate di recente.",
@@ -4853,6 +4863,10 @@
       "view-json-diff": "Visualizza la differenza JSON per vedere tutte le modifiche"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Aggiungi nuovo",
     "alert": {
@@ -5054,7 +5068,7 @@
     "canvas-actions": {
       "add-panel": "Aggiungi pannello",
       "disabled-child-contains-tabs": "Impossibile passare alle schede perché una riga contiene già schede",
-      "disabled-nested-grouping": "Il raggruppamento è limitato a 2 livelli",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Le schede non possono essere nidificate all'interno di altre schede",
       "group-into-row": "Raggruppa in riga",
       "group-into-tab": "Raggruppa in scheda",
@@ -10965,7 +10979,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nessuna opzione trovata"
@@ -12368,6 +12384,11 @@
       "text-loading-teams": "Caricamento team in corso..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Aggiungi una nota per descrivere le modifiche (facoltativo)",
@@ -13379,7 +13400,9 @@
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
