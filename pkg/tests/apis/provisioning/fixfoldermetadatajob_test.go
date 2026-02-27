@@ -29,7 +29,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 	}
 	helper.CreateRepo(t, testRepo)
 
-	t.Run("noop job completes successfully", func(t *testing.T) {
+	t.Run("job completes successfully", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
 		}
@@ -39,7 +39,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		require.Equal(t, "success", state, "fix-folder-metadata job should complete with success")
 	})
 
-	t.Run("noop job does not modify repository content", func(t *testing.T) {
+	t.Run("job creates marker file", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
 		}
@@ -47,15 +47,42 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 
 		// Verify original file still exists unchanged
 		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
-		require.NoError(t, err, "original file should still exist after noop job")
+		require.NoError(t, err, "original file should still exist after job")
 
 		// Verify dashboards are untouched
 		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		require.Len(t, dashboards.Items, 1, "dashboard count should be unchanged after noop job")
+		require.Len(t, dashboards.Items, 1, "dashboard count should be unchanged after job")
+
+		// Verify marker file was created in .grafana directory
+		files, err := helper.Repositories.Resource.List(ctx, repo, metav1.ListOptions{}, "files")
+		require.NoError(t, err)
+		// Check that a .grafana/folder-metadata-fixed-* file was created
+		foundMarker := false
+		for _, item := range files.Items {
+			path := mustNestedString(item.Object, "path")
+			if len(path) > 29 && path[:29] == ".grafana/folder-metadata-fixed-" {
+				foundMarker = true
+				break
+			}
+		}
+		require.True(t, foundMarker, "marker file should be created in .grafana directory")
 	})
 
-	t.Run("noop job with options completes successfully", func(t *testing.T) {
+	t.Run("job with custom ref completes successfully", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionFixFolderMetadata,
+			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+				Ref: "main",
+			},
+		}
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		state := mustNestedString(job.Object, "status", "state")
+		require.Equal(t, "success", state, "fix-folder-metadata job with custom ref should complete with success")
+	})
+
+	t.Run("job with empty options uses default ref", func(t *testing.T) {
 		spec := provisioning.JobSpec{
 			Action:            provisioning.JobActionFixFolderMetadata,
 			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{},
@@ -63,6 +90,6 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
 		state := mustNestedString(job.Object, "status", "state")
-		require.Equal(t, "success", state, "fix-folder-metadata job with options should complete with success")
+		require.Equal(t, "success", state, "fix-folder-metadata job with empty options should complete with success")
 	})
 }

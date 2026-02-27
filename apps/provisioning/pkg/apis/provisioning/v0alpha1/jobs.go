@@ -239,7 +239,10 @@ func (MoveJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "MoveJobOptions"
 }
 
-type FixFolderMetadataJobOptions struct{}
+type FixFolderMetadataJobOptions struct {
+	// Ref to the branch to create the empty commit on (defaults to "main" if not specified)
+	Ref string `json:"ref,omitempty"`
+}
 
 func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FixFolderMetadataJobOptions"
