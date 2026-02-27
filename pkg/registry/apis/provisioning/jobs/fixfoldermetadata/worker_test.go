@@ -156,8 +156,8 @@ func TestWorker_Process(t *testing.T) {
 				Namespace: "default",
 			},
 			Spec: provisioning.JobSpec{
-				Action:            provisioning.JobActionFixFolderMetadata,
-				Repository:        "test-repo",
+				Action:     provisioning.JobActionFixFolderMetadata,
+				Repository: "test-repo",
 				FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
 					Ref: customRef,
 				},
