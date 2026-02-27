@@ -80,7 +80,6 @@ export const ConnectStep = memo(function ConnectStep() {
                   placeholder={gitFields.branchConfig.placeholder}
                   options={repositoryRefsOptions || []}
                   loading={isRefsLoading}
-                  disabled={isRefsLoading}
                   createCustomValue
                   isClearable
                   {...field}
