@@ -148,7 +148,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 
 	cachedPerms, err := s.getCachedIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
 	if err == nil {
-		allowed, err := s.checkPermission(ctx, cachedPerms, checkReq)
+		allowed, err := s.checkPermission(ctx, cachedPerms, checkReq, nil)
 		if err != nil {
 			ctxLogger.Error("could not check permission", "error", err)
 			s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
@@ -170,7 +170,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		return deny, err
 	}
 
-	allowed, err := s.checkPermission(ctx, permissions, checkReq)
+	allowed, err := s.checkPermission(ctx, permissions, checkReq, nil)
 	if err != nil {
 		ctxLogger.Error("could not check permission", "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
@@ -363,15 +363,50 @@ func (s *Service) processBatchCheckGroup(
 		return
 	}
 
+	tree, err := s.resolveGroupFolderTree(ctx, ns, group)
+	if err != nil {
+		ctxLogger.Error("could not resolve folder tree", "namespace", ns.Value, "action", group.action, "error", err)
+		for _, item := range group.items {
+			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
+		}
+		return
+	}
+
 	for i, item := range group.items {
 		checkReq := group.checkReqs[i]
-		allowed, err := s.checkPermission(ctx, permissions, checkReq)
+		allowed, err := s.checkPermission(ctx, permissions, checkReq, tree)
 		if err != nil {
 			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
 			continue
 		}
 		results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: allowed}
 	}
+}
+
+// resolveGroupFolderTree fetches or builds the folder tree once for all items in a batch check group.
+// It returns nil if the resource type does not have folder support.
+// When a non-nil tree is returned, it is passed directly into checkPermission/checkInheritedPermissions,
+// eliminating per-item cache lookups inside the item loop.
+func (s *Service) resolveGroupFolderTree(ctx context.Context, ns types.NamespaceInfo, group *batchCheckGroup) (*folderTree, error) {
+	// All items in a group share the same action → same resource type → same HasFolderSupport value.
+	// Check folder support once using the first request, then scan items for actual folder usage.
+	first := group.checkReqs[0]
+	t, ok := s.mapper.Get(first.Group, first.Resource)
+	if !ok || !t.HasFolderSupport() {
+		return nil, nil
+	}
+
+	if !group.requiresFreshData {
+		if tree, ok := s.getCachedFolderTree(ctx, ns); ok {
+			return &tree, nil
+		}
+	}
+
+	tree, err := s.buildFolderTree(ctx, ns)
+	if err != nil {
+		return nil, err
+	}
+	return &tree, nil
 }
 
 // getPermissionsForGroup fetches permissions for a batch check group,
@@ -809,7 +844,7 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, 
 	return *basicRole, nil
 }
 
-func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *checkRequest) (bool, error) {
+func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *checkRequest, tree *folderTree) (bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.checkPermission", trace.WithAttributes(
 		attribute.Int("scope_count", len(scopeMap))))
 	defer span.End()
@@ -854,7 +889,7 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return false, nil
 	}
 
-	return s.checkInheritedPermissions(ctx, scopeMap, req)
+	return s.checkInheritedPermissions(ctx, scopeMap, req, tree)
 }
 
 func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
@@ -875,7 +910,7 @@ func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string
 	return permMap
 }
 
-func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *checkRequest) (bool, error) {
+func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *checkRequest, preResolvedTree *folderTree) (bool, error) {
 	if req.ParentFolder == "" {
 		return false, nil
 	}
@@ -884,20 +919,26 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	tree, ok := s.getCachedFolderTree(ctx, req.Namespace)
+	var tree folderTree
+	if preResolvedTree != nil {
+		tree = *preResolvedTree
+	} else {
+		var ok bool
+		tree, ok = s.getCachedFolderTree(ctx, req.Namespace)
 
-	// Check cached tree is up to date
-	if !ok || !s.isFolderInTree(tree, req.ParentFolder) {
-		var err error
-		tree, err = s.buildFolderTree(ctx, req.Namespace)
-		if err != nil {
-			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
-			return false, err
-		}
-		if !s.isFolderInTree(tree, req.ParentFolder) {
-			// Not erroring here as the permission might exist but the folder wasn't synchronized yet
-			// Once in mode 5 we can deny access here
-			ctxLogger.Error("parent folder not found in folder tree", "folder", req.ParentFolder)
+		// Check cached tree is up to date
+		if !ok || !s.isFolderInTree(tree, req.ParentFolder) {
+			var err error
+			tree, err = s.buildFolderTree(ctx, req.Namespace)
+			if err != nil {
+				ctxLogger.Error("could not build folder and dashboard tree", "error", err)
+				return false, err
+			}
+			if !s.isFolderInTree(tree, req.ParentFolder) {
+				// Not erroring here as the permission might exist but the folder wasn't synchronized yet
+				// Once in mode 5 we can deny access here
+				ctxLogger.Error("parent folder not found in folder tree", "folder", req.ParentFolder)
+			}
 		}
 	}
 
