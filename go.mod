@@ -88,9 +88,9 @@ require (
 	github.com/googleapis/gax-go/v2 v2.15.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20260225144157-3c6f7441f804 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20260218111514-582136a04938 // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20260218111514-582136a04938 // @grafana/identity-access-team
+	github.com/grafana/alerting v0.0.0-20260226210840-9640967a1c7f // @grafana/alerting-backend
+	github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20260226130908-b01d89f85c4d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // @grafana/grafana-backend-group
@@ -105,7 +105,7 @@ require (
 	github.com/grafana/grafana-cloud-migration-snapshot v1.10.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.289.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.290.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // @grafana/alerting-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 	github.com/grafana/nanogit v0.4.0 // indirect; @grafana/grafana-git-ui-sync-team
@@ -187,11 +187,11 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
 	go.etcd.io/bbolt v1.4.3 // @grafana/grafana-search-and-storage
 	go.opentelemetry.io/collector/pdata v1.44.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.64.0 // @grafana/plugins-platform-backend
-	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.64.0 // @grafana/grafana-operator-experience-squad
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.64.0 // @grafana/sharing-squad
-	go.opentelemetry.io/contrib/propagators/jaeger v1.39.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.33.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0 // @grafana/plugins-platform-backend
+	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.65.0 // @grafana/grafana-operator-experience-squad
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.65.0 // @grafana/sharing-squad
+	go.opentelemetry.io/contrib/propagators/jaeger v1.40.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.34.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel v1.40.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.15.0 // indirect; @grafana/grafana-operator-experience-squad
@@ -212,7 +212,7 @@ require (
 	gocloud.dev/secrets/hashivault v0.44.0 // @grafana/grafana-operator-experience-squad
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // @grafana/alerting-backend
 	golang.org/x/mod v0.33.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.50.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.51.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.35.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
 	golang.org/x/text v0.34.0 // @grafana/grafana-backend-group
@@ -436,7 +436,7 @@ require (
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/edsrzf/mmap-go v1.2.0 // indirect
-	github.com/elazarl/goproxy v1.8.0 // indirect
+	github.com/elazarl/goproxy v1.8.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.36.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
@@ -701,9 +701,8 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
+	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
-
-require software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

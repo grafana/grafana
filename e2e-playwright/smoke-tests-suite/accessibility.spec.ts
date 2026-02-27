@@ -14,7 +14,7 @@ interface A11yTestCase {
 test.describe(
   'A11y smokescreen',
   {
-    tag: ['@acceptance', '@a11y'],
+    tag: ['@a11y'],
   },
   () => {
     (

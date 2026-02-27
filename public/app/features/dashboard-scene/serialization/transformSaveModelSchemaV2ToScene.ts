@@ -55,6 +55,7 @@ import {
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
   AnnoKeyEmbedded,
+  DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
@@ -199,8 +200,11 @@ export function transformSaveModelSchemaV2ToScene(
     dashboardProfiler
   );
 
+  const deprecatedId = metadata.labels?.[DeprecatedInternalId];
+
   const dashboardScene = new DashboardScene(
     {
+      id: deprecatedId ? parseInt(deprecatedId, 10) : undefined,
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,

@@ -14,6 +14,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   DeepPartial,
   SceneComponentProps,
@@ -27,7 +28,6 @@ import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2,
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
-import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -149,14 +149,15 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
   const onlyOverrides = listMode === OptionFilter.Overrides;
   const isScrollingLayout = useScrollReflowLimit();
 
+  const { value: listedPlugins = [] } = useListedPanelPluginMetas();
   const pluginMeta: PanelPluginMeta = useMemo(() => {
-    let meta = getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0];
+    let meta = listedPlugins.find((p) => p.id === pluginId);
     if (!meta) {
       const notFound = getPanelPluginNotFound(`Panel plugin not found (${pluginId})`, true);
       meta = notFound.meta;
     }
     return meta;
-  }, [pluginId]);
+  }, [pluginId, listedPlugins]);
 
   return (
     <>

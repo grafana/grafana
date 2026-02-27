@@ -4228,6 +4228,16 @@
       "clear": "Wyczyść wyszukiwanie i filtry",
       "text": "Nie znaleziono wyników dla tego zapytania"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Wyczyść historię",
       "error": "Nie udało się załadować ostatnio wyświetlanych pulpitów.",
@@ -4905,6 +4915,10 @@
       "view-json-diff": "Wyświetl różnice w plikach JSON, aby zobaczyć wszystkie zmiany"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Dodaj nowe",
     "alert": {
@@ -5106,7 +5120,7 @@
     "canvas-actions": {
       "add-panel": "Dodaj panel",
       "disabled-child-contains-tabs": "Nie można zmienić na karty, ponieważ wiersz zawiera już karty",
-      "disabled-nested-grouping": "Grupowanie jest ograniczone do 2 poziomów",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Kart nie można zagnieżdżać w innych kartach",
       "group-into-row": "Grupuj w wierszu",
       "group-into-tab": "Grupuj na karcie",
@@ -11067,7 +11081,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nie znaleziono opcji"
@@ -12476,6 +12492,11 @@
       "text-loading-teams": "Wczytywanie zespołów…"
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Dodaj notatkę, aby opisać zmiany (opcjonalnie)",
@@ -13505,7 +13526,11 @@
       "footer-items_one": "",
       "footer-items_few": "",
       "footer-items_many": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_few": "",
+      "footer-items-alert_many": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",

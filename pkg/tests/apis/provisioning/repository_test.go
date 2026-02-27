@@ -168,6 +168,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				}
 			}
 
+			// Verify default values
 			if extensions.IsEnterprise {
 				assert.ElementsMatch(collect, []provisioning.RepositoryType{
 					provisioning.LocalRepositoryType,
@@ -239,6 +240,49 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			}, stats)
 		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})
+}
+
+func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	var helper *provisioningTestHelper
+	// Changing the repository types to check if users can override the default values
+	if !extensions.IsEnterprise {
+		helper = runGrafana(t, withRepositoryTypes([]string{"local", "github"}))
+	} else {
+		helper = runGrafana(t, withRepositoryTypes([]string{"local", "git", "github", "bitbucket"}))
+	}
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		settings := &provisioning.RepositoryViewList{}
+		rsp := helper.ViewerREST.Get().
+			Namespace("default").
+			Suffix("settings").
+			Do(context.Background())
+		if !assert.NoError(collect, rsp.Error()) {
+			return
+		}
+
+		err := rsp.Into(settings)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		// Verify default values
+		if extensions.IsEnterprise {
+			assert.ElementsMatch(collect, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitRepositoryType,
+				provisioning.GitHubRepositoryType,
+				provisioning.BitbucketRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		} else {
+			assert.ElementsMatch(collect, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		}
+	}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 }
 
 func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
