@@ -4159,6 +4159,16 @@
       "clear": "Hapus pencarian dan filter",
       "text": "Hasil untuk kueri Anda tidak ditemukan"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Hapus riwayat",
       "error": "Dasbor yang baru dilihat tidak dapat dimuat.",
@@ -4827,6 +4837,10 @@
       "view-json-diff": "Lihat selisih JSON untuk melihat semua perubahan"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Tambahkan baru",
     "alert": {
@@ -5028,7 +5042,7 @@
     "canvas-actions": {
       "add-panel": "Tambah panel",
       "disabled-child-contains-tabs": "Tidak dapat mengubah ke tab karena baris sudah berisi tab",
-      "disabled-nested-grouping": "Pengelompokan dibatasi hingga 2 level",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Tab tidak dapat disarangkan di dalam tab lain",
       "group-into-row": "Kelompokkan ke dalam baris",
       "group-into-tab": "Kelompokkan ke dalam tab",
@@ -10914,7 +10928,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Opsi tidak ditemukan"
@@ -12314,6 +12330,11 @@
       "text-loading-teams": "Memuat tim..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
@@ -13316,7 +13337,8 @@
       "transformations": "Transformasi",
       "view-toggle": "",
       "alerts_other": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
