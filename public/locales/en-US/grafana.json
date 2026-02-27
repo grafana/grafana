@@ -13316,6 +13316,7 @@
     "action": {
       "add-transformation-filter": "Add filter",
       "duplicate": "Duplicate {{type}}",
+      "error": "Error",
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "hide-transformation-help": "Hide transformation help",
