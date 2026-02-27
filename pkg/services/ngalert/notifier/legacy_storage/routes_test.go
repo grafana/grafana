@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -376,7 +375,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 			},
 			Receivers: []*definition.PostableApiReceiver{
 				{
-					Receiver: config.Receiver{
+					Receiver: definitions.Receiver{
 						Name: name,
 					},
 				},

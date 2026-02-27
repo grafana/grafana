@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { of } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { locationService, setBackendSrv } from '@grafana/runtime';
@@ -41,6 +42,7 @@ jest.mock('@grafana/assistant', () => ({
     openAssistant: jest.fn(),
   })),
   createAssistantContextItem: jest.fn((type: string, data: object) => ({ type, ...data })),
+  isAssistantAvailable: jest.fn(() => of(true)),
 }));
 
 const mockUseBooleanFlagValue = jest.fn();

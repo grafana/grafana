@@ -4228,6 +4228,16 @@
       "clear": "Очистить поиск и фильтры",
       "text": "По вашему запросу ничего не найдено"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Очистить историю",
       "error": "Не удалось загрузить последние просмотренные дашборды.",
@@ -4905,6 +4915,10 @@
       "view-json-diff": "Просмотреть JSON Diff, чтобы увидеть все изменения"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Добавить новую",
     "alert": {
@@ -5106,7 +5120,7 @@
     "canvas-actions": {
       "add-panel": "Добавить панель",
       "disabled-child-contains-tabs": "Невозможно переключиться на вкладки, поскольку строка уже их содержит",
-      "disabled-nested-grouping": "Группировка ограничена 2 уровнями",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Вкладки не могут быть вложены в другие вкладки",
       "group-into-row": "Группировать в строку",
       "group-into-tab": "Группировать во вкладку",
@@ -11067,7 +11081,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Параметры не найдены"
@@ -12476,6 +12492,11 @@
       "text-loading-teams": "Загрузка команд..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Добавить примечание с описанием изменений (необязательно)",
@@ -13505,7 +13526,11 @@
       "footer-items_one": "",
       "footer-items_few": "",
       "footer-items_many": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_few": "",
+      "footer-items-alert_many": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",

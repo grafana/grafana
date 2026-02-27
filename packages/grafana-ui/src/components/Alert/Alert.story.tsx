@@ -2,6 +2,7 @@ import { action } from '@storybook/addon-actions';
 import { StoryFn, Meta } from '@storybook/react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
+import { Button } from '../Button/Button';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { Alert, AlertVariant } from './Alert';
@@ -16,7 +17,7 @@ const meta: Meta = {
     docs: {
       page: mdx,
     },
-    controls: { exclude: ['onRemove'] },
+    controls: { exclude: ['onRemove', 'action'] },
   },
   argTypes: {
     severity: {
@@ -36,17 +37,6 @@ export const Basic: StoryFn<typeof Alert> = (args) => {
 Basic.args = {
   severity: 'error',
   title: 'Basic',
-};
-
-export const WithActions: StoryFn<typeof Alert> = (args) => {
-  return <Alert {...args}>Child content that includes some alert details, like maybe what actually happened.</Alert>;
-};
-
-WithActions.args = {
-  title: 'With action',
-  severity: 'error',
-  onRemove: action('Remove button clicked'),
-  buttonContent: 'Close',
 };
 
 export const Examples: StoryFn<typeof Alert> = () => {
@@ -76,6 +66,51 @@ export const Examples: StoryFn<typeof Alert> = () => {
       </StoryExample>
     </Stack>
   );
+};
+
+export const WithActionAndDismiss: StoryFn<typeof Alert> = (args) => {
+  return <Alert {...args}>You have reached your quota limit. Request an increase or dismiss this alert.</Alert>;
+};
+
+WithActionAndDismiss.args = {
+  title: 'Quota limit reached',
+  severity: 'warning',
+  action: (
+    <Button variant="secondary" onClick={action('Action button clicked')}>
+      Request increase
+    </Button>
+  ),
+  onRemove: action('Dismiss button clicked'),
+};
+
+export const WithActionOnly: StoryFn<typeof Alert> = (args) => {
+  return <Alert {...args}>The rule you are trying to copy does not exist.</Alert>;
+};
+
+WithActionOnly.args = {
+  title: 'Cannot copy the rule',
+  severity: 'error',
+  action: (
+    <Button variant="secondary" onClick={action('Action button clicked')}>
+      Go back to alert list
+    </Button>
+  ),
+};
+
+export const WithActionAndRemoveButton: StoryFn<typeof Alert> = (args) => {
+  return <Alert {...args}>This alert has both a custom action and a remove button with custom content.</Alert>;
+};
+
+WithActionAndRemoveButton.args = {
+  title: 'Multiple actions',
+  severity: 'info',
+  action: (
+    <Button variant="primary" onClick={action('Action button clicked')}>
+      View docs
+    </Button>
+  ),
+  onRemove: action('Remove button clicked'),
+  buttonContent: 'Dismiss',
 };
 
 export const Toast: StoryFn<typeof Alert> = (args) => {
