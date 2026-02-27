@@ -11,7 +11,7 @@ interface A11yTestCase {
   ignoredRules?: string[];
 }
 
-test.skip(
+test.describe.skip(
   'A11y smokescreen',
   {
     tag: ['@acceptance', '@a11y'],
