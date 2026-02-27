@@ -749,7 +749,7 @@ func TestLokiReader_Query_Counts(t *testing.T) {
 	queryTypeCounts := v0alpha1.CreateNotificationqueryRequestBodyTypeCounts
 
 	makeMetricSample := func(count string, metric map[string]string) lokiclient.MetricSample {
-		ts, _ := json.Marshal(float64(now.UnixNano()) / 1e9)
+		ts, _ := json.Marshal(now.Unix())
 		val, _ := json.Marshal(count)
 		return lokiclient.MetricSample{
 			Metric: metric,

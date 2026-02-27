@@ -112,11 +112,6 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 			return QueryResult{}, err
 		}
 
-		// Prune entries to the requested limit.
-		if int64(len(entries)) > limit {
-			entries = entries[:limit]
-		}
-
 		return QueryResult{Entries: entries}, nil
 
 	case v0alpha1.CreateNotificationqueryRequestBodyTypeCounts:
@@ -128,11 +123,6 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 		counts, err := h.runMetricsQuery(ctx, logql, from, to, limit, groupBy)
 		if err != nil {
 			return QueryResult{}, err
-		}
-
-		// Prune counts to the requested limit.
-		if int64(len(counts)) > limit {
-			counts = counts[:limit]
 		}
 
 		return QueryResult{Counts: counts}, nil
