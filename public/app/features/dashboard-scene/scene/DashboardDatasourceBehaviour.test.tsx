@@ -76,7 +76,7 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
   return of([]).pipe(
     map(() => {
       result.state = LoadingState.Done;
-      result.series = [{ fields: [], length: 0 }];
+      result.series = [];
 
       return result;
     })
