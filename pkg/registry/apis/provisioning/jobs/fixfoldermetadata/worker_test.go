@@ -182,13 +182,14 @@ func TestWorker_Process(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("returns error when options are missing", func(t *testing.T) {
+	t.Run("uses default ref when options are nil", func(t *testing.T) {
 		w := NewWorker()
 		ctx := context.Background()
 
 		mockRepo := &mockStageableRepo{
 			MockStageableRepository: repository.NewMockStageableRepository(t),
 		}
+		mockStaged := repository.NewMockStagedRepository(t)
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		job := provisioning.Job{
@@ -199,13 +200,23 @@ func TestWorker_Process(t *testing.T) {
 			Spec: provisioning.JobSpec{
 				Action:            provisioning.JobActionFixFolderMetadata,
 				Repository:        "test-repo",
-				FixFolderMetadata: nil, // Missing options
+				FixFolderMetadata: nil, // Nil options should default
 			},
 		}
 
+		// Expect staging with "main" as default ref (since options are nil)
+		mockRepo.MockStageableRepository.EXPECT().Stage(ctx, mock.MatchedBy(func(opts repository.StageOptions) bool {
+			return opts.Ref == "main"
+		})).Return(mockStaged, nil)
+
+		mockStaged.EXPECT().Write(ctx, mock.Anything, "main", mock.Anything, mock.Anything).Return(nil)
+		mockStaged.EXPECT().Push(ctx).Return(nil)
+		mockStaged.EXPECT().Remove(ctx).Return(nil)
+		mockProgress.EXPECT().SetMessage(ctx, "Creating marker commit on branch main").Return()
+		mockProgress.EXPECT().SetFinalMessage(ctx, "Folder metadata fixed on branch main").Return()
+
 		err := w.Process(ctx, mockRepo, job, mockProgress)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "missing fix folder metadata options")
+		require.NoError(t, err)
 	})
 }
 

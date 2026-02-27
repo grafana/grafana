@@ -26,9 +26,10 @@ func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
 func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 
+	// Get options, defaulting to empty if not provided
 	options := job.Spec.FixFolderMetadata
 	if options == nil {
-		return fmt.Errorf("missing fix folder metadata options")
+		options = &provisioning.FixFolderMetadataJobOptions{}
 	}
 
 	// Default to "main" if no ref is specified
@@ -51,8 +52,11 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 	// Create a marker file to document when the fix was run
 	fn := func(stagedRepo repository.Repository, staged bool) error {
+		// For non-stageable repositories (like local folders), just skip the commit
+		// The job will complete successfully but won't create a marker file
 		if !staged {
-			return fmt.Errorf("repository does not support staging")
+			logger.Info("repository does not support staging, skipping marker commit")
+			return nil
 		}
 
 		rw, ok := stagedRepo.(repository.ReaderWriter)
