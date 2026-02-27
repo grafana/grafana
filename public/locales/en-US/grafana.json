@@ -2182,7 +2182,7 @@
         "success": "Success"
       },
       "resolved-alerts": "Resolved Alerts",
-      "showing-alerts": "Showing {{showing}} out of {{total}} alerts",
+      "showing-alerts": "Showing {{ showing }} out of {{ total }} alerts",
       "started": "Started:",
       "status": {
         "firing": "Firing",

@@ -8,7 +8,6 @@ import {
   CreateNotificationqueryNotificationStatus,
   CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
-  useCreateNotificationsqueryalertsMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { dateTime } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -28,6 +27,7 @@ import {
 } from '@grafana/ui';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { useNotificationAlerts } from '../../../hooks/useNotificationAlerts';
 import { matcherToOperator } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../../DynamicTable';
@@ -356,21 +356,12 @@ interface NotificationExpandedContentProps {
 }
 
 const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps) => {
-  const [queryAlerts, { data: alertsData, isLoading: alertsLoading }] = useCreateNotificationsqueryalertsMutation();
-
-  useEffect(() => {
-    const from = entry.timestamp;
-    const to = new Date(new Date(entry.timestamp).getTime() + 1000).toISOString();
-    queryAlerts({ createNotificationsqueryalertsRequestBody: { uuid: entry.uuid, from, to, limit: 10 } });
-  }, [entry.uuid, entry.timestamp, queryAlerts]);
-
-  const alerts = alertsData?.alerts ?? [];
-  const firingAlerts = alerts.filter(
-    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'firing'
-  );
-  const resolvedAlerts = alerts.filter(
-    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'resolved'
-  );
+  const {
+    alerts,
+    firingAlerts,
+    resolvedAlerts,
+    isLoading: alertsLoading,
+  } = useNotificationAlerts(entry.uuid, entry.timestamp);
 
   return (
     <Box padding={2}>
@@ -385,7 +376,7 @@ const NotificationExpandedContent = ({ entry }: NotificationExpandedContentProps
           <Stack direction="row" gap={0.5} alignItems="center">
             <Icon name="info-circle" size="xs" />
             <Text variant="bodySmall" color="secondary">
-              {t('alerting.notification-history.showing-alerts', 'Showing {{showing}} out of {{total}} alerts', {
+              {t('alerting.notification-history.showing-alerts', 'Showing {{ showing }} out of {{ total }} alerts', {
                 showing: alerts.length,
                 total: entry.alertCount,
               })}

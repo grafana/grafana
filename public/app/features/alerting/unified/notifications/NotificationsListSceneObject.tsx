@@ -9,7 +9,6 @@ import {
   CreateNotificationqueryNotificationEntry,
   CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
-  useCreateNotificationsqueryalertsMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -39,6 +38,7 @@ import {
 
 import { CollapseToggle } from '../components/CollapseToggle';
 import { StateTag } from '../components/StateTag';
+import { useNotificationAlerts } from '../hooks/useNotificationAlerts';
 import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
@@ -261,7 +261,7 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
-          <NotificationDetails record={record} uuid={record.uuid} />
+          <NotificationDetails record={record} />
         </div>
       )}
     </Stack>
@@ -283,29 +283,17 @@ function NotificationState({ status }: NotificationStateProps) {
 
 interface NotificationDetailsProps {
   record: NotificationEntry;
-  uuid: string;
 }
 
-function NotificationDetails({ record, uuid }: NotificationDetailsProps) {
+function NotificationDetails({ record }: NotificationDetailsProps) {
   const styles = useStyles2(getStyles);
 
-  const [queryAlerts, { data: alertsData, isLoading: alertsLoading }] = useCreateNotificationsqueryalertsMutation();
-
-  React.useEffect(() => {
-    const from = record.timestamp;
-    const to = new Date(new Date(record.timestamp).getTime() + 1000).toISOString();
-    queryAlerts({ createNotificationsqueryalertsRequestBody: { uuid, from, to, limit: 10 } });
-  }, [uuid, record.timestamp, queryAlerts]);
-
-  const alerts = alertsData?.alerts ?? [];
-
-  // Split alerts into firing and resolved
-  const firingAlerts = alerts.filter(
-    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'firing'
-  );
-  const resolvedAlerts = alerts.filter(
-    (alert: CreateNotificationsqueryalertsNotificationEntryAlert) => alert.status === 'resolved'
-  );
+  const {
+    alerts,
+    firingAlerts,
+    resolvedAlerts,
+    isLoading: alertsLoading,
+  } = useNotificationAlerts(record.uuid, record.timestamp);
 
   const renderAlert = (alert: CreateNotificationsqueryalertsNotificationEntryAlert, index: number) => {
     const ruleUid = alert.labels?.__alert_rule_uid__;
