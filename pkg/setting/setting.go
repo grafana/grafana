@@ -106,6 +106,7 @@ type Cfg struct {
 	ServeFromSubPath  bool
 	StaticRootPath    string
 	Protocol          Scheme
+	ServeOnSocket     bool
 	SocketGid         int
 	SocketMode        int
 	SocketPath        string
@@ -650,10 +651,15 @@ type Cfg struct {
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
 	EnableGarbageCollection                    bool
+	GarbageCollectionDryRun                    bool
 	GarbageCollectionInterval                  time.Duration
 	GarbageCollectionBatchSize                 int
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
+
+	EventRetentionPeriod time.Duration
+	EventPruningInterval time.Duration
+
 	// SimulatedNetworkLatency is used for testing only
 	SimulatedNetworkLatency       time.Duration
 	TenantApiServerAddress        string
@@ -2002,6 +2008,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	protocolStr := valueAsString(server, "protocol", "http")
 
+	cfg.ServeOnSocket = server.Key("serve_on_socket").MustBool(false)
+	if cfg.ServeOnSocket && (protocolStr == "http" || protocolStr == "https" || protocolStr == "h2") {
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+	}
+
 	switch protocolStr {
 	case "https":
 		cfg.Protocol = HTTPSScheme
@@ -2198,7 +2211,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		}
 	}
 
-	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", "git|github|local"))
+	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", ""))
 	if repositoryTypes != "|" && repositoryTypes != "" {
 		cfg.ProvisioningRepositoryTypes = strings.Split(repositoryTypes, "|")
 		for i, s := range cfg.ProvisioningRepositoryTypes {

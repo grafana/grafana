@@ -4159,6 +4159,16 @@
       "clear": "検索とフィルタをクリア",
       "text": "クエリに一致する結果が見つかりませんでした。"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "履歴をクリア",
       "error": "最近表示したダッシュボードを読み込めませんでした。",
@@ -4827,6 +4837,10 @@
       "view-json-diff": "JSON diffを表示してすべての変更を確認する"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "新規追加",
     "alert": {
@@ -5028,7 +5042,7 @@
     "canvas-actions": {
       "add-panel": "パネルを追加",
       "disabled-child-contains-tabs": "行にすでにタブが含まれているため、タブに変更できません",
-      "disabled-nested-grouping": "グループ化は2つのレベルまでに制限されています",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "タブは他のタブ内にネストすることはできません",
       "group-into-row": "行にグループ化",
       "group-into-tab": "タブにグループ化",
@@ -10914,7 +10928,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "オプションが見つかりません"
@@ -12314,6 +12330,11 @@
       "text-loading-teams": "チームを読み込み中..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "変更内容を説明するメモを追加（任意）",
@@ -13316,7 +13337,8 @@
       "transformations": "変換",
       "view-toggle": "",
       "alerts_other": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",

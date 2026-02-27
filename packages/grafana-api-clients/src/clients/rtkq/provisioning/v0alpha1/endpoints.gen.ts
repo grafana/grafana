@@ -1676,7 +1676,7 @@ export type JobSpec = {
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'delete' | 'fixFolderMetadata' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+  action: 'delete' | 'fixFolderMetadata' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
   /** Delete when the action is `delete` */
   delete?: DeleteJobOptions;
   /** Options when the action is `fix-folder-metadata` */

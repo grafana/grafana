@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultCatalogTTL = 1 * time.Hour
+	defaultCatalogTTL = 6 * time.Hour
 )
 
 // CatalogProvider retrieves plugin metadata from the grafana.com API.

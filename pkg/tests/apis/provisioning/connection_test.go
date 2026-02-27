@@ -341,7 +341,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		t.Skip("Skipping integration test when not enterprise")
 	}
 
-	helper := runGrafana(t)
+	// Enforcing enterprise connection types for the test (defaults to github only)
+	helper := runGrafana(t, withRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
 	ctx := context.Background()
 
 	gitlabNamePrefix := fmt.Sprintf("%s-", provisioning.GitlabConnectionType)
@@ -930,7 +931,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 		t.Skip("Skipping integration test when not enterprise")
 	}
 
-	helper := runGrafana(t)
+	// Enforcing enterprise connection types for the test (defaults to github only)
+	helper := runGrafana(t, withRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
@@ -2289,7 +2291,8 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 		t.Skip("Skipping integration test when not enterprise")
 	}
 
-	helper := runGrafana(t)
+	// Enforcing enterprise connection types for the test (defaults to github only)
+	helper := runGrafana(t, withRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
 	ctx := context.Background()
 
 	t.Run("GitLab connection can be created and reconciled", func(t *testing.T) {

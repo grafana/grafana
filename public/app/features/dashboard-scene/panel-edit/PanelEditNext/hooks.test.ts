@@ -51,14 +51,16 @@ describe('buildVizAndDataPaneGrid', () => {
     expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.75 }).gridTemplateRows).toBe('3fr 1fr');
   });
 
-  it('converts sidebarRatio 0.5 to equal columns (1fr 1fr)', () => {
-    expect(buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.5 }).gridTemplateColumns).toBe('1fr 1fr');
+  it('converts sidebarRatio 0.5 to equal columns (minmax(220px, 1fr) 1fr)', () => {
+    expect(buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.5 }).gridTemplateColumns).toBe('minmax(220px, 1fr) 1fr');
   });
 
   it('converts sidebarRatio 0.25 to approximately one-third of the available width', () => {
-    // 0.25 / (1 - 0.25) = 0.333...fr
-    const [sidebarFr] = buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.25 }).gridTemplateColumns.split(' ');
-    expect(parseFloat(sidebarFr)).toBeCloseTo(1 / 3, 5);
+    // 0.25 / (1 - 0.25) = 0.333...fr — wrapped in minmax(200px, Xfr)
+    const columns = buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.25 }).gridTemplateColumns;
+    const match = columns.match(/minmax\(\d+px,\s*([\d.]+)fr\)/);
+    expect(match).not.toBeNull();
+    expect(parseFloat(match![1])).toBeCloseTo(1 / 3, 5);
   });
 });
 
