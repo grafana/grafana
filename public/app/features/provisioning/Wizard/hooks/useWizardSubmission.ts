@@ -111,10 +111,7 @@ export function useWizardSubmission({
         if (isFetchError(error)) {
           const errors = getFormErrors(error.data);
           const extractedErrors = extractFormErrors(error.data);
-          const extractedMessage = extractedErrors
-            .map((error) => error.detail)
-            .filter((detail): detail is string => Boolean(detail))
-            .join('\n');
+          const extractedMessage = extractedErrors.map((error) => error.detail);
           // Check for special case: token error when using GitHub App
           const tokenError = errors.find(([field]) => field === 'repository.token');
           if (tokenError && activeStep === 'connection' && formData.githubAuthType !== 'pat') {
