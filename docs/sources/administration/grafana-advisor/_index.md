@@ -16,6 +16,8 @@ keywords:
 
 # Grafana Advisor
 
+{{< docs/public-preview product="Grafana Advisor" featureFlag="grafanaAdvisor" >}}
+
 Grafana Advisor is a monitoring tool that helps administrators keep their Grafana instances running smoothly and securely. It automatically performs regular health checks on your Grafana server, providing actionable insights and recommendations for maintaining optimal system performance.
 
 {{< admonition type="note" >}}
@@ -24,11 +26,34 @@ Currently, Grafana Advisor performs regular checks on data sources, plugins, and
 You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
 {{< /admonition >}}
 
-TBD UPDATE VIDEO?
-
 {{< youtube id="o84EfY-KP-c" >}}
 
-To access the Grafana Advisor:
+## Before you begin
+
+To set up Grafana Advisor you need:
+
+- Administration rights in your Grafana organization.
+- If you're running Grafana on-premise, enable the required feature toggle in your Grafana instance. Refer to [Enable required feature toggles](#enable-feature-toggles) for instructions. If you're using Grafana Cloud feature toggles are enabled by default.
+
+### Enable feature toggles
+
+To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it's not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
+To enable the required feature toggles, add them to your Grafana configuration file:
+
+1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on the operating system, refer to Configuration file location.
+1. Locate or add a `[feature_toggles]` section. Add this value:
+
+   ```ini
+   [feature_toggles]
+   grafanaAdvisor = true
+   ```
+
+1. Save the changes to the file and restart Grafana.
+
+## Access Grafana Advisor
+
+To access Grafana Advisor:
 
 1. Log in to your Grafana instance with an **Administrator account**.
 1. Navigate to the **Administration** section on the left navigation menu.
