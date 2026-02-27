@@ -55,7 +55,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
       variable.setState({
         defaultValue: {
           value: options.map((opt) => opt.value!),
-          text: options.map((opt) => opt.label ?? opt.value ?? ''),
+          text: options.map((opt) => opt.label ?? opt.value!),
         },
       });
     }
