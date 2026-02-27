@@ -50,13 +50,17 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
 
   const onDefaultValueChange = (options: Array<SelectableValue<string>>) => {
     if (options.length === 0) {
-      variable.setState({ defaultValue: undefined });
+      variable.setState({
+        defaultValue: undefined,
+        restorable: false,
+      });
     } else {
       variable.setState({
         defaultValue: {
           value: options.map((opt) => opt.value!),
           text: options.map((opt) => opt.label ?? opt.value!),
         },
+        restorable: false,
       });
     }
     onRunQuery();
