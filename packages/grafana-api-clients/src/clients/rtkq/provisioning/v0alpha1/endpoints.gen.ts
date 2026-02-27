@@ -1629,7 +1629,7 @@ export type DeleteJobOptions = {
   resources?: ResourceRef[];
 };
 export type FixFolderMetadataJobOptions = {
-  /** Ref to the branch to create the empty commit on (defaults to "main" if not specified) */
+  /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
   ref?: string;
 };
 export type MigrateJobOptions = {

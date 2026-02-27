@@ -240,7 +240,7 @@ func (MoveJobOptions) OpenAPIModelName() string {
 }
 
 type FixFolderMetadataJobOptions struct {
-	// Ref to the branch to create the empty commit on (defaults to "main" if not specified)
+	// Ref to the branch to create the commit on (uses repository's default branch if not specified)
 	Ref string `json:"ref,omitempty"`
 }
 

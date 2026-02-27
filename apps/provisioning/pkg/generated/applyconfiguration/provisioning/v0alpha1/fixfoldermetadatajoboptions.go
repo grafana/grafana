@@ -7,7 +7,7 @@ package v0alpha1
 // FixFolderMetadataJobOptionsApplyConfiguration represents a declarative configuration of the FixFolderMetadataJobOptions type for use
 // with apply.
 type FixFolderMetadataJobOptionsApplyConfiguration struct {
-	// Ref to the branch to create the empty commit on (defaults to "main" if not specified)
+	// Ref to the branch to create the commit on (uses repository's default branch if not specified)
 	Ref *string `json:"ref,omitempty"`
 }
 
