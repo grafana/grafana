@@ -324,11 +324,11 @@ describe('useWizardSubmission', () => {
           await result.current.handleSubmit();
         });
 
-        expect(mockSetStepStatusInfo).toHaveBeenCalledWith({
+        expect(mockSetStepStatusInfo).toHaveBeenLastCalledWith({
           status: 'error',
           error: {
             title: 'Repository connection failed',
-            message: 'Maximum number of 1 repositories reached',
+            message: ['Maximum number of 1 repositories reached'],
           },
         });
       });
