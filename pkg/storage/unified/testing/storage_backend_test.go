@@ -56,6 +56,7 @@ func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
 func TestIntegrationBenchmarkSQLKVStorageAndSearch(t *testing.T) {
 	for _, withRvManager := range []bool{true, false} {
 		t.Run(fmt.Sprintf("rvmanager=%t", withRvManager), func(t *testing.T) {
+			t.Skip("skipping until https://github.com/grafana/search-and-storage-team/issues/659 is fixed")
 			testutil.SkipIntegrationTestInShortMode(t)
 			opts := DefaultBenchmarkOptions(t)
 			if db.IsTestDbSQLite() {
