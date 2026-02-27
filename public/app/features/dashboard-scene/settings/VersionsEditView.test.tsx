@@ -187,6 +187,36 @@ describe('VersionsEditView', () => {
       expect(rows[2]).toHaveTextContent('Bhaskar Surroy');
     });
 
+    it('should use createdBy annotation as fallback for initial version without updatedBy', async () => {
+      mockListDashboardHistory.mockResolvedValue({
+        metadata: { continue: '' },
+        items: [
+          createTestResource(2, '2024-01-02T00:00:00Z', 'user:uid-editor'),
+          createTestResourceWithCreatedByOnly(1, '2024-01-01T00:00:00Z', 'user:uid-creator'),
+        ],
+      });
+
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:uid-editor', 'user:uid-creator'],
+          display: [
+            { identity: { type: 'user', name: 'uid-creator' }, displayName: 'Creator User' },
+            { identity: { type: 'user', name: 'uid-editor' }, displayName: 'Editor User' },
+          ],
+        },
+      });
+
+      const { versionsView } = await buildTestScene();
+      render(<versionsView.Component model={versionsView} />);
+
+      expect(await screen.findByText('Editor User')).toBeInTheDocument();
+      expect(screen.getByText('Creator User')).toBeInTheDocument();
+
+      const rows = screen.getAllByRole('row');
+      expect(rows[1]).toHaveTextContent('Editor User');
+      expect(rows[2]).toHaveTextContent('Creator User');
+    });
+
     it('should fall back to raw key when user is not found in display data', async () => {
       mockListDashboardHistory.mockResolvedValue({
         metadata: { continue: '' },
@@ -215,6 +245,23 @@ function createTestResource(version: number, created: string, updatedBy = 'admin
       creationTimestamp: created,
       annotations: {
         'grafana.app/updatedBy': updatedBy,
+        'grafana.app/message': '',
+      },
+    },
+    spec: { version },
+  };
+}
+
+function createTestResourceWithCreatedByOnly(version: number, created: string, createdBy: string) {
+  return {
+    apiVersion: 'v1beta1',
+    kind: 'Dashboard',
+    metadata: {
+      name: '_U4zObQMz',
+      generation: version,
+      creationTimestamp: created,
+      annotations: {
+        'grafana.app/createdBy': createdBy,
         'grafana.app/message': '',
       },
     },
