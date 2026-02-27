@@ -107,15 +107,9 @@ export const NotificationsList = React.memo(function NotificationsList({
     } catch {
       // Error is handled by the RTK Query isError state
     }
-  }, [
-    timeRange?.from,
-    timeRange?.to,
-    statusFilter,
-    outcomeFilter,
-    receiverFilter,
-    labelFilter,
-    createNotificationQuery,
-  ]);
+    // Don't include createNotificationQuery in deps to avoid infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange?.from?.unix(), timeRange?.to?.unix(), statusFilter, outcomeFilter, receiverFilter, labelFilter]);
 
   // Extract entries from API response (data is properly typed from the generated client)
   const entriesArray: NotificationEntry[] = React.useMemo(() => {
