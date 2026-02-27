@@ -33,7 +33,7 @@ func TestCacheWrap_LocalTTL(t *testing.T) {
 	assert.Equal(t, "value1", v)
 
 	// Overwrite remote directly — local should still serve stale value until TTL expires
-	remote.Set(ctx, "key", []byte(`"value2"`), 5*time.Minute)
+	require.NoError(t, remote.Set(ctx, "key", []byte(`"value2"`), 5*time.Minute))
 
 	v, ok = c.Get(ctx, "key")
 	require.True(t, ok)
@@ -55,7 +55,7 @@ func TestCacheWrap_NoLocalTTL(t *testing.T) {
 	c.Set(ctx, "key", "value1")
 
 	// Overwrite remote directly — should be visible immediately without local layer
-	remote.Set(ctx, "key", []byte(`"value2"`), 5*time.Minute)
+	require.NoError(t, remote.Set(ctx, "key", []byte(`"value2"`), 5*time.Minute))
 
 	v, ok := c.Get(ctx, "key")
 	require.True(t, ok)
