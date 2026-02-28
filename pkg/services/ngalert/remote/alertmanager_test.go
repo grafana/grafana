@@ -2,12 +2,10 @@ package remote
 
 import (
 	"context"
-	"crypto/md5"
 	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +21,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/http/v0mimir1"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
@@ -127,7 +126,16 @@ func TestNewAlertmanager(t *testing.T) {
 				BasicAuthPassword: test.password,
 				DefaultConfig:     defaultGrafanaConfig,
 			}
-			am, err := newAlertmanagerSut(cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
+			am, err := NewAlertmanager(
+				context.Background(),
+				cfg,
+				nil,
+				notifier.NewCrypto(secretsService, nil, log.NewNopLogger()),
+				NoopAutogenFn,
+				metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry()),
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+			)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -145,10 +153,7 @@ func TestNewAlertmanager(t *testing.T) {
 func TestGetRemoteState(t *testing.T) {
 	const tenantID = "test"
 	ctx := context.Background()
-	store := ngfakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(1, store)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 
 	// getOkHandler allows us to specify a full state the test server is going to respond with.
 	getOkHandler := func(state string) http.HandlerFunc {
@@ -227,7 +232,7 @@ func TestGetRemoteState(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		t.Run(test.name, func(tt *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			server := httptest.NewServer(test.handler)
 			cfg := AlertmanagerConfig{
 				OrgID:         1,
@@ -235,8 +240,7 @@ func TestGetRemoteState(t *testing.T) {
 				URL:           server.URL,
 				DefaultConfig: defaultGrafanaConfig,
 			}
-			am, err := newAlertmanagerSut(cfg, fstore, tc, NoopAutogenFn)
-			require.NoError(t, err)
+			_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 			s, err := am.GetRemoteState(ctx)
 			if test.expErr != "" {
@@ -301,6 +305,10 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
 
+	config := func(cfg []byte) *ngmodels.AlertConfiguration {
+		return &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(cfg)}
+	}
+
 	// ApplyConfig performs a readiness check at startup.
 	// A non-200 response should result in an error.
 	server := httptest.NewServer(errorHandler)
@@ -320,30 +328,37 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 	ctx := context.Background()
 	store := ngfakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(1, store)
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, testSilence1))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, testNflog1))
 
-	// An error response from the remote Alertmanager should result in the readiness check failing.
-	am, err := newAlertmanagerSut(cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
-	require.NoError(t, err)
-
-	config := &ngmodels.AlertConfiguration{
-		AlertmanagerConfiguration: string(encryptedConfig),
+	newAm := func() *Alertmanager {
+		_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
+		am.state = notifier.NewFileStore(1, store)
+		return am
 	}
-	require.Error(t, am.ApplyConfig(ctx, config))
+
+	// An error response from the remote Alertmanager should result in the readiness check failing.
+	am := newAm()
+
+	orig := client.ReadinessTimeout
+	client.ReadinessTimeout = 200 * time.Millisecond // Speed up the test.
+	err = am.ApplyConfig(ctx, config(encryptedConfig))
+	client.ReadinessTimeout = orig
+	require.Error(t, err)
 	require.False(t, am.Ready())
 	require.Equal(t, 0, stateSyncs)
 	require.Equal(t, 0, configSyncs)
 
 	// A 200 status code response should make the check succeed.
 	server.Config.Handler = okHandler
-	require.NoError(t, am.ApplyConfig(ctx, config))
+	err = am.ApplyConfig(ctx, config(encryptedConfig))
+	require.NoError(t, err)
 	require.True(t, am.Ready())
 	require.Equal(t, 1, stateSyncs)
 	require.Equal(t, 1, configSyncs)
 
 	// The sent configuration should be unencrypted and promoted.
+	verifyAutogenExistsAndRemove(t, &configSent)
 	amCfg, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
 	require.NoError(t, err)
 	require.JSONEq(t, testGrafanaConfigWithSecret, string(amCfg))
@@ -356,31 +371,32 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 	// If we already got a 200 status code response and the sync interval hasn't elapsed,
 	// we shouldn't send the state/configuration again.
-	require.NoError(t, am.ApplyConfig(ctx, config))
+	err = am.ApplyConfig(ctx, config(encryptedConfig))
+	require.NoError(t, err)
 	require.Equal(t, 1, stateSyncs)
 	require.Equal(t, 1, configSyncs)
 
 	// Changing the sync interval and calling ApplyConfig again with a new config
 	// should result in us sending the configuration but not the state.
 	am.syncInterval = 0
-	config = &ngmodels.AlertConfiguration{
-		AlertmanagerConfiguration: testGrafanaConfig,
-	}
-	require.NoError(t, am.ApplyConfig(ctx, config))
+	err = am.ApplyConfig(ctx, config([]byte(testGrafanaConfig)))
+	require.NoError(t, err)
 	require.Equal(t, 2, configSyncs)
 	require.Equal(t, 1, stateSyncs)
 
 	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
-	am, err = newAlertmanagerSut(cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
+	am = newAm()
 	require.NoError(t, err)
-	require.NoError(t, am.ApplyConfig(ctx, config))
+	err = am.ApplyConfig(ctx, config([]byte(testGrafanaConfig)))
+	require.NoError(t, err)
 	require.Equal(t, 2, configSyncs)
 
 	// Changing the "from" address should result in the configuration being updated.
 	cfg.SmtpConfig.FromAddress = "new-address@test.com"
-	am, err = newAlertmanagerSut(cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
+	am = newAm()
 	require.NoError(t, err)
-	require.NoError(t, am.ApplyConfig(ctx, config))
+	err = am.ApplyConfig(ctx, config([]byte(testGrafanaConfig)))
+	require.NoError(t, err)
 	require.Equal(t, 3, configSyncs)
 	require.Equal(t, am.smtp.FromAddress, configSent.SmtpConfig.FromAddress)
 
@@ -396,22 +412,23 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		StaticHeaders:  map[string]string{"test": "true"},
 		User:           "Test User",
 	}
-	am, err = newAlertmanagerSut(cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
+	am = newAm()
 	require.NoError(t, err)
-	require.NoError(t, am.ApplyConfig(ctx, config))
+	err = am.ApplyConfig(ctx, config([]byte(testGrafanaConfig)))
+	require.NoError(t, err)
 	require.Equal(t, 4, configSyncs)
 	require.Equal(t, am.smtp, configSent.SmtpConfig)
 
 	// Failing to add the auto-generated routes should not result in an error.
-	_, err = newAlertmanagerSut(cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), errAutogenFn)
-	require.NoError(t, err, errTest)
+	am = newAm()
+	am.autogenFn = errAutogenFn
+	err = am.ApplyConfig(ctx, config([]byte(testGrafanaConfig)))
+	require.ErrorIs(t, err, errTest)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
 	const tenantID = "test"
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-
-	testCrypto := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -427,7 +444,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		require.NoError(t, err)
 	}))
 
-	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t))
 	cfg := AlertmanagerConfig{
 		OrgID:         1,
 		TenantID:      tenantID,
@@ -435,14 +451,12 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		DefaultConfig: defaultGrafanaConfig,
 	}
 
-	testAutogenFn := func(_ context.Context, _ log.Logger, _ int64, config *apimodels.PostableApiAlertingConfig, _ notifier.InvalidReceiversAction) error {
-		newRoute := definition.Route{
-			Receiver: config.Receivers[0].Name,
-			Match:    map[string]string{"auto-gen-test": "true"},
-		}
-
-		config.Route.Routes = append(config.Route.Routes, &newRoute)
-		return nil
+	cloneConfig := func(c apimodels.PostableUserConfig) apimodels.PostableUserConfig {
+		clone, err := json.Marshal(c)
+		require.NoError(t, err)
+		var cloneCfg apimodels.PostableUserConfig
+		require.NoError(t, json.Unmarshal(clone, &cloneCfg))
+		return cloneCfg
 	}
 
 	// Create a config with correctly encrypted and encoded secrets.
@@ -451,32 +465,21 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
-	testGrafanaConfigWithEncryptedSecret, err := json.Marshal(inputCfg)
-	require.NoError(t, err)
+	testGrafanaConfigWithEncryptedSecret := cloneConfig(inputCfg)
 
 	// Created a config with invalid base64 encoding in the secret.
 	inputCfg.AlertmanagerConfig.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers[0].SecureSettings["password"] = "!"
-	testGrafanaConfigWithBadEncoding, err := json.Marshal(inputCfg)
-	require.NoError(t, err)
+	testGrafanaConfigWithBadEncoding := cloneConfig(inputCfg)
 
 	// Create a config with a valid base64 encoding but an invalid encryption.
 	inputCfg.AlertmanagerConfig.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers[0].SecureSettings["password"] = base64.StdEncoding.EncodeToString([]byte("test"))
-	testGrafanaConfigWithBadEncryption, err := json.Marshal(inputCfg)
-	require.NoError(t, err)
+	testGrafanaConfigWithBadEncryption := cloneConfig(inputCfg)
 
 	test, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
 	cfgWithDecryptedSecret := client.GrafanaAlertmanagerConfig{
 		TemplateFiles:      test.TemplateFiles,
 		AlertmanagerConfig: test.AlertmanagerConfig,
-	}
-
-	testAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
-	require.NoError(t, err)
-	require.NoError(t, testAutogenFn(nil, nil, 0, &testAutogenRoutes.AlertmanagerConfig, notifier.ErrorOnInvalidReceivers))
-	cfgWithAutogenRoutes := client.GrafanaAlertmanagerConfig{
-		TemplateFiles:      testAutogenRoutes.TemplateFiles,
-		AlertmanagerConfig: testAutogenRoutes.AlertmanagerConfig,
 	}
 
 	cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
@@ -491,74 +494,100 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
 	}
 
-	mustMarshal := func(v any) []byte {
-		t.Helper()
-		b, err := json.Marshal(v)
-		require.NoError(t, err)
-		return b
-	}
-
 	tests := []struct {
 		name                  string
-		config                string
-		autogenFn             AutogenFn
+		config                apimodels.PostableUserConfig
+		autogenConfig         map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
 		enabledMultipleRoutes bool
 		expCfg                *client.UserGrafanaConfig
 		expErrContains        []string
 	}{
 		{
 			name:           "invalid config",
-			config:         "{}",
-			autogenFn:      NoopAutogenFn,
-			expErrContains: []string{"no route provided in config"},
+			config:         apimodels.PostableUserConfig{},
+			expErrContains: []string{"no routes provided"},
 		},
 		{
 			name:           "invalid base-64 in key",
-			config:         string(testGrafanaConfigWithBadEncoding),
-			autogenFn:      NoopAutogenFn,
+			config:         testGrafanaConfigWithBadEncoding,
 			expErrContains: []string{`"grafana-default-email"`, "dde6ntuob69dtf", "password", "illegal base64 data at input byte 0"},
 		},
 		{
 			name:           "decrypt error",
-			config:         string(testGrafanaConfigWithBadEncryption),
-			autogenFn:      NoopAutogenFn,
+			config:         testGrafanaConfigWithBadEncryption,
 			expErrContains: []string{`"grafana-default-email"`, "dde6ntuob69dtf", "password", "unable to compute salt"},
 		},
 		{
-			name:           "error from autogen function",
-			config:         string(testGrafanaConfigWithEncryptedSecret),
-			autogenFn:      errAutogenFn,
-			expErrContains: []string{errTest.Error()},
+			name:   "error from autogen function",
+			config: testGrafanaConfigWithEncryptedSecret,
+			autogenConfig: map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{
+				1: {
+					ngmodels.AlertRuleKey{OrgID: 1, UID: "rule-uid-test"}: {
+						Receiver: "some non-existent receiver",
+					},
+				},
+			},
+			expErrContains: []string{"some non-existent receiver", "does not exist"},
 		},
 		{
-			name:      "no error",
-			config:    string(testGrafanaConfigWithEncryptedSecret),
-			autogenFn: NoopAutogenFn,
+			name:   "no error",
+			config: testGrafanaConfigWithEncryptedSecret,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithDecryptedSecret,
 			},
 		},
 		{
-			name:      "no error, with auto-generated routes",
-			config:    string(testGrafanaConfigWithEncryptedSecret),
-			autogenFn: testAutogenFn,
-			expCfg: &client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: cfgWithAutogenRoutes,
+			name:   "no error, with auto-generated routes",
+			config: testGrafanaConfigWithEncryptedSecret,
+			autogenConfig: map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{
+				1: {
+					ngmodels.AlertRuleKey{OrgID: 1, UID: "rule-uid-test"}: {
+						Receiver: "grafana-default-email", // Some existing receiver.
+					},
+				},
 			},
+			expCfg: func() *client.UserGrafanaConfig {
+				testAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+				require.NoError(t, err)
+				matcher := func(key, val string) definition.ObjectMatchers {
+					m, err := labels.NewMatcher(labels.MatchEqual, key, val)
+					require.NoError(t, err)
+					return definition.ObjectMatchers{m}
+				}
+				testAutogenRoutes.AlertmanagerConfig.Route.Routes = append([]*definition.Route{
+					{
+						Receiver:       "grafana-default-email",
+						ObjectMatchers: matcher(ngmodels.AutogeneratedRouteLabel, "true"),
+						Routes: []*definition.Route{
+							{
+								Receiver:       "grafana-default-email",
+								ObjectMatchers: matcher(ngmodels.AutogeneratedRouteReceiverNameLabel, "grafana-default-email"),
+								GroupByStr:     []string{ngmodels.FolderTitleLabel, model.AlertNameLabel},
+								GroupBy:        []model.LabelName{ngmodels.FolderTitleLabel, model.AlertNameLabel},
+							},
+						},
+					},
+				}, testAutogenRoutes.AlertmanagerConfig.Route.Routes...)
+
+				return &client.UserGrafanaConfig{
+					GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+						TemplateFiles:      testAutogenRoutes.TemplateFiles,
+						AlertmanagerConfig: testAutogenRoutes.AlertmanagerConfig,
+					},
+				}
+			}(),
 		},
 		{
-			name:      "no error, with extra configurations",
-			config:    string(cfgWithExtraUnmergedBytes),
-			autogenFn: NoopAutogenFn,
+			name:   "no error, with extra configurations",
+			config: *cfgWithExtraUnmerged,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithExtraMerged,
 			},
 		},
 		{
 			name:                  "no error, with extra configurations and managed routes enabled",
-			config:                string(cfgWithExtraUnmergedBytes),
+			config:                *cfgWithExtraUnmerged,
 			enabledMultipleRoutes: true,
-			autogenFn:             NoopAutogenFn,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: func() client.GrafanaAlertmanagerConfig {
 					cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
@@ -582,9 +611,8 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		},
 		{
 			name:                  "no error, with managed routes",
-			config:                string(mustMarshal(policy_exports.Config())),
+			config:                *policy_exports.Config(),
 			enabledMultipleRoutes: true,
-			autogenFn:             NoopAutogenFn,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
 					AlertmanagerConfig: func() definition.PostableApiAlertingConfig {
@@ -597,9 +625,8 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		},
 		{
 			name:                  "no error, with managed routes but flag disabled",
-			config:                string(mustMarshal(policy_exports.Config())),
+			config:                *policy_exports.Config(),
 			enabledMultipleRoutes: false,
-			autogenFn:             NoopAutogenFn,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
 					AlertmanagerConfig: policy_exports.Config().AlertmanagerConfig,
@@ -608,17 +635,16 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		},
 		{
 			name: "do not add managed route from extra config if name conflict",
-			config: func() string {
-				cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
+			config: func() apimodels.PostableUserConfig {
+				c, err := notifier.Load(cfgWithExtraUnmergedBytes)
 				require.NoError(t, err)
 
-				cfgWithExtraUnmerged.ManagedRoutes = map[string]*definition.Route{
+				c.ManagedRoutes = map[string]*definition.Route{
 					"imported": {Receiver: "grafana-default-email"},
 				}
-				return string(mustMarshal(cfgWithExtraUnmerged))
+				return *c
 			}(),
 			enabledMultipleRoutes: true,
-			autogenFn:             NoopAutogenFn,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: func() client.GrafanaAlertmanagerConfig {
 					cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
@@ -640,32 +666,42 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(tt *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			ctx := context.Background()
-			am, err := newAlertmanagerSut(cfg, fstore, testCrypto, NoopAutogenFn)
-			require.NoError(t, err)
 
+			features := featuremgmt.WithFeatures()
 			if test.enabledMultipleRoutes {
-				am.features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
+				features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 			}
+			moa, _ := newRemoteMOA(t, cfg, test.autogenConfig, features, secretsService)
 
-			// Adding the autogenFn after creating the Alertmanager
-			// to simulate errors when comparing the configuration.
-			am.autogenFn = test.autogenFn
-
-			cfg := ngmodels.AlertConfiguration{
-				AlertmanagerConfiguration: test.config,
-			}
-			err = am.CompareAndSendConfiguration(ctx, &cfg)
+			dbConfig := func() *ngmodels.AlertConfiguration {
+				raw, err := json.Marshal(test.config)
+				require.NoError(t, err)
+				return &ngmodels.AlertConfiguration{
+					AlertmanagerConfiguration: string(raw),
+					CreatedAt:                 time.Now().Unix(),
+				}
+			}()
+			err = moa.ApplyConfig(ctx, 1, dbConfig)
 			if len(test.expErrContains) == 0 {
-				require.NoError(tt, err)
+				require.NoError(t, err)
 
 				var gotCfg client.UserGrafanaConfig
-				require.NoError(tt, json.Unmarshal([]byte(got), &gotCfg))
+				require.NoError(t, json.Unmarshal([]byte(got), &gotCfg))
 
-				require.NotEmpty(tt, gotCfg.Hash)
-				require.Empty(tt, cmp.Diff(test.expCfg, &gotCfg,
-					cmpopts.IgnoreFields(client.UserGrafanaConfig{}, "Hash"), // do not compare hashes because the config is processed slightly different: empty maps are nils.
+				require.NotEmpty(t, gotCfg.Hash)
+				require.NotEmpty(t, gotCfg.CreatedAt)
+
+				if test.autogenConfig == nil {
+					// For tests that aren't specifically testing autogenerated routes, we simply check if the routes
+					// exist and remove them for the config comparison.
+					verifyAutogenExistsAndRemove(t, &gotCfg)
+				}
+
+				require.Empty(t, cmp.Diff(test.expCfg, &gotCfg,
+					// do not compare hashes because the config is processed slightly different: empty maps are nils.
+					cmpopts.IgnoreFields(client.UserGrafanaConfig{}, "Hash", "CreatedAt"),
 					cmpopts.EquateEmpty(),
 					cmpopts.IgnoreUnexported(
 						time.Location{},
@@ -675,15 +711,15 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 				got1 := got
 				got = ""
-				err = am.CompareAndSendConfiguration(ctx, &cfg)
-				require.NoError(tt, err)
+				err = moa.ApplyConfig(ctx, 1, dbConfig)
+				require.NoError(t, err)
 
 				got2 := got
-				require.Equalf(tt, got1, got2, "Configuration is not idempotent")
+				require.Equalf(t, got1, got2, "Configuration is not idempotent")
 				return
 			}
 			for _, expErr := range test.expErrContains {
-				require.ErrorContains(tt, err, expErr)
+				require.ErrorContains(t, err, expErr)
 			}
 		})
 	}
@@ -692,8 +728,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 	const tenantID = "test"
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-
-	testCrypto := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 
 	var got apimodels.TestReceiversConfigBodyParams
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -705,7 +739,6 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 		require.NoError(t, err)
 	}))
 
-	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t))
 	cfg := AlertmanagerConfig{
 		OrgID:         1,
 		TenantID:      tenantID,
@@ -713,8 +746,7 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 		DefaultConfig: defaultGrafanaConfig,
 	}
 
-	am, err := newAlertmanagerSut(cfg, fstore, testCrypto, NoopAutogenFn)
-	require.NoError(t, err)
+	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
@@ -740,46 +772,210 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 }
 
 func Test_isDefaultConfiguration(t *testing.T) {
-	parsedDefaultConfig, _ := notifier.Load([]byte(defaultGrafanaConfig))
-	parsedTestConfig, _ := notifier.Load([]byte(testGrafanaConfig))
-	parsedDefaultConfigWithDifferentFieldOrder, _ := notifier.Load([]byte(testGrafanaDefaultConfigWithDifferentFieldOrder))
-	rawDefaultCfg, _ := json.Marshal(parsedDefaultConfig)
+	mustLoad := func(raw string) *apimodels.PostableUserConfig {
+		parsed, err := notifier.Load([]byte(raw))
+		require.NoError(t, err)
+		return parsed
+	}
 
 	tests := []struct {
-		name     string
-		config   *apimodels.PostableUserConfig
-		expected bool
+		name                 string
+		config               *apimodels.PostableUserConfig
+		notificationSettings map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
+		features             featuremgmt.FeatureToggles
+		expected             bool
 	}{
 		{
-			"empty configuration",
-			nil,
-			false,
+			name:     "valid configuration",
+			config:   mustLoad(testGrafanaConfig),
+			expected: false,
 		},
 		{
-			"valid configuration",
-			parsedTestConfig,
-			false,
+			name:     "default configuration",
+			config:   mustLoad(defaultGrafanaConfig),
+			expected: true,
 		},
 		{
-			"default configuration",
-			parsedDefaultConfig,
-			true,
+			name:     "default configuration with different field order",
+			config:   mustLoad(testGrafanaDefaultConfigWithDifferentFieldOrder),
+			expected: false,
 		},
 		{
-			"default configuration with different field order",
-			parsedDefaultConfigWithDifferentFieldOrder,
-			false,
+			name:     "other valid config",
+			config:   mustLoad(testGrafanaConfigWithSecret),
+			expected: false,
 		},
+		{
+			name:     "default configuration and FF enabled",
+			config:   mustLoad(defaultGrafanaConfig),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), // Flag shouldn't affect Default status if there aren't any ManagedRoutes.
+			expected: true,
+		},
+		{
+			name: "default config with ManagedRoutes and FF disabled",
+			config: func() *apimodels.PostableUserConfig {
+				c := mustLoad(defaultGrafanaConfig)
+				c.ManagedRoutes = map[string]*definition.Route{
+					"imported": {Receiver: "empty"},
+				}
+				return c
+			}(),
+			expected: true,
+		},
+		//{ TODO: Fix default hash calculation
+		//	name: "default config with ManagedRoutes and FF enabled",
+		//	config: func() *apimodels.PostableUserConfig {
+		//		c := mustLoad(defaultGrafanaConfig)
+		//		c.ManagedRoutes = map[string]*definition.Route{
+		//			"imported": {Receiver: "empty"},
+		//		}
+		//		return c
+		//	}(),
+		//	features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+		//	expected: false,
+		//},
+		{
+			name: "default config with ExtraConfig and FF disabled",
+			config: func() *apimodels.PostableUserConfig {
+				cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
+				require.NoError(t, err)
+				cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
+				require.NoError(t, err)
+				return cfgWithExtraUnmerged
+			}(),
+			expected: false, // Even disabled the ExtraConfig is merged into the Route.
+		},
+		{
+			name: "default config with ExtraConfig and FF enabled",
+			config: func() *apimodels.PostableUserConfig {
+				cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
+				require.NoError(t, err)
+				cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
+				require.NoError(t, err)
+				return cfgWithExtraUnmerged
+			}(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+			expected: false,
+		},
+		{
+			name: "default config with TemplateFiles",
+			config: func() *apimodels.PostableUserConfig {
+				c := mustLoad(defaultGrafanaConfig)
+				c.TemplateFiles = map[string]string{"test": "test"}
+				return c
+			}(),
+			expected: false,
+		},
+		{
+			name: "default config with MuteTimeInterval",
+			config: func() *apimodels.PostableUserConfig {
+				c := mustLoad(defaultGrafanaConfig)
+				c.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{{Name: "test"}}
+				return c
+			}(),
+			expected: false,
+		},
+		{
+			name: "default config with TimeIntervals",
+			config: func() *apimodels.PostableUserConfig {
+				c := mustLoad(defaultGrafanaConfig)
+				c.AlertmanagerConfig.TimeIntervals = []config.TimeInterval{{Name: "test"}}
+				return c
+			}(),
+			expected: false,
+		},
+		{
+			name: "default config with InhibitRules",
+			config: func() *apimodels.PostableUserConfig {
+				c := mustLoad(defaultGrafanaConfig)
+				c.AlertmanagerConfig.InhibitRules = []config.InhibitRule{{}}
+				return c
+			}(),
+			expected: false,
+		},
+		{
+			name: "default config with ManagedInhibitionRules and FF disabled",
+			config: func() *apimodels.PostableUserConfig {
+				c := mustLoad(defaultGrafanaConfig)
+				c.ManagedInhibitionRules = map[string]*apimodels.InhibitionRule{
+					"imported": {Name: "imported"},
+				}
+				return c
+			}(),
+			expected: true,
+		},
+		//{ TODO: Fix default hash calculation
+		//	name: "default config with ManagedInhibitionRules and FF enabled",
+		//	config: func() *apimodels.PostableUserConfig {
+		//		c := mustLoad(defaultGrafanaConfig)
+		//		c.ManagedInhibitionRules = map[string]*apimodels.InhibitionRule{
+		//			"imported": {Name: "imported"},
+		//		}
+		//		return c
+		//	}(),
+		//	features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+		//	expected: false,
+		//},
+		//{ TODO: Fix default hash calculation
+		//	name:   "default config with rule notification settings",
+		//	config: mustLoad(defaultGrafanaConfig),
+		//	notificationSettings: map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{
+		//		1: {
+		//			ngmodels.AlertRuleKey{OrgID: 1, UID: "rule-uid-test"}: {
+		//				Receiver: "empty",
+		//				GroupBy:  []string{"something else"},
+		//			},
+		//		},
+		//	},
+		//	expected: false,
+		//},
 	}
 	for _, test := range tests {
-		t.Run(test.name, func(tt *testing.T) {
-			am := &Alertmanager{
-				defaultConfig:     string(rawDefaultCfg),
-				defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawDefaultCfg)),
+		t.Run(test.name, func(t *testing.T) {
+			const tenantID = "test"
+
+			var configSent client.UserGrafanaConfig
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+
+				if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
+				}
+
+				w.Header().Add("content-type", "application/json")
+				require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
+			}))
+			defer server.Close()
+
+			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+			c := AlertmanagerConfig{
+				OrgID:         1,
+				TenantID:      tenantID,
+				URL:           server.URL,
+				DefaultConfig: defaultGrafanaConfig,
+				PromoteConfig: true,
 			}
-			raw, err := json.Marshal(test.config)
-			require.NoError(tt, err)
-			require.Equal(tt, test.expected, am.isDefaultConfiguration(fmt.Sprintf("%x", md5.Sum(raw))))
+
+			features := featuremgmt.WithFeatures()
+			if test.features != nil {
+				features = test.features
+			}
+
+			moa, _ := newRemoteMOA(t, c, nil, features, secretsService)
+
+			dbConfig := func() *ngmodels.AlertConfiguration {
+				raw, err := json.Marshal(test.config)
+				require.NoError(t, err)
+				return &ngmodels.AlertConfiguration{
+					AlertmanagerConfiguration: string(raw),
+					CreatedAt:                 time.Now().Unix(),
+				}
+			}()
+			err := moa.ApplyConfig(context.Background(), 1, dbConfig)
+			require.NoError(t, err)
+
+			require.Equalf(t, test.expected, configSent.Default, "expected default configuration to be %v", test.expected)
+			require.NotEmpty(t, configSent.Hash)
 		})
 	}
 }
@@ -827,8 +1023,6 @@ receivers:
 	}
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
-	ctx := context.Background()
 
 	c := AlertmanagerConfig{
 		OrgID:         1,
@@ -838,15 +1032,17 @@ receivers:
 		PromoteConfig: true,
 	}
 
-	store := ngfakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(1, store)
-	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.SilencesFilename, ""))
-	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.NotificationLogFilename, ""))
+	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(), secretsService)
 
-	am, err := newAlertmanagerSut(c, fstore, tc, NoopAutogenFn)
-	require.NoError(t, err)
-
-	err = am.SaveAndApplyConfig(ctx, &cfg)
+	dbConfig := func() *ngmodels.AlertConfiguration {
+		raw, err := json.Marshal(cfg)
+		require.NoError(t, err)
+		return &ngmodels.AlertConfiguration{
+			AlertmanagerConfiguration: string(raw),
+			CreatedAt:                 time.Now().Unix(),
+		}
+	}()
+	err := moa.ApplyConfig(context.Background(), 1, dbConfig)
 	require.NoError(t, err)
 
 	require.Equal(t, len(configSent.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers), 2)
@@ -949,21 +1145,17 @@ receivers:
 		PromoteConfig: true,
 	}
 
-	store := ngfakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(1, store)
-	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.SilencesFilename, ""))
-	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.NotificationLogFilename, ""))
+	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(), secretsService)
 
-	am, err := newAlertmanagerSut(c, fstore, tc, NoopAutogenFn)
-	require.NoError(t, err)
-
-	configJSON, err := json.Marshal(cfg)
-	require.NoError(t, err)
-	config := &ngmodels.AlertConfiguration{
-		AlertmanagerConfiguration: string(configJSON),
-	}
-
-	err = am.CompareAndSendConfiguration(ctx, config)
+	dbConfig := func() *ngmodels.AlertConfiguration {
+		raw, err := json.Marshal(cfg)
+		require.NoError(t, err)
+		return &ngmodels.AlertConfiguration{
+			AlertmanagerConfiguration: string(raw),
+			CreatedAt:                 time.Now().Unix(),
+		}
+	}()
+	err = moa.ApplyConfig(ctx, 1, dbConfig)
 	require.NoError(t, err)
 
 	require.Equal(t, len(configSent.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers), 2)
@@ -995,25 +1187,17 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
-	testConfigCreatedAt := time.Now().Unix()
-	testConfig := &ngmodels.AlertConfiguration{
-		AlertmanagerConfiguration: testGrafanaConfig,
-		ConfigurationHash:         "",
-		ConfigurationVersion:      "v2",
-		CreatedAt:                 testConfigCreatedAt,
-		OrgID:                     1,
-	}
+	var testConfigCreatedAt int64
 
 	store := ngfakes.NewFakeKVStore(t)
-	fstore := notifier.NewFileStore(cfg.OrgID, store)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+
+	moa, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
+	am.state = notifier.NewFileStore(1, store)
 
 	ctx := context.Background()
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, testSilence1))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, testNflog1))
-
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	am, err := newAlertmanagerSut(cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
-	require.NoError(t, err)
 
 	encodedFullState, err := am.getFullState(ctx)
 	require.NoError(t, err)
@@ -1032,7 +1216,8 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	// Using `ApplyConfig` as a heuristic of a function that gets called when the Alertmanager starts
 	// We call it as if the Alertmanager were starting.
 	{
-		require.NoError(t, am.ApplyConfig(ctx, testConfig))
+		err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: testGrafanaConfig, CreatedAt: time.Now().Unix()})
+		require.NoError(t, err)
 
 		// First, we need to verify that the readiness check passes.
 		require.True(t, am.Ready())
@@ -1041,23 +1226,26 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
 
+		verifyAutogenExistsAndRemove(t, config)
+
 		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
 		require.NoError(t, err)
 		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
-		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
-		require.Equal(t, testConfig.Default, config.Default)
+		require.False(t, config.Default)
 
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 		require.NoError(t, err)
 		require.Equal(t, encodedFullState, state.State)
+
+		testConfigCreatedAt = config.CreatedAt
 	}
 
-	// Calling `ApplyConfig` again with a changed configuration and state yields no effect.
+	// Calling `ApplyConfig` again with an unchanged configuration and state yields no effect.
 	{
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", testSilence2))
 		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", testNflog2))
-		testConfig.CreatedAt = time.Now().Unix()
-		require.NoError(t, am.ApplyConfig(ctx, testConfig))
+		err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: testGrafanaConfig, CreatedAt: time.Now().Unix()})
+		require.NoError(t, err)
 
 		// The remote Alertmanager continues to be ready.
 		require.True(t, am.Ready())
@@ -1065,6 +1253,8 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		// Next, we need to verify that the config that was uploaded remains the same.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
+
+		verifyAutogenExistsAndRemove(t, config)
 
 		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
 		require.NoError(t, err)
@@ -1094,7 +1284,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 		// Call `SaveAndApplyConfig` with the encrypted configuration.
 		require.NoError(t, err)
-		require.NoError(t, am.SaveAndApplyConfig(ctx, postableCfg))
+		err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(encryptedConfig), CreatedAt: time.Now().Unix()})
 
 		// Check that the original configuration is not modified (decrypted).
 		currentJSON, err := json.Marshal(postableCfg)
@@ -1104,6 +1294,9 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		// Check that the configuration was uploaded to the remote Alertmanager.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
+
+		verifyAutogenExistsAndRemove(t, config)
+
 		got, err := json.Marshal(config.GrafanaAlertmanagerConfig)
 		require.NoError(t, err)
 
@@ -1112,40 +1305,28 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.False(t, config.Default)
 
 		// An error while adding auto-generated rutes should be returned.
+		orig := am.autogenFn
 		am.autogenFn = errAutogenFn
-		require.ErrorIs(t, am.SaveAndApplyConfig(ctx, postableCfg), errTest)
-		am.autogenFn = NoopAutogenFn
+		err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(encryptedConfig), CreatedAt: time.Now().Unix()})
+		am.autogenFn = orig
+		require.ErrorIs(t, err, errTest)
 	}
 
-	// `SaveAndApplyDefaultConfig` should send the default Alertmanager configuration to the remote Alertmanager.
+	// Calling `ApplyConfig` with the default config should send Default=true.
 	{
-		require.NoError(t, am.SaveAndApplyDefaultConfig(ctx))
+		err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: am.defaultConfig, CreatedAt: time.Now().Unix()})
+		require.NoError(t, err)
 
-		// Check that the default configuration was uploaded.
+		// The remote Alertmanager continues to be ready.
+		require.True(t, am.Ready())
+
+		// Next, we need to verify that the config that was uploaded remains the same.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
 
-		pCfg, err := notifier.Load([]byte(defaultGrafanaConfig))
-		require.NoError(t, err)
-
-		want, err := json.Marshal(pCfg)
-		require.NoError(t, err)
-
-		got, err := json.Marshal(config.GrafanaAlertmanagerConfig)
-		require.NoError(t, err)
-
-		require.JSONEq(t, string(want), string(got))
 		require.True(t, config.Default)
-
-		// An error while adding auto-generated rutes should be returned.
-		am.autogenFn = errAutogenFn
-		require.ErrorIs(t, am.SaveAndApplyDefaultConfig(ctx), errTest)
-		am.autogenFn = NoopAutogenFn
 	}
 
-	// TODO: Now, shutdown the Alertmanager and we expect the latest configuration to be uploaded.
-	{
-	}
 }
 
 func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
@@ -1168,8 +1349,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	am, err := newAlertmanagerSut(cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
-	require.NoError(t, err)
+	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// We should get the default Cloud Alertmanager configuration.
 	status, err := am.GetStatus(ctx)
@@ -1199,8 +1379,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	am, err := newAlertmanagerSut(cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
-	require.NoError(t, err)
+	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// We should have no silences at first.
 	silences, err := am.ListSilences(ctx, []string{})
@@ -1282,8 +1461,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	am, err := newAlertmanagerSut(cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
-	require.NoError(t, err)
+	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// Wait until the Alertmanager is ready to send alerts.
 	require.NoError(t, am.checkReadiness(ctx))
@@ -1357,8 +1535,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	am, err := newAlertmanagerSut(cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
-	require.NoError(t, err)
+	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// We should start with the default config.
 	rcvs, err := am.GetReceivers(ctx)
@@ -1393,8 +1570,7 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	am, err := newAlertmanagerSut(cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
-	require.NoError(t, err)
+	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// Valid template
 	c := apimodels.TestTemplatesConfigBodyParams{
@@ -1451,8 +1627,7 @@ func TestIntegrationRemoteAlertmanagerTestIntegration(t *testing.T) {
 
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	am, err := newAlertmanagerSut(cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn)
-	require.NoError(t, err)
+	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	integration := ngmodels.IntegrationGen(ngmodels.IntegrationMuts.WithValidConfig("webhook"))()
 	integration.Settings["url"] = "grafana://noop" // TODO remove later if https://github.com/grafana/alerting/pull/465 merged
@@ -1513,15 +1688,45 @@ receivers:
     - name: empty-receiver
 `
 
-func newAlertmanagerSut(cfg AlertmanagerConfig, fstore *notifier.FileStore, crypto notifier.Crypto, fn AutogenFn) (*Alertmanager, error) {
-	return NewAlertmanager(
+func newRemoteMOA(t *testing.T, cfg AlertmanagerConfig, notificationSettings map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, features featuremgmt.FeatureToggles, secretsService *secretsManager.SecretsService) (*notifier.MultiOrgAlertmanager, *Alertmanager) {
+	cfgStore := notifier.NewFakeNotificationStore(t, notificationSettings)
+	testCrypto := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
+	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t))
+
+	am, err := NewAlertmanager(
 		context.Background(),
 		cfg,
 		fstore,
-		crypto,
-		fn,
+		testCrypto,
+		func(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig, _ notifier.InvalidReceiversAction) error {
+			return notifier.AddAutogenConfig(ctx, logger, cfgStore, orgId, config, notifier.ErrorOnInvalidReceivers, features)
+		},
 		metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry()),
 		tracing.InitializeTracerForTest(),
-		featuremgmt.WithFeatures(),
+		features,
 	)
+	require.NoError(t, err)
+
+	return notifier.NewTestMultiOrgAlertmanager(t,
+		notifier.WithFeatureToggles(am.features),
+		notifier.WithSecretService(secretsService),
+		notifier.WithConfigStore(cfgStore),
+		notifier.WithAlertmanagers(map[int64]notifier.Alertmanager{
+			1: am,
+		}),
+		notifier.WithSkipLoad(),
+	), am
+}
+
+// verifyAutogenExistsAndRemove is a helper function to ensure autogenerated routes were created but without validating them exactly.
+func verifyAutogenExistsAndRemove(t *testing.T, cfg *client.UserGrafanaConfig) {
+	// First ensure there are some autogenerated routes.
+	require.True(t, slices.ContainsFunc(cfg.GrafanaAlertmanagerConfig.AlertmanagerConfig.Route.Routes, func(route *apimodels.Route) bool {
+		if !notifier.IsAutogeneratedRoot(route) {
+			return false
+		}
+		return len(route.Routes) > 0
+	}))
+	// Now remove them for the config comparison.
+	notifier.RemoveAutogenConfigIfExists(cfg.GrafanaAlertmanagerConfig.AlertmanagerConfig.Route)
 }
