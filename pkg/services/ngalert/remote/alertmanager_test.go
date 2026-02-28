@@ -1283,8 +1283,8 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
 
 		// Call `SaveAndApplyConfig` with the encrypted configuration.
-		require.NoError(t, err)
 		err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(encryptedConfig), CreatedAt: time.Now().Unix()})
+		require.NoError(t, err)
 
 		// Check that the original configuration is not modified (decrypted).
 		currentJSON, err := json.Marshal(postableCfg)
@@ -1326,7 +1326,6 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 		require.True(t, config.Default)
 	}
-
 }
 
 func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
