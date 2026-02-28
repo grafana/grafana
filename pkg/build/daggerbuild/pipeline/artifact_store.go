@@ -22,6 +22,11 @@ type ArtifactStore interface {
 
 	Export(ctx context.Context, d *dagger.Client, a *Artifact, destination string, checksum bool) ([]string, error)
 	Exists(ctx context.Context, a *Artifact) (bool, error)
+
+	// ImportDirectory stores a pre-built directory directly by store key,
+	// enabling split builds where artifacts are built in separate jobs and
+	// imported into the store to skip rebuilding.
+	ImportDirectory(key string, dir *dagger.Directory)
 }
 
 type MapArtifactStore struct {
@@ -116,6 +121,10 @@ func (m *MapArtifactStore) Export(ctx context.Context, d *dagger.Client, a *Arti
 	}
 
 	return nil, fmt.Errorf("unrecognized artifact type: %d", a.Type)
+}
+
+func (m *MapArtifactStore) ImportDirectory(key string, dir *dagger.Directory) {
+	m.data.Store(key, dir)
 }
 
 func (m *MapArtifactStore) Exists(ctx context.Context, a *Artifact) (bool, error) {

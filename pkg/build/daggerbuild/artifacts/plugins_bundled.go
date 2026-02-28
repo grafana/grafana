@@ -20,6 +20,27 @@ var (
 	}
 )
 
+var BundledPluginsInitializer = Initializer{
+	InitializerFunc: NewBundledPluginsFromString,
+	Arguments:       BundledPluginsArguments,
+}
+
+func NewBundledPluginsFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
+	src, err := GrafanaDir(ctx, state, false)
+	if err != nil {
+		return nil, err
+	}
+	cache, err := state.CacheVolume(ctx, arguments.YarnCacheDirectory)
+	if err != nil {
+		return nil, err
+	}
+	version, err := state.String(ctx, arguments.Version)
+	if err != nil {
+		return nil, err
+	}
+	return NewBundledPlugins(ctx, log, artifact, src, version, cache)
+}
+
 type BundledPlugins struct {
 	Name        packages.Name
 	Src         *dagger.Directory

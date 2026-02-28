@@ -55,7 +55,11 @@ func (f *GoModDir) BuildDir(ctx context.Context, builder *dagger.Container, opts
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work"},
 		}).
 		WithWorkdir("/src").
-		//WithMountedCache("/go/pkg/mod", f.Cache).
+		// NOTE: Do not use WithMountedCache here. Dagger cannot export a
+		// directory from a cache mount path via Directory(). The go-mod-cache
+		// volume IS used by the backend builder (backend/builder.go) for
+		// compilation, but this GoModDir artifact exports the module directory
+		// itself, which is incompatible with cache mounts.
 		WithExec([]string{"go", "mod", "download"}).
 		Directory("/go/pkg/mod"), nil
 }

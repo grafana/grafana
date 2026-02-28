@@ -116,6 +116,11 @@ func (m *ArtifactStoreLogger) Exists(ctx context.Context, a *Artifact) (bool, er
 	return v, nil
 }
 
+func (m *ArtifactStoreLogger) ImportDirectory(key string, dir *dagger.Directory) {
+	m.Log.Debug("importing pre-built directory into store", "key", key)
+	m.Store.ImportDirectory(key, dir)
+}
+
 func StoreWithLogging(s ArtifactStore, log *slog.Logger) *ArtifactStoreLogger {
 	return &ArtifactStoreLogger{
 		Store: s,

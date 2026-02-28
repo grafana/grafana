@@ -40,6 +40,11 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 		Value: "us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev",
 	}
 
+	importDirFlag := &cli.StringSliceFlag{
+		Name:  "import-dir",
+		Usage: "Import a pre-built directory into the artifact store, skipping rebuild (format: store-key=host-path)",
+	}
+
 	flags := flags.Join(
 		[]cli.Flag{
 			artifactsFlag,
@@ -49,6 +54,7 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 			flags.Platform,
 			cacheBuildersFlag,
 			cacheBuildersRegistryFlag,
+			importDirFlag,
 		},
 		flags.PublishFlags,
 		flags.ConcurrencyFlags,

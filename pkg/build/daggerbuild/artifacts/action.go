@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/pipeline"
@@ -108,6 +109,20 @@ func Action(r Registerer, c *cli.Context) error {
 
 	// The artifact store is responsible for storing built artifacts and issuing them to artifacts that use them as dependencies using the artifact's filename as the key.
 	store := pipeline.NewArtifactStore(log)
+
+	// Pre-populate the store with directories from earlier build jobs.
+	// This allows split builds: build-backend and build-frontend export artifacts,
+	// then build-grafana imports them and only runs assembly (targz + docker).
+	for _, spec := range c.StringSlice("import-dir") {
+		parts := strings.SplitN(spec, "=", 2)
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid --import-dir format, expected key=path: %s", spec)
+		}
+		key, hostPath := parts[0], parts[1]
+		dir := client.Host().Directory(hostPath)
+		store.ImportDirectory(key, dir)
+		log.Info("Imported pre-built directory into artifact store", "key", key, "path", hostPath)
+	}
 
 	opts := &pipeline.ArtifactContainerOpts{
 		Client:     client,
