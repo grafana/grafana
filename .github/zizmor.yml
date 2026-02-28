@@ -14,10 +14,6 @@ rules:
         # https://nvd.nist.gov/vuln/detail/cve-2025-30066
         # https://nvd.nist.gov/vuln/detail/cve-2025-30154
         - reviewdog/*
-  unpinned-images:
-    ignore:
-      # Service container image is a dynamic build output from the build-grafana job
-      - pr-e2e-tests.yml
   cache-poisoning:
     ignore:
       - backend-unit-tests.yml

@@ -352,29 +352,6 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6]
         shardTotal: [6]
 
-    services:
-      grafana:
-        image: ${{ needs.build-grafana.outputs.docker-image }}
-        credentials:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          GF_SERVER_HTTP_PORT: "3001"
-          GF_PATHS_CONFIG: /grafana-config/custom.ini
-          GF_PATHS_PROVISIONING: /grafana-provisioning
-        ports:
-          - 3001:3001
-        volumes:
-          - ${{ github.workspace }}/scripts/grafana-server:/grafana-config
-          - ${{ github.workspace }}/devenv:/usr/share/grafana/devenv
-          - ${{ github.workspace }}/e2e-test-plugins:/var/lib/grafana/plugins
-          - ${{ github.workspace }}/grafana-provisioning:/grafana-provisioning
-        options: >-
-          --health-cmd "curl -f http://localhost:3001/api/health || exit 1"
-          --health-interval 5s
-          --health-retries 60
-          --health-timeout 5s
-
     steps:
       - uses: actions/checkout@v5
         with:
@@ -384,17 +361,27 @@ jobs:
           name: grafana-test-plugins
           path: e2e-test-plugins
 
-      - name: Setup provisioning and restart Grafana
+      - name: Setup provisioning
         run: |
-          # Create provisioning directory structure from devenv files
           mkdir -p grafana-provisioning/{datasources,dashboards,alerting,plugins}
           cp devenv/datasources.yaml grafana-provisioning/datasources/
           cp devenv/dashboards.yaml grafana-provisioning/dashboards/
           cp devenv/alert_rules.yaml grafana-provisioning/alerting/
           cp devenv/plugins.yaml grafana-provisioning/plugins/
 
-          # Restart so Grafana picks up config, provisioning, and plugins from the bind mounts
-          docker restart ${{ job.services.grafana.id }}
+      - name: Start Grafana
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker run -d --name grafana \
+            -e GF_SERVER_HTTP_PORT=3001 \
+            -e GF_PATHS_CONFIG=/grafana-config/custom.ini \
+            -e GF_PATHS_PROVISIONING=/grafana-provisioning \
+            -p 3001:3001 \
+            -v "$PWD/scripts/grafana-server:/grafana-config" \
+            -v "$PWD/devenv:/usr/share/grafana/devenv" \
+            -v "$PWD/e2e-test-plugins:/var/lib/grafana/plugins" \
+            -v "$PWD/grafana-provisioning:/grafana-provisioning" \
+            "${{ needs.build-grafana.outputs.docker-image }}"
 
       - name: Wait for Grafana
         run: |
@@ -407,7 +394,7 @@ jobs:
             sleep 2
           done
           echo "Grafana failed to start. Container logs:"
-          docker logs ${{ job.services.grafana.id }}
+          docker logs grafana
           exit 1
 
       - uses: actions/setup-node@v6
