@@ -179,6 +179,9 @@ jobs:
           name: grafana-frontend
           path: artifacts/frontend
 
+      # Ensure import directories exist (actions/upload-artifact skips empty dirs)
+      - run: mkdir -p artifacts/frontend/bin/bundled-plugins
+
       - name: Build tarball + Docker via Dagger
         uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
         env:
