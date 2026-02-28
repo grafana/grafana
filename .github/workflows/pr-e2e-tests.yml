@@ -180,7 +180,10 @@ jobs:
           path: artifacts/frontend
 
       # Ensure import directories exist (actions/upload-artifact skips empty dirs)
-      - run: mkdir -p artifacts/frontend/bin/bundled-plugins
+      # Restore execute permissions stripped by actions/upload-artifact (all files become 644)
+      - run: |
+          mkdir -p artifacts/frontend/bin/bundled-plugins
+          chmod +x artifacts/backend/bin/grafana/linux/amd64/grafana*
 
       - name: Build tarball + Docker via Dagger
         uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
