@@ -69,6 +69,11 @@ export interface FeatureToggles {
   */
   alertingBacktesting?: boolean;
   /**
+  * Sort alert rule groups by folder full path in the Prometheus rules API
+  * @default false
+  */
+  alertingRuleGroupSortByFolderFullpath?: boolean;
+  /**
   * Allow datasource to provide custom UI for context view
   * @default true
   */
@@ -1508,6 +1513,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamsHandlerRedirect?: boolean;
   /**
+  * Enables user APIs in the app platform
+  * @default false
+  */
+  kubernetesUsersApi?: boolean;
+  /**
   * Enables external group mapping APIs in the app platform
   * @default false
   */
@@ -1572,4 +1582,9 @@ export interface FeatureToggles {
   * @default false
   */
   dsAbstractionApp?: boolean;
+  /**
+  * Enables new analytics framework
+  * @default false
+  */
+  analyticsFramework?: boolean;
 }

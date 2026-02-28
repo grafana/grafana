@@ -553,6 +553,19 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleGroupSortByFolderFullpath",
+        "resourceVersion": "1770763646748",
+        "creationTimestamp": "2026-02-10T22:47:26Z"
+      },
+      "spec": {
+        "description": "Sort alert rule groups by folder full path in the Prometheus rules API",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-03T11:18:25Z"
@@ -787,6 +800,20 @@
         "description": "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "analyticsFramework",
+        "resourceVersion": "1772205128141",
+        "creationTimestamp": "2026-02-27T15:12:08Z"
+      },
+      "spec": {
+        "description": "Enables new analytics framework",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2640,6 +2667,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesUsersApi",
+        "resourceVersion": "1772099076728",
+        "creationTimestamp": "2026-02-26T09:44:36Z"
+      },
+      "spec": {
+        "description": "Enables user APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

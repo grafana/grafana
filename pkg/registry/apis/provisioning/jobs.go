@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
@@ -131,6 +132,42 @@ func (c *jobsConnector) Connect(
 			return
 		}
 		spec.Repository = name
+
+		// Validate write operations before queueing the job
+		requiresWrite := spec.Action == provisioning.JobActionDelete ||
+			spec.Action == provisioning.JobActionMove ||
+			spec.Action == provisioning.JobActionPush ||
+			spec.Action == provisioning.JobActionMigrate
+
+		if requiresWrite {
+			var targetRef string
+			switch spec.Action {
+			case provisioning.JobActionDelete:
+				if spec.Delete != nil {
+					targetRef = spec.Delete.Ref
+				}
+			case provisioning.JobActionMove:
+				if spec.Move != nil {
+					targetRef = spec.Move.Ref
+				}
+			case provisioning.JobActionPush:
+				if spec.Push != nil {
+					targetRef = spec.Push.Branch
+				}
+			case provisioning.JobActionMigrate:
+				// Migrate operates on the default branch (no ref)
+				targetRef = ""
+			default:
+				// Read-only operations (Pull, PullRequest, FixFolderMetadata) don't reach here
+				// due to requiresWrite check, but include default for exhaustive linter
+				targetRef = ""
+			}
+
+			if err := repository.IsWriteAllowed(cfg, targetRef); err != nil {
+				responder.Error(err)
+				return
+			}
+		}
 
 		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
 		if err != nil {

@@ -32,6 +32,15 @@ var (
 	_ resource.BulkProcessingBackend = (*backend)(nil)
 )
 
+// noRollbackTx wraps a db.Tx but makes Rollback() a no-op.
+// Used for external (migration) transactions where we want to keep the
+// transaction alive on failure so the caller can retry with parquet buffering.
+type noRollbackTx struct {
+	db.Tx
+}
+
+func (t *noRollbackTx) Rollback() error { return nil }
+
 type bulkRV struct {
 	max     int64
 	counter int64
@@ -139,21 +148,16 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 	}
 	defer b.bulkLock.Finish(setting.Collection)
 
-	// If provided, reuse the inproc transaction for SQLite
-	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil && b.dialect.DialectName() == "sqlite" {
-		if externalTx := resource.TransactionFromContext(clientCtx); externalTx != nil {
-			b.log.Info("Using SQLite transaction from client context")
-			rsp := &resourcepb.BulkResponse{}
-			err := b.processBulkWithTx(ctx, dbimpl.NewTx(externalTx), setting, iter, rsp)
-			if err != nil {
-				rsp.Error = resource.AsErrorResult(err)
-			}
-			return rsp
-		}
+	// Use a temporary Parquet file to separate read and write phases for SQLite.
+	// This avoids lock contention between the SHARED lock held by legacy row cursors
+	// and the EXCLUSIVE lock needed for cache spills during bulk inserts.
+	// Enabled via config (migration_parquet_buffer) or context (retry after failure).
+	useParquet := b.migrationParquetBuffer
+	clientCtx := inprocgrpc.ClientContext(ctx) // inprocgrpc contains the migrator context
+	if !useParquet && clientCtx != nil {
+		useParquet = resource.ParquetBufferFromContext(clientCtx)
 	}
-
-	// We may want to first write parquet, then read parquet
-	if b.dialect.DialectName() == "sqlite" {
+	if useParquet && b.dialect.DialectName() == "sqlite" {
 		file, err := os.CreateTemp("", "grafana-bulk-export-*.parquet")
 		if err != nil {
 			return &resourcepb.BulkResponse{
@@ -174,7 +178,7 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 			return rsp
 		}
 
-		b.log.Info("using parquet buffer", "parquet", file)
+		b.log.Info("using parquet buffer", "path", file.Name(), "processed", rsp.Processed)
 
 		// Replace the iterator with one from parquet
 		iter, err = parquet.NewParquetReader(file.Name(), 50)
@@ -182,6 +186,20 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 			return &resourcepb.BulkResponse{
 				Error: resource.AsErrorResult(err),
 			}
+		}
+	}
+
+	if clientCtx != nil && b.dialect.DialectName() == "sqlite" {
+		if externalTx := resource.TransactionFromContext(clientCtx); externalTx != nil {
+			b.log.Info("Using SQLite transaction from client context")
+			rsp := &resourcepb.BulkResponse{}
+			// Let migrator rollback its transaction on error
+			tx := &noRollbackTx{dbimpl.NewTx(externalTx)}
+			err := b.processBulkWithTx(ctx, tx, setting, iter, rsp)
+			if err != nil {
+				rsp.Error = resource.AsErrorResult(err)
+			}
+			return rsp
 		}
 	}
 

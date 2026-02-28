@@ -70,91 +70,64 @@ export const NotificationsScene = ({
   },
   hideFilters,
 }: NotificationsSceneProps = {}) => {
-  const [isDataSourceReady, setIsDataSourceReady] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [availableKeys, setAvailableKeys] = useState<Array<{ text: string; value: string }>>(() => {
-    // Fallback keys if API query fails
     const fallbackKeys = ['alertname', 'severity', 'namespace', 'cluster', 'job', 'instance', 'grafana_folder'];
     return fallbackKeys.map((key) => ({ text: key, value: key }));
   });
-  const [, setAvailableValues] = useState<Record<string, Array<{ text: string; value: string }>>>({});
   const [availableReceivers, setAvailableReceivers] = useState<string[]>([]);
 
   useEffect(() => {
     logInfo(LogMessages.loadedCentralAlertStateHistory);
   }, []);
 
-  // Register datasource using layout effect to ensure it runs before child renders
   useLayoutEffect(() => {
     ensureNotificationsDataSourceRegistered();
-    setIsDataSourceReady(true);
   }, []);
 
-  // Fetch available label keys from recent notifications
   useEffect(() => {
-    const fetchAvailableKeys = async () => {
+    const initialize = async () => {
       try {
-        // Query recent notifications to get available label keys
-        const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(); // Last 7 days
+        const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
         const to = new Date().toISOString();
 
         const notifications = await getNotifications(from, to, undefined, undefined, undefined, []);
 
-        // Extract unique label keys and values from notifications
         const keysSet = new Set<string>();
-        const valuesMap = new Map<string, Set<string>>();
         const receiversSet = new Set<string>();
         const entries = notifications.entries ?? [];
 
         entries.forEach((entry) => {
           if (entry.groupLabels) {
-            Object.entries(entry.groupLabels).forEach(([key, value]) => {
-              keysSet.add(key);
-
-              if (!valuesMap.has(key)) {
-                valuesMap.set(key, new Set());
-              }
-              valuesMap.get(key)!.add(String(value));
-            });
+            Object.keys(entry.groupLabels).forEach((key) => keysSet.add(key));
           }
-
-          // Extract receiver/contact point names
           if (entry.receiver) {
             receiversSet.add(entry.receiver);
           }
         });
 
         if (keysSet.size > 0) {
-          const dynamicKeys = Array.from(keysSet)
-            .sort()
-            .map((key) => ({ text: key, value: key }));
-          setAvailableKeys(dynamicKeys);
+          setAvailableKeys(
+            Array.from(keysSet)
+              .sort()
+              .map((key) => ({ text: key, value: key }))
+          );
         }
 
-        // Convert values map to the format needed
-        const valuesRecord: Record<string, Array<{ text: string; value: string }>> = {};
-        valuesMap.forEach((values, key) => {
-          valuesRecord[key] = Array.from(values)
-            .sort()
-            .map((val) => ({ text: val, value: val }));
-        });
-        setAvailableValues(valuesRecord);
-
-        // Set available receivers
         if (receiversSet.size > 0) {
           setAvailableReceivers(Array.from(receiversSet).sort());
         }
       } catch {
-        // Keep fallback keys if fetching available label keys fails
+        // Keep fallback keys if fetching fails
       }
+      setIsReady(true);
     };
 
-    fetchAvailableKeys();
+    initialize();
   }, []);
 
   const scene = useMemo(() => {
-    if (!isDataSourceReady) {
-      // Return a minimal scene object that won't cause issues with useUrlSync
-      // We'll replace this with the real scene once datasource is ready
+    if (!isReady) {
       return new EmbeddedScene({
         body: new SceneFlexLayout({ children: [] }),
       });
@@ -236,12 +209,11 @@ export const NotificationsScene = ({
         ],
       }),
     });
-  }, [defaultTimeRange, hideFilters, isDataSourceReady, availableKeys, availableReceivers]);
+  }, [defaultTimeRange, hideFilters, isReady, availableKeys, availableReceivers]);
 
   const isUrlSyncInitialized = useUrlSync(scene);
 
-  // Show empty state until datasource is ready and URL sync is initialized
-  if (!isDataSourceReady || !isUrlSyncInitialized) {
+  if (!isReady || !isUrlSyncInitialized) {
     return null;
   }
 

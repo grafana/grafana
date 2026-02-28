@@ -242,6 +242,183 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 	}
 }
 
+func TestBuildConditionPatchOpsFromExisting_MultipleConditions(t *testing.T) {
+	fixedTime := metav1.NewTime(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
+
+	tests := []struct {
+		name               string
+		existingConditions []metav1.Condition
+		generation         int64
+		newConditions      []metav1.Condition
+		expectPatch        bool
+		expectedConditions int
+	}{
+		{
+			name:               "creates patch when no existing conditions with multiple new ones",
+			existingConditions: nil,
+			generation:         1,
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeResourceQuota,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonWithinQuota,
+					Message: "Within quota: 5/100 resources",
+				},
+				{
+					Type:    provisioning.ConditionTypePullStatus,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonSuccess,
+					Message: "Pull completed successfully",
+				},
+			},
+			expectPatch:        true,
+			expectedConditions: 2,
+		},
+		{
+			name: "no patch when all conditions unchanged",
+			existingConditions: []metav1.Condition{
+				{
+					Type:               provisioning.ConditionTypeResourceQuota,
+					Status:             metav1.ConditionTrue,
+					Reason:             provisioning.ReasonWithinQuota,
+					Message:            "Within quota: 5/100 resources",
+					ObservedGeneration: 1,
+					LastTransitionTime: fixedTime,
+				},
+				{
+					Type:               provisioning.ConditionTypePullStatus,
+					Status:             metav1.ConditionTrue,
+					Reason:             provisioning.ReasonSuccess,
+					Message:            "Pull completed successfully",
+					ObservedGeneration: 1,
+					LastTransitionTime: fixedTime,
+				},
+			},
+			generation: 1,
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeResourceQuota,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonWithinQuota,
+					Message: "Within quota: 5/100 resources",
+				},
+				{
+					Type:    provisioning.ConditionTypePullStatus,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonSuccess,
+					Message: "Pull completed successfully",
+				},
+			},
+			expectPatch: false,
+		},
+		{
+			name: "creates patch when one of multiple conditions changes",
+			existingConditions: []metav1.Condition{
+				{
+					Type:               provisioning.ConditionTypeResourceQuota,
+					Status:             metav1.ConditionTrue,
+					Reason:             provisioning.ReasonWithinQuota,
+					Message:            "Within quota: 5/100 resources",
+					ObservedGeneration: 1,
+					LastTransitionTime: fixedTime,
+				},
+				{
+					Type:               provisioning.ConditionTypePullStatus,
+					Status:             metav1.ConditionTrue,
+					Reason:             provisioning.ReasonSuccess,
+					Message:            "Pull completed successfully",
+					ObservedGeneration: 1,
+					LastTransitionTime: fixedTime,
+				},
+			},
+			generation: 1,
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeResourceQuota,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonWithinQuota,
+					Message: "Within quota: 5/100 resources",
+				},
+				{
+					Type:    provisioning.ConditionTypePullStatus,
+					Status:  metav1.ConditionFalse,
+					Reason:  provisioning.ReasonFailure,
+					Message: "network error",
+				},
+			},
+			expectPatch:        true,
+			expectedConditions: 2,
+		},
+		{
+			name: "preserves existing unrelated conditions",
+			existingConditions: []metav1.Condition{
+				{
+					Type:               provisioning.ConditionTypeReady,
+					Status:             metav1.ConditionTrue,
+					Reason:             provisioning.ReasonAvailable,
+					Message:            "Resource is available",
+					ObservedGeneration: 1,
+					LastTransitionTime: fixedTime,
+				},
+			},
+			generation: 1,
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeResourceQuota,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonWithinQuota,
+					Message: "Within quota: 5/100 resources",
+				},
+				{
+					Type:    provisioning.ConditionTypePullStatus,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonSuccess,
+					Message: "Pull completed successfully",
+				},
+			},
+			expectPatch:        true,
+			expectedConditions: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			patchOps := BuildConditionPatchOpsFromExisting(tt.existingConditions, tt.generation, tt.newConditions...)
+
+			if !tt.expectPatch {
+				assert.Nil(t, patchOps, "expected no patch operations")
+				return
+			}
+
+			require.NotNil(t, patchOps, "expected patch operations")
+			require.Len(t, patchOps, 1, "expected exactly one patch operation")
+
+			patch := patchOps[0]
+			assert.Equal(t, "replace", patch["op"])
+			assert.Equal(t, "/status/conditions", patch["path"])
+
+			conditions, ok := patch["value"].([]metav1.Condition)
+			require.True(t, ok, "patch value should be []metav1.Condition")
+			assert.Len(t, conditions, tt.expectedConditions)
+
+			for _, newCond := range tt.newConditions {
+				found := false
+				for _, c := range conditions {
+					if c.Type == newCond.Type {
+						assert.Equal(t, tt.generation, c.ObservedGeneration)
+						assert.Equal(t, newCond.Status, c.Status)
+						assert.Equal(t, newCond.Reason, c.Reason)
+						assert.Equal(t, newCond.Message, c.Message)
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "expected to find condition type %s", newCond.Type)
+			}
+		})
+	}
+}
+
 func TestBuildConditionPatchOpsFromExisting_Connection(t *testing.T) {
 	fixedTime := metav1.NewTime(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
 

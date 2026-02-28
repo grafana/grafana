@@ -21,8 +21,8 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/alerting/http/v0mimir1"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
@@ -670,6 +670,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 					cmpopts.IgnoreUnexported(
 						time.Location{},
 						labels.Matcher{},
+						v0mimir1.ProxyConfig{},
 						common_config.ProxyConfig{})))
 
 				got1 := got
@@ -896,7 +897,7 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 			},
 			Receivers: []*apimodels.PostableApiReceiver{
 				{
-					Receiver: config.Receiver{Name: "grafana-default-email"},
+					Receiver: apimodels.Receiver{Name: "grafana-default-email"},
 					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
 						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
 							{
