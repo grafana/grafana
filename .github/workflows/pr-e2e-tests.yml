@@ -369,9 +369,15 @@ jobs:
           cp devenv/alert_rules.yaml grafana-provisioning/alerting/
           cp devenv/plugins.yaml grafana-provisioning/plugins/
 
+      - name: Login to GHCR
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start Grafana
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           docker run -d --name grafana \
             -e GF_SERVER_HTTP_PORT=3001 \
             -e GF_PATHS_CONFIG=/grafana-config/custom.ini \
