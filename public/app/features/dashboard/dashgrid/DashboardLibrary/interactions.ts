@@ -1,5 +1,12 @@
 import { reportInteraction } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
+import {
+  NewBasicProvisionedDashboardsInteractions,
+  NewDashboardLibraryInteractions,
+  NewSuggestedDashboardsInteractions,
+  NewTemplateDashboardInteractions,
+} from './analytics/main';
 import { ContentKind, DiscoveryMethod, EventLocation, FEATURE_VARIANTS, SourceEntryPoint } from './constants';
 import { isTemplateDashboardAssistantEnabled } from './utils/assistantHelpers';
 
@@ -23,7 +30,7 @@ type ItemClickedInteractionProperties = {
   discoveryMethod: DiscoveryMethod;
 };
 
-export const DashboardLibraryInteractions = {
+const OldDashboardLibraryInteractions = {
   loaded: (properties: LoadedInteractionProperties) => {
     reportDashboardLibraryInteraction('loaded', properties);
   },
@@ -91,8 +98,8 @@ export const DashboardLibraryInteractions = {
   },
 };
 
-export const TemplateDashboardInteractions = {
-  ...DashboardLibraryInteractions,
+const OldTemplateDashboardInteractions = {
+  ...OldDashboardLibraryInteractions,
   itemClicked: async (
     properties: ItemClickedInteractionProperties & {
       /** Which button was clicked (template modal only): View template vs Customize with Assistant */
@@ -115,8 +122,8 @@ export const TemplateDashboardInteractions = {
   },
 };
 
-export const SuggestedDashboardInteractions = {
-  ...DashboardLibraryInteractions,
+const OldSuggestedDashboardInteractions = {
+  ...OldDashboardLibraryInteractions,
   loaded: (properties: LoadedInteractionProperties) => {
     reportDashboardLibraryInteraction('loaded', {
       ...properties,
@@ -131,8 +138,8 @@ export const SuggestedDashboardInteractions = {
   },
 };
 
-export const BasicProvisionedDashboardInteractions = {
-  ...DashboardLibraryInteractions,
+const OldBasicProvisionedDashboardInteractions = {
+  ...OldDashboardLibraryInteractions,
   loaded: (properties: LoadedInteractionProperties) => {
     reportDashboardLibraryInteraction('loaded', {
       ...properties,
@@ -150,3 +157,21 @@ export const BasicProvisionedDashboardInteractions = {
 const reportDashboardLibraryInteraction = (name: string, properties?: Record<string, unknown>) => {
   reportInteraction(`grafana_dashboard_library_${name}`, { ...properties, schema_version: SCHEMA_VERSION });
 };
+
+const isAnalyticsFrameworkEnabled = getFeatureFlagClient().getBooleanValue('analyticsFramework', true);
+
+export const DashboardLibraryInteractions = isAnalyticsFrameworkEnabled
+  ? OldDashboardLibraryInteractions
+  : NewDashboardLibraryInteractions;
+
+export const TemplateDashboardInteractions = isAnalyticsFrameworkEnabled
+  ? OldTemplateDashboardInteractions
+  : NewTemplateDashboardInteractions;
+
+export const SuggestedDashboardsInteractions = isAnalyticsFrameworkEnabled
+  ? OldSuggestedDashboardInteractions
+  : NewSuggestedDashboardsInteractions;
+
+export const BasicProvisionedDashboardsInteractions = isAnalyticsFrameworkEnabled
+  ? OldBasicProvisionedDashboardInteractions
+  : NewBasicProvisionedDashboardsInteractions;
