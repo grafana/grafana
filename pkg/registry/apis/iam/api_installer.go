@@ -57,6 +57,9 @@ type GlobalRoleApiInstaller ApiInstaller[*iamv0.GlobalRole]
 // TeamLBACApiInstaller provides TeamLBACRule-specific API registration and validation.
 type TeamLBACApiInstaller ApiInstaller[*iamv0.TeamLBACRule]
 
+// ExternalGroupMappingApiInstaller provides ExternalGroupMapping-specific API registration and validation.
+type ExternalGroupMappingApiInstaller ApiInstaller[*iamv0.ExternalGroupMapping]
+
 // NoopApiInstaller is a no-op implementation for when roles are not available (OSS).
 type NoopApiInstaller[T runtime.Object] struct {
 	ResourceInfo utils.ResourceInfo
@@ -127,5 +130,12 @@ func ProvideNoopGlobalRoleApiInstaller() GlobalRoleApiInstaller {
 func ProvideNoopTeamLBACApiInstaller() TeamLBACApiInstaller {
 	return &NoopApiInstaller[*iamv0.TeamLBACRule]{
 		ResourceInfo: iamv0.TeamLBACRuleInfo,
+	}
+}
+
+// ProvideNoopExternalGroupMappingApiInstaller provides a no-op ExternalGroupMapping installer.
+func ProvideNoopExternalGroupMappingApiInstaller() ExternalGroupMappingApiInstaller {
+	return &NoopApiInstaller[*iamv0.ExternalGroupMapping]{
+		ResourceInfo: iamv0.ExternalGroupMappingResourceInfo,
 	}
 }

@@ -1,3 +1,7 @@
+import { firstValueFrom, map } from 'rxjs';
+
+import { isAssistantAvailable } from '@grafana/assistant';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { GnetDashboard } from '../types';
@@ -95,4 +99,24 @@ export function buildTemplateContextTitle(dashboard: PluginDashboard | GnetDashb
  */
 export function buildAssistantPrompt(): string {
   return `Create a new dashboard based on this dashboard template.`;
+}
+
+/**
+ * Async function to check if the template dashboard assistant is enabled.
+ * Both flags can be enabled in the specific wave/environment, but the assistant may not be available.
+ * For example, cloud users without assistant access.
+ */
+export function isTemplateDashboardAssistantEnabled(): Promise<boolean> {
+  return firstValueFrom(
+    isAssistantAvailable().pipe(
+      map((assistantAvailable) => {
+        const buttonEnabled = getFeatureFlagClient().getBooleanValue('dashboardTemplatesAssistantButton', false);
+        const toolEnabled = getFeatureFlagClient().getBooleanValue(
+          'assistant.frontend.tools.dashboardTemplates',
+          false
+        );
+        return buttonEnabled && toolEnabled && assistantAvailable;
+      })
+    )
+  );
 }

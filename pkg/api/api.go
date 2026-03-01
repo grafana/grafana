@@ -131,6 +131,12 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/secrets", authorize(ac.EvalAny(
 			ac.EvalPermission(secret.ActionSecretSecureValuesCreate),
 			ac.EvalPermission(secret.ActionSecretSecureValuesRead),
+			ac.EvalPermission(secret.ActionSecretKeepersCreate),
+			ac.EvalPermission(secret.ActionSecretKeepersRead),
+		)), hs.Index)
+		r.Get("/admin/secrets/secure-values", authorize(ac.EvalAny(
+			ac.EvalPermission(secret.ActionSecretSecureValuesCreate),
+			ac.EvalPermission(secret.ActionSecretSecureValuesRead),
 		)), hs.Index)
 		r.Get("/admin/secrets/keepers", authorize(ac.EvalAny(
 			ac.EvalPermission(secret.ActionSecretKeepersCreate),

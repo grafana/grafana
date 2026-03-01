@@ -6,7 +6,13 @@ import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { ActionItem, Actions } from '../../Actions';
-import { QUERY_EDITOR_COLORS, QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT } from '../../constants';
+import {
+  QUERY_EDITOR_COLORS,
+  QueryEditorType,
+  SIDEBAR_CARD_HEIGHT,
+  SIDEBAR_CARD_INDENT,
+  getQueryEditorColors,
+} from '../../constants';
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
@@ -96,13 +102,14 @@ export const SidebarCard = ({
         aria-pressed={isSelected}
       >
         <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
-        <div>
-          {item.isError && (
-            <div className={styles.errorIcon}>
-              <Icon name="exclamation-triangle" size="sm" color={QUERY_EDITOR_COLORS.error} />
+        {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
+        {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
+        {hasActions && (
+          <div>
+            <div className={styles.cardContentIcons}>
+              {item.isHidden && <Icon name="eye-slash" size="sm" />}
+              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={QUERY_EDITOR_COLORS.error} />}
             </div>
-          )}
-          {hasActions && (
             <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
               <Actions
                 handleResetFocus={handleResetFocus}
@@ -110,10 +117,15 @@ export const SidebarCard = ({
                 onDelete={onDelete}
                 onDuplicate={onDuplicate}
                 onToggleHide={onToggleHide}
+                order={{
+                  delete: 1,
+                  duplicate: 0,
+                  hide: 2,
+                }}
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       <AddCardButton variant={addVariant} afterId={id} />
     </div>
@@ -139,10 +151,11 @@ function getStyles(
     theme,
     editorType: item.type,
     alertState: item.alertState,
-    isError: item.isError,
+    isError: !!item.error,
   });
 
-  const backgroundColor = isSelected ? QUERY_EDITOR_COLORS.card.activeBg : QUERY_EDITOR_COLORS.card.hoverBg;
+  const themeColors = getQueryEditorColors(theme);
+  const backgroundColor = isSelected ? themeColors.card.activeBg : themeColors.card.hoverBg;
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -153,7 +166,7 @@ function getStyles(
     paddingRight: theme.spacing(1),
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
-    background: `linear-gradient(270deg, ${backgroundColor} 80%, rgba(32, 38, 47, 0.00) 100%)`,
+    background: `linear-gradient(270deg, ${backgroundColor} 80%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
@@ -166,6 +179,13 @@ function getStyles(
   });
 
   return {
+    cardContentIcons: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      marginRight: theme.spacing(1.5),
+    }),
     wrapper: css({
       position: 'relative',
       marginInlineStart: theme.spacing(SIDEBAR_CARD_INDENT),
@@ -212,7 +232,7 @@ function getStyles(
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      background: isSelected ? QUERY_EDITOR_COLORS.card.activeBg : 'none',
+      background: isSelected ? themeColors.card.activeBg : 'none',
       borderLeft: `${isSelected ? 3 : 1}px solid ${borderColor}`,
       cursor: 'pointer',
 
