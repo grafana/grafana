@@ -3,6 +3,7 @@
  */
 import { Spec } from './types.spec.gen';
 import { Status } from './types.status.gen';
+import { Preferences } from './types.preferences.gen';
 
 export interface Metadata {
     name: string;
@@ -46,4 +47,5 @@ export interface Dashboard {
     metadata: Metadata;
     spec: Spec;
     status: Status;
+    preferences: Preferences;
 }

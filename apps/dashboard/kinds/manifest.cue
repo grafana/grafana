@@ -82,8 +82,9 @@ manifest: {
 					kind:       "Dashboard"
 					pluralName: "Dashboards"
 					schema: {
-						spec:   v2beta1.DashboardSpec
-						status: DashboardStatus
+						spec:        v2beta1.DashboardSpec
+						status:      DashboardStatus
+						preferences: Preferences
 					}
 				}
 			]

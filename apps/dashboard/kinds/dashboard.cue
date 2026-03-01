@@ -24,3 +24,9 @@ ConversionStatus: {
   // The original value map[string]any
 	source?: _
 }
+
+// Preferences is the editing preferences for the dashboard
+Preferences: {
+	// Default layout that would be used when adding new elements
+	defaultLayout?: string
+}
