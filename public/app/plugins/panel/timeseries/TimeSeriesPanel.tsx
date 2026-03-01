@@ -60,15 +60,21 @@ export const TimeSeriesPanel = ({
     onAddAdHocFilters,
   } = usePanelContext();
 
-  // let prevSeries = usePrevious(data.series);
+  const prevSeries = usePrevious(data.series);
 
-  // console.log(prevSeries === data.series);
+  if (
+    prevSeries != null &&
+    prevSeries !== data.series &&
+    prevSeries[0].fields[0].values !== data.series[0].fields[0].values
+  ) {
+    for (let i = 0; i < prevSeries.length; i++) {
+      let fields = prevSeries[i].fields;
 
-  // if (prevSeries && data.series) {
-  //   if (prevSeries.every((fr, i) => fr === data.series[i])) {
-  //     console.log('all same!')
-  //   }
-  // }
+      for (let i = 0; i < fields.length; i++) {
+        fields[i].values.length = 0;
+      }
+    }
+  }
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 

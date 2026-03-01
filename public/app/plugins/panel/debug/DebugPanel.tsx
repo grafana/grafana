@@ -1,3 +1,5 @@
+import { usePrevious } from 'react-use';
+
 import { PanelProps } from '@grafana/data';
 
 // import { CursorView } from './CursorView';
@@ -23,4 +25,20 @@ export function DebugPanel(props: Props) {
   //   default:
   //     return <RenderInfoViewer {...props} />;
   // }
+
+  const prevSeries = usePrevious(props.data.series);
+
+  if (
+    prevSeries != null &&
+    prevSeries !== props.data.series &&
+    prevSeries[0].fields[0].values !== props.data.series[0].fields[0].values
+  ) {
+    for (let i = 0; i < prevSeries.length; i++) {
+      let fields = prevSeries[i].fields;
+
+      for (let i = 0; i < fields.length; i++) {
+        fields[i].values.length = 0;
+      }
+    }
+  }
 }
