@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -106,5 +106,5 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	tracing *tracing.TracingService
 
-	cfg *setting.Cfg
+	cfgProvider configprovider.ConfigProvider
 }

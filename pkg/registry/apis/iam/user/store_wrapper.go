@@ -8,26 +8,30 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // StoreWrapper filters users based on the hidden users configuration.
 // It does not enforce any write authorization — those are handled at the API level.
 type StoreWrapper struct {
-	cfg *setting.Cfg
+	cfgProvider configprovider.ConfigProvider
 }
 
 var _ storewrapper.ResourceStorageAuthorizer = (*StoreWrapper)(nil)
 
-func NewStoreWrapper(cfg *setting.Cfg) *StoreWrapper {
-	return &StoreWrapper{cfg: cfg}
+func NewStoreWrapper(cfgProvider configprovider.ConfigProvider) *StoreWrapper {
+	return &StoreWrapper{cfgProvider: cfgProvider}
 }
 
 // AfterGet returns NotFound if the user's login is in the hidden users list
 // and the requester is not the user themselves.
 func (f *StoreWrapper) AfterGet(ctx context.Context, obj runtime.Object) error {
-	if len(f.cfg.HiddenUsers) == 0 {
+	cfg, err := f.cfgProvider.Get(ctx)
+	if err != nil {
+		return err
+	}
+	if len(cfg.HiddenUsers) == 0 {
 		return nil
 	}
 
@@ -42,7 +46,7 @@ func (f *StoreWrapper) AfterGet(ctx context.Context, obj runtime.Object) error {
 	}
 
 	login := u.Spec.Login
-	if _, isHidden := f.cfg.HiddenUsers[login]; isHidden && login != authInfo.GetUsername() {
+	if _, isHidden := cfg.HiddenUsers[login]; isHidden && login != authInfo.GetUsername() {
 		return apierrors.NewNotFound(iamv0.UserResourceInfo.GroupResource(), u.Name)
 	}
 
@@ -51,7 +55,11 @@ func (f *StoreWrapper) AfterGet(ctx context.Context, obj runtime.Object) error {
 
 // FilterList removes hidden users from the list, except for the requester themselves.
 func (f *StoreWrapper) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
-	if len(f.cfg.HiddenUsers) == 0 {
+	cfg, err := f.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(cfg.HiddenUsers) == 0 {
 		return list, nil
 	}
 
@@ -68,7 +76,7 @@ func (f *StoreWrapper) FilterList(ctx context.Context, list runtime.Object) (run
 	requesterLogin := authInfo.GetUsername()
 	filtered := userList.Items[:0]
 	for _, u := range userList.Items {
-		if _, isHidden := f.cfg.HiddenUsers[u.Spec.Login]; !isHidden || u.Spec.Login == requesterLogin {
+		if _, isHidden := cfg.HiddenUsers[u.Spec.Login]; !isHidden || u.Spec.Login == requesterLogin {
 			filtered = append(filtered, u)
 		}
 	}
