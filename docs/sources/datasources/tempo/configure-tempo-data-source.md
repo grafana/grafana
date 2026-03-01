@@ -151,7 +151,7 @@ The following table describes the ways in which you can configure your trace to 
 
 ## Trace to metrics
 
-The **Trace to metrics** setting configures the [trace to metrics feature](https://grafana.com/oss/grafana/) available when integrating Grafana with Tempo.
+The **Trace to metrics** setting configures the [trace to metrics feature](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#trace-to-metrics) available when integrating Grafana with Tempo.
 
 {{< youtube id="TkapvLeMMpc" >}}
 
