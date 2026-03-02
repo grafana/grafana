@@ -72,8 +72,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-10-12,cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 2025-07-23,alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
-2025-11-13,alertingUIUseBackendFilters,experimental,@grafana/alerting-squad,false,false,false
-2025-11-24,alertingUIUseFullyCompatBackendFilters,experimental,@grafana/alerting-squad,false,false,false
+2025-11-13,alertingUIUseBackendFilters,preview,@grafana/alerting-squad,false,false,false
+2025-11-24,alertingUIUseFullyCompatBackendFilters,preview,@grafana/alerting-squad,false,false,false
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 2023-11-13,dashboardScene,GA,@grafana/dashboards-squad,false,false,true
