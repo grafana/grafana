@@ -75,15 +75,19 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedEl
                     );
                   }}
                 </Draggable>
-                <Draggable draggableId="paste-panel-drag" index={1} isDragDisabled={!hasCopiedPanel}>
+                <Draggable
+                  draggableId="paste-panel-drag"
+                  index={1}
+                  isDragDisabled={!hasCopiedPanel}
+                  disableInteractiveElementBlocking={true}
+                >
                   {(dragProvided, _) => (
-                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps}>
+                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps}>
                       {hasCopiedPanel ? (
                         <Button
                           variant="secondary"
                           fill="outline"
-                          className={getNewButtonStyles(theme).iconButton}
-                          {...dragProvided.dragHandleProps}
+                          className={cx(getNewButtonStyles(theme).iconButton, styles.pasteButton)}
                           role="button"
                           icon="clipboard-alt"
                           size="lg"
@@ -137,6 +141,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     placeholder: css({
       display: 'none',
+    }),
+    pasteButton: css({
+      width: '100%',
+      marginTop: theme.spacing(2),
     }),
   };
 }
