@@ -89,16 +89,19 @@ jobs:
           key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'plugins-bundled/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
           path: |
             public/build
+            public/app/plugins/*/*/dist
             e2e-playwright/test-plugins
 
-      - uses: actions/setup-node@v6
+      - name: Setup Node.js
         if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          node-version-file: '.nvmrc'
+        uses: ./.github/actions/setup-node
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
 
       - name: Build frontend
         if: steps.cache.outputs.cache-hit != 'true'
@@ -243,14 +246,11 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - uses: actions/cache@v4
-        with:
-          key: storybook-yarn-${{ hashFiles('yarn.lock') }}
-          path: |
-            node_modules
-            .yarn/cache
-      - name: Install dependencies
+      - name: Install yarn dependencies
         run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
 
       - name: Get Playwright version
         id: pw-version
@@ -327,7 +327,11 @@ jobs:
       # Install test dependencies
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - run: yarn install --immutable
+      - name: Install yarn dependencies
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
 
       - name: Get Playwright version
         id: pw-version
@@ -510,8 +514,11 @@ jobs:
           persist-credentials: false
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - name: Install dependencies
+      - name: Install yarn dependencies
         run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
       - name: Get pa11y results
         uses: actions/download-artifact@v6
         with:
