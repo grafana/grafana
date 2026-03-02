@@ -113,7 +113,8 @@ jobs:
           name: grafana-frontend
           path: |
             public/
-            !public/**/.ts
+            !public/**/*.ts
+            !public/**/*.tsx
           retention-days: 1
 
       - uses: actions/upload-artifact@v5
@@ -297,6 +298,7 @@ jobs:
           path: frontend-artifact
 
       - run: rsync -a frontend-artifact/ public/
+      - run: rm -rf frontend-artifact
 
       - uses: actions/download-artifact@v4
         with:
@@ -306,7 +308,7 @@ jobs:
       - run: tree > tree.txt
       - uses: actions/upload-artifact@v5
         with:
-          name: debug-tree
+          name: debug-tree-shard-${{ matrix.shard }}
           path: tree.txt
           retention-days: 1
 
