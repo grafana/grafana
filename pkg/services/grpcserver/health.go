@@ -113,17 +113,20 @@ func (s *HealthService) AddHealthListener(svc services.NamedService) {
 	name := svc.ServiceName()
 	hc, ok := svc.(HealthProbe)
 	s.logger.Info("Registering health listener", "service", name, "hasChecker", ok)
-	runningFn := func() {}
-	if ok {
-		runningFn = func() {
-			s.logger.Debug("Service entered running state, checking health", "service", name)
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			if hc.CheckHealth(ctx) {
-				s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_SERVING)
-			} else {
-				s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-			}
+	s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	runningFn := func() {
+		if !ok {
+			s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_SERVING)
+			return
+		}
+
+		s.logger.Debug("Service entered running state, checking health", "service", name)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if hc.CheckHealth(ctx) {
+			s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_SERVING)
+		} else {
+			s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 		}
 	}
 	notServingFn := func(from services.State) {

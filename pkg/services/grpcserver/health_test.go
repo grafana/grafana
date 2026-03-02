@@ -234,6 +234,16 @@ func (f *fakeHealthWatchServer) Context() context.Context {
 	return f.context
 }
 
+type fakeNamedService struct {
+	*services.BasicService
+}
+
+func newFakeNamedService(name string) *fakeNamedService {
+	s := &fakeNamedService{}
+	s.BasicService = services.NewIdleService(nil, nil).WithName(name)
+	return s
+}
+
 // fakeHealthProbeService is a dskit service that also implements HealthProbe.
 type fakeHealthProbeService struct {
 	*services.BasicService
@@ -249,6 +259,27 @@ func newFakeHealthProbeService(name string, healthy bool) *fakeHealthProbeServic
 
 func (f *fakeHealthProbeService) CheckHealth(_ context.Context) bool {
 	return f.healthy.Load()
+}
+
+func TestHealthService_AddHealthListenerInitialStatusAndNoProbeService(t *testing.T) {
+	hs := newTestHealthService(t)
+	svc := newFakeNamedService("no-probe-svc")
+
+	hs.AddHealthListener(svc)
+
+	ctx := context.Background()
+	res, err := hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "no-probe-svc"})
+	require.NoError(t, err)
+	assert.Equal(t, grpc_health_v1.HealthCheckResponse_NOT_SERVING, res.Status)
+
+	require.NoError(t, svc.StartAsync(ctx))
+	require.NoError(t, svc.AwaitRunning(ctx))
+	defer svc.StopAsync()
+
+	require.Eventually(t, func() bool {
+		res, err = hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "no-probe-svc"})
+		return err == nil && res.Status == grpc_health_v1.HealthCheckResponse_SERVING
+	}, 2*time.Second, 50*time.Millisecond)
 }
 
 func TestHealthService_StateChangeUpdatesStatus(t *testing.T) {
