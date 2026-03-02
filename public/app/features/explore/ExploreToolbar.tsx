@@ -325,18 +325,17 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             data-testid={selectors.pages.Explore.toolbar.refreshPicker}
           />,
           (!splitted || !isLeftPane) && <ShortLinkButtonMenu key="share" hideText={showSmallTimePicker} />,
-          <Button key="save-explore" size="sm" variant="secondary" onClick={() => setSaveModalOpen(true)} icon="save">
+          <ToolbarButton key="save-explore" variant="canvas" onClick={() => setSaveModalOpen(true)} icon="save">
             <Trans i18nKey="explore.toolbar.save-view-button">Save</Trans>
-          </Button>,
-          <Button
+          </ToolbarButton>,
+          <ToolbarButton
             key="open-saved-explorations"
-            size="sm"
-            variant="secondary"
+            variant="canvas"
             onClick={() => setSavedListOpen(true)}
             icon="folder-open"
           >
             <Trans i18nKey="explore.toolbar.saved-button">Open</Trans>
-          </Button>,
+          </ToolbarButton>,
           datasourceInstance?.meta.streaming && (
             <LiveTailControls key="liveControls" exploreId={exploreId}>
               {(c) => {
