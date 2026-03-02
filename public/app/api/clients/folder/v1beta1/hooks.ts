@@ -150,7 +150,8 @@ export async function getFolderByUidFacade(uid: string) {
     const [legacyFolderResponse, folderResponse, parentsResponse] = responses;
 
     if (!folderResponse?.data || !legacyFolderResponse?.data || !parentsResponse?.data) {
-      throw new Error('One of the folder responses is undefined');
+      const error = legacyFolderResponse?.error || ('error' in parentsResponse ? parentsResponse.error : undefined);
+      throw error || new Error('One of the folder responses is undefined');
     }
 
     const userKeys = getUserKeys(folderResponse.data);
