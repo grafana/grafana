@@ -16,6 +16,7 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { dashboardEditActions } from '../edit-pane/shared';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel } from '../utils/utils';
 
@@ -39,6 +40,7 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
   draggingGridItem?: SceneObjectRef<SceneGridItemLike>;
   /** Row currently being dragged */
   draggingRow?: SceneObjectRef<RowItem>;
+  draggingTab?: SceneObjectRef<TabItem>;
   /** Key of the source tab where drag started */
   sourceTabKey?: string;
   /** Key of the tab currently being hovered during drag */
@@ -257,6 +259,107 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // Add pointerup listener to handle drop after cross-tab switch
     // Use capture phase to ensure we receive the event even if something calls stopPropagation
     document.body.addEventListener('pointerup', this._onRowDragPointerUp, true);
+  }
+
+  public startTabDrag(draggingTab: TabItem): void {
+    this.setState({
+      draggingTab: draggingTab.getRef(),
+    });
+  }
+
+  public stopTabDrag(
+    destinationManagerKey: string | undefined,
+    sourceIndex: number,
+    destinationIndex: number | undefined
+  ): void {
+    const tab = this.state.draggingTab?.resolve();
+
+    this.setState({
+      draggingTab: undefined,
+    });
+
+    if (!tab || !destinationManagerKey || destinationIndex === undefined) {
+      return;
+    }
+
+    const sourceManager = tab.getParentLayout();
+    const destinationManager = sceneGraph.findByKeyAndType(
+      this._getDashboard(),
+      destinationManagerKey,
+      TabsLayoutManager
+    );
+
+    if (!destinationManager) {
+      return;
+    }
+
+    // moving within the same TabsLayoutManager
+    if (sourceManager === destinationManager) {
+      if (sourceIndex === destinationIndex) {
+        return;
+      }
+      sourceManager.moveTab(sourceIndex, destinationIndex);
+      return;
+    }
+    // moving to a different TabsLayoutManager
+    else {
+      const realDestinationIndex = destinationManager.mapTabInsertIndex(destinationIndex);
+      // When moving a tab into a new tab group, make it the active tab.
+      this._moveTabBetweenManagers(tab, sourceManager, destinationManager, realDestinationIndex);
+    }
+  }
+
+  private _moveTabBetweenManagers(
+    tab: TabItem,
+    source: TabsLayoutManager,
+    destination: TabsLayoutManager,
+    destinationIndex: number
+  ) {
+    const prevSourceTabs = [...source.state.tabs];
+    const prevSourceSlug = source.state.currentTabSlug;
+    const prevDestinationTabs = [...destination.state.tabs];
+    const prevDestinationSlug = destination.state.currentTabSlug;
+
+    dashboardEditActions.moveElement({
+      source,
+      movedObject: tab,
+      perform: () => {
+        const sourceTabs = [...prevSourceTabs];
+        const destTabs = [...prevDestinationTabs];
+
+        const fromIndex = sourceTabs.findIndex((t) => t === tab);
+        if (fromIndex < 0) {
+          return;
+        }
+
+        sourceTabs.splice(fromIndex, 1);
+
+        const clampedDestinationIndex = Math.max(0, Math.min(destinationIndex, destTabs.length));
+        destTabs.splice(clampedDestinationIndex, 0, tab);
+
+        // If the moved tab was active in source, pick a sensible new active tab.
+        let nextSourceSlug = prevSourceSlug;
+        if (prevSourceSlug === tab.getSlug()) {
+          const newIndex = fromIndex > 0 ? fromIndex - 1 : 0;
+          nextSourceSlug = sourceTabs[newIndex]?.getSlug();
+        }
+
+        // Important: avoid briefly parenting the same SceneObject in two places.
+        // Remove from source first, then clear parent, then add to destination.
+        source.setState({ tabs: sourceTabs, currentTabSlug: nextSourceSlug });
+        tab.clearParent();
+        destination.setState({
+          tabs: destTabs,
+          currentTabSlug: tab.getSlug(),
+        });
+      },
+      undo: () => {
+        // Reverse order for the same parenting reason as in perform().
+        destination.setState({ tabs: prevDestinationTabs, currentTabSlug: prevDestinationSlug });
+        tab.clearParent();
+        source.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
+      },
+    });
   }
 
   private _onRowDragPointerMove = (evt: PointerEvent): void => {

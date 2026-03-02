@@ -149,7 +149,18 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    return this.clone();
+    // Ensure clone globally unique keys for tabs in repeated rows by prefixing with ancestor key
+    // TODO: https://github.com/grafana/grafana/issues/118343
+    // This can be removed if https://github.com/grafana/scenes/issues/1363 is implemented.
+    const clone = this.clone({
+      key: `${ancestorKey}-${this.state.key}`,
+    });
+    clone.state.tabs.forEach((tab) => {
+      tab.setState({
+        key: `${ancestorKey}-${tab.state.key}`,
+      });
+    });
+    return clone;
   }
 
   public getOutlineChildren() {
@@ -241,6 +252,33 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         this._confirmConvertMixedGrids(availableIds);
       },
     });
+  }
+
+  /**
+   * Calculates the correct index to insert a tab when dragging within the same TabsLayoutManager, accounting for repeated tabs.
+   * @param {number } insertIndexInRepeatedTabs - the index where the tab would be inserted if repeated tabs were included as separate entries
+   */
+  public mapTabInsertIndex(insertIndexInRepeatedTabs: number): number {
+    const { tabs } = this.state;
+    const insertAt = Math.max(0, insertIndexInRepeatedTabs);
+    let groupStart = 0;
+
+    for (let tabIndex = 0; tabIndex < tabs.length; tabIndex++) {
+      const groupSize = 1 + (tabs[tabIndex].state.repeatedTabs?.length ?? 0);
+      const groupEnd = groupStart + groupSize;
+
+      if (insertAt <= groupStart) {
+        return tabIndex;
+      }
+
+      if (insertAt < groupEnd) {
+        return tabIndex + 1;
+      }
+
+      groupStart = groupEnd;
+    }
+
+    return tabs.length;
   }
 
   private _confirmConvertMixedGrids(availableIds: Set<string>) {
