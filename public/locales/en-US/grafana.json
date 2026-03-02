@@ -4183,7 +4183,6 @@
     "quota-banner": {
       "at-limit-body": "Clean up unused resources to free up space.",
       "at-limit-title": "You've hit your storage limits",
-      "dismiss": "Dismiss",
       "nearing-body": "New resources can't be created once the limit is reached. Clean up unused resources to free up space.",
       "nearing-title": "You're nearing your storage limits",
       "request-extension": "Request quota extension",
@@ -14364,6 +14363,11 @@
           "settings": "Settings"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": "Folders"
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "External group sync"
@@ -14420,6 +14424,19 @@
       "loading-teams": "Loading teams...",
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "You can set up ownership of a folder from folder detail page",
+        "empty-state-message": "This team does not own any folders yet.",
+        "error-loading-folders": "Could not load team folders",
+        "loading": "Loading...",
+        "open-folder": "Open folder",
+        "table": {
+          "name": "Name",
+          "path": "Full path"
+        }
+      }
     },
     "team-settings": {
       "description-email": "This is optional and is primarily used to set the team profile avatar (via the Gravatar service)",
