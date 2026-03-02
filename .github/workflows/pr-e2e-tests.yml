@@ -314,7 +314,7 @@ jobs:
 
       # Restore execute permissions stripped by actions/upload-artifact
       - name: Fix binary permissions
-        run: chmod +x bin/linux-amd64/grafana*
+        run: chmod +x bin/grafana*
 
       # Start Grafana using existing scripts (handles provisioning, config, etc.)
       - name: Start Grafana
@@ -326,9 +326,8 @@ jobs:
           PORT: 3001
 
       # Install test dependencies
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
 
       - uses: actions/cache@v4
         with:
@@ -381,9 +380,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
 
       - name: Download blob reports from GitHub Actions Artifacts
         uses: actions/download-artifact@v6
@@ -519,9 +517,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+        uses: ./.github/actions/setup-node
       - name: Install dependencies
         run: yarn install --immutable
       - name: Get pa11y results
