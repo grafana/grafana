@@ -1,9 +1,12 @@
 import { CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 
-import { getCorrelationsHandler } from '../../../../../../packages/grafana-test-utils/src/handlers/apis/correlations.grafana.app/v0alpha1/handlers';
+import {
+  createCorrelationsHandler,
+  getCorrelationsHandler,
+} from '../../../../../../packages/grafana-test-utils/src/handlers/apis/correlations.grafana.app/v0alpha1/handlers';
 
 const generateCorrMetadata = (correlation: CorrelationSpec) => {
-  let labels: any = {
+  let labels: Record<string, string> = {
     'correlations.grafana.app/sourceDS-ref': `${correlation.source.group}.${correlation.source.name}`,
   };
 
@@ -79,3 +82,5 @@ export const existingCorrelationsScenario = [
     items: fakeCorrelations.map((rc) => generateCorrMetadata(rc)),
   }),
 ];
+
+export const createCorrelationsScenario = [createCorrelationsHandler(generateCorrMetadata(fakeCorrelations[0]))];
