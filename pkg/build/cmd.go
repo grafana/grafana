@@ -293,11 +293,6 @@ func setBuildEnv(opts BuildOpts) error {
 		}
 	}
 
-	if opts.goos != GoOSLinux && opts.goos != GoOSDarwin {
-		// needed for archs other than linux/amd64, linux/arm64, darwin/arm64 and darwin/amd64
-		opts.cgo = true
-	}
-
 	if strings.HasPrefix(opts.goarch, "armv") {
 		if err := os.Setenv("GOARCH", "arm"); err != nil {
 			return err
@@ -310,18 +305,6 @@ func setBuildEnv(opts BuildOpts) error {
 		if err := os.Setenv("GOARCH", opts.goarch); err != nil {
 			return err
 		}
-	}
-
-	cgoEnabled := "0"
-	if opts.cgo {
-		cgoEnabled = "1"
-	}
-	if err := os.Setenv("CGO_ENABLED", cgoEnabled); err != nil {
-		return err
-	}
-
-	if opts.gocc == "" {
-		return nil
 	}
 
 	return os.Setenv("CC", opts.gocc)

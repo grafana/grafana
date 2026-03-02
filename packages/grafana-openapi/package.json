@@ -1,0 +1,60 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "name": "@grafana/openapi",
+  "version": "13.0.0-pre",
+  "description": "Grafana OpenApi Library",
+  "keywords": [
+    "grafana",
+    "openapi",
+    "typescript"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-openapi"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    "./api/*": {
+      "import": "./dist/api/*.json",
+      "require": "./dist/api/*.json"
+    },
+    "./apis/*": {
+      "import": "./dist/apis/*.json",
+      "require": "./dist/apis/*.json"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "./README.md",
+    "./CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
+  "scripts": {
+    "build": "yarn clean && yarn create:folders && yarn copy:dist",
+    "clean": "rm -rf ./dist && rm -f package.tgz",
+    "copy:api": "cp ../../public/openapi3.json ./src/api",
+    "copy:dist": "cp ./src/apis/* ./dist/apis && cp ./src/api/* ./dist/api",
+    "create:folders": "mkdir -p dist/api dist/apis",
+    "format": "prettier \"**/*.json\" --write --log-level=warn",
+    "generate:openapi": "make -C ../../ generate-openapi",
+    "typecheck": "",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json",
+    "process-specs": "node src/scripts/process-specs.ts && yarn copy:api && yarn format"
+  },
+  "engines": {
+    "node": ">= 22 <25"
+  },
+  "packageManager": "yarn@4.11.0",
+  "devDependencies": {
+    "openapi-types": "^12.1.3",
+    "prettier": "3.6.2"
+  }
+}

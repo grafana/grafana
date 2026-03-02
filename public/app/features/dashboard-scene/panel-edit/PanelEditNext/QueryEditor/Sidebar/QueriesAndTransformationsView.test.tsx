@@ -98,6 +98,33 @@ describe('QueryEditorSidebar', () => {
     expect(screen.getByRole('button', { name: /select card organize/i })).toBeInTheDocument();
   });
 
+  it('should expand collapsed queries section when adding an expression', async () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+
+    const { user } = renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
+      queries,
+      selectedQuery: queries[0],
+    });
+
+    // Verify query card is visible
+    expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
+
+    // Collapse the "Queries & Expressions" section
+    await user.click(screen.getByRole('button', { name: /queries & expressions/i }));
+
+    // Query card should be unmounted
+    expect(screen.queryByRole('button', { name: /select card A/i })).not.toBeInTheDocument();
+
+    // Click the header "+" button to open the add menu
+    await user.click(screen.getByRole('button', { name: /add query or expression/i }));
+
+    // Click "Add expression" from the dropdown
+    await user.click(screen.getByRole('menuitem', { name: /add expression/i }));
+
+    // Section should now be expanded — query card is visible again
+    expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
+  });
+
   it('should render "Add below" buttons for both query/expression and transformation cards', () => {
     const queries: DataQuery[] = [
       { refId: 'A', datasource: { type: 'test', uid: 'test' } },

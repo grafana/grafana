@@ -91,6 +91,13 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "alertingRuleGroupSortByFolderFullpath",
+			Description: "Sort alert rule groups by folder full path in the Prometheus rules API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1858,6 +1865,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "createdByMeSearchFilter",
+			Description:  "Enables the created by me search filter on the browse dashboards page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,
@@ -1918,13 +1933,6 @@ var (
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "tabularNumbers",
-			Description: "Use fixed-width numbers globally in the UI",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
 		{
@@ -2387,6 +2395,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesUsersApi",
+			Description:  "Enables user APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesExternalGroupMappingsApi",
 			Description:  "Enables external group mapping APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2417,6 +2433,14 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:            "appPluginAPIServer",
+			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		{
 			Name:         "alertingIgnorePendingForNoDataAndError",
@@ -2464,6 +2488,38 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "managedPluginsV2",
+			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "rememberUserOrgForSso",
+			Description:  "Remember the last viewed organization for users using SSO",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "true", // enabled by default
+		},
+		{
+			Name:         "dsAbstractionApp",
+			Description:  "Registers the dsabstraction app for querying datasources via unified SQL",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "analyticsFramework",
+			Description:  "Enables new analytics framework",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
 			Expression:   "false",
 		},
 	}

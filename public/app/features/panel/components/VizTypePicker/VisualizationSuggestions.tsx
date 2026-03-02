@@ -12,17 +12,20 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
-import { getAllPanelPluginMeta } from '../../state/util';
+import { filterPluginList } from '../../state/util';
 import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
+import { panelsWithoutData } from '../../suggestions/consts';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
+import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
 import { VizTypeChangeDetails } from './types';
 
@@ -91,8 +94,8 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     return PANEL_STATES.EXISTING_PANEL;
   }, [isUnconfiguredPanel, isNewPanel]);
 
+  const { value: meta = [] } = useListedPanelPluginMetas();
   const suggestionsByVizType = useMemo(() => {
-    const meta = getAllPanelPluginMeta();
     const record: Record<string, PanelPluginMeta> = {};
     for (const m of meta) {
       record[m.id] = m;
@@ -109,7 +112,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       result[result.length - 1][1].push(suggestion);
     }
     return result;
-  }, [suggestions]);
+  }, [suggestions, meta]);
 
   const suggestionIndexMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -166,6 +169,12 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       return;
     }
 
+    // Skip auto-selection until real data arrives; `data` is omitted from deps
+    // because suggestions already re-compute when data changes.
+    if (!data || !hasData(data)) {
+      return;
+    }
+
     // if the first suggestion has changed, we're going to change the currently selected suggestion and
     // set the firstCardHash to the new first suggestion's hash. We also choose the first suggestion if
     // the previously selected suggestion is no longer present in the list.
@@ -175,6 +184,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
       setFirstCardHash(newFirstCardHash);
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     suggestions,
     suggestionHash,
@@ -203,17 +213,8 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     );
   }
 
-  if (isNewVizSuggestionsEnabled && (!data || !hasData(data))) {
-    return (
-      <div className={styles.emptyStateWrapper}>
-        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
-        <Text element="p" textAlignment="center" color="secondary">
-          <Trans i18nKey="dashboard.new-panel.suggestions.empty-state-message">
-            Run a query to start seeing suggested visualizations
-          </Trans>
-        </Text>
-      </div>
-    );
+  if (isNewVizSuggestionsEnabled && !hasData(data)) {
+    return <NoDataPanelList searchQuery={searchQuery} panel={panel} onChange={onChange} />;
   }
 
   return (
@@ -299,11 +300,70 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
                   suggestion={suggestion}
                   width={width}
                   tabIndex={index}
-                  onClick={() => applySuggestion(suggestion, index)}
+                  onClick={() => applySuggestion(suggestion, index, false, true)}
                 />
               </div>
             ))}
       </div>
+    </>
+  );
+}
+
+interface NoDataPanelListProps {
+  searchQuery?: string;
+  panel?: PanelModel;
+  onChange: (options: VizTypeChangeDetails) => void;
+}
+
+function NoDataPanelList({ searchQuery, panel, onChange }: NoDataPanelListProps) {
+  const styles = useStyles2(getStyles);
+  const { value: meta = [] } = useListedPanelPluginMetas();
+  const noDataPanels = useMemo(() => {
+    const panels = meta.filter((p) => panelsWithoutData.has(p.id));
+    return filterPluginList(panels, searchQuery ?? '', panel?.type);
+  }, [searchQuery, panel?.type, meta]);
+
+  return (
+    <>
+      <div className={styles.emptyStateSection}>
+        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
+        <Text element="p" textAlignment="center" color="secondary">
+          <Trans i18nKey="panel.visualization-suggestions.run-query-hint">
+            Run a query to start seeing suggested visualizations
+          </Trans>
+        </Text>
+      </div>
+      <div className={styles.orDivider}>
+        <div className={styles.orDividerLine} />
+        <Text color="secondary" variant="body">
+          <Trans i18nKey="panel.visualization-suggestions.or-divider">OR</Trans>
+        </Text>
+        <div className={styles.orDividerLine} />
+      </div>
+      <div className={styles.startWithoutDataSection}>
+        <Text element="p" textAlignment="center" color="secondary" variant="body">
+          <Trans i18nKey="panel.visualization-suggestions.start-without-data-title">Start without data</Trans>
+        </Text>
+        <Text element="p" textAlignment="center" color="secondary" variant="bodySmall">
+          <Trans i18nKey="panel.visualization-suggestions.start-without-data-description">
+            Add panels that don&apos;t require a query
+          </Trans>
+        </Text>
+      </div>
+      {noDataPanels.map((plugin) => (
+        <VizTypePickerPlugin
+          key={plugin.id}
+          isCurrent={plugin.id === panel?.type}
+          plugin={plugin}
+          disabled={false}
+          onSelect={(withModKey) =>
+            onChange({
+              pluginId: plugin.id,
+              withModKey,
+            })
+          }
+        />
+      ))}
     </>
   );
 }
@@ -341,18 +401,35 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(1),
       justifyContent: 'space-evenly',
     }),
-    emptyStateWrapper: css({
+    emptyStateSection: css({
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: theme.spacing(4),
+      padding: theme.spacing(4, 2, 2),
       textAlign: 'center',
-      minHeight: '200px',
     }),
     emptyStateIcon: css({
       color: theme.colors.text.secondary,
       marginBottom: theme.spacing(2),
+    }),
+    orDivider: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+      padding: theme.spacing(1, 2),
+    }),
+    orDividerLine: css({
+      flex: 1,
+      height: '1px',
+      background: theme.colors.border.weak,
+    }),
+    startWithoutDataSection: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(1, 2, 2),
     }),
     cardContainer: css({
       position: 'relative',

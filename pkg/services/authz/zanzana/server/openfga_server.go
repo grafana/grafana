@@ -133,6 +133,9 @@ func withOpenFGAOptions(cfg setting.ZanzanaServerSettings) []server.OpenFGAServi
 	if cfg.OpenFgaServerSettings.AuthorizationModelCacheSize != 0 {
 		opts = append(opts, server.WithAuthorizationModelCacheSize(cfg.OpenFgaServerSettings.AuthorizationModelCacheSize))
 	}
+	if cfg.OpenFgaServerSettings.TypesystemCacheSize != 0 {
+		opts = append(opts, server.WithTypesystemCacheSize(cfg.OpenFgaServerSettings.TypesystemCacheSize))
+	}
 	if cfg.OpenFgaServerSettings.ChangelogHorizonOffset != 0 {
 		opts = append(opts, server.WithChangelogHorizonOffset(cfg.OpenFgaServerSettings.ChangelogHorizonOffset))
 	}

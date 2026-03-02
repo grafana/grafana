@@ -3,17 +3,17 @@ package jobs
 import (
 	"errors"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// isWarningError checks if the given error should be treated as a warning.
-// It uses errors.As to check if the error is of any of the warning error types.
-func isWarningError(err error) bool {
+// classifyWarning returns the warning reason for err and whether it is a warning.
+func classifyWarning(err error) (string, bool) {
 	if err == nil {
-		return false
+		return "", false
 	}
 
 	var validationErr *resources.ResourceValidationError
@@ -21,15 +21,21 @@ func isWarningError(err error) bool {
 	var quotaExceededErr *quotas.QuotaExceededError
 
 	switch {
-	case errors.As(err, &validationErr):
-		return true
-	case errors.As(err, &ownershipErr):
-		return true
 	case errors.As(err, &quotaExceededErr):
-		return true
+		return provisioning.ReasonQuotaExceeded, true
+	case errors.As(err, &validationErr):
+		return provisioning.ReasonResourceInvalid, true
+	case errors.As(err, &ownershipErr):
+		return provisioning.ReasonResourceInvalid, true
 	default:
-		return false
+		return "", false
 	}
+}
+
+// isWarningError checks if the given error should be treated as a warning.
+func isWarningError(err error) bool {
+	_, ok := classifyWarning(err)
+	return ok
 }
 
 // JobResourceResult represents the result of a resource operation in a job.
@@ -199,4 +205,10 @@ func (r JobResourceResult) Error() error {
 // Warning returns the warning associated with the resource operation.
 func (r JobResourceResult) Warning() error {
 	return r.warning
+}
+
+// WarningReason returns the warning reason for this result's warning, or "" if none.
+func (r JobResourceResult) WarningReason() string {
+	reason, _ := classifyWarning(r.warning)
+	return reason
 }

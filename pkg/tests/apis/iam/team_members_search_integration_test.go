@@ -53,6 +53,7 @@ func TestIntegrationTeamMembers(t *testing.T) {
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
 					featuremgmt.FlagKubernetesTeamBindings,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
 				UnifiedStorageEnableSearch: true,
 			})

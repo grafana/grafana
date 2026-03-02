@@ -2,6 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { DataSourceSettings, DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
@@ -31,6 +32,7 @@ export interface DatasourceInstanceK8sSpec {
   basicAuth: boolean;
   basicAuthUser: string;
   isDefault?: boolean;
+  readOnly?: boolean;
 }
 
 export interface DatasourceAccessK8s {
@@ -87,7 +89,7 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
   let k8sMetadata: K8sMetadata = {
     name: dsSettings.uid,
     namespace: namespace,
-    resourceVersion: 'fortytwo',
+    resourceVersion: '',
     labels: { 'grafana.app/deprecatedInternalID': dsSettings.id.toString() },
     annotations: {},
   };
@@ -99,6 +101,7 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
     basicAuth: dsSettings.basicAuth,
     basicAuthUser: dsSettings.basicAuthUser,
     isDefault: dsSettings.isDefault,
+    readOnly: dsSettings.readOnly,
   };
   let dsK8sSettings: DataSourceSettingsK8s = {
     kind: 'DataSource',
@@ -142,7 +145,7 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
     isDefault: dsK8sSettings.spec.isDefault ? true : false,
     jsonData: dsK8sSettings.spec.jsonData,
     secureJsonFields: {},
-    readOnly: false,
+    readOnly: dsK8sSettings.spec.readOnly ? dsK8sSettings.spec.readOnly : false,
     withCredentials: false,
   };
   if (dsK8sSettings.secure) {
@@ -206,7 +209,7 @@ export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string
 };
 
 export const getDataSourceByUid = async (uid: string) => {
-  if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
+  if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
     return getDataSourceFromK8sAPI(uid, config.namespace);
   }
 
@@ -255,7 +258,7 @@ export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
 export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
 
 export const updateDataSource = async (dataSource: DataSourceSettings) => {
-  if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
+  if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
     let k8sVersion = 'v0alpha1';
     let dsK8sSettings = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
       dataSource,
@@ -310,7 +313,7 @@ export const updateDataSource = async (dataSource: DataSourceSettings) => {
 
 export const deleteDataSource = (uid: string) => {
   let deleteUrl = `/api/datasources/uid/${uid}`;
-  if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
+  if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
     let namespace = config.namespace;
     let apiVersion = `${getDataSourceK8sGroup(uid)}/v0alpha1`;
     deleteUrl = `/apis/${apiVersion}/namespaces/${namespace}/datasources/${uid}`;
