@@ -1,5 +1,5 @@
 import { compact, isEqual } from 'lodash';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useDebounce } from 'react-use';
 
 import {
@@ -34,7 +34,6 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
   const { isGrafanaAlertmanager } = useAlertmanager();
   const [searchParams, setSearchParams] = useURLSearchParams();
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
   const { hasFilters, clearFilters, selectedPolicyTreeNames } = useNotificationPoliciesFilters();
 
@@ -99,7 +98,6 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
         error={!inputValid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
-          ref={searchInputRef}
           data-testid="search-query-input"
           placeholder={t('alerting.notification-policies-filter.search-query-input-placeholder-search', 'Search')}
           width={46}
@@ -107,7 +105,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
           onChange={(event) => {
             setSearchParams({ queryString: event.currentTarget.value });
           }}
-          defaultValue={queryString}
+          value={queryString ?? ''}
         />
       </Field>
       {contactPointsSupported && canSeeContactPoints && (

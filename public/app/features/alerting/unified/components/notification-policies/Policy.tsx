@@ -783,27 +783,13 @@ type DefaultPolicyIndicatorProps = { route?: RouteWithID };
 
 export const DefaultPolicyIndicator: FC<DefaultPolicyIndicatorProps> = ({ route = { name: '' } }) => {
   return (
-    <>
-      <Text element="h2" variant="body" weight="medium">
-        {route.name === ROOT_ROUTE_NAME || !route.name ? (
-          <Trans i18nKey="alerting.policies.default-policy.title">Default policy</Trans>
-        ) : (
-          route.name
-        )}
-      </Text>
-      {/*<span className={styles.metadata}>
-        {route.name === ROOT_ROUTE_NAME || !route.name ? (
-          <Trans i18nKey="alerting.policies.default-policy.description">
-            All alert instances will be handled by the default policy if no matching routes are found.
-          </Trans>
-        ) : (
-          <Trans i18nKey="alerting.policies.root-policy.description">
-            All alert instances associated with this route will be handled by this default policy if no other matching
-            policies are found.
-          </Trans>
-        )}
-      </span>*/}
-    </>
+    <Text element="h2" variant="body" weight="medium">
+      {route.name === ROOT_ROUTE_NAME || !route.name ? (
+        <Trans i18nKey="alerting.policies.default-policy.title">Default policy</Trans>
+      ) : (
+        route.name
+      )}
+    </Text>
   );
 };
 

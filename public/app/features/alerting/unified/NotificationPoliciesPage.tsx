@@ -191,12 +191,16 @@ function PolicyTreeTab() {
   const hasActiveFilters = Boolean(contactPointFilter) || labelMatchersFilter.length > 0;
   // Auto-expand when there is only one visible tree or filters are active; collapse when there are multiple trees
   const defaultExpanded = manualDefaultExpanded ?? (visiblePolicies.length === 1 || hasActiveFilters);
-  const isAllExpanded = defaultExpanded && expandedOverrides.size === 0;
+  // All expanded when: default=expanded with no individual collapses,
+  // OR default=collapsed but every visible policy root has been individually toggled open.
+  const isAllExpanded = defaultExpanded
+    ? expandedOverrides.size === 0
+    : expandedOverrides.size === visiblePolicies.length;
 
   const toggleAllExpanded = useCallback(() => {
-    setManualDefaultExpanded(!defaultExpanded);
+    setManualDefaultExpanded(!isAllExpanded);
     clear();
-  }, [defaultExpanded, clear]);
+  }, [isAllExpanded, clear]);
 
   // Single-tree mode: show filters but no collapse/expand or create button
   if (!useMultiplePolicies) {

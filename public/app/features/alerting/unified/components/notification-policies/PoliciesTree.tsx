@@ -41,6 +41,7 @@ import {
   useNotificationPolicyRoute,
   useUpdateExistingNotificationPolicy,
 } from './useNotificationPolicyRoute';
+import { getAlertGroupsKey } from './utils';
 
 /** Async function that computes route-to-alert-group mapping off the main thread. */
 export type GetRouteGroupsMapFn = (
@@ -142,20 +143,21 @@ export const PoliciesTree = ({
   // Uses a ref-guard to avoid re-triggering when the async result causes a re-render.
   const [routeAlertGroupsMap, setRouteAlertGroupsMap] = useState<Map<string, AlertmanagerGroup[]> | undefined>();
   const [instancesPreviewError, setInstancesPreviewError] = useState<Error | undefined>();
-  const matchingInputsRef = useRef<{ rootRouteId: string | undefined; alertGroupsLen: number | undefined }>({
+  const matchingInputsRef = useRef<{ rootRouteId: string | undefined; alertGroupsKey: string | undefined }>({
     rootRouteId: undefined,
-    alertGroupsLen: undefined,
+    alertGroupsKey: undefined,
   });
 
   const computeMatching = useCallback(async () => {
     if (!rootRoute || !alertGroups || !getRouteGroupsMap) {
       return;
     }
+    const alertGroupsKey = getAlertGroupsKey(alertGroups);
+    const inputKey = { rootRouteId: rootRoute.id, alertGroupsKey };
     // Skip if inputs haven't changed (prevents re-triggering after state update)
-    const inputKey = { rootRouteId: rootRoute.id, alertGroupsLen: alertGroups.length };
     if (
       matchingInputsRef.current.rootRouteId === inputKey.rootRouteId &&
-      matchingInputsRef.current.alertGroupsLen === inputKey.alertGroupsLen
+      matchingInputsRef.current.alertGroupsKey === inputKey.alertGroupsKey
     ) {
       return;
     }
