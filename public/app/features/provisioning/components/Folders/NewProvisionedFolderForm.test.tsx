@@ -75,11 +75,12 @@ jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => {
   };
 });
 
+const mockDispatch = jest.fn();
 jest.mock('react-redux', () => {
   const actual = jest.requireActual('react-redux');
   return {
     ...actual,
-    useDispatch: jest.fn(),
+    useDispatch: () => mockDispatch,
   };
 });
 
