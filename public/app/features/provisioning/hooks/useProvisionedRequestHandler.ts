@@ -189,7 +189,7 @@ function getResourceLabel(resourceType?: ResourceType): string {
  * Uses createElement instead of JSX since this is a .ts file.
  */
 function buildPushSuccessComponent(branch: string, repositoryURL?: string, resourceLabel?: string): ReactElement {
-  const prefix = t('provisioned-request.push-success.prefix', '{{resourceLabel}} successfully pushed to ', {
+  const prefix = t('provisioned-request.push-success.prefix', '{{resourceLabel}} changes successfully pushed to ', {
     resourceLabel,
   });
 
