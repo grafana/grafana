@@ -20,7 +20,7 @@ mkdir $RUNDIR
 # see https://github.com/air-verse/air/issues/525
 # if this gets resolved, we could remove the go build and rely on the binary being present as before
 if [[ ! -f ./bin/"$ARCH"grafana ]]; then
-  echo "Grafana server binary not found, building it now..."
+  echo -e "Grafana server binary not found at ./bin/${ARCH}grafana, building it now..."
   make GO_BUILD_DEV=1 build-go
 fi
 
