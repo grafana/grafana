@@ -12421,7 +12421,7 @@
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
       "description-filename": "File name for the dashboard (.json or .yaml)",
-      "description-folder": "Folder inside the repository",
+      "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "info-branch-disabled": "Push to configured branch is disabled",

@@ -104,7 +104,7 @@ export const ConnectStep = memo(function ConnectStep() {
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
                   invalid={!!errors?.repository?.path?.message}
-                  onChange={(option) => onChange(option?.value ?? '')}
+                  onChange={(option) => onChange(option?.value || '')}
                   placeholder={gitFields.pathConfig.placeholder}
                   options={folderOptions}
                   loading={isFoldersLoading}
