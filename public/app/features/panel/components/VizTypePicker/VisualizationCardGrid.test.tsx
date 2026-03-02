@@ -12,6 +12,14 @@ import {
 
 import { VisualizationCardGrid, VisualizationCardGridGroup } from './VisualizationCardGrid';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: { newVizSuggestions: true },
+  },
+}));
+
 jest.mock('./VisualizationSuggestionCard', () => ({
   VisualizationSuggestionCard: ({
     onClick,
