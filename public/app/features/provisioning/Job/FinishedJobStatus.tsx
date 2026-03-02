@@ -12,7 +12,7 @@ import { getJobMessages } from './getJobMessage';
 export interface FinishedJobProps {
   jobUid: string;
   repositoryName: string;
-  jobType: 'sync' | 'delete' | 'move';
+  jobType: 'sync' | 'delete' | 'move' | 'fix';
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
   onRetry?: () => void;
 }
