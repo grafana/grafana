@@ -4988,6 +4988,10 @@
         "description": "Drag or click to add a panel",
         "title": "Panel"
       },
+      "paste": {
+        "title": "Paste panel",
+        "description": "Click or drag to paste panel"
+      },
       "pane-header": "Add"
     },
     "add-library-panel-widget": {

@@ -26,8 +26,11 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 export const NEW_PANEL_HEIGHT = 8;
@@ -426,6 +429,25 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
 export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }
+
+export const getLayoutForObject = (
+  object?: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene | null
+) => {
+  if (object) {
+    const gridManagerForObject = sceneGraph.findObject(
+      object,
+      (currentSceneObject) =>
+        currentSceneObject instanceof AutoGridLayoutManager || currentSceneObject instanceof DefaultGridLayoutManager
+    );
+    if (
+      gridManagerForObject instanceof AutoGridLayoutManager ||
+      gridManagerForObject instanceof DefaultGridLayoutManager
+    ) {
+      return gridManagerForObject;
+    }
+  }
+  return null;
+};
 
 // @returns true if the panel is a valid library panel reference
 // a valid library panel reference is a panel with this
