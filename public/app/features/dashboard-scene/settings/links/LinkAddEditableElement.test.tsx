@@ -132,10 +132,7 @@ describe('LinkAddEditableElement', () => {
 
     describe('onDelete', () => {
       it('removes the link at the given index', () => {
-        const dashboard = buildDashboard([
-          createTestLink({ title: 'First' }),
-          createTestLink({ title: 'Second' }),
-        ]);
+        const dashboard = buildDashboard([createTestLink({ title: 'First' }), createTestLink({ title: 'Second' })]);
         const linkEdit = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex: 0 });
         const element = new LinkEditEditableElement(linkEdit);
 
