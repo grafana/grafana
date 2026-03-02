@@ -100,6 +100,43 @@ describe('FixFolderMetadataDrawer', () => {
     );
   });
 
+  it('shows error alert when job submission fails', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, () =>
+        HttpResponse.json({ message: 'server error' }, { status: 500 })
+      )
+    );
+
+    const { user } = setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+
+    await screen.findByRole('button', { name: /fix folder ids/i });
+    await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText(/error fixing folder metadata/i)).toBeInTheDocument();
+  });
+
+  it('does not close drawer on job success', async () => {
+    const jobResponse = {
+      metadata: { name: 'job-1', uid: 'job-uid-1', labels: { 'provisioning.grafana.app/repository': REPO_NAME } },
+      spec: { action: 'fixFolderMetadata' },
+      status: { state: 'success' },
+    };
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json(jobResponse)),
+      http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [jobResponse] }))
+    );
+
+    const onDismiss = jest.fn();
+    const { user } = setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={onDismiss} />);
+
+    await screen.findByRole('button', { name: /fix folder ids/i });
+    await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
+
+    // The drawer should remain open showing job status, not auto-dismiss
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
   it('shows read-only banner for read-only repository', async () => {
     server.use(
       http.get(`${BASE}/settings`, () =>
