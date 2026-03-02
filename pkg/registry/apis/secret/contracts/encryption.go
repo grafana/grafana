@@ -18,6 +18,11 @@ type EncryptionManager interface {
 
 	// Since consolidation occurs at a level above the EncryptionManager, we need to allow that process to manually flush the cache
 	FlushCache(namespace xkube.Namespace)
+
+	// ConsolidateNamespace re-encrypts all given values for a single namespace using a new DEK.
+	// It primes the DEK cache with a new key, decrypts and re-encrypts each value (using cache), then flushes the namespace cache.
+	// Returns one payload per value in the same order; nil entries indicate decrypt or re-encrypt failure for that value.
+	ConsolidateNamespace(ctx context.Context, namespace xkube.Namespace, values []*EncryptedValue) ([]*EncryptedPayload, error)
 }
 
 type EncryptedPayload struct {

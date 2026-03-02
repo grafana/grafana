@@ -399,6 +399,60 @@ func (s *EncryptionManager) FlushCache(namespace xkube.Namespace) {
 	s.dataKeyCache.Flush(namespace.String())
 }
 
+// ConsolidateNamespace re-encrypts all values for a single namespace using one new DEK held in memory.
+// It creates the new DEK once, then for each value resolves the old DEK by id, decrypts with the cipher,
+// and re-encrypts with the cipher using the new key—skipping the high-level Encrypt/Decrypt lookups.
+func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace xkube.Namespace, values []*contracts.EncryptedValue) ([]*contracts.EncryptedPayload, error) {
+	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.ConsolidateNamespace", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.Int("values_count", len(values)),
+	))
+	defer span.End()
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	label := encryption.KeyLabel(s.providerConfig.CurrentProvider)
+	newKeyID, newKeyDecrypted, err := s.currentDataKey(ctx, namespace, label, false)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
+		return nil, fmt.Errorf("ensuring current data key for namespace %s: %w", namespace.String(), err)
+	}
+
+	ns := namespace.String()
+	results := make([]*contracts.EncryptedPayload, len(values))
+
+	for i, ev := range values {
+		oldKey, err := s.dataKeyById(ctx, ns, ev.EncryptedPayload.DataKeyID, false)
+		if err != nil {
+			s.log.FromContext(ctx).Error("Failed to resolve data key during consolidation", "namespace", ev.Namespace, "name", ev.Name, "error", err)
+			results[i] = nil
+			continue
+		}
+
+		plaintext, err := s.cipher.Decrypt(ctx, ev.EncryptedPayload.EncryptedData, string(oldKey))
+		if err != nil {
+			s.log.FromContext(ctx).Error("Failed to decrypt value during consolidation", "namespace", ev.Namespace, "name", ev.Name, "error", err)
+			results[i] = nil
+			continue
+		}
+
+		encrypted, err := s.cipher.Encrypt(ctx, plaintext, string(newKeyDecrypted))
+		if err != nil {
+			s.log.FromContext(ctx).Error("Failed to re-encrypt value during consolidation", "namespace", ev.Namespace, "name", ev.Name, "error", err)
+			results[i] = nil
+			continue
+		}
+
+		results[i] = &contracts.EncryptedPayload{DataKeyID: newKeyID, EncryptedData: encrypted}
+	}
+
+	s.FlushCache(namespace)
+	return results, nil
+}
+
 func (s *EncryptionManager) Run(ctx context.Context) error {
 	gc := time.NewTicker(s.cfg.SecretsManagement.DataKeysCacheCleanupInterval)
 

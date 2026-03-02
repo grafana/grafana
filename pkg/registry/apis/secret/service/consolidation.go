@@ -11,6 +11,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// namespaceBatch groups encrypted values by namespace. ListAll is ordered by namespace, so a single pass yields contiguous namespace groups.
+type namespaceBatch struct {
+	namespace string
+	values    []*contracts.EncryptedValue
+}
+
 type ConsolidationService struct {
 	tracer                    trace.Tracer
 	globalDataKeyStore        contracts.GlobalDataKeyStorage
@@ -36,7 +42,6 @@ func ProvideConsolidationService(
 }
 
 func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
-	fmt.Println("ConsolidationService.Consolidate")
 	ctx, span := s.tracer.Start(ctx, "ConsolidationService.Consolidate")
 	defer span.End()
 
@@ -47,59 +52,60 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 		}
 	}()
 
-	// Disable all active data keys.
-	// This will ensure that no new data can be encrypted with the old keys.
-	err = s.globalDataKeyStore.DisableAllDataKeys(ctx)
-	if err != nil {
+	// Disable all active data keys so no new data is encrypted with old keys.
+	if err = s.globalDataKeyStore.DisableAllDataKeys(ctx); err != nil {
 		return fmt.Errorf("disabling all data keys: %w", err)
 	}
-	fmt.Println("ConsolidationService.Consolidate: disabled all data keys")
 
-	// Keep track of which namespaces we have already flushed so we get to take advantage of caching the new values
-	flushedNamespaces := make(map[string]bool)
-
-	// List all encrypted values.
+	// List all encrypted values sorted by namespace so we can process namespace-by-namespace.
 	encryptedValues, err := s.globalEncryptedValueStore.ListAll(ctx, contracts.ListOpts{
 		OrderBy: "namespace",
 	}, nil)
 	if err != nil {
 		return fmt.Errorf("listing all encrypted values: %w", err)
 	}
-	fmt.Println("ConsolidationService.Consolidate: listed all encrypted values")
-	fmt.Println("ConsolidationService.Consolidate: encrypted values", len(encryptedValues))
-	for _, ev := range encryptedValues {
-		// Flush the cache for this namespace if we haven't already
-		if !flushedNamespaces[ev.Namespace] {
-			s.encryptionManager.FlushCache(xkube.Namespace(ev.Namespace))
-			flushedNamespaces[ev.Namespace] = true
-			fmt.Println("ConsolidationService.Consolidate: flushed cache for namespace", ev.Namespace)
+
+	batches := s.groupByNamespace(encryptedValues)
+	for _, batch := range batches {
+		ns := xkube.Namespace(batch.namespace)
+		reEncrypted, err := s.encryptionManager.ConsolidateNamespace(ctx, ns, batch.values)
+		if err != nil {
+			return fmt.Errorf("consolidating namespace %s: %w", batch.namespace, err)
 		}
 
-		// Decrypt the value using its old data key. Skip the cache to avoid overloading it during consolidation.
-		decryptedValue, err := s.encryptionManager.Decrypt(ctx, xkube.Namespace(ev.Namespace), ev.EncryptedPayload, contracts.EncryptionOption{SkipCache: true})
-		if err != nil {
-			logging.FromContext(ctx).Error("Failed to decrypt value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
-			continue
+		for i, payload := range reEncrypted {
+			if payload == nil {
+				continue
+			}
+			ev := batch.values[i]
+			if err = s.encryptedValueStore.Update(ctx, ns, ev.Name, ev.Version, *payload); err != nil {
+				logging.FromContext(ctx).Error("Failed to update encrypted value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
+			}
 		}
-
-		// Re-encrypt the value using a new data key. Skip the cache to avoid overloading it during consolidation.
-		reEncryptedValue, err := s.encryptionManager.Encrypt(ctx, xkube.Namespace(ev.Namespace), decryptedValue, contracts.EncryptionOption{SkipCache: true})
-		if err != nil {
-			logging.FromContext(ctx).Error("Failed to re-encrypt value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
-			continue
-		}
-
-		// Update the encrypted value in the store.
-		err = s.encryptedValueStore.Update(ctx, xkube.Namespace(ev.Namespace), ev.Name, ev.Version, reEncryptedValue)
-		if err != nil {
-			logging.FromContext(ctx).Error("Failed to update encrypted value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
-			continue
-		}
-		fmt.Println("ConsolidationService.Consolidate: updated encrypted value for namespace", ev.Namespace, "name", ev.Name, "version", ev.Version)
 	}
 
 	// TODO: After all values are re-encrypted, we can safely remove the old data keys.
 
-	fmt.Println("ConsolidationService.Consolidate done")
 	return nil
+}
+
+// groupByNamespace returns contiguous namespace batches. encryptedValues must be sorted by namespace.
+func (s *ConsolidationService) groupByNamespace(encryptedValues []*contracts.EncryptedValue) []namespaceBatch {
+	if len(encryptedValues) == 0 {
+		return nil
+	}
+
+	var batches []namespaceBatch
+	current := namespaceBatch{namespace: encryptedValues[0].Namespace, values: []*contracts.EncryptedValue{encryptedValues[0]}}
+
+	for _, ev := range encryptedValues[1:] {
+		if ev.Namespace != current.namespace {
+			batches = append(batches, current)
+			current = namespaceBatch{namespace: ev.Namespace, values: []*contracts.EncryptedValue{ev}}
+		} else {
+			current.values = append(current.values, ev)
+		}
+	}
+	batches = append(batches, current)
+	return batches
 }
