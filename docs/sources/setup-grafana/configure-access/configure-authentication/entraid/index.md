@@ -25,12 +25,12 @@ weight: 800
 The Microsoft Entra ID authentication allows you to use a Microsoft Entra ID (formerly known as Azure Active Directory) tenant as an identity provider for Grafana. You can use Entra ID application roles to assign users and groups to Grafana roles from the Azure Portal.
 
 {{< admonition type="caution" >}}
-If you use the same email address in Microsoft Entra ID and in other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that your users are matched correctly. 
+If you use the same email address in Microsoft Entra ID and in other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that your users are matched correctly.
 
 Refer to [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) for more information.
 {{< /admonition >}}
 
-## Register you application with Microsoft Entra ID 
+## Register you application with Microsoft Entra ID
 
 To enable the Entra ID OAuth, register your application with Entra ID.
 
@@ -425,8 +425,6 @@ You can reference Entra ID groups by group object ID, like `8bab1c86-8fba-33e5-2
 
 To learn more, refer to the [Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync) documentation.
 
-
-
 ## Skip organization role sync
 
 If you don't want Entra ID authentication to sync user roles and organization membership and prevent the sync of org roles from Entra ID, set `skip_org_role_sync` to `true`. Use this if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
@@ -476,7 +474,7 @@ The following table outlines the various Entra ID configuration options. You can
 | `use_pkce`                      | No       | Yes                | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                              | `true`                                               |
 | `use_refresh_token`             | No       | Yes                | Enables the use of refresh tokens and checks for access token expiration. When enabled, Grafana automatically adds the `offline_access` scope to the list of scopes.                                                                                                                                                                                                                                                                                                                            | `true`                                               |
 | `force_use_graph_api`           | No       | Yes                | Set to `true` to always fetch groups from the Microsoft Graph API instead of the `id_token`. If a user belongs to more than 200 groups, the Microsoft Graph API will be used to retrieve the groups regardless of this setting.                                                                                                                                                                                                                                                                 | `false`                                              |
-| `signout_redirect_url`          | No       | Yes                | URL to redirect to after the user logs out.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                  
+| `signout_redirect_url`          | No       | Yes                | URL to redirect to after the user logs out.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ## Common troubleshooting
 
