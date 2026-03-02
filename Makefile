@@ -285,7 +285,7 @@ update-workspace: gen-go
 .PHONY: build-go
 build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
 	@echo "build go binaries"
-	$(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
+	$(if $(GO_BUILD_OS),GOOS=$(GO_BUILD_OS)) $(if $(GO_BUILD_ARCH),GOARCH=$(GO_BUILD_ARCH)) $(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
 
 .PHONY: build-backend
 build-backend: build-go
