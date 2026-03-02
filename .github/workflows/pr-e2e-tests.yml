@@ -117,8 +117,11 @@ jobs:
           path: |
             public/build/
             public/app/plugins/
+            public/emails/
+            public/views/
             !public/**/*.ts
             !public/**/*.tsx
+            !public/**/node_modules/
           retention-days: 1
 
       - uses: actions/upload-artifact@v5
