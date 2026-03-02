@@ -754,7 +754,6 @@ export class PrometheusDatasource
     const finalQuery = filters.map(remapOneOf).reduce((acc, filter) => {
       const { key, operator } = filter;
       let { value } = filter;
-
       if (operator === '=~' || operator === '!~') {
         value = prometheusRegularEscape(value);
       }
