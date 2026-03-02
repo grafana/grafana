@@ -12,7 +12,7 @@ import {
   ControlsLayout,
   sceneUtils,
 } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
@@ -117,6 +117,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
         <VariableLabel
           variable={variable}
           layout={'vertical'}
+          isEditingNewLayouts={isEditingNewLayouts}
           className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
         />
       </div>
@@ -134,7 +135,12 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
         onPointerDown={onPointerDown}
         data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
       >
-        <VariableLabel variable={variable} layout={'vertical'} className={cx(isSelectable && styles.labelSelectable)} />
+        <VariableLabel
+          variable={variable}
+          layout={'vertical'}
+          isEditingNewLayouts={isEditingNewLayouts}
+          className={cx(isSelectable && styles.labelSelectable)}
+        />
         <variable.Component model={variable} />
       </div>
     );
@@ -150,7 +156,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
       onPointerDown={onPointerDown}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
     >
-      <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
+      <VariableLabel
+        variable={variable}
+        isEditingNewLayouts={isEditingNewLayouts}
+        className={cx(isSelectable && styles.labelSelectable, styles.label)}
+      />
       <variable.Component model={variable} />
     </div>
   );
@@ -160,19 +170,32 @@ function VariableLabel({
   variable,
   className,
   layout,
+  isEditingNewLayouts,
 }: {
   variable: SceneVariable;
   className?: string;
   layout?: ControlsLayout;
+  isEditingNewLayouts?: boolean;
 }) {
   const { state } = variable;
+  const styles = useStyles2(getStyles);
+  const elementId = `var-${state.key}`;
 
   if (variable.state.hide === VariableHide.hideLabel) {
-    return null;
+    if (!isEditingNewLayouts) {
+      return null;
+    }
+
+    return (
+      <Tooltip content={state.label || state.name}>
+        <label htmlFor={elementId} className={cx(styles.hiddenLabelIcon, className)}>
+          <Icon name="eye-slash" size="sm" />
+        </label>
+      </Tooltip>
+    );
   }
 
   const labelOrName = state.label || state.name;
-  const elementId = `var-${state.key}`;
 
   return (
     <ControlsLabel
@@ -231,5 +254,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
   }),
+  hiddenLabelIcon: css({
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(0, 1),
+    height: theme.spacing(theme.components.height.md),
+    background: theme.isDark ? theme.colors.background.primary : theme.colors.background.secondary,
+    border: `1px solid ${theme.components.input.borderColor}`,
+    borderRadius: `${theme.shape.radius.default} 0 0 ${theme.shape.radius.default}`,
+    color: theme.colors.text.secondary,
   }),
 });
