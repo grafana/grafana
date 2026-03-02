@@ -21,11 +21,34 @@ interface FixFolderMetadataDrawerProps {
 }
 
 export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolderMetadataDrawerProps) {
+  const [submittedJob, setSubmittedJob] = useState<Job>();
+  const [jobError, setJobError] = useState<string | StatusInfo>();
   const { repository, isReadOnlyRepo, isLoading: repoLoading } = useGetResourceRepositoryView({ name: repositoryName });
+
+  const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
+    if (statusInfo.status === 'error' && statusInfo.error) {
+      setJobError(statusInfo.error);
+    }
+  }, []);
+
+  const drawerTitle = t('provisioning.fix-folder-metadata-drawer.title', 'Fix folder metadata');
+
+  // Once the job is submitted, show only the job status view.
+  // This skips the repository loading/readOnly checks below, so tag
+  // invalidation from the mutation cannot cause the drawer to re-render
+  // with a loading or error state.
+  if (submittedJob) {
+    return (
+      <Drawer title={drawerTitle} onClose={onDismiss}>
+        <ProvisioningAlert error={jobError} />
+        <JobStatus watch={submittedJob} jobType="fix" onStatusChange={handleJobStatusChange} />
+      </Drawer>
+    );
+  }
 
   if (repoLoading) {
     return (
-      <Drawer title={t('provisioning.fix-folder-metadata-drawer.title', 'Fix folder metadata')} onClose={onDismiss}>
+      <Drawer title={drawerTitle} onClose={onDismiss}>
         <Trans i18nKey="provisioning.fix-folder-metadata-drawer.loading">Loading repository...</Trans>
       </Drawer>
     );
@@ -33,7 +56,7 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
 
   if (isReadOnlyRepo || !repository) {
     return (
-      <Drawer title={t('provisioning.fix-folder-metadata-drawer.title', 'Fix folder metadata')} onClose={onDismiss}>
+      <Drawer title={drawerTitle} onClose={onDismiss}>
         <RepoInvalidStateBanner
           noRepository={!repository}
           isReadOnlyRepo={isReadOnlyRepo}
@@ -65,6 +88,9 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
       canPushToConfiguredBranch={canPushToConfiguredBranch}
       defaultValues={defaultValues}
       onDismiss={onDismiss}
+      submitError={jobError}
+      onJobCreated={setSubmittedJob}
+      onSubmitError={setJobError}
     />
   );
 }
@@ -75,6 +101,9 @@ interface FixFolderMetadataFormProps {
   canPushToConfiguredBranch: boolean;
   defaultValues: BaseProvisionedFormData;
   onDismiss: () => void;
+  submitError: string | StatusInfo | undefined;
+  onJobCreated: (job: Job) => void;
+  onSubmitError: (error: string | StatusInfo | undefined) => void;
 }
 
 function FixFolderMetadataForm({
@@ -83,16 +112,17 @@ function FixFolderMetadataForm({
   canPushToConfiguredBranch,
   defaultValues,
   onDismiss,
+  submitError,
+  onJobCreated,
+  onSubmitError,
 }: FixFolderMetadataFormProps) {
-  const [job, setJob] = useState<Job>();
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [jobError, setJobError] = useState<string | StatusInfo>();
   const [createJob, createJobState] = useCreateRepositoryJobsMutation();
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues });
   const { handleSubmit } = methods;
 
   const handleSubmitForm = async ({ ref }: BaseProvisionedFormData) => {
+    onSubmitError(undefined);
     try {
       const result = await createJob({
         name: repositoryName,
@@ -103,11 +133,10 @@ function FixFolderMetadataForm({
       }).unwrap();
 
       if (result) {
-        setJob(result);
-        setHasSubmitted(true);
+        onJobCreated(result);
       }
     } catch {
-      setJobError({
+      onSubmitError({
         title: t('provisioning.fix-folder-metadata-drawer.error-title', 'Error fixing folder metadata'),
         message: t(
           'provisioning.fix-folder-metadata-drawer.error-message',
@@ -117,45 +146,32 @@ function FixFolderMetadataForm({
     }
   };
 
-  const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
-    if (statusInfo.status === 'error' && statusInfo.error) {
-      setJobError(statusInfo.error);
-    }
-  }, []);
-
   return (
     <Drawer title={t('provisioning.fix-folder-metadata-drawer.title', 'Fix folder metadata')} onClose={onDismiss}>
-      {hasSubmitted && job ? (
-        <>
-          <ProvisioningAlert error={jobError} />
-          <JobStatus watch={job} jobType="fix" onStatusChange={handleJobStatusChange} />
-        </>
-      ) : (
-        <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(handleSubmitForm)}>
-            <Stack direction="column" gap={2}>
-              <ProvisioningAlert error={jobError} />
-              <ResourceEditFormSharedFields
-                resourceType="folder"
-                canPushToConfiguredBranch={canPushToConfiguredBranch}
-                repository={repository}
-                hidePath
-              />
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(handleSubmitForm)}>
+          <Stack direction="column" gap={2}>
+            <ProvisioningAlert error={submitError} />
+            <ResourceEditFormSharedFields
+              resourceType="folder"
+              canPushToConfiguredBranch={canPushToConfiguredBranch}
+              repository={repository}
+              hidePath
+            />
 
-              <Stack gap={2}>
-                <Button variant="secondary" fill="outline" onClick={onDismiss}>
-                  <Trans i18nKey="provisioning.fix-folder-metadata-drawer.cancel">Cancel</Trans>
-                </Button>
-                <Button type="submit" disabled={createJobState.isLoading}>
-                  {createJobState.isLoading
-                    ? t('provisioning.fix-folder-metadata-drawer.submitting', 'Fixing...')
-                    : t('provisioning.fix-folder-metadata-drawer.submit', 'Fix folder IDs')}
-                </Button>
-              </Stack>
+            <Stack gap={2}>
+              <Button variant="secondary" fill="outline" onClick={onDismiss}>
+                <Trans i18nKey="provisioning.fix-folder-metadata-drawer.cancel">Cancel</Trans>
+              </Button>
+              <Button type="submit" disabled={createJobState.isLoading}>
+                {createJobState.isLoading
+                  ? t('provisioning.fix-folder-metadata-drawer.submitting', 'Fixing...')
+                  : t('provisioning.fix-folder-metadata-drawer.submit', 'Fix folder IDs')}
+              </Button>
             </Stack>
-          </form>
-        </FormProvider>
-      )}
+          </Stack>
+        </form>
+      </FormProvider>
     </Drawer>
   );
 }
