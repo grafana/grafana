@@ -39,7 +39,7 @@ func ProvideTestEnv(
 	githubRepoFactory *github.Factory,
 	githubConnectionFactory githubconnection.GithubFactory,
 	decryptService decrypt.DecryptService,
-	quotaGetter quotas.OverridableQuotaGetter,
+	quotaGetter quotas.QuotaGetter,
 ) (*TestEnv, error) {
 	return &TestEnv{
 		TestingT:                testingT,
@@ -81,5 +81,5 @@ type TestEnv struct {
 	GithubRepoFactory       *github.Factory
 	GithubConnectionFactory githubconnection.GithubFactory
 	DecryptService          decrypt.DecryptService
-	QuotaGetter             quotas.OverridableQuotaGetter
+	QuotaGetter             quotas.QuotaGetter
 }

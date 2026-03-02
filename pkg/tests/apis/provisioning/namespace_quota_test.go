@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -18,51 +17,54 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 
 	helper := runGrafana(t)
 
+	const (
+		repo1Name = "ns-quota-repo1"
+		repo2Name = "ns-quota-repo2"
+	)
+
 	repo1Path := filepath.Join(helper.ProvisioningPath, "repo1")
 	repo2Path := filepath.Join(helper.ProvisioningPath, "repo2")
 
 	// --- Step 1: create 2 repos with unlimited quota  ---------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
 	helper.CreateRepo(t, TestRepo{
-		Name:                   "ns-quota-repo1",
+		Name:                   repo1Name,
 		Path:                   repo1Path,
 		Target:                 "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
 	helper.CreateRepo(t, TestRepo{
-		Name:                   "ns-quota-repo2",
+		Name:                   repo2Name,
 		Path:                   repo2Path,
 		Target:                 "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
 
-	helper.WaitForHealthyRepository(t, "ns-quota-repo1")
-	helper.WaitForHealthyRepository(t, "ns-quota-repo2")
-	// waitForNamespaceQuota(t, helper, "ns-quota-repo1", provisioning.ReasonQuotaUnlimited)
-	//waitForNamespaceQuota(t, helper, "ns-quota-repo2", provisioning.ReasonQuotaUnlimited)
+	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaUnlimited)
+	waitForHealthyWithNamespaceQuota(t, helper, repo2Name, provisioning.ReasonQuotaUnlimited)
 
 	// --- Step 2: lower quota to 1 — both repos exceed the limit --------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
-	helper.TriggerRepositoryReconciliation(t, "ns-quota-repo1")
-	helper.TriggerRepositoryReconciliation(t, "ns-quota-repo2")
+	helper.TriggerRepositoryReconciliation(t, repo1Name)
+	helper.TriggerRepositoryReconciliation(t, repo2Name)
 
-	waitForUnhealthyWithNamespaceQuota(t, helper, "ns-quota-repo1", provisioning.ReasonQuotaExceeded)
-	waitForUnhealthyWithNamespaceQuota(t, helper, "ns-quota-repo2", provisioning.ReasonQuotaExceeded)
+	waitForUnhealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaExceeded)
+	waitForUnhealthyWithNamespaceQuota(t, helper, repo2Name, provisioning.ReasonQuotaExceeded)
 
 	// --- Step 3: delete one repo — remaining repo recovers -------------
-	err := helper.Repositories.Resource.Delete(t.Context(), "ns-quota-repo2", metav1.DeleteOptions{})
+	err := helper.Repositories.Resource.Delete(t.Context(), repo2Name, metav1.DeleteOptions{})
 	require.NoError(t, err)
 
-	helper.TriggerRepositoryReconciliation(t, "ns-quota-repo1")
-	waitForHealthyWithNamespaceQuota(t, helper, "ns-quota-repo1", provisioning.ReasonQuotaReached)
+	helper.TriggerRepositoryReconciliation(t, repo1Name)
+	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaReached)
 
 	// --- Step 4: set quota back to unlimited — repo fully recovers -----
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
 
-	helper.TriggerRepositoryReconciliation(t, "ns-quota-repo1")
-	waitForHealthyWithNamespaceQuota(t, helper, "ns-quota-repo1", provisioning.ReasonQuotaUnlimited)
+	helper.TriggerRepositoryReconciliation(t, repo1Name)
+	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaUnlimited)
 }
 
 // waitForUnhealthyWithNamespaceQuota waits for a repo to become unhealthy and
@@ -70,7 +72,7 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *provisioningTestHelper, repoName, expectedReason string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		fmt.Printf("Waiting for unhealthy with namespace quota for repo %s\n", repoName)
+		t.Logf("Waiting for unhealthy with namespace quota for repo %s", repoName)
 		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
@@ -78,7 +80,6 @@ func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *provisioningTestHe
 		repo := unstructuredToRepository(t, repoObj)
 		assert.False(collect, repo.Status.Health.Healthy, "repo %s should be unhealthy", repoName)
 		cond := findCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
-		fmt.Printf("NamespaceQuota condition: %+v\n", cond)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
 			return
 		}
@@ -91,6 +92,7 @@ func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *provisioningTestHe
 func waitForHealthyWithNamespaceQuota(t *testing.T, helper *provisioningTestHelper, repoName, expectedReason string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		t.Logf("Waiting for healthy with namespace quota for repo %s", repoName)
 		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return

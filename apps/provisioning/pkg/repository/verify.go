@@ -120,6 +120,7 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 
 	count := 0
 	for _, v := range all {
+		// If the repository is being updated, allow it even if the quota is reached
 		if v.Name == cfg.Name {
 			return nil
 		} else {
