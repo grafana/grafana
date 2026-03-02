@@ -232,7 +232,7 @@ function getStyles(
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      background: isSelected ? themeColors.card.activeBg : themeColors.card.background,
+      background: isSelected ? themeColors.card.activeBg : 'none',
       borderLeft: `${isSelected ? 3 : 1}px solid ${borderColor}`,
       cursor: 'pointer',
 
@@ -249,6 +249,9 @@ function getStyles(
         opacity: 1,
         transform: 'translateX(0)',
         pointerEvents: 'auto',
+      },
+      '[data-is-dragging] &': {
+        background: isSelected ? themeColors.card.activeBg : themeColors.card.hoverBg,
       },
     }),
     hoverActions,

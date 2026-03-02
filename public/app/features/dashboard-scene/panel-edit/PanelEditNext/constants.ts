@@ -46,7 +46,6 @@ export function getQueryEditorColors(theme: GrafanaTheme2) {
     sidebarFooterBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#141820',
     sidebarHeaderBackground: USE_THEME_COLORS ? theme.colors.background.secondary : '#20262F',
     card: {
-      background: theme.colors.background.secondary,
       activeBg: theme.isDark ? '#314158' : 'oklch(92.9% 0.013 255.508)',
       hoverBg: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
     },
