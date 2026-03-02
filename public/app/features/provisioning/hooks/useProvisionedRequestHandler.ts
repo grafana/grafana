@@ -184,8 +184,7 @@ function getResourceLabel(resourceType?: ResourceType): string {
 }
 
 /**
- * Builds the success notification body for a push-to-branch operation.
- * Returns e.g. "Dashboard successfully pushed to <branch>" where <branch> is a link when repositoryURL is available.
+ * Returns e.g. "Dashboard changes successfully pushed to <branch>" where <branch> is a link when repositoryURL is available.
  * Uses createElement instead of JSX since this is a .ts file.
  */
 function buildPushSuccessComponent(branch: string, repositoryURL?: string, resourceLabel?: string): ReactElement {
