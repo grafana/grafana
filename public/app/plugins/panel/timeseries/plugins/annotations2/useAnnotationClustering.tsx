@@ -171,7 +171,7 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotBox: 
 
   return { clusterIdx, clusters };
 };
-const calculateMergeThreshold = (timeRange: TimeRange2, plotBox) => {
+const calculateMergeThreshold = (timeRange: TimeRange2, plotBox: BBox) => {
   const pixelThreshold = 24 * uPlot.pxRatio;
   const dt = timeRange.to - timeRange.from;
   const plotWidth = plotBox?.width;

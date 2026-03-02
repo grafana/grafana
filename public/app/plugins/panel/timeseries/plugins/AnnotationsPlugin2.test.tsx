@@ -93,6 +93,7 @@ describe('AnnotationsPlugin2', () => {
     const result = render(
       <div>
         <AnnotationsPlugin2
+          annotationsOptions={{}}
           annotations={[mockAnnotationFrame]}
           config={config}
           timeZone={'browser'}
