@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externes",
-      "extra-config-warning": {
-        "content": "Cette vue présente la configuration fusionnée de l’Alertmanager Grafana avec les configurations importées. Cette vue fusionnée est en lecture seule dans l’interface utilisateur.",
-        "title": "Configuration importée"
-      },
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
     "alert-menu": {
@@ -910,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Échec de la récupération des points de contact"
     },
     "contact-points": {
-      "create": "Créer un point de contact",
+      "create": "",
       "custom-template-value": "Valeur du modèle personnalisé",
       "delete-reasons": {
         "heading": "Le point de contact ne peut pas être supprimé pour les raisons suivantes :",
@@ -2133,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Ajouter un intervalle de temps"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2177,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2184,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Recherche par point de contact",
@@ -2256,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Échec de la récupération des modèles de notification"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Ajouter un groupe de modèles de notification",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Créez des modèles de notification pour personnaliser vos notifications."
     },
     "notifications-list": {
@@ -2283,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2306,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Ajoutez des étiquettes pour vous aider à mieux gérer vos règles d’enregistrement.",
@@ -3354,7 +3348,7 @@
       "stop-alerting-when": "Arrêter l’alerte (ou l’état en attente) lorsque"
     },
     "time-interval": {
-      "add-time-interval": "Ajouter un intervalle de temps",
+      "add-time-interval": "",
       "save": "Enregistrer l’intervalle de temps",
       "saving": "Enregistrement de l’intervalle de temps"
     },
@@ -4186,6 +4180,16 @@
       "clear": "Effacer la recherche et les filtres",
       "text": "Aucun résultat n'a été trouvé pour votre requête"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Effacer l’historique",
       "error": "Impossible de charger les tableaux de bord consultés récemment.",
@@ -4857,6 +4861,10 @@
       "view-json-diff": "Afficher JSON diff pour voir toutes les modifications"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Ajouter un nouveau",
     "alert": {
@@ -5003,6 +5011,7 @@
       "description-color-annotation-event-markers": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
       "description-enabled-annotation-query-issued-every-dashboard": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
       "description-hidden": "Les requêtes d’annotation peuvent être activées ou désactivées en haut du tableau de bord. Lorsque cette option est cochée, ce bouton sera masqué.",
+      "error-loading-panels": "",
       "label-color": "Couleur",
       "label-data-source": "Source de données",
       "label-enabled": "Activé",
@@ -5057,7 +5066,7 @@
     "canvas-actions": {
       "add-panel": "Ajouter un panneau",
       "disabled-child-contains-tabs": "Impossible de passer aux onglets car une ligne contient déjà des onglets",
-      "disabled-nested-grouping": "Le regroupement est limité à 2 niveaux",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Les onglets ne peuvent pas être imbriqués dans d’autres onglets",
       "group-into-row": "Grouper en ligne",
       "group-into-tab": "Grouper dans un onglet",
@@ -5685,10 +5694,7 @@
       "empty-state-message": "Exécutez une requête pour la visualiser ici ou accédez à toutes les visualisations, afin d’ajouter d’autres types de panneaux",
       "menu-open-panel-editor": "Configurer",
       "menu-use-library-panel": "Utiliser le panneau de bibliothèque",
-      "missing-config": "Configuration de panneau manquante",
-      "suggestions": {
-        "empty-state-message": "Exécutez une requête pour commencer à voir les visualisations suggérées"
-      }
+      "missing-config": "Configuration de panneau manquante"
     },
     "new-panel-title": "Nouveau panneau",
     "on-create-new-row": {
@@ -6444,6 +6450,7 @@
       "delete": "Supprimer",
       "description-color-annotation-event-markers": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
       "description-enabled-annotation-query-issued-every-dashboard": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Afficher les contrôles d’annotation dans",
       "label-color": "Couleur",
       "label-data-source": "Source de données",
@@ -6595,6 +6602,12 @@
           "row-title": "Titre de la ligne"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Échec de la suppression du tableau de bord",
@@ -6922,11 +6935,11 @@
       "static-options-legend": "Options statiques"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Options avancées",
         "classic": "Classique",
         "json": "JSON",
-        "v1-resource": "Ressource V1",
         "v2-resource": "Ressource V2",
         "yaml": "YAML"
       },
@@ -10970,7 +10983,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
@@ -11926,6 +11941,10 @@
         "title": "Erreur",
         "try-again-button": "Réessayer"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Type de visualisation inconnu"
     },
     "viz-type-picker": {
@@ -12369,6 +12388,11 @@
       "text-loading-teams": "Chargement des équipes..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Ajouter une note pour décrire vos modifications (facultatif)",
@@ -12636,6 +12660,15 @@
       "label-read-only": "Lecture seule",
       "label-sync-interval": "Intervalle de synchronisation (secondes)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Aucun résultat ne correspond à votre requête",
       "partial-managed": "{{managedCount}} ressources sur {{resourceCount}} sont gérées par la synchronisation Git.",
@@ -12770,6 +12803,14 @@
       "show-more": "afficher plus",
       "truncated": "Message tronqué"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "repo-message": "",
+      "repo-title": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "La synchronisation complète de l’instance est désactivée, car un autre dossier est déjà synchronisé avec un référentiel.",
@@ -12900,6 +12941,7 @@
       "header-status": "Statut",
       "header-title": "Titre",
       "header-type": "Type",
+      "missing-folder-metadata": "",
       "search-placeholder": "Rechercher par chemin ou par titre",
       "source": "Source",
       "status-pending": "En attente",
@@ -13274,6 +13316,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13301,7 +13344,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13311,9 +13355,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13357,20 +13402,20 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Sélectionner la carte {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
       "transformations": "Transformations",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13567,6 +13612,7 @@
       "panel-type": "Panneau : {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Inclure des panneaux",
       "remove-datasource-filter": "Source de données : {{datasource}}",
       "sort-placeholder": "Trier",

@@ -20,6 +20,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/alerting/definition"
+	"github.com/grafana/alerting/http/v0mimir1"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/utils/hash"
@@ -854,7 +855,7 @@ func (am *Alertmanager) logDiff(curCfg, newCfg *remoteClient.UserGrafanaConfig) 
 			return a < b
 		}),
 		cmpopts.IgnoreFields(remoteClient.UserGrafanaConfig{}, "Hash", "CreatedAt", "Default"),
-		cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}, common_config.ProxyConfig{}, time.Location{}),
+		cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}, v0mimir1.ProxyConfig{}, common_config.ProxyConfig{}, time.Location{}),
 	}
 	_ = cmp.Equal(curCfg, newCfg, cOpt...)
 	paths := reporter.Diffs.Paths()

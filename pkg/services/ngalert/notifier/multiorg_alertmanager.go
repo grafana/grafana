@@ -265,8 +265,15 @@ func (moa *MultiOrgAlertmanager) initAlertBroadcast() {
 	if _, ok := moa.peer.(*NilPeer); ok {
 		return
 	}
+	queueSize := moa.settings.UnifiedAlerting.HASingleEvaluationAlertBroadcastQueueSize
+	if queueSize <= 0 {
+		queueSize = setting.AlertBroadcastDefaultQueueSize
+	}
 	state := newAlertBroadcastState(moa.logger.New("component", "alert-broadcast"), moa)
-	moa.alertsBroadcastChannel = moa.peer.AddState(alertBroadcastKey, state, moa.metrics.Registerer)
+	moa.alertsBroadcastChannel = moa.peer.AddState(alertBroadcastKey, state, moa.metrics.Registerer,
+		alertingCluster.WithReliableDelivery(true),
+		alertingCluster.WithQueueSize(queueSize),
+	)
 }
 
 // BroadcastAlerts sends alerts to all peers via the cluster channel.

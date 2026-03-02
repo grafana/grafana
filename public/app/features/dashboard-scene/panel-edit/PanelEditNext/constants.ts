@@ -30,18 +30,27 @@ export enum SidebarSize {
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
 
 export const QUERY_EDITOR_COLORS = {
-  footerBackground: '#1e2939',
-  sidebarFooterBackground: '#141820',
   query: '#FF8904',
   expression: '#C27AFF',
   transformation: '#00D492',
-  card: {
-    activeBg: '#314158',
-    hoverBg: '#1D293D',
-    headerBg: '#20262F',
-  },
-  error: '#D10E5C',
+  error: '#E7000B',
 };
+
+// TODO: Remove this once all the new colors are finalized
+const USE_THEME_COLORS = true;
+
+export function getQueryEditorColors(theme: GrafanaTheme2) {
+  return {
+    contentHeaderBackground: theme.colors.background.secondary,
+    footerBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#1e2939',
+    sidebarFooterBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#141820',
+    sidebarHeaderBackground: USE_THEME_COLORS ? theme.colors.background.secondary : '#20262F',
+    card: {
+      activeBg: theme.isDark ? '#314158' : 'oklch(92.9% 0.013 255.508)',
+      hoverBg: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+    },
+  };
+}
 
 export interface QueryEditorTypeConfig {
   icon: IconName;
@@ -112,10 +121,13 @@ export const TIME_OPTION_PLACEHOLDER = '1h';
 export const SIDEBAR_CARD_HEIGHT = 30;
 export const SIDEBAR_CARD_SPACING = 1;
 export const SIDEBAR_CARD_INDENT = 2;
+export const FOOTER_HEIGHT = 32;
 
 export const CONTENT_SIDE_BAR = {
-  width: 300,
+  fieldLabelWidth: 130,
   labelWidth: 80,
+  sidebarTransitionMs: 150,
+  width: 500,
 } as const;
 
 export interface QueryOptionFieldConfig {
@@ -168,6 +180,14 @@ export const QUERY_OPTION_FIELD_CONFIG: Record<QueryOptionField, QueryOptionFiel
       ),
     getLabel: () => t('query-editor-next.details-sidebar.time-shift', 'Time shift'),
     placeholder: TIME_OPTION_PLACEHOLDER,
+  },
+  [QueryOptionField.hideTimeOverride]: {
+    getTooltip: () =>
+      t(
+        'query-editor-next.details-sidebar.hide-time-override-tooltip',
+        'Hides the time override displayed in the panel header when relative time or time shift is set.'
+      ),
+    getLabel: () => t('query-editor-next.details-sidebar.hide-time-override', 'Hide time info'),
   },
   [QueryOptionField.cacheTimeout]: {
     getTooltip: () =>
