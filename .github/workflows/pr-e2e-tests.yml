@@ -316,6 +316,7 @@ jobs:
       - name: Fix binary permissions
         run: chmod +x bin/grafana*
 
+      - run: mkdir -p bin/linux-amd64
       - run: cp bin/grafana bin/linux-amd64/grafana-server
 
       # Start Grafana using existing scripts (handles provisioning, config, etc.)
