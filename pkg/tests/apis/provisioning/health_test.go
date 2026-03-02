@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
@@ -546,84 +547,35 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 	})
 }
 
-func TestIntegrationProvisioning_RepositoryTestWritePermissions(t *testing.T) {
+func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	t.Run("repository with write workflow checks write permissions via Test endpoint", func(t *testing.T) {
-		// Create a local repository with write workflow
+	// Use public GitHub repository (grafana/grafana) via git type - no token needed for read access
+	// This tests that:
+	// - With workflows: write permission check FAILS (we can't write to public repo without token)
+	// - Without workflows: succeeds (only needs read access)
+
+	t.Run("git repository with workflows fails write permission check via Test endpoint", func(t *testing.T) {
+		// Create a git repository config pointing to public GitHub repo with write workflow
+		// No token = cannot write to public repo
 		repoConfig := map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Repository",
 			"metadata": map[string]any{
-				"name":      "test-repo-write-permissions",
+				"name":      "test-git-write-denied",
 				"namespace": "default",
-				"finalizers": []string{
-					"remove-orphan-resources",
-					"cleanup",
-				},
 			},
 			"spec": map[string]any{
-				"title": "Test Repository with Write Workflow",
-				"type":  "local",
-				"local": map[string]any{
-					"path": helper.ProvisioningPath,
+				"title": "Test Git Write Permission Denied",
+				"type":  "git",
+				"git": map[string]any{
+					"url":    "https://github.com/grafana/grafana.git",
+					"branch": "main",
 				},
 				"workflows": []string{"write"}, // Write workflow configured
-				"sync": map[string]any{
-					"enabled":         false, // Disable sync for this test
-					"target":          "folder",
-					"intervalSeconds": 10,
-				},
-			},
-		}
-
-		configBytes, err := json.Marshal(repoConfig)
-		require.NoError(t, err)
-
-		// Test the repository configuration with dryRun
-		// This should trigger the Test method which checks CanWrite
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name("test-repo-write-permissions").
-			SubResource("test").
-			Body(configBytes).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-
-		require.NoError(t, result.Error(), "test endpoint should work for repository with write workflow")
-
-		obj, err := result.Get()
-		require.NoError(t, err)
-
-		testResults := parseTestResults(t, obj)
-		require.True(t, testResults.Success, "local repository with write workflow should pass write permission check")
-		require.Equal(t, 200, testResults.Code, "should return 200 for successful test")
-	})
-
-	t.Run("read-only repository skips write permission check via Test endpoint", func(t *testing.T) {
-		// Create a local repository WITHOUT workflows (read-only)
-		repoConfig := map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Repository",
-			"metadata": map[string]any{
-				"name":      "test-repo-readonly",
-				"namespace": "default",
-				"finalizers": []string{
-					"remove-orphan-resources",
-					"cleanup",
-				},
-			},
-			"spec": map[string]any{
-				"title": "Test Read-Only Repository",
-				"type":  "local",
-				"local": map[string]any{
-					"path": helper.ProvisioningPath,
-				},
-				// No workflows = read-only
 				"sync": map[string]any{
 					"enabled":         false,
 					"target":          "folder",
@@ -635,47 +587,91 @@ func TestIntegrationProvisioning_RepositoryTestWritePermissions(t *testing.T) {
 		configBytes, err := json.Marshal(repoConfig)
 		require.NoError(t, err)
 
-		// Test the repository configuration with dryRun
-		// This should NOT trigger write permission check (no workflows)
+		// Test endpoint should fail - no write permission without token
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
-			Name("test-repo-readonly").
+			Name("test-git-write-denied").
 			SubResource("test").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 
-		require.NoError(t, result.Error(), "test endpoint should work for read-only repository")
+		require.NoError(t, result.Error())
 
 		obj, err := result.Get()
 		require.NoError(t, err)
 
 		testResults := parseTestResults(t, obj)
-		require.True(t, testResults.Success, "read-only repository should succeed without write permission check")
+		require.False(t, testResults.Success, "git repository without token should fail write permission check")
+		require.Equal(t, 403, testResults.Code, "should return 403 for write permission denied")
+	})
+
+	t.Run("read-only git repository succeeds without write permission check via Test endpoint", func(t *testing.T) {
+		// Create a git repository WITHOUT workflows (read-only)
+		// No token needed - only read access required
+		repoConfig := map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "test-git-readonly",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Git Read-Only",
+				"type":  "git",
+				"git": map[string]any{
+					"url":    "https://github.com/grafana/grafana.git",
+					"branch": "main",
+				},
+				// No workflows = read-only, no write permission check
+				"sync": map[string]any{
+					"enabled":         false,
+					"target":          "folder",
+					"intervalSeconds": 10,
+				},
+			},
+		}
+
+		configBytes, err := json.Marshal(repoConfig)
+		require.NoError(t, err)
+
+		// Test endpoint should succeed - only needs read access
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-git-readonly").
+			SubResource("test").
+			Body(configBytes).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.NoError(t, result.Error())
+
+		obj, err := result.Get()
+		require.NoError(t, err)
+
+		testResults := parseTestResults(t, obj)
+		require.True(t, testResults.Success, "read-only git repository should succeed")
 		require.Equal(t, 200, testResults.Code, "should return 200 for successful test")
 	})
 
-	t.Run("repository write workflow validation via dryRun", func(t *testing.T) {
-		// Test creating a repository with write workflow using dryRun
-		// This validates the configuration without creating the actual resource
+	t.Run("git repository with workflows fails dryRun validation", func(t *testing.T) {
+		// DryRun should fail for git repo with workflows (no write permission)
 		repoConfig := &unstructured.Unstructured{
 			Object: map[string]any{
 				"apiVersion": "provisioning.grafana.app/v0alpha1",
 				"kind":       "Repository",
 				"metadata": map[string]any{
-					"name":      "test-repo-dryrun-write",
+					"name":      "test-git-dryrun-write",
 					"namespace": "default",
-					"finalizers": []string{
-						"remove-orphan-resources",
-						"cleanup",
-					},
 				},
 				"spec": map[string]any{
-					"title": "Test Repository DryRun with Write Workflow",
-					"type":  "local",
-					"local": map[string]any{
-						"path": helper.ProvisioningPath,
+					"title": "Test Git DryRun Write Denied",
+					"type":  "github",
+					"github": map[string]any{
+						"repository": "grafana/grafana",
+						"ref":        "main",
 					},
 					"workflows": []string{"write"},
 					"sync": map[string]any{
@@ -687,37 +683,30 @@ func TestIntegrationProvisioning_RepositoryTestWritePermissions(t *testing.T) {
 			},
 		}
 
-		// Create with dryRun - validates without actually creating
-		repo, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{
+		// Create with dryRun - should fail due to write permission check
+		_, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
-		require.NoError(t, err, "dryRun should succeed for repository with write workflow")
-		require.NotNil(t, repo)
-
-		// Verify the repository was not actually created
-		_, err = helper.Repositories.Resource.Get(ctx, "test-repo-dryrun-write", metav1.GetOptions{})
-		require.True(t, k8serrors.IsNotFound(err), "repository should not be created during dryRun")
+		require.Error(t, err, "dryRun should fail for git repository without write permission")
+		require.True(t, k8serrors.IsForbidden(err), "should return 403 Forbidden")
 	})
 
-	t.Run("repository without workflows passes validation via dryRun", func(t *testing.T) {
-		// Test creating a read-only repository using dryRun
+	t.Run("read-only git repository passes dryRun validation", func(t *testing.T) {
+		// DryRun should succeed for read-only git repo
 		repoConfig := &unstructured.Unstructured{
 			Object: map[string]any{
 				"apiVersion": "provisioning.grafana.app/v0alpha1",
 				"kind":       "Repository",
 				"metadata": map[string]any{
-					"name":      "test-repo-dryrun-readonly",
+					"name":      "test-git-dryrun-readonly",
 					"namespace": "default",
-					"finalizers": []string{
-						"remove-orphan-resources",
-						"cleanup",
-					},
 				},
 				"spec": map[string]any{
-					"title": "Test Repository DryRun Read-Only",
-					"type":  "local",
-					"local": map[string]any{
-						"path": helper.ProvisioningPath,
+					"title": "Test Git DryRun Read-Only",
+					"type":  "github",
+					"github": map[string]any{
+						"repository": "grafana/grafana",
+						"ref":        "main",
 					},
 					// No workflows = read-only
 					"sync": map[string]any{
@@ -729,43 +718,74 @@ func TestIntegrationProvisioning_RepositoryTestWritePermissions(t *testing.T) {
 			},
 		}
 
-		// Create with dryRun
+		// Create with dryRun - should succeed
 		repo, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
-		require.NoError(t, err, "dryRun should succeed for read-only repository")
+		require.NoError(t, err, "dryRun should succeed for read-only git repository")
 		require.NotNil(t, repo)
 
-		// Verify the repository was not actually created
-		_, err = helper.Repositories.Resource.Get(ctx, "test-repo-dryrun-readonly", metav1.GetOptions{})
+		// Verify it wasn't actually created
+		_, err = helper.Repositories.Resource.Get(ctx, "test-git-dryrun-readonly", metav1.GetOptions{})
 		require.True(t, k8serrors.IsNotFound(err), "repository should not be created during dryRun")
 	})
 
-	t.Run("health check reflects write permission status for repositories with workflows", func(t *testing.T) {
-		// Create an actual repository with write workflow
-		repo := "test-repo-health-write"
-		helper.CreateRepo(t, TestRepo{
-			Name:            repo,
-			Target:          "folder",
-			ExpectedFolders: 1,
-			Values: map[string]any{
-				"Workflows": []string{"write"},
+	t.Run("git repository with workflows shows unhealthy after creation", func(t *testing.T) {
+		// Create a git repo with workflows - it should be created but become unhealthy
+		// when health check detects missing write permission
+		repoConfig := &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "test-git-unhealthy",
+					"namespace": "default",
+					"finalizers": []string{
+						"remove-orphan-resources",
+						"cleanup",
+					},
+				},
+				"spec": map[string]any{
+					"title": "Test Git Unhealthy",
+					"type":  "github",
+					"github": map[string]any{
+						"repository": "grafana/grafana",
+						"ref":        "main",
+					},
+					"workflows": []string{"write"},
+					"sync": map[string]any{
+						"enabled":         false,
+						"target":          "folder",
+						"intervalSeconds": 10,
+					},
+				},
 			},
-		})
+		}
+
+		// Create the repository
+		repo, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{})
+		require.NoError(t, err, "repository creation should succeed")
+		require.NotNil(t, repo)
+
+		// Wait a moment for health check to run
+		time.Sleep(2 * time.Second)
 
 		// Get the repository and check health status
-		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+		repo, err = helper.Repositories.Resource.Get(ctx, "test-git-unhealthy", metav1.GetOptions{})
 		require.NoError(t, err)
-		repository := unstructuredToRepository(t, repoObj)
 
-		// Repository should be healthy
-		require.True(t, repository.Status.Health.Healthy, "repository with write workflow should be healthy")
-		require.Empty(t, repository.Status.Health.Error, "should have no health errors")
-		require.Empty(t, repository.Status.FieldErrors, "should have no field errors")
+		// Extract health status
+		status, found, err := unstructured.NestedMap(repo.Object, "status")
+		require.NoError(t, err)
+		require.True(t, found, "status should be present")
 
-		// Verify Ready condition
-		readyCondition := findCondition(repository.Status.Conditions, provisioning.ConditionTypeReady)
-		require.NotNil(t, readyCondition, "Ready condition should exist")
-		require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+		healthy, found, err := unstructured.NestedBool(status, "healthy")
+		require.NoError(t, err)
+		require.True(t, found, "healthy field should be present")
+		require.False(t, healthy, "repository with workflows should be unhealthy without write permission")
+
+		// Cleanup
+		err = helper.Repositories.Resource.Delete(ctx, "test-git-unhealthy", metav1.DeleteOptions{})
+		require.NoError(t, err)
 	})
 }

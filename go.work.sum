@@ -1110,6 +1110,7 @@ github.com/grafana/grafana-plugin-sdk-go v0.284.0/go.mod h1:lHPniaSxq3SL5MxDIPy0
 github.com/grafana/grafana-plugin-sdk-go v0.286.0/go.mod h1:cNFa2EpURNF5Hy15kH7HfVdprNu+UEmNZx7TMWVdctY=
 github.com/grafana/grafana-plugin-sdk-go v0.286.1-0.20260206110612-f4c45260a42a/go.mod h1:+acajHDMI7l1/a5H+n5O+ewyXz+hlH4xKTLkFGg+LOI=
 github.com/grafana/grafana-plugin-sdk-go v0.287.0/go.mod h1:+acajHDMI7l1/a5H+n5O+ewyXz+hlH4xKTLkFGg+LOI=
+github.com/grafana/grafana-plugin-sdk-go v0.289.0/go.mod h1:1jspyz8OfKcRQMplKxcn0jt4aeXcK6GRz1PdRqLWNnk=
 github.com/grafana/grafana/apps/example v0.0.0-20260119093047-426e55f358f5/go.mod h1:NbjkuzchbQyNeGZ6lKRs4YNHh7JVdXO3UvBKTAl8u2Y=
 github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2/go.mod h1:M7bV60iRB61y0ISPG1HX/oNLZtlh0ZF22rUYwNkAKjo=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
