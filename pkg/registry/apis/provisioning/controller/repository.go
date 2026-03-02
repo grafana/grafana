@@ -75,6 +75,7 @@ type RepositoryController struct {
 	queue           workqueue.TypedRateLimitingInterface[*queueItem]
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
+	drainTimeout    time.Duration
 
 	registry    prometheus.Registerer
 	tracer      tracing.Tracer
@@ -100,6 +101,7 @@ func NewRepositoryController(
 	parallelOperations int,
 	resyncInterval time.Duration,
 	minSyncInterval time.Duration,
+	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
@@ -131,6 +133,7 @@ func NewRepositoryController(
 		tracer:          tracer,
 		resyncInterval:  resyncInterval,
 		minSyncInterval: minSyncInterval,
+		drainTimeout:    drainTimeout,
 		quotaGetter:     quotaGetter,
 	}
 
@@ -161,9 +164,13 @@ func repoKeyFunc(obj any) (string, error) {
 
 // Run starts the RepositoryController.
 //
+// The onStarted callback is invoked once all workers have been launched.
+// The onShutdown callback is invoked immediately when context cancellation is
+// detected, before draining in-flight work.
+//
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
 // until shutdown. Individual processing operations already have their own spans.
-func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func()) {
+func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
 
@@ -185,7 +192,22 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	onStarted()
 
 	<-ctx.Done()
-	logger.Info("Shutting down workers")
+	onShutdown()
+	logger.Info("Shutting down workers, draining queue")
+
+	drainDone := make(chan struct{})
+	go func() {
+		rc.queue.ShutDownWithDrain()
+		close(drainDone)
+	}()
+
+	select {
+	case <-drainDone:
+		logger.Info("Queue drained successfully")
+	case <-time.After(rc.drainTimeout):
+		logger.Warn("Drain timeout exceeded, forcing shutdown")
+		rc.queue.ShutDown()
+	}
 }
 
 func (rc *RepositoryController) runWorker(ctx context.Context) {
