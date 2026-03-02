@@ -34,6 +34,15 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org",
 		})
 	}
+	if hasAccess(ac.OrgPreferencesAccessEvaluator) {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+			Text:     "Custom themes",
+			Id:       "custom-themes",
+			SubTitle: "Manage custom themes for your organization",
+			Icon:     "palette",
+			Url:      s.cfg.AppSubURL + "/themes",
+		})
+	}
 	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text: "Settings", SubTitle: "View the settings defined in your Grafana config", Id: "server-settings", Url: s.cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
