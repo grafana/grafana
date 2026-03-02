@@ -103,7 +103,10 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   return (
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
       <div className={styles.bannerWrapper}>
-        <QueryEditorBanner panelEditor={panelEditor} />
+        <QueryEditorBanner
+          useQueryExperienceNext={panelEditor.state.useQueryExperienceNext ?? false}
+          onToggle={panelEditor.onToggleQueryEditorVersion}
+        />
       </div>
       <TabsBar hideBorder className={styles.tabsBar}>
         {tabs.map((t) => t.renderTab({ active: t.tabId === tab, onChangeTab: () => model.onChangeTab(t) }))}

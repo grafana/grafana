@@ -11,11 +11,14 @@ import {
   QUERY_EDITOR_BANNER_DISMISSED_KEY,
   QUERY_EDITOR_BANNER_FEEDBACK_URL,
 } from './PanelEditNext/constants';
-import { PanelEditor } from './PanelEditor';
 
-export function QueryEditorBanner({ panelEditor }: { panelEditor: PanelEditor }) {
+interface Props {
+  useQueryExperienceNext: boolean;
+  onToggle: () => void;
+}
+
+export function QueryEditorBanner({ useQueryExperienceNext, onToggle }: Props) {
   const styles = useStyles2(getStyles);
-  const { useQueryExperienceNext } = panelEditor.useState();
 
   const [dismissed, setDismissed] = useSessionStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
 
@@ -66,7 +69,7 @@ export function QueryEditorBanner({ panelEditor }: { panelEditor: PanelEditor })
           )}
         </a>
         {useQueryExperienceNext ? (
-          <button className={styles.actionLink} onClick={panelEditor.onToggleQueryEditorVersion}>
+          <button className={styles.actionLink} onClick={onToggle}>
             <Icon name="history" size="sm" />
             {t('dashboard-scene.query-editor-banner.go-back', 'Go back to classic')}
           </button>
@@ -75,8 +78,8 @@ export function QueryEditorBanner({ panelEditor }: { panelEditor: PanelEditor })
             label={t('dashboard-scene.query-editor-banner.new-editor', 'New editor')}
             showLabel={true}
             id="query-editor-version-banner"
-            value={useQueryExperienceNext ?? false}
-            onClick={panelEditor.onToggleQueryEditorVersion}
+            value={useQueryExperienceNext}
+            onClick={onToggle}
             aria-label={t('dashboard-scene.query-editor-banner.toggle-aria', 'Toggle between query editor v1 and v2')}
           />
         )}
