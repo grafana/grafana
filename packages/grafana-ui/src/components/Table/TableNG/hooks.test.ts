@@ -675,7 +675,7 @@ describe('TableNG hooks', () => {
               data: createDataFrame({ fields }),
             });
           }).result.current
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2); // 3 rows + header + padding
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + 16); // 3 rows + header + padding + scrollbar
       });
 
       it('calculates the height to return using default height', () => {
@@ -710,7 +710,7 @@ describe('TableNG hooks', () => {
               data: createDataFrame({ fields }),
             });
           }).result.current
-        ).toBe(defaultHeight * 3 + defaultNonNestedHeight + TABLE.CELL_PADDING * 2); // 3 nested rows + 1 non-nested row + header + padding
+        ).toBe(defaultHeight * 3 + defaultNonNestedHeight + TABLE.CELL_PADDING * 2 + 16); // 3 nested rows + 1 non-nested row + header + padding + scrollbar
       });
 
       it('uses a string-based default height for the nested rows', () => {
