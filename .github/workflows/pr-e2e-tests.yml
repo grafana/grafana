@@ -115,10 +115,7 @@ jobs:
         with:
           name: grafana-frontend
           path: |
-            public/build/
-            public/app/plugins/
-            public/emails/
-            public/views/
+            public/
             !public/**/*.ts
             !public/**/*.tsx
             !public/**/node_modules/
