@@ -1,13 +1,12 @@
-import {useMemo} from 'react'
+import { useMemo } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { arrayToDataFrame, DataFrame, DataTopic } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/internal';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-
-import { getXAnnotationFrames } from '../utils';
 import { TimeRange2 } from '@grafana/ui/internal';
 
+import { getXAnnotationFrames } from '../utils';
 
 interface Props {
   annotations: DataFrame[];
