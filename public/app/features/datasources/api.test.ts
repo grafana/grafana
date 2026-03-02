@@ -63,7 +63,7 @@ describe('Datasources / API', () => {
         secureJsonFields: {
           basicAuthPassword: true,
         },
-        readOnly: false,
+        readOnly: true,
         withCredentials: false,
       };
 
@@ -71,7 +71,7 @@ describe('Datasources / API', () => {
         name: 'fortytwo',
         namespace: 'default',
         uid: 'fortytwo',
-        resourceVersion: 'fortytwo',
+        resourceVersion: '',
         generation: 42,
         creationTimestamp: '1234',
         labels: { 'grafana.app/deprecatedInternalID': '42' },
@@ -85,6 +85,7 @@ describe('Datasources / API', () => {
         basicAuth: true,
         basicAuthUser: 'zaphod',
         isDefault: true,
+        readOnly: true,
       };
       let dsK8sSettings: DataSourceSettingsK8s = {
         kind: 'DataSource',
@@ -116,13 +117,13 @@ describe('Datasources / API', () => {
         isDefault: true,
         jsonData: { authType: 'bar' },
         secureJsonFields: {},
-        readOnly: false,
+        readOnly: true,
         withCredentials: false,
       };
       let k8sMetadata: K8sMetadata = {
         name: 'fortytwo',
         namespace: 'default',
-        resourceVersion: 'fortytwo',
+        resourceVersion: '',
         labels: { 'grafana.app/deprecatedInternalID': '42' },
         annotations: {},
       };
@@ -134,6 +135,7 @@ describe('Datasources / API', () => {
         basicAuth: true,
         basicAuthUser: 'zaphod',
         isDefault: true,
+        readOnly: true,
       };
       let dsK8sSettings: DataSourceSettingsK8s = {
         kind: 'DataSource',

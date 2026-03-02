@@ -176,32 +176,9 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 		meta.Suggestions = &jsonData.Suggestions
 	}
 
-	// Map category
+	// Map category - pass through any string value (even custom ones)
 	if jsonData.Category != "" {
-		var category pluginsv0alpha1.MetaJSONDataCategory
-		switch jsonData.Category {
-		case "tsdb":
-			category = pluginsv0alpha1.MetaJSONDataCategoryTsdb
-		case "logging":
-			category = pluginsv0alpha1.MetaJSONDataCategoryLogging
-		case "cloud":
-			category = pluginsv0alpha1.MetaJSONDataCategoryCloud
-		case "tracing":
-			category = pluginsv0alpha1.MetaJSONDataCategoryTracing
-		case "profiling":
-			category = pluginsv0alpha1.MetaJSONDataCategoryProfiling
-		case "sql":
-			category = pluginsv0alpha1.MetaJSONDataCategorySql
-		case "enterprise":
-			category = pluginsv0alpha1.MetaJSONDataCategoryEnterprise
-		case "iot":
-			category = pluginsv0alpha1.MetaJSONDataCategoryIot
-		case "other":
-			category = pluginsv0alpha1.MetaJSONDataCategoryOther
-		default:
-			category = pluginsv0alpha1.MetaJSONDataCategoryOther
-		}
-		meta.Category = &category
+		meta.Category = &jsonData.Category
 	}
 
 	// Map state

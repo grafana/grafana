@@ -70,8 +70,10 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// If repo is git, ensure no other repository is defined with a child path
-	if cfg.Spec.Type.IsGit() {
+	// If repo is git and sync is enabled, ensure no other repository is defined with a conflicting path.
+	// Path checks are skipped when sync is disabled to allow the onboarding wizard to create repositories
+	// in multiple steps (first with empty path, then configure path, then enable sync).
+	if cfg.Spec.Type.IsGit() && cfg.Spec.Sync.Enabled {
 		for _, v := range all {
 			// skip itself
 			if cfg.Name == v.Name {

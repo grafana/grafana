@@ -27,10 +27,12 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
-			ExpectedDashboards: 1,
-			ExpectedFolders:    1,
+			SkipSync:               true, // Prevent controller auto-sync racing with file copy
+			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
+		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Wait for the repository to be synced and check the Quota condition
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -69,10 +71,12 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 		}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should be set to QuotaUnlimited")
 	})
 
+	// Is only possible to set the first sync to exceed quota when the repo is created.
+	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
 	t.Run("quota condition is ResourceQuotaExceeded when limit is exceeded", func(t *testing.T) {
 		// Set a low resource limit
 		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 1 // Only allow 1 resource
+			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 2 resources
 		})
 		ctx := context.Background()
 
@@ -81,14 +85,16 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				// Adding 2 dashboards will exceed the limit of 1
+				// Adding 2 dashboards + 1 root folder will exceed the limit of 2
 				"testdata/all-panels.json":   "dashboard1.json",
 				"testdata/text-options.json": "dashboard2.json",
 			},
-			ExpectedDashboards: 2,
-			ExpectedFolders:    1,
+			SkipSync:               true, // Prevent controller auto-sync racing with file copy
+			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
+		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Wait for the repository to be synced and check the Quota condition
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -143,10 +149,12 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				// Adding 1 dashboard, well under the limit of 10
 				"testdata/all-panels.json": "dashboard1.json",
 			},
-			ExpectedDashboards: 1,
-			ExpectedFolders:    1,
+			SkipSync:               true, // Prevent controller auto-sync racing with file copy
+			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
+		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Wait for the repository to be synced and check the Quota condition
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -233,10 +241,12 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
-			ExpectedDashboards: 1,
-			ExpectedFolders:    1,
+			SkipSync:               true, // Prevent controller auto-sync racing with file copy
+			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
+		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Wait for the repository to be reconciled and check the QuotaStatus
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -291,10 +301,12 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
-			ExpectedDashboards: 1,
-			ExpectedFolders:    1,
+			SkipSync:               true, // Prevent controller auto-sync racing with file copy
+			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
+		helper.RequireRepoDashboardCount(t, repo, 1)
 
 		// Wait for the repository to be reconciled and check the QuotaStatus
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
