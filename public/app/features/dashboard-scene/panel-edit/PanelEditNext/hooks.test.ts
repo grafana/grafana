@@ -35,20 +35,22 @@ describe('buildVizAndDataPaneGrid', () => {
   it('places the controls row above the viz when controls are enabled', () => {
     const { gridTemplateAreas, gridTemplateRows } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true });
 
-    expect(gridTemplateAreas).toBe('"controls controls"\n"viz viz"\n"sidebar data-pane"');
-    expect(gridTemplateRows).toBe('auto 1fr 1fr');
+    expect(gridTemplateAreas).toBe(
+      '"controls controls"\n"viz viz"\n"version-toggle version-toggle"\n"sidebar data-pane"'
+    );
+    expect(gridTemplateRows).toBe('auto 1fr auto 1fr');
   });
 
   it('makes sidebar span every row when isSidebarFullWidth is true', () => {
     const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true, isSidebarFullWidth: true });
 
-    expect(gridTemplateAreas).toBe('"sidebar controls"\n"sidebar viz"\n"sidebar data-pane"');
+    expect(gridTemplateAreas).toBe('"sidebar controls"\n"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
   });
 
   it('converts vizRatio to fractional row height — ratio / (1 - ratio)', () => {
     // 0.5 → 1fr (equal split), 0.75 → 3fr (3x taller than data pane)
-    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.5 }).gridTemplateRows).toBe('1fr 1fr');
-    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.75 }).gridTemplateRows).toBe('3fr 1fr');
+    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.5 }).gridTemplateRows).toBe('1fr auto 1fr');
+    expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.75 }).gridTemplateRows).toBe('3fr auto 1fr');
   });
 
   it('converts sidebarRatio 0.5 to equal columns (minmax(220px, 1fr) 1fr)', () => {
