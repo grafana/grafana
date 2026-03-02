@@ -61,13 +61,14 @@ v0alpha1: {
 						}
 					}
 					response: {
-						#TeamHit: {
-							name: string
-							title: string
-							email: string
-							provisioned: bool
-							externalUID: string
-						}
+					#TeamHit: {
+						name: string
+						title: string
+						email: string
+						provisioned: bool
+						externalUID: string
+						accessControl?: {[string]: bool}
+					}
 						offset: int64
 						totalHits: int64
 						hits: [...#TeamHit]

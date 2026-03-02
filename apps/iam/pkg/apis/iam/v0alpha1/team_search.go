@@ -27,9 +27,10 @@ type TeamSearchResults struct {
 
 // +k8s:deepcopy-gen=true
 type TeamHit struct {
-	Name        string `json:"name"`
-	Title       string `json:"title"`
-	Email       string `json:"email,omitempty"`
-	Provisioned bool   `json:"provisioned,omitempty"`
-	ExternalUID string `json:"externalUID,omitempty"`
+	Name          string          `json:"name"`
+	Title         string          `json:"title"`
+	Email         string          `json:"email,omitempty"`
+	Provisioned   bool            `json:"provisioned,omitempty"`
+	ExternalUID   string          `json:"externalUID,omitempty"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }

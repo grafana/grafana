@@ -2,15 +2,19 @@ package iam
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -48,7 +52,7 @@ func TestTeamSearchFallback(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideStaticServiceForTests(cfg)
-			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
+			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/teams/search", nil)
@@ -185,7 +189,7 @@ func TestTeamSearchHandler(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideStaticServiceForTests(cfg)
-			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil)
+			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			endpoint := fmt.Sprintf("/teams/search?limit=%d", limit)
@@ -286,4 +290,217 @@ func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 }
 func (m *MockClient) GetQuotaUsage(ctx context.Context, in *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
 	return nil, nil
+}
+
+func mockTeamClientWithHits() *MockClient {
+	return &MockClient{
+		MockResponses: []*resourcepb.ResourceSearchResponse{
+			{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: "title"},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "team-1"}, Cells: [][]byte{[]byte("Team One")}},
+						{Key: &resourcepb.ResourceKey{Name: "team-2"}, Cells: [][]byte{[]byte("Team Two")}},
+					},
+				},
+				TotalHits: 2,
+			},
+		},
+	}
+}
+
+func TestTeamAccessControl(t *testing.T) {
+	partialClient := &mockTeamAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			allowed := map[string]bool{
+				"teams:read":             true,
+				"teams.permissions:read": true,
+				"teams.roles:read":       true,
+			}
+			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+			for _, check := range req.Checks {
+				for _, c := range teamAccessControlChecks {
+					if c.group == check.Group && c.resource == check.Resource && c.verb == check.Verb {
+						results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: allowed[c.action]}
+						break
+					}
+				}
+			}
+			return authlib.BatchCheckResponse{Results: results}, nil
+		},
+	}
+
+	perTeamClient := &mockTeamAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+			for _, check := range req.Checks {
+				allowed := false
+				for _, c := range teamAccessControlChecks {
+					if c.group == check.Group && c.resource == check.Resource && c.verb == check.Verb {
+						if check.Name == "team-1" {
+							allowed = c.action == "teams:read" || c.action == "teams:write"
+						}
+						break
+					}
+				}
+				results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: allowed}
+			}
+			return authlib.BatchCheckResponse{Results: results}, nil
+		},
+	}
+
+	errorClient := &mockTeamAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			return authlib.BatchCheckResponse{}, fmt.Errorf("access service unavailable")
+		},
+	}
+
+	tests := []struct {
+		name      string
+		url       string
+		client    authlib.AccessClient
+		checkHits func(t *testing.T, hits []iamv0alpha1.TeamHit)
+	}{
+		{
+			name:   "param absent - no access control on hits",
+			url:    "/teams/search",
+			client: authlib.FixedAccessClient(true),
+			checkHits: func(t *testing.T, hits []iamv0alpha1.TeamHit) {
+				t.Helper()
+				for _, hit := range hits {
+					assert.Nil(t, hit.AccessControl)
+				}
+			},
+		},
+		{
+			name:   "param false - no access control on hits",
+			url:    "/teams/search?accesscontrol=false",
+			client: authlib.FixedAccessClient(true),
+			checkHits: func(t *testing.T, hits []iamv0alpha1.TeamHit) {
+				t.Helper()
+				for _, hit := range hits {
+					assert.Nil(t, hit.AccessControl)
+				}
+			},
+		},
+		{
+			name:   "all allowed",
+			url:    "/teams/search?accesscontrol=true",
+			client: authlib.FixedAccessClient(true),
+			checkHits: func(t *testing.T, hits []iamv0alpha1.TeamHit) {
+				t.Helper()
+				for _, hit := range hits {
+					require.NotNil(t, hit.AccessControl)
+					for _, c := range teamAccessControlChecks {
+						assert.True(t, hit.AccessControl[c.action], "expected %s to be allowed", c.action)
+					}
+				}
+			},
+		},
+		{
+			name:   "all denied - empty map on hits",
+			url:    "/teams/search?accesscontrol=true",
+			client: authlib.FixedAccessClient(false),
+			checkHits: func(t *testing.T, hits []iamv0alpha1.TeamHit) {
+				t.Helper()
+				for _, hit := range hits {
+					assert.Empty(t, hit.AccessControl)
+				}
+			},
+		},
+		{
+			name:   "partial permissions",
+			url:    "/teams/search?accesscontrol=true",
+			client: partialClient,
+			checkHits: func(t *testing.T, hits []iamv0alpha1.TeamHit) {
+				t.Helper()
+				for _, hit := range hits {
+					require.NotNil(t, hit.AccessControl)
+					assert.True(t, hit.AccessControl["teams:read"])
+					assert.True(t, hit.AccessControl["teams.permissions:read"])
+					assert.True(t, hit.AccessControl["teams.roles:read"])
+					assert.False(t, hit.AccessControl["teams:write"])
+					assert.False(t, hit.AccessControl["teams:delete"])
+					assert.False(t, hit.AccessControl["teams.permissions:write"])
+				}
+			},
+		},
+		{
+			name:   "per-team scoped permissions",
+			url:    "/teams/search?accesscontrol=true",
+			client: perTeamClient,
+			checkHits: func(t *testing.T, hits []iamv0alpha1.TeamHit) {
+				t.Helper()
+				for _, hit := range hits {
+					if hit.Name == "team-1" {
+						require.NotNil(t, hit.AccessControl)
+						assert.True(t, hit.AccessControl["teams:read"])
+						assert.True(t, hit.AccessControl["teams:write"])
+						assert.False(t, hit.AccessControl["teams:delete"])
+						assert.False(t, hit.AccessControl["teams.permissions:write"])
+					} else {
+						assert.Empty(t, hit.AccessControl, "team-2 should have no permissions")
+					}
+				}
+			},
+		},
+		{
+			name:   "access service error - graceful degradation, empty map on hits",
+			url:    "/teams/search?accesscontrol=true",
+			client: errorClient,
+			checkHits: func(t *testing.T, hits []iamv0alpha1.TeamHit) {
+				t.Helper()
+				for _, hit := range hits {
+					assert.Empty(t, hit.AccessControl)
+				}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			searchHandler := &TeamSearchHandler{
+				log:          log.New("grafana-apiserver.teams.search"),
+				client:       mockTeamClientWithHits(),
+				tracer:       tracing.NewNoopTracerService(),
+				features:     featuremgmt.WithFeatures(),
+				accessClient: tc.client,
+			}
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", tc.url, nil)
+			req.Header.Add("content-type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+			searchHandler.DoTeamSearch(rr, req)
+
+			require.Equal(t, 200, rr.Code)
+
+			var resp iamv0alpha1.TeamSearchResults
+			require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+			require.Len(t, resp.Hits, 2)
+			tc.checkHits(t, resp.Hits)
+		})
+	}
+}
+
+type mockTeamAccessClient struct {
+	batchCheckFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error)
+}
+
+func (m *mockTeamAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{}, nil
+}
+
+func (m *mockTeamAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return nil, nil, nil
+}
+
+func (m *mockTeamAccessClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	if m.batchCheckFunc != nil {
+		return m.batchCheckFunc(ctx, info, req)
+	}
+	return authlib.BatchCheckResponse{}, nil
 }

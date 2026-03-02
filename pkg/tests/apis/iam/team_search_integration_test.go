@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -198,4 +199,86 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, 1, len(result.Hits), "should return 1 hit")
 		require.Equal(t, int64(1), result.Offset, "should return offset 1")
 	})
+}
+
+func TestIntegrationTeamSearch_AccessControl(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"teams.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesAuthnMutation,
+				},
+				UnifiedStorageEnableSearch: true,
+			})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			ctx := context.Background()
+			namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+
+			teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User:      helper.Org1.Admin,
+				Namespace: namespace,
+				GVR:       gvrTeams,
+			})
+
+			team1, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, team1)
+
+			t.Run("accesscontrol=true includes permissions on hits", func(t *testing.T) {
+				res := searchTeamsWithAccessControl(t, helper, namespace, "", true)
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.NotNil(t, hit.AccessControl, "expected AccessControl map on hit %s", hit.Name)
+					require.True(t, hit.AccessControl["teams:read"], "admin should have teams:read on %s", hit.Name)
+				}
+			})
+
+			t.Run("accesscontrol absent omits permissions from hits", func(t *testing.T) {
+				res := searchTeamsWithAccessControl(t, helper, namespace, "", false)
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.Empty(t, hit.AccessControl, "expected no AccessControl on hit %s when param absent", hit.Name)
+				}
+			})
+		})
+	}
+}
+
+func searchTeamsWithAccessControl(t *testing.T, helper *apis.K8sTestHelper, namespace string, query string, accessControl bool) *iamv0alpha1.TeamSearchResults {
+	q := url.Values{}
+	if query != "" {
+		q.Set("query", query)
+	}
+	q.Set("limit", "100")
+	if accessControl {
+		q.Set("accesscontrol", "true")
+	}
+
+	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?%s", namespace, q.Encode())
+
+	res := &iamv0alpha1.TeamSearchResults{}
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodGet,
+		Path:   path,
+	}, res)
+
+	require.Equal(t, 200, rsp.Response.StatusCode)
+	return res
 }
