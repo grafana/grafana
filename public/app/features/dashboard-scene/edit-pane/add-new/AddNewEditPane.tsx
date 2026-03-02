@@ -5,30 +5,33 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
-import { Sidebar, useStyles2 } from '@grafana/ui';
-import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { Sidebar, useStyles2, Icon, Button, useTheme2 } from '@grafana/ui';
 import addPanelImg from 'img/dashboards/add-panel.png';
 
-import { DashboardInteractions } from '../../utils/interactions';
+import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
 import { AddNewSection } from './AddNewSection';
+import { AddNewSectionItem, getAddNewSectionIconStyles } from './AddNewSectionItem';
 
 interface AddNewEditPaneProps {
   dashboard: SceneObject;
   selectedElement: SceneObject | undefined;
   onAddPanel: () => void;
+  onPastePanel: () => void;
 }
 
-export function AddNewEditPane({ onAddPanel, dashboard, selectedElement }: AddNewEditPaneProps) {
+export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedElement }: AddNewEditPaneProps) {
+  const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const dashboardScene = getDashboardSceneFor(dashboard);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
 
-  const onAddPanelClick = () => {
-    onAddPanel();
-    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(selectedElement));
+  const onStartDragging = (result: { draggableId: string }) => {
+    const mode = result.draggableId === 'paste-panel-drag' ? 'paste' : 'newPanel';
+    orchestrator?.startDraggingNewPanel(mode);
   };
 
   return (
@@ -38,41 +41,75 @@ export function AddNewEditPane({ onAddPanel, dashboard, selectedElement }: AddNe
         title={t('dashboard.add.new-panel.title', 'Panel')}
         description={t('dashboard.add.new-panel.description', 'Drag or click to add a panel')}
       >
-        <DragDropContext onDragStart={() => orchestrator?.startDraggingNewPanel()} onDragEnd={() => {}}>
+        <DragDropContext onDragStart={onStartDragging} onDragEnd={() => {}}>
           <Droppable droppableId="side-drop-id" isDropDisabled>
             {(dropProvided) => (
               <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
-                <div className={styles.dragContainer}>
-                  <Draggable draggableId="new-panel-drag" index={0}>
-                    {(dragProvided, dragSnapshot) => {
-                      return (
-                        <div
-                          role="button"
-                          data-testid={selectors.components.Sidebar.newPanelButton}
-                          tabIndex={0}
-                          ref={dragProvided.innerRef}
-                          {...dragProvided.draggableProps}
-                          {...dragProvided.dragHandleProps}
-                          className={cx(styles.imageContainer, dragSnapshot.isDragging && styles.dragging)}
-                          onClick={onAddPanelClick}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              onAddPanelClick();
-                            }
-                          }}
-                          aria-label={t('dashboard.add.new-panel.title', 'Panel')}
-                        >
-                          <img
-                            alt={t('dashboard.add.new-panel.button', 'Add new panel button')}
-                            src={addPanelImg}
-                            draggable={false}
-                          />
-                        </div>
-                      );
-                    }}
-                  </Draggable>
-                </div>
+                <Draggable draggableId="new-panel-drag" index={0}>
+                  {(dragProvided, dragSnapshot) => (
+                    <div
+                      role="button"
+                      data-testid={selectors.components.Sidebar.newPanelButton}
+                      tabIndex={0}
+                      ref={dragProvided.innerRef}
+                      {...dragProvided.draggableProps}
+                      {...dragProvided.dragHandleProps}
+                      className={cx(styles.imageContainer, dragSnapshot.isDragging && styles.dragging)}
+                      onClick={onAddPanel}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onAddPanel();
+                        }
+                      }}
+                      aria-label={t('dashboard.add.new-panel.title', 'Panel')}
+                    >
+                      <img
+                        alt={t('dashboard.add.new-panel.button', 'Add new panel button')}
+                        src={addPanelImg}
+                        draggable={false}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+                <Draggable draggableId="paste-panel-drag" index={1} isDragDisabled={!hasCopiedPanel}>
+                  {(dragProvided, _) => (
+                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps}>
+                      {hasCopiedPanel ? (
+                        <AddNewSectionItem
+                          iconSlot={
+                            <Button
+                              variant="secondary"
+                              fill="outline"
+                              className={getAddNewSectionIconStyles(theme)}
+                              {...dragProvided.dragHandleProps}
+                              role="button"
+                              tabIndex={0}
+                              onClick={onPastePanel}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  onPastePanel();
+                                }
+                              }}
+                              aria-label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
+                            >
+                              <Icon name="clipboard-alt" size="xl" />
+                            </Button>
+                          }
+                          label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
+                          description={t(
+                            'dashboard.canvas-actions.add.paste.description',
+                            'Click or drag to paste panel'
+                          )}
+                        />
+                      ) : (
+                        <div className={styles.placeholder} aria-hidden />
+                      )}
+                    </div>
+                  )}
+                </Draggable>
+                {dropProvided.placeholder}
               </div>
             )}
           </Droppable>
@@ -90,19 +127,19 @@ function getStyles(theme: GrafanaTheme2) {
     dragging: css({
       cursor: 'move',
     }),
-    dragContainer: css({
-      height: 150,
-    }),
     imageContainer: css({
       cursor: 'pointer',
       opacity: 0.8,
       overflow: 'hidden',
-      padding: theme.spacing(2, 0),
       borderRadius: theme.shape.radius.sm,
+      marginBottom: theme.spacing(2),
       width: '100%',
       '&:hover': {
         opacity: 1,
       },
+    }),
+    placeholder: css({
+      display: 'none',
     }),
   };
 }

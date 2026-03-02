@@ -148,7 +148,11 @@ export const DashboardInteractions = {
   trackUngroupClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
-  trackPastePanelClick() {
+  trackPastePanelClick(
+    source: 'sidebar' | 'canvas' = 'canvas',
+    target?: 'row' | 'tab' | 'dashboard',
+    action: 'drop' | 'click' = 'click'
+  ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel' });
   },
   trackDeleteDashboardElement(elementType: string) {
