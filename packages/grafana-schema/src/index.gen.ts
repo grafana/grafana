@@ -56,7 +56,8 @@ export {
   MappingType,
   SpecialValueMatch,
   DashboardCursorSync,
-  defaultDashboardCursorSync
+  defaultDashboardCursorSync,
+  MatcherType
 } from './raw/dashboard/x/types.gen';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's

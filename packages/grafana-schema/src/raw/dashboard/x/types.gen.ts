@@ -1033,6 +1033,14 @@ export interface LibraryPanelRef {
 }
 
 /**
+ * Indidates what type of field this matcher is limited to matching.
+ */
+export enum MatcherType {
+  Annotation = 1,
+  Nested = 0,
+}
+
+/**
  * Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
  * It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
  */
@@ -1045,6 +1053,10 @@ export interface MatcherConfig {
    * The matcher options. This is specific to the matcher implementation.
    */
   options?: unknown;
+  /**
+   * if set, limits the matcher to specific field types.
+   */
+  type?: MatcherType;
 }
 
 export const defaultMatcherConfig: Partial<MatcherConfig> = {

@@ -741,12 +741,17 @@ lineage: schemas: [{
 			uid: string
 		} @cuetsy(kind="interface")
 
+    // Indidates what type of field this matcher is limited to matching.
+    #MatcherType: 0 | 1 @cuetsy(kind="enum",memberNames="Nested|Annotation") @grafanamaturity(NeedsExpertReview)
+
 		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 		#MatcherConfig: {
 			// The matcher id. This is used to find the matcher implementation from registry.
 			id: string | *"" @grafanamaturity(NeedsExpertReview)
-			// The matcher options. This is specific to the matcher implementation.
+			// if set, limits the matcher to specific field types.
+      type?: #MatcherType
+      // The matcher options. This is specific to the matcher implementation.
 			options?: _ @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
@@ -859,7 +864,7 @@ lineage: schemas: [{
 			type: "datasource"
 			// The plugin type-id
 			group: string
-		} 
+		}
 
 		#ControlSourceRef: #DatasourceControlSourceRef
 	}
