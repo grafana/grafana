@@ -240,6 +240,18 @@ During conversion:
 - Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
 - Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
 
+### Regular expression compatibility
+
+Regular expressions in SQL expressions aren't fully compatible with MySQL standards.
+
+SQL expressions that use regular expression functions have limitations such as:
+
+- Lack of back-references.
+- No before/after text matching.
+- Differences in handling carriage return (`\r`) characters.
+
+There may be other minor differences as well.
+
 ### Schema changes and missing data
 
 SQL expressions have known limitations that may cause queries to fail or return unexpected results. These constraints are inherent to how the feature is implemented and should be understood when building queries.
