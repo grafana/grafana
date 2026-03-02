@@ -132,6 +132,7 @@ export const AnnotationsPlugin2 = ({
     annotations: xAnnos,
     clusteringMode,
     plotBox: plot?.bbox,
+    // @todo should we use time range from uplot?
     timeRange: { from: plot?.scales?.x?.min ?? -1, to: plot?.scales?.x?.max ?? -1 },
   });
   const exitWipEdit = useCallback(() => {
@@ -319,7 +320,6 @@ export const AnnotationsPlugin2 = ({
 
           markers.push(
             <AnnotationMarker2
-              plotBox={plot?.bbox}
               pinAnnotation={setAnnotation}
               isPinned={annoIdx === `${frameIdx}:${i}`}
               showOnHover={!annoIdx}

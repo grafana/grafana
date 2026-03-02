@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import uPlot, { BBox } from 'uplot';
 
 import { DataFrame, FieldType } from '@grafana/data';
+import { maybeSortFrame } from '@grafana/data/internal';
 import { TimeRange2 } from '@grafana/ui/internal';
 
 interface Props {
@@ -62,8 +63,9 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
 
           // append cluster regions to frame
           clusters.forEach((idxs, ci) => {
-            timeEndFrame.fields.forEach((field) => {
+            timeEndFrame.fields.forEach((field, fieldIdx) => {
               const vals = field.values;
+
               // @todo clean up
               if (field.name === 'time') {
                 // Push the first clustered annotation as the annotation region start time
@@ -99,10 +101,16 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
               } else if (field.name === 'type') {
                 // Update the type?
                 vals.push(ci);
+              } else if (field.name === 'id') {
+                // Update the id?
+                vals.push(ci);
               } else {
                 console.log('unexpected annotation field name', { field });
                 vals.push(null);
               }
+
+              // Set vals
+              // timeEndFrame.fields[fieldIdx].values = vals;
             });
           });
 
@@ -118,11 +126,23 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
       console.warn('Hover mode not implemented');
     }
 
-    return { outAnnos: clusteredAnnotations.length > 0 ? clusteredAnnotations : annotations };
+    // Sort clustered frames
+    return {
+      outAnnos:
+        clusteredAnnotations.length > 0
+          ? clusteredAnnotations.map((frame) =>
+              maybeSortFrame(
+                frame,
+                frame.fields.findIndex((field) => field.name === 'time')
+              )
+            )
+          : annotations,
+    };
   }, [annotations, clusteringMode, plotBox, timeRange]);
 
   return outAnnos;
 };
+
 const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotBox: BBox, timeRange: TimeRange2) => {
   const isRegionVals: boolean[] =
     frame.fields.find((f) => f.name === 'isRegion')?.values ?? Array(timeVals.length).fill(false);
@@ -145,7 +165,6 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotBox: 
           if (thisCluster.length === 0) {
             thisCluster.push(prevIdx);
             clusterIdx[prevIdx] = clusters.length;
-            // console.log('cluster::open', { prevIdx, clusters: { ...clusters }, clusterIdx: { ...clusterIdx } });
           }
           thisCluster.push(j);
           clusterIdx[j] = clusters.length;
@@ -153,7 +172,6 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotBox: 
           // close cluster
           if (thisCluster.length > 0) {
             clusters.push(thisCluster);
-            // console.log('cluster::close', { thisCluster, clusters: { ...clusters }, clusterIdx: { ...clusterIdx } });
             thisCluster = [];
           }
         }
@@ -166,11 +184,11 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotBox: 
   // close cluster
   if (thisCluster.length > 0) {
     clusters.push(thisCluster);
-    // console.log('cluster::lateClose', { thisCluster, clusters: { ...clusters }, clusterIdx: { ...clusterIdx } });
   }
 
   return { clusterIdx, clusters };
 };
+
 const calculateMergeThreshold = (timeRange: TimeRange2, plotBox: BBox) => {
   const pixelThreshold = 24 * uPlot.pxRatio;
   const dt = timeRange.to - timeRange.from;

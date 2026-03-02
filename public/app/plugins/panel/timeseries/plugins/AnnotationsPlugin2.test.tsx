@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { ScopedVars } from '@grafana/data';
+import { dateTimeFormat, ScopedVars, systemDateFormats } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelContext, UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
 import { TimeRange2 } from '@grafana/ui/internal';
@@ -15,6 +15,7 @@ import {
   mockAnnotationFrame,
   mockIRMAnnotation,
   mockIRMAnnotationRegion,
+  mockIRMClusteringAnnotation,
 } from './mocks/mockAnnotationFrames';
 
 const minTime = 1759388895560;
@@ -37,8 +38,22 @@ jest.mock('uplot', () => {
     return Math.min(nt * plotWidth);
   });
   const redraw = jest.fn();
-  return jest.fn().mockImplementation(() => {
+  return jest.fn().mockImplementation((opts?: Partial<uPlot.Options>) => {
     return {
+      ...jest.requireActual('uplot'),
+      bbox: {
+        show: true,
+        left: 0,
+        top: 0,
+        width: plotWidth,
+        height: plotWidth,
+      },
+      scales: {
+        x: {
+          min: minTime,
+          max: maxTime,
+        },
+      },
       setData: setDataMock,
       setSize: setSizeMock,
       initialize: initializeMock,
@@ -48,9 +63,11 @@ jest.mock('uplot', () => {
       rect: {
         width: plotWidth,
       },
+
       root: {
         querySelector: jest.fn().mockImplementation(() => document.getElementById('grafana-portal-container')),
       },
+      ...opts,
     };
   });
 });
@@ -82,13 +99,19 @@ uplotMockInstance.setData.mockImplementationOnce(() => {});
 describe('AnnotationsPlugin2', () => {
   let hooks: Record<string, (u: uPlot) => {}> = {};
   let config: UPlotConfigBuilder;
-  const setUp = (props?: Partial<React.ComponentProps<typeof AnnotationsPlugin2>>) => {
+  const setUp = (
+    props?: Partial<React.ComponentProps<typeof AnnotationsPlugin2>>,
+    uPlotProps?: Partial<uPlot.Options>
+  ) => {
     function applyReady() {
       act(() => {
         //@ts-ignore
-        hooks.ready(new uPlot());
+        hooks.ready(new uPlot(uPlotProps));
       });
     }
+
+    // Manually set static property
+    uPlot.pxRatio = 2;
 
     const result = render(
       <div>
@@ -397,7 +420,62 @@ describe('AnnotationsPlugin2', () => {
   });
 
   describe('options', () => {
-    it.todo('clustering');
+    describe('clustering', () => {
+      it('should not cluster', async () => {
+        // should cluster all points within 48px
+        setUp({
+          annotations: [mockIRMClusteringAnnotation],
+          annotationsOptions: {
+            clustering: false,
+          },
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers.length).toEqual(4);
+      });
+
+      it('should cluster', async () => {
+        // should cluster all points within 48px
+        setUp({
+          annotations: [mockIRMClusteringAnnotation],
+          annotationsOptions: {
+            clustering: true,
+          },
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers.length).toEqual(2);
+        await userEvent.click(markers[0]);
+
+        // The first three annotations should get clustered, let's make sure the header includes the formatted time range
+        const startTime = dateTimeFormat(mockIRMClusteringAnnotation.fields[2].values[0], {
+          format: systemDateFormats.fullDate,
+        });
+
+        const endTime = dateTimeFormat(mockIRMClusteringAnnotation.fields[2].values[2], {
+          format: systemDateFormats.fullDate,
+        });
+
+        expect(screen.getByText(`${startTime} - ${endTime}`));
+
+        // Assert the tooltip body contains the title and the text
+        const titles = screen.getAllByTestId('mock-annotation-title');
+        expect(titles).toHaveLength(3);
+        expect(titles[0]).toBeVisible();
+
+        const texts = screen.getAllByTestId('mock-annotation-text');
+        expect(texts).toHaveLength(3);
+        expect(texts[0]).toBeVisible();
+
+        // // Assert all of the titles are rolled-up and rendered
+        expect(titles[0]).toHaveTextContent('prod-000-writes-error');
+        expect(titles[1]).toHaveTextContent('prod-001-writes-error');
+        expect(titles[2]).toHaveTextContent('LogsDeleteRequestProcessingStuck (dev-us-west-0, notify)');
+        //
+        // // Assert all of the text are rolled-up and ren rendered
+        expect(texts[0]).toHaveTextContent('(>16MB)');
+        expect(texts[1]).toHaveTextContent('(>32MB)');
+        expect(texts[2]).toHaveTextContent('Declared by Ada');
+      });
+    });
     it.todo('multiLane');
   });
 

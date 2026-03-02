@@ -4,7 +4,6 @@ import { useFloating } from '@floating-ui/react';
 import * as React from 'react';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BBox } from 'uplot';
 
 import { ActionModel, DataFrame, GrafanaTheme2, InterpolateFunction, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -31,7 +30,6 @@ interface AnnoBoxProps {
   pinAnnotation: (pin: boolean) => void;
   isPinned: boolean;
   showOnHover: boolean;
-  plotBox?: BBox;
 }
 const STATE_DEFAULT = 0;
 const STATE_EDITING = 1;
@@ -51,14 +49,14 @@ export const AnnotationMarker2 = ({
   pinAnnotation,
   showOnHover,
   isPinned,
-  plotBox,
 }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
 
   const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
   const [isHovering, setIsHovering] = useState(false);
-  const isClustering = annoVals.isRegion[annoIdx] && annoVals.clusterIdx?.[annoIdx];
+  const isClustering =
+    annoVals.isRegion[annoIdx] && annoVals.clusterIdx?.[annoIdx] !== undefined && annoVals.clusterIdx?.[annoIdx] > -1;
 
   const { refs, floatingStyles } = useFloating({
     open: true,
