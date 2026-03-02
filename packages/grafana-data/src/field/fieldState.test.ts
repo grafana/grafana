@@ -1,7 +1,7 @@
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { DataFrame, TIME_SERIES_TIME_FIELD_NAME, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
 
-import { decoupleHideFromState, getFieldDisplayName, getFrameDisplayName } from './fieldState';
+import { cacheFieldDisplayNames, decoupleHideFromState, getFieldDisplayName, getFrameDisplayName } from './fieldState';
 
 interface TitleScenario {
   frames: DataFrame[];
@@ -282,5 +282,48 @@ describe('decoupleHideFromState', () => {
     });
 
     expect(frame.fields[0].state?.hideFrom).not.toBeUndefined();
+  });
+});
+
+describe('cacheFieldDisplayNames', () => {
+  it('should cache field display names', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Field 1' }],
+    });
+    cacheFieldDisplayNames([frame]);
+    expect(frame.fields[0].state?.displayName).toEqual('Field 1');
+  });
+
+  it('should cache field display names for nested frames', () => {
+    const frame = toDataFrame({
+      fields: [
+        {
+          name: 'Field 1',
+          type: FieldType.nestedFrames,
+          values: [
+            [
+              toDataFrame({
+                fields: [
+                  { name: 'Field 2', type: FieldType.number, values: [1, 2, 3], config: { displayName: 'Field 2' } },
+                ],
+              }),
+              toDataFrame({
+                fields: [
+                  {
+                    name: 'Field 2',
+                    type: FieldType.boolean,
+                    values: [false, true, false],
+                    config: { displayName: 'Field 3' },
+                  },
+                ],
+              }),
+            ],
+          ],
+        },
+      ],
+    });
+    cacheFieldDisplayNames([frame]);
+    expect(frame.fields[0].values[0][0].fields[0].state?.displayName).toEqual('Field 2');
+    expect(frame.fields[0].values[0][1].fields[0].state?.displayName).toEqual('Field 3');
   });
 });

@@ -30,13 +30,14 @@ test.describe(
       });
 
       // confirm that the second row of the table is tall due to the content in it
-      await expect(getCellHeight(page, 2, 1)).resolves.toBeGreaterThan(100);
+      const table = page.locator('.rdg');
+      await expect(getCellHeight(table, 2, 1)).resolves.toBeGreaterThan(100);
 
       // set the max row height to 80, watch the row shrink
       const maxRowHeightInput = page.getByLabel('Max row height').last();
       await maxRowHeightInput.fill('80');
       await expect(async () => {
-        await expect(getCellHeight(page, 2, 1)).resolves.toBeLessThan(100);
+        await expect(getCellHeight(table, 2, 1)).resolves.toBeLessThan(100);
       }).toPass();
     });
   }

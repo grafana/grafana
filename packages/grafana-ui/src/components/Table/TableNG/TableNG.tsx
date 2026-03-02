@@ -3,6 +3,7 @@ import 'react-data-grid/lib/styles.css';
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import {
+  AriaAttributes,
   CSSProperties,
   type JSX,
   Key,
@@ -28,6 +29,7 @@ import {
 } from 'react-data-grid';
 
 import {
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
   FALLBACK_COLOR,
@@ -60,6 +62,7 @@ import {
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNestedRows,
   usePaginatedRows,
   useRowHeight,
   useScrollbarWidth,
@@ -85,13 +88,12 @@ import {
   TableSummaryRow,
 } from './types';
 import {
-  applySort,
   calculateFooterHeight,
   canFieldBeColorized,
+  compileFrameToRecords,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
-  frameToRecords,
   getAlignment,
   getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
@@ -113,6 +115,7 @@ import {
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
+type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
 export function TableNG(props: TableNGProps) {
   const {
@@ -123,7 +126,7 @@ export function TableNG(props: TableNGProps) {
     enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
-    frozenColumns = 0,
+    frozenColumns: _frozenColumns = 0,
     getActions = () => [],
     height,
     maxRowHeight: _maxRowHeight,
@@ -180,36 +183,75 @@ export function TableNG(props: TableNGProps) {
     }
     return getDisplayName(firstNestedField);
   }, [data, hasNestedFrames]);
-  const rows = useMemo(() => frameToRecords(data, nestedFramesFieldName), [data, nestedFramesFieldName]);
-  const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
+  const frameToRecords = useMemo(
+    () => compileFrameToRecords(data, nestedFramesFieldName),
+    [data, nestedFramesFieldName]
+  );
+  const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
 
-  const {
-    rows: filteredRows,
-    filter,
-    setFilter,
-    crossFilterOrder,
-    crossFilterRows,
-  } = useFilteredRows(rows, data.fields, { hasNestedFrames });
+  const nestedData = useMemo(
+    (): DataFrame[] | undefined =>
+      hasNestedFrames
+        ? data.fields.find((f) => getDisplayName(f) === nestedFramesFieldName)?.values.map((v) => v[0])
+        : undefined,
+    [data, nestedFramesFieldName, hasNestedFrames]
+  );
+  const firstRowNestedData = useMemo(
+    () => (hasNestedFrames && nestedData ? nestedData[0] : undefined),
+    [nestedData, hasNestedFrames]
+  );
+  const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
+  const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
+
+  const { rows: filteredRows, filter, setFilter } = useFilteredRows(rows, data.fields, hasNestedFrames);
 
   const {
     rows: sortedRows,
     sortColumns,
     setSortColumns,
-  } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy: sortBy });
+  } = useSortedRows(filteredRows, data.fields, nestedFields, { hasNestedFrames, initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
+  const nestedRows = useNestedRows(rows, nestedData, hasNestedFrames, nestedFramesFieldName, filter, sortColumns);
+
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
+  const onCellClick: OnCellClick = useCallback(
+    ({ column, row }, ev) => {
+      // we attach field to the column, but it doesn't
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const field = (column as unknown as TableColumn).field;
+
+      // let the click event through for the expander column, since it has its own click handler for expanding/collapsing rows.
+      if (column.key === EXPANDED_COLUMN_KEY) {
+        return;
+      }
+
+      if (
+        ev.target instanceof HTMLElement &&
+        // this walks up the tree to find either a faux link wrapper or the cell root
+        // it then only proceeds if we matched the faux link wrapper
+        ev.target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
+      ) {
+        const rowIdx = row.__index;
+        setTooltipState({
+          coords: {
+            clientX: ev.clientX,
+            clientY: ev.clientY,
+          },
+          links: getCellLinks(field, rowIdx),
+          actions: getCellActions(field, rowIdx),
+        });
+        ev.preventGridDefault();
+      }
+    },
+    [getCellActions]
+  );
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
   // vt scrollbar accounting for column auto-sizing
-
-  const defaultRowHeight = useMemo(
-    () => getDefaultRowHeight(theme, visibleFields, cellHeight),
-    [theme, visibleFields, cellHeight]
-  );
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
   const availableWidth = useMemo(
@@ -221,6 +263,8 @@ export function TableNG(props: TableNGProps) {
     () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
     [data.fields, getCellColorInlineStyles]
   );
+  const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
+
   const typographyCtx = useMemo(
     () =>
       createTypographyContext(
@@ -231,6 +275,8 @@ export function TableNG(props: TableNGProps) {
     [theme]
   );
 
+  // https://github.com/grafana/grafana/issues/118984: nested tables don't support frozen columns yet.
+  const frozenColumns = useMemo(() => (hasNestedFrames ? 0 : _frozenColumns), [hasNestedFrames, _frozenColumns]);
   const [widths, numFrozenColsFullyInView] = useColWidths(visibleFields, availableWidth, frozenColumns);
 
   const headerHeight = useHeaderHeight({
@@ -243,14 +289,33 @@ export function TableNG(props: TableNGProps) {
   });
   // the minimum max row height we should honor is a single line of text.
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
+  const visibleNestedRowCounts = useMemo(
+    () => nestedRows.map((row, idx) => (expandedRows.has(idx) ? row.final.length : null)),
+    [nestedRows, expandedRows]
+  );
+
+  const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
+  const defaultRowHeight = useMemo(
+    () => getDefaultRowHeight(theme, visibleFields, cellHeight),
+    [theme, visibleFields, cellHeight]
+  );
+  const defaultNestedRowHeight = useMemo(
+    () => getDefaultRowHeight(theme, nestedVisibleFields, cellHeight),
+    [theme, nestedVisibleFields, cellHeight]
+  );
+
   const rowHeight = useRowHeight({
     columnWidths: widths,
     fields: visibleFields,
     hasNestedFrames,
     defaultHeight: defaultRowHeight,
-    expandedRows,
+    defaultNestedHeight: defaultNestedRowHeight,
+    visibleNestedRowCounts,
     typographyCtx,
     maxHeight: maxRowHeight,
+    nestedColWidths: nestedFieldWidths,
+    nestedFields: nestedVisibleFields,
+    nestedRows,
   });
 
   const {
@@ -258,6 +323,7 @@ export function TableNG(props: TableNGProps) {
     page,
     setPage,
     numPages,
+    numRows,
     pageRangeStart,
     pageRangeEnd,
     smallPagination,
@@ -268,7 +334,13 @@ export function TableNG(props: TableNGProps) {
     footerHeight,
     headerHeight: hasHeader ? TABLE.HEADER_HEIGHT : 0,
     rowHeight,
+    hasNestedFrames,
   });
+
+  const isExpanded = useCallback(
+    (row: TableRow) => (row.__depth > 0 ? expandedRows.has(row.__index) : false),
+    [expandedRows]
+  );
 
   const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
   useEffect(() => {
@@ -311,24 +383,29 @@ export function TableNG(props: TableNGProps) {
 
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
+    if (typeof defaultNestedRowHeight === 'string') {
+      return (row: TableRow) => (isExpanded(row) ? TABLE.MAX_CELL_HEIGHT : 0);
+    }
     if (typeof rowHeight === 'function') {
-      return rowHeight;
+      // this is safe because we only return a (row: TableRow) => string function when defaultNestedRowHeight is a string.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return rowHeight as unknown as (row: TableRow) => number;
     }
     if (typeof rowHeight === 'string') {
       return () => TABLE.MAX_CELL_HEIGHT;
     }
     return () => rowHeight;
-  }, [rowHeight]);
+  }, [rowHeight, defaultNestedRowHeight, isExpanded]);
 
   const renderRow = useMemo(
-    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
-    [data, enableSharedCrosshair, expandedRows, panelContext]
+    () => renderRowFactory(data.fields, panelContext, isExpanded, enableSharedCrosshair),
+    [data.fields, panelContext, isExpanded, enableSharedCrosshair]
   );
 
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization: !IS_SAFARI_26 && enableVirtualization !== false && rowHeight !== 'auto',
+        enableVirtualization: !IS_SAFARI_26 && enableVirtualization !== false && typeof rowHeight !== 'string',
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
@@ -368,11 +445,13 @@ export function TableNG(props: TableNGProps) {
 
   const buildNestedTableExpanderColumn = useCallback(
     (
-      nestedColumns: TableColumn[],
+      nestedColumnsMatrix: FromFieldsResult[],
       hasNestedHeaders: boolean,
       renderers: Renderers<TableRow, TableSummaryRow>
     ): TableColumn => ({
       key: EXPANDED_COLUMN_KEY,
+      sortable: false,
+      resizable: false,
       name: t('grafana-ui.table.nested-table.expander-column-name', 'Expand nested rows'),
       field: {
         name: '',
@@ -398,30 +477,22 @@ export function TableNG(props: TableNGProps) {
           return (
             <RowExpander
               rowId={rowId}
-              isExpanded={expandedRows.has(rowIdx)}
+              isExpanded={isExpanded(row)}
               onCellExpand={() => {
-                if (expandedRows.has(rowIdx)) {
-                  expandedRows.delete(rowIdx);
-                } else {
-                  expandedRows.add(rowIdx);
-                }
-                setExpandedRows(new Set(expandedRows));
+                setExpandedRows((er) => {
+                  if (er.has(rowIdx)) {
+                    er.delete(rowIdx);
+                  } else {
+                    er.add(rowIdx);
+                  }
+                  return new Set(er);
+                });
               }}
             />
           );
         }
 
-        // Type guard to check if data exists as it's optional
-        const nestedData = row.data;
-        if (!nestedData) {
-          return null;
-        }
-
-        const expandedRecords = applySort(
-          frameToRecords(nestedData, nestedFramesFieldName),
-          nestedData.fields,
-          sortColumns
-        );
+        const expandedRecords = nestedRows[row.__index]?.final ?? [];
         if (!expandedRecords.length) {
           return (
             <div className={styles.noDataNested}>
@@ -430,16 +501,19 @@ export function TableNG(props: TableNGProps) {
           );
         }
 
+        const nestedColumns = nestedColumnsMatrix[row.__index].columns;
+
         return (
           <div id={rowId}>
             <DataGrid<TableRow, TableSummaryRow>
               {...commonDataGridProps}
               className={clsx(styles.grid, styles.gridNested)}
-              headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
+              headerRowClass={clsx(styles.headerRow, hasNestedHeaders ? '' : styles.displayNone)}
               headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
               columns={nestedColumns}
               rows={expandedRecords}
               renderers={renderers}
+              onCellClick={onCellClick}
             />
           </div>
         );
@@ -458,16 +532,22 @@ export function TableNG(props: TableNGProps) {
       styles.displayNone,
       styles.noDataNested,
       data.fields.length,
-      uniqueId,
-      nestedFramesFieldName,
-      sortColumns,
       commonDataGridProps,
-      expandedRows,
+      isExpanded,
+      nestedRows,
+      onCellClick,
+      uniqueId,
     ]
   );
 
   const fromFields = useCallback(
-    (f: Field[], widths: number[]): FromFieldsResult => {
+    (
+      f: Field[],
+      widths: number[],
+      frame: DataFrame,
+      rawRows: TableRow[],
+      visibleRows: TableRow[]
+    ): FromFieldsResult => {
       const result: FromFieldsResult = {
         columns: [],
         cellRootRenderers: {},
@@ -526,8 +606,8 @@ export function TableNG(props: TableNGProps) {
           : undefined;
 
         const shouldOverflow =
-          !IS_SAFARI_26 && rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
-        const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
+          !IS_SAFARI_26 && typeof rowHeight !== 'string' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
+        const textWrap = typeof rowHeight === 'string' || shouldTextWrap(field);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
         const cellStyleOptions: TableCellStyleOptions = {
           textAlign,
@@ -542,7 +622,7 @@ export function TableNG(props: TableNGProps) {
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
         const styleFieldValue = field.config.custom?.styleField;
-        const styleField = styleFieldValue ? data.fields.find(predicateByName(styleFieldValue)) : undefined;
+        const styleField = styleFieldValue ? frame.fields.find(predicateByName(styleFieldValue)) : undefined;
         const styleFieldName = styleField ? getDisplayName(styleField) : undefined;
         const hasValidStyleField = Boolean(styleFieldName);
 
@@ -583,7 +663,7 @@ export function TableNG(props: TableNGProps) {
               className={clsx(
                 props.className,
                 cellParentStyles,
-                cellSpecificStyles != null && { [cellSpecificStyles]: maxRowHeight == null }
+                cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
               )}
               style={style}
             />
@@ -600,7 +680,6 @@ export function TableNG(props: TableNGProps) {
           // NOTE: some cell types still require a height to be passed down, so that's why string-based
           // cell types are going to just pass down the max cell height as a numeric height for those cells.
           const height = rowHeightFn(props.row);
-          const frame = data;
 
           let result = (
             <>
@@ -647,7 +726,7 @@ export function TableNG(props: TableNGProps) {
 
         const tooltipFieldName = field.config.custom?.tooltip?.field;
         if (tooltipFieldName) {
-          const tooltipField = data.fields.find(predicateByName(tooltipFieldName));
+          const tooltipField = frame.fields.find(predicateByName(tooltipFieldName));
           if (tooltipField) {
             const tooltipDisplayName = getDisplayName(tooltipField);
             const tooltipCellOptions = getCellOptions(tooltipField);
@@ -685,7 +764,7 @@ export function TableNG(props: TableNGProps) {
                 tooltipSpecificStyles,
                 tooltipLinkStyles
               ),
-              data,
+              data: frame,
               disableSanitizeHtml,
               field: tooltipField,
               getActions: getCellActions,
@@ -737,15 +816,14 @@ export function TableNG(props: TableNGProps) {
           renderHeaderCell: ({ column, sortDirection }) => (
             <HeaderCell
               column={column}
-              rows={rows}
+              rows={rawRows}
               field={field}
               filter={filter}
               setFilter={setFilter}
               disableKeyboardEvents={disableKeyboardEvents}
-              crossFilterOrder={crossFilterOrder}
-              crossFilterRows={crossFilterRows}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
+              parentIndex={visibleRows[0]?.__parentIndex}
               selectFirstCell={() => {
                 gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
               }}
@@ -753,7 +831,7 @@ export function TableNG(props: TableNGProps) {
           ),
           renderSummaryCell: () => (
             <SummaryCell
-              rows={sortedRows}
+              rows={visibleRows}
               footers={footers}
               field={field}
               colIdx={i}
@@ -773,7 +851,6 @@ export function TableNG(props: TableNGProps) {
       rowHeight,
       maxRowHeight,
       applyToRowBgFn,
-      data,
       frozenColumns,
       numFrozenColsFullyInView,
       getCellColorInlineStyles,
@@ -782,33 +859,33 @@ export function TableNG(props: TableNGProps) {
       getCellActions,
       disableSanitizeHtml,
       getTextColorForBackground,
-      rows,
       filter,
       setFilter,
       disableKeyboardEvents,
-      crossFilterOrder,
-      crossFilterRows,
       showTypeIcons,
-      sortedRows,
       footers,
       isUniformFooter,
     ]
   );
 
-  // set up the first row's nested data and the nest field widths using useColWidths to avoid
-  // unnecessary re-renders on re-size.
-  const firstRowNestedData = useMemo(
-    () => (hasNestedFrames ? rows.find((r) => r.data)?.data : undefined),
-    [hasNestedFrames, rows]
+  const nestedColumnsMatrix = useMemo(
+    () =>
+      rows
+        .filter((r) => r.__depth > 0)
+        .map((r) =>
+          fromFields(
+            nestedVisibleFields,
+            nestedFieldWidths,
+            nestedData![r.__index]!,
+            nestedRows[r.__index].raw,
+            nestedRows[r.__index].final
+          )
+        ),
+    [rows, nestedData, nestedRows, nestedVisibleFields, nestedFieldWidths, fromFields]
   );
-  const nestedVisibleFields = useMemo(
-    () => (firstRowNestedData ? getVisibleFields(firstRowNestedData.fields) : []),
-    [firstRowNestedData]
-  );
-  const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
 
   const { columns, cellRootRenderers } = useMemo(() => {
-    const result = fromFields(visibleFields, widths);
+    const result = fromFields(visibleFields, widths, data, rows, sortedRows);
 
     // if nested frames are present, augment the columns to include the nested table expander column.
     if (!firstRowNestedData) {
@@ -817,33 +894,32 @@ export function TableNG(props: TableNGProps) {
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
     const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
-    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
-    const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
-      nestedVisibleFields,
-      nestedFieldWidths
-    );
+    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, isExpanded, enableSharedCrosshair);
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
 
     // If we have nested frames, we need to add a column for the row expansion
     result.columns.unshift(
-      buildNestedTableExpanderColumn(nestedColumns, hasNestedHeaders, {
+      buildNestedTableExpanderColumn(nestedColumnsMatrix, hasNestedHeaders, {
         renderRow,
-        renderCell: (key, props) => nestedCellRootRenderers[props.column.key](key, props),
+        renderCell: (key, props) =>
+          nestedColumnsMatrix[props.row.__parentIndex!].cellRootRenderers[props.column.key](key, props),
       })
     );
 
     return result;
   }, [
     buildNestedTableExpanderColumn,
+    data,
     enableSharedCrosshair,
-    expandedRows,
     firstRowNestedData,
     fromFields,
-    nestedFieldWidths,
-    nestedVisibleFields,
+    isExpanded,
+    nestedColumnsMatrix,
     panelContext,
+    rows,
+    sortedRows,
     visibleFields,
     widths,
   ]);
@@ -859,7 +935,6 @@ export function TableNG(props: TableNGProps) {
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
-  const numRows = sortedRows.length;
 
   let rendered = (
     <>
@@ -874,33 +949,11 @@ export function TableNG(props: TableNGProps) {
         isRowSelectionDisabled={() => initialRowIndex !== undefined}
         selectedRows={selectedRows}
         onSelectedRowsChange={setSelectedRows}
-        headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
+        headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
         headerRowHeight={headerHeight}
-        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
-          // Note: could be column.field; JS says yes, but TS says no!
-          const field = columns[column.idx].field;
-
-          if (
-            target instanceof HTMLElement &&
-            // this walks up the tree to find either a faux link wrapper or the cell root
-            // it then only proceeds if we matched the faux link wrapper
-            target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
-          ) {
-            const rowIdx = row.__index;
-            setTooltipState({
-              coords: {
-                clientX,
-                clientY,
-              },
-              links: getCellLinks(field, rowIdx),
-              actions: getCellActions(field, rowIdx),
-            });
-
-            preventGridDefault();
-          }
-        }}
+        onCellClick={onCellClick}
         onCellKeyDown={({ column, row }, event) => {
-          // if top-left cell, use default browser tabbing and
+          // if top-left cell, use default browser tabbing
           if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
             event.preventGridDefault();
             gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 }); // select the far right cell of the header
@@ -969,42 +1022,55 @@ export function TableNG(props: TableNGProps) {
 /**
  * this is passed to the top-level `renderRow` prop on DataGrid. applies aria attributes and custom event handlers.
  */
-const renderRowFactory =
-  (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
-  // eslint-disable-next-line react/display-name
-  (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
+const renderRowFactory = (
+  fields: Field[],
+  panelContext: PanelContext,
+  isExpanded: (row: TableRow) => boolean,
+  enableSharedCrosshair: boolean
+) => {
+  const onMouseLeave = () => {
+    panelContext.eventBus.publish(new DataHoverClearEvent());
+  };
+  const onMouseEnter = (timeField: Field, rowIdx: number) => {
+    panelContext.eventBus.publish(
+      new DataHoverEvent({
+        point: {
+          time: timeField?.values[rowIdx],
+        },
+      })
+    );
+  };
+
+  let timeField: Field | undefined;
+  if (enableSharedCrosshair) {
+    timeField = fields.find((f) => f.type === FieldType.time);
+  }
+
+  const renderRow = (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
-    const rowIdx = row.__index;
-    const isExpanded = expandedRows.has(rowIdx);
 
     // Don't render non expanded child rows
-    if (row.__depth === 1 && !isExpanded) {
+    if (row.__depth > 0 && !isExpanded(row)) {
       return null;
     }
 
-    // Add aria-expanded to parent rows that have nested data
-    if (row.data) {
-      return <Row key={key} aria-level={row.__index + 1} aria-expanded={isExpanded} {...props} />;
-    }
-
     const handlers: Partial<typeof props> = {};
-    if (enableSharedCrosshair) {
-      const timeField = fields.find((f) => f.type === FieldType.time);
-      if (timeField) {
-        handlers.onMouseEnter = () => {
-          panelContext.eventBus.publish(
-            new DataHoverEvent({
-              point: {
-                time: timeField?.values[rowIdx],
-              },
-            })
-          );
-        };
-        handlers.onMouseLeave = () => {
-          panelContext.eventBus.publish(new DataHoverClearEvent());
-        };
-      }
+    if (enableSharedCrosshair && timeField) {
+      handlers.onMouseEnter = () => onMouseEnter(timeField, row.__index);
+      handlers.onMouseLeave = onMouseLeave;
     }
 
-    return <Row key={key} {...props} {...handlers} />;
+    const a11yProps: AriaAttributes = {
+      'aria-level': row.__depth + 1,
+    };
+    if (row.__depth > 0) {
+      a11yProps['aria-expanded'] = isExpanded(row);
+    }
+
+    return <Row key={key} {...props} {...handlers} {...a11yProps} />;
   };
+
+  renderRow.displayName = 'RenderRow';
+
+  return renderRow;
+};

@@ -1,10 +1,12 @@
 import { Page, Locator } from '@playwright/test';
 
-export const getCell = (loc: Page | Locator, rowIdx: number, colIdx: number) =>
-  loc
-    .getByRole('row')
+import { expect } from '@grafana/plugin-e2e';
+
+export const getCell = (tableLoc: Page | Locator, rowIdx: number, colIdx: number) =>
+  tableLoc
+    .locator('>[role="row"]')
     .nth(rowIdx)
-    .getByRole(rowIdx === 0 ? 'columnheader' : 'gridcell')
+    .locator(rowIdx === 0 ? '>[role="columnheader"]' : '>[role="gridcell"]')
     .nth(colIdx);
 
 export const getCellHeight = async (loc: Page | Locator, rowIdx: number, colIdx: number) => {
@@ -28,4 +30,9 @@ export const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
     throw new Error(`Could not find the "${columnName}" column in the table`);
   }
   return result;
+};
+
+// helper utils
+export const waitForTableLoad = async (loc: Page | Locator) => {
+  await expect(loc.locator('.rdg')).toBeVisible();
 };

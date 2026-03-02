@@ -9741,6 +9741,12 @@
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
     },
+    "matchers": {
+      "labels": {
+        "base-field-name": "{{name}} (base field name)",
+        "not-found": "{{name}} (not found)"
+      }
+    },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Set properties for fields with names matching a regex",
       "description-fields-by-query": "Set properties for fields from a specific query",
@@ -9871,6 +9877,7 @@
       "csv-placeholder": "Enter CSV here...",
       "filter": {
         "add-all": "Add all displayed values to the filter",
+        "blanks": "(Blanks)",
         "button": "Filter {{name}}",
         "operator": {
           "contains": "Contains",
