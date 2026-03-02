@@ -107,13 +107,6 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 			return nil
 		}
 
-		if err := fm.beforeCreate(ctx, f); err != nil {
-			return &PathCreationError{
-				Path: f.Path,
-				Err:  err,
-			}
-		}
-
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return &PathCreationError{
 				Path: f.Path,
@@ -150,6 +143,11 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		return nil
 	} else if !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if folder exists: %w", err)
+	}
+
+	// Run creation guard only when the folder does not already exist.
+	if err := fm.beforeCreate(ctx, folder); err != nil {
+		return err
 	}
 
 	// Always use the provisioning identity when writing

@@ -114,15 +114,15 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 		require.Error(t, err)
 		require.Empty(t, parent)
 
+		fA := resources.ParseFolder("a", cfg.GetName())
+
 		var pathErr *resources.PathCreationError
 		require.ErrorAs(t, err, &pathErr)
 		require.Equal(t, "a", pathErr.Path)
 		require.ErrorIs(t, err, hookErr)
 		require.Equal(t, []string{"a"}, intercepted)
-		require.Empty(t, client.getCalls)
+		require.Equal(t, []string{fA.ID}, client.getCalls)
 		require.Empty(t, client.createCalls)
-
-		_ = cfg
 	})
 
 	t.Run("allows all creations when beforeCreate returns nil", func(t *testing.T) {
@@ -195,7 +195,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 		fAB := resources.ParseFolder("a/b", cfg.GetName())
 		fABC := resources.ParseFolder("a/b/c", cfg.GetName())
 
-		require.Equal(t, []string{fA.ID}, client.getCalls)
+		require.Equal(t, []string{fA.ID, fAB.ID}, client.getCalls)
 		require.Equal(t, []string{fA.ID}, client.createCalls)
 		require.True(t, tree.In(fA.ID))
 		require.False(t, tree.In(fAB.ID))
