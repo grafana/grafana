@@ -111,11 +111,11 @@ func (s *HealthService) aggregateStatusLocked() grpc_health_v1.HealthCheckRespon
 // Services should be registered before the manager is started
 func (s *HealthService) AddHealthListener(svc services.NamedService) {
 	name := svc.ServiceName()
-	hc, ok := svc.(HealthProbe)
-	s.logger.Info("Registering health listener", "service", name, "hasChecker", ok)
+	healthProbe, hasHealthProbe := svc.(HealthProbe)
+	s.logger.Info("Registering health listener", "service", name, "hasChecker", hasHealthProbe)
 	s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	runningFn := func() {
-		if !ok {
+		if !hasHealthProbe {
 			s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_SERVING)
 			return
 		}
@@ -123,7 +123,7 @@ func (s *HealthService) AddHealthListener(svc services.NamedService) {
 		s.logger.Debug("Service entered running state, checking health", "service", name)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if hc.CheckHealth(ctx) {
+		if healthProbe.CheckHealth(ctx) {
 			s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_SERVING)
 		} else {
 			s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
@@ -143,8 +143,8 @@ func (s *HealthService) AddHealthListener(svc services.NamedService) {
 			notServingFn(from)
 		},
 	))
-	if hc != nil {
-		s.probeServices = append(s.probeServices, probeService{service: svc, probe: hc})
+	if healthProbe != nil {
+		s.probeServices = append(s.probeServices, probeService{service: svc, probe: healthProbe})
 	}
 	s.serviceNames[name] = true
 }
