@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Échec de la récupération des points de contact"
     },
     "contact-points": {
-      "create": "Créer un point de contact",
+      "create": "",
       "custom-template-value": "Valeur du modèle personnalisé",
       "delete-reasons": {
         "heading": "Le point de contact ne peut pas être supprimé pour les raisons suivantes :",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Ajouter un intervalle de temps"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Recherche par point de contact",
@@ -2252,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Échec de la récupération des modèles de notification"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Ajouter un groupe de modèles de notification",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Créez des modèles de notification pour personnaliser vos notifications."
     },
     "notifications-list": {
@@ -2279,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Ajoutez des étiquettes pour vous aider à mieux gérer vos règles d’enregistrement.",
@@ -3350,7 +3348,7 @@
       "stop-alerting-when": "Arrêter l’alerte (ou l’état en attente) lorsque"
     },
     "time-interval": {
-      "add-time-interval": "Ajouter un intervalle de temps",
+      "add-time-interval": "",
       "save": "Enregistrer l’intervalle de temps",
       "saving": "Enregistrement de l’intervalle de temps"
     },
@@ -6604,6 +6602,12 @@
           "row-title": "Titre de la ligne"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Échec de la suppression du tableau de bord",
@@ -12656,6 +12660,12 @@
       "label-read-only": "Lecture seule",
       "label-sync-interval": "Intervalle de synchronisation (secondes)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12797,6 +12807,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13304,6 +13316,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",

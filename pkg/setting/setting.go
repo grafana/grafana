@@ -664,6 +664,7 @@ type Cfg struct {
 	SimulatedNetworkLatency       time.Duration
 	TenantApiServerAddress        string
 	TenantWatcherAllowInsecureTLS bool
+	TenantWatcherCAFile           string
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
