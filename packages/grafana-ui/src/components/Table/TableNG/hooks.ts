@@ -2,7 +2,7 @@ import { debounce } from 'lodash';
 import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties, useEffect } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
-import { Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
 
 import { TableColumnResizeActionCallback } from '../types';
 
@@ -27,7 +27,7 @@ import {
   buildCellHeightMeasurers,
   IS_SAFARI_26,
   applyFilter,
-  frameToRecords,
+  compileFrameToRecords,
 } from './utils';
 
 export interface FilteredRowsOptions {
@@ -263,32 +263,40 @@ export function usePaginatedRows(
 
 export const useNestedRows = (
   rows: TableRow[],
+  nestedData: DataFrame[] | undefined,
   hasNestedFrames: boolean,
   nestedFramesFieldName: string | undefined,
   filter: FilterType,
   sortColumns: SortColumn[]
 ): NestedRowEntry[] => {
+  const frameToRecords = useMemo(() => {
+    if (!hasNestedFrames || !nestedFramesFieldName || !nestedData?.[0]) {
+      return;
+    }
+    return compileFrameToRecords(nestedData[0]);
+  }, [hasNestedFrames, nestedFramesFieldName, nestedData]);
+
   return useMemo(() => {
     const result: NestedRowEntry[] = [];
-    if (!hasNestedFrames || !nestedFramesFieldName) {
+    if (!hasNestedFrames || !nestedFramesFieldName || !frameToRecords || !nestedData) {
       return result;
     }
 
     for (const parentRow of rows) {
       // Type guard to check if data exists as it's optional
-      const nestedData = parentRow.data;
-      if (!nestedData) {
+      const nestedFrame = nestedData[parentRow.__index];
+      if (!nestedFrame) {
         continue;
       }
 
-      const rawRows = frameToRecords(nestedData, nestedFramesFieldName, parentRow.__index);
-      const filteredRows = applyFilter(rawRows, filter, nestedData.fields);
-      const sortedRows = applySort(filteredRows, nestedData.fields, sortColumns, getColumnTypes(nestedData.fields));
+      const rawRows = frameToRecords(nestedFrame, parentRow.__index);
+      const filteredRows = applyFilter(rawRows, filter, nestedFrame.fields);
+      const sortedRows = applySort(filteredRows, nestedFrame.fields, sortColumns, getColumnTypes(nestedFrame.fields));
       result[parentRow.__index] = { raw: rawRows, final: sortedRows };
     }
 
     return result;
-  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter]);
+  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter, frameToRecords, nestedData]);
 };
 
 const ICON_WIDTH = 16;
@@ -370,6 +378,7 @@ interface UseRowHeightOptions {
   visibleNestedRowCounts: Array<number | null>;
   typographyCtx: TypographyCtx;
   maxHeight?: number;
+  nestedData?: DataFrame[] | undefined;
   nestedRows: NestedRowEntry[];
   nestedFields: Field[];
   nestedColWidths: number[];
@@ -386,6 +395,7 @@ export function useRowHeight({
   typographyCtx,
   maxHeight,
   hasNestedFrames,
+  nestedData,
   nestedRows,
   nestedFields,
   nestedColWidths,
@@ -484,7 +494,7 @@ export function useRowHeight({
           return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
         }
 
-        const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
+        const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultHeight;
         const nestedRowsHeight = nestedRows[row.__index].final.reduce(
           (acc, row) => acc + getNestedRowHeightWithCache(row),
           0
@@ -502,6 +512,7 @@ export function useRowHeight({
     hasNestedFrames,
     hasWrappedCols,
     nestedRows,
+    nestedData,
     visibleNestedRowCounts,
   ]);
 
