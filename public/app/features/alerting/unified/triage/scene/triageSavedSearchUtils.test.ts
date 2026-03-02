@@ -1,3 +1,4 @@
+import { dateTime } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import {
@@ -55,15 +56,12 @@ describe('triageSavedSearchUtils', () => {
       expect(params.has('var-filters')).toBe(true);
     });
 
-    it('builds query string with Date-like time range (DateTime)', () => {
-      const fromDate = new Date('2025-01-15T10:00:00Z');
-      const toDate = new Date('2025-01-15T11:00:00Z');
+    it('builds query string with DateTime time range', () => {
+      const fromDateTime = dateTime('2025-01-15T10:00:00Z');
+      const toDateTime = dateTime('2025-01-15T11:00:00Z');
       const result = buildTriageQueryStringFromParts({
         groupBy: [],
-        timeRange: {
-          from: { toISOString: () => fromDate.toISOString() },
-          to: { toISOString: () => toDate.toISOString() },
-        },
+        timeRange: { from: fromDateTime, to: toDateTime },
       });
       const params = new URLSearchParams(result);
       expect(params.get('from')).toBe('2025-01-15T10:00:00.000Z');
