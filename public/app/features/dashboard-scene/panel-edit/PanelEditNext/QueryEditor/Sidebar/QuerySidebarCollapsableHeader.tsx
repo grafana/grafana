@@ -23,17 +23,24 @@ export const QuerySidebarCollapsableHeader = ({
   return (
     <CollapsableSection
       label={
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Text color="maxContrast" variant="bodySmall" weight="light">
-            {label}
-          </Text>
-          {headerAction && (
-            // `stopPropagation` to prevent the header action from triggering the collapsable section collapse
-            <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="button" tabIndex={0}>
-              {headerAction}
-            </div>
-          )}
-        </Stack>
+        <div className={styles.headerContent}>
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Text color="maxContrast" variant="bodySmall" weight="light">
+              {label}
+            </Text>
+            {headerAction && (
+              <div
+                className={styles.headerActionWrapper}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                role="button"
+                tabIndex={0}
+              >
+                {headerAction}
+              </div>
+            )}
+          </Stack>
+        </div>
       }
       isOpen={isOpen}
       onToggle={onToggle}
@@ -58,5 +65,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   queryStackCardsContainer: css({
     paddingTop: theme.spacing(1),
+  }),
+  headerActionWrapper: css({
+    // This is used so we can stop the header action from triggering the collapse of the header
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'flex-start',
+  }),
+  headerContent: css({
+    width: '100%',
   }),
 });
