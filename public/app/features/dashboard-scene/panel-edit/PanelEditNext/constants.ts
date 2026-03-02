@@ -28,6 +28,16 @@ export enum SidebarSize {
 }
 
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
+export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
+export const QUERY_EDITOR_BANNER_FEEDBACK_URL =
+  'https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/';
+
+export const QUERY_EDITOR_BANNER_COLORS = {
+  background: '#1D293D',
+  border: '#314158',
+  iconBackground: '#111217',
+  accent: '#FF9830',
+};
 
 export const QUERY_EDITOR_COLORS = {
   query: '#FF8904',

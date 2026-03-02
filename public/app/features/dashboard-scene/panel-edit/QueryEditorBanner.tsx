@@ -1,78 +1,45 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useSessionStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, IconButton, InlineSwitch, TextLink, useStyles2 } from '@grafana/ui';
 
+import {
+  QUERY_EDITOR_BANNER_COLORS,
+  QUERY_EDITOR_BANNER_DISMISSED_KEY,
+  QUERY_EDITOR_BANNER_FEEDBACK_URL,
+} from './PanelEditNext/constants';
 import { PanelEditor } from './PanelEditor';
 
-type BannerVariant = 'upgrade' | 'downgrade';
-
-interface Props {
-  panelEditor: PanelEditor;
-  variant: BannerVariant;
-}
-
-const DISMISSED_KEYS: Record<BannerVariant, string> = {
-  upgrade: 'grafana.queryEditorBanner.upgrade.dismissed',
-  downgrade: 'grafana.queryEditorBanner.downgrade.dismissed',
-};
-
-const VARIANT_ICONS: Record<BannerVariant, 'bolt' | 'rocket'> = {
-  upgrade: 'bolt',
-  downgrade: 'rocket',
-};
-
-const FEEDBACK_URL = 'https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/';
-
-export function QueryEditorBanner({ panelEditor, variant }: Props) {
+export function QueryEditorBanner({ panelEditor }: { panelEditor: PanelEditor }) {
   const styles = useStyles2(getStyles);
   const { useQueryExperienceNext } = panelEditor.useState();
-  const [dismissed, setDismissed] = useState(() => {
-    try {
-      return sessionStorage.getItem(DISMISSED_KEYS[variant]) === 'true';
-    } catch {
-      return false;
-    }
-  });
+
+  const [dismissed, setDismissed] = useSessionStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
 
   if (!config.featureToggles.queryEditorNext || dismissed) {
     return null;
   }
 
-  const handleDismiss = () => {
-    setDismissed(true);
-    try {
-      sessionStorage.setItem(DISMISSED_KEYS[variant], 'true');
-    } catch {
-      // ignore
-    }
-  };
-
   return (
     <div className={styles.banner}>
       <div className={styles.left}>
         <div className={styles.iconCircle}>
-          <Icon name={VARIANT_ICONS[variant]} size="md" className={styles.accentIcon} />
+          <Icon name={useQueryExperienceNext ? 'rocket' : 'bolt'} size="md" className={styles.accentIcon} />
         </div>
         <span className={styles.title}>
-          {variant === 'upgrade'
-            ? t('dashboard-scene.query-editor-banner.upgrade-title', 'New editor available!')
-            : t('dashboard-scene.query-editor-banner.downgrade-title', 'New query editor!')}
+          {useQueryExperienceNext
+            ? t('dashboard-scene.query-editor-banner.downgrade-title', 'New query editor!')
+            : t('dashboard-scene.query-editor-banner.upgrade-title', 'New editor available!')}
         </span>
         <span className={styles.description}>
-          {variant === 'upgrade'
-            ? t('dashboard-scene.query-editor-banner.upgrade-description', 'Try the improved query editing experience.')
-            : t(
-                'dashboard-scene.query-editor-banner.downgrade-description',
-                'Try the improved query editing experience.'
-              )}
-          {variant === 'downgrade' && (
+          {t('dashboard-scene.query-editor-banner.description', 'Try the improved query editing experience.')}
+          {useQueryExperienceNext && (
             <>
               {' '}
-              <TextLink href={FEEDBACK_URL} external inline variant="body">
+              <TextLink href={QUERY_EDITOR_BANNER_FEEDBACK_URL} external inline variant="body">
                 {t('dashboard-scene.query-editor-banner.learn-more', 'Learn more')}
               </TextLink>
             </>
@@ -80,20 +47,30 @@ export function QueryEditorBanner({ panelEditor, variant }: Props) {
         </span>
       </div>
       <div className={styles.right}>
-        <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className={styles.actionLink}>
-          {variant === 'upgrade' ? (
-            <>
-              {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
-              <Icon name="external-link-alt" size="sm" style={{ opacity: 0.8 }} />
-            </>
-          ) : (
+        <a
+          href={QUERY_EDITOR_BANNER_FEEDBACK_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.actionLink}
+        >
+          {useQueryExperienceNext ? (
             <>
               <Icon name="comment-alt" size="sm" />
               {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
             </>
+          ) : (
+            <>
+              {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
+              <Icon name="external-link-alt" size="sm" style={{ opacity: 0.8 }} />
+            </>
           )}
         </a>
-        {variant === 'upgrade' ? (
+        {useQueryExperienceNext ? (
+          <button className={styles.actionLink} onClick={panelEditor.onToggleQueryEditorVersion}>
+            <Icon name="history" size="sm" />
+            {t('dashboard-scene.query-editor-banner.go-back', 'Go back to classic')}
+          </button>
+        ) : (
           <InlineSwitch
             label={t('dashboard-scene.query-editor-banner.new-editor', 'New editor')}
             showLabel={true}
@@ -102,17 +79,12 @@ export function QueryEditorBanner({ panelEditor, variant }: Props) {
             onClick={panelEditor.onToggleQueryEditorVersion}
             aria-label={t('dashboard-scene.query-editor-banner.toggle-aria', 'Toggle between query editor v1 and v2')}
           />
-        ) : (
-          <button className={styles.actionLink} onClick={panelEditor.onToggleQueryEditorVersion}>
-            <Icon name="history" size="sm" />
-            {t('dashboard-scene.query-editor-banner.go-back', 'Go back to classic')}
-          </button>
         )}
         <IconButton
           name="times"
           size="md"
           tooltip={t('dashboard-scene.query-editor-banner.dismiss', 'Dismiss')}
-          onClick={handleDismiss}
+          onClick={() => setDismissed(true)}
           className={styles.closeButton}
           aria-label={t('dashboard-scene.query-editor-banner.dismiss', 'Dismiss')}
         />
@@ -120,12 +92,6 @@ export function QueryEditorBanner({ panelEditor, variant }: Props) {
     </div>
   );
 }
-
-// Intentional custom colors for the promotional banner — not part of the standard theme palette.
-const BANNER_BG = '#1D293D';
-const BANNER_BORDER = '#314158';
-const ICON_BG = '#111217';
-const ACCENT_COLOR = '#FF9830';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -135,8 +101,8 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'space-between',
       padding: theme.spacing(0, 2),
       height: theme.spacing(5),
-      backgroundColor: BANNER_BG,
-      border: `1px solid ${BANNER_BORDER}`,
+      backgroundColor: QUERY_EDITOR_BANNER_COLORS.background,
+      border: `1px solid ${QUERY_EDITOR_BANNER_COLORS.border}`,
       borderRadius: theme.shape.radius.default,
       flexShrink: 0,
     }),
@@ -153,14 +119,14 @@ function getStyles(theme: GrafanaTheme2) {
       width: theme.spacing(3.25),
       height: theme.spacing(3.25),
       borderRadius: theme.shape.radius.circle,
-      backgroundColor: ICON_BG,
+      backgroundColor: QUERY_EDITOR_BANNER_COLORS.iconBackground,
       flexShrink: 0,
     }),
     accentIcon: css({
-      color: ACCENT_COLOR,
+      color: QUERY_EDITOR_BANNER_COLORS.accent,
     }),
     title: css({
-      color: ACCENT_COLOR,
+      color: QUERY_EDITOR_BANNER_COLORS.accent,
       fontWeight: theme.typography.fontWeightMedium,
       fontSize: theme.typography.body.fontSize,
       whiteSpace: 'nowrap',

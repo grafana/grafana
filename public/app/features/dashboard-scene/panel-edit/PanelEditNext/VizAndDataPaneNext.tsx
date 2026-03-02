@@ -43,7 +43,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
           </div>
           <QueryEditorContextWrapper dataPane={nextDataPane}>
             <div className={styles.versionToggle}>
-              <QueryEditorBanner panelEditor={model} variant="downgrade" />
+              <QueryEditorBanner panelEditor={model} />
             </div>
             <div className={styles.sidebar}>
               <div className={styles.sidebarContent}>
