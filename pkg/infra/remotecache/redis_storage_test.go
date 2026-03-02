@@ -37,6 +37,15 @@ func Test_parseRedisConnStr(t *testing.T) {
 			},
 			false,
 		},
+		"network unix should parse": {
+			"network=unix,addr=/var/run/redis/redis.sock,pool_size=100",
+			&redis.Options{
+				Addr:     "/var/run/redis/redis.sock",
+				PoolSize: 100,
+				Network:  "unix",
+			},
+			false,
+		},
 		"ssl set to true should result in default TLS configuration with tls set to addr's host": {
 			"addr=grafana.com:6379,ssl=true",
 			&redis.Options{
