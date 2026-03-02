@@ -128,6 +128,7 @@ COPY cue.mod cue.mod
 COPY kinds kinds
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
+COPY packages/grafana-data packages/grafana-data
 COPY public/app/plugins public/app/plugins
 COPY public/api-merged.json public/api-merged.json
 COPY pkg pkg
