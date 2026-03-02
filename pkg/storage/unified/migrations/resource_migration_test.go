@@ -184,7 +184,7 @@ func TestIntegrationRun_Rename(t *testing.T) {
 			locker: func() MigrationTableLocker {
 				return &mysqlTableLocker{sql: legacysql.NewDatabaseProvider(env.store)}
 			},
-			renamer:   func() MigrationTableRenamer { return &mysqlTableRenamer{log: logger} },
+			renamer:   func() MigrationTableRenamer { return &mysqlTableRenamer{log: logger, waitDeadline: time.Minute} },
 			numTables: 2, wantRenamed: true,
 		},
 		{
@@ -193,7 +193,7 @@ func TestIntegrationRun_Rename(t *testing.T) {
 			locker: func() MigrationTableLocker {
 				return &mysqlTableLocker{sql: legacysql.NewDatabaseProvider(env.store)}
 			},
-			renamer:   func() MigrationTableRenamer { return &mysqlTableRenamer{log: logger} },
+			renamer:   func() MigrationTableRenamer { return &mysqlTableRenamer{log: logger, waitDeadline: time.Minute} },
 			numTables: 1, wantRenamed: false,
 		},
 	}
@@ -234,7 +234,7 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 
 	t.Run("single table detected", func(t *testing.T) {
 		table := uniqueTable(t, env.engine)
-		renamer := &mysqlTableRenamer{log: logger}
+		renamer := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
 		mg := migrator.NewMigrator(env.engine, setting.NewCfg())
 
 		sess := env.engine.NewSession()
@@ -257,7 +257,7 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 
 	t.Run("multiple tables detected", func(t *testing.T) {
 		t1, t2 := uniqueTable(t, env.engine), uniqueTable(t, env.engine)
-		renamer := &mysqlTableRenamer{log: logger}
+		renamer := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
 		mg := migrator.NewMigrator(env.engine, setting.NewCfg())
 
 		sess := env.engine.NewSession()
@@ -315,7 +315,7 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 
 	t.Run("context cancellation", func(t *testing.T) {
 		table := uniqueTable(t, env.engine)
-		renamer := &mysqlTableRenamer{log: logger}
+		renamer := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
 		mg := migrator.NewMigrator(env.engine, setting.NewCfg())
 
 		sess := env.engine.NewSession()
@@ -398,7 +398,7 @@ func TestIntegrationRunMySQL_CrashRecovery(t *testing.T) {
 	require.NoError(t, err)
 
 	sqlProvider := legacysql.NewDatabaseProvider(env.store)
-	runner, m := newRunner(t, &mysqlTableLocker{sql: sqlProvider}, &mysqlTableRenamer{log: logger}, def)
+	runner, m := newRunner(t, &mysqlTableLocker{sql: sqlProvider}, &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}, def)
 	runMigration(t, env.engine, runner, migrator.MySQL)
 
 	// Recovery restores tables, then full migration re-runs including rename
