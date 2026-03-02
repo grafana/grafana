@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Failed to fetch contact points"
     },
     "contact-points": {
-      "create": "Create contact point",
+      "create": "New contact point",
       "custom-template-value": "Custom template value",
       "delete-reasons": {
         "heading": "Contact point cannot be deleted for the following reasons:",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Add time interval"
+        "add-time-interval": "New time interval"
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,8 +2173,7 @@
         "status": "Status",
         "tooltip": "Use label matcher expression or click on a group label to filter instances, for example:"
       },
-      "firing-alerts_one": "Firing Alerts ({{count}})",
-      "firing-alerts_other": "Firing Alerts ({{count}})",
+      "firing-alerts": "Firing Alerts",
       "labels": "Labels:",
       "loading": "Loading notifications...",
       "notification-error": "Notification Error",
@@ -2182,8 +2181,8 @@
         "failed": "Failed",
         "success": "Success"
       },
-      "resolved-alerts_one": "Resolved Alerts ({{count}})",
-      "resolved-alerts_other": "Resolved Alerts ({{count}})",
+      "resolved-alerts": "Resolved Alerts",
+      "showing-alerts": "Showing {{ showing }} out of {{ total }} alerts",
       "started": "Started:",
       "status": {
         "firing": "Firing",
@@ -2252,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Failed to fetch notification templates"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Add notification template group",
+      "add-notification-template-group": "New notification template",
       "create-notification-templates-customize-notifications": "Create notification templates to customize your notifications."
     },
     "notifications-list": {
@@ -2279,8 +2278,7 @@
         "clear": "Clear filters"
       },
       "filterBy": "Filter by:",
-      "firing-alerts_one": "Firing Alerts ({{count}})",
-      "firing-alerts_other": "Firing Alerts ({{count}})",
+      "firing-alerts": "Firing Alerts",
       "header": {
         "contact-point": "Contact point",
         "group-labels": "Group Labels",
@@ -2304,8 +2302,8 @@
           "receiver": "Contact point:"
         }
       },
-      "resolved-alerts_one": "Resolved Alerts ({{count}})",
-      "resolved-alerts_other": "Resolved Alerts ({{count}})",
+      "resolved-alerts": "Resolved Alerts",
+      "showing-alerts": "Showing {{ showing }} out of {{ total }} alerts",
       "started": "Started: {{value}}",
       "status-filter-variable": {
         "label": {
@@ -3264,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Template form",
+      "body-legacy": "This template was imported from a Mimir Alertmanager and uses a legacy format.",
       "label-examples-documentation": "Examples documentation",
       "label-template-group": "Template group",
       "label-template-group-name": "Template group name",
@@ -3272,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Give your template group a name",
       "title-error-saving-template": "Error saving template",
+      "title-legacy": "This template uses a legacy format",
       "title-templating-cheat-sheet": "Templating cheat sheet"
     },
     "template-preview": {
@@ -3312,12 +3312,14 @@
       "help": {
         "intro": "Notification templates use Go templating language to create notification messages.\n\nIn Grafana, a template group can define multiple notification templates using {{ define \"<NAME>\" }}.\nThese templates can then be used in contact points and within other notification templates by calling {{ template \"<NAME>\" }}.\nFor detailed information about notification templates, refer to our documentation."
       },
+      "legacy-badge-text": "Legacy",
+      "legacy-badge-tooltip": "This template was imported from a Mimir Alertmanager and uses a legacy format.",
       "misconfigured-badge-text": "Misconfigured",
       "misconfigured-warning": "This template is misconfigured.",
       "misconfigured-warning-details": "Templates must be defined in both the <2></2> and <5></5> sections of your alertmanager configuration."
     },
     "templates-page": {
-      "add-template": "Add notification template group",
+      "add-template": "New notification template",
       "description": "Create notification templates to customize your notifications."
     },
     "templates-picker": {
@@ -3350,7 +3352,7 @@
       "stop-alerting-when": "Stop alerting (or pending state) when"
     },
     "time-interval": {
-      "add-time-interval": "Add time interval",
+      "add-time-interval": "New time interval",
       "save": "Save time interval",
       "saving": "Saving time interval"
     },
@@ -3422,7 +3424,14 @@
         "title": "Rule not found"
       },
       "rules-with-firing-instances": "Alert rules with firing instances",
-      "rules-with-pending-instances": "Alert rules with pending instances"
+      "rules-with-pending-instances": "Alert rules with pending instances",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "Show only firing",
+          "folder-firing": "Show only firing, grouped by folder",
+          "folder-only": "Grouped by folder"
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -4185,7 +4194,6 @@
     "quota-banner": {
       "at-limit-body": "Clean up unused resources to free up space.",
       "at-limit-title": "You've hit your storage limits",
-      "dismiss": "Dismiss",
       "nearing-body": "New resources can't be created once the limit is reached. Clean up unused resources to free up space.",
       "nearing-title": "You're nearing your storage limits",
       "request-extension": "Request quota extension",
@@ -6605,6 +6613,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "Default value",
+      "description": "Values that are pre-selected by default.",
+      "label": "Default value",
+      "placeholder": "Choose default values"
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
@@ -7813,7 +7827,10 @@
     "pro-tip": "ProTip: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Try returning <4>home</4> or seeking help on the <7>community site.</7>"
+    "community-link": "Community Help",
+    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Please check the URL and try again.",
+    "home-link": "Back to Home",
+    "title": "{{entity}} not found"
   },
   "errors": {
     "dashboard-settings": {
@@ -11926,8 +11943,6 @@
       "tooltip-delete": "Delete"
     },
     "visualization-suggestions": {
-      "edit": "Edit",
-      "edit-aria-label": "Edit {{suggestionName}} visualization",
       "error-loading-some-suggestions": {
         "message": "Some suggestions could not be loaded"
       },
@@ -13312,6 +13327,7 @@
     "action": {
       "add-transformation-filter": "Add filter",
       "duplicate": "Duplicate {{type}}",
+      "error": "Error",
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "hide-transformation-help": "Hide transformation help",
@@ -14359,6 +14375,11 @@
           "settings": "Settings"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": "Folders"
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "External group sync"
@@ -14415,6 +14436,19 @@
       "loading-teams": "Loading teams...",
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "You can set up ownership of a folder from folder detail page",
+        "empty-state-message": "This team does not own any folders yet.",
+        "error-loading-folders": "Could not load team folders",
+        "loading": "Loading...",
+        "open-folder": "Open folder",
+        "table": {
+          "name": "Name",
+          "path": "Full path"
+        }
+      }
     },
     "team-settings": {
       "description-email": "This is optional and is primarily used to set the team profile avatar (via the Gravatar service)",

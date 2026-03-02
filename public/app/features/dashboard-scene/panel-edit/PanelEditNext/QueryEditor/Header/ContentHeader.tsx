@@ -9,7 +9,7 @@ import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { getQueryEditorColors, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { AlertRule, Transformation } from '../types';
 import { getEditorBorderColor } from '../utils';
@@ -267,12 +267,14 @@ const getStyles = (
   { cardType, selectedAlert }: { cardType: QueryEditorType; selectedAlert: AlertRule | null }
 ) => {
   const borderColor = getEditorBorderColor({ theme, editorType: cardType, alertState: selectedAlert?.state });
+  const themeColors = getQueryEditorColors(theme);
 
   return {
     container: css({
-      borderLeft: `4px solid ${borderColor}`,
-      backgroundColor: theme.colors.background.secondary,
+      position: 'relative',
+      backgroundColor: themeColors.contentHeaderBackground,
       padding: theme.spacing(0.5),
+      paddingLeft: `calc(${theme.spacing(0.5)} + 4px)`,
       borderTopLeftRadius: theme.shape.radius.default,
       borderTopRightRadius: theme.shape.radius.default,
       display: 'flex',
@@ -280,6 +282,18 @@ const getStyles = (
       justifyContent: 'space-between',
       gap: theme.spacing(1),
       minHeight: theme.spacing(5),
+
+      // psuedo-element to show the border color on the left of the header
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 4,
+        background: borderColor,
+        borderTopLeftRadius: theme.shape.radius.default,
+      },
     }),
     leftSection: css({
       display: 'flex',

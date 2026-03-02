@@ -54,6 +54,24 @@ export const SingleDefaultTree: Story = {
   render: StoryRenderFn,
 };
 
+const MultiSelectRenderFn: StoryFn<RoutingTreeSelectorProps> = (args) => {
+  const id = useId();
+  return (
+    <Field noMargin label="Select notification policies">
+      <RoutingTreeSelector {...args} multi value={[]} onChange={() => {}} id={id} />
+    </Field>
+  );
+};
+
+export const MultiSelect: Story = {
+  parameters: {
+    msw: {
+      handlers: simpleRoutingTreesListScenario,
+    },
+  },
+  render: MultiSelectRenderFn,
+};
+
 export const WithError: Story = {
   parameters: {
     msw: {

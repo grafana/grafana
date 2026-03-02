@@ -10,6 +10,7 @@ import (
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
@@ -102,8 +103,11 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		Limit:        queryLimit,
 		Offset:       offset,
 		AlertID:      -1,
-		Tags:         opts.Tags,
-		MatchAny:     opts.TagsMatchAny,
+		// CreatedBy holds the uid of the user to filter by. The SQL layer resolves
+		// this to a numeric user_id via subquery.
+		UserUID:  opts.CreatedBy,
+		Tags:     opts.Tags,
+		MatchAny: opts.TagsMatchAny,
 	}
 
 	items, err := a.repo.Find(ctx, query)
@@ -137,6 +141,10 @@ func (a *sqlAdapter) Create(ctx context.Context, anno *annotationV0.Annotation) 
 
 	item := a.fromK8sResource(anno)
 	item.OrgID = orgID
+
+	if user, err := identity.GetRequester(ctx); err == nil {
+		item.UserID, _ = identity.UserIdentifier(user.GetID())
+	}
 
 	if err := a.repo.Save(ctx, item); err != nil {
 		return nil, err
@@ -232,6 +240,12 @@ func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) 
 	if item.PanelID != 0 {
 		anno.Spec.PanelID = &item.PanelID
 	}
+
+	if item.UserUID != "" {
+		if m, err := utils.MetaAccessor(anno); err == nil {
+			m.SetCreatedBy(claims.NewTypeID(claims.TypeUser, item.UserUID))
+		}
+	}
 	if item.TimeEnd != 0 {
 		anno.Spec.TimeEnd = &item.TimeEnd
 	}
@@ -258,6 +272,7 @@ func (a *sqlAdapter) fromK8sResource(anno *annotationV0.Annotation) *annotations
 	if anno.Spec.PanelID != nil {
 		item.PanelID = *anno.Spec.PanelID
 	}
+
 	if anno.Spec.TimeEnd != nil {
 		item.EpochEnd = *anno.Spec.TimeEnd
 	}

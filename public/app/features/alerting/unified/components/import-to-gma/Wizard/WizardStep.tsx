@@ -31,6 +31,8 @@ interface WizardStepProps {
   onBack?: () => void;
   /** Disable the next button */
   disableNext?: boolean;
+  /** Handler called when the wizard is cancelled */
+  onCancel?: () => void;
 }
 
 /**
@@ -53,6 +55,7 @@ export const WizardStep = ({
   onSkip,
   onBack,
   disableNext = false,
+  onCancel,
 }: WizardStepProps) => {
   const styles = useStyles2(getStyles);
   const { setVisitedStep, setStepCompleted, setStepSkipped } = useStepperState();
@@ -102,7 +105,7 @@ export const WizardStep = ({
             disabled={disableNext}
           />
         </Stack>
-        <CancelButton />
+        <CancelButton onCancel={onCancel} />
       </div>
     </FieldSet>
   );

@@ -507,8 +507,9 @@ Leave empty when using `database` and Grafana uses the primary database.
 
 ##### `redis`
 
-Example connection string: `addr=127.0.0.1:6379,pool_size=100,db=0,username=grafana,password=grafanaRocks,ssl=false`
+Example connection string: `network=tcp,addr=127.0.0.1:6379,pool_size=100,db=0,username=grafana,password=grafanaRocks,ssl=false`
 
+- `network` (optional) can be `tcp` or `unix`.
 - `addr` is the host `:` port of the Redis server.
 - `pool_size` (optional) is the number of underlying connections that can be made to Redis.
 - `db` (optional) is the number identifier of the Redis database you want to use.
