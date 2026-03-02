@@ -277,8 +277,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1]
-        shardTotal: [1]
+        shard: [1, 2, 3, 4, 5, 6]
+        shardTotal: [6]
 
     steps:
       - uses: actions/checkout@v5
@@ -317,19 +317,11 @@ jobs:
       # Start Grafana using existing scripts (handles provisioning, config, etc.)
       - name: Start Grafana
         run: |
-          ./scripts/grafana-server/start-server
+          ./scripts/grafana-server/start-server &
+          ./scripts/grafana-server/wait-for-grafana
         env:
           ARCH: linux-amd64
           PORT: 3001
-
-      # # Start Grafana using existing scripts (handles provisioning, config, etc.)
-      # - name: Start Grafana
-      #   run: |
-      #     ./scripts/grafana-server/start-server &
-      #     ./scripts/grafana-server/wait-for-grafana
-      #   env:
-      #     ARCH: linux-amd64
-      #     PORT: 3001
 
       # Install test dependencies
       - uses: actions/setup-node@v6
