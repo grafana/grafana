@@ -224,7 +224,7 @@ func setupWorkers(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
-	parsers := resources.NewParserFactory(clients, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)) //nolint:staticcheck
+	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {

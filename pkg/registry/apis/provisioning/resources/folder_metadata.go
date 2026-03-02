@@ -6,8 +6,16 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// IsFolderMetadataEnabled reports whether the provisioningFolderMetadata feature flag is on.
+func IsFolderMetadataEnabled(cfg *setting.Cfg) bool {
+	//nolint:staticcheck // The usage of this function is deprecated, but we don't plan to keep it for long.
+	return cfg.IsFeatureToggleEnabled(featuremgmt.FlagProvisioningFolderMetadata)
+}
 
 const FolderMetadataFileName = "_folder.json"
 
