@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { Provider } from 'react-redux';
 
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import {
   DataFrame,
@@ -20,6 +19,7 @@ import {
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
