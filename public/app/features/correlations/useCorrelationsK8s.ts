@@ -11,7 +11,6 @@ import { toEnrichedCorrelationData } from './useCorrelations';
 export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | undefined => {
   const dsSrv = getDataSourceSrv();
   const sourceDS = dsSrv.getInstanceSettings({ type: item.spec.source.group, uid: item.spec.source.name });
-
   if (sourceDS !== undefined) {
     const baseCor = {
       uid: item.metadata.name!,

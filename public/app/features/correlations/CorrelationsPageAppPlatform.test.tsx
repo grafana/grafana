@@ -24,6 +24,7 @@ import { configureStore } from 'app/store/configureStore';
 import { mockDataSource } from '../alerting/unified/mocks';
 
 import { CorrelationsPageAppPlatform } from './CorrelationsPageWrapper';
+import { setupCorrelationsMswServer } from './mocks/server';
 import {
   createCorrelationsScenario,
   emptyCorrelationsScenario,
@@ -31,9 +32,7 @@ import {
 } from './mocks/server/correlations.test.scenario';
 import { MockDataSourceSrv } from './mocks/useCorrelations.mocks';
 
-//setupCorrelationsMswServer();
-setBackendSrv(backendSrv);
-const server = setupMockServer();
+const server = setupCorrelationsMswServer();
 
 const originalFeatureToggles = config.featureToggles;
 
