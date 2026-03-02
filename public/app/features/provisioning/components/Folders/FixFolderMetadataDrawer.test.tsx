@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
@@ -26,10 +25,6 @@ const defaultSettings = {
   availableRepositoryTypes: ['github'],
 };
 
-function setup(jsx: JSX.Element) {
-  return { ...render(jsx), user: userEvent.setup() };
-}
-
 describe('FixFolderMetadataDrawer', () => {
   testWithFeatureToggles({ enable: ['provisioning'] });
 
@@ -44,7 +39,7 @@ describe('FixFolderMetadataDrawer', () => {
   });
 
   it('renders branch field but not comment field', async () => {
-    setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+    render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
     // Wait for the drawer to load the repository and render the form
     expect(await screen.findByRole('button', { name: /fix folder ids/i })).toBeInTheDocument();
@@ -53,7 +48,7 @@ describe('FixFolderMetadataDrawer', () => {
   });
 
   it('renders cancel and submit buttons', async () => {
-    setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+    render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
     expect(await screen.findByRole('button', { name: /cancel/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /fix folder ids/i })).toBeInTheDocument();
@@ -61,7 +56,7 @@ describe('FixFolderMetadataDrawer', () => {
 
   it('calls onDismiss when cancel is clicked', async () => {
     const onDismiss = jest.fn();
-    const { user } = setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={onDismiss} />);
+    const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={onDismiss} />);
 
     const cancelButton = await screen.findByRole('button', { name: /cancel/i });
     await user.click(cancelButton);
@@ -84,7 +79,7 @@ describe('FixFolderMetadataDrawer', () => {
       http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [jobResponse] }))
     );
 
-    const { user } = setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+    const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
     await screen.findByRole('button', { name: /fix folder ids/i });
 
@@ -115,7 +110,7 @@ describe('FixFolderMetadataDrawer', () => {
       http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [jobResponse] }))
     );
 
-    const { user } = setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+    const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
     const branchInput = await screen.findByRole('combobox', { name: /branch/i });
     await user.clear(branchInput);
@@ -141,7 +136,7 @@ describe('FixFolderMetadataDrawer', () => {
       )
     );
 
-    const { user } = setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+    const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
     await screen.findByRole('button', { name: /fix folder ids/i });
     await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
@@ -162,7 +157,7 @@ describe('FixFolderMetadataDrawer', () => {
     );
 
     const onDismiss = jest.fn();
-    const { user } = setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={onDismiss} />);
+    const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={onDismiss} />);
 
     await screen.findByRole('button', { name: /fix folder ids/i });
     await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
@@ -190,7 +185,7 @@ describe('FixFolderMetadataDrawer', () => {
       )
     );
 
-    setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+    render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
     expect(await screen.findByText(/This repository is read only/i)).toBeInTheDocument();
   });

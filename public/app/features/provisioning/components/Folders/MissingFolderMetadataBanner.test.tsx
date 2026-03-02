@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
@@ -28,13 +27,9 @@ jest.mock('./FixFolderMetadataDrawer', () => ({
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { useFolderMetadataStatus } = require('../../hooks/useFolderMetadataStatus');
 
-function setup(jsx: JSX.Element) {
-  return { ...render(jsx), user: userEvent.setup() };
-}
-
 describe('MissingFolderMetadataBanner', () => {
   it('renders warning alert with correct content', () => {
-    setup(<MissingFolderMetadataBanner repositoryName="test-repo" />);
+    render(<MissingFolderMetadataBanner repositoryName="test-repo" />);
 
     const alert = screen.getByRole('alert');
     expect(alert).toBeInTheDocument();
@@ -47,13 +42,13 @@ describe('MissingFolderMetadataBanner', () => {
   });
 
   it('renders fix button', () => {
-    setup(<MissingFolderMetadataBanner repositoryName="test-repo" />);
+    render(<MissingFolderMetadataBanner repositoryName="test-repo" />);
 
     expect(screen.getByText('Fix folder IDs')).toBeInTheDocument();
   });
 
   it('opens drawer when fix button is clicked', async () => {
-    const { user } = setup(<MissingFolderMetadataBanner repositoryName="test-repo" />);
+    const { user } = render(<MissingFolderMetadataBanner repositoryName="test-repo" />);
 
     expect(screen.queryByTestId('fix-folder-metadata-drawer')).not.toBeInTheDocument();
 
@@ -65,7 +60,7 @@ describe('MissingFolderMetadataBanner', () => {
   });
 
   it('closes drawer when onDismiss is called', async () => {
-    const { user } = setup(<MissingFolderMetadataBanner repositoryName="test-repo" />);
+    const { user } = render(<MissingFolderMetadataBanner repositoryName="test-repo" />);
 
     await user.click(screen.getByText('Fix folder IDs'));
     expect(screen.getByTestId('fix-folder-metadata-drawer')).toBeInTheDocument();
