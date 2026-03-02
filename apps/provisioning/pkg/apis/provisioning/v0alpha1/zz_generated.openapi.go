@@ -808,6 +808,15 @@ func schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref commo
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ref to the branch to create the commit on (uses repository's default branch if not specified)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
 			},
 		},
 	}

@@ -106,6 +106,52 @@ var appManifestData = app.ManifestData{
 																		Description: "From is the starting timestamp for the query.",
 																	},
 																},
+																"groupBy": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"object"},
+																		Description: "GroupBy specifies how to aggregate counts queries.",
+																		Properties: map[string]spec.Schema{
+																			"error": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"integration": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"integrationIndex": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"outcome": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"receiver": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																			"status": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"receiver",
+																			"integration",
+																			"integrationIndex",
+																			"status",
+																			"outcome",
+																			"error",
+																		},
+																	},
+																},
 																"groupLabels": {
 																	SchemaProps: spec.SchemaProps{
 
@@ -159,6 +205,16 @@ var appManifestData = app.ManifestData{
 																		Description: "To is the starting timestamp for the query.",
 																	},
 																},
+																"type": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "Type of query to perform (default: entries)",
+																		Enum: []interface{}{
+																			"entries",
+																			"counts",
+																		},
+																	},
+																},
 															},
 														}},
 												}},
@@ -176,6 +232,18 @@ var appManifestData = app.ManifestData{
 																SchemaProps: spec.SchemaProps{
 																	Type: []string{"object"},
 																	Properties: map[string]spec.Schema{
+																		"counts": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationCount"),
+																						}},
+																				},
+																			},
+																		},
 																		"entries": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
@@ -191,6 +259,7 @@ var appManifestData = app.ManifestData{
 																	},
 																	Required: []string{
 																		"entries",
+																		"counts",
 																	},
 																}},
 														}},
@@ -330,6 +399,54 @@ var appManifestData = app.ManifestData{
 
 										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryMatcher"),
 									}},
+							},
+						},
+					},
+					"createNotificationqueryNotificationCount": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"count": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Count is the number of notification attempts in the time period.",
+									},
+								},
+								"error": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"integration": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"integrationIndex": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"outcome": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationOutcome"),
+									},
+								},
+								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"status": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
+									},
+								},
+							},
+							Required: []string{
+								"count",
 							},
 						},
 					},
