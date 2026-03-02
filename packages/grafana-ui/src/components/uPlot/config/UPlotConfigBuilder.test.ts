@@ -1,6 +1,8 @@
 // TODO: migrate tests below to the builder
 
-import { createTheme, ThresholdsMode } from '@grafana/data';
+import uPlot from 'uplot';
+
+import { createTheme, DataFrame, ThresholdsMode } from '@grafana/data';
 import {
   GraphGradientMode,
   AxisPlacement,
@@ -919,6 +921,68 @@ describe('UPlotConfigBuilder', () => {
       expect(axesConfig[0].grid!.show).toBe(false);
       expect(axesConfig[1].grid!.show).toBe(false);
       expect(axesConfig[2].grid!.show).toBe(true);
+    });
+  });
+
+  describe('pointColorFn cursor callbacks', () => {
+    it('does not throw when this.frames is undefined (before prepData runs)', () => {
+      const builder = new UPlotConfigBuilder();
+      const config = builder.getConfig();
+
+      const mockU = {
+        series: [null, { points: { _stroke: () => 'blue' } }],
+        cursor: { idxs: [null, 5] },
+      } as unknown as uPlot;
+
+      expect(() => {
+        // @ts-ignore — accessing private config internals for test
+        config.cursor!.points!.stroke!(mockU, 1);
+      }).not.toThrow();
+    });
+
+    it('does not throw when field.values is undefined', () => {
+      const builder = new UPlotConfigBuilder();
+      builder['frames'] = [
+        {
+          fields: [null, { display: jest.fn(() => ({ color: 'red', text: '1', numeric: 1 })), values: undefined }],
+        },
+      ] as unknown as DataFrame[];
+
+      const config = builder.getConfig();
+      const mockU = {
+        series: [null, { points: { _stroke: () => 'blue' } }],
+        cursor: { idxs: [null, 5] },
+      } as unknown as uPlot;
+
+      expect(() => {
+        // @ts-ignore
+        config.cursor!.points!.stroke!(mockU, 1);
+      }).not.toThrow();
+    });
+
+    it('returns correct color when all data is available', () => {
+      const builder = new UPlotConfigBuilder();
+      builder['frames'] = [
+        {
+          fields: [
+            null,
+            {
+              display: jest.fn(() => ({ color: '#ff0000', text: '42', numeric: 42 })),
+              values: [0, 42, 100],
+            },
+          ],
+        },
+      ] as unknown as DataFrame[];
+
+      const config = builder.getConfig();
+      const mockU = {
+        series: [null, { points: { _stroke: () => 'fn' } }],
+        cursor: { idxs: [null, 1] },
+      } as unknown as uPlot;
+
+      // @ts-ignore
+      const color = config.cursor!.points!.fill!(mockU, 1);
+      expect(color).toBe('#ff0000');
     });
   });
 });
