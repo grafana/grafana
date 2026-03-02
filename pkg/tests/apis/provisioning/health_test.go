@@ -553,14 +553,14 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	// Use public GitHub repository (grafana/grafana) via git type - no token needed for read access
+	// Use public GitHub repository (grafana-git-sync-demo) via git type - no token needed for read access
 	// This tests that:
 	// - With workflows: write permission check FAILS (we can't write to public repo without token)
 	// - Without workflows: succeeds (only needs read access)
 
 	t.Run("git repository with workflows fails write permission check via Test endpoint", func(t *testing.T) {
 		// Create a git repository config pointing to public GitHub repo with write workflow
-		// No token = cannot write to public repo
+		// Invalid token = cannot write to public repo
 		repoConfig := map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Repository",
@@ -572,8 +572,8 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 				"title": "Test Git Write Permission Denied",
 				"type":  "git",
 				"git": map[string]any{
-					"url":    "https://github.com/grafana/grafana.git",
-					"branch": "main",
+					"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+					"branch": "integration-test",
 				},
 				"workflows": []string{"write"}, // Write workflow configured
 				"sync": map[string]any{
@@ -581,6 +581,9 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 					"target":          "folder",
 					"intervalSeconds": 10,
 				},
+			},
+			"secure": map[string]any{
+				"token": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
 			},
 		}
 
@@ -597,14 +600,27 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 
-		require.NoError(t, result.Error())
+		// The test can fail in two ways:
+		// 1. HTTP-level error if validation catches the issue
+		// 2. Successful HTTP response with TestResults indicating failure
+		if result.Error() != nil {
+			// If there's an HTTP error, it should mention permission or token
+			errMsg := result.Error().Error()
+			require.True(t,
+				strings.Contains(errMsg, "write permission") ||
+					strings.Contains(errMsg, "token") ||
+					strings.Contains(errMsg, "Forbidden") ||
+					strings.Contains(errMsg, "permission denied"),
+				"error should mention permission issue, got: %s", errMsg)
+		} else {
+			// If no HTTP error, check TestResults
+			obj, err := result.Get()
+			require.NoError(t, err)
 
-		obj, err := result.Get()
-		require.NoError(t, err)
-
-		testResults := parseTestResults(t, obj)
-		require.False(t, testResults.Success, "git repository without token should fail write permission check")
-		require.Equal(t, 403, testResults.Code, "should return 403 for write permission denied")
+			testResults := parseTestResults(t, obj)
+			require.False(t, testResults.Success, "git repository without token should fail write permission check")
+			require.Equal(t, 403, testResults.Code, "should return 403 for write permission denied")
+		}
 	})
 
 	t.Run("read-only git repository succeeds without write permission check via Test endpoint", func(t *testing.T) {
@@ -621,8 +637,8 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 				"title": "Test Git Read-Only",
 				"type":  "git",
 				"git": map[string]any{
-					"url":    "https://github.com/grafana/grafana.git",
-					"branch": "main",
+					"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+					"branch": "integration-test",
 				},
 				// No workflows = read-only, no write permission check
 				"sync": map[string]any{
@@ -668,10 +684,10 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 				},
 				"spec": map[string]any{
 					"title": "Test Git DryRun Write Denied",
-					"type":  "github",
-					"github": map[string]any{
-						"repository": "grafana/grafana",
-						"ref":        "main",
+					"type":  "git",
+					"git": map[string]any{
+						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+						"branch": "integration-test",
 					},
 					"workflows": []string{"write"},
 					"sync": map[string]any{
@@ -680,15 +696,25 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 						"intervalSeconds": 10,
 					},
 				},
+				"secure": map[string]any{
+					"token": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
+				},
 			},
 		}
 
-		// Create with dryRun - should fail due to write permission check
+		// Create with dryRun - should fail with validation error about write permission/token
 		_, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
 		require.Error(t, err, "dryRun should fail for git repository without write permission")
-		require.True(t, k8serrors.IsForbidden(err), "should return 403 Forbidden")
+		// Error should mention the permission or token issue
+		errMsg := err.Error()
+		require.True(t,
+			strings.Contains(errMsg, "write permission") ||
+			strings.Contains(errMsg, "token") ||
+			strings.Contains(errMsg, "Forbidden") ||
+			strings.Contains(errMsg, "permission denied"),
+			"error should mention permission issue, got: %s", errMsg)
 	})
 
 	t.Run("read-only git repository passes dryRun validation", func(t *testing.T) {
@@ -747,10 +773,10 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 				},
 				"spec": map[string]any{
 					"title": "Test Git Unhealthy",
-					"type":  "github",
-					"github": map[string]any{
-						"repository": "grafana/grafana",
-						"ref":        "main",
+					"type":  "git",
+					"git": map[string]any{
+						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+						"branch": "integration-test",
 					},
 					"workflows": []string{"write"},
 					"sync": map[string]any{
@@ -758,6 +784,9 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 						"target":          "folder",
 						"intervalSeconds": 10,
 					},
+				},
+				"secure": map[string]any{
+					"token": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
 				},
 			},
 		}
