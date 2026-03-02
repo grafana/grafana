@@ -8,7 +8,7 @@ import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { AddCardButton } from './AddCardButton';
 import { QueryCard } from './Cards/QueryCard';
 import { TransformationCard } from './Cards/TransformationCard';
-import { DraggableList } from './DraggableList';
+import { DraggableList } from './DraggableList/DraggableList';
 import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
 import { SidebarCollapsableHeader } from './SidebarCollapsableHeader';
 
