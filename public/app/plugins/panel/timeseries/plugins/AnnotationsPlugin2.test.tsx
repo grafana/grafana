@@ -412,15 +412,8 @@ describe('AnnotationsPlugin2', () => {
   });
 
   describe('annotation fields', () => {
-    // @todo when the id field is set to 0 we're supposed to disable editing? Needs to be number field!
-    it.todo('id');
-    // @todo type looks unused?
-    it.todo('type');
-    // @todo source looks unused?
-    it.todo('source');
-
     describe('alert state', () => {
-      // when newState and alertId are both defined we show a custom alert header, and
+      // when newState and alertId are both defined we show a custom alert header
       it('should render', async () => {
         setUp({
           annotations: [mockAlertingFrame],
@@ -431,6 +424,7 @@ describe('AnnotationsPlugin2', () => {
         await userEvent.hover(markers[0]);
         expect(screen.getByText('ALERTING')).toBeVisible();
       });
+      // When alert state is defined we only render the annotation text, and not the title
       it('should not render annotation title', async () => {
         setUp({
           annotations: [mockAlertingFrame],
@@ -452,6 +446,7 @@ describe('AnnotationsPlugin2', () => {
         await userEvent.hover(markers[0]);
         expect(screen.getByText('Launching HG Instance ops with hgrun version 1')).toBeVisible();
       });
+      // The alert title currently renders after the text if the alertId and alertState is defined
       it('should render alert specific title', async () => {
         setUp({
           annotations: [mockAlertingFrame],
