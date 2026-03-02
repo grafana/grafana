@@ -48,7 +48,7 @@ Grafana requires the following minimum system resources:
 - Minimum recommended memory: 512 MB
 - Minimum recommended CPU: 1 core
 
-These minimums support evaluation and single-user development only. For any shared or production deployment, refer to the sizing guidance below.
+Some features might require more memory or CPUs. For more information, refer to the following sizing guidance.
 
 ### Sizing your deployment
 
