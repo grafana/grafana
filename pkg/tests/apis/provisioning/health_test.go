@@ -711,9 +711,9 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 		errMsg := err.Error()
 		require.True(t,
 			strings.Contains(errMsg, "write permission") ||
-			strings.Contains(errMsg, "token") ||
-			strings.Contains(errMsg, "Forbidden") ||
-			strings.Contains(errMsg, "permission denied"),
+				strings.Contains(errMsg, "token") ||
+				strings.Contains(errMsg, "Forbidden") ||
+				strings.Contains(errMsg, "permission denied"),
 			"error should mention permission issue, got: %s", errMsg)
 	})
 
