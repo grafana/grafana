@@ -240,10 +240,9 @@ During conversion:
 - Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
 - Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
 
-### Regular expression compatibility
+### Regular expression limitations in SQL expressions
 
-Regular expressions in SQL expressions aren't fully compatible with MySQL standards.
-This is because Grafana runs SQL expressions in a CGo-free configuration, which uses regular expression behavior that differs from MySQL in some cases.
+SQL expressions in Grafana use the `go-mysql-server` SQL engine. Full MySQL regular expression compatibility in that engine depends on CGo, but Grafana is built without CGo.
 
 SQL expressions that use regular expression functions have limitations such as:
 
@@ -253,7 +252,7 @@ SQL expressions that use regular expression functions have limitations such as:
 
 There may be other minor differences as well.
 
-For implementation context, refer to the [`go-mysql-server` regex compatibility notes](https://github.com/grafana/go-mysql-server/blob/main/README.md).
+For implementation context, refer to the [`go-mysql-server` regular expression compatibility notes](https://github.com/grafana/go-mysql-server/blob/main/README.md).
 
 ### Schema changes and missing data
 
