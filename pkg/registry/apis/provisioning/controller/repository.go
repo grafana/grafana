@@ -632,12 +632,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		})
 	}
 
-	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
-	); conditionPatchOps != nil {
-		patchOperations = append(patchOperations, conditionPatchOps...)
-	}
-
 	// Repository needs to be blocked.
 	if !isCurrentlyBlocked && isOverQuota {
 		// Rule 1: Not blocked + over quota -> Block and exit
@@ -645,6 +639,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"namespace", namespace,
 			"max_repositories", newQuota.MaxRepositories,
 		)
+
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
+		); conditionPatchOps != nil {
+			patchOperations = append(patchOperations, conditionPatchOps...)
+		}
 
 		// Mark the repository as unhealthy
 		patchOperations = append(patchOperations, map[string]interface{}{
@@ -665,15 +665,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			}
 		}
 		return nil
-	}
-
-	// We're unblocking the repository. Here - we should set the condition correctly, to match this case.
-	if forceProcessForUnblock {
-		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
-		); conditionPatchOps != nil {
-			patchOperations = append(patchOperations, conditionPatchOps...)
-		}
 	}
 
 	if shouldGenerateToken {
@@ -743,14 +734,23 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
+	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
 	}
+	testResults := healthResult.TestResults
+	healthStatus := healthResult.HealthStatus
 
-	// Add health patch operations first
-	if len(healthPatchOps) > 0 {
-		patchOperations = append(patchOperations, healthPatchOps...)
+	// Add health patch operations
+	if len(healthResult.PatchOps) > 0 {
+		patchOperations = append(patchOperations, healthResult.PatchOps...)
+	}
+
+	// Build ALL condition patches together to avoid one overwriting another.
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
+	); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
 
 	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors

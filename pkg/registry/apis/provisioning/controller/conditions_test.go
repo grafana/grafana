@@ -79,23 +79,24 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 	fixedTime := metav1.NewTime(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
 
 	tests := []struct {
-		name                string
-		existingConditions  []metav1.Condition
-		generation          int64
-		newCondition        metav1.Condition
-		expectPatch         bool
-		expectedConditions  int
-		validateLastTransit bool
+		name               string
+		existingConditions []metav1.Condition
+		generation         int64
+		newConditions      []metav1.Condition
+		expectPatch        bool
+		expectedConditions int
 	}{
 		{
 			name:               "creates patch when no existing conditions",
 			existingConditions: nil,
 			generation:         1,
-			newCondition: metav1.Condition{
-				Type:    provisioning.ConditionTypeReady,
-				Status:  metav1.ConditionTrue,
-				Reason:  provisioning.ReasonAvailable,
-				Message: "Resource is available",
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonAvailable,
+					Message: "Resource is available",
+				},
 			},
 			expectPatch:        true,
 			expectedConditions: 1,
@@ -113,11 +114,13 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 				},
 			},
 			generation: 1,
-			newCondition: metav1.Condition{
-				Type:    provisioning.ConditionTypeReady,
-				Status:  metav1.ConditionTrue,
-				Reason:  provisioning.ReasonAvailable,
-				Message: "Resource is available",
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonAvailable,
+					Message: "Resource is available",
+				},
 			},
 			expectPatch:        true,
 			expectedConditions: 1,
@@ -135,11 +138,13 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 				},
 			},
 			generation: 1,
-			newCondition: metav1.Condition{
-				Type:    provisioning.ConditionTypeReady,
-				Status:  metav1.ConditionTrue,
-				Reason:  provisioning.ReasonAvailable,
-				Message: "Resource is available",
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonAvailable,
+					Message: "Resource is available",
+				},
 			},
 			expectPatch: false,
 		},
@@ -156,11 +161,13 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 				},
 			},
 			generation: 2,
-			newCondition: metav1.Condition{
-				Type:    provisioning.ConditionTypeReady,
-				Status:  metav1.ConditionTrue,
-				Reason:  provisioning.ReasonAvailable,
-				Message: "Resource is available",
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonAvailable,
+					Message: "Resource is available",
+				},
 			},
 			expectPatch:        true,
 			expectedConditions: 1,
@@ -178,11 +185,13 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 				},
 			},
 			generation: 1,
-			newCondition: metav1.Condition{
-				Type:    provisioning.ConditionTypeReady,
-				Status:  metav1.ConditionTrue,
-				Reason:  "DifferentReason",
-				Message: "Resource is available",
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionTrue,
+					Reason:  "DifferentReason",
+					Message: "Resource is available",
+				},
 			},
 			expectPatch:        true,
 			expectedConditions: 1,
@@ -200,20 +209,110 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 				},
 			},
 			generation: 1,
-			newCondition: metav1.Condition{
-				Type:    provisioning.ConditionTypeReady,
-				Status:  metav1.ConditionTrue,
-				Reason:  provisioning.ReasonAvailable,
-				Message: "Different message",
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonAvailable,
+					Message: "Different message",
+				},
 			},
 			expectPatch:        true,
 			expectedConditions: 1,
+		},
+		{
+			name:               "multiple conditions are merged into a single patch",
+			existingConditions: nil,
+			generation:         1,
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeNamespaceQuota,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonQuotaUnlimited,
+					Message: "No quota limits configured",
+				},
+				{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonAvailable,
+					Message: "Resource is available",
+				},
+			},
+			expectPatch:        true,
+			expectedConditions: 2,
+		},
+		{
+			name: "only changed conditions trigger a patch",
+			existingConditions: []metav1.Condition{
+				{
+					Type:               provisioning.ConditionTypeNamespaceQuota,
+					Status:             metav1.ConditionTrue,
+					Reason:             provisioning.ReasonQuotaUnlimited,
+					Message:            "No quota limits configured",
+					ObservedGeneration: 1,
+					LastTransitionTime: fixedTime,
+				},
+			},
+			generation: 1,
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeNamespaceQuota,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonQuotaUnlimited,
+					Message: "No quota limits configured",
+				},
+				{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonAvailable,
+					Message: "Resource is available",
+				},
+			},
+			expectPatch:        true,
+			expectedConditions: 2,
+		},
+		{
+			name: "no patch when all conditions unchanged",
+			existingConditions: []metav1.Condition{
+				{
+					Type:               provisioning.ConditionTypeNamespaceQuota,
+					Status:             metav1.ConditionTrue,
+					Reason:             provisioning.ReasonQuotaUnlimited,
+					Message:            "No quota limits configured",
+					ObservedGeneration: 1,
+					LastTransitionTime: fixedTime,
+				},
+				{
+					Type:               provisioning.ConditionTypeReady,
+					Status:             metav1.ConditionTrue,
+					Reason:             provisioning.ReasonAvailable,
+					Message:            "Resource is available",
+					ObservedGeneration: 1,
+					LastTransitionTime: fixedTime,
+				},
+			},
+			generation: 1,
+			newConditions: []metav1.Condition{
+				{
+					Type:    provisioning.ConditionTypeNamespaceQuota,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonQuotaUnlimited,
+					Message: "No quota limits configured",
+				},
+				{
+					Type:    provisioning.ConditionTypeReady,
+					Status:  metav1.ConditionTrue,
+					Reason:  provisioning.ReasonAvailable,
+					Message: "Resource is available",
+				},
+			},
+			expectPatch: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			patchOps := BuildConditionPatchOpsFromExisting(tt.existingConditions, tt.generation, tt.newCondition)
+			patchOps := BuildConditionPatchOpsFromExisting(tt.existingConditions, tt.generation, tt.newConditions...)
 
 			if !tt.expectPatch {
 				assert.Nil(t, patchOps, "expected no patch operations")
@@ -231,13 +330,10 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 			require.True(t, ok, "patch value should be []metav1.Condition")
 			assert.Len(t, conditions, tt.expectedConditions)
 
-			// Verify ObservedGeneration is set
-			readyCondition := conditions[0]
-			assert.Equal(t, tt.generation, readyCondition.ObservedGeneration)
-			assert.Equal(t, tt.newCondition.Type, readyCondition.Type)
-			assert.Equal(t, tt.newCondition.Status, readyCondition.Status)
-			assert.Equal(t, tt.newCondition.Reason, readyCondition.Reason)
-			assert.Equal(t, tt.newCondition.Message, readyCondition.Message)
+			// Verify ObservedGeneration is set on all conditions
+			for _, cond := range conditions {
+				assert.Equal(t, tt.generation, cond.ObservedGeneration)
+			}
 		})
 	}
 }

@@ -294,7 +294,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 	// TODO: Fix GetTree in nanogit as it does not work commit hash
 	commit, err := r.client.GetCommit(ctx, refHash)
 	if err != nil {
-		return nil, fmt.Errorf("get commit: %w", err)
+		return nil, fmt.Errorf("get commit: %w", mapNanogitError(err))
 	}
 
 	// Check if the path represents a directory
@@ -307,7 +307,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 				return nil, repository.ErrFileNotFound
 			}
 
-			return nil, fmt.Errorf("get tree by path: %w", err)
+			return nil, fmt.Errorf("get tree by path: %w", mapNanogitError(err))
 		}
 
 		return &repository.FileInfo{
@@ -323,7 +323,7 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 			return nil, repository.ErrFileNotFound
 		}
 
-		return nil, fmt.Errorf("read blob: %w", err)
+		return nil, fmt.Errorf("read blob: %w", mapNanogitError(err))
 	}
 
 	return &repository.FileInfo{
@@ -349,7 +349,7 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return nil, repository.ErrRefNotFound
 		}
-		return nil, fmt.Errorf("get flat tree: %w", err)
+		return nil, fmt.Errorf("get flat tree: %w", mapNanogitError(err))
 	}
 
 	entries := make([]repository.FileTreeEntry, 0, len(tree.Entries))
@@ -391,7 +391,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 
 	writer, err := r.client.NewStagedWriter(ctx, branchRef)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", err)
+		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
 
 	if err := r.create(ctx, path, data, writer); err != nil {
@@ -418,7 +418,7 @@ func (r *gitRepository) create(ctx context.Context, path string, data []byte, wr
 			return repository.ErrFileAlreadyExists
 		}
 
-		return fmt.Errorf("create blob: %w", err)
+		return fmt.Errorf("create blob: %w", mapNanogitError(err))
 	}
 
 	return nil
@@ -442,7 +442,7 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", err)
+		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
 
 	if err := r.update(ctx, path, data, writer); err != nil {
@@ -464,7 +464,7 @@ func (r *gitRepository) update(ctx context.Context, path string, data []byte, wr
 			return repository.ErrFileNotFound
 		}
 
-		return fmt.Errorf("update blob: %w", err)
+		return fmt.Errorf("update blob: %w", mapNanogitError(err))
 	}
 
 	return nil
@@ -504,7 +504,7 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", err)
+		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
 
 	if err := r.delete(ctx, path, writer); err != nil {
@@ -528,7 +528,7 @@ func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment
 	// Create a staged writer
 	writer, err := r.client.NewStagedWriter(ctx, branchRef)
 	if err != nil {
-		return fmt.Errorf("create staged writer: %w", err)
+		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
 
 	if err := r.move(ctx, oldPath, newPath, writer); err != nil {
@@ -547,14 +547,14 @@ func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
 			}
-			return fmt.Errorf("delete tree: %w", err)
+			return fmt.Errorf("delete tree: %w", mapNanogitError(err))
 		}
 	} else {
 		if _, err := writer.DeleteBlob(ctx, finalPath); err != nil {
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
 			}
-			return fmt.Errorf("delete blob: %w", err)
+			return fmt.Errorf("delete blob: %w", mapNanogitError(err))
 		}
 	}
 
@@ -578,7 +578,7 @@ func (r *gitRepository) move(ctx context.Context, oldPath, newPath string, write
 			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
 				return repository.ErrFileAlreadyExists
 			}
-			return fmt.Errorf("move tree: %w", err)
+			return fmt.Errorf("move tree: %w", mapNanogitError(err))
 		}
 	} else if !safepath.IsDir(oldPath) && !safepath.IsDir(newPath) {
 		// For files, use MoveBlob operation
@@ -589,7 +589,7 @@ func (r *gitRepository) move(ctx context.Context, oldPath, newPath string, write
 			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
 				return repository.ErrFileAlreadyExists
 			}
-			return fmt.Errorf("move blob: %w", err)
+			return fmt.Errorf("move blob: %w", mapNanogitError(err))
 		}
 	} else {
 		// Mismatched types (file to directory or vice versa)
@@ -766,7 +766,7 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return hash.Zero, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
 		}
-		return hash.Zero, fmt.Errorf("get ref %s: %w", ref, err)
+		return hash.Zero, fmt.Errorf("get ref %s: %w", ref, mapNanogitError(err))
 	}
 
 	return branchRef.Hash, nil
@@ -867,7 +867,7 @@ func (r *gitRepository) commitAndPush(ctx context.Context, writer nanogit.Staged
 	}
 
 	if err := writer.Push(ctx); err != nil {
-		return fmt.Errorf("push changes: %w", err)
+		return fmt.Errorf("push changes: %w", mapNanogitError(err))
 	}
 
 	return nil

@@ -4595,7 +4595,13 @@
         }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.FixFolderMetadataJobOptions": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "ref": {
+            "description": "Ref to the branch to create the commit on (uses repository's default branch if not specified)",
+            "type": "string"
+          }
+        }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubConnectionConfig": {
         "type": "object",

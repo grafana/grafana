@@ -1628,7 +1628,10 @@ export type DeleteJobOptions = {
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
   resources?: ResourceRef[];
 };
-export type FixFolderMetadataJobOptions = object;
+export type FixFolderMetadataJobOptions = {
+  /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
+  ref?: string;
+};
 export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit */
   message?: string;
