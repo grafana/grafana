@@ -64,7 +64,6 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, onSelect, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
-  const shouldShowHiddenVariables = isEditingNewLayouts && isHidden;
   const styles = useStyles2(getStyles);
 
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
@@ -106,7 +105,6 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
       <div
         className={cx(
           styles.switchMenuContainer,
-          shouldShowHiddenVariables && styles.hidden,
           isSelected && 'dashboard-selected-element',
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
@@ -130,7 +128,6 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
       <div
         className={cx(
           styles.verticalContainer,
-          shouldShowHiddenVariables && styles.hidden,
           isSelected && 'dashboard-selected-element',
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
@@ -147,7 +144,6 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     <div
       className={cx(
         styles.container,
-        shouldShowHiddenVariables && styles.hidden,
         isSelected && 'dashboard-selected-element',
         isSelectable && !isSelected && 'dashboard-selectable-element'
       )}
@@ -235,13 +231,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
   }),
-  hidden: css({
-    opacity: 0.6,
-    '&:hover': css({
-      opacity: 1,
-    }),
-    label: css({
-      textDecoration: 'line-through',
-    }),
   }),
 });
