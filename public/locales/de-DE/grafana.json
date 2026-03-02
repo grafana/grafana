@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Kontaktpunkte konnten nicht abgerufen werden"
     },
     "contact-points": {
-      "create": "Kontaktpunkt erstellen",
+      "create": "",
       "custom-template-value": "Benutzerdefinierter Vorlagenwert",
       "delete-reasons": {
         "heading": "Der Kontaktpunkt kann aus folgenden Gründen nicht gelöscht werden:",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Zeitintervall hinzufügen"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Suche nach Kontaktpunkt",
@@ -2252,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Abrufen der Benachrichtigungsvorlagen fehlgeschlagen"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Benachrichtigungsvorlagengruppe hinzufügen",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Erstellen Sie Benachrichtigungsvorlagen, um Ihre Benachrichtigungen anzupassen."
     },
     "notifications-list": {
@@ -2279,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Fügen Sie Labels hinzu, um Ihre Aufnahmeregeln besser verwalten zu können.",
@@ -3350,7 +3348,7 @@
       "stop-alerting-when": "Warnung (oder ausstehenden Status) stoppen, wenn"
     },
     "time-interval": {
-      "add-time-interval": "Zeitintervall hinzufügen",
+      "add-time-interval": "",
       "save": "Zeitintervall speichern",
       "saving": "Zeitintervall wird gespeichert"
     },
@@ -6604,6 +6602,12 @@
           "row-title": "Zeilentitel"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Das Dashboard konnte nicht gelöscht werden",
@@ -12656,6 +12660,12 @@
       "label-read-only": "Nur lesen",
       "label-sync-interval": "Synchronisierungsintervall (Sekunden)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12797,6 +12807,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13304,6 +13316,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",

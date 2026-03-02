@@ -2173,8 +2173,7 @@
         "status": "Status",
         "tooltip": "Use label matcher expression or click on a group label to filter instances, for example:"
       },
-      "firing-alerts_one": "Firing Alerts ({{count}})",
-      "firing-alerts_other": "Firing Alerts ({{count}})",
+      "firing-alerts": "Firing Alerts",
       "labels": "Labels:",
       "loading": "Loading notifications...",
       "notification-error": "Notification Error",
@@ -2182,8 +2181,8 @@
         "failed": "Failed",
         "success": "Success"
       },
-      "resolved-alerts_one": "Resolved Alerts ({{count}})",
-      "resolved-alerts_other": "Resolved Alerts ({{count}})",
+      "resolved-alerts": "Resolved Alerts",
+      "showing-alerts": "Showing {{ showing }} out of {{ total }} alerts",
       "started": "Started:",
       "status": {
         "firing": "Firing",
@@ -2279,8 +2278,7 @@
         "clear": "Clear filters"
       },
       "filterBy": "Filter by:",
-      "firing-alerts_one": "Firing Alerts ({{count}})",
-      "firing-alerts_other": "Firing Alerts ({{count}})",
+      "firing-alerts": "Firing Alerts",
       "header": {
         "contact-point": "Contact point",
         "group-labels": "Group Labels",
@@ -2304,8 +2302,8 @@
           "receiver": "Contact point:"
         }
       },
-      "resolved-alerts_one": "Resolved Alerts ({{count}})",
-      "resolved-alerts_other": "Resolved Alerts ({{count}})",
+      "resolved-alerts": "Resolved Alerts",
+      "showing-alerts": "Showing {{ showing }} out of {{ total }} alerts",
       "started": "Started: {{value}}",
       "status-filter-variable": {
         "label": {
@@ -6604,6 +6602,12 @@
           "row-title": "Row title"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "Default value",
+      "description": "Values that are pre-selected by default.",
+      "label": "Default value",
+      "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Failed to delete dashboard",
@@ -13312,6 +13316,7 @@
     "action": {
       "add-transformation-filter": "Add filter",
       "duplicate": "Duplicate {{type}}",
+      "error": "Error",
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "hide-transformation-help": "Hide transformation help",

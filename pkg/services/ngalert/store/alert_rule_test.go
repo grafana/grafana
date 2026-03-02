@@ -2198,6 +2198,119 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		// After all pages, token should be empty
 		require.Empty(t, continueToken2, "should be no more pages")
 	})
+
+	t.Run("should sort by folder fullpath when enabled", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		// Intentionally make namespace and fullpath sort orders conflict.
+		ruleNamespaceFirst := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("a-namespace"),
+			ruleGen.WithGroupName("group-z"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "z-folder"
+			},
+		))
+
+		ruleFullpathFirst := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("z-namespace"),
+			ruleGen.WithGroupName("group-a"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "a-folder"
+			},
+		))
+
+		resultByNamespace, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+		})
+		require.NoError(t, err)
+		require.Len(t, resultByNamespace, 2)
+		require.Equal(t, ruleNamespaceFirst.UID, resultByNamespace[0].UID)
+		require.Equal(t, ruleFullpathFirst.UID, resultByNamespace[1].UID)
+
+		resultByFullpath, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, resultByFullpath, 2)
+		require.Equal(t, ruleFullpathFirst.UID, resultByFullpath[0].UID)
+		require.Equal(t, ruleNamespaceFirst.UID, resultByFullpath[1].UID)
+	})
+
+	t.Run("should paginate with fullpath cursor and include folder fullpath in token", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		// Intentionally make namespace and fullpath order different to validate fullpath cursor behavior.
+		rule1 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("b-namespace"),
+			ruleGen.WithGroupName("group-1"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "a-folder"
+			},
+		))
+		rule2 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("a-namespace"),
+			ruleGen.WithGroupName("group-2"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "b-folder"
+			},
+		))
+		rule3 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("c-namespace"),
+			ruleGen.WithGroupName("group-3"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "c-folder"
+			},
+		))
+
+		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               1,
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, page1, 1)
+		require.Equal(t, rule1.UID, page1[0].UID)
+		require.NotEmpty(t, token1)
+
+		cursor1, err := models.DecodeGroupCursor(token1)
+		require.NoError(t, err)
+		require.Equal(t, "a-folder", cursor1.FolderFullpath)
+		require.Equal(t, "b-namespace", cursor1.NamespaceUID)
+		require.Equal(t, "group-1", cursor1.RuleGroup)
+
+		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               1,
+			ContinueToken:       token1,
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, page2, 1)
+		require.Equal(t, rule2.UID, page2[0].UID)
+		require.NotEmpty(t, token2)
+
+		cursor2, err := models.DecodeGroupCursor(token2)
+		require.NoError(t, err)
+		require.Equal(t, "b-folder", cursor2.FolderFullpath)
+		require.Equal(t, "a-namespace", cursor2.NamespaceUID)
+		require.Equal(t, "group-2", cursor2.RuleGroup)
+
+		page3, token3, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               1,
+			ContinueToken:       token2,
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, page3, 1)
+		require.Equal(t, rule3.UID, page3[0].UID)
+		require.Empty(t, token3)
+	})
 }
 
 func Benchmark_ListAlertRules(b *testing.B) {
