@@ -6,7 +6,7 @@ import { isFetchError } from '@grafana/runtime';
 import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { dataToSpec } from '../../utils/data';
-import { getFormErrors } from '../../utils/getFormErrors';
+import { extractFormErrors, getFormErrors } from '../../utils/getFormErrors';
 import { Step } from '../Stepper';
 import { StepStatusInfo, WizardFormData, WizardStep } from '../types';
 
@@ -110,6 +110,10 @@ export function useWizardSubmission({
       } catch (error) {
         if (isFetchError(error)) {
           const errors = getFormErrors(error.data);
+          const extractedErrors = extractFormErrors(error.data);
+          const extractedMessage = extractedErrors
+            .map((error) => error.detail)
+            .filter((detail): detail is string => Boolean(detail));
           // Check for special case: token error when using GitHub App
           const tokenError = errors.find(([field]) => field === 'repository.token');
           if (tokenError && activeStep === 'connection' && formData.githubAuthType !== 'pat') {
@@ -142,7 +146,7 @@ export function useWizardSubmission({
               status: 'error',
               error: {
                 title: repositoryConnectionFailed,
-                message: error.data.message,
+                message: extractedMessage || error.data.message,
               },
             });
           }

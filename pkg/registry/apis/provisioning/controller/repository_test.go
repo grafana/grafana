@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
@@ -710,22 +711,20 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 	}
 }
 
-// capturingStatusPatcher records all Patch calls for later inspection.
-type capturingStatusPatcher struct {
-	calls [][]map[string]interface{}
+// capturePatcher captures all patch operations for inspection in tests.
+type capturePatcher struct {
+	ops []map[string]interface{}
 }
 
-func (c *capturingStatusPatcher) Patch(_ context.Context, _ *provisioning.Repository, ops ...map[string]interface{}) error {
-	c.calls = append(c.calls, ops)
+func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]interface{}) error {
+	c.ops = append(c.ops, patchOperations...)
 	return nil
 }
 
-func (c *capturingStatusPatcher) findPatchOp(path string) (map[string]interface{}, bool) {
-	for _, ops := range c.calls {
-		for _, op := range ops {
-			if op["path"] == path {
-				return op, true
-			}
+func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool) {
+	for _, op := range c.ops {
+		if op["path"] == path {
+			return op, true
 		}
 	}
 	return nil, false
@@ -801,7 +800,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			require.NoError(t, indexer.Add(repo))
 			repoLister := listers.NewRepositoryLister(indexer)
 
-			patcher := &capturingStatusPatcher{}
+			patcher := &capturePatcher{}
 
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().
@@ -841,10 +840,10 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			assert.NoError(t, err)
 
 			if tc.expectReconcile {
-				assert.NotEmpty(t, patcher.calls,
+				assert.NotEmpty(t, patcher.ops,
 					"expected status patcher to be called during reconciliation")
 			} else {
-				assert.Empty(t, patcher.calls,
+				assert.Empty(t, patcher.ops,
 					"expected no status patch when reconciliation is skipped")
 			}
 
@@ -877,4 +876,89 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			}
 		})
 	}
+}
+
+// TestRepositoryController_process_ConditionsNotOverwritten verifies that the reconciliation loop
+// produces a final /status/conditions patch containing both the quota and ready condition.
+func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-repo",
+			Namespace:  "default",
+			Generation: 2,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+			Sync: provisioning.SyncOptions{
+				Enabled: false,
+			},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+		},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	mockMetrics := NewMockHealthMetricsRecorder(t)
+	mockMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Return()
+
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(nil, tester, mockMetrics)
+
+	mockConfigRepo := repository.NewMockConfigRepository(t)
+	mockConfigRepo.EXPECT().Config().Return(repo)
+	mockConfigRepo.EXPECT().Test(mock.Anything).Return(
+		&provisioning.TestResults{Success: true, Code: http.StatusOK},
+		nil,
+	)
+
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConfigRepo, nil)
+
+	patcher := &capturePatcher{}
+
+	rc := &RepositoryController{
+		repoLister:    mockLister,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(mockLister),
+		healthChecker: healthChecker,
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+	}
+
+	err := rc.process(&queueItem{key: "default/test-repo"})
+	require.NoError(t, err)
+
+	// Find the last /status/conditions patch operation — if there are multiple
+	// replace ops on the same path, the last one wins when applied as a JSON Patch.
+	var lastConditionsPatch map[string]interface{}
+	for _, op := range patcher.ops {
+		if path, ok := op["path"].(string); ok && path == "/status/conditions" {
+			lastConditionsPatch = op
+		}
+	}
+
+	require.NotNil(t, lastConditionsPatch, "expected at least one /status/conditions patch")
+
+	conditions, ok := lastConditionsPatch["value"].([]metav1.Condition)
+	require.True(t, ok, "expected conditions value to be []metav1.Condition")
+
+	var hasQuotaCondition, hasReadyCondition bool
+	for _, c := range conditions {
+		switch c.Type {
+		case provisioning.ConditionTypeNamespaceQuota:
+			hasQuotaCondition = true
+		case provisioning.ConditionTypeReady:
+			hasReadyCondition = true
+		}
+	}
+
+	assert.True(t, hasQuotaCondition, "expected quota condition in final /status/conditions patch")
+	assert.True(t, hasReadyCondition, "expected ready condition in final /status/conditions patch")
+	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
 }

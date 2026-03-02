@@ -912,7 +912,7 @@
       "title-failed-to-fetch-contact-points": "Не удалось получить точки контакта"
     },
     "contact-points": {
-      "create": "Создать точку контакта",
+      "create": "",
       "custom-template-value": "Значение пользовательского шаблона",
       "delete-reasons": {
         "heading": "Точку контакта нельзя удалить по следующим причинам.",
@@ -2147,7 +2147,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Добавить временной интервал"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2191,6 +2191,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2198,20 +2199,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Поиск по точке контакта",
@@ -2274,7 +2269,7 @@
       "title-failed-to-fetch-notification-templates": "Не удалось получить шаблоны уведомлений"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Добавить группу шаблонов уведомлений",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Создавайте собственные шаблоны уведомлений."
     },
     "notifications-list": {
@@ -2301,6 +2296,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2324,21 +2320,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Добавьте метки, чтобы улучшить управление правилами записи.",
@@ -3386,7 +3376,7 @@
       "stop-alerting-when": "Прекратить оповещение (или состояние ожидания), если"
     },
     "time-interval": {
-      "add-time-interval": "Добавить временной интервал",
+      "add-time-interval": "",
       "save": "Сохранить временной интервал",
       "saving": "Сохранение временного интервала"
     },
@@ -6660,6 +6650,12 @@
           "row-title": "Заголовок строки"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Не удалось удалить дашборд",
@@ -12772,6 +12768,12 @@
       "label-read-only": "Только для чтения",
       "label-sync-interval": "Интервал синхронизации (в секундах)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12917,6 +12919,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13426,6 +13430,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",

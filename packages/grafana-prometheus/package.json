@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@floating-ui/react": "0.27.16",
+    "@floating-ui/react": "0.27.18",
     "@grafana/data": "13.0.0-pre",
     "@grafana/e2e-selectors": "13.0.0-pre",
     "@grafana/i18n": "13.0.0-pre",
@@ -61,15 +61,13 @@
     "@lezer/highlight": "1.2.3",
     "@lezer/lr": "1.4.3",
     "@prometheus-io/lezer-promql": "0.307.3",
-    "@reduxjs/toolkit": "2.10.1",
     "@types/debounce-promise": "3.1.9",
     "@types/lodash": "4.17.20",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@types/react-highlight-words": "0.20.0",
-    "@types/react-window": "1.8.8",
     "@types/semver": "7.7.1",
-    "@types/uuid": "10.0.0",
+    "@types/uuid": "11.0.0",
     "debounce-promise": "3.1.2",
     "lodash": "^4.17.23",
     "moment": "2.30.1",
@@ -82,8 +80,8 @@
     "react-use": "17.6.0",
     "react-window": "1.8.11",
     "rxjs": "7.8.2",
-    "semver": "7.7.3",
-    "uuid": "11.1.0"
+    "semver": "7.7.4",
+    "uuid": "13.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-dynamic-import-vars": "2.1.5",
