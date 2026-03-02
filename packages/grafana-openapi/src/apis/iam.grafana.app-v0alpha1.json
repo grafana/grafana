@@ -5106,6 +5106,13 @@
         "type": "object",
         "required": ["name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "score"],
         "properties": {
+          "accessControl": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean",
+              "default": false
+            }
+          },
           "email": {
             "type": "string",
             "default": ""
@@ -5146,6 +5153,106 @@
           }
         }
       },
+      "GetTeamGroupsBody": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "GetTeamGroupsExternalGroupMapping": {
+        "type": "object",
+        "required": ["name", "externalGroup"],
+        "properties": {
+          "externalGroup": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "GetTeamGroupsResponse": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "GetTeamMembersBody": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "GetTeamMembersResponse": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "GetTeamMembersTeamUser": {
+        "type": "object",
+        "required": ["team", "user", "permission", "external"],
+        "properties": {
+          "external": {
+            "type": "boolean",
+            "default": false
+          },
+          "permission": {
+            "type": "string",
+            "default": ""
+          },
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "GetTeamsBody": {
         "type": "object",
         "required": ["items"],
@@ -5179,6 +5286,60 @@
         }
       },
       "GetTeamsUserTeam": {
+        "type": "object",
+        "required": ["user", "team", "permission", "external"],
+        "properties": {
+          "external": {
+            "type": "boolean",
+            "default": false
+          },
+          "permission": {
+            "type": "string",
+            "default": ""
+          },
+          "team": {
+            "type": "string",
+            "default": ""
+          },
+          "user": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "GetUserTeamsBody": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "GetUserTeamsResponse": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {}
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "GetUserTeamsUserTeam": {
         "type": "object",
         "required": ["user", "team", "permission", "external"],
         "properties": {
