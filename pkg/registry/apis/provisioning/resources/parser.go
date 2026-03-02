@@ -202,6 +202,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// Calculate folder identifier from the file path
 	if info.Path != "" {
 		dirPath := safepath.Dir(info.Path)
+		// _folder.json represents the directory it lives in, so its parent is one level above.
+		if r.folderMetadataEnabled && path.Base(info.Path) == FolderMetadataFileName {
+			dirPath = safepath.Dir(dirPath)
+		}
 		if dirPath != "" {
 			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
 		} else {

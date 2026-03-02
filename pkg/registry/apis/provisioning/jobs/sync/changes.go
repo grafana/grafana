@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"fmt"
+	"path"
 	"strings"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -93,6 +94,15 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 		}
 
 		if resources.IsPathSupported(file.Path) == nil {
+			// _folder.json is a folder-metadata file (like .keep), not a resource.
+			// Skip it here; the parent directory change handles folder creation.
+			if path.Base(file.Path) == resources.FolderMetadataFileName {
+				if err := keep.Add(file.Path); err != nil {
+					return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				}
+				continue
+			}
+
 			changes = append(changes, ResourceFileChange{
 				Action: repository.FileActionCreated, // or previously ignored/failed
 				Path:   file.Path,

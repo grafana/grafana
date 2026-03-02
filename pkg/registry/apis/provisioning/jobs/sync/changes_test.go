@@ -452,6 +452,28 @@ func TestChanges(t *testing.T) {
 		}, changes[2])
 	})
 
+	t.Run("_folder.json is not treated as a resource change", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "def", Blob: true},
+			{Path: "my-folder/dashboard.json", Hash: "ghi", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		// Only the folder and the dashboard — _folder.json must not appear
+		require.Len(t, changes, 2)
+
+		paths := make([]string, len(changes))
+		for i, c := range changes {
+			paths[i] = c.Path
+		}
+		require.Contains(t, paths, "my-folder/dashboard.json")
+		require.Contains(t, paths, "my-folder/")
+		require.NotContains(t, paths, "my-folder/_folder.json")
+	})
+
 	t.Run("report correct changes with .keep files", func(t *testing.T) {
 		// Replicating how `source` is actually being passed in `Changes` function
 		source := []repository.FileTreeEntry{

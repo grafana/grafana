@@ -30,10 +30,10 @@ import (
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo                 repository.ReaderWriter
-	parser               Parser
-	folders              *FolderManager
-	access               auth.AccessChecker
+	repo                  repository.ReaderWriter
+	parser                Parser
+	folders               *FolderManager
+	access                auth.AccessChecker
 	folderMetadataEnabled bool
 }
 

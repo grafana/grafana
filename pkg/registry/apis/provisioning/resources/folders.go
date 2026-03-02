@@ -81,6 +81,22 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
+// effectiveFolderID returns the stable UID from _folder.json if present,
+// otherwise returns the hash-based hashID. No feature flag needed —
+// the presence of _folder.json is the signal.
+func (fm *FolderManager) effectiveFolderID(ctx context.Context, folderPath, hashID string) string {
+	metadataPath := safepath.Join(folderPath, FolderMetadataFileName)
+	info, err := fm.repo.Read(ctx, metadataPath, "")
+	if err != nil {
+		return hashID
+	}
+	uid, err := FolderManifestUID(info.Data)
+	if err != nil || uid == "" {
+		return hashID
+	}
+	return uid
+}
+
 // EnsureFoldersExist creates the folder structure in the cluster.
 func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error) {
 	cfg := fm.repo.Config()
@@ -96,12 +112,15 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	f := ParseFolder(dir, cfg.Name)
+	// Use stable UID from _folder.json if available
+	f.ID = fm.effectiveFolderID(ctx, f.Path, f.ID)
 	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
+		f.ID = fm.effectiveFolderID(ctx, traverse, f.ID)
 		if fm.tree.In(f.ID) {
 			parent = f.ID
 			return nil

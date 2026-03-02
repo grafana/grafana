@@ -41,7 +41,7 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 		parsers:               parsers,
 		clients:               clients,
 		access:                access,
-		folderMetadataEnabled: features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata),
+		folderMetadataEnabled: features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), //nolint:staticcheck
 	}
 }
 

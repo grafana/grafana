@@ -8,9 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path"
-	"path/filepath"
 	"sync"
 	"testing"
 
@@ -1036,33 +1034,27 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
 
-	// Verify _folder.json was created in the filesystem instead of .keep
-	metadataPath := filepath.Join(helper.ProvisioningPath, "meta-test-folder", "_folder.json")
-	require.FileExists(t, metadataPath, "_folder.json should have been created when flag is enabled")
+	// Verify _folder.json was created via the files endpoint instead of .keep
+	wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/_folder.json")
+	require.NoError(t, err, "_folder.json should be readable via the files endpoint")
 
-	keepPath := filepath.Join(helper.ProvisioningPath, "meta-test-folder", ".keep")
-	require.NoFileExists(t, keepPath, ".keep should not have been created when flag is enabled")
+	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
+	require.Equal(t, "folder.grafana.app/v1beta1", apiVersion)
 
-	// Verify _folder.json has valid content with a full Folder resource
-	content, err := os.ReadFile(metadataPath)
-	require.NoError(t, err)
-	var folderRes struct {
-		APIVersion string `json:"apiVersion"`
-		Kind       string `json:"kind"`
-		Metadata   struct {
-			Name string `json:"name"`
-		} `json:"metadata"`
-		Spec struct {
-			Title string `json:"title"`
-		} `json:"spec"`
-	}
-	require.NoError(t, json.Unmarshal(content, &folderRes))
-	require.Equal(t, "folder.grafana.app/v1beta1", folderRes.APIVersion)
-	require.Equal(t, "Folder", folderRes.Kind)
-	require.NotEmpty(t, folderRes.Metadata.Name, "_folder.json should contain a non-empty metadata.name (stable UID)")
-	require.Equal(t, "meta-test-folder", folderRes.Spec.Title)
+	kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
+	require.Equal(t, "Folder", kind)
+
+	folderUID, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
+	require.NotEmpty(t, folderUID, "_folder.json should contain a non-empty metadata.name (stable UID)")
+
+	title, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "spec", "title")
+	require.Equal(t, "meta-test-folder", title)
+
+	// Verify .keep was not created when flag is enabled
+	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
+	require.Error(t, err, ".keep should not exist when flag is enabled")
 
 	// Verify the Grafana folder was created with the stable UID from _folder.json
-	_, err = helper.Folders.Resource.Get(ctx, folderRes.Metadata.Name, metav1.GetOptions{})
+	_, err = helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
 	require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
 }

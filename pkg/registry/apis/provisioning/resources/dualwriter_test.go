@@ -11,8 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
@@ -245,6 +245,35 @@ func newTestRepoConfig(name string) *provisioning.Repository {
 			Sync:      provisioning.SyncOptions{Enabled: false},
 		},
 	}
+}
+
+// TestEnsureFolderPathExist_UsesStableUID verifies that EnsureFolderPathExist uses
+// the stable UID from _folder.json instead of the hash-derived UID when the file exists.
+func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
+	ctx := context.Background()
+	stableUID := "my-stable-uid"
+
+	// Prepare _folder.json content with the stable UID
+	manifest := NewFolderManifest(stableUID, "my-folder")
+	data, err := json.Marshal(manifest)
+	require.NoError(t, err)
+
+	config := newTestRepoConfig("test-repo")
+	rw := repository.NewMockReaderWriter(t)
+	rw.On("Config").Return(config)
+	rw.On("Read", mock.Anything, "my-folder/_folder.json", "").Return(&repository.FileInfo{Data: data}, nil)
+
+	// Pre-populate the tree with the stable UID only — if effectiveFolderID is not
+	// called the hash-based UID won't match and EnsureFolderExists would be invoked
+	// (which would panic since the dynamic client is nil).
+	tree := NewEmptyFolderTree()
+	tree.Add(Folder{ID: stableUID, Title: "my-folder", Path: "my-folder/"}, "")
+
+	fm := NewFolderManager(rw, nil, tree)
+
+	parentID, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+	require.NoError(t, err)
+	require.Equal(t, stableUID, parentID)
 }
 
 func TestCreateFolder_FolderMetadata_FlagDisabled(t *testing.T) {
