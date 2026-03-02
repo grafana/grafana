@@ -40,6 +40,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
+      height: '200px',
     }),
     header: css({
       alignItems: 'center',
