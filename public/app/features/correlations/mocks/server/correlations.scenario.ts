@@ -1,5 +1,6 @@
 import { CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { createCorrelationsHandler, getCorrelationsHandler } from '@grafana/test-utils/unstable';
+
+import { createCorrelationsHandler, getCorrelationsHandler } from '../handlers/';
 
 const generateCorrMetadata = (correlation: CorrelationSpec) => {
   let labels: Record<string, string> = {
