@@ -13,7 +13,7 @@ import { JobSummary } from './JobSummary';
 import { getJobMessages } from './getJobMessage';
 
 export interface JobContentProps {
-  jobType: 'sync' | 'delete' | 'move';
+  jobType: 'sync' | 'delete' | 'move' | 'fix';
   job?: Job;
   isFinishedJob?: boolean;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
