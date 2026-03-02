@@ -960,6 +960,31 @@ describe('UPlotConfigBuilder', () => {
       }).not.toThrow();
     });
 
+    it('returns empty string when display resolves without a color (no crash)', () => {
+      const builder = new UPlotConfigBuilder();
+      builder['frames'] = [
+        {
+          fields: [
+            null,
+            {
+              display: jest.fn(() => ({ text: '42', numeric: 42 })), // no color
+              values: [0, 42],
+            },
+          ],
+        },
+      ] as unknown as DataFrame[];
+
+      const config = builder.getConfig();
+      const mockU = {
+        series: [null, { points: { _stroke: () => 'fn' } }],
+        cursor: { idxs: [null, 1] },
+      } as unknown as uPlot;
+
+      // @ts-ignore
+      const result = config.cursor!.points!.stroke!(mockU, 1);
+      expect(result).toBe('80'); // '' + '80'
+    });
+
     it('returns correct color when all data is available', () => {
       const builder = new UPlotConfigBuilder();
       builder['frames'] = [

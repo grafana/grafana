@@ -1,6 +1,6 @@
 import uPlot from 'uplot';
 
-import { createDataFrame, createTheme, dateTime, DateTimeInput, FieldType } from '@grafana/data';
+import { createDataFrame, createTheme, dateTime, DateTimeInput, DataFrame, FieldType } from '@grafana/data';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
 
@@ -398,6 +398,49 @@ describe('preparePlotConfigBuilder crash guards', () => {
         ],
       });
     }).not.toThrow();
+  });
+
+  it('maps fieldIndices correctly when renderer field exists in aligned frame', () => {
+    // Use a raw frame object rather than createDataFrame because createDataFrame
+    // strips field.state (needed by getNamesToFieldIndex to build the name→index map).
+    const frame = {
+      fields: [
+        {
+          config: {},
+          values: [1000, 2000, 3000],
+          name: 'Time',
+          state: { multipleFrames: false, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
+          type: FieldType.time,
+        },
+        {
+          config: {},
+          values: [1, 2, 3],
+          name: 'Value',
+          state: { multipleFrames: false, displayName: 'Value', origin: { fieldIndex: 1, frameIndex: 0 } },
+          type: FieldType.number,
+        },
+      ],
+      length: 3,
+    } as unknown as DataFrame;
+
+    const mockInit = jest.fn();
+
+    preparePlotConfigBuilder({
+      frame,
+      theme: createTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      allFrames: [frame],
+      renderers: [
+        {
+          fieldMap: { main: 'Value' },
+          indicesOnly: [],
+          init: mockInit,
+        },
+      ],
+    });
+
+    expect(mockInit).toHaveBeenCalledWith(expect.anything(), { main: 1 });
   });
 
   it('pointColorFn does not throw when invoked before prepData (panel type change scenario)', () => {
