@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { createElement, type ReactElement, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -8,6 +8,8 @@ import {
   GetRepositoryFilesWithPathApiResponse,
   RepositoryView,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { Resource } from 'app/features/apiserver/types';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
@@ -119,11 +121,24 @@ export function useProvisionedRequestHandler<T>({
       // Only show success alert for write workflow (not branch workflow,
       // which navigates to a preview page with its own PR banner)
       if (workflow !== 'branch') {
-        const message = successMessage || getContextualSuccessMessage(info);
-        getAppEvents().publish({
-          type: AppEvents.alertSuccess.name,
-          payload: [message],
-        });
+        const branch = ref || selectedBranch || repository?.branch;
+        const repoURL = urls?.repositoryURL || repository?.url;
+
+        const label = getResourceLabel(resourceType);
+        if (branch) {
+          // Uses dispatch(notifyApp(...)) instead of getAppEvents().publish() because AlertPayload only accepts strings
+          // and notifyApp supports a React component for rendering the branch name as a clickable link.
+          const component = buildPushSuccessComponent(branch, repoURL, label);
+          dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
+        } else {
+          const message =
+            successMessage ||
+            t('provisioned-request.saved-success', '{{resourceLabel}} saved successfully', { resourceLabel: label });
+          getAppEvents().publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [message],
+          });
+        }
       }
 
       // Branch workflow
@@ -157,17 +172,37 @@ export function useProvisionedRequestHandler<T>({
   ]);
 }
 
-function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
-  const { resourceType } = info;
-
+function getResourceLabel(resourceType?: ResourceType): string {
   switch (resourceType) {
     case 'dashboard':
-      return t('provisioned-resource-request-handler-dashboard', 'Dashboard saved successfully');
+      return t('provisioned-request.resource-label.dashboard', 'Dashboard');
     case 'folder':
-      return t('provisioned-resource-request-handler-folder', 'Folder created successfully');
+      return t('provisioned-request.resource-label.folder', 'Folder');
     default:
-      return t('provisioned-resource-request-handler', 'Resource saved successfully');
+      return t('provisioned-request.resource-label.resource', 'Resource');
   }
+}
+
+/**
+ * Builds the success notification body for a push-to-branch operation.
+ * Returns e.g. "Dashboard successfully pushed to <branch>" where <branch> is a link when repositoryURL is available.
+ * Uses createElement instead of JSX since this is a .ts file.
+ */
+function buildPushSuccessComponent(branch: string, repositoryURL?: string, resourceLabel?: string): ReactElement {
+  const prefix = t('provisioned-request.push-success.prefix', '{{resourceLabel}} successfully pushed to ', {
+    resourceLabel,
+  });
+
+  if (repositoryURL) {
+    const link = createElement(
+      'a',
+      { href: repositoryURL, target: '_blank', rel: 'noopener noreferrer', style: { textDecoration: 'underline' } },
+      branch
+    );
+    return createElement('span', null, prefix, link);
+  }
+
+  return createElement('span', null, prefix, branch);
 }
 
 export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };
