@@ -47,7 +47,6 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	backend.Logger.Error("2: NEW API IS CONNECTED")
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
