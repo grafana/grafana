@@ -4,7 +4,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AdHocFiltersVariable, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
+import { AdHocFiltersVariable, buildApplicabilityMatcher, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 const GAP_SIZE = 8;
@@ -39,36 +39,29 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     const originFilters = filtersState?.originFilters ?? [];
     const filterValues = [...filters, ...originFilters];
 
-    if (filterValues.length) {
-      const nonApplicableFilters = filterValues.reduce<
-        Array<{ filter: (typeof filterValues)[number]; reason?: string }>
-      >((acc, filter, i) => {
-        const result = i < applicability.length ? applicability[i] : undefined;
-        if (result && !result.applicable) {
-          acc.push({ filter, reason: result.reason });
-        }
-        return acc;
-      }, []);
+    if (filterValues.length && applicability.filters.length) {
+      const matchFilter = buildApplicabilityMatcher(applicability.filters);
 
-      items.push(
-        ...nonApplicableFilters.map(({ filter, reason }) => {
+      for (const filter of filterValues) {
+        const result = matchFilter(filter.key, filter.origin);
+        if (result && !result.applicable) {
           const displayValue = filter.values?.length ? filter.values.join(', ') : filter.value;
-          return { label: `${filter.key} ${filter.operator} ${displayValue}`, reason };
-        })
-      );
+          items.push({ label: `${filter.key} ${filter.operator} ${displayValue}`, reason: result.reason });
+        }
+      }
     }
 
     const value = groupByState?.value ?? [];
     const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
 
     if (groupByValues.length) {
+      const matchGroupBy = applicability.groupBy.length
+        ? buildApplicabilityMatcher(applicability.groupBy)
+        : undefined;
       const groupByApplicability = groupByState?.keysApplicability;
-      const groupByIndexOffset = filterValues.length;
 
-      for (let gi = 0; gi < groupByValues.length; gi++) {
-        const groupByKey = groupByValues[gi];
-        const resultIdx = groupByIndexOffset + gi;
-        const apiResult = resultIdx < applicability.length ? applicability[resultIdx] : undefined;
+      for (const groupByKey of groupByValues) {
+        const apiResult = matchGroupBy?.(String(groupByKey));
         if (apiResult && !apiResult.applicable) {
           items.push({ label: String(groupByKey), reason: apiResult.reason });
           continue;
