@@ -1,18 +1,46 @@
+import { useState } from 'react';
+
+import { useDeleteThemeMutation, useListThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
+import { createTheme } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { EmptyState, LinkButton } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
+import { ConfirmModal, EmptyState, Grid, LinkButton } from '@grafana/ui';
+
+import { Page } from '../../../core/components/Page/Page';
+
+import { ThemeCard } from './ThemeCard';
 
 export default function CustomThemesPage() {
+  const customThemes = useListThemeQuery({});
+  const [deleteTheme] = useDeleteThemeMutation();
+  const [themeToDelete, setThemeToDelete] = useState<string>();
+
   return (
     <Page
       navId="custom-themes"
       actions={
-        <LinkButton icon="plus" href="/themes/new">
-          <Trans i18nKey="admin.custom-themes.add-button">Add custom theme</Trans>
-        </LinkButton>
+        customThemes.data?.items.length ? (
+          <LinkButton icon="plus" href="/themes/new">
+            <Trans i18nKey="admin.custom-themes.add-button">Add custom theme</Trans>
+          </LinkButton>
+        ) : undefined
       }
     >
-      <Page.Contents>
+      {customThemes.data?.items.length ? (
+        <Grid minColumnWidth={34} gap={2}>
+          {customThemes.data.items.map((themeOption) => (
+            <ThemeCard
+              themeOption={{
+                id: themeOption.metadata.uid!,
+                name: themeOption.metadata.name!,
+                isExtra: true,
+                build: () => createTheme(themeOption.spec),
+              }}
+              key={themeOption.metadata.uid}
+              onRemove={() => setThemeToDelete(themeOption.metadata.name)}
+            />
+          ))}
+        </Grid>
+      ) : (
         <EmptyState
           variant="call-to-action"
           button={
@@ -26,7 +54,21 @@ export default function CustomThemesPage() {
             Add a custom theme to apply a unique look and feel to your organization.
           </Trans>
         </EmptyState>
-      </Page.Contents>
+      )}
+      <ConfirmModal
+        title={t('admin.custom-themes.delete-modal.title', 'Delete custom theme')}
+        confirmText={t('admin.custom-themes.delete-modal.confirm-text', 'Delete')}
+        body={t('admin.custom-themes.delete-modal.body', 'Are you sure you want to delete the {{name}} theme?', {
+          name: themeToDelete,
+        })}
+        onConfirm={() => {
+          deleteTheme({ name: themeToDelete! });
+          setThemeToDelete(undefined);
+        }}
+        confirmationText={themeToDelete}
+        isOpen={Boolean(themeToDelete)}
+        onDismiss={() => setThemeToDelete(undefined)}
+      />
     </Page>
   );
 }
