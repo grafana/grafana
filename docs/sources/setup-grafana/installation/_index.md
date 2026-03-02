@@ -67,11 +67,11 @@ Image rendering and large numbers of short-interval alert rules are the two most
 
 Use the table below to identify which tier describes your workload, then refer to the corresponding hardware baseline.
 
-| Tier | Concurrent users | Alert rules | Data sources | Dashboards |
-| ------ | ---------------- | ----------- | ------------ | ---------- |
-| Small | < 25 | < 100 | < 5 | < 200 |
-| Medium | 25 – 200 | 100 – 1,000 | 5 – 25 | 200 – 2,000 |
-| Large | 200+ | 1,000+ | 25+ | 2,000+ |
+| Tier   | Concurrent users | Alert rules | Data sources | Dashboards  |
+| ------ | ---------------- | ----------- | ------------ | ----------- |
+| Small  | < 25             | < 100       | < 5          | < 200       |
+| Medium | 25 – 200         | 100 – 1,000 | 5 – 25       | 200 – 2,000 |
+| Large  | 200+             | 1,000+      | 25+          | 2,000+      |
 
 The dashboard count threshold assumes roughly 10-20 panels per dashboard with refresh intervals of 30 seconds or longer. Dashboards with more panels or shorter refresh intervals produce proportionally more query load and should be weighted toward the higher tier. Similarly, the data source count assumes a mix of source types. Deployments that rely heavily on proxied SQL sources should plan for the next tier up.
 
@@ -81,12 +81,12 @@ These thresholds are starting points. Validate sizing with a load test that refl
 
 Small deployments suit small teams, internal tooling, and low-traffic environments.
 
-| Resource | Minimum |
-| -------- | ------- |
-| CPU | 2 cores |
-| Memory | 2 – 4 GB |
-| Disk | 10 – 20 GB SSD (database host) |
-| Instances | 1 |
+| Resource  | Minimum                        |
+| --------- | ------------------------------ |
+| CPU       | 2 cores                        |
+| Memory    | 2 – 4 GB                       |
+| Disk      | 10 – 20 GB SSD (database host) |
+| Instances | 1                              |
 
 **Database:** SQLite works for small environments. Refer to [Appropriate uses for SQLite](https://www.sqlite.org/whentouse.html) to assess whether it suits your use case. For higher reliability and growth capacity, consider an external MySQL or PostgreSQL instance. For more information, refer to [Supported databases](#supported-databases).
 
@@ -96,12 +96,12 @@ Small deployments suit small teams, internal tooling, and low-traffic environmen
 
 Medium deployments suit shared team environments and departmental observability platforms.
 
-| Resource | Recommendation |
-| -------- | -------------- |
-| CPU | 4 – 8 cores |
-| Memory | 8 – 16 GB |
-| Disk | 20 – 50 GB SSD (database host) |
-| Instances | 2 (load-balanced) |
+| Resource  | Recommendation                 |
+| --------- | ------------------------------ |
+| CPU       | 4 – 8 cores                    |
+| Memory    | 8 – 16 GB                      |
+| Disk      | 20 – 50 GB SSD (database host) |
+| Instances | 2 (load-balanced)              |
 
 **Database:** SQLite is not suitable at this tier. Refer to [Supported databases](#supported-databases) for guidance on choosing an external database.
 
@@ -113,13 +113,13 @@ Medium deployments suit shared team environments and departmental observability 
 
 Large deployments suit organization-wide platforms and high-traffic production environments.
 
-| Resource | Recommendation |
-| -------- | -------------- |
-| CPU | 8 – 16+ cores per instance |
-| Memory | 16 – 32+ GB per instance |
-| Disk | 50+ GB SSD, high IOPS (database host) |
-| Instances | 3+ (load-balanced) |
-| Network | 10 Gbps or faster |
+| Resource  | Recommendation                        |
+| --------- | ------------------------------------- |
+| CPU       | 8 – 16+ cores per instance            |
+| Memory    | 16 – 32+ GB per instance              |
+| Disk      | 50+ GB SSD, high IOPS (database host) |
+| Instances | 3+ (load-balanced)                    |
+| Network   | 10 Gbps or faster                     |
 
 **Database:** a highly available MySQL or PostgreSQL cluster is strongly advised at this tier. Refer to [Supported databases](#supported-databases).
 
