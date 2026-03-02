@@ -14,6 +14,7 @@ import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
+import { QueryEditorBanner } from './QueryEditorBanner';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
@@ -133,6 +134,12 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         {dataPane && (
           <>
             <div {...splitterProps} />
+            <div className={styles.bannerWrapper}>
+              <QueryEditorBanner
+                useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
+                onToggle={model.onToggleQueryEditorVersion}
+              />
+            </div>
             <div
               {...secondaryProps}
               className={cx(secondaryProps.className, isScrollingLayout && styles.fullSizeEditor)}
@@ -269,6 +276,10 @@ function getStyles(theme: GrafanaTheme2) {
       svg: {
         rotate: '-90deg',
       },
+    }),
+    bannerWrapper: css({
+      paddingLeft: theme.spacing(2),
+      flexShrink: 0,
     }),
     vizWrapper: css({
       height: '100%',
