@@ -12672,7 +12672,7 @@
       "error-message": "Failed to start folder metadata fix job. Please try again.",
       "error-title": "Error fixing folder metadata",
       "loading": "Loading repository...",
-      "read-only-message": "This repository is read-only. Folder metadata cannot be fixed automatically.",
+      "read-only-message": "Folder metadata cannot be fixed automatically.",
       "submit": "Fix folder IDs",
       "submitting": "Fixing...",
       "success-title": "Folder metadata fixed successfully",

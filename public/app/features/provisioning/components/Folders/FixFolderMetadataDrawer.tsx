@@ -69,7 +69,7 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
           isReadOnlyRepo={isReadOnlyRepo}
           readOnlyMessage={t(
             'provisioning.fix-folder-metadata-drawer.read-only-message',
-            'This repository is read-only. Folder metadata cannot be fixed automatically.'
+            'Folder metadata cannot be fixed automatically.'
           )}
         />
       </Drawer>
@@ -94,6 +94,7 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
       repository={repository}
       canPushToConfiguredBranch={canPushToConfiguredBranch}
       defaultValues={defaultValues}
+      drawerTitle={drawerTitle}
       onDismiss={onDismiss}
       submitError={jobError}
       onJobCreated={setSubmittedJob}
@@ -107,6 +108,7 @@ interface FixFolderMetadataFormProps {
   repository: RepositoryView;
   canPushToConfiguredBranch: boolean;
   defaultValues: BaseProvisionedFormData;
+  drawerTitle: string;
   onDismiss: () => void;
   submitError: string | StatusInfo | undefined;
   onJobCreated: (job: Job) => void;
@@ -118,6 +120,7 @@ function FixFolderMetadataForm({
   repository,
   canPushToConfiguredBranch,
   defaultValues,
+  drawerTitle,
   onDismiss,
   submitError,
   onJobCreated,
@@ -156,7 +159,7 @@ function FixFolderMetadataForm({
   };
 
   return (
-    <Drawer title={t('provisioning.fix-folder-metadata-drawer.title', 'Fix folder metadata')} onClose={onDismiss}>
+    <Drawer title={drawerTitle} onClose={onDismiss}>
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleSubmitForm)}>
           <Stack direction="column" gap={2}>

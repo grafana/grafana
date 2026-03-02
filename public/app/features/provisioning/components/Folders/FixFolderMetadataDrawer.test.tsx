@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 
@@ -85,14 +85,16 @@ describe('FixFolderMetadataDrawer', () => {
 
     await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
 
-    expect(capturedBody).toEqual(
-      expect.objectContaining({
-        action: 'fixFolderMetadata',
-        fixFolderMetadata: expect.objectContaining({
-          ref: 'main',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(capturedBody).toEqual(
+        expect.objectContaining({
+          action: 'fixFolderMetadata',
+          fixFolderMetadata: expect.objectContaining({
+            ref: 'main',
+          }),
+        })
+      );
+    });
   });
 
   it('submits job with custom branch', async () => {
@@ -119,14 +121,16 @@ describe('FixFolderMetadataDrawer', () => {
 
     await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
 
-    expect(capturedBody).toEqual(
-      expect.objectContaining({
-        action: 'fixFolderMetadata',
-        fixFolderMetadata: expect.objectContaining({
-          ref: 'feature-branch',
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(capturedBody).toEqual(
+        expect.objectContaining({
+          action: 'fixFolderMetadata',
+          fixFolderMetadata: expect.objectContaining({
+            ref: 'feature-branch',
+          }),
+        })
+      );
+    });
   });
 
   it('shows error alert when job submission fails', async () => {
@@ -188,5 +192,27 @@ describe('FixFolderMetadataDrawer', () => {
     render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
     expect(await screen.findByText(/This repository is read only/i)).toBeInTheDocument();
+  });
+
+  it('disables submit when an active job exists', async () => {
+    server.use(
+      http.get(`${BASE}/jobs`, () =>
+        HttpResponse.json({
+          items: [
+            {
+              status: { state: 'working' },
+              metadata: { labels: { 'provisioning.grafana.app/repository': REPO_NAME } },
+            },
+          ],
+        })
+      )
+    );
+
+    render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+
+    await screen.findByRole('button', { name: /fix folder ids/i });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /fix folder ids/i })).toBeDisabled();
+    });
   });
 });
