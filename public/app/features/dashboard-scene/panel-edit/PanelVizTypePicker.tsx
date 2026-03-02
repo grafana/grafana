@@ -3,7 +3,7 @@ import { debounce } from 'lodash';
 import { useCallback, useId, useMemo, useState } from 'react';
 import { useMedia, useSessionStorage } from 'react-use';
 
-import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -22,7 +22,6 @@ import {
 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
-import { VisualizationPresets } from 'app/features/panel/components/VizTypePicker/VisualizationPresets';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypePicker } from 'app/features/panel/components/VizTypePicker/VizTypePicker';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -70,36 +69,6 @@ export function PanelVizTypePicker({
   const filterId = useId();
 
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
-
-  const [presetsState, setPresetsState] = useState<{
-    suggestion: PanelPluginVisualizationSuggestion;
-    presets: PanelPluginVisualizationSuggestion[];
-  } | null>(null);
-
-  const handleShowPresets = useCallback(
-    (suggestion: PanelPluginVisualizationSuggestion, presets: PanelPluginVisualizationSuggestion[]) => {
-      setPresetsState({ suggestion, presets });
-    },
-    []
-  );
-
-  const handlePresetApply = useCallback(
-    (preset: PanelPluginVisualizationSuggestion) => {
-      onChange({
-        pluginId: preset.pluginId,
-        options: presetsState?.suggestion.options,
-        fieldConfig: preset.fieldConfig,
-        withModKey: false,
-        fromSuggestions: true,
-      });
-      setPresetsState(null);
-    },
-    [onChange, presetsState]
-  );
-
-  const handlePresetsBack = useCallback(() => {
-    setPresetsState(null);
-  }, []);
 
   /** SEARCH */
   const [searchQuery, setSearchQuery] = useState('');
@@ -168,76 +137,57 @@ export function PanelVizTypePicker({
           />
         ))}
       </TabsBar>
-      {!presetsState && (
-        <div className={styles.stickySearchWrapper}>
-          <Field
-            className={styles.searchField}
-            noMargin
-            htmlFor={filterId}
-            aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
-          >
-            <Stack direction="row" gap={1}>
-              {showBackButton && (
-                <Button
-                  aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
-                  fill="text"
-                  variant="secondary"
-                  icon="arrow-left"
-                  className={styles.backButton}
-                  data-testid={selectors.components.PanelEditor.toggleVizPicker}
-                  onClick={handleBackButtonClick}
-                >
-                  <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
-                </Button>
-              )}
-              <FilterInput
-                id={filterId}
-                autoFocus={!isMobile}
-                className={styles.filter}
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
-              />
-            </Stack>
-          </Field>
-        </div>
-      )}
+      <div className={styles.stickySearchWrapper}>
+        <Field
+          className={styles.searchField}
+          noMargin
+          htmlFor={filterId}
+          aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+        >
+          <Stack direction="row" gap={1}>
+            {showBackButton && (
+              <Button
+                aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
+                fill="text"
+                variant="secondary"
+                icon="arrow-left"
+                className={styles.backButton}
+                data-testid={selectors.components.PanelEditor.toggleVizPicker}
+                onClick={handleBackButtonClick}
+              >
+                <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
+              </Button>
+            )}
+            <FilterInput
+              id={filterId}
+              autoFocus={!isMobile}
+              className={styles.filter}
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+            />
+          </Stack>
+        </Field>
+      </div>
       <ScrollContainer>
         <TabContent className={styles.tabContent}>
           <Stack gap={1} direction="column">
-            {presetsState && data ? (
-              <VisualizationPresets
-                presets={presetsState.presets}
+            {listMode === VisualizationSelectPaneTab.Suggestions && (
+              <VisualizationSuggestions
+                onChange={onChange}
+                panel={panelModel}
                 data={data}
-                onApply={handlePresetApply}
-                onBack={handlePresetsBack}
-                onSkip={onClose}
+                searchQuery={searchQuery}
+                isNewPanel={isNewPanel}
               />
-            ) : (
-              <>
-                {listMode === VisualizationSelectPaneTab.Suggestions && (
-                  <VisualizationSuggestions
-                    onChange={onChange}
-                    onShowPresets={
-                      config.featureToggles.vizPresets && config.featureToggles.newVizSuggestions
-                        ? handleShowPresets
-                        : undefined
-                    }
-                    panel={panelModel}
-                    data={data}
-                    searchQuery={searchQuery}
-                    isNewPanel={isNewPanel}
-                  />
-                )}
-                {listMode === VisualizationSelectPaneTab.Visualizations && (
-                  <VizTypePicker
-                    pluginId={panel.state.pluginId}
-                    searchQuery={searchQuery}
-                    trackSearch={trackSearch}
-                    onChange={onChange}
-                  />
-                )}
-              </>
+            )}
+            {listMode === VisualizationSelectPaneTab.Visualizations && (
+              <VizTypePicker
+                pluginId={panel.state.pluginId}
+                searchQuery={searchQuery}
+                trackSearch={trackSearch}
+                onChange={onChange}
+              />
             )}
           </Stack>
         </TabContent>
