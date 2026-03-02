@@ -18,51 +18,113 @@ export type Color = string;
 
 export const defaultColor = (): Color => ("");
 
-// >=0 & <=1
-export type NumberBetween0And1 = number;
-
-export const defaultNumberBetween0And1 = (): NumberBetween0And1 => (0);
-
 export interface Visualization {
-	hues?: {
-		red?: HueDefinition;
-		orange?: HueDefinition;
-		yellow?: HueDefinition;
-		green?: HueDefinition;
-		blue?: HueDefinition;
-		purple?: HueDefinition;
-	};
+	hues?: Hue[];
 	palette?: string[];
 }
 
 export const defaultVisualization = (): Visualization => ({
 });
 
-export interface HueDefinition {
-	primary?: HueColorDefinition;
-	super_light?: HueColorDefinition;
-	light?: HueColorDefinition;
-	semi_dark?: HueColorDefinition;
-	dark?: HueColorDefinition;
+export type Hue = RedHue | OrangeHue | YellowHue | GreenHue | BlueHue | PurpleHue;
+
+export const defaultHue = (): Hue => (defaultRedHue());
+
+export interface RedHue {
+	name: "red";
+	shades: {
+		color: string;
+		name: string;
+		aliases?: string[];
+		primary?: boolean;
+	}[];
 }
 
-export const defaultHueDefinition = (): HueDefinition => ({
+export const defaultRedHue = (): RedHue => ({
+	name: "red",
+	shades: [],
 });
 
-export interface HueColorDefinition {
-	color: Color;
-	aliases?: string[];
-	primary?: boolean;
+export interface OrangeHue {
+	name: "orange";
+	shades: {
+		color: string;
+		name: string;
+		aliases?: string[];
+		primary?: boolean;
+	}[];
 }
 
-export const defaultHueColorDefinition = (): HueColorDefinition => ({
-	color: defaultColor(),
+export const defaultOrangeHue = (): OrangeHue => ({
+	name: "orange",
+	shades: [],
+});
+
+export interface YellowHue {
+	name: "yellow";
+	shades: {
+		color: string;
+		name: string;
+		aliases?: string[];
+		primary?: boolean;
+	}[];
+}
+
+export const defaultYellowHue = (): YellowHue => ({
+	name: "yellow",
+	shades: [],
+});
+
+export interface GreenHue {
+	name: "green";
+	shades: {
+		color: string;
+		name: string;
+		aliases?: string[];
+		primary?: boolean;
+	}[];
+}
+
+export const defaultGreenHue = (): GreenHue => ({
+	name: "green",
+	shades: [],
+});
+
+export interface BlueHue {
+	name: "blue";
+	shades: {
+		color: string;
+		name: string;
+		aliases?: string[];
+		primary?: boolean;
+	}[];
+}
+
+export const defaultBlueHue = (): BlueHue => ({
+	name: "blue",
+	shades: [],
+});
+
+export interface PurpleHue {
+	name: "purple";
+	shades: {
+		color: string;
+		name: string;
+		aliases?: string[];
+		primary?: boolean;
+	}[];
+}
+
+export const defaultPurpleHue = (): PurpleHue => ({
+	name: "purple",
+	shades: [],
 });
 
 export interface Spec {
-	title: string;
-	colors: {
-		mode: "light" | "dark";
+	name: string;
+	id: string;
+	colors?: {
+		mode?: "light" | "dark";
 		primary?: ColorSection;
 		secondary?: ColorSection;
 		info?: ColorSection;
@@ -95,15 +157,16 @@ export interface Spec {
 			selected?: string;
 			selectedBorder?: string;
 			hover?: string;
-			hoverOpacity?: NumberBetween0And1;
+			hoverOpacity?: number;
 			focus?: string;
 			disabledBackground?: string;
 			disabledText?: string;
-			disabledOpacity?: NumberBetween0And1;
+			disabledOpacity?: number;
 		};
-		hoverFactor?: NumberBetween0And1;
-		contrastThreshold?: NumberBetween0And1;
-		tonalOffset?: NumberBetween0And1;
+		scrollbar?: string;
+		hoverFactor?: number;
+		contrastThreshold?: number;
+		tonalOffset?: number;
 	};
 	spacing?: {
 		gridSize?: number;
@@ -114,20 +177,18 @@ export interface Spec {
 	typography?: {
 		fontFamily?: string;
 		fontFamilyMonospace?: string;
-		fontSize?: NumberBetween0And1;
-		fontWeightLight?: NumberBetween0And1;
-		fontWeightRegular?: NumberBetween0And1;
-		fontWeightMedium?: NumberBetween0And1;
-		fontWeightBold?: NumberBetween0And1;
-		htmlFontSize?: NumberBetween0And1;
+		fontSize?: number;
+		fontWeightLight?: number;
+		fontWeightRegular?: number;
+		fontWeightMedium?: number;
+		fontWeightBold?: number;
+		htmlFontSize?: number;
 	};
 	visualization?: Visualization;
 }
 
 export const defaultSpec = (): Spec => ({
-	title: "",
-	colors: {
-	mode: "light",
-},
+	name: "",
+	id: "",
 });
 

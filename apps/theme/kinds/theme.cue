@@ -20,15 +20,16 @@ themeV0alpha1: {
   }
   schema: {
     spec: {
-        title: string
-        colors: {
-            mode: *"light" | "dark"
+        name: string
+        id: string
+        colors?: {
+            mode?: "light" | "dark"
             primary?: #ColorSection
             secondary?: #ColorSection
             info?: #ColorSection
             error?: #ColorSection
             success?: #ColorSection
-            warning?: #ColorSection        
+            warning?: #ColorSection
             text?: {
                 primary?: string
                 secondary?: string
@@ -55,15 +56,16 @@ themeV0alpha1: {
                 selected?: string
                 selectedBorder?: string
                 hover?: string
-                hoverOpacity?: #NumberBetween0And1
+                hoverOpacity?: number
                 focus?: string
                 disabledBackground?: string
                 disabledText?: string
-                disabledOpacity?: #NumberBetween0And1
+                disabledOpacity?: number
             }
-            hoverFactor?: #NumberBetween0And1
-            contrastThreshold?: #NumberBetween0And1
-            tonalOffset?: #NumberBetween0And1
+            scrollbar?: string
+            hoverFactor?: number
+            contrastThreshold?: number
+            tonalOffset?: number
         }
         spacing?: {
             gridSize?: int
@@ -74,12 +76,12 @@ themeV0alpha1: {
         typography?: {
             fontFamily?: string
             fontFamilyMonospace?: string
-            fontSize?: #NumberBetween0And1
-            fontWeightLight?: #NumberBetween0And1
-            fontWeightRegular?: #NumberBetween0And1
-            fontWeightMedium?: #NumberBetween0And1
-            fontWeightBold?: #NumberBetween0And1
-            htmlFontSize?: #NumberBetween0And1
+            fontSize?: number
+            fontWeightLight?: number
+            fontWeightRegular?: number
+            fontWeightMedium?: number
+            fontWeightBold?: number
+            htmlFontSize?: number
         }
         visualization?: #Visualization
     }
@@ -88,7 +90,6 @@ themeV0alpha1: {
 
 
 #Color: string
-#NumberBetween0And1: number // >=0 & <=1
 
 #ColorSection: {
   name?: string
@@ -101,29 +102,59 @@ themeV0alpha1: {
   contrastText?: #Color
 }
 
-#HueDefinition: {
-    primary?: #HueColorDefinition
-    super_light?: #HueColorDefinition
-    light?: #HueColorDefinition
-    semi_dark?: #HueColorDefinition
-    dark?: #HueColorDefinition
-}
-
-#HueColorDefinition: {
-    color: #Color
+#VisualizationShade: {
+    color: string
+    name: string
     aliases?: [...string]
     primary?: bool
 }
 
+#RedHue: {
+    name: "red"
+    shades: [...(#VisualizationShade & {
+        name: "super-light-red" | "light-red" | "red" | "semi-dark-red" | "dark-red"
+    })]
+}
+
+#OrangeHue: {
+    name: "orange"
+    shades: [...(#VisualizationShade & {
+        name: "super-light-orange" | "light-orange" | "orange" | "semi-dark-orange" | "dark-orange"
+    })]
+}
+
+#YellowHue: {
+    name: "yellow"
+    shades: [...(#VisualizationShade & {
+        name: "super-light-yellow" | "light-yellow" | "yellow" | "semi-dark-yellow" | "dark-yellow"
+    })]
+}
+
+#GreenHue: {
+    name: "green"
+    shades: [...(#VisualizationShade & {
+        name: "super-light-green" | "light-green" | "green" | "semi-dark-green" | "dark-green"
+    })]
+}
+
+#BlueHue: {
+    name: "blue"
+    shades: [...(#VisualizationShade & {
+        name: "super-light-blue" | "light-blue" | "blue" | "semi-dark-blue" | "dark-blue"
+    })]
+}
+
+#PurpleHue: {
+    name: "purple"
+    shades: [...(#VisualizationShade & {
+        name: "super-light-purple" | "light-purple" | "purple" | "semi-dark-purple" | "dark-purple"
+    })]
+}
+
+#Hue: #RedHue | #OrangeHue | #YellowHue | #GreenHue | #BlueHue | #PurpleHue
+
 #Visualization: {
-    hues?: {
-        red?: #HueDefinition
-        orange?: #HueDefinition
-        yellow?: #HueDefinition
-        green?: #HueDefinition
-        blue?: #HueDefinition
-        purple?: #HueDefinition
-    }
+    hues?: [...#Hue]
     palette?: [...string]
 }
 
