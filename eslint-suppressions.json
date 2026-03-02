@@ -1395,11 +1395,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
-    "no-restricted-syntax": {
-      "count": 10
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx": {
     "no-restricted-syntax": {
       "count": 2
