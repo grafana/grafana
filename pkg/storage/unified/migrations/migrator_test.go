@@ -263,13 +263,14 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				// EnableLog:             true,
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDataMigrations: false,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig:  unifiedConfig,
-				EnableFeatureToggles:  featureToggles,
+				//EnableLog:              true,
+				AppModeProduction:      true,
+				DisableAnonymous:       true,
+				DisableDataMigrations:  false,
+				APIServerStorageType:   "unified",
+				UnifiedStorageConfig:   unifiedConfig,
+				MigrationParquetBuffer: true,
+				EnableFeatureToggles:   featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -429,7 +430,6 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				nil,
 				mockClient,
 				registry,
 			)
@@ -486,7 +486,6 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		nil,
 		mockClient,
 		registry,
 	)
@@ -675,7 +674,6 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				nil,
 				mockClient,
 				registry,
 			)
@@ -748,7 +746,6 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		nil,
 		mockClient,
 		registry,
 	)

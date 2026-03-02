@@ -3,10 +3,16 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { ActionItem, Actions } from '../../Actions';
-import { QUERY_EDITOR_COLORS, QueryEditorType } from '../../constants';
+import {
+  QUERY_EDITOR_COLORS,
+  QueryEditorType,
+  SIDEBAR_CARD_HEIGHT,
+  SIDEBAR_CARD_INDENT,
+  getQueryEditorColors,
+} from '../../constants';
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
@@ -91,19 +97,33 @@ export const SidebarCard = ({
         onBlur={handleBlur}
         role="button"
         tabIndex={0}
+        data-query-sidebar-card={id}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
         <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
+        {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
+        {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
         {hasActions && (
-          <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-            <Actions
-              handleResetFocus={handleResetFocus}
-              item={item}
-              onDelete={onDelete}
-              onDuplicate={onDuplicate}
-              onToggleHide={onToggleHide}
-            />
+          <div>
+            <div className={styles.cardContentIcons}>
+              {item.isHidden && <Icon name="eye-slash" size="sm" />}
+              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={QUERY_EDITOR_COLORS.error} />}
+            </div>
+            <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+              <Actions
+                handleResetFocus={handleResetFocus}
+                item={item}
+                onDelete={onDelete}
+                onDuplicate={onDuplicate}
+                onToggleHide={onToggleHide}
+                order={{
+                  delete: 1,
+                  duplicate: 0,
+                  hide: 2,
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -127,9 +147,15 @@ function getStyles(
     item: ActionItem;
   }
 ) {
-  const borderColor = getEditorBorderColor(theme, item.type, item.alertState);
+  const borderColor = getEditorBorderColor({
+    theme,
+    editorType: item.type,
+    alertState: item.alertState,
+    isError: !!item.error,
+  });
 
-  const backgroundColor = isSelected ? QUERY_EDITOR_COLORS.card.activeBg : QUERY_EDITOR_COLORS.card.hoverBg;
+  const themeColors = getQueryEditorColors(theme);
+  const backgroundColor = isSelected ? themeColors.card.activeBg : themeColors.card.hoverBg;
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -140,7 +166,7 @@ function getStyles(
     paddingRight: theme.spacing(1),
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
-    background: `linear-gradient(270deg, ${backgroundColor} 80%, rgba(32, 38, 47, 0.00) 100%)`,
+    background: `linear-gradient(270deg, ${backgroundColor} 80%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
@@ -153,9 +179,16 @@ function getStyles(
   });
 
   return {
+    cardContentIcons: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      marginRight: theme.spacing(1.5),
+    }),
     wrapper: css({
       position: 'relative',
-      marginInlineStart: theme.spacing(2),
+      marginInlineStart: theme.spacing(SIDEBAR_CARD_INDENT),
 
       // Two slim pseudo-element strips extend the hover zone to the left and
       // below the card, covering the path to the "+" button without overlapping
@@ -193,13 +226,13 @@ function getStyles(
 
     card: css({
       position: 'relative',
-      minHeight: '30px',
+      minHeight: `${SIDEBAR_CARD_HEIGHT}px`,
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      background: isSelected ? QUERY_EDITOR_COLORS.card.activeBg : 'none',
+      background: isSelected ? themeColors.card.activeBg : 'none',
       borderLeft: `${isSelected ? 3 : 1}px solid ${borderColor}`,
       cursor: 'pointer',
 
@@ -282,6 +315,10 @@ function getStyles(
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${ghostCardPulse} 3s ease-in-out infinite`,
       },
+    }),
+
+    errorIcon: css({
+      paddingRight: theme.spacing(1),
     }),
   };
 }

@@ -517,6 +517,19 @@ func TestRunInQueue(t *testing.T) {
 		<-executed
 	})
 
+	t.Run("should use cluster-scoped tenant for empty tenantID", func(t *testing.T) {
+		s, _ := newTestServerWithQueue(t, 1, 1)
+		executed := make(chan bool, 1)
+
+		runnable := func(ctx context.Context) {
+			executed <- true
+		}
+
+		err := s.runInQueue(context.Background(), "", runnable)
+		require.NoError(t, err)
+		assert.True(t, <-executed, "runnable should have been executed with cluster-scoped tenantID")
+	})
+
 	t.Run("should return an error if queue is consistently full after retrying", func(t *testing.T) {
 		s, q := newTestServerWithQueue(t, 1, 1)
 		// Task 1: This will be picked up by the worker and block it.

@@ -1,7 +1,8 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
+import { DataSourceRef, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import { Panel } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
@@ -198,7 +199,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
         }
       }
 
-      const panelDef: PanelPluginMeta = config.panels[panel.type];
+      const panelDef = await getPanelPluginMeta(panel.type);
       if (panelDef) {
         requires['panel' + panelDef.id] = {
           type: 'panel',

@@ -65,7 +65,17 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
       <WarningBadges />
       <SaveButton parentRef={containerRef} />
       <PluginActions app={CoreApp.PanelEditor} />
-      <Actions contentHeader={true} item={item} onDelete={onDelete} onToggleHide={onToggleHide} />
+      <Actions
+        contentHeader={true}
+        item={item}
+        onDelete={onDelete}
+        onToggleHide={onToggleHide}
+        order={{
+          delete: 2,
+          hide: 1,
+          duplicate: 0,
+        }}
+      />
       {cardType === QueryEditorType.Transformation ? <TransformationActionButtons /> : <QueryActionsMenu />}
     </Stack>
   );

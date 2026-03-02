@@ -12,9 +12,8 @@ import (
 
 // API errors that we need to convey after parsing real GH errors (or faking them).
 var (
-	ErrResourceNotFound = errors.New("the resource does not exist")
-	ErrUnauthorized     = errors.New("unauthorized")
-	//lint:ignore ST1005 this is not punctuation
+	ErrResourceNotFound   = errors.New("the resource does not exist")
+	ErrUnauthorized       = errors.New("unauthorized")
 	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
 	ErrTooManyItems       = errors.New("maximum number of items exceeded")
 )
