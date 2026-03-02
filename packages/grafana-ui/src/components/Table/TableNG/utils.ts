@@ -646,13 +646,13 @@ export const processNestedTableRows = (
 
   // Reconstruct the result
   const result: TableRow[] = [];
-  processedParents.forEach((row) => {
+  for (const row of processedParents) {
     result.push(row);
     const childRow = childRows.get(row.__index);
     if (childRow) {
       result.push(childRow);
     }
-  });
+  }
 
   return result;
 };

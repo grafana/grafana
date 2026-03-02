@@ -549,7 +549,8 @@ export function TableNG(props: TableNGProps) {
         background: undefined,
       };
 
-      f.forEach((field, i) => {
+      for (let i = 0; i < f.length; i++) {
+        let field = f[i];
         const cellOptions = getCellOptions(field);
         const cellType = cellOptions.type;
 
@@ -830,7 +831,7 @@ export function TableNG(props: TableNGProps) {
             />
           ),
         });
-      });
+      }
 
       return result;
     },
