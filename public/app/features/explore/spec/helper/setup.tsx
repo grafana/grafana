@@ -12,7 +12,6 @@ import { Route, Router } from 'react-router-dom';
 import { of } from 'rxjs';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-
 import {
   DataSourceApi,
   DataSourceInstanceSettings,

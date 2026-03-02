@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { Provider } from 'react-redux';
 
-
 import {
   DataFrame,
   EventBusSrv,
