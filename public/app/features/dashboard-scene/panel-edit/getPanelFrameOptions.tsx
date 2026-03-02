@@ -86,7 +86,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         title: t('dashboard-scene.get-panel-frame-options.title.panel-styles', 'Panel styles'),
         id: 'panel-styles',
         isOpenDefault: true,
-        customRender: () => <PanelStylesSection panel={panel} />,
+        customRender: () => <PanelStylesSection key="panel-styles" panel={panel} />,
       })
     );
   }
