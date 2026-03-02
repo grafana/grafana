@@ -28,7 +28,7 @@ import {
   createCorrelationsScenario,
   emptyCorrelationsScenario,
   existingCorrelationsScenario,
-} from './mocks/server/Correlations.test.scenario';
+} from './mocks/server/correlations.test.scenario';
 import { MockDataSourceSrv } from './mocks/useCorrelations.mocks';
 
 //setupCorrelationsMswServer();
