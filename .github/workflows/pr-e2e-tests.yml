@@ -305,19 +305,19 @@ jobs:
           name: grafana-test-plugins
           path: e2e-playwright/test-plugins
 
-      - run: tree > tree.txt
-      - uses: actions/upload-artifact@v5
-        with:
-          name: debug-tree-shard-${{ matrix.shard }}
-          path: tree.txt
-          retention-days: 1
-
       # Restore execute permissions stripped by actions/upload-artifact
       - name: Fix binary permissions
         run: chmod +x bin/grafana*
 
       - run: mkdir -p bin/linux-amd64
       - run: cp bin/grafana bin/linux-amd64/grafana-server
+
+      - run: tree > tree.txt
+      - uses: actions/upload-artifact@v5
+        with:
+          name: debug-tree-shard-${{ matrix.shard }}
+          path: tree.txt
+          retention-days: 1
 
       # Start Grafana using existing scripts (handles provisioning, config, etc.)
       - name: Start Grafana
@@ -331,13 +331,6 @@ jobs:
       # Install test dependencies
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-
-      - uses: actions/cache@v4
-        with:
-          key: e2e-yarn-${{ hashFiles('yarn.lock') }}
-          path: |
-            node_modules
-            .yarn/cache
       - run: yarn install --immutable
 
       - name: Get Playwright version
