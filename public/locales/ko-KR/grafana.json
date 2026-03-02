@@ -903,7 +903,7 @@
       "title-failed-to-fetch-contact-points": "연락처 가져오기 실패"
     },
     "contact-points": {
-      "create": "연락처 생성",
+      "create": "",
       "custom-template-value": "사용자 지정 템플릿 값",
       "delete-reasons": {
         "heading": "다음과 같은 이유로 연락처를 삭제할 수 없습니다.",
@@ -2120,7 +2120,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "시간 간격 추가"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2164,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,14 +2172,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "연락처로 검색",
@@ -2241,7 +2242,7 @@
       "title-failed-to-fetch-notification-templates": "알림 템플릿 가져오기 실패"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "알림 템플릿 그룹 추가",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "알림 템플릿을 만들어 알림을 사용자 정의하세요."
     },
     "notifications-list": {
@@ -2268,6 +2269,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2291,15 +2293,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "기록 규칙을 더 잘 관리할 수 있도록 라벨을 추가하세요.",
@@ -3332,7 +3334,7 @@
       "stop-alerting-when": "다음 조건에서 알림(또는 보류 상태) 중지 "
     },
     "time-interval": {
-      "add-time-interval": "시간 간격 추가",
+      "add-time-interval": "",
       "save": "시간 간격 저장",
       "saving": "시간 간격 저장 중"
     },
@@ -4159,6 +4161,16 @@
       "clear": "검색 및 필터 초기화",
       "text": "쿼리에 대해 찾은 결과 없음"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "기록 지우기",
       "error": "최근 조회한 대시보드를 불러올 수 없습니다.",
@@ -4827,6 +4839,10 @@
       "view-json-diff": "모든 변경 내용을 보려면 JSON 차이를 확인하세요."
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "새로 추가",
     "alert": {
@@ -5028,7 +5044,7 @@
     "canvas-actions": {
       "add-panel": "패널 추가",
       "disabled-child-contains-tabs": "행에 탭이 이미 포함되어 탭으로 변경할 수 없습니다",
-      "disabled-nested-grouping": "그룹화는 2단계로 제한됩니다",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "탭은 다른 탭 안에 중첩될 수 없습니다",
       "group-into-row": "행으로 그룹화",
       "group-into-tab": "탭으로 그룹화",
@@ -6562,6 +6578,12 @@
           "row-title": "행 제목"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "대시보드 삭제 실패",
@@ -10914,7 +10936,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "옵션을 찾을 수 없습니다"
@@ -12314,6 +12338,11 @@
       "text-loading-teams": "팀 로딩 중..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "변경 사항을 설명하는 메모 추가(선택 사항)",
@@ -12577,6 +12606,12 @@
       "label-read-only": "읽기 전용",
       "label-sync-interval": "동기화 간격(초)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12716,6 +12751,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13222,6 +13259,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13316,7 +13354,8 @@
       "transformations": "변환",
       "view-toggle": "",
       "alerts_other": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",

@@ -1628,7 +1628,10 @@ export type DeleteJobOptions = {
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
   resources?: ResourceRef[];
 };
-export type FixFolderMetadataJobOptions = object;
+export type FixFolderMetadataJobOptions = {
+  /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
+  ref?: string;
+};
 export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit */
   message?: string;
@@ -1676,7 +1679,7 @@ export type JobSpec = {
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'delete' | 'fixFolderMetadata' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+  action: 'delete' | 'fixFolderMetadata' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
   /** Delete when the action is `delete` */
   delete?: DeleteJobOptions;
   /** Options when the action is `fix-folder-metadata` */

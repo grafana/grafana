@@ -11,14 +11,8 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import {
-  BasicProvisionedDashboardInteractions,
-  CONTENT_KINDS,
-  CREATION_ORIGINS,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-} from './interactions';
+import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { BasicProvisionedDashboardInteractions } from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 interface Props {

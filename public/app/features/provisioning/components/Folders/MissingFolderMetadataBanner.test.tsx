@@ -16,12 +16,20 @@ jest.mock('../../hooks/useFolderMetadataStatus', () => ({
   useFolderMetadataStatus: jest.fn(),
 }));
 
+jest.mock('../../hooks/useFixFolderMetadata', () => ({
+  useFixFolderMetadata: () => ({
+    onFixFolderMetadata: jest.fn(),
+    buttonContent: 'Fix folder IDs',
+    isJobRunning: false,
+  }),
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { useFolderMetadataStatus } = require('../../hooks/useFolderMetadataStatus');
 
 describe('MissingFolderMetadataBanner', () => {
   it('renders warning alert with correct content', () => {
-    render(<MissingFolderMetadataBanner />);
+    render(<MissingFolderMetadataBanner repositoryName="test-repo" />);
 
     const alert = screen.getByRole('alert');
     expect(alert).toBeInTheDocument();
@@ -31,6 +39,12 @@ describe('MissingFolderMetadataBanner', () => {
         "Since this folder doesn't contain a metadata file, the folder ID is based on the folder path. If you move or rename the folder, the folder ID will change, and permissions may no longer apply to the folder."
       )
     ).toBeInTheDocument();
+  });
+
+  it('renders fix button', () => {
+    render(<MissingFolderMetadataBanner repositoryName="test-repo" />);
+
+    expect(screen.getByText('Fix folder IDs')).toBeInTheDocument();
   });
 });
 
@@ -61,7 +75,10 @@ describe('FolderPermissions', () => {
   });
 
   it('renders loading state', () => {
-    useFolderMetadataStatus.mockReturnValue('loading' as FolderMetadataStatus);
+    useFolderMetadataStatus.mockReturnValue({
+      status: 'loading' as FolderMetadataStatus,
+      repositoryName: 'test-repo',
+    });
 
     render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
 
@@ -69,7 +86,10 @@ describe('FolderPermissions', () => {
   });
 
   it('renders warning banner and read-only permissions when metadata is missing', () => {
-    useFolderMetadataStatus.mockReturnValue('missing' as FolderMetadataStatus);
+    useFolderMetadataStatus.mockReturnValue({
+      status: 'missing' as FolderMetadataStatus,
+      repositoryName: 'test-repo',
+    });
 
     render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
 
@@ -82,7 +102,10 @@ describe('FolderPermissions', () => {
   });
 
   it('renders error alert when metadata check fails', () => {
-    useFolderMetadataStatus.mockReturnValue('error' as FolderMetadataStatus);
+    useFolderMetadataStatus.mockReturnValue({
+      status: 'error' as FolderMetadataStatus,
+      repositoryName: 'test-repo',
+    });
 
     render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
 
@@ -91,7 +114,10 @@ describe('FolderPermissions', () => {
   });
 
   it('renders permissions with original canSetPermissions when metadata is ok', () => {
-    useFolderMetadataStatus.mockReturnValue('ok' as FolderMetadataStatus);
+    useFolderMetadataStatus.mockReturnValue({
+      status: 'ok' as FolderMetadataStatus,
+      repositoryName: 'test-repo',
+    });
 
     render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
 
