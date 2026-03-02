@@ -502,6 +502,7 @@ DataQueryKind: {
 	kind: "DataQuery"
 	group: string
 	version: string | *"v0"
+	labels?: [string]: string
 	// New type for datasource reference
 	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
 	datasource?: {
@@ -805,7 +806,7 @@ VariableOption: {
 	// Value of the option
 	value: string | [...string]
 	// Additional properties for multi-props variables
-	properties?: {[string]: string}
+	properties?: [string]: string
 }
 
 // Query variable specification
@@ -992,6 +993,7 @@ GroupByVariableSpec: {
 GroupByVariableKind: {
 	kind: "GroupByVariable"
 	group: string
+	labels?: [string]: string
 	datasource?: {
 		name?: string
 	}
@@ -1037,6 +1039,7 @@ AdHocFilterWithLabels: {
 AdhocVariableKind: {
 	kind: "AdhocVariable"
 	group: string
+	labels?: [string]: string
 	datasource?: {
 		name?: string
 	}
