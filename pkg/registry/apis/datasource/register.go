@@ -254,7 +254,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	if b.cfg.EnableHealthEndpoint {
-		backend.Logger.Error("1: NEW API IS ENABLED")
 		storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 	}
 
