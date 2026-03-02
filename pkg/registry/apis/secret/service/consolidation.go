@@ -73,6 +73,7 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 		}
 		for i, payload := range reEncrypted {
 			if payload == nil {
+				logging.FromContext(ctx).Error("Failed to re-encrypt value", "namespace", values[i].Namespace, "name", values[i].Name, "error", "nil payload")
 				continue
 			}
 			ev := values[i]

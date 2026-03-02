@@ -392,16 +392,9 @@ func (s *EncryptionManager) GetProviders() encryption.ProviderConfig {
 	return s.providerConfig
 }
 
-// TODO: This is called repeatedly during consolidation and could perform poorly due to the mutex lock contention.
-// We may want to consider an approach where we temporarily disable the cache during consolidation then flush it all at once.
-// Do some benchmarking and revisit.
-func (s *EncryptionManager) FlushCache(namespace xkube.Namespace) {
-	s.dataKeyCache.Flush(namespace.String())
-}
-
 // ConsolidateNamespace re-encrypts all values for a single namespace using one new DEK held in memory.
 // It creates the new DEK once, then for each value resolves the old DEK by id, decrypts with the cipher,
-// and re-encrypts with the cipher using the new key—skipping the high-level Encrypt/Decrypt lookups.
+// and re-encrypts with the cipher using the new key—skipping the high-level Encrypt/Decrypt and cache lookups.
 func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace xkube.Namespace, values []*contracts.EncryptedValue) ([]*contracts.EncryptedPayload, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.ConsolidateNamespace", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -449,7 +442,8 @@ func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace 
 		results[i] = &contracts.EncryptedPayload{DataKeyID: newKeyID, EncryptedData: encrypted}
 	}
 
-	s.FlushCache(namespace)
+	s.dataKeyCache.Flush(namespace.String())
+
 	return results, nil
 }
 

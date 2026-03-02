@@ -178,6 +178,7 @@ var adminCommands = []*cli.Command{
 				Usage:  "Re-encrypts all encrypted values with new data keys and deletes the old deactivated data keys. Returns ok unless there is an error. Safe to execute multiple times.",
 				Action: runRunnerCommand(secretsconsolidation.ConsolidateSecrets),
 				Flags: []cli.Flag{
+					// MM TODO: Should be able to inherit these flags from the runner
 					// Inherited by runner; also define here so they can be passed after the subcommand
 					&cli.StringFlag{
 						Name:  "config",
