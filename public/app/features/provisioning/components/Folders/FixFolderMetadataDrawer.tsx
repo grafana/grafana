@@ -3,7 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Stack } from '@grafana/ui';
-import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { Job, RepositoryView, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
@@ -97,7 +97,7 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
 
 interface FixFolderMetadataFormProps {
   repositoryName: string;
-  repository: NonNullable<ReturnType<typeof useGetResourceRepositoryView>['repository']>;
+  repository: RepositoryView;
   canPushToConfiguredBranch: boolean;
   defaultValues: BaseProvisionedFormData;
   onDismiss: () => void;
