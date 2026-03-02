@@ -92,7 +92,7 @@ function FixFolderMetadataForm({
   const methods = useForm<BaseProvisionedFormData>({ defaultValues });
   const { handleSubmit } = methods;
 
-  const handleSubmitForm = async ({ ref, comment }: BaseProvisionedFormData) => {
+  const handleSubmitForm = async ({ ref }: BaseProvisionedFormData) => {
     try {
       const result = await createJob({
         name: repositoryName,
@@ -117,18 +117,11 @@ function FixFolderMetadataForm({
     }
   };
 
-  const handleJobStatusChange = useCallback(
-    (statusInfo: StepStatusInfo) => {
-      if (statusInfo.status === 'success') {
-        onDismiss();
-      }
-
-      if (statusInfo.status === 'error' && statusInfo.error) {
-        setJobError(statusInfo.error);
-      }
-    },
-    [onDismiss]
-  );
+  const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
+    if (statusInfo.status === 'error' && statusInfo.error) {
+      setJobError(statusInfo.error);
+    }
+  }, []);
 
   return (
     <Drawer title={t('provisioning.fix-folder-metadata-drawer.title', 'Fix folder metadata')} onClose={onDismiss}>
@@ -141,6 +134,7 @@ function FixFolderMetadataForm({
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
             <Stack direction="column" gap={2}>
+              <ProvisioningAlert error={jobError} />
               <ResourceEditFormSharedFields
                 resourceType="folder"
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
