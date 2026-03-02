@@ -6,4 +6,8 @@ export interface VizTypeChangeDetails {
   fieldConfig?: FieldConfigSource;
   withModKey?: boolean;
   fromSuggestions?: boolean;
+  suggestionMetadata?: {
+    suggestionName: string;
+    suggestionIndex: number;
+  };
 }
