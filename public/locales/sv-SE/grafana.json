@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Misslyckades med att hämta kontaktpunkter"
     },
     "contact-points": {
-      "create": "Skapa kontaktpunkt",
+      "create": "",
       "custom-template-value": "Anpassat mallvärde",
       "delete-reasons": {
         "heading": "Kontaktpunkten kan inte raderas av följande skäl:",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Lägg till tidsintervall"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Sök efter kontaktpunkt",
@@ -2252,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Det gick inte att hämta aviseringsmallar"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Lägg till aviseringsmallgrupp",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Skapa aviseringsmallar för att anpassa dina aviseringar."
     },
     "notifications-list": {
@@ -2279,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Lägg till etiketter för att hjälpa dig att bättre hantera inspelningsregler.",
@@ -3350,7 +3348,7 @@
       "stop-alerting-when": "Stoppa larm (eller vänteläge) när "
     },
     "time-interval": {
-      "add-time-interval": "Lägg till tidsintervall",
+      "add-time-interval": "",
       "save": "Spara tidsintervall",
       "saving": "Sparar tidsintervall"
     },
@@ -6604,6 +6602,12 @@
           "row-title": "Radrubrik"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Det gick inte att radera instrumentpanelen",
@@ -12656,6 +12660,12 @@
       "label-read-only": "Skrivskyddad",
       "label-sync-interval": "Synkroniseringsintervall (sekunder)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12797,6 +12807,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13304,6 +13316,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",

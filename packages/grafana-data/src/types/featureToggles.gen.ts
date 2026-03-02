@@ -1538,6 +1538,11 @@ export interface FeatureToggles {
   */
   alertingMultiplePolicies?: boolean;
   /**
+  * Registers an API server for each backend app plugin exposing a settings endpoint
+  * @default false
+  */
+  appPluginAPIServer?: boolean;
+  /**
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false
   */
