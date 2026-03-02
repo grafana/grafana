@@ -33,6 +33,15 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
       pathItem.parameters = filterNamespaceParameters(pathItem.parameters);
     }
 
+    // Remove the `name` path parameter from /find/* endpoints.
+    // K8s codegen adds it to all connect-type endpoints, but /find/* paths
+    // don't contain {name} so the parameter is unused.
+    if (newPathKey.startsWith('/find/') && Array.isArray(pathItem.parameters)) {
+      pathItem.parameters = pathItem.parameters.filter(
+        (param) => !('in' in param && param.in === 'path' && 'name' in param && param.name === 'name')
+      );
+    }
+
     for (const method of Object.keys(pathItem)) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const operation = pathItem[method as keyof OpenAPIV3.PathItemObject];
