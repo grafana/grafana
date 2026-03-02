@@ -2,24 +2,31 @@ package controller
 
 import (
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
@@ -702,4 +709,256 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 			assert.Equal(t, tc.expectedResync, result, tc.description)
 		})
 	}
+}
+
+// capturePatcher captures all patch operations for inspection in tests.
+type capturePatcher struct {
+	ops []map[string]interface{}
+}
+
+func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]interface{}) error {
+	c.ops = append(c.ops, patchOperations...)
+	return nil
+}
+
+func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool) {
+	for _, op := range c.ops {
+		if op["path"] == path {
+			return op, true
+		}
+	}
+	return nil, false
+}
+
+func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testing.T) {
+	testCases := []struct {
+		name             string
+		oldQuota         provisioning.QuotaStatus
+		newQuota         provisioning.QuotaStatus
+		expectReconcile  bool
+		expectQuotaPatch bool
+	}{
+		{
+			name: "quota change triggers reconciliation and patches status",
+			oldQuota: provisioning.QuotaStatus{
+				MaxRepositories:           5,
+				MaxResourcesPerRepository: 100,
+			},
+			newQuota: provisioning.QuotaStatus{
+				MaxRepositories:           10,
+				MaxResourcesPerRepository: 200,
+			},
+			expectReconcile:  true,
+			expectQuotaPatch: true,
+		},
+		{
+			name: "unchanged quota skips reconciliation",
+			oldQuota: provisioning.QuotaStatus{
+				MaxRepositories:           5,
+				MaxResourcesPerRepository: 100,
+			},
+			newQuota: provisioning.QuotaStatus{
+				MaxRepositories:           5,
+				MaxResourcesPerRepository: 100,
+			},
+			expectReconcile:  false,
+			expectQuotaPatch: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			namespace := "default"
+			repoName := "test-repo"
+
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       repoName,
+					Namespace:  namespace,
+					Generation: 1,
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Sync: provisioning.SyncOptions{
+						Enabled: false,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: true,
+						Checked: time.Now().UnixMilli(),
+					},
+					Quota: tc.oldQuota,
+				},
+			}
+
+			indexer := cache.NewIndexer(
+				cache.MetaNamespaceKeyFunc,
+				cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+			)
+			require.NoError(t, indexer.Add(repo))
+			repoLister := listers.NewRepositoryLister(indexer)
+
+			patcher := &capturePatcher{}
+
+			healthMetrics := NewMockHealthMetricsRecorder(t)
+			healthMetrics.EXPECT().
+				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+				Maybe()
+
+			tester := repository.NewTester()
+			healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(repo).Maybe()
+			mockRepo.On("Test", mock.Anything).
+				Return(&provisioning.TestResults{Success: true}, nil).Maybe()
+
+			repoFactory := repository.NewMockFactory(t)
+			repoFactory.On("Build", mock.Anything, mock.Anything).
+				Return(mockRepo, nil).Maybe()
+
+			mockJobs := &mockJobsQueueStore{
+				MockQueue: jobs.NewMockQueue(t),
+				MockStore: jobs.NewMockStore(t),
+			}
+
+			rc := &RepositoryController{
+				repoLister:    repoLister,
+				quotaGetter:   quotas.NewFixedQuotaGetter(tc.newQuota),
+				quotaChecker:  NewRepositoryQuotaChecker(repoLister),
+				healthChecker: healthChecker,
+				statusPatcher: patcher,
+				repoFactory:   repoFactory,
+				jobs:          mockJobs,
+				logger:        logging.DefaultLogger.With("logger", loggerName),
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+
+			err := rc.process(&queueItem{key: namespace + "/" + repoName})
+			assert.NoError(t, err)
+
+			if tc.expectReconcile {
+				assert.NotEmpty(t, patcher.ops,
+					"expected status patcher to be called during reconciliation")
+			} else {
+				assert.Empty(t, patcher.ops,
+					"expected no status patch when reconciliation is skipped")
+			}
+
+			if tc.expectQuotaPatch {
+				quotaOp, found := patcher.findPatchOp("/status/quota")
+				assert.True(t, found, "expected /status/quota patch operation")
+				if found {
+					assert.Equal(t, "replace", quotaOp["op"])
+					assert.Equal(t, tc.newQuota, quotaOp["value"])
+				}
+
+				condOp, found := patcher.findPatchOp("/status/conditions")
+				assert.True(t, found,
+					"expected /status/conditions patch operation for quota condition update")
+				if found {
+					conditions, ok := condOp["value"].([]metav1.Condition)
+					assert.True(t, ok, "conditions value should be []metav1.Condition")
+					if ok {
+						var quotaCond *metav1.Condition
+						for i := range conditions {
+							if conditions[i].Type == provisioning.ConditionTypeNamespaceQuota {
+								quotaCond = &conditions[i]
+								break
+							}
+						}
+						assert.NotNil(t, quotaCond,
+							"expected NamespaceQuota condition to be present")
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestRepositoryController_process_ConditionsNotOverwritten verifies that the reconciliation loop
+// produces a final /status/conditions patch containing both the quota and ready condition.
+func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-repo",
+			Namespace:  "default",
+			Generation: 2,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+			Sync: provisioning.SyncOptions{
+				Enabled: false,
+			},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+		},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	mockMetrics := NewMockHealthMetricsRecorder(t)
+	mockMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Return()
+
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(nil, tester, mockMetrics)
+
+	mockConfigRepo := repository.NewMockConfigRepository(t)
+	mockConfigRepo.EXPECT().Config().Return(repo)
+	mockConfigRepo.EXPECT().Test(mock.Anything).Return(
+		&provisioning.TestResults{Success: true, Code: http.StatusOK},
+		nil,
+	)
+
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConfigRepo, nil)
+
+	patcher := &capturePatcher{}
+
+	rc := &RepositoryController{
+		repoLister:    mockLister,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(mockLister),
+		healthChecker: healthChecker,
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+	}
+
+	err := rc.process(&queueItem{key: "default/test-repo"})
+	require.NoError(t, err)
+
+	// Find the last /status/conditions patch operation — if there are multiple
+	// replace ops on the same path, the last one wins when applied as a JSON Patch.
+	var lastConditionsPatch map[string]interface{}
+	for _, op := range patcher.ops {
+		if path, ok := op["path"].(string); ok && path == "/status/conditions" {
+			lastConditionsPatch = op
+		}
+	}
+
+	require.NotNil(t, lastConditionsPatch, "expected at least one /status/conditions patch")
+
+	conditions, ok := lastConditionsPatch["value"].([]metav1.Condition)
+	require.True(t, ok, "expected conditions value to be []metav1.Condition")
+
+	var hasQuotaCondition, hasReadyCondition bool
+	for _, c := range conditions {
+		switch c.Type {
+		case provisioning.ConditionTypeNamespaceQuota:
+			hasQuotaCondition = true
+		case provisioning.ConditionTypeReady:
+			hasReadyCondition = true
+		}
+	}
+
+	assert.True(t, hasQuotaCondition, "expected quota condition in final /status/conditions patch")
+	assert.True(t, hasReadyCondition, "expected ready condition in final /status/conditions patch")
+	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
 }

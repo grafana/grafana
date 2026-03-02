@@ -347,7 +347,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 
 	testStore := sqlstore.NewTestStore(b, sqlstore.WithCfg(cfg))
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, testStore, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
+	srv, err := NewEmbeddedZanzanaServer(cfg, testStore, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil)
 	require.NoError(b, err)
 
 	// Generate test data

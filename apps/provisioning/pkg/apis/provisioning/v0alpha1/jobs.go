@@ -91,7 +91,7 @@ func (j JobState) Finished() bool {
 }
 
 type JobSpec struct {
-	Action JobAction `json:"action,omitempty"`
+	Action JobAction `json:"action"`
 
 	// The the repository reference (for now also in labels)
 	// This value is required, but will be popuplated from the job making the request
@@ -239,7 +239,10 @@ func (MoveJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "MoveJobOptions"
 }
 
-type FixFolderMetadataJobOptions struct{}
+type FixFolderMetadataJobOptions struct {
+	// Ref to the branch to create the commit on (uses repository's default branch if not specified)
+	Ref string `json:"ref,omitempty"`
+}
 
 func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FixFolderMetadataJobOptions"

@@ -26,6 +26,7 @@ export function SyncRepository({ repository }: Props) {
     createJob({
       name,
       jobSpec: {
+        action: 'pull',
         pull: {
           incremental: false, // will queue a full resync job
         },
@@ -45,7 +46,13 @@ export function SyncRepository({ repository }: Props) {
             ? undefined
             : t('provisioning.sync-repository.tooltip-unhealthy-repository', 'Unable to pull an unhealthy repository')
         }
-        disabled={jobQuery.isLoading || activeJob?.status?.state === 'working' || !name || !isHealthy}
+        disabled={
+          jobQuery.isLoading ||
+          activeJob?.status?.state === 'working' ||
+          activeJob?.status?.state === 'pending' ||
+          !name ||
+          !isHealthy
+        }
         onClick={onClick}
       >
         <Trans i18nKey="provisioning.sync-repository.pull">Pull</Trans>

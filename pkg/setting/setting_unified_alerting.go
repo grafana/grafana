@@ -22,6 +22,7 @@ const (
 	alertmanagerDefaultReconnectTimeout   = alertingCluster.DefaultReconnectTimeout
 	alertmanagerDefaultPushPullInterval   = alertingCluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
+	AlertBroadcastDefaultQueueSize        = 200
 	alertmanagerRedisDefaultMaxConns      = 5
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
@@ -73,46 +74,47 @@ var (
 )
 
 type UnifiedAlertingSettings struct {
-	AdminConfigPollInterval         time.Duration
-	AlertmanagerConfigPollInterval  time.Duration
-	AlertmanagerMaxSilenceSizeBytes int
-	AlertmanagerMaxSilencesCount    int
-	HAListenAddr                    string
-	HAAdvertiseAddr                 string
-	HAPeers                         []string
-	HAPeerTimeout                   time.Duration
-	HAGossipInterval                time.Duration
-	HAReconnectTimeout              time.Duration
-	HAPushPullInterval              time.Duration
-	HALabel                         string
-	HARedisClusterModeEnabled       bool
-	HARedisSentinelModeEnabled      bool
-	HARedisSentinelMasterName       string
-	HARedisSentinelUsername         string
-	HARedisSentinelPassword         string
-	HARedisAddr                     string
-	HARedisPeerName                 string
-	HARedisPrefix                   string
-	HARedisUsername                 string
-	HARedisPassword                 string
-	HARedisDB                       int
-	HARedisMaxConns                 int
-	HARedisTLSEnabled               bool
-	HARedisTLSConfig                dstls.ClientConfig
-	HASingleNodeEvaluation          bool
-	InitializationTimeout           time.Duration
-	MaxAttempts                     int64
-	InitialRetryDelay               time.Duration
-	MaxRetryDelay                   time.Duration
-	RandomizationFactor             float64
-	MinInterval                     time.Duration
-	EvaluationTimeout               time.Duration
-	EvaluationResultLimit           int
-	DisableJitter                   bool
-	ExecuteAlerts                   bool
-	DefaultConfiguration            string
-	Enabled                         *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
-	DisabledOrgs                    map[int64]struct{}
+	AdminConfigPollInterval                   time.Duration
+	AlertmanagerConfigPollInterval            time.Duration
+	AlertmanagerMaxSilenceSizeBytes           int
+	AlertmanagerMaxSilencesCount              int
+	HAListenAddr                              string
+	HAAdvertiseAddr                           string
+	HAPeers                                   []string
+	HAPeerTimeout                             time.Duration
+	HAGossipInterval                          time.Duration
+	HAReconnectTimeout                        time.Duration
+	HAPushPullInterval                        time.Duration
+	HALabel                                   string
+	HARedisClusterModeEnabled                 bool
+	HARedisSentinelModeEnabled                bool
+	HARedisSentinelMasterName                 string
+	HARedisSentinelUsername                   string
+	HARedisSentinelPassword                   string
+	HARedisAddr                               string
+	HARedisPeerName                           string
+	HARedisPrefix                             string
+	HARedisUsername                           string
+	HARedisPassword                           string
+	HARedisDB                                 int
+	HARedisMaxConns                           int
+	HARedisTLSEnabled                         bool
+	HARedisTLSConfig                          dstls.ClientConfig
+	HASingleNodeEvaluation                    bool
+	HASingleEvaluationAlertBroadcastQueueSize int
+	InitializationTimeout                     time.Duration
+	MaxAttempts                               int64
+	InitialRetryDelay                         time.Duration
+	MaxRetryDelay                             time.Duration
+	RandomizationFactor                       float64
+	MinInterval                               time.Duration
+	EvaluationTimeout                         time.Duration
+	EvaluationResultLimit                     int
+	DisableJitter                             bool
+	ExecuteAlerts                             bool
+	DefaultConfiguration                      string
+	Enabled                                   *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
+	DisabledOrgs                              map[int64]struct{}
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
 	BaseInterval time.Duration
@@ -344,6 +346,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HARedisTLSConfig.CipherSuites = ua.Key("ha_redis_tls_cipher_suites").MustString("")
 	uaCfg.HARedisTLSConfig.MinVersion = ua.Key("ha_redis_tls_min_version").MustString("")
 	uaCfg.HASingleNodeEvaluation = ua.Key("ha_single_node_evaluation").MustBool(false)
+	uaCfg.HASingleEvaluationAlertBroadcastQueueSize = ua.Key("ha_single_evaluation_alert_broadcast_queue_size").MustInt(AlertBroadcastDefaultQueueSize)
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration

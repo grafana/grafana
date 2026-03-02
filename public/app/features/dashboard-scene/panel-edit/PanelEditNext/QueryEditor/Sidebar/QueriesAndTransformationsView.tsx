@@ -1,34 +1,47 @@
-import { DropResult } from '@hello-pangea/dnd';
+import { useCallback, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { LoadingBar } from '@grafana/ui';
 
-import { Transformation } from '../types';
+import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { AddCardButton } from './AddCardButton';
 import { DraggableList } from './DraggableList';
 import { QueryCard } from './QueryCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
 import { TransformationCard } from './TransformationCard';
+import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
-interface QueriesAndTransformationsViewProps {
-  queries: DataQuery[];
-  transformations: Transformation[];
-  onQueryDragEnd: (result: DropResult) => void;
-  onTransformationDragEnd: (result: DropResult) => void;
-}
+export function QueriesAndTransformationsView() {
+  const { queries, isLoading } = useQueryRunnerContext();
+  const { transformations } = usePanelContext();
+  const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
-export function QueriesAndTransformationsView({
-  queries,
-  transformations,
-  onQueryDragEnd,
-  onTransformationDragEnd,
-}: QueriesAndTransformationsViewProps) {
+  const [queriesOpen, setQueriesOpen] = useState(true);
+  const [transformationsOpen, setTransformationsOpen] = useState(true);
+
+  const expandQueries = useCallback(() => setQueriesOpen(true), []);
+  const expandTransformations = useCallback(() => setTransformationsOpen(true), []);
+
+  if (isLoading) {
+    return (
+      <LoadingBar
+        width={400}
+        ariaLabel={t(
+          'query-editor-next.sidebar.loading-queries-transformations',
+          'Loading queries and transformations'
+        )}
+      />
+    );
+  }
+
   return (
     <>
       <QuerySidebarCollapsableHeader
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
-        headerAction={<AddCardButton variant="query" alwaysVisible />}
+        isOpen={queriesOpen}
+        onToggle={setQueriesOpen}
+        headerAction={<AddCardButton variant="query" alwaysVisible onAdd={expandQueries} />}
       >
         <DraggableList
           droppableId="query-sidebar-queries"
@@ -40,7 +53,9 @@ export function QueriesAndTransformationsView({
       </QuerySidebarCollapsableHeader>
       <QuerySidebarCollapsableHeader
         label={t('query-editor-next.sidebar.transformations', 'Transformations')}
-        headerAction={<AddCardButton variant="transformation" alwaysVisible />}
+        isOpen={transformationsOpen}
+        onToggle={setTransformationsOpen}
+        headerAction={<AddCardButton variant="transformation" alwaysVisible onAdd={expandTransformations} />}
       >
         {transformations.length > 0 && (
           <DraggableList

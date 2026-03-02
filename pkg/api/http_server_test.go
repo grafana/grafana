@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net"
+	"net/http"
 	"os"
 	"testing"
 
@@ -327,3 +329,63 @@ ZXEiT0mcWOdtRV5WfkkSrjE0BtWUW6r+eW/0ZSLPESnGqBIpTgzDEk29bWbbMdwh
 dsdSPwCrdg9wYOPr1CNjfoA6GjX5SipJ6rU1hOzcOF8SQh0Oh9a5kpfkVD+ktHxr
 +eLHA9/oarks8uDsI8ZzsPI=
 -----END CERTIFICATE-----`)
+
+func TestHTTPServer_getListeners(t *testing.T) {
+	t.Run("protocol=http, serve_on_socket=false", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Protocol = setting.HTTPScheme
+		cfg.HTTPPort = "0"
+
+		hs := &HTTPServer{
+			Cfg:     cfg,
+			httpSrv: &http.Server{}, //nolint:gosec
+		}
+		hs.httpSrv.Addr = net.JoinHostPort(cfg.HTTPAddr, cfg.HTTPPort)
+
+		listeners, err := hs.getListeners()
+		require.NoError(t, err)
+		assert.Len(t, listeners, 1)
+		_ = listeners[0].Close()
+	})
+
+	t.Run("protocol=http, serve_on_socket=true", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Protocol = setting.HTTPScheme
+		cfg.HTTPPort = "0"
+		cfg.ServeOnSocket = true
+		cfg.SocketGid = -1
+		cfg.SocketPath = os.TempDir() + "/grafana_test.sock"
+		t.Cleanup(func() { _ = os.Remove(cfg.SocketPath) })
+
+		hs := &HTTPServer{
+			Cfg:     cfg,
+			httpSrv: &http.Server{}, //nolint:gosec
+		}
+		hs.httpSrv.Addr = net.JoinHostPort(cfg.HTTPAddr, cfg.HTTPPort)
+
+		listeners, err := hs.getListeners()
+		require.NoError(t, err)
+		assert.Len(t, listeners, 2)
+		for _, l := range listeners {
+			_ = l.Close()
+		}
+	})
+
+	t.Run("protocol=socket, serve_on_socket=false", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Protocol = setting.SocketScheme
+		cfg.SocketGid = -1
+		cfg.SocketPath = os.TempDir() + "/grafana_test_only.sock"
+		t.Cleanup(func() { _ = os.Remove(cfg.SocketPath) })
+
+		hs := &HTTPServer{
+			Cfg:     cfg,
+			httpSrv: &http.Server{}, //nolint:gosec
+		}
+
+		listeners, err := hs.getListeners()
+		require.NoError(t, err)
+		assert.Len(t, listeners, 1)
+		_ = listeners[0].Close()
+	})
+}

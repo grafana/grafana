@@ -147,6 +147,36 @@ describe('clearable behavior', () => {
   });
 });
 
+describe('multi select', () => {
+  it('should show all options and allow selecting multiple trees', async () => {
+    const onChangeHandler = jest.fn();
+
+    const { user } = render(<RoutingTreeSelector multi value={[]} onChange={onChangeHandler} />);
+    await user.click(screen.getByRole('combobox'));
+
+    const options = await screen.findAllByRole('option');
+    expect(options).toHaveLength(simpleRoutingTreesList.items.length);
+
+    // Select first custom tree
+    await user.click(await screen.findByRole('option', { name: /team-platform/i }));
+
+    expect(onChangeHandler).toHaveBeenCalledWith([
+      expect.objectContaining({
+        metadata: expect.objectContaining({ name: 'team-platform' }),
+      }),
+    ]);
+  });
+
+  it('should show pre-selected value as a pill', async () => {
+    const onChangeHandler = jest.fn();
+
+    render(<RoutingTreeSelector multi value={[USER_DEFINED_TREE_NAME]} onChange={onChangeHandler} />);
+
+    // MultiCombobox renders selected values as pills
+    expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
+  });
+});
+
 describe('error handling', () => {
   beforeEach(() => {
     server.use(...routingTreeWithErrorScenario);

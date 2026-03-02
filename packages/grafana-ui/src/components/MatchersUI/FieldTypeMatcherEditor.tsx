@@ -1,12 +1,13 @@
-import { memo, useMemo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
-import { FieldMatcherID, fieldMatchers, SelectableValue, FieldType, DataFrame } from '@grafana/data';
+import { DataFrame, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { getFieldTypeIconName } from '../../types/icon';
-import { Select } from '../Select/Select';
+import { Combobox } from '../Combobox/Combobox';
+import { ComboboxOption } from '../Combobox/types';
 
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
 
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps, id } = props;
@@ -14,20 +15,20 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const selectOptions = useSelectOptions(counts, options);
 
   const onChange = useCallback(
-    (selection: SelectableValue<string>) => {
+    (selection: ComboboxOption) => {
       return onChangeFromProps(selection.value!);
     },
     [onChangeFromProps]
   );
 
   const selectedOption = selectOptions.find((v) => v.value === options);
-  return <Select inputId={id} value={selectedOption} options={selectOptions} onChange={onChange} />;
+  return <Combobox id={id} value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 FieldTypeMatcherEditor.displayName = 'FieldTypeMatcherEditor';
 
 // Select options for all field types.
-// This is not eported to the published package, but used internally
-export const getAllFieldTypeIconOptions: () => Array<SelectableValue<FieldType>> = () => [
+// This is not exported to the published package, but used internally
+export const getAllFieldTypeIconOptions: () => Array<ComboboxOption<FieldType>> = () => [
   {
     value: FieldType.number,
     label: t('grafana-ui.matchers-ui.get-all-field-type-icon-options.label-number', 'Number'),
@@ -85,10 +86,10 @@ const useFieldCounts = (data: DataFrame[]): Map<FieldType, number> => {
   }, [data]);
 };
 
-const useSelectOptions = (counts: Map<string, number>, opt?: string): Array<SelectableValue<string>> => {
+const useSelectOptions = (counts: Map<string, number>, opt?: string): ComboboxOption[] => {
   return useMemo(() => {
     let found = false;
-    const options: Array<SelectableValue<string>> = [];
+    const options: ComboboxOption[] = [];
     for (const t of getAllFieldTypeIconOptions()) {
       const count = counts.get(t.value!);
       const match = opt === t.value;
