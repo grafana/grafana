@@ -115,7 +115,8 @@ jobs:
         with:
           name: grafana-frontend
           path: |
-            public/
+            public/build/
+            public/app/plugins/
             !public/**/*.ts
             !public/**/*.tsx
           retention-days: 1
@@ -124,6 +125,31 @@ jobs:
         with:
           name: grafana-test-plugins
           path: e2e-playwright/test-plugins/
+          retention-days: 1
+
+  build-misc:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    name: Prepare misc files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Prepare misc distribution files
+        run: |
+          mkdir grafana-misc
+          cp -r conf grafana-misc/
+          cp -r tools grafana-misc/
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: grafana-misc
+          path: grafana-misc/
           retention-days: 1
 
   build-grafana:
@@ -269,6 +295,7 @@ jobs:
     needs:
       - build-backend
       - build-frontend
+      - build-misc
     name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
     runs-on: ubuntu-x64-large
     timeout-minutes: 20
@@ -286,43 +313,73 @@ jobs:
         with:
           persist-credentials: false
 
-      # Download pre-built artifacts into the correct locations
+      # Download backend binaries → grafana-server/bin/
       - uses: actions/download-artifact@v4
         with:
           name: grafana-backend
-          path: bin
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: grafana-frontend
-          path: frontend-artifact
-
-      - run: rsync -a frontend-artifact/ public/
-      - run: rm -rf frontend-artifact
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: grafana-test-plugins
-          path: e2e-playwright/test-plugins
+          path: grafana-server/bin
 
       # Restore execute permissions stripped by actions/upload-artifact
       - name: Fix binary permissions
-        run: chmod +x bin/grafana*
+        run: chmod +x grafana-server/bin/grafana*
 
-      - run: tree > tree.txt
+      # Download frontend assets → grafana-server/public/
+      - uses: actions/download-artifact@v4
+        with:
+          name: grafana-frontend
+          path: grafana-server/public
+
+      # Download test plugins → grafana-server/data/plugins/
+      - uses: actions/download-artifact@v4
+        with:
+          name: grafana-test-plugins
+          path: grafana-server/data/plugins
+
+      # Download misc files (conf/, tools/, plugins-bundled/) → grafana-server/
+      - uses: actions/download-artifact@v4
+        with:
+          name: grafana-misc
+          path: grafana-server
+
+      # Apply E2E test configuration on top of the production-mirrored distribution
+      - name: Configure for E2E testing
+        run: |
+          mkdir -p grafana-server/conf/provisioning/{datasources,dashboards,alerting,plugins}
+          cp scripts/grafana-server/custom.ini grafana-server/conf/custom.ini
+          cp devenv/datasources.yaml grafana-server/conf/provisioning/datasources/
+          cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
+          cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
+          cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
+
+      - run: tree grafana-server > tree.txt
       - uses: actions/upload-artifact@v5
         with:
           name: debug-tree-shard-${{ matrix.shard }}
           path: tree.txt
           retention-days: 1
 
-      # Start Grafana using existing scripts (handles provisioning, config, etc.)
+      # Start Grafana from the standalone directory
       - name: Start Grafana
         run: |
-          ./scripts/grafana-server/start-server &
-          ./scripts/grafana-server/wait-for-grafana
-        env:
-          PORT: 3001
+          grafana-server/bin/grafana server \
+            --homepath="$PWD/grafana-server" \
+            cfg:server.http_port=3001 \
+            > grafana-server/grafana.log 2>&1 &
+
+          # Wait for Grafana to be ready
+          timeout=180
+          elapsed=0
+          printf "Waiting for Grafana to start"
+          while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
+            if [ $elapsed -ge $timeout ]; then
+              printf "\nTimeout after %d seconds waiting for Grafana\n" "$timeout"
+              exit 1
+            fi
+            printf "."
+            sleep 1
+            elapsed=$((elapsed + 1))
+          done
+          printf "\nGrafana is ready\n"
 
       # Install test dependencies
       - name: Setup Node.js
@@ -342,12 +399,19 @@ jobs:
           path: ~/.cache/ms-playwright
       - run: npx playwright install chromium --with-deps
 
-      # Run tests — Grafana is running natively on localhost:3001
+      # Run tests — Grafana is running standalone on localhost:3001
       - name: Run Playwright tests
         run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
         env:
           GRAFANA_URL: http://localhost:3001
           CI: true
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: grafana-server-log-${{ github.run_number }}-${{ matrix.shard }}
+          path: grafana-server/grafana.log
+          retention-days: 3
 
       - uses: actions/upload-artifact@v5
         if: success() || failure()
