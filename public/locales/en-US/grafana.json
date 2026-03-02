@@ -4954,10 +4954,6 @@
         "description": "Drag or click to add a panel",
         "title": "Panel"
       },
-      "paste": {
-        "title": "Paste panel",
-        "description": "Click or drag to paste panel"
-      },
       "pane-header": "Add"
     },
     "add-library-panel-widget": {
@@ -5032,6 +5028,12 @@
       }
     },
     "canvas-actions": {
+      "add": {
+        "paste": {
+          "description": "Click or drag to paste panel",
+          "title": "Paste panel"
+        }
+      },
       "add-panel": "Add panel",
       "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to 2 levels",
