@@ -23,7 +23,7 @@ export const QuerySidebarCollapsableHeader = ({
   return (
     <CollapsableSection
       label={
-        <Stack direction="row" alignItems="center" gap={0.5}>
+        <Stack direction="row" alignItems="center" gap={1}>
           <Text color="maxContrast" variant="bodySmall" weight="light">
             {label}
           </Text>
@@ -51,13 +51,12 @@ export const QuerySidebarCollapsableHeader = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsableSection: css({
-    marginTop: theme.spacing(1),
+    marginTop: theme.spacing(0.5),
   }),
   contentArea: css({
     padding: 0,
   }),
   queryStackCardsContainer: css({
     paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(2.5), // Prevents clipping of the last card's absolutely-positioned AddCardButton
   }),
 });

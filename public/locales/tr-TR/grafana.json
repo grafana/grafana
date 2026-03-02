@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "İletişim noktaları getirilemedi"
     },
     "contact-points": {
-      "create": "İletişim noktası oluştur",
+      "create": "",
       "custom-template-value": "Özel şablon değeri",
       "delete-reasons": {
         "heading": "İletişim noktası aşağıdaki nedenlerden dolayı silinemiyor:",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Zaman aralığı ekle"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "İletişim noktasına göre ara",
@@ -2252,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Bildirim şablonları getirilemedi"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Bildirim şablon grubu ekle",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Bildirimlerinizi özelleştirmek için bildirim şablonları oluşturun."
     },
     "notifications-list": {
@@ -2279,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Kayıt kurallarınızı daha iyi yönetebilmeniz için etiketler ekleyin.",
@@ -3350,7 +3348,7 @@
       "stop-alerting-when": "Şu durumda uyarıyı durdur (veya bekleme durumuna geç):"
     },
     "time-interval": {
-      "add-time-interval": "Zaman aralığı ekle",
+      "add-time-interval": "",
       "save": "Zaman aralığını kaydet",
       "saving": "Zaman aralığı kaydediliyor"
     },
@@ -6604,6 +6602,12 @@
           "row-title": "Satır başlığı"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Pano silinemedi",
@@ -12656,6 +12660,12 @@
       "label-read-only": "Salt okunur",
       "label-sync-interval": "Eşitleme Aralığı (saniye)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12797,6 +12807,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13304,6 +13316,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",

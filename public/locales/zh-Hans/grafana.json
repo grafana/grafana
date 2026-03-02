@@ -903,7 +903,7 @@
       "title-failed-to-fetch-contact-points": "获取联络点失败"
     },
     "contact-points": {
-      "create": "创建联络点",
+      "create": "",
       "custom-template-value": "自定义模板值",
       "delete-reasons": {
         "heading": "无法删除联络点，原因为：",
@@ -2120,7 +2120,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "添加时间间隔"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2164,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,14 +2172,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "按联络点搜索",
@@ -2241,7 +2242,7 @@
       "title-failed-to-fetch-notification-templates": "获取通知模板失败"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "添加通知模板组",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "创建通知模板以自定义您的通知。"
     },
     "notifications-list": {
@@ -2268,6 +2269,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2291,15 +2293,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "添加标签，以帮助您更好地管理录制规则。",
@@ -3332,7 +3334,7 @@
       "stop-alerting-when": "当出现以下情况时停止警报（或待处理状态）："
     },
     "time-interval": {
-      "add-time-interval": "添加时间间隔",
+      "add-time-interval": "",
       "save": "保存时间间隔",
       "saving": "正在保存时间间隔"
     },
@@ -6576,6 +6578,12 @@
           "row-title": "行标题"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "删除数据面板失败",
@@ -12598,6 +12606,12 @@
       "label-read-only": "只读",
       "label-sync-interval": "间隔（秒）"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12737,6 +12751,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13243,6 +13259,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",

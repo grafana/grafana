@@ -9,7 +9,7 @@ import { dispatch } from 'app/types/store';
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { MappingContext } from '../SuggestedDashboardsModal';
 import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../interactions';
+import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../constants';
 import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';

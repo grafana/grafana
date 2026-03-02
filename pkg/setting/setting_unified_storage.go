@@ -127,6 +127,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// tenant watcher
 	cfg.TenantApiServerAddress = section.Key("tenant_api_server_address").String()
 	cfg.TenantWatcherAllowInsecureTLS = section.Key("tenant_watcher_allow_insecure_tls").MustBool(false)
+	cfg.TenantWatcherCAFile = section.Key("tenant_watcher_ca_file").String()
 
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
