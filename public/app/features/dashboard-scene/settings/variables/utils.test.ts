@@ -56,22 +56,22 @@ const dsMock: DataSourceApi = {
   },
 } as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 
+const defaultDsSettings = {
+  name: 'DataSourceInstance1',
+  uid: 'ds1',
+  type: 'dsTestDataSource',
+  meta: {
+    name: 'ds1',
+    id: 'dsTestDataSource',
+  },
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: async () => dsMock,
-    getList: () => {
-      return [
-        {
-          name: 'DataSourceInstance1',
-          uid: 'ds1',
-          meta: {
-            name: 'ds1',
-            id: 'dsTestDataSource',
-          },
-        },
-      ];
-    },
+    getInstanceSettings: (ref: string | null) => (ref === null ? defaultDsSettings : undefined),
+    getList: () => [defaultDsSettings],
   }),
 }));
 

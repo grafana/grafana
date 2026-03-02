@@ -9,6 +9,20 @@ import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { VariableAdd, VariableTypeSelection } from './VariableAddEditableElement';
 
+const defaultDsSettings = {
+  name: 'TestDataSource',
+  uid: 'ds1',
+  type: 'test',
+  meta: { id: 'test', name: 'Test' },
+};
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getInstanceSettings: (ref: string | null) => (ref === null ? defaultDsSettings : undefined),
+  }),
+}));
+
 function buildTestScene() {
   const testScene = new DashboardScene({
     $variables: new SceneVariableSet({ variables: [] }),
