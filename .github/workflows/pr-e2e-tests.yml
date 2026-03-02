@@ -112,10 +112,10 @@ jobs:
         with:
           name: grafana-frontend
           path: |
-            public/build/
-            public/app/plugins/
+            public/
             !public/**/*.ts
             !public/**/*.tsx
+            !public/**/node_modules/
           retention-days: 1
 
       - uses: actions/upload-artifact@v5
