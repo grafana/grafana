@@ -912,7 +912,7 @@
       "title-failed-to-fetch-contact-points": "Nie udało się pobrać punktów kontaktu"
     },
     "contact-points": {
-      "create": "Utwórz punkt kontaktowy",
+      "create": "",
       "custom-template-value": "Niestandardowa wartość szablonu",
       "delete-reasons": {
         "heading": "Nie można usunąć punktu kontaktowego z następujących powodów:",
@@ -2147,7 +2147,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Dodaj odstęp czasu"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2191,6 +2191,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2198,20 +2199,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Szukaj według punktu kontaktu",
@@ -2274,7 +2269,7 @@
       "title-failed-to-fetch-notification-templates": "Nie udało się pobrać szablonów powiadomień"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Dodaj grupę szablonów powiadomień",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Utwórz szablony powiadomień, aby dostosować wysyłane powiadomienia."
     },
     "notifications-list": {
@@ -2301,6 +2296,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2324,21 +2320,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Dodaj etykiety, aby lepiej zarządzać regułami rejestrowania.",
@@ -3386,7 +3376,7 @@
       "stop-alerting-when": "Zatrzymaj alerty (lub stan oczekiwania), gdy"
     },
     "time-interval": {
-      "add-time-interval": "Dodaj odstęp czasu",
+      "add-time-interval": "",
       "save": "Zapisz odstęp czasu",
       "saving": "Zapisywanie odstępu czasu"
     },
@@ -6660,6 +6650,12 @@
           "row-title": "Tytuł wiersza"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Nie udało się usunąć pulpitu",
@@ -12772,6 +12768,12 @@
       "label-read-only": "Tylko do odczytu",
       "label-sync-interval": "Odstęp czasu synchronizacji (sekundy)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12917,6 +12919,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13426,6 +13430,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
