@@ -13,10 +13,6 @@ concurrency:
 
 permissions: {}
 
-env:
-  ACTIONS_STEP_DEBUG: true
-  RUNNER_DEBUG: 1
-
 jobs:
   detect-changes:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
@@ -47,12 +43,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -61,23 +52,22 @@ jobs:
         id: cache
         with:
           key: "build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'build.go', 'embed.go') }}"
-          path: dist
+          path: bin
 
-      - name: Build backend via Dagger
+      - uses: actions/setup-go@v6.0.0
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        env:
-          CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
         with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/cmd artifacts -a backend:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build backend
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: make build-go
 
       - uses: actions/upload-artifact@v5
         with:
           name: grafana-backend
-          path: dist/
+          path: bin/
           retention-days: 1
 
   build-frontend:
@@ -88,14 +78,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      id-token: write
-    outputs:
-      frontend-store-key: ${{ steps.store-key.outputs.frontend-store-key }}
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -103,64 +86,49 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'plugins-bundled/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
+          key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'plugins-bundled/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
           path: |
-            dist
-            test-plugins
-            out.txt
+            public/build
+            e2e-playwright/test-plugins
 
-      - name: Build frontend + bundled-plugins via Dagger
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        env:
-          CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/cmd artifacts -a frontend -a bundled-plugins --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
-
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: yarn install --immutable
+
+      - name: Build frontend
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: make build-js
+
       - name: Build e2e test plugins
         if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          yarn install --immutable
-          yarn e2e:plugin:build
-          mkdir -p test-plugins
-          cp -r e2e-playwright/test-plugins/* test-plugins/
-
-      - name: Extract frontend store key
-        id: store-key
-        run: |
-          FRONTEND_PATH=$(grep "/public$" out.txt | head -1)
-          FRONTEND_KEY=${FRONTEND_PATH#dist/}
-          echo "frontend-store-key=${FRONTEND_KEY}" >> "$GITHUB_OUTPUT"
+        run: yarn e2e:plugin:build
 
       - uses: actions/upload-artifact@v5
         with:
           name: grafana-frontend
-          path: dist/
+          path: public/build/
           retention-days: 1
+
       - uses: actions/upload-artifact@v5
         with:
           name: grafana-test-plugins
-          path: test-plugins/
+          path: e2e-playwright/test-plugins/
           retention-days: 1
 
   build-grafana:
-    needs: [build-backend, build-frontend]
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     name: Build Grafana artifacts
-    runs-on: ubuntu-x64-large
-    timeout-minutes: 10
+    runs-on: ubuntu-x64-xlarge
+    timeout-minutes: 20
     permissions:
       contents: read
-      packages: write
       id-token: write
-    outputs:
-      docker-image: ${{ steps.push-ghcr.outputs.image }}
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@main
         if: github.event.pull_request.head.repo.fork == false
@@ -170,59 +138,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: grafana-backend
-          path: artifacts/backend
-      - uses: actions/download-artifact@v4
-        with:
-          name: grafana-frontend
-          path: artifacts/frontend
-
-      # Ensure import directories exist (actions/upload-artifact skips empty dirs)
-      # Restore execute permissions stripped by actions/upload-artifact (all files become 644)
-      - run: |
-          mkdir -p artifacts/frontend/bin/bundled-plugins
-          chmod +x artifacts/backend/bin/grafana/linux/amd64/grafana*
-
-      - name: Build tarball + Docker via Dagger
+      - name: Build all artifacts via Dagger
         uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
         env:
           CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
-          FRONTEND_KEY: ${{ needs.build-frontend.outputs.frontend-store-key }}
         with:
           cache-binary: "true"
           version: 0.18.8
           verb: run
-          args: >-
-            go run ./pkg/build/cmd artifacts
-            -a targz:grafana:linux/amd64
-            -a docker:grafana:linux/amd64
-            --import-dir "bin/grafana/linux/amd64=./artifacts/backend/bin/grafana/linux/amd64"
-            --import-dir "${FRONTEND_KEY}=./artifacts/frontend/${FRONTEND_KEY}"
-            --import-dir "bin/bundled-plugins=./artifacts/frontend/bin/bundled-plugins"
-            --grafana-dir="${PWD}"
-            --cache-builders=${CACHE_BUILDERS}
-            > out.txt
+          args: go run ./pkg/build/cmd artifacts -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
 
-      - name: Login to GHCR
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Docker image to GHCR
-        id: push-ghcr
-        run: |
-          set -euo pipefail
-          LOADED=$(docker load -i dist/*.docker.tar.gz 2>&1 | grep "Loaded image" | sed 's/Loaded image: //')
-          IMAGE="ghcr.io/${{ github.repository }}/grafana:${{ github.run_id }}"
-          docker tag "${LOADED}" "${IMAGE}"
-          docker push "${IMAGE}"
-          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
-
-      - name: Upload grafana.tar.gz
+      - name: Upload grafana tarball
         uses: actions/upload-artifact@v5
         with:
           retention-days: 1
@@ -338,13 +264,13 @@ jobs:
 
   run-playwright-tests:
     needs:
-      - build-grafana
+      - build-backend
+      - build-frontend
     name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
     runs-on: ubuntu-x64-large
     timeout-minutes: 20
     permissions:
       contents: read
-      packages: read
 
     strategy:
       fail-fast: false
@@ -356,53 +282,35 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+
+      # Download pre-built artifacts into the correct locations
+      - uses: actions/download-artifact@v4
+        with:
+          name: grafana-backend
+          path: bin
+      - uses: actions/download-artifact@v4
+        with:
+          name: grafana-frontend
+          path: public/build
       - uses: actions/download-artifact@v4
         with:
           name: grafana-test-plugins
-          path: e2e-test-plugins
+          path: e2e-playwright/test-plugins
 
-      - name: Setup provisioning
-        run: |
-          mkdir -p grafana-provisioning/{datasources,dashboards,alerting,plugins}
-          cp devenv/datasources.yaml grafana-provisioning/datasources/
-          cp devenv/dashboards.yaml grafana-provisioning/dashboards/
-          cp devenv/alert_rules.yaml grafana-provisioning/alerting/
-          cp devenv/plugins.yaml grafana-provisioning/plugins/
+      # Restore execute permissions stripped by actions/upload-artifact
+      - name: Fix binary permissions
+        run: chmod +x bin/linux-amd64/grafana*
 
-      - name: Login to GHCR
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
+      # Start Grafana using existing scripts (handles provisioning, config, etc.)
       - name: Start Grafana
         run: |
-          docker run -d --name grafana \
-            -e GF_SERVER_HTTP_PORT=3001 \
-            -e GF_PATHS_CONFIG=/grafana-config/custom.ini \
-            -e GF_PATHS_PROVISIONING=/grafana-provisioning \
-            -p 3001:3001 \
-            -v "$PWD/scripts/grafana-server:/grafana-config" \
-            -v "$PWD/devenv:/usr/share/grafana/devenv" \
-            -v "$PWD/e2e-test-plugins:/var/lib/grafana/plugins" \
-            -v "$PWD/grafana-provisioning:/grafana-provisioning" \
-            "${{ needs.build-grafana.outputs.docker-image }}"
+          ./scripts/grafana-server/start-server &
+          ./scripts/grafana-server/wait-for-grafana
+        env:
+          ARCH: linux-amd64
+          PORT: 3001
 
-      - name: Wait for Grafana
-        run: |
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
-              echo "Grafana is ready"
-              exit 0
-            fi
-            echo "Waiting for Grafana... attempt $i/30"
-            sleep 2
-          done
-          echo "Grafana failed to start. Container logs:"
-          docker logs grafana
-          exit 1
-
+      # Install test dependencies
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
@@ -424,6 +332,7 @@ jobs:
           path: ~/.cache/ms-playwright
       - run: npx playwright install chromium --with-deps
 
+      # Run tests — Grafana is running natively on localhost:3001
       - name: Run Playwright tests
         run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
         env:
@@ -441,7 +350,6 @@ jobs:
     needs:
       - run-playwright-tests
       - run-storybook-test
-      - build-grafana
     if: ${{ !cancelled() }}
     name: All Playwright tests complete
     runs-on: ubuntu-latest
