@@ -93,7 +93,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
 				Format:        backend.DataFrameFormat_JSON, // encode directly in the plugin
-			}, chunked.NewHTTPWriter(w)); err != nil {
+			}, chunked.NewChunkedHTTPWriter(w)); err != nil {
 				responder.Error(fmt.Errorf("error running chunked query %w", err))
 			}
 			return

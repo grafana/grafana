@@ -10,8 +10,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 )
 
+const CONTENT_TYPE = "text/jsonl"
+
 func IsRequestingChunkedResponse(accept string) bool {
-	return accept == "text/event-stream"
+	return accept == CONTENT_TYPE
 }
 
 var (
@@ -20,17 +22,23 @@ var (
 )
 
 type rawChunkWriter struct {
-	w http.ResponseWriter
+	w       http.ResponseWriter
+	flusher http.Flusher
 }
 
-func NewHTTPWriter(w http.ResponseWriter) *rawChunkWriter {
-	return &rawChunkWriter{w}
+func NewChunkedHTTPWriter(w http.ResponseWriter) *rawChunkWriter {
+	w.Header().Add("Content-Type", CONTENT_TYPE)
+	flusher, _ := w.(http.Flusher)
+	return &rawChunkWriter{
+		w:       w,
+		flusher: flusher,
+	}
 }
 
 // ReceivedChunk implements [backendplugin.RawChunkReceiver].
+// Each chunk is one line flushed to the response
 func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error {
-	// Write directly to the response -- avoiding any additional buffering
-	_, _ = r.w.Write([]byte(`data: {"refId":"`))
+	_, _ = r.w.Write([]byte(`{"refId":"`))
 	_, _ = r.w.Write([]byte(chunk.RefId))
 	_, _ = r.w.Write([]byte(`"`))
 
@@ -53,7 +61,6 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 
 		_, _ = r.w.Write([]byte(`,"frame":`))
 		_, _ = r.w.Write(chunk.Frame)
-		_, _ = r.w.Write([]byte(`"`))
 	}
 
 	if chunk.Error != "" {
@@ -64,12 +71,12 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 		}
 	}
 
-	if _, err := r.w.Write([]byte(`}\n\n`)); err != nil {
+	if _, err := r.w.Write([]byte("}\n")); err != nil {
 		return err
 	}
-	flusher, ok := r.w.(http.Flusher)
-	if ok {
-		flusher.Flush()
+
+	if r.flusher != nil {
+		r.flusher.Flush()
 	}
 	return nil
 }
