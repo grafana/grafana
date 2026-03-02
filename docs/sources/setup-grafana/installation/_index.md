@@ -75,7 +75,7 @@ Use the table below to identify which tier describes your workload, then refer t
 
 The dashboard count threshold assumes roughly 10-20 panels per dashboard with refresh intervals of 30 seconds or longer. Dashboards with more panels or shorter refresh intervals produce proportionally more query load and should be weighted toward the higher tier. Similarly, the data source count assumes a mix of source types. Deployments that rely heavily on proxied SQL sources should plan for the next tier up.
 
-These thresholds are starting points. Validate sizing with a load test that reflects your actual dashboard complexity, panel count, and refresh rates before committing to production hardware.
+These thresholds are starting points. Validate sizing with a load test that reflects your actual dashboard complexity, panel count, and refresh rates before committing to production hardware. Size for your current workload and include headroom for traffic spikes and growth.
 
 #### Small
 
