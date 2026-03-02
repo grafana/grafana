@@ -245,10 +245,9 @@ describe('useSelectedQueryDatasource', () => {
       const queryA: DataQuery = { refId: 'A' };
       const queryBWithExplicitDs: DataQuery = { refId: 'B', datasource: { uid: 'prometheus-uid', type: 'prometheus' } };
 
-      const { result, rerender } = renderHook(
-        ({ query, settings }) => useSelectedQueryDatasource(query, settings),
-        { initialProps: { query: queryA as DataQuery | null, settings: mockTestDataSettings } }
-      );
+      const { result, rerender } = renderHook(({ query, settings }) => useSelectedQueryDatasource(query, settings), {
+        initialProps: { query: queryA as DataQuery | null, settings: mockTestDataSettings },
+      });
 
       await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
       expect(result.current.selectedQueryDsData?.dsSettings.uid).toBe('testdata-uid');
