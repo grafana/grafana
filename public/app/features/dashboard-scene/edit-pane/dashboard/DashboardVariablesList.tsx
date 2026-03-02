@@ -157,10 +157,6 @@ function VariablesSection({
 }) {
   const styles = useStyles2(getStyles);
 
-  const onClickDragHandle = useCallback((event: React.SyntheticEvent) => {
-    event.stopPropagation();
-  }, []);
-
   const onClickVariableItem = useCallback(
     (variable: SceneVariable) => {
       onClickVariable(variable);
@@ -179,19 +175,8 @@ function VariablesSection({
               index={index}
             >
               {(draggableProvided) => (
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
-                <li
-                  ref={draggableProvided.innerRef}
-                  {...draggableProvided.draggableProps}
-                  className={styles.listItem}
-                  onClick={() => onClickVariableItem(variable)}
-                >
-                  {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-                  <div
-                    {...draggableProvided.dragHandleProps}
-                    onPointerDown={onClickDragHandle}
-                    onClick={onClickDragHandle}
-                  >
+                <li ref={draggableProvided.innerRef} {...draggableProvided.draggableProps} className={styles.listItem}>
+                  <div {...draggableProvided.dragHandleProps}>
                     <Tooltip
                       content={t('dashboard-scene.variables-section.content-drag-to-reorder', 'Drag to reorder')}
                       placement="top"
@@ -199,7 +184,18 @@ function VariablesSection({
                       <Icon name="draggabledots" size="md" className={styles.dragHandle} />
                     </Tooltip>
                   </div>
-                  <div className={styles.variableName}>
+                  <div
+                    className={styles.variableName}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onClickVariableItem(variable)}
+                    onKeyDown={(event: React.KeyboardEvent) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onClickVariableItem(variable);
+                      }
+                    }}
+                  >
                     <div data-testid={`${droppableId}-variable-name`}>{variable.state.name}</div>
                     <Stack direction="row" gap={1} alignItems="center">
                       <Button variant="primary" size="sm" fill="outline">
