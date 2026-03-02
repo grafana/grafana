@@ -143,22 +143,21 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 		return ConnectionHealthResultWithPatchOps{}, fmt.Errorf("health check failed: %w", err)
 	}
 
-	result := ConnectionHealthResultWithPatchOps{
-		TestResults:    testResults,
-		HealthStatus:   newHealthStatus,
-		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyConnectionError(testResults)),
-	}
-
-	// Only return patch operation if health status actually changed
+	var patchOps []map[string]interface{}
 	if hc.hasHealthStatusChanged(conn.Status.Health, newHealthStatus) {
-		result.PatchOps = append(result.PatchOps, map[string]interface{}{
+		patchOps = []map[string]interface{}{{
 			"op":    "replace",
 			"path":  "/status/health",
 			"value": newHealthStatus,
-		})
+		}}
 	}
 
-	return result, nil
+	return ConnectionHealthResultWithPatchOps{
+		TestResults:    testResults,
+		HealthStatus:   newHealthStatus,
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyConnectionError(testResults)),
+		PatchOps:       patchOps,
+	}, nil
 }
 
 // refreshHealth performs a comprehensive health check

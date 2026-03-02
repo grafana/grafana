@@ -257,7 +257,10 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 	testResults := healthResult.TestResults
 	healthStatus := healthResult.HealthStatus
-	patchOperations = append(patchOperations, healthResult.PatchOps...)
+
+	if len(healthResult.PatchOps) > 0 {
+		patchOperations = append(patchOperations, healthResult.PatchOps...)
+	}
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
 		conn.Status.Conditions, conn.GetGeneration(), healthResult.ReadyCondition,
 	); conditionPatchOps != nil {

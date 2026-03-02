@@ -199,22 +199,21 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 		return HealthResultWithPatchOps{}, fmt.Errorf("health check failed: %w", err)
 	}
 
-	result := HealthResultWithPatchOps{
-		TestResults:    testResults,
-		HealthStatus:   newHealthStatus,
-		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, provisioning.ReasonInvalidSpec),
-	}
-
-	// Only return patch operation if health status actually changed
+	var patchOps []map[string]interface{}
 	if hc.hasHealthStatusChanged(cfg.Status.Health, newHealthStatus) {
-		result.PatchOps = append(result.PatchOps, map[string]interface{}{
+		patchOps = []map[string]interface{}{{
 			"op":    "replace",
 			"path":  "/status/health",
 			"value": newHealthStatus,
-		})
+		}}
 	}
 
-	return result, nil
+	return HealthResultWithPatchOps{
+		TestResults:    testResults,
+		HealthStatus:   newHealthStatus,
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, provisioning.ReasonInvalidSpec),
+		PatchOps:       patchOps,
+	}, nil
 }
 
 // RefreshTimestamp updates the health status timestamp without changing other fields
