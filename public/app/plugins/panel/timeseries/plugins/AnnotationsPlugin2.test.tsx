@@ -188,6 +188,71 @@ describe('AnnotationsPlugin2', () => {
         });
       });
 
+      describe('pinning', () => {
+        afterEach(() => {
+          jest.restoreAllMocks();
+        });
+        it('pins on click', async () => {
+          mockUsePanelContext.mockReturnValue({
+            canExecuteActions: () => false,
+            canEditAnnotations: () => false,
+            canDeleteAnnotations: () => false,
+          } as PanelContext);
+
+          setUp({ annotations: [frame] });
+          const thirdMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[2];
+          expect(thirdMarker).toBeVisible();
+
+          // Pin the annotation tooltip on click
+          await userEvent.click(thirdMarker);
+
+          // Focus is within the tooltip, on the first icon (in this case close since edit and delete are not defined)
+          expect(screen.getByLabelText('Close')).toHaveFocus();
+
+          // Can close tooltip via keyboard press
+          await userEvent.keyboard('{Enter}');
+
+          expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+        });
+
+        it('pins on keyboard', async () => {
+          mockUsePanelContext.mockReturnValue({
+            canExecuteActions: () => false,
+            canEditAnnotations: () => false,
+            canDeleteAnnotations: () => false,
+          } as PanelContext);
+
+          setUp({ annotations: [frame] });
+          const thirdMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[2];
+          expect(thirdMarker).toBeVisible();
+
+          // Pin the annotation tooltip on focus
+          act(() => {
+            thirdMarker.focus();
+          });
+          expect(thirdMarker).toHaveFocus();
+
+          // Verify the tooltip is rendered
+          expect(screen.queryByTestId('mock-annotation-title')).toBeVisible();
+
+          // But the close button isn't rendered until pinned
+          expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+
+          // Pin the annotation tooltip
+          await userEvent.keyboard('{Enter}');
+
+          // Focus is within the tooltip, on the first icon (in this case close since edit and delete are not defined)
+          expect(screen.getByLabelText('Close')).toHaveFocus();
+
+          // Can close tooltip via keyboard press
+          await userEvent.keyboard('{Enter}');
+
+          // Assert tooltip is now closed
+          expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+          expect(screen.queryByTestId('mock-annotation-title')).not.toBeInTheDocument();
+        });
+      });
+
       describe('editing & deleting', () => {
         afterEach(() => {
           jest.restoreAllMocks();
