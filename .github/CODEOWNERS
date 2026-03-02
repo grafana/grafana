@@ -68,7 +68,6 @@
 /pkg/ruleguard.rules.go @grafana/grafana-backend-group
 /.bra.toml @grafana/grafana-backend-group
 /.golangci.yml @grafana/grafana-backend-group
-/build.go @grafana/grafana-backend-services-squad
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
