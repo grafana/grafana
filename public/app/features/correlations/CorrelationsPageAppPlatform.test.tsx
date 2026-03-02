@@ -20,7 +20,7 @@ import {
   createCorrelationsScenario,
   emptyCorrelationsScenario,
   existingCorrelationsScenario,
-} from './mocks/server/correlations.test.scenario';
+} from './mocks/server/correlations.scenario';
 import { MockDataSourceSrv } from './mocks/useCorrelations.mocks';
 
 const server = setupCorrelationsMswServer();
