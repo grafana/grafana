@@ -37,7 +37,7 @@ import {
   getResultCloudOpsLink,
 } from './selectors';
 
-const click = async (selector: () => HTMLElement) => act(() => userEvent.click(selector()));
+const click = async (selector: () => HTMLElement) => act(async () => await userEvent.click(selector()));
 
 const type = async (selector: () => HTMLInputElement, value: string) => {
   await act(() => fireEvent.input(selector(), { target: { value } }));
@@ -47,7 +47,7 @@ const type = async (selector: () => HTMLInputElement, value: string) => {
 export const updateScopes = async (service: ScopesService, scopes: string[]) =>
   act(async () => service.changeScopes(scopes));
 export const openSelector = async () => click(getSelectorInput);
-export const hoverSelector = async () => fireEvent.mouseOver(getSelectorInput());
+export const hoverSelector = async () => userEvent.hover(getSelectorInput());
 export const clearSelector = async () => click(getSelectorClear);
 export const applyScopes = async () => {
   await click(getSelectorApply);

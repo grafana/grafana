@@ -3,11 +3,15 @@ package dualwrite
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
 
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -19,24 +23,60 @@ type legacyTupleCollector func(ctx context.Context, orgID int64) (map[string]map
 type zanzanaTupleCollector func(ctx context.Context, client zanzana.Client, object string, namespace string) (map[string]*openfgav1.TupleKey, error)
 
 type resourceReconciler struct {
-	name    string
-	legacy  legacyTupleCollector
-	zanzana zanzanaTupleCollector
-	client  zanzana.Client
+	name               string
+	legacy             legacyTupleCollector
+	zanzana            zanzanaTupleCollector
+	client             zanzana.Client
+	orphanObjectPrefix string
+	orphanRelations    []string
 }
 
-func newResourceReconciler(name string, legacy legacyTupleCollector, zanzana zanzanaTupleCollector, client zanzana.Client) resourceReconciler {
-	return resourceReconciler{name, legacy, zanzana, client}
+func newResourceReconciler(name string, legacy legacyTupleCollector, zanzanaCollector zanzanaTupleCollector, client zanzana.Client) resourceReconciler {
+	r := resourceReconciler{name: name, legacy: legacy, zanzana: zanzanaCollector, client: client}
+
+	// we only need to worry about orphaned tuples for reconcilers that use the managed permissions collector (i.e. dashboards & folders)
+	switch name {
+	case "managed folder permissions":
+		// prefix for folders is `folder:`
+		r.orphanObjectPrefix = zanzana.NewObjectEntry(zanzana.TypeFolder, "", "", "", "")
+		r.orphanRelations = append([]string{}, zanzana.RelationsFolder...)
+	case "managed dashboard permissions":
+		// prefix for dashboards will be `resource:dashboard.grafana.app/dashboards/`
+		r.orphanObjectPrefix = fmt.Sprintf("%s/", zanzana.NewObjectEntry(zanzana.TypeResource, dashboardV1.APIGroup, dashboardV1.DASHBOARD_RESOURCE, "", ""))
+		r.orphanRelations = append([]string{}, zanzana.RelationsResouce...)
+	}
+
+	return r
 }
 
 func (r resourceReconciler) reconcile(ctx context.Context, namespace string) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.dualwrite.resourceReconciler.reconcile",
+		trace.WithAttributes(attribute.String("namespace", namespace)),
+		trace.WithAttributes(attribute.String("reconciler", r.name)),
+	)
+	defer span.End()
+
 	info, err := claims.ParseNamespace(namespace)
 	if err != nil {
 		return err
 	}
 
+	// 0. Fetch all tuples currently stored in Zanzana. This will be used later on
+	// to cleanup orphaned tuples.
+	// This order needs to be kept (fetching from Zanzana first) to avoid accidentally
+	// cleaning up new tuples that were added after the legacy tuples were fetched.
+	allTuplesInZanzana, err := r.readAllTuples(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to read all tuples from zanzana for %s: %w", r.name, err)
+	}
+
 	// 1. Fetch grafana resources stored in grafana db.
-	res, err := r.legacy(ctx, info.OrgID)
+	legacyCtx, legacySpan := tracer.Start(ctx, "accesscontrol.dualwrite.resourceReconciler.legacyCollector",
+		trace.WithAttributes(attribute.String("namespace", namespace)),
+		trace.WithAttributes(attribute.String("reconciler", r.name)),
+	)
+	res, err := r.legacy(legacyCtx, info.OrgID)
+	legacySpan.End()
 	if err != nil {
 		return fmt.Errorf("failed to collect legacy tuples for %s: %w", r.name, err)
 	}
@@ -87,6 +127,14 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 		}
 	}
 
+	// when the last managed permission for a resource is removed, the legacy results will no
+	// longer contain any tuples for that resource. this process cleans it up when applicable.
+	orphans, err := r.collectOrphanDeletes(ctx, namespace, allTuplesInZanzana, res)
+	if err != nil {
+		return fmt.Errorf("failed to collect orphan deletes (%s): %w", r.name, err)
+	}
+	deletes = append(deletes, orphans...)
+
 	if len(writes) == 0 && len(deletes) == 0 {
 		return nil
 	}
@@ -118,4 +166,86 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	}
 
 	return nil
+}
+
+// collectOrphanDeletes collects tuples that are no longer present in the legacy results
+// but still are present in zanzana. when that is the case, we need to delete the tuple from
+// zanzana. this will happen when the last managed permission for a resource is removed.
+// this is only used for dashboards and folders, as those are the only resources that use the managed permissions collector.
+func (r resourceReconciler) collectOrphanDeletes(
+	ctx context.Context,
+	namespace string,
+	allTuplesInZanzana []*authzextv1.Tuple,
+	legacyReturnedTuples map[string]map[string]*openfgav1.TupleKey,
+) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+	if r.orphanObjectPrefix == "" || len(r.orphanRelations) == 0 {
+		return []*openfgav1.TupleKeyWithoutCondition{}, nil
+	}
+
+	seen := map[string]struct{}{}
+	out := []*openfgav1.TupleKeyWithoutCondition{}
+
+	// what relation types we are interested in cleaning up
+	relationsToCleanup := map[string]struct{}{}
+	for _, rel := range r.orphanRelations {
+		relationsToCleanup[rel] = struct{}{}
+	}
+
+	for _, tuple := range allTuplesInZanzana {
+		if tuple == nil || tuple.Key == nil {
+			continue
+		}
+		// only cleanup the particular relation types we are interested in
+		if _, ok := relationsToCleanup[tuple.Key.Relation]; !ok {
+			continue
+		}
+		// only cleanup the particular object types we are interested in (either dashboards or folders)
+		if !strings.HasPrefix(tuple.Key.Object, r.orphanObjectPrefix) {
+			continue
+		}
+		// if legacy returned this object, it's not orphaned
+		if _, ok := legacyReturnedTuples[tuple.Key.Object]; ok {
+			continue
+		}
+		// keep track of the tuples we have already seen and marked for deletion
+		key := fmt.Sprintf("%s|%s|%s", tuple.Key.User, tuple.Key.Relation, tuple.Key.Object)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, &openfgav1.TupleKeyWithoutCondition{
+			User:     tuple.Key.User,
+			Relation: tuple.Key.Relation,
+			Object:   tuple.Key.Object,
+		})
+	}
+
+	return out, nil
+}
+
+func (r resourceReconciler) readAllTuples(ctx context.Context, namespace string) ([]*authzextv1.Tuple, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.dualwrite.resourceReconciler.zanzana.readAllTuples",
+		trace.WithAttributes(attribute.String("namespace", namespace)),
+		trace.WithAttributes(attribute.String("reconciler", r.name)),
+	)
+	defer span.End()
+
+	var (
+		out           []*authzextv1.Tuple
+		continueToken string
+	)
+	for {
+		res, err := r.client.Read(ctx, &authzextv1.ReadRequest{
+			Namespace:         namespace,
+			ContinuationToken: continueToken,
+		})
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, res.Tuples...)
+		continueToken = res.ContinuationToken
+		if continueToken == "" {
+			return out, nil
+		}
+	}
 }

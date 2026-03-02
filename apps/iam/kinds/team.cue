@@ -31,5 +31,18 @@ teamv0alpha1: teamKind & {
 				responseMetadata: objectMeta: false
 			}
 		}
+		"/members": {
+			"GET": {
+				response: {
+					#TeamUser: {
+						team: string
+						user: string
+						permission: string
+						external: bool
+					}
+					items: [...#TeamUser]
+				}
+			}
+		}
 	}
 }

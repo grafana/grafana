@@ -29,9 +29,10 @@ import {
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
+import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
-import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LabelType, LokiQuery } from './types';
 
 /**
  * Returns search terms from a LogQL query.

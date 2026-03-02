@@ -544,7 +544,7 @@
     "name": "area/provisioning",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/599"
+      "url": "https://github.com/orgs/grafana/projects/835"
     }
   },
   {
@@ -744,7 +744,7 @@
     "name": "area/backend/db/sql",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/599"
+      "url": "https://github.com/orgs/grafana/projects/835"
     }
   },
   {
@@ -960,7 +960,7 @@
     "name": "area/backend/db/sqlite",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/599"
+      "url": "https://github.com/orgs/grafana/projects/835"
     }
   },
   {
@@ -1225,6 +1225,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/69"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/suggestions",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
     }
   }
 ]

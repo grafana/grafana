@@ -135,12 +135,19 @@ export const UsersTable = ({
           content: 'Time since user was seen using Grafana',
           iconName: 'question-circle',
         },
-        cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
+        cell: ({
+          cell: { value },
+          row: {
+            original: { lastSeenAt, created },
+          },
+        }: Cell<'lastSeenAtAge'>) => {
+          // The user has never logged in if lastSeenAt is before its creation date.
+          const neverLoggedIn = lastSeenAt && created && new Date(lastSeenAt) < new Date(created);
           return (
             <>
               {value && (
                 <>
-                  {value === '10 years' ? (
+                  {neverLoggedIn ? (
                     <Text color={'disabled'}>
                       <Trans i18nKey="admin.users-table.last-seen-never">Never</Trans>
                     </Text>

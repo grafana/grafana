@@ -24,7 +24,7 @@ import { TooltipPlacement } from '../Tooltip/types';
 export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
   root?: HTMLElement;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];
@@ -97,7 +97,13 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, root
               see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
             */}
             {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-            <div ref={refs.setFloating} style={floatingStyles} onClick={onOverlayClicked} onKeyDown={handleKeys}>
+            <div
+              ref={refs.setFloating}
+              style={floatingStyles}
+              onClick={onOverlayClicked}
+              onKeyDown={handleKeys}
+              {...getFloatingProps()}
+            >
               <CSSTransition
                 nodeRef={transitionRef}
                 appear={true}
@@ -105,7 +111,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, root
                 timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
                 classNames={animationStyles}
               >
-                <div ref={transitionRef}>{renderOrCallToRender(overlay, { ...getFloatingProps() })}</div>
+                <div ref={transitionRef}>{renderOrCallToRender(overlay, {})}</div>
               </CSSTransition>
             </div>
           </FloatingFocusManager>

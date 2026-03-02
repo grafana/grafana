@@ -29,6 +29,10 @@ permissions:
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
+    # If the source is not from a fork then dispatch the job to the workflow.
+    # This will fail on forks when trying to broker a token, so instead, forks will create the required status and mark
+    # it as a success
+    if: ${{ ! github.event.pull_request.head.repo.fork }}
     env:
       HEAD_REF: ${{ inputs.head_ref }}
       BASE_REF: ${{ github.base_ref }}
@@ -76,3 +80,20 @@ jobs:
                   triggering_github_handle: SENDER
                 }
             })
+  dispatch-job-fork:
+    # If the source is from a fork then use the built-in workflow token to create the same status and unconditionally
+    # mark it as a success.
+    if: ${{ github.event.pull_request.head.repo.fork }}
+    permissions:
+      statuses: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create status
+        uses: myrotvorets/set-commit-status-action@6d6905c99cd24a4a2cbccc720b62dc6ca5587141
+        with:
+          token: ${{ github.token }}
+          sha: ${{ inputs.pr_commit_sha }}
+          repo: ${{ inputs.repo }}
+          status: success
+          context: "Test Patches (event)"
+          description: "Test Patches (event) on a fork"

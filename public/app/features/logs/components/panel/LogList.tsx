@@ -23,7 +23,7 @@ import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@graf
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { LogListFieldSelector } from '../fieldSelector/FieldSelector';
+import { LogListFieldSelector } from '../fieldSelector/LogListFieldSelector';
 
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
 import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsContext';
@@ -95,6 +95,7 @@ export interface Props {
   timestampResolution?: LogLineTimestampResolution;
   timeZone: string;
   syntaxHighlighting?: boolean;
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 
@@ -113,6 +114,7 @@ type LogListComponentProps = Omit<
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
+  | 'unwrappedColumns'
   | 'wrapLogMessage'
 >;
 
@@ -168,6 +170,7 @@ export const LogList = ({
   timeRange,
   timestampResolution,
   timeZone,
+  unwrappedColumns = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.unwrappedColumns`, true) : true,
   wrapLogMessage,
 }: Props) => {
   return (
@@ -210,6 +213,7 @@ export const LogList = ({
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}
       timestampResolution={timestampResolution}
+      unwrappedColumns={unwrappedColumns}
       wrapLogMessage={wrapLogMessage}
     >
       <LogDetailsContextProvider
@@ -219,6 +223,7 @@ export const LogList = ({
         logs={logs}
         logOptionsStorageKey={logOptionsStorageKey}
         showControls={showControls}
+        showFieldSelector={showFieldSelector}
       >
         <LogListSearchContextProvider>
           <LogListComponent
@@ -276,9 +281,11 @@ const LogListComponent = ({
     showUniqueLabels,
     sortOrder,
     timestampResolution,
+    unwrappedColumns,
     wrapLogMessage,
   } = useLogListContext();
   const { detailsMode, showDetails, toggleDetails } = useLogDetailsContext();
+  const { setSearch, showSearch } = useLogListSearchContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
@@ -294,12 +301,12 @@ const LogListComponent = ({
         : virtualization.calculateFieldDimensions(
             processedLogs,
             displayedFields,
-            timestampResolution,
+            showTime ? timestampResolution : undefined,
             showUniqueLabels
           ),
-    [displayedFields, processedLogs, showUniqueLabels, timestampResolution, virtualization, wrapLogMessage]
+    [displayedFields, processedLogs, showTime, showUniqueLabels, timestampResolution, virtualization, wrapLogMessage]
   );
-  const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -440,6 +447,14 @@ const LogListComponent = ({
     [debouncedScrollToItem, filteredLogs]
   );
 
+  const onClickSearchString = useCallback(
+    (search: string) => {
+      showSearch();
+      setSearch(search);
+    },
+    [setSearch, showSearch]
+  );
+
   const logLevels = useMemo(() => getLevelsFromLogs(processedLogs), [processedLogs]);
 
   if (!containerElement || listHeight == null) {
@@ -458,6 +473,7 @@ const LogListComponent = ({
           timeRange={timeRange}
           timeZone={timeZone}
           showControls={showControls}
+          showFieldSelector={showFieldSelector}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
@@ -469,6 +485,7 @@ const LogListComponent = ({
             {...popoverState.popoverMenuCoordinates}
             onClickFilterString={onClickFilterString}
             onClickFilterOutString={onClickFilterOutString}
+            onClickSearchString={onClickSearchString}
             onDisable={onDisablePopoverMenu}
           />
         )}
@@ -550,15 +567,14 @@ const LogListComponent = ({
 function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
-  displayedFields: string[],
-  { showTime }: { showTime: boolean }
+  displayedFields: string[] = [],
+  { unwrappedColumns }: { unwrappedColumns: boolean }
 ) {
-  const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
       '& .unwrapped-log-line': {
         display: 'grid',
-        gridTemplateColumns: getGridTemplateColumns(columns, displayedFields),
+        gridTemplateColumns: getGridTemplateColumns(dimensions, displayedFields, unwrappedColumns),
         '& .field': {
           overflow: 'hidden',
         },

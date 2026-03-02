@@ -10,7 +10,6 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
@@ -23,6 +22,7 @@ import {
 } from '../history/RichHistoryStorage';
 import { createRetentionPeriodBoundary } from '../history/richHistoryLocalStorageUtils';
 import { getLocalRichHistoryStorage, getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { notifyApp } from '../reducers/appNotification';
 import { contextSrv } from '../services/context_srv';
 
 import {

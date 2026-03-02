@@ -4,9 +4,10 @@ import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
+import { switchToAutoGrid } from './utils';
+
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
@@ -33,8 +34,8 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
-      await page.getByLabel('layout-selection-option-Auto grid').click();
+
+      await switchToAutoGrid(page, dashboardPage);
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
@@ -65,9 +66,8 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
 
-      await page.getByLabel('layout-selection-option-Auto grid').click();
+      await switchToAutoGrid(page, dashboardPage);
 
       // Get initial positions - standard width should have panels on different rows
       const firstPanelTop = await getPanelTop(dashboardPage, selectors);
@@ -127,9 +127,8 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
 
-      await page.getByLabel('layout-selection-option-Auto grid').click();
+      await switchToAutoGrid(page, dashboardPage);
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth)
@@ -186,8 +185,8 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
-      await page.getByLabel('layout-selection-option-Auto grid').click();
+
+      await switchToAutoGrid(page, dashboardPage);
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns)
@@ -222,8 +221,8 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
-      await page.getByLabel('layout-selection-option-Auto grid').click();
+
+      await switchToAutoGrid(page, dashboardPage);
 
       const regularRowHeight = await getPanelHeight(dashboardPage, selectors);
 
@@ -278,8 +277,8 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
-      await page.getByLabel('layout-selection-option-Auto grid').click();
+
+      await switchToAutoGrid(page, dashboardPage);
 
       const regularRowHeight = await getPanelHeight(dashboardPage, selectors);
 
@@ -336,8 +335,8 @@ test.describe(
       ).toHaveCount(3);
 
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await page.getByLabel('Expand Panel layout category').click();
-      await page.getByLabel('layout-selection-option-Auto grid').click();
+
+      await switchToAutoGrid(page, dashboardPage);
 
       // Set narrow column width first to ensure panels fit horizontally
       await dashboardPage

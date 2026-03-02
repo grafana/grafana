@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,6 +27,8 @@ var _ authn.Client = new(ExtendedJWT)
 const (
 	ExtJWTAuthenticationHeaderName = "X-Access-Token"
 	ExtJWTAuthorizationHeaderName  = "X-Grafana-Id"
+
+	grafanaAppPrefix = "grafana.app"
 )
 
 var (
@@ -131,11 +134,20 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !claims.IsIdentityType(t, claims.TypeUser) {
+	if !claims.IsIdentityType(t, claims.TypeUser, claims.TypeServiceAccount, claims.TypeRenderService, claims.TypeAnonymous) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
-	return &authn.Identity{
+	fetchPermissionsParams := authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}}
+	for _, perm := range accessTokenClaims.Rest.DelegatedPermissions {
+		if strings.Contains(perm, grafanaAppPrefix) {
+			fetchPermissionsParams.K8sRestrictedActions = append(fetchPermissionsParams.K8sRestrictedActions, perm)
+		} else {
+			fetchPermissionsParams.RestrictedActions = append(fetchPermissionsParams.RestrictedActions, perm)
+		}
+	}
+
+	identity := &authn.Identity{
 		ID:                id,
 		Type:              t,
 		OrgID:             s.cfg.DefaultOrgID(),
@@ -145,13 +157,28 @@ func (s *ExtendedJWT) authenticateAsUser(
 		AuthID:            accessTokenClaims.Subject,
 		Namespace:         idTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
-			SyncPermissions: true,
-			FetchPermissionsParams: authn.FetchPermissionsParams{
-				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
-			},
-			FetchSyncedUser: true,
+			SyncPermissions:        true,
+			FetchPermissionsParams: fetchPermissionsParams,
+			FetchSyncedUser:        true,
 		},
-	}, nil
+	}
+
+	if t == claims.TypeAnonymous {
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleType(s.cfg.Anonymous.OrgRole),
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	if t == claims.TypeRenderService {
+		// RenderService always has Admin role (based on render.go logic)
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleAdmin,
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	return identity, nil
 }
 
 func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
@@ -179,7 +206,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		for i := range permissions {
 			if strings.HasPrefix(permissions[i], "fixed:") {
 				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
-			} else if strings.Contains(permissions[i], "grafana.app") {
+			} else if strings.Contains(permissions[i], grafanaAppPrefix) {
 				// Check for pattern <resource>.grafana.app/<resource>:<action>
 				fetchPermissionsParams.K8s = append(fetchPermissionsParams.K8s, permissions[i])
 			} else {

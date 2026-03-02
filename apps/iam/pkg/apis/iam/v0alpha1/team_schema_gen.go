@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaTeam = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", &Team{}, &TeamList{}, resource.WithKind("Team"),
+	schemaTeam = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewTeam(), &TeamList{}, resource.WithKind("Team"),
 		resource.WithPlural("teams"), resource.WithScope(resource.NamespacedScope))
 	kindTeam = resource.Kind{
 		Schema: schemaTeam,

@@ -12,7 +12,7 @@ import { DashboardViewItem } from '../../../features/search/types';
 import { useFoldersQuery } from './useFoldersQuery';
 import { getCustomRootFolderItem, getRootFolderItem } from './utils';
 
-const [_, { folderA, folderB, folderC }] = getFolderFixtures();
+const [_, { folderA, folderB, folderC, folderD }] = getFolderFixtures();
 
 runtime.setBackendSrv(backendSrv);
 setupMockServer();
@@ -39,12 +39,19 @@ describe('useFoldersQuery', () => {
     // foldersAppPlatformAPI disabled
     false,
   ])('foldersAppPlatformAPI feature toggle set to %s', (featureToggleState) => {
-    it('returns data using legacy api', async () => {
+    it('returns data', async () => {
       runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
       const [_dashboardsContainer, ...items] = await testFn();
 
       const sortedItemTitles = items.map((item) => (item.item as DashboardViewItem).title).sort();
-      const expectedTitles = [folderA.item.title, folderB.item.title, folderC.item.title].sort();
+      const expectedTitles = [folderA.item.title, folderB.item.title, folderC.item.title, folderD.item.title];
+      if (featureToggleState) {
+        // In new API mode we create the "Shared with me" folder under the root folder in the front end so it's always
+        // present. In the legacy one I assume it came from backend and so isn't present if the fixtures don't include
+        // it
+        expectedTitles.push('Shared with me');
+      }
+      expectedTitles.sort();
 
       expect(sortedItemTitles).toEqual(expectedTitles);
     });
@@ -95,8 +102,7 @@ async function testFn() {
   expect(result.current.isLoading).toBe(true);
 
   await waitFor(() => {
-    const withoutPaginationPlaceholders = result.current.items.filter((item) => item.item.kind !== 'ui');
-    return expect(withoutPaginationPlaceholders.length).toBeGreaterThan(1);
+    return expect(result.current.isLoading).toBe(false);
   });
 
   return result.current.items;

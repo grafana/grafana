@@ -132,8 +132,17 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 				}
 			} else {
 				failOnExisting := event.Type == resourcepb.WatchEvent_ADDED
-				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
+				sql, err := a.sql(ctx)
 				if err != nil {
+					return 0, err
+				}
+
+				var after *dashboard.Dashboard
+				if err := sql.DB.InTransaction(ctx, func(ctx context.Context) error {
+					var err error
+					after, _, err = a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
+					return err
+				}); err != nil {
 					return 0, err
 				}
 				if after != nil {
@@ -296,11 +305,19 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resourcepb.L
 		return 0, fmt.Errorf("token and orgID mismatch")
 	}
 
+	// Default batch size for iterator - fetch rows in batches to avoid slow queries
+	const defaultMaxRows = 500
+	maxRows := defaultMaxRows
+	if req.Limit > 0 && req.Limit < int64(defaultMaxRows) {
+		maxRows = int(req.Limit)
+	}
+
 	query := &DashboardQuery{
-		OrgID:  info.OrgID,
-		Limit:  int(req.Limit),
-		LastID: token.id,
-		Labels: req.Options.Labels,
+		OrgID:   info.OrgID,
+		Limit:   int(req.Limit),
+		MaxRows: maxRows,
+		LastID:  token.id,
+		Labels:  req.Options.Labels,
 	}
 
 	sql, err := a.sql(ctx)
@@ -323,14 +340,15 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resourcepb.L
 		return 0, err
 	}
 	listRV *= 1000 // Convert to microseconds
-	rows, err := a.getRows(ctx, sql, query)
-	if rows != nil {
+
+	iter, err := newBatchingIterator(ctx, a, sql, query)
+	if iter != nil {
 		defer func() {
-			_ = rows.Close()
+			_ = iter.Close()
 		}()
 	}
 	if err == nil {
-		err = cb(rows)
+		err = cb(iter)
 	}
 	return listRV, err
 }

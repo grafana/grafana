@@ -15,7 +15,7 @@ export type FunctionSelector = (id: string) => string;
 export type FunctionSelectorTwoArgs = (arg1: string, arg2: string) => string;
 
 /**
- * A function selector without argument
+ * A function selector without arguments
  */
 export type CssSelector = () => string;
 

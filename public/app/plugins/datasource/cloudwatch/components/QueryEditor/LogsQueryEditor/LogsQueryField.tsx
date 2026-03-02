@@ -4,8 +4,9 @@ import { ReactNode, useCallback } from 'react';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { CloudWatchLogsQuery, LogGroupClass, LogsQueryLanguage, LogsQueryScope } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
-import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery, LogsQueryLanguage } from '../../../types';
+import { CloudWatchJsonData, CloudWatchQuery } from '../../../types';
 import { LogGroupsFieldWrapper } from '../../shared/LogGroups/LogGroupsField';
 
 import { LogsQLCodeEditor } from './code-editors/LogsQLCodeEditor';
@@ -38,6 +39,23 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
         logGroups={query.logGroups}
         onChange={(logGroups) => {
           onChangeLogs({ ...query, logGroups, logGroupNames: undefined });
+        }}
+        queryLanguage={query.queryLanguage}
+        logsQueryScope={query.logsQueryScope}
+        onLogsQueryScopeChange={(scope: LogsQueryScope) => {
+          onChangeLogs({ ...query, logsQueryScope: scope });
+        }}
+        logGroupPrefixes={query.logGroupPrefixes}
+        onLogGroupPrefixesChange={(prefixes: string[]) => {
+          onChangeLogs({ ...query, logGroupPrefixes: prefixes });
+        }}
+        logGroupClass={query.logGroupClass}
+        onLogGroupClassChange={(logGroupClass: LogGroupClass) => {
+          onChangeLogs({ ...query, logGroupClass });
+        }}
+        selectedAccountIds={query.selectedAccountIds}
+        onSelectedAccountIdsChange={(accountIds: string[]) => {
+          onChangeLogs({ ...query, selectedAccountIds: accountIds });
         }}
         //legacy props
         legacyOnChange={(logGroupNames) => {

@@ -75,10 +75,26 @@ LibraryPanelRef: {
 
 AnnotationPanelFilter: {
 	// Should the specified panels be included or excluded
-	exclude?: bool | *false
+	exclude?: bool | *false 
 
 	// Panel IDs that should be included or excluded
 	ids: [...uint32]
+} 
+
+// Annotation event field source. Defines how to obtain the value for an annotation event field.
+// - "field": Find the value with a matching key (default)
+// - "text": Write a constant string into the value
+// - "skip": Do not include the field
+AnnotationEventFieldSource: "field" | "text" | "skip" | *"field"
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+AnnotationEventFieldMapping: {
+	// Source type for the field value
+	source?: AnnotationEventFieldSource | *"field"
+	// Constant value to use when source is "text"
+	value?: string
+	// Regular expression to apply to the field value
+	regex?: string
 }
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -111,6 +127,8 @@ DashboardLink: {
 	keepTime: bool | *false
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 	placement?: DashboardLinkPlacement
+	// The source that registered the link (if any)
+	origin?: ControlSourceRef
 }
 
 // Dashboard Link placement. Defines where the link should be displayed.
@@ -191,7 +209,7 @@ FieldConfig: {
 	filterable?: bool
 
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -234,7 +252,17 @@ FieldConfig: {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: {...}
+
+	// Calculate min max per field
+	fieldMinMax?: bool
+
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode
 }
+
+// How null values should be handled
+NullValueMode: "null" | "connected" | "null as zero"
 
 DynamicConfigValue: {
 	id:     string | *""
@@ -450,7 +478,10 @@ AnnotationQuerySpec: {
 	filter?:     AnnotationPanelFilter
 	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
 	placement?:  AnnotationQueryPlacement
-	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?:   [string]: AnnotationEventFieldMapping
+	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
+	legacyOptions?:     [string]: _
 }
 
 AnnotationQueryKind: {
@@ -611,6 +642,7 @@ RowsLayoutRowSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
+	variables?:            [...VariableKind]
 }
 
 AutoGridLayoutKind: {
@@ -658,6 +690,7 @@ TabsLayoutTabSpec: {
 	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
+	variables?:            [...VariableKind]
 }
 
 PanelSpec: {
@@ -753,6 +786,10 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu"
 
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+VariableRegexApplyTo: *"value" | "text"
+
 // Determine the origin of the adhoc variable filter
 FilterOrigin: "dashboard"
 
@@ -771,7 +808,19 @@ VariableOption: {
 	text: string | [...string]
 	// Value of the option
 	value: string | [...string]
+	// Additional properties for multi-props variables
+	properties?: {[string]: string}
 }
+
+// Source information for controls (e.g. variables or links)
+DatasourceControlSourceRef: {
+  type: "datasource"
+  // The plugin type-id
+  group: string
+}
+
+ControlSourceRef: DatasourceControlSourceRef
+
 
 // Query variable specification
 QueryVariableSpec: {
@@ -787,6 +836,7 @@ QueryVariableSpec: {
 	description?: string
 	query:        DataQueryKind
 	regex:        string | *""
+	regexApplyTo?: VariableRegexApplyTo
 	sort:         VariableSort
 	definition?:  string
 	options: [...VariableOption] | *[]
@@ -797,6 +847,7 @@ QueryVariableSpec: {
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
+	origin?: ControlSourceRef
 }
 
 // Query variable kind
@@ -817,6 +868,7 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	origin?: ControlSourceRef
 }
 
 // Text variable kind
@@ -837,6 +889,7 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	origin?: ControlSourceRef
 }
 
 // Constant variable kind
@@ -864,6 +917,7 @@ DatasourceVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	origin?: ControlSourceRef
 }
 
 // Datasource variable kind
@@ -889,6 +943,7 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	origin?: ControlSourceRef
 }
 
 // Interval variable kind
@@ -911,6 +966,8 @@ CustomVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	valuesFormat?: "csv" | "json"
+	origin?: ControlSourceRef
 }
 
 // Custom variable kind
@@ -928,6 +985,7 @@ SwitchVariableSpec: {
 	hide:          VariableHide
 	skipUrlSync:   bool | *false
 	description?:  string
+	origin?: ControlSourceRef
 }
 
 SwitchVariableKind: {
@@ -949,6 +1007,7 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	origin?: ControlSourceRef
 }
 
 // Group variable kind
@@ -972,6 +1031,7 @@ AdhocVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	origin?: ControlSourceRef
 }
 
 // Define the MetricFindValue type

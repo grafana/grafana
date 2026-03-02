@@ -1,0 +1,26 @@
+route:
+  receiver: noop
+  group_by:
+    - alertname
+    - cluster
+  group_wait: 1s
+  group_interval: 5s
+  routes:
+    - matchers:
+        - severity="warn"
+      receiver: noop-warn
+      mute_time_intervals:
+        - mute-interval-1
+    - matchers:
+        - severity="critical"
+      receiver: noop-critical
+      active_time_intervals:
+        - time-interval-1
+receivers:
+  - name: noop
+  - name: noop-warn
+  - name: noop-critical
+time_intervals:
+  - name: time-interval-1
+mute_time_intervals:
+  - name: mute-interval-1

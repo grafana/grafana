@@ -71,7 +71,7 @@ var (
 )
 
 // ignore fields that are not part of the rule definition
-var ignoreFieldsForValidate = [...]string{"RuleGroupIndex"}
+var ignoreFieldsForValidate = [...]string{"RuleGroupIndex", "FolderFullpath"}
 
 // RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace.
@@ -412,9 +412,14 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		deletePermanently = true
 	}
 
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
+	f, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
+	}
+
+	namespace := ngmodels.NewNamespace(f)
+	if err := namespace.ValidateForRuleStorage(); err != nil {
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err), "")
 	}
 
 	if err := srv.checkGroupLimits(ruleGroupConfig); err != nil {
@@ -530,7 +535,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			if err != nil {
 				return fmt.Errorf("failed to parse configuration: %w", err)
 			}
-			validator := notifier.NewNotificationSettingsValidator(&cfg.AlertmanagerConfig)
+			validator := notifier.NewNotificationSettingsValidator(cfg)
 			for _, s := range newOrUpdatedNotificationSettings {
 				if err := validator.Validate(s); err != nil {
 					return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
@@ -841,9 +846,13 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 		return ErrResp(http.StatusBadRequest, errors.New("missing request body"), "")
 	}
 
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
+	f, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
+	}
+	namespace := ngmodels.NewNamespace(f)
+	if err := namespace.ValidateForRuleStorage(); err != nil {
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err), "")
 	}
 
 	ruleGroups, _, err := srv.searchAuthorizedAlertRules(c.Req.Context(), authorizedRuleGroupQuery{

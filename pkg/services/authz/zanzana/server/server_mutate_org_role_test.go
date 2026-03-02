@@ -8,6 +8,7 @@ import (
 
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupMutateOrgRoles(t *testing.T, srv *Server) *Server {
@@ -21,11 +22,14 @@ func setupMutateOrgRoles(t *testing.T, srv *Server) *Server {
 	return setupOpenFGADatabase(t, srv, tuples)
 }
 
-func testMutateOrgRoles(t *testing.T, srv *Server) {
+func TestIntegrationServerMutateOrgRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv := setupOpenFGAServer(t)
 	setupMutateOrgRoles(t, srv)
 
 	t.Run("should update user org role and delete old role", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -63,7 +67,7 @@ func testMutateOrgRoles(t *testing.T, srv *Server) {
 	})
 
 	t.Run("should add user org role and delete old role", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{

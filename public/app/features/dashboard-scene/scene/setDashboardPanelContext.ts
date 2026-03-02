@@ -1,11 +1,12 @@
 import { AnnotationChangeEvent, AnnotationEventUIModel, CoreApp, DataFrame } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { AdHocFilterItem, PanelContext } from '@grafana/ui';
 import { annotationServer } from 'app/features/annotations/api';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -31,22 +32,12 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return false;
     }
 
-    // If feature flag is enabled we pass the info of whether annotation can be added through the dashboard permissions
-    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
-      return false;
-    }
-
     // If RBAC is enabled there are additional conditions to check.
     return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canAdd);
   };
 
   context.canEditAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
-
-    // If feature flag is enabled we pass the info of whether annotation can be edited through the dashboard permissions
-    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
-      return false;
-    }
 
     if (dashboardUID) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canEdit);
@@ -57,11 +48,6 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 
   context.canDeleteAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
-
-    // If feature flag is enabled we pass the info of whether annotation can be deleted through the dashboard permissions
-    if (!config.featureToggles.annotationPermissionUpdate && !dashboard.canEditDashboard()) {
-      return false;
-    }
 
     if (dashboardUID) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canDelete);
@@ -121,7 +107,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     context.eventBus.publish(new AnnotationChangeEvent({ id }));
   };
 
-  context.onAddAdHocFilter = (newFilter: AdHocFilterItem) => {
+  context.onAddAdHocFilter = async (newFilter: AdHocFilterItem) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
     const queryRunner = getQueryRunnerFor(vizPanel);
@@ -129,8 +115,69 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return;
     }
 
-    const filterVar = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
+    let datasource = getDatasourceFromQueryRunner(queryRunner);
+
+    // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
+    // we need to resolve it to a full datasource
+    if (datasource && !datasource.uid) {
+      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      datasource = {
+        uid: datasourceToLoad.uid,
+        type: datasourceToLoad.type,
+      };
+    }
+
+    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
     updateAdHocFilterVariable(filterVar, newFilter);
+  };
+
+  context.getFiltersBasedOnGrouping = (items: AdHocFilterItem[]) => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (!queryRunner) {
+      return [];
+    }
+
+    const datasource = getDatasourceFromQueryRunner(queryRunner);
+    const groupByVar = getGroupByVariableFor(dashboard, datasource);
+
+    if (!groupByVar) {
+      return [];
+    }
+
+    const currentValues = Array.isArray(groupByVar.state.value)
+      ? groupByVar.state.value
+      : groupByVar.state.value
+        ? [groupByVar.state.value]
+        : [];
+
+    return items
+      .map((item) => (currentValues.find((key) => key === item.key) ? item : undefined))
+      .filter((item) => item !== undefined);
+  };
+
+  context.onAddAdHocFilters = async (items: AdHocFilterItem[]) => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (!queryRunner) {
+      return;
+    }
+
+    let datasource = getDatasourceFromQueryRunner(queryRunner);
+
+    // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
+    // we need to resolve it to a full datasource
+    if (datasource && !datasource.uid) {
+      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      datasource = {
+        uid: datasourceToLoad.uid,
+        type: datasourceToLoad.type,
+      };
+    }
+    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
+    bulkUpdateAdHocFiltersVariable(filterVar, items);
   };
 
   context.canExecuteActions = () => {
@@ -167,6 +214,21 @@ function reRunBuiltInAnnotationsLayer(scene: DashboardScene) {
   }
 }
 
+function getGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+  const variables = sceneGraph.getVariables(scene);
+
+  for (const variable of variables.state.variables) {
+    if (sceneUtils.isGroupByVariable(variable)) {
+      const filtersDs = variable.state.datasource;
+      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+        return variable;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
   const variables = sceneGraph.getVariables(scene);
 
@@ -184,7 +246,7 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
     datasource: ds,
     supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
     useQueriesAsFilterForOptions: true,
-    layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+    layout: 'combobox',
   });
 
   // Add it to the scene
@@ -193,6 +255,35 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   });
 
   return newVariable;
+}
+
+function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilters: AdHocFilterItem[]) {
+  if (!newFilters.length) {
+    return;
+  }
+
+  const updatedFilters = filterVar.state.filters.slice();
+  let hasChanges = false;
+
+  for (const newFilter of newFilters) {
+    const filterToReplaceIndex = updatedFilters.findIndex(
+      (filter) =>
+        filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
+    );
+
+    if (filterToReplaceIndex >= 0) {
+      updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
+      hasChanges = true;
+      continue;
+    }
+
+    updatedFilters.push(newFilter);
+    hasChanges = true;
+  }
+
+  if (hasChanges) {
+    filterVar.updateFilters(updatedFilters);
+  }
 }
 
 function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem) {

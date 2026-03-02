@@ -8,8 +8,8 @@ import {
   RowsLayoutKind,
   RowsLayoutRowKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -127,7 +127,7 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
-        gnetId: 'something-like-a-uid',
+        gnetId: 456,
         revision: 225,
         links: [
           {
@@ -141,6 +141,19 @@ describe('ResponseTransformers', () => {
             icon: 'external link',
             type: 'link',
             tooltip: 'Link 1 Tooltip',
+          },
+          {
+            title: 'Link 2',
+            url: 'https://grafana.com',
+            asDropdown: false,
+            targetBlank: true,
+            includeVars: true,
+            keepTime: true,
+            tags: ['tag3', 'tag4'],
+            icon: 'external link',
+            type: 'link',
+            tooltip: 'Link 2 Tooltip',
+            placement: 'inControlsMenu',
           },
         ],
         annotations: {
@@ -425,7 +438,7 @@ describe('ResponseTransformers', () => {
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedTimestamp]).toEqual('2023-01-02T00:00:00Z');
       expect(transformed.metadata.annotations?.[AnnoKeyFolder]).toEqual('folder1');
       expect(transformed.metadata.annotations?.[AnnoKeySlug]).toEqual('dashboard-slug');
-      expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('something-like-a-uid');
+      expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('456');
       expect(transformed.metadata.labels?.[DeprecatedInternalId]).toBe('123');
 
       // Spec
@@ -588,7 +601,7 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
-        gnetId: 'something-like-a-uid',
+        gnetId: 456,
         revision: 225,
         links: [],
         annotations: {
@@ -838,7 +851,7 @@ describe('ResponseTransformers', () => {
             'grafana.app/updatedTimestamp': '2023-01-02T00:00:00Z',
             'grafana.app/folder': 'folder1',
             'grafana.app/slug': 'dashboard-slug',
-            'grafana.app/dashboard-gnet-id': 'something-like-a-uid',
+            'grafana.app/dashboard-gnet-id': '456',
           },
         },
         spec: {
@@ -885,6 +898,19 @@ describe('ResponseTransformers', () => {
               icon: 'external link',
               type: 'link',
               tooltip: 'Link 1 Tooltip',
+            },
+            {
+              title: 'Link 2',
+              url: 'https://grafana.com',
+              asDropdown: false,
+              targetBlank: true,
+              includeVars: true,
+              keepTime: true,
+              tags: ['tag3', 'tag4'],
+              icon: 'external link',
+              type: 'link',
+              tooltip: 'Link 2 Tooltip',
+              placement: 'inControlsMenu',
             },
           ],
           annotations: handyTestingSchema.annotations,
@@ -936,7 +962,6 @@ describe('ResponseTransformers', () => {
       expect(dashboard.liveNow).toBe(dashboardV2.spec.liveNow);
       expect(dashboard.editable).toBe(dashboardV2.spec.editable);
       expect(dashboard.revision).toBe(225);
-      expect(dashboard.gnetId).toBe(dashboardV2.metadata.annotations?.['grafana.app/dashboard-gnet-id']);
       expect(dashboard.time?.from).toBe(dashboardV2.spec.timeSettings.from);
       expect(dashboard.time?.to).toBe(dashboardV2.spec.timeSettings.to);
       expect(dashboard.timezone).toBe(dashboardV2.spec.timeSettings.timezone);
@@ -962,6 +987,14 @@ describe('ResponseTransformers', () => {
       validateAnnotation(dashboard.annotations!.list![1], dashboardV2.spec.annotations[1]);
       validateAnnotation(dashboard.annotations!.list![2], dashboardV2.spec.annotations[2]);
       validateAnnotation(dashboard.annotations!.list![3], dashboardV2.spec.annotations[3]);
+
+      const gnetId = dashboardV2.metadata.annotations?.[AnnoKeyDashboardGnetId];
+      if (gnetId?.length) {
+        expect(dashboard.gnetId).toBe(+gnetId);
+      } else {
+        expect(dashboard.gnetId).toBeUndefined();
+      }
+
       // panel
       const panelKey = 'panel-1';
       expect(dashboardV2.spec.elements[panelKey].kind).toBe('Panel');
@@ -1057,7 +1090,7 @@ describe('ResponseTransformers', () => {
     expect(v1.enable).toBe(v2Spec.enable);
     expect(v1.hide).toBe(v2Spec.hide);
     expect(v1.iconColor).toBe(v2Spec.iconColor);
-    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : undefined);
+    expect(v1.builtIn).toBe(v2Spec.builtIn !== undefined ? (v2Spec.builtIn ? 1 : 0) : undefined);
     expect(v1.target).toEqual(v2Spec.query.spec);
     expect(v1.filter).toEqual(v2Spec.filter);
   }

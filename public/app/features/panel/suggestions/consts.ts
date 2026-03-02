@@ -1,0 +1,22 @@
+export const panelsToCheckFirst = [
+  'timeseries',
+  'barchart',
+  'gauge',
+  'stat',
+  'piechart',
+  'bargauge',
+  'table',
+  'state-timeline',
+  'status-history',
+  'logs',
+  'candlestick',
+  'flamegraph',
+  'traces',
+  'nodeGraph',
+  'heatmap',
+  'histogram',
+  'geomap',
+  'text',
+];
+
+export const panelsWithoutData = new Set(['text', 'dashlist', 'alertlist']);

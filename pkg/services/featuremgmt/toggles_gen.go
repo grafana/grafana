@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagDisableEnvelopeEncryption
-	// Disable envelope encryption (emergency only)
-	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
-
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
@@ -31,10 +27,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagLogRequestsInstrumentedAsUnknown
-	// Logs the path for requests that are instrumented as unknown
-	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -43,21 +35,17 @@ const (
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 
-	// FlagShowDashboardValidationWarnings
-	// Show warnings when dashboards do not validate against the schema
-	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
-
-	// FlagMysqlAnsiQuotes
-	// Use double quotes to escape keyword in a MySQL query
-	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
-	// FlagIndividualCookiePreferences
-	// Support overriding cookie preferences per user
-	FlagIndividualCookiePreferences = "individualCookiePreferences"
+	// FlagAlertingRuleGroupSortByFolderFullpath
+	// Sort alert rule groups by folder full path in the Prometheus rules API
+	FlagAlertingRuleGroupSortByFolderFullpath = "alertingRuleGroupSortByFolderFullpath"
+
+	// FlagLiveAPIServer
+	// Registers a live apiserver
+	FlagLiveAPIServer = "liveAPIServer"
 
 	// FlagKubernetesStars
 	// Routes stars requests from /api to the /apis endpoint
@@ -78,10 +66,6 @@ const (
 	// FlagDisableSSEDataplane
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
-
-	// FlagUnifiedRequestLog
-	// Writes error logs to the request logger
-	FlagUnifiedRequestLog = "unifiedRequestLog"
 
 	// FlagRenderAuthJWT
 	// Uses JWT-based auth for rendering instead of relying on remote cache
@@ -115,6 +99,14 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
+	// FlagProvisioningFolderMetadata
+	// Allow setting folder metadata for provisioned folders
+	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
+
+	// FlagProvisioningExport
+	// Enable export functionality for provisioned resources
+	FlagProvisioningExport = "provisioningExport"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -127,17 +119,13 @@ const (
 	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
 	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
 
-	// FlagPermissionsFilterRemoveSubquery
-	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
-	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
-
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagReportingRetries
-	// Enables rendering retries for the reporting feature
-	FlagReportingRetries = "reportingRetries"
+	// FlagReportingCsvEncodingOptions
+	// Enables CSV encoding options in the reporting feature
+	FlagReportingCsvEncodingOptions = "reportingCsvEncodingOptions"
 
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
@@ -150,14 +138,6 @@ const (
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
-
-	// FlagEnableNativeHTTPHistogram
-	// Enables native HTTP Histograms
-	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
-
-	// FlagDisableClassicHTTPHistogram
-	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
@@ -182,6 +162,10 @@ const (
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
+
+	// FlagKubernetesUnifiedStorageQuotas
+	// Adds support for Kubernetes unified storage quotas
+	FlagKubernetesUnifiedStorageQuotas = "kubernetesUnifiedStorageQuotas"
 
 	// FlagKubernetesLogsDrilldown
 	// Adds support for Kubernetes logs drilldown
@@ -211,6 +195,10 @@ const (
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
+	// FlagDatasourceDisableIdApi
+	// Does not register datasource apis that use the numeric id
+	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
+
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
@@ -222,6 +210,18 @@ const (
 	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
 	FlagQueryServiceRewrite = "queryServiceRewrite"
+
+	// FlagDatasourcesRerouteLegacyCRUDAPIs
+	// Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesRerouteLegacyCRUDAPIs = "datasourcesRerouteLegacyCRUDAPIs"
+
+	// FlagDatasourcesApiServerEnableResourceEndpoint
+	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
+
+	// FlagDatasourcesApiServerEnableResourceEndpointFrontend
+	// Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+	FlagDatasourcesApiServerEnableResourceEndpointFrontend = "datasourcesApiServerEnableResourceEndpointFrontend"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -256,12 +256,8 @@ const (
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
 	// FlagDashboardNewLayouts
-	// Enables experimental new dashboard layouts
+	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
-
-	// FlagKubernetesDashboardsV2
-	// Use the v2 kubernetes API in the frontend for dashboards
-	FlagKubernetesDashboardsV2 = "kubernetesDashboardsV2"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
@@ -279,9 +275,9 @@ const (
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
-	// FlagSecretsManagementAppPlatform
-	// Enable the secrets management API and services under app platform
-	FlagSecretsManagementAppPlatform = "secretsManagementAppPlatform"
+	// FlagAuditLoggingAppPlatform
+	// Enable audit logging with Kubernetes under app platform
+	FlagAuditLoggingAppPlatform = "auditLoggingAppPlatform"
 
 	// FlagSecretsManagementAppPlatformUI
 	// Enable the secrets management app platform UI
@@ -335,6 +331,10 @@ const (
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
 
+	// FlagDashboardAdHocAndGroupByWrapper
+	// Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
+	FlagDashboardAdHocAndGroupByWrapper = "dashboardAdHocAndGroupByWrapper"
+
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
@@ -351,6 +351,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagSavedQueriesRBAC
+	// Enables Saved queries (query library) RBAC permissions
+	FlagSavedQueriesRBAC = "savedQueriesRBAC"
+
 	// FlagDashboardLibrary
 	// Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagDashboardLibrary = "dashboardLibrary"
@@ -359,9 +363,17 @@ const (
 	// Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagSuggestedDashboards = "suggestedDashboards"
 
+	// FlagDashboardValidatorApp
+	// Enables dashboard validator app to run compatibility checks between a dashboard and data source
+	FlagDashboardValidatorApp = "dashboardValidatorApp"
+
 	// FlagDashboardTemplates
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
+
+	// FlagAlertingNavigationV2
+	// Enables the new Alerting navigation structure with improved menu grouping
+	FlagAlertingNavigationV2 = "alertingNavigationV2"
 
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
@@ -386,10 +398,6 @@ const (
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
-
-	// FlagSsoSettingsLDAP
-	// Use the new SSO Settings API to configure LDAP
-	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -423,10 +431,6 @@ const (
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
 
-	// FlagNewFiltersUI
-	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
-	FlagNewFiltersUI = "newFiltersUI"
-
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
@@ -446,14 +450,6 @@ const (
 	// FlagRolePickerDrawer
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
-
-	// FlagUnifiedStorageSearch
-	// Enable unified storage search
-	FlagUnifiedStorageSearch = "unifiedStorageSearch"
-
-	// FlagUnifiedStorageSearchSprinkles
-	// Enable sprinkles on unified storage search
-	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
 
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
@@ -535,17 +531,9 @@ const (
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
 
-	// FlagInvestigationsBackend
-	// Enable the investigations backend API
-	FlagInvestigationsBackend = "investigationsBackend"
-
 	// FlagK8SFolderCounts
 	// Enable folder&#39;s api server counts
 	FlagK8SFolderCounts = "k8SFolderCounts"
-
-	// FlagK8SFolderMove
-	// Enable folder&#39;s api server move
-	FlagK8SFolderMove = "k8SFolderMove"
 
 	// FlagImprovedExternalSessionHandlingSAML
 	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
@@ -554,6 +542,10 @@ const (
 	// FlagTeamHttpHeadersTempo
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
+
+	// FlagTeamHttpHeadersFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
+	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
 
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
@@ -566,6 +558,10 @@ const (
 	// FlagFetchRulesUsingPost
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
+
+	// FlagFetchRulesInCompactMode
+	// Add compact=true when fetching rules
+	FlagFetchRulesInCompactMode = "fetchRulesInCompactMode"
 
 	// FlagGrafanaconThemes
 	// Enables the temporary themes for GrafanaCon
@@ -623,12 +619,20 @@ const (
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
 
 	// FlagKubernetesAuthzApis
-	// Registers AuthZ /apis endpoint
+	// Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
 	// FlagKubernetesAuthZHandlerRedirect
-	// Redirects the traffic from the legacy access control endpoints to the new K8s AuthZ endpoints
+	// Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
 	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
+
+	// FlagKubernetesAuthZResourcePermissionsRedirect
+	// Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZResourcePermissionsRedirect = "kubernetesAuthZResourcePermissionsRedirect"
+
+	// FlagKubernetesAuthZRolesRedirect
+	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
 
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
@@ -638,13 +642,29 @@ const (
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
 
+	// FlagKubernetesAuthzCoreRolesApi
+	// Registers AuthZ Core Roles /apis endpoint
+	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
+
+	// FlagKubernetesAuthzGlobalRolesApi
+	// Registers AuthZ Global Roles /apis endpoint
+	FlagKubernetesAuthzGlobalRolesApi = "kubernetesAuthzGlobalRolesApi"
+
+	// FlagKubernetesAuthzRolesApi
+	// Registers AuthZ Roles /apis endpoint
+	FlagKubernetesAuthzRolesApi = "kubernetesAuthzRolesApi"
+
+	// FlagKubernetesAuthzTeamLBACRuleApi
+	// Registers AuthZ TeamLBACRule /apis endpoint
+	FlagKubernetesAuthzTeamLBACRuleApi = "kubernetesAuthzTeamLBACRuleApi"
+
+	// FlagKubernetesAuthzRoleBindingsApi
+	// Registers AuthZ Role Bindings /apis endpoint
+	FlagKubernetesAuthzRoleBindingsApi = "kubernetesAuthzRoleBindingsApi"
+
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
 	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
-
-	// FlagKubernetesExternalGroupMapping
-	// Routes external group mapping requests from /api to the /apis endpoint
-	FlagKubernetesExternalGroupMapping = "kubernetesExternalGroupMapping"
 
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
@@ -670,13 +690,13 @@ const (
 	// Enables the UI to see imported Alertmanager configuration
 	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
 
+	// FlagAlertingDisableDMAinUI
+	// Disables the DMA feature in the UI
+	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
+
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
-
-	// FlagTabularNumbers
-	// Use fixed-width numbers globally in the UI
-	FlagTabularNumbers = "tabularNumbers"
 
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
@@ -722,10 +742,6 @@ const (
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
 
-	// FlagTempoSearchBackendMigration
-	// Run search queries through the tempo backend
-	FlagTempoSearchBackendMigration = "tempoSearchBackendMigration"
-
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
@@ -750,19 +766,107 @@ const (
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
 
+	// FlagExcludeRedundantManagedPermissions
+	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
+	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
+
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
 
-	// FlagKubernetesAnnotations
-	// Enables app platform API for annotations
-	FlagKubernetesAnnotations = "kubernetesAnnotations"
+	// FlagElasticsearchRawDSLQuery
+	// Enables the raw DSL query editor in the Elasticsearch data source
+	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
 
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 
+	// FlagOpentsdbBackendMigration
+	// Run queries through the data source backend
+	FlagOpentsdbBackendMigration = "opentsdbBackendMigration"
+
 	// FlagKubernetesAlertingHistorian
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
+
+	// FlagSecretsManagementAppPlatformAwsKeeper
+	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
+	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
+
+	// FlagProfilesExemplars
+	// Enables profiles exemplars support in profiles drilldown
+	FlagProfilesExemplars = "profilesExemplars"
+
+	// FlagAlertingSyncDispatchTimer
+	// Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+	FlagAlertingSyncDispatchTimer = "alertingSyncDispatchTimer"
+
+	// FlagKubernetesTeamBindings
+	// Enables search for team bindings in the app platform API
+	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
+
+	// FlagKubernetesTeamsHandlerRedirect
+	// Redirects the request of the team endpoints to the app platform APIs
+	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
+
+	// FlagKubernetesUsersApi
+	// Enables user APIs in the app platform
+	FlagKubernetesUsersApi = "kubernetesUsersApi"
+
+	// FlagKubernetesExternalGroupMappingsApi
+	// Enables external group mapping APIs in the app platform
+	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"
+
+	// FlagKubernetesExternalGroupMappingsRedirect
+	// Redirects the request of the external group mapping endpoints to the app platform APIs
+	FlagKubernetesExternalGroupMappingsRedirect = "kubernetesExternalGroupMappingsRedirect"
+
+	// FlagKubernetesTeamSync
+	// Use the new APIs for syncing users to teams
+	FlagKubernetesTeamSync = "kubernetesTeamSync"
+
+	// FlagAlertingMultiplePolicies
+	// Enables the ability to create multiple alerting policies
+	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+
+	// FlagAppPluginAPIServer
+	// Registers an API server for each backend app plugin exposing a settings endpoint
+	FlagAppPluginAPIServer = "appPluginAPIServer"
+
+	// FlagAlertingIgnorePendingForNoDataAndError
+	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
+	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
+
+	// FlagAlertingNotificationHistoryRuleViewer
+	// Enables the notification history tab in the rule viewer
+	FlagAlertingNotificationHistoryRuleViewer = "alertingNotificationHistoryRuleViewer"
+
+	// FlagAlertingNotificationHistoryGlobal
+	// Enables the notification history global menu item viewer
+	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
+
+	// FlagReact19
+	// Whether to use the new React 19 runtime
+	FlagReact19 = "react19"
+
+	// FlagFrontendServiceUseSettingsService
+	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
+	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
+
+	// FlagManagedPluginsV2
+	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
+	FlagManagedPluginsV2 = "managedPluginsV2"
+
+	// FlagRememberUserOrgForSso
+	// Remember the last viewed organization for users using SSO
+	FlagRememberUserOrgForSso = "rememberUserOrgForSso"
+
+	// FlagDsAbstractionApp
+	// Registers the dsabstraction app for querying datasources via unified SQL
+	FlagDsAbstractionApp = "dsAbstractionApp"
+
+	// FlagAnalyticsFramework
+	// Enables new analytics framework
+	FlagAnalyticsFramework = "analyticsFramework"
 )

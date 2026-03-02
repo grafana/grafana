@@ -334,7 +334,7 @@ func TestAlertRuleAfterEval(t *testing.T) {
 		ruleStore.PutRule(context.Background(), rule)
 		ruleFactory := ruleFactoryFromScheduler(sch)
 
-		process := ruleFactory.new(context.Background(), rule)
+		process := ruleFactory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 
 		return &testContext{
 			rule:         rule,
@@ -503,7 +503,14 @@ func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *a
 		Log:       log.NewNopLogger(),
 	}
 	st := state.NewManager(managerCfg, state.NewNoopPersister())
-	return newAlertRule(ctx, key, nil, false, RetryConfig{}, nil, st, nil, nil, nil, log.NewNopLogger(), nil, featuremgmt.WithFeatures(), nil, nil)
+	// Create a minimal rule from the key
+	rule := &models.AlertRule{
+		OrgID:     key.OrgID,
+		UID:       key.UID,
+		RuleGroup: key.RuleGroup,
+	}
+	rf := ruleWithFolder{rule: rule, folderTitle: ""}
+	return newAlertRule(ctx, rf, nil, false, RetryConfig{}, nil, st, nil, nil, nil, log.NewNopLogger(), nil, featuremgmt.WithFeatures(), nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
@@ -540,7 +547,7 @@ func TestRuleRoutine(t *testing.T) {
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := factory.new(ctx, rule)
+			ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: folderTitle})
 			go func() {
 				_ = ruleInfo.Run()
 			}()
@@ -557,7 +564,7 @@ func TestRuleRoutine(t *testing.T) {
 			require.Equal(t, expectedTime, actualTime)
 
 			t.Run("it should add extra labels", func(t *testing.T) {
-				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				states := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 				for _, s := range states {
 					assert.Equal(t, rule.UID, s.Labels[alertingModels.RuleUIDLabel])
 					assert.Equal(t, rule.NamespaceUID, s.Labels[alertingModels.NamespaceUIDLabel])
@@ -568,7 +575,7 @@ func TestRuleRoutine(t *testing.T) {
 
 			t.Run("it should process evaluation results via state manager", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
-				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				states := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 				require.Len(t, states, 1)
 				s := states[0]
 				require.Equal(t, rule.UID, s.AlertRuleUID)
@@ -582,7 +589,7 @@ func TestRuleRoutine(t *testing.T) {
 			})
 			t.Run("it should save alert instances to storage", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
-				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				states := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 				require.Len(t, states, 1)
 				s := states[0]
 
@@ -607,7 +614,7 @@ func TestRuleRoutine(t *testing.T) {
 			})
 
 			t.Run("status should accurately reflect latest evaluation", func(t *testing.T) {
-				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				states := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 				require.NotEmpty(t, states)
 
 				status := ruleInfo.Status()
@@ -723,12 +730,13 @@ func TestRuleRoutine(t *testing.T) {
 			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 
 			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
-			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			expectedStates := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 			require.NotEmpty(t, expectedStates)
 
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
-			ruleInfo := factory.new(ctx, rule)
+			folderTitle := ""
+			ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: folderTitle})
 			go func() {
 				err := ruleInfo.Run()
 				stoppedChan <- err
@@ -737,7 +745,7 @@ func TestRuleRoutine(t *testing.T) {
 			cancel()
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
-			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 			sender.AssertNotCalled(t, "Send")
 		})
 
@@ -747,10 +755,10 @@ func TestRuleRoutine(t *testing.T) {
 			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 
 			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
-			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)
-			ruleInfo := factory.new(context.Background(), rule)
+			ruleInfo := factory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 			go func() {
 				err := ruleInfo.Run()
 				stoppedChan <- err
@@ -760,7 +768,7 @@ func TestRuleRoutine(t *testing.T) {
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
 
-			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 			sender.AssertNotCalled(t, "Send")
 		})
 
@@ -771,10 +779,10 @@ func TestRuleRoutine(t *testing.T) {
 			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 
 			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
-			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)
-			ruleInfo := factory.new(context.Background(), rule)
+			ruleInfo := factory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
 			go func() {
 				err := ruleInfo.Run()
 				stoppedChan <- err
@@ -784,7 +792,7 @@ func TestRuleRoutine(t *testing.T) {
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
 
-			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 			sender.AssertExpectations(t)
 		})
 	})
@@ -804,7 +812,7 @@ func TestRuleRoutine(t *testing.T) {
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx, rule)
+		ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: folderTitle})
 
 		go func() {
 			_ = ruleInfo.Run()
@@ -836,7 +844,7 @@ func TestRuleRoutine(t *testing.T) {
 		}
 		sch.stateManager.Put(states)
 
-		states = sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		states = sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 		expectedToBeSent := 0
 		for _, s := range states {
 			if s.State == eval.Normal || s.State == eval.Pending {
@@ -850,7 +858,7 @@ func TestRuleRoutine(t *testing.T) {
 			ruleInfo.Update(&Evaluation{rule: rule, folderTitle: folderTitle})
 			ruleInfo.Update(&Evaluation{rule: rule, folderTitle: folderTitle}) // second time just to make sure that previous messages were handled
 
-			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			actualStates := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
 
 			sender.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
@@ -863,12 +871,146 @@ func TestRuleRoutine(t *testing.T) {
 				return len(sender.Calls()) > 0
 			}, 5*time.Second, 100*time.Millisecond)
 
-			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 			sender.AssertNumberOfCalls(t, "Send", 1)
 			args, ok := sender.Calls()[0].Arguments[2].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls()[0].Arguments[2]))
 			require.Len(t, args.PostableAlerts, expectedToBeSent)
 		})
+	})
+
+	t.Run("when update is sent before first evaluation", func(t *testing.T) {
+		rule := gen.With(withQueryForState(t, eval.Normal)).GenerateRef()
+		folderTitle := "folderName"
+
+		evalAppliedChan := make(chan time.Time)
+
+		sender := NewSyncAlertsSenderMock()
+		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
+
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender, clock.NewMock())
+		ruleStore.PutRule(context.Background(), rule)
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+
+		// Add state to verify it's not cleared
+		states := []*state.State{
+			{
+				AlertRuleUID: rule.UID,
+				CacheID:      data.Labels(rule.Labels).Fingerprint(),
+				OrgID:        rule.OrgID,
+				State:        eval.Alerting,
+				StartsAt:     sch.clock.Now(),
+				EndsAt:       sch.clock.Now().Add(5 * time.Second),
+				Labels:       rule.Labels,
+			},
+		}
+		sch.stateManager.Put(states)
+
+		t.Run("should not reset state if fingerprint is the same", func(t *testing.T) {
+			factory := ruleFactoryFromScheduler(sch)
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+			ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: folderTitle})
+
+			go func() {
+				_ = ruleInfo.Run()
+			}()
+
+			// Send update before first evaluation - same rule, same fingerprint
+			// This should not reset state since fingerprint is the same
+			ruleInfo.Update(&Evaluation{rule: rule, folderTitle: folderTitle})
+
+			// Give time for update to be processed
+			time.Sleep(100 * time.Millisecond)
+
+			actualStates := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+			require.NotEmpty(t, actualStates)
+		})
+
+		t.Run("should reset state if fingerprint is different", func(t *testing.T) {
+			// Re-add state for this test
+			sch.stateManager.Put(states)
+
+			sender := NewSyncAlertsSenderMock()
+			sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
+
+			sch2, ruleStore2, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
+			ruleStore2.PutRule(context.Background(), rule)
+			sch2.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+			sch2.stateManager.Put(states)
+
+			factory := ruleFactoryFromScheduler(sch2)
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+			ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: folderTitle})
+
+			go func() {
+				_ = ruleInfo.Run()
+			}()
+
+			// Send update before first eval, with a changed alert rule title.
+			// This should reset state and send resolved alerts
+			updatedRule := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+			ruleInfo.Update(&Evaluation{rule: updatedRule, folderTitle: folderTitle})
+
+			// Wait for sender to be called (which happens when state is cleared and resolved alerts are sent)
+			require.Eventually(t, func() bool {
+				return len(sender.Calls()) > 0
+			}, 5*time.Second, 100*time.Millisecond)
+
+			// State should be cleared because fingerprint changed
+			actualStates := sch2.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+			require.Empty(t, actualStates)
+		})
+	})
+
+	t.Run("paused rule should reset state on first evaluation", func(t *testing.T) {
+		rule := gen.With(withQueryForState(t, eval.Normal)).GenerateRef()
+		rule.IsPaused = true
+		folderTitle := "folderName"
+
+		sender := NewSyncAlertsSenderMock()
+		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
+
+		sch, ruleStore, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
+		ruleStore.PutRule(context.Background(), rule)
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+
+		states := []*state.State{
+			{
+				AlertRuleUID: rule.UID,
+				CacheID:      data.Labels(rule.Labels).Fingerprint(),
+				OrgID:        rule.OrgID,
+				State:        eval.Alerting,
+				StartsAt:     sch.clock.Now(),
+				EndsAt:       sch.clock.Now().Add(5 * time.Second),
+				Labels:       rule.Labels,
+			},
+		}
+		sch.stateManager.Put(states)
+		require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+
+		factory := ruleFactoryFromScheduler(sch)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+		ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: folderTitle})
+
+		go func() {
+			_ = ruleInfo.Run()
+		}()
+
+		ruleInfo.Eval(&Evaluation{
+			scheduledAt: sch.clock.Now(),
+			rule:        rule,
+			folderTitle: folderTitle,
+		})
+
+		require.Eventually(t, func() bool {
+			return len(sender.Calls()) > 0
+		}, 5*time.Second, 100*time.Millisecond)
+
+		actualStates := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+		require.Empty(t, actualStates)
 	})
 
 	t.Run("when evaluation fails", func(t *testing.T) {
@@ -910,7 +1052,7 @@ func TestRuleRoutine(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx, rule)
+		ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: ""})
 
 		go func() {
 			_ = ruleInfo.Run()
@@ -1044,7 +1186,7 @@ func TestRuleRoutine(t *testing.T) {
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := factory.new(ctx, rule)
+			ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: ""})
 
 			go func() {
 				_ = ruleInfo.Run()
@@ -1078,7 +1220,7 @@ func TestRuleRoutine(t *testing.T) {
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx, rule)
+		ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: ""})
 
 		go func() {
 			_ = ruleInfo.Run()
@@ -1093,7 +1235,7 @@ func TestRuleRoutine(t *testing.T) {
 
 		sender.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
 
-		require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+		require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 	})
 
 	t.Run("when there are resolved alerts they should keep sending until retention period is over", func(t *testing.T) {
@@ -1119,7 +1261,7 @@ func TestRuleRoutine(t *testing.T) {
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx, rule)
+		ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: ""})
 
 		go func() {
 			_ = ruleInfo.Run()
@@ -1214,7 +1356,7 @@ func TestAlertRuleRetry(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	ruleInfo := factory.new(ctx, rule)
+	ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: ""})
 
 	go func() {
 		_ = ruleInfo.Run()

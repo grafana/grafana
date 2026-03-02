@@ -9,6 +9,7 @@ import {
   BuilderQueryEditorPropertyExpression,
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorReduceExpression,
+  BuilderQueryEditorReduceParameterTypes,
   BuilderQueryEditorWhereExpression,
   BuilderQueryExpression,
 } from '../../dataquery.gen';
@@ -93,12 +94,17 @@ export interface BuildAndUpdateOptions {
 }
 
 export const aggregateOptions = [
-  { label: 'sum', value: 'sum' },
-  { label: 'avg', value: 'avg' },
-  { label: 'percentile', value: 'percentile' },
-  { label: 'count', value: 'count' },
-  { label: 'min', value: 'min' },
-  { label: 'max', value: 'max' },
-  { label: 'dcount', value: 'dcount' },
-  { label: 'stdev', value: 'stdev' },
+  { label: 'sum', value: 'sum', parameterType: BuilderQueryEditorReduceParameterTypes.Numeric },
+  { label: 'avg', value: 'avg', parameterType: BuilderQueryEditorReduceParameterTypes.Numeric },
+  { label: 'percentile', value: 'percentile', parameterType: BuilderQueryEditorReduceParameterTypes.Numeric },
+  { label: 'stdev', value: 'stdev', parameterType: BuilderQueryEditorReduceParameterTypes.Numeric },
+  { label: 'min', value: 'min', parameterType: BuilderQueryEditorReduceParameterTypes.Generic },
+  { label: 'max', value: 'max', parameterType: BuilderQueryEditorReduceParameterTypes.Generic },
+  { label: 'count', value: 'count', parameterType: BuilderQueryEditorReduceParameterTypes.Generic },
+  { label: 'dcount', value: 'dcount', parameterType: BuilderQueryEditorReduceParameterTypes.Generic },
 ];
+
+export const isNumericColumn = (column: AzureLogAnalyticsMetadataColumn): boolean => {
+  const numericTypes = ['decimal', 'int', 'long', 'real'];
+  return numericTypes.includes(column.type);
+};

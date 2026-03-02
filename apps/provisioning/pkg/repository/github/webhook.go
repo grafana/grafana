@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
 	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -306,6 +306,10 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 		return nil, nil
 	}
 
+	if len(r.config.Spec.Workflows) == 0 {
+		return nil, nil
+	}
+
 	ctx, _ = r.logger(ctx, "")
 	hook, err := r.createWebhook(ctx)
 	if err != nil {
@@ -335,6 +339,22 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 	if len(r.webhookURL) == 0 {
 		return nil, nil
 	}
+
+	if len(r.config.Spec.Workflows) == 0 {
+		if r.config.Status.Webhook != nil {
+			ctx, _ = r.logger(ctx, "")
+			if err := r.deleteWebhook(ctx); err != nil {
+				return nil, err
+			}
+			return []map[string]any{{
+				"op":    "replace",
+				"path":  "/status/webhook",
+				"value": nil,
+			}}, nil
+		}
+		return nil, nil
+	}
+
 	ctx, _ = r.logger(ctx, "")
 	hook, changed, err := r.updateWebhook(ctx)
 	if err != nil || !changed {

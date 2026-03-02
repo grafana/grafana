@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -152,7 +153,6 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard.UID: dashboard.ID,
 				},
-				CanAccessDashAnnotations: true,
 			})
 
 			require.NoError(t, err)
@@ -176,7 +176,6 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard.UID: dashboard.ID,
 				},
-				CanAccessDashAnnotations: true,
 			})
 
 			require.NoError(t, err)
@@ -258,7 +257,6 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard2.UID: dashboard2.ID,
 				},
-				CanAccessDashAnnotations: true,
 			})
 			require.NoError(t, err)
 			assert.Len(t, items, 1)
@@ -267,8 +265,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should not find any when item is outside time range", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
@@ -284,8 +281,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should not find one when tag filter does not match", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
@@ -302,8 +298,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should not find one when type filter does not match", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
@@ -320,8 +315,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should find one when all tag filters does match", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
@@ -352,8 +346,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should find one when all key value tag filters does match", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
@@ -378,8 +371,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -414,8 +406,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -448,8 +439,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -482,8 +472,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -519,8 +508,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				SignedInUser: testUser,
 			}
 			accRes := &annotation_ac.AccessResources{
-				Dashboards:               map[string]int64{dashboard.UID: 1},
-				CanAccessDashAnnotations: true,
+				Dashboards: map[string]int64{dashboard.UID: 1},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -553,7 +541,6 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard2.UID: dashboard2.ID,
 				},
-				CanAccessDashAnnotations: true,
 			}
 
 			query := annotations.ItemQuery{
@@ -591,7 +578,6 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard2.UID: dashboard2.ID,
 				},
-				CanAccessDashAnnotations: true,
 			}
 
 			query := annotations.ItemQuery{
@@ -768,24 +754,28 @@ func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
 		require.NotNil(t, store)
 		assert.Equal(t, "sql", store.Type())
 
+		// Wait for the async migration to complete (runs in background goroutine)
 		var result struct {
 			DashboardUID *string `xorm:"dashboard_uid"`
 		}
-		err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
-			has, err := sess.Table("annotation").
-				Where("id = ?", annotation.ID).
-				Get(&result)
+		require.Eventually(t, func() bool {
+			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+				has, err := sess.Table("annotation").
+					Where("id = ?", annotation.ID).
+					Get(&result)
+				if err != nil {
+					return err
+				}
+				if !has {
+					return fmt.Errorf("annotation not found")
+				}
+				return nil
+			})
 			if err != nil {
-				return err
+				return false
 			}
-			if !has {
-				return fmt.Errorf("annotation not found")
-			}
-			return nil
-		})
-		require.NoError(t, err)
-		require.NotNil(t, result.DashboardUID, "dashboard_uid should not be NULL when migration runs")
-		assert.Equal(t, "test-run-uid", *result.DashboardUID, "dashboard_uid should be populated when migration runs")
+			return result.DashboardUID != nil && *result.DashboardUID == "test-run-uid"
+		}, 5*time.Second, 100*time.Millisecond, "dashboard_uid should be populated when migration runs")
 	})
 }
 

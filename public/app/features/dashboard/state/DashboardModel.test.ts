@@ -912,6 +912,31 @@ describe('DashboardModel', () => {
     });
   });
 
+  describe('Given model with a variable type that has no registered adapter', () => {
+    it('getSaveModelCloneOld should not throw and should include the variable as-is', () => {
+      const groupByVariable = {
+        name: 'groupby',
+        type: 'groupby' as const,
+        datasource: { type: 'prometheus', uid: 'abc' },
+        label: 'Group by',
+        options: [],
+        current: { text: 'host', value: 'host' },
+      };
+
+      const json = { templating: { list: [] } } as unknown as Dashboard;
+      const model = new DashboardModel(json, undefined, {
+        getVariablesFromState: () => [groupByVariable as any],
+      });
+
+      const saveModel = model.getSaveModelCloneOld();
+
+      expect(saveModel.templating.list).toHaveLength(1);
+      expect(saveModel.templating.list[0].type).toBe('groupby');
+      expect(saveModel.templating.list[0].name).toBe('groupby');
+      expect(saveModel.templating.list[0].current.text).toBe('host');
+    });
+  });
+
   describe('Given a dashboard with one panel legend on and two off', () => {
     let model: DashboardModel;
 
@@ -948,7 +973,7 @@ describe('DashboardModel', () => {
       ${false} | ${true}         | ${true}  | ${true}
       ${true}  | ${false}        | ${true}  | ${true}
       ${true}  | ${true}         | ${true}  | ${true}
-      ${false} | ${false}        | ${true}  | ${false}
+      ${false} | ${false}        | ${true}  | ${true}
       ${false} | ${true}         | ${false} | ${false}
       ${true}  | ${false}        | ${false} | ${false}
       ${true}  | ${true}         | ${false} | ${false}
@@ -980,7 +1005,7 @@ describe('DashboardModel', () => {
       ${false} | ${true}         | ${true}                  | ${true}
       ${true}  | ${false}        | ${true}                  | ${true}
       ${true}  | ${true}         | ${true}                  | ${true}
-      ${false} | ${false}        | ${true}                  | ${false}
+      ${false} | ${false}        | ${true}                  | ${true}
       ${false} | ${true}         | ${false}                 | ${false}
       ${true}  | ${false}        | ${false}                 | ${false}
       ${true}  | ${true}         | ${false}                 | ${false}
@@ -1010,7 +1035,7 @@ describe('DashboardModel', () => {
       ${false} | ${true}         | ${true}                        | ${true}
       ${true}  | ${false}        | ${true}                        | ${true}
       ${true}  | ${true}         | ${true}                        | ${true}
-      ${false} | ${false}        | ${true}                        | ${false}
+      ${false} | ${false}        | ${true}                        | ${true}
       ${false} | ${true}         | ${false}                       | ${false}
       ${true}  | ${false}        | ${false}                       | ${false}
       ${true}  | ${true}         | ${false}                       | ${false}
@@ -1042,7 +1067,7 @@ describe('DashboardModel', () => {
       ${false} | ${true}         | ${true}                    | ${true}
       ${true}  | ${false}        | ${true}                    | ${true}
       ${true}  | ${true}         | ${true}                    | ${true}
-      ${false} | ${false}        | ${true}                    | ${false}
+      ${false} | ${false}        | ${true}                    | ${true}
       ${false} | ${true}         | ${false}                   | ${false}
       ${true}  | ${false}        | ${false}                   | ${false}
       ${true}  | ${true}         | ${false}                   | ${false}
@@ -1072,7 +1097,7 @@ describe('DashboardModel', () => {
       ${false} | ${true}         | ${true}                          | ${true}
       ${true}  | ${false}        | ${true}                          | ${true}
       ${true}  | ${true}         | ${true}                          | ${true}
-      ${false} | ${false}        | ${true}                          | ${false}
+      ${false} | ${false}        | ${true}                          | ${true}
       ${false} | ${true}         | ${false}                         | ${false}
       ${true}  | ${false}        | ${false}                         | ${false}
       ${true}  | ${true}         | ${false}                         | ${false}

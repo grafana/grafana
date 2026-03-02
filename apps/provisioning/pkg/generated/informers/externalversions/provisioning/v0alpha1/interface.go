@@ -10,6 +10,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// Connections returns a ConnectionInformer.
+	Connections() ConnectionInformer
 	// HistoricJobs returns a HistoricJobInformer.
 	HistoricJobs() HistoricJobInformer
 	// Jobs returns a JobInformer.
@@ -27,6 +29,11 @@ type version struct {
 // New returns a new Interface.
 func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakListOptions internalinterfaces.TweakListOptionsFunc) Interface {
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
+}
+
+// Connections returns a ConnectionInformer.
+func (v *version) Connections() ConnectionInformer {
+	return &connectionInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // HistoricJobs returns a HistoricJobInformer.

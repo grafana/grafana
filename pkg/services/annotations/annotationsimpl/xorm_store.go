@@ -105,10 +105,16 @@ func triggerAlwaysOnMigrations(cfg *setting.Cfg, l log.Logger, db db.DB) {
 		l.Debug("skipped dashboard UID startup migration")
 		return
 	}
-	err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName())
-	if err != nil {
-		l.Error("failed to populate dashboard_uid for annotations", "error", err)
-	}
+	// Run migration in a background goroutine to avoid blocking service startup
+	go func() {
+		l.Info("Starting annotation dashboard_uid migration in background")
+		err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetDialect().DriverName(), l)
+		if err != nil {
+			l.Error("failed to populate dashboard_uid for annotations", "error", err)
+		} else {
+			l.Info("Annotation dashboard_uid migration completed successfully")
+		}
+	}()
 }
 
 func (r *xormRepositoryImpl) Type() string {
@@ -328,6 +334,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 				annotation.updated,
 				usr.email,
 				usr.login,
+				usr.uid as user_uid,
 				r.title as alert_name
 			FROM annotation
 			LEFT OUTER JOIN ` + r.db.GetDialect().Quote("user") + ` as usr on usr.id = annotation.user_id
@@ -372,6 +379,11 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		if query.UserID != 0 {
 			sql.WriteString(` AND a.user_id = ?`)
 			params = append(params, query.UserID)
+		}
+
+		if query.UserUID != "" {
+			sql.WriteString(` AND a.user_id = (SELECT id FROM ` + r.db.GetDialect().Quote("user") + ` WHERE uid = ? AND org_id = ?)`)
+			params = append(params, query.UserUID, query.OrgID)
 		}
 
 		if query.From > 0 && query.To > 0 {
@@ -427,7 +439,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		// order of ORDER BY arguments match the order of a sql index for performance
 		orderBy := " ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC"
 		if query.Limit > 0 {
-			orderBy += r.db.GetDialect().Limit(query.Limit)
+			orderBy += r.db.GetDialect().LimitOffset(query.Limit, query.Offset)
 		}
 		sql.WriteString(orderBy + " ) dt on dt.id = annotation.id")
 
@@ -491,18 +503,16 @@ func (r *xormRepositoryImpl) getAccessControlFilter(accessResources *accesscontr
 		filters = append(filters, "a.dashboard_id = 0")
 	}
 
-	if accessResources.CanAccessDashAnnotations {
-		if len(accessResources.Dashboards) == 0 {
-			filters = append(filters, "1=0") // empty set
+	if len(accessResources.Dashboards) == 0 {
+		filters = append(filters, "1=0") // empty set
+	} else {
+		if dashboardUID != "" {
+			filters = append(filters, "a.dashboard_uid = ?")
+			params = append(params, dashboardUID)
 		} else {
-			if dashboardUID != "" {
-				filters = append(filters, "a.dashboard_uid = ?")
-				params = append(params, dashboardUID)
-			} else {
-				filters = append(filters, fmt.Sprintf("a.dashboard_uid IN (%s)", strings.Repeat("?,", len(accessResources.Dashboards)-1)+"?"))
-				for uid := range accessResources.Dashboards {
-					params = append(params, uid)
-				}
+			filters = append(filters, fmt.Sprintf("a.dashboard_uid IN (%s)", strings.Repeat("?,", len(accessResources.Dashboards)-1)+"?"))
+			for uid := range accessResources.Dashboards {
+				params = append(params, uid)
 			}
 		}
 	}
@@ -567,7 +577,7 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 		}
 
 		var sql bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]interface{}, 0) //nolint:prealloc
 		tagKey := `tag.` + r.db.GetDialect().Quote("key")
 		tagValue := `tag.` + r.db.GetDialect().Quote("value")
 

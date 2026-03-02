@@ -104,6 +104,7 @@ describe('when creating variables objects', () => {
       type: 'custom',
       value: 'a',
       hide: 0,
+      valuesFormat: 'csv',
     });
   });
 
@@ -184,6 +185,7 @@ describe('when creating variables objects', () => {
       query: 'SHOW TAG VALUES  WITH KEY = "datacenter" ',
       refresh: 1,
       regex: '',
+      regexApplyTo: 'value',
       skipUrlSync: false,
       sort: 0,
       text: 'America',
@@ -459,6 +461,11 @@ describe('when creating variables objects', () => {
       applyMode: 'auto',
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
+      collapsible: undefined,
+      $behaviors: undefined,
+      defaultKeys: undefined,
+      drilldownRecommendationsEnabled: undefined,
+      layout: 'combobox',
     });
   });
 
@@ -544,6 +551,10 @@ describe('when creating variables objects', () => {
       ],
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
+      collapsible: undefined,
+      $behaviors: undefined,
+      drilldownRecommendationsEnabled: undefined,
+      layout: 'combobox',
     });
   });
 

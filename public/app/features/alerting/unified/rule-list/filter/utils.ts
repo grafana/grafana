@@ -5,9 +5,12 @@ import { RulesFilter } from '../../search/rulesSearchParser';
 
 import { AdvancedFilters } from './types';
 
-export function formAdvancedFiltersToRuleFilter(values: AdvancedFilters): RulesFilter {
+export function formAdvancedFiltersToRuleFilter(
+  values: AdvancedFilters,
+  existingFreeFormWords: string[] = []
+): RulesFilter {
   return {
-    freeFormWords: [],
+    freeFormWords: existingFreeFormWords,
     ...values,
     namespace: values.namespace || undefined,
     groupName: values.groupName || undefined,

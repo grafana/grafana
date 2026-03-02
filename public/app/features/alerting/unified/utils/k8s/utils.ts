@@ -1,6 +1,9 @@
-import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { ObjectMeta, ReceiverIntegration } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
+import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+
+import { KnownProvenance } from '../../types/knownProvenance';
 
 /**
  * Should we call the kubernetes-style API for managing alertmanager entities?
@@ -13,7 +16,7 @@ export const shouldUseK8sApi = (alertmanager?: string) => {
 };
 
 type EntityToCheck = {
-  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
+  metadata?: ObjectMeta;
 };
 
 /**
@@ -22,7 +25,7 @@ type EntityToCheck = {
  */
 export const isK8sEntityProvisioned = (k8sEntity: EntityToCheck) => {
   const provenance = getAnnotation(k8sEntity, K8sAnnotations.Provenance);
-  return Boolean(provenance && provenance !== PROVENANCE_NONE);
+  return isProvisionedResource(provenance);
 };
 
 export const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
@@ -42,6 +45,12 @@ export const canAdminEntity = (k8sEntity: EntityToCheck) =>
 export const canDeleteEntity = (k8sEntity: EntityToCheck) =>
   getAnnotation(k8sEntity, K8sAnnotations.AccessDelete) === 'true';
 
+export const canModifyProtectedEntity = (k8sEntity: EntityToCheck) =>
+  getAnnotation(k8sEntity, K8sAnnotations.AccessModifyProtected) === 'true';
+
+export const canTestEntity = (k8sEntity: EntityToCheck) =>
+  getAnnotation(k8sEntity, K8sAnnotations.AccessTest) === 'true';
+
 /**
  * Escape \ and = characters for field selectors.
  * The Kubernetes API Machinery will decode those automatically.
@@ -56,3 +65,22 @@ export const stringifyFieldSelector = (fieldSelectors: FieldSelector[]): string 
     .map(([key, value, operator = '=']) => `${key}${operator}${encodeFieldSelector(value)}`)
     .join(',');
 };
+
+export function isProvisionedResource(provenance?: string): boolean {
+  return Boolean(provenance && provenance !== KnownProvenance.None);
+}
+
+export function isImportedResource(provenance?: string): boolean {
+  return provenance === KnownProvenance.ConvertedPrometheus;
+}
+
+export function receiverConfigToK8sIntegration(config: GrafanaManagedReceiverConfig): ReceiverIntegration {
+  return {
+    uid: config.uid,
+    disableResolveMessage: config.disableResolveMessage,
+    secureFields: config.secureFields,
+    settings: config.settings,
+    type: config.type,
+    version: config.version ?? 'v1',
+  };
+}

@@ -6,7 +6,6 @@ description: Learn about RBAC Grafana provisioning and view an example YAML prov
   file that configures Grafana role assignments.
 labels:
   products:
-    - cloud
     - enterprise
 menuTitle: Provisioning RBAC with Grafana
 title: Provisioning RBAC with Grafana
@@ -52,10 +51,12 @@ refs:
 # Provisioning RBAC with Grafana
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) for self-managed instances. This feature is not available in Grafana Cloud.
 {{< /admonition >}}
 
 You can create, change or remove [Custom roles](ref:manage-rbac-roles-create-custom-roles-using-provisioning) and create or remove [basic role assignments](ref:assign-rbac-roles-assign-a-fixed-role-to-a-basic-role-using-provisioning), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
+
+Because this method requires access to the file system where Grafana is running, it's only available for self-managed Grafana instances. To provision RBAC in Grafana Cloud, use [Terraform](ref:rbac-terraform-provisioning) or the [HTTP API](ref:api-rbac-create-and-manage-custom-roles).
 
 Grafana performs provisioning during startup. After you make a change to the configuration file, you can reload it during runtime. You do not need to restart the Grafana server for your changes to take effect.
 

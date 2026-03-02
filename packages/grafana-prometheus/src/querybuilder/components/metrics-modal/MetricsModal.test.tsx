@@ -48,7 +48,7 @@ describe('MetricsModal', () => {
       operations: [],
     };
 
-    setup(query, ['with-labels'], true);
+    setup(query, ['with-labels']);
     await waitFor(() => {
       expect(screen.getByText('with-labels')).toBeInTheDocument();
     });
@@ -220,6 +220,10 @@ function createDatasource(withLabels?: boolean) {
   // display different results if their labels are selected in the PromVisualQuery
   if (withLabels) {
     languageProvider.queryMetricsMetadata = jest.fn().mockResolvedValue({
+      ALERTS: {
+        type: 'gauge',
+        help: 'alerts help text',
+      },
       'with-labels': {
         type: 'with-labels-type',
         help: 'with-labels-help',
@@ -297,7 +301,7 @@ function createProps(query: PromVisualQuery, datasource: PrometheusDatasource, m
   };
 }
 
-function setup(query: PromVisualQuery, metrics: string[], withlabels?: boolean) {
+function setup(query: PromVisualQuery, metrics: string[]) {
   const withLabels: boolean = query.labels.length > 0;
   const datasource = createDatasource(withLabels);
   const props = createProps(query, datasource, metrics);

@@ -16,6 +16,7 @@ import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
+import { getPortalContainer } from '../Portal/Portal';
 
 import { CustomInput } from './CustomInput';
 import { DropdownIndicator } from './DropdownIndicator';
@@ -123,7 +124,7 @@ export function SelectBase<T, Rest = {}>({
   minMenuHeight,
   maxVisibleValues,
   menuPlacement = 'auto',
-  menuPosition,
+  menuPosition = 'fixed',
   menuShouldPortal = true,
   noOptionsMessage = t('grafana-ui.select.no-options-label', 'No options found'),
   onBlur,
@@ -255,9 +256,9 @@ export function SelectBase<T, Rest = {}>({
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
-    menuPosition,
+    menuPosition: menuShouldPortal ? 'fixed' : menuPosition,
     menuShouldBlockScroll: true,
-    menuPortalTarget: menuShouldPortal && typeof document !== 'undefined' ? document.body : undefined,
+    menuPortalTarget: menuShouldPortal && getPortalContainer(),
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
@@ -354,10 +355,18 @@ export function SelectBase<T, Rest = {}>({
                 role="button"
                 aria-label={t('grafana-ui.select.clear-value', 'Clear value')}
                 className={styles.singleValueRemove}
+                tabIndex={0}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   clearValue();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    clearValue();
+                  }
                 }}
               />
             );

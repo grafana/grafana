@@ -40,13 +40,24 @@ export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
 };
 
+export enum FilterOperator {
+  CONTAINS = 'Contains',
+  EQUALS = '=',
+  NOT_EQUALS = '!=',
+  GREATER = '>',
+  GREATER_OR_EQUAL = '>=',
+  LESS = '<',
+  LESS_OR_EQUAL = '<=',
+  EXPRESSION = 'Expression',
+}
+
 export type FilterType = Record<
   string,
   {
     filteredSet: Set<string>;
     filtered?: Array<SelectableValue<unknown>>;
     searchFilter?: string;
-    operator?: SelectableValue<string>;
+    operator?: SelectableValue<FilterOperator>;
   }
 >;
 
@@ -79,7 +90,6 @@ export interface TableRow {
 
   // Nested table properties
   data?: DataFrame;
-  __nestedFrames?: DataFrame[];
   __expanded?: boolean; // For row expansion state
 
   // Generic typing for column values
@@ -105,6 +115,13 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
+/**
+ * Controls how the `sortBy` prop is applied.
+ * `initial` will only read from the options on initial render,
+ * while `managed` will update the sort order whenever the sortBy array is changed.
+ */
+export type SortByBehavior = 'initial' | 'managed';
+
 export interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
@@ -116,7 +133,8 @@ export interface BaseTableProps {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
-  initialSortBy?: TableSortByFieldState[];
+  sortBy?: TableSortByFieldState[];
+  sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
@@ -138,6 +156,8 @@ export interface BaseTableProps {
   enableVirtualization?: boolean;
   // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
   disableSanitizeHtml?: boolean;
+  // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+  disableKeyboardEvents?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -184,6 +204,7 @@ export interface TableCellActionsProps {
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
   onCellExpand: (e: SyntheticEvent) => void;
+  rowId: string;
   isExpanded?: boolean;
 }
 
@@ -260,7 +281,7 @@ export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOpti
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
 
 // Type for converting a DataFrame into an array of TableRows
-export type FrameToRowsConverter = (frame: DataFrame) => TableRow[];
+export type FrameToRowsConverter = (frame: DataFrame, nestedFramesFieldName?: string) => TableRow[];
 
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;

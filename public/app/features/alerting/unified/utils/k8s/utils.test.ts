@@ -1,4 +1,7 @@
-import { encodeFieldSelector } from './utils';
+import { KnownProvenance } from '../../types/knownProvenance';
+
+import { K8sAnnotations } from './constants';
+import { canTestEntity, encodeFieldSelector, isProvisionedResource } from './utils';
 
 describe('encodeFieldSelector', () => {
   it('should escape backslashes', () => {
@@ -23,5 +26,69 @@ describe('encodeFieldSelector', () => {
 
   it('should escape mixed special characters', () => {
     expect(encodeFieldSelector('foo=bar,bar=baz,qux\\foo')).toBe('foo\\=bar\\,bar\\=baz\\,qux\\\\foo');
+  });
+});
+
+describe('isProvisionedResource', () => {
+  it('should return true when provenance is API', () => {
+    expect(isProvisionedResource(KnownProvenance.API)).toBe(true);
+  });
+
+  it('should return true when provenance is File', () => {
+    expect(isProvisionedResource(KnownProvenance.File)).toBe(true);
+  });
+
+  it('should return true when provenance is ConvertedPrometheus', () => {
+    expect(isProvisionedResource(KnownProvenance.ConvertedPrometheus)).toBe(true);
+  });
+
+  it('should return false when provenance is none', () => {
+    expect(isProvisionedResource(KnownProvenance.None)).toBe(false);
+  });
+
+  it('should return false when provenance is undefined', () => {
+    expect(isProvisionedResource(undefined)).toBe(false);
+  });
+
+  it('should return true for any other non-empty string', () => {
+    expect(isProvisionedResource('custom-provenance')).toBe(true);
+  });
+});
+
+describe('canTestEntity', () => {
+  it('should return true when canTest annotation is "true"', () => {
+    const entity = {
+      metadata: {
+        annotations: {
+          [K8sAnnotations.AccessTest]: 'true',
+        },
+      },
+    };
+    expect(canTestEntity(entity)).toBe(true);
+  });
+
+  it('should return false when canTest annotation is "false"', () => {
+    const entity = {
+      metadata: {
+        annotations: {
+          [K8sAnnotations.AccessTest]: 'false',
+        },
+      },
+    };
+    expect(canTestEntity(entity)).toBe(false);
+  });
+
+  it('should return false when canTest annotation is missing', () => {
+    const entity = {
+      metadata: {
+        annotations: {},
+      },
+    };
+    expect(canTestEntity(entity)).toBe(false);
+  });
+
+  it('should return false when metadata is undefined', () => {
+    const entity = {};
+    expect(canTestEntity(entity)).toBe(false);
   });
 });

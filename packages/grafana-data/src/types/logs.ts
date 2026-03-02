@@ -196,6 +196,13 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   return 'getLogRowContext' in datasource;
 };
 
+export const hasLogsLabelTypesSupport = (datasource: unknown): datasource is DataSourceWithLogsLabelTypesSupport => {
+  if (!datasource || typeof datasource !== 'object') {
+    return false;
+  }
+  return 'getLabelDisplayTypeFromFrame' in datasource;
+};
+
 /**
  * Types of supplementary queries that can be run in Explore.
  * @internal
@@ -273,7 +280,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
   /**
    * Returns supplementary query types that data source supports.
    */
-  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
+  getSupportedSupplementaryQueryTypes(dsRequest?: DataQueryRequest<DataQuery>): SupplementaryQueryType[];
   /**
    * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
    * If the provided query is not suitable for the provided supplementary query type, undefined should be returned.
@@ -283,7 +290,8 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
   datasource: DataSourceApi | (DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery>),
-  type: SupplementaryQueryType
+  type: SupplementaryQueryType,
+  dsRequest?: DataQueryRequest<DataQuery>
 ): datasource is DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery> => {
   if (!datasource) {
     return false;
@@ -293,7 +301,7 @@ export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
     ('getDataProvider' in datasource || 'getSupplementaryRequest' in datasource) &&
     'getSupplementaryQuery' in datasource &&
     'getSupportedSupplementaryQueryTypes' in datasource &&
-    datasource.getSupportedSupplementaryQueryTypes().includes(type)
+    datasource.getSupportedSupplementaryQueryTypes(dsRequest).includes(type)
   );
 };
 
@@ -366,6 +374,14 @@ export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery
    * Returns a list of supported action types for `modifyQuery()`.
    */
   getSupportedQueryModifications(): Array<QueryFixType | string>;
+}
+
+/**
+ * Logs data sources that support custom field groupings within logs details in the Logs Panel.
+ * If this method is defined, the return value will be used to group fields in the Logs Panel.
+ */
+export interface DataSourceWithLogsLabelTypesSupport {
+  getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): null | string;
 }
 
 /**

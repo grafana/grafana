@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,14 +36,15 @@ var (
 
 var resource = iamv0alpha1.ServiceAccountResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
 }
 
 type LegacyStore struct {
 	store               legacy.LegacyIdentityStore
 	ac                  claims.AccessClient
 	enableAuthnMutation bool
+	tracer              trace.Tracer
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
@@ -52,6 +54,9 @@ func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccount.Delete")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
 		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
 	}
@@ -95,6 +100,9 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 
 // Create implements rest.Creater.
 func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccount.Create")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
 		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
 	}
@@ -165,9 +173,12 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccount.List")
+	defer span.End()
+
 	res, err := common.List(
 		ctx, resource, s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.ServiceAccount], error) {
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.ServiceAccount], error) {
 			found, err := s.store.ListServiceAccounts(ctx, ns, legacy.ListServiceAccountsQuery{
 				Pagination: p,
 			})
@@ -176,12 +187,13 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			items := make([]iamv0alpha1.ServiceAccount, 0, len(found.Items))
+			items := make([]*iamv0alpha1.ServiceAccount, 0, len(found.Items))
 			for _, sa := range found.Items {
-				items = append(items, s.toSAItem(sa, ns.Value))
+				saItem := s.toSAItem(sa, ns.Value)
+				items = append(items, &saItem)
 			}
 
-			return &common.ListResponse[iamv0alpha1.ServiceAccount]{
+			return &common.ListResponse[*iamv0alpha1.ServiceAccount]{
 				Items:    items,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -193,7 +205,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
-	obj := &iamv0alpha1.ServiceAccountList{Items: res.Items}
+	items := make([]iamv0alpha1.ServiceAccount, len(res.Items))
+	for i, sa := range res.Items {
+		items[i] = *sa
+	}
+
+	obj := &iamv0alpha1.ServiceAccountList{Items: items}
 	obj.Continue = common.OptionalFormatInt(res.Continue)
 	obj.ResourceVersion = common.OptionalFormatInt(res.RV)
 	return obj, nil
@@ -228,6 +245,9 @@ func extractPluginNameFromTitle(title string) string {
 }
 
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccount.Get")
+	defer span.End()
+
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err

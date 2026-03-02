@@ -22,6 +22,7 @@ import {
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -33,10 +34,10 @@ import {
   stopQueryState,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
+import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
   Block,
@@ -49,7 +50,6 @@ import {
 } from 'app/types/explore';
 import { createAsyncThunk, StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
-import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
@@ -68,7 +68,6 @@ import {
   createCacheKey,
   filterLogRowsByIndex,
   getCorrelationsData,
-  getDatasourceUIDs,
   getResultsFromCache,
   buildQueryBlocksFromQueries,
 } from './utils';
@@ -389,8 +388,7 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
           newQuery.refId === oldQuery.refId &&
           newQuery.datasource?.uid !== oldQuery.datasource?.uid
         ) {
-          const datasourceUIDs = getDatasourceUIDs(MIXED_DATASOURCE_NAME, queries);
-          const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+          const correlations = await getCorrelationsFromStorage(dispatch, queries, rootUID);
           dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
         }
       }
@@ -1145,6 +1143,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     return {
       ...state,
+      queriesChangedIndex: state.queriesChangedIndex + 1,
       queries,
     };
   }
@@ -1453,6 +1452,7 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
 
   return {
     ...state,
+    queriesChangedIndexAtRun: state.queriesChangedIndex,
     queryResponse: response,
     graphResult,
     tableResult,

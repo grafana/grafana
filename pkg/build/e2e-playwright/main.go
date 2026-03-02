@@ -130,6 +130,11 @@ func run(ctx context.Context, cmd *cli.Command) error {
 			".yarnrc.yml",
 			".yarn",
 			"packages/*/package.json",
+			"packages/grafana-data",
+			"packages/grafana-i18n",
+			"packages/grafana-runtime",
+			"packages/grafana-schema",
+			"packages/grafana-ui",
 			"packages/grafana-plugin-configs",
 			"public/app/plugins/*/*/package.json",
 			"e2e-playwright/test-plugins/*/package.json",
@@ -157,7 +162,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		},
 	})
 
-	frontendContainer, err := e2eutil.WithFrontendContainer(ctx, d, yarnHostSrc)
+	yarnCache := d.CacheVolume("yarn-cache")
+	frontendContainer, err := e2eutil.WithFrontendContainer(ctx, d, yarnHostSrc, yarnCache)
 	if err != nil {
 		return fmt.Errorf("failed to create frontend container: %w", err)
 	}

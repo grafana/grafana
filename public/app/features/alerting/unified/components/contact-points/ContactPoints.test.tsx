@@ -13,6 +13,7 @@ import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { ContactPoint } from './ContactPoint';
@@ -134,39 +135,39 @@ describe('contact points', () => {
       test('loads contact points tab', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=contact_points'] });
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('loads templates tab', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=templates'] });
 
-        expect(await screen.findByText(/add notification template/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new notification template/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with invalid query param', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=foo_bar'] });
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with no query param', async () => {
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab if user has only read permission', async () => {
         grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab if user has only create permission', async () => {
         grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
     });
 
@@ -262,10 +263,7 @@ describe('contact points', () => {
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await user.click(notificationTemplatesTab);
-      expect(screen.getByRole('link', { name: 'Add notification template group' })).toHaveAttribute(
-        'aria-disabled',
-        'true'
-      );
+      expect(screen.getByRole('link', { name: 'New notification template' })).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('allows deleting when not disabled', async () => {
@@ -305,7 +303,9 @@ describe('contact points', () => {
     });
 
     it('should disable buttons when provisioned', async () => {
-      const { user } = renderWithProvider(<ContactPoint contactPoint={{ ...basicContactPoint, provisioned: true }} />);
+      const { user } = renderWithProvider(
+        <ContactPoint contactPoint={{ ...basicContactPoint, provenance: KnownProvenance.File }} />
+      );
 
       expect(screen.getByText(/provisioned/i)).toBeInTheDocument();
 
@@ -335,7 +335,7 @@ describe('contact points', () => {
 
       const { user } = renderWithProvider(<ContactPoint contactPoint={{ ...basicContactPointInUse, policies }} />);
 
-      expect(screen.getByRole('link', { name: /1 notification policy/ })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /1 notification policies/ })).toBeInTheDocument();
 
       const moreActions = screen.getByRole('button', { name: /More/ });
       await user.click(moreActions);
@@ -474,7 +474,7 @@ describe('contact points', () => {
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await user.click(notificationTemplatesTab);
-      expect(screen.queryByRole('link', { name: 'Add notification template group' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'New notification template' })).not.toBeInTheDocument();
     });
   });
 
@@ -516,8 +516,8 @@ describe('contact points', () => {
     it('renders number of alert rules and policies and does not permit deletion', async () => {
       const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithEverything} />);
 
-      expect(screen.getByText(/used by 3 alert rule/i)).toBeInTheDocument();
-      expect(screen.getByText(/used by 1 notification policy/i)).toBeInTheDocument();
+      expect(screen.getByText(/used by 3 alert rules/i)).toBeInTheDocument();
+      expect(screen.getByText(/used by 1 notification policies/i)).toBeInTheDocument();
 
       await clickMoreActionsButton(contactPointWithEverything.name);
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
@@ -608,7 +608,7 @@ describe('contact points', () => {
 
       await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
 
-      const permissionsDialog = await screen.findByRole('dialog', { name: /drawer title manage permissions/i });
+      const permissionsDialog = await screen.findByRole('dialog', { name: /manage permissions/i });
 
       expect(permissionsDialog).toBeInTheDocument();
       expect(await screen.findByRole('table')).toBeInTheDocument();

@@ -6,6 +6,7 @@ import {
   NotifierDTO,
   NotifierType,
 } from 'app/features/alerting/unified/types/alerting';
+import { getOptionsForVersion } from 'app/features/alerting/unified/utils/notifier-versions';
 import {
   AlertmanagerReceiver,
   GrafanaManagedContactPoint,
@@ -185,6 +186,7 @@ function grafanaChannelConfigToFormChannelValues(
   const values: GrafanaChannelValues = {
     __id: id,
     type: channel.type as NotifierType,
+    version: channel.version,
     provenance: channel.provenance,
     settings: { ...channel.settings },
     secureFields: { ...channel.secureFields },
@@ -219,7 +221,7 @@ export function getSecureFieldNames(notifier: NotifierDTO): string[] {
     }
   }
 
-  findSecureOptions(notifier.options);
+  findSecureOptions(getOptionsForVersion(notifier));
 
   return secureFieldPaths;
 }
@@ -239,6 +241,7 @@ export function formChannelValuesToGrafanaChannelConfig(
     }),
     secureFields: secureFieldsFromValues,
     type: values.type,
+    version: values.version ?? existing?.version,
     name,
     disableResolveMessage:
       values.disableResolveMessage ?? existing?.disableResolveMessage ?? defaults.disableResolveMessage,

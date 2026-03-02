@@ -2,7 +2,6 @@
 // TODO: remove this when new Browse Dashboards UI is no longer feature flagged
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 
 export function getSearchPlaceholder(includePanels = false) {
   return includePanels
@@ -11,9 +10,7 @@ export function getSearchPlaceholder(includePanels = false) {
 }
 
 export function getNewDashboardPhrase() {
-  return config.featureToggles.dashboardTemplates
-    ? t('search.dashboard-actions.empty-dashboard', 'Empty dashboard')
-    : t('search.dashboard-actions.new-dashboard', 'New dashboard');
+  return t('search.dashboard-actions.new-dashboard', 'New dashboard');
 }
 
 export function getNewTemplateDashboardPhrase() {

@@ -17,7 +17,7 @@ import (
 
 const StateHistoryWriteTimeout = time.Minute
 
-func shouldRecord(transition state.StateTransition) bool {
+func ShouldRecord(transition state.StateTransition) bool {
 	if !transition.Changed() {
 		return false
 	}
@@ -35,9 +35,9 @@ func shouldRecord(transition state.StateTransition) bool {
 }
 
 // ShouldRecordAnnotation returns true if an annotation should be created for a given state transition.
-// This is stricter than shouldRecord to avoid cluttering panels with state transitions.
+// This is stricter than ShouldRecord to avoid cluttering panels with state transitions.
 func ShouldRecordAnnotation(t state.StateTransition) bool {
-	if !shouldRecord(t) {
+	if !ShouldRecord(t) {
 		return false
 	}
 

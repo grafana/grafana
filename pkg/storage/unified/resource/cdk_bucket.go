@@ -7,7 +7,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"gocloud.dev/blob"
 )
 
@@ -36,14 +35,12 @@ const (
 type InstrumentedBucket struct {
 	requests *prometheus.CounterVec
 	latency  *prometheus.HistogramVec
-	tracer   trace.Tracer
 	bucket   CDKBucket
 }
 
-func NewInstrumentedBucket(bucket CDKBucket, reg prometheus.Registerer, tracer trace.Tracer) *InstrumentedBucket {
+func NewInstrumentedBucket(bucket CDKBucket, reg prometheus.Registerer) *InstrumentedBucket {
 	b := &InstrumentedBucket{
 		bucket: bucket,
-		tracer: tracer,
 	}
 	b.initMetrics(reg)
 	return b
@@ -66,7 +63,7 @@ func (b *InstrumentedBucket) initMetrics(reg prometheus.Registerer) {
 }
 
 func (b *InstrumentedBucket) Attributes(ctx context.Context, key string) (*blob.Attributes, error) {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/Attributes")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.Attributes")
 	defer span.End()
 	start := time.Now()
 	retVal, err := b.bucket.Attributes(ctx, key)
@@ -94,7 +91,7 @@ func (b *InstrumentedBucket) List(opts *blob.ListOptions) *blob.ListIterator {
 }
 
 func (b *InstrumentedBucket) ListPage(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/ListPage")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.ListPage")
 	defer span.End()
 	start := time.Now()
 	retVal, nextPageToken, err := b.bucket.ListPage(ctx, pageToken, pageSize, opts)
@@ -116,7 +113,7 @@ func (b *InstrumentedBucket) ListPage(ctx context.Context, pageToken []byte, pag
 }
 
 func (b *InstrumentedBucket) ReadAll(ctx context.Context, key string) ([]byte, error) {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/ReadAll")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.ReadAll")
 	defer span.End()
 	start := time.Now()
 	retVal, err := b.bucket.ReadAll(ctx, key)
@@ -139,7 +136,7 @@ func (b *InstrumentedBucket) ReadAll(ctx context.Context, key string) ([]byte, e
 }
 
 func (b *InstrumentedBucket) WriteAll(ctx context.Context, key string, p []byte, opts *blob.WriterOptions) error {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/WriteAll")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.WriteAll")
 	defer span.End()
 	start := time.Now()
 	err := b.bucket.WriteAll(ctx, key, p, opts)
@@ -162,7 +159,7 @@ func (b *InstrumentedBucket) WriteAll(ctx context.Context, key string, p []byte,
 }
 
 func (b *InstrumentedBucket) Delete(ctx context.Context, key string) error {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/Delete")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.Delete")
 	defer span.End()
 	start := time.Now()
 	err := b.bucket.Delete(ctx, key)
@@ -185,7 +182,7 @@ func (b *InstrumentedBucket) Delete(ctx context.Context, key string) error {
 }
 
 func (b *InstrumentedBucket) SignedURL(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error) {
-	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/SignedURL")
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.SignedURL")
 	defer span.End()
 	start := time.Now()
 	retVal, err := b.bucket.SignedURL(ctx, key, opts)

@@ -17,6 +17,7 @@ import (
 	dbsql "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -94,7 +95,7 @@ func TestIntegrationListIter(t *testing.T) {
 				return fmt.Errorf("failed to insert test data: %w", err)
 			}
 
-			if _, err = dbutil.Exec(ctx, tx, sqlResourceUpdateRV, sqlResourceUpdateRVRequest{
+			if _, err = dbutil.Exec(ctx, tx, rvmanager.SqlResourceUpdateRV, rvmanager.SqlResourceUpdateRVRequest{
 				SQLTemplate: sqltemplate.New(dialect),
 				GUIDToRV: map[string]int64{
 					item.guid: item.resourceVersion,
@@ -214,14 +215,14 @@ func TestIntegrationListIter(t *testing.T) {
 
 		token := iter.ContinueToken()
 
-		var actual resource.ContinueToken
+		var actual ContinueToken
 		b, err := base64.StdEncoding.DecodeString(token)
 		require.NoError(t, err)
 
 		err = json.Unmarshal(b, &actual)
 		require.NoError(t, err)
 
-		expected := resource.ContinueToken{
+		expected := ContinueToken{
 			ResourceVersion: 300,
 			StartOffset:     1,
 			SortAscending:   true,
@@ -250,14 +251,14 @@ func TestIntegrationListIter(t *testing.T) {
 
 		token := iter.ContinueToken()
 
-		var actual resource.ContinueToken
+		var actual ContinueToken
 		b, err := base64.StdEncoding.DecodeString(token)
 		require.NoError(t, err)
 
 		err = json.Unmarshal(b, &actual)
 		require.NoError(t, err)
 
-		expected := resource.ContinueToken{
+		expected := ContinueToken{
 			ResourceVersion: 100,
 			StartOffset:     1,
 			SortAscending:   true,

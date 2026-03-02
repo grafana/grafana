@@ -145,7 +145,7 @@ func Test_readPluginSettings(t *testing.T) {
 
 	t.Run("when plugins.preinstall is defined", func(t *testing.T) {
 		defaultPreinstallPluginsList := make([]InstallPlugin, 0, len(defaultPreinstallPlugins))
-		defaultPreinstallPluginsIDs := []string{}
+		defaultPreinstallPluginsIDs := make([]string, 0, len(defaultPreinstallPlugins))
 		for _, p := range defaultPreinstallPlugins {
 			defaultPreinstallPluginsList = append(defaultPreinstallPluginsList, p)
 			defaultPreinstallPluginsIDs = append(defaultPreinstallPluginsIDs, p.ID)
@@ -209,6 +209,11 @@ func Test_readPluginSettings(t *testing.T) {
 				name:     "should parse a plugin with URL",
 				rawInput: "plugin1@@https://example.com/plugin1.tar.gz",
 				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://example.com/plugin1.tar.gz"}),
+			},
+			{
+				name:     "should parse a plugin with credentials in the URL",
+				rawInput: "plugin1@@https://username:password@example.com/plugin1.tar.gz",
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://username:password@example.com/plugin1.tar.gz"}),
 			},
 			{
 				name:         "when preinstall_async is false, should add all plugins to preinstall_sync",

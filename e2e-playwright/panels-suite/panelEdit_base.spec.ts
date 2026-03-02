@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { VisualizationSelectPaneTab } from '../../public/app/features/dashboard/components/PanelEditor/types';
+
 const PANEL_UNDER_TEST = 'Lines 500 data points';
 
 test.describe(
@@ -8,7 +10,7 @@ test.describe(
     tag: ['@panels'],
   },
   () => {
-    test('Tests various Panel edit scenarios', async ({ gotoDashboardPage, selectors, page }) => {
+    test('Tests various Panel edit scenarios', async ({ gotoDashboardPage, selectors, page, panelEditPage }) => {
       const dashboardPage = await gotoDashboardPage({ uid: 'TkZXxlNG3' });
 
       const panelTitle = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(PANEL_UNDER_TEST));
@@ -58,7 +60,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Queries')).click();
 
       // Check that Time series is chosen
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker)).toContainText(
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)).toHaveText(
         'Time series'
       );
 
@@ -71,9 +73,14 @@ test.describe(
 
       // Change to Text panel
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage
+        .getByGrafanaSelector(
+          selectors.components.Tab.title(VisualizationSelectPaneTab[VisualizationSelectPaneTab.Visualizations])
+        )
+        .click(); // <-- should only need to do this once thanks to the session storage
       await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item('Text')).click();
       // Check current visualization shows Text
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker)).toContainText(
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)).toHaveText(
         'Text'
       );
 
@@ -84,7 +91,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item('Table')).click();
       // Check current visualization shows Table
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker)).toContainText(
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)).toHaveText(
         'Table'
       );
 

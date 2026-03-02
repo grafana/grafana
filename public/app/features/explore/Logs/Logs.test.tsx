@@ -75,6 +75,7 @@ describe('Logs', () => {
     Object.defineProperty(window, 'location', {
       value: {
         href: 'http://localhost:3000/explore?test',
+        search: '?test',
       },
       writable: true,
     });

@@ -30,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
+	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -40,12 +42,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
@@ -420,8 +420,13 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
+	// Go 1.26's httptest.ResponseRecorder.Write returns http.ErrBodyNotAllowed
+	// for status codes that disallow a body (204, 304). The error is expected
+	// because HTTPResponseSender unconditionally calls Write on the response.
+	//require.ErrorContains(t, err, "request method or response status code does not allow body")
+	// Uncomment when we finally upgrade and delete the one below
+	//require.Zero(t, resp.Header().Get("Content-Type"))
 	require.NoError(t, err)
-
 	require.True(t, resp.Flushed, "response should be flushed after request is processed")
 	require.Zero(t, resp.Header().Get("Content-Type"))
 }
@@ -528,7 +533,7 @@ func callGetPluginAsset(sc *scenarioContext) {
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
 	cfg *setting.Cfg, pluginRegistry registry.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+		store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 		require.NoError(t, err)
 
 		hs := HTTPServer{
@@ -567,22 +572,29 @@ type fakePluginClient struct {
 
 func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	c.req = req
-	bytes, err := json.Marshal(map[string]any{
-		"message": "hello",
-	})
-	if err != nil {
-		return err
-	}
 
 	statusCode := http.StatusOK
 	if c.statusCode != 0 {
 		statusCode = c.statusCode
 	}
 
+	// Go 1.26.0 follows RFC 7230 more strictly:
+	// https://github.com/golang/go/blame/master/src/net/http/httptest/recorder.go#L113-L115
+	var body []byte
+	if statusCode != http.StatusNoContent && statusCode != http.StatusNotModified {
+		var err error
+		body, err = json.Marshal(map[string]any{
+			"message": "hello",
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return sender.Send(&backend.CallResourceResponse{
 		Status:  statusCode,
 		Headers: c.headers,
-		Body:    bytes,
+		Body:    body,
 	})
 }
 
@@ -643,7 +655,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 				require.NoError(t, err)
 
 				hs.Cfg = setting.NewCfg()
@@ -678,9 +690,10 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 
 func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	return &plugins.Plugin{
-		JSONData: jd,
-		Class:    class,
-		FS:       files,
+		JSONData:        jd,
+		Class:           class,
+		FS:              files,
+		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 }
 
@@ -833,7 +846,7 @@ func Test_PluginsSettings(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 				require.NoError(t, err)
 
 				hs.Cfg = setting.NewCfg()
@@ -850,7 +863,8 @@ func Test_PluginsSettings(t *testing.T) {
 				pCfg := &config.PluginManagementCfg{}
 				pluginCDN := pluginscdn.ProvideService(pCfg)
 				sig := signature.ProvideService(pCfg, statickey.New())
-				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
+				calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), pluginCDN, sig)
+				hs.pluginAssets = pluginassets.ProvideService(calc)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,
@@ -903,7 +917,7 @@ func Test_UpdatePluginSetting(t *testing.T) {
 
 	t.Run("should return an error when trying to disable an auto-enabled plugin", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 			require.NoError(t, err)
 
 			hs.Cfg = setting.NewCfg()

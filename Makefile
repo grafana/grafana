@@ -8,18 +8,26 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.3
+GO_VERSION = 1.25.7
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
-GO_BUILD_FLAGS += $(GO_RACE_FLAG)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_CGO),-cgo-enabled=$(GO_BUILD_CGO))
+# Backend build version and ldflags (aligned with pkg/build/daggerbuild/backend).
+BUILD_NUMBER ?= local
+BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
+BUILD_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+BUILD_STAMP := $(shell echo $${SOURCE_DATE_EPOCH:-$$(date +%s 2>/dev/null)})
+GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
+	-X main.commit=$(BUILD_COMMIT) \
+	-X main.buildBranch=$(BUILD_BRANCH) \
+	-X main.buildstamp=$(BUILD_STAMP)
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
+
+CUE = cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -37,7 +45,7 @@ all: deps build
 
 .PHONY: deps-go
 deps-go: ## Install backend dependencies.
-	$(GO) run $(GO_RACE_FLAG) build.go setup
+	go mod download
 
 .PHONY: deps-js
 deps-js: node_modules ## Install frontend dependencies.
@@ -125,7 +133,13 @@ OAPI_SPEC_TARGET = public/openapi3.json
 
 .PHONY: openapi3-gen
 openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
+	$(GO) run $(GO_RACE_FLAG) scripts/openapi3/openapi3conv.go cleanup $(ENTERPRISE_SPEC_TARGET) $(MERGED_SPEC_TARGET)
 	$(GO) run $(GO_RACE_FLAG) scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+
+.PHONY: generate-openapi
+generate-openapi: openapi3-gen
+	$(GO) test ./pkg/tests/apis || true
+	yarn workspace @grafana/openapi process-specs
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
@@ -135,18 +149,18 @@ i18n-extract-enterprise:
 	@echo "Skipping i18n extract for Enterprise: not enabled"
 else
 i18n-extract-enterprise:
-	@echo "Extracting i18n strings for Enterprise"	
-	cd public/locales/enterprise && yarn run i18next-cli extract --sync-primary
+	@echo "Extracting i18n strings for Enterprise"
+	cd public/locales/enterprise && LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	yarn run i18next-cli extract --sync-primary
+	LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
-	yarn run packages:i18n-extract
+	LANG=en_US.UTF-8 yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
-	yarn run plugin:i18n-extract
+	LANG=en_US.UTF-8 yarn run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
@@ -167,18 +181,26 @@ gen-cuev2: ## Do all CUE code generation
 	@echo "generate code from .cue files (v2)"
 	@$(MAKE) -C ./kindsv2 all
 
-# TODO (@radiohead): uncomment once we want to start generating code for all apps.
-# For now, we want to use an explicit list of apps to generate code for.
-#
-#APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
-APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
+
+APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | sort)
+# Alternatively use an explicit list of apps:
+# APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
+
+# Optional app variable to specify a single app to generate
+# Usage: make gen-apps app=dashboard
+app ?=
 
 .PHONY: gen-apps
-gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt
+gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt. Use app=<name> to generate for a specific app.
+## NOTE: codegen produces some openapi files that result in circular dependencies
+## for now, we revert the zz_openapi_gen.go files before comparison
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+	  git checkout HEAD -- apps/alerting/rules/pkg/apis/alerting/v0alpha1/zz_openapi_gen.go; \
+		git checkout HEAD -- apps/iam/pkg/apis/iam/v0alpha1/zz_openapi_gen.go; \
+    git checkout HEAD -- apps/secret/pkg/apis/secret/v1beta1/zz_openapi_gen.go; \
 		echo "Verifying generated code is up to date..."; \
 		if ! git diff --quiet; then \
-			echo "Error: Generated code is not up to date. Please run 'make gen-apps', 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \
+			echo "Error: Generated code is not up to date. Please run 'make gen-apps' (optionally with app=<name>), 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \
 			git diff --name-only; \
 			exit 1; \
 		fi; \
@@ -187,10 +209,20 @@ gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run go
 
 .PHONY: do-gen-apps
 do-gen-apps: ## Generate code for Grafana App SDK apps
-	for dir in $(APPS_DIRS); do \
-		$(MAKE) -C $$dir generate; \
-	done
-	./hack/update-codegen.sh
+	@if [ -n "$(app)" ]; then \
+		app_dir="./apps/$(app)"; \
+		if [ ! -f "$$app_dir/Makefile" ]; then \
+			echo "Error: App '$(app)' not found or does not have a Makefile at $$app_dir"; \
+			exit 1; \
+		fi; \
+		echo "Generating code for app: $(app)"; \
+		$(MAKE) -C $$app_dir generate; \
+	else \
+		for dir in $(APPS_DIRS); do \
+			$(MAKE) -C $$dir generate; \
+		done; \
+		./hack/update-codegen.sh; \
+	fi
 
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
@@ -217,15 +249,33 @@ gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generating Wire graph"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
+.PHONY: gen-app-manifests-unistore
+gen-app-manifests-unistore: ## Generate unified storage app manifests list
+	@echo "generating unified storage app manifests"
+	$(GO) generate ./pkg/storage/unified/resource/app_manifests.go
+	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+		echo "Verifying generated code is up to date..."; \
+		if ! git diff --quiet pkg/storage/unified/resource/app_manifests.go; then \
+			echo "Error: pkg/storage/unified/resource/app_manifests.go is not up to date. Please run 'make gen-app-manifests-unistore' to regenerate."; \
+			git diff pkg/storage/unified/resource/app_manifests.go; \
+			exit 1; \
+		fi; \
+		echo "Generated app manifests code is up to date."; \
+	fi
+
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"
-	$(cue) fix kinds/**/*.cue
-	$(cue) fix public/app/plugins/**/**/*.cue
+	$(CUE) fix kinds/**/*.cue
+	$(CUE) fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
 	go generate ./devenv/jsonnet
+
+.PHONY: gen-themes
+gen-themes:
+	go generate ./pkg/services/preference
 
 .PHONY: update-workspace
 update-workspace: gen-go
@@ -233,32 +283,16 @@ update-workspace: gen-go
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: ## Build all Go binaries.
-	@echo "build go files with updated workspace"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build
-
-.PHONY: build-go-fast
-build-go-fast: ## Build all Go binaries without updating workspace.
-	@echo "!!! [DEPRECATED] use build-go, they do the same thing now. This command will be removed soon"
+build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
+	@echo "build go binaries"
+	$(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
 
 .PHONY: build-backend
-build-backend: ## Build Grafana backend.
-	@echo "build backend"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
+build-backend: build-go
 
 .PHONY: build-air
-build-air: build-backend
+build-air: build-go
 	@cp ./bin/grafana ./bin/grafana-air
-
-.PHONY: build-server
-build-server: ## Build Grafana server.
-	@echo "build server"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
-
-.PHONY: build-cli
-build-cli: ## Build Grafana CLI application.
-	@echo "build grafana-cli"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
 
 .PHONY: build-js
 build-js: ## Build frontend assets.

@@ -4,11 +4,10 @@ import {
   FieldType,
   VisualizationSuggestion,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplierFn,
+  VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LegendDisplayMode } from '@grafana/schema';
-import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
+import { defaultNumericVizOptions, SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { PieChartLabels, Options, PieChartType } from './panelcfg.gen';
 
@@ -16,12 +15,13 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
   defaultsDeep(suggestion, {
     options: {
       displayLabels: [PieChartLabels.Percent],
-      legend: {
-        calcs: [],
-        displayMode: LegendDisplayMode.Hidden,
-        placement: 'right',
-        values: [],
-        showLegend: false,
+    },
+    cardOptions: {
+      previewModifier: (s) => {
+        s.options!.legend = {
+          ...SUGGESTIONS_LEGEND_OPTIONS,
+          values: [],
+        };
       },
     },
   } satisfies VisualizationSuggestion<Options>);
@@ -29,7 +29,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
 const SLICE_MAX = 30;
 const SLICE_MIN = 2;
 
-export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
+export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
   if (!dataSummary.hasFieldType(FieldType.number)) {
     return;
   }

@@ -820,14 +820,23 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 		db:      store,
 		dialect: store.GetDialect(),
 		log:     log.NewNopLogger(),
+		cfg:     cfg,
 	}
-	// orgUserStore.cfg.Skip
+
 	orgSvc, userSvc := createOrgAndUserSvc(t, store, cfg)
 
 	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
 	require.NoError(t, err)
 
 	seedOrgUsers(t, &orgUserStore, 10, userSvc, o.ID)
+
+	user1, err := userSvc.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "user-1"})
+	require.NoError(t, err)
+
+	cfg.HiddenUsers = map[string]struct{}{
+		"user-1": {},
+		"user-2": {},
+	}
 
 	tests := []struct {
 		desc             string
@@ -840,7 +849,7 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 				OrgID: o.ID,
 				User: &user.SignedInUser{
 					OrgID:       o.ID,
-					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+					Permissions: map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 				},
 			},
 			expectedNumUsers: 10,
@@ -851,7 +860,7 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 				OrgID: o.ID,
 				User: &user.SignedInUser{
 					OrgID:       o.ID,
-					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {""}}},
+					Permissions: map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {""}}},
 				},
 			},
 			expectedNumUsers: 0,
@@ -862,14 +871,63 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 				OrgID: o.ID,
 				User: &user.SignedInUser{
 					OrgID: o.ID,
-					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {
-						"users:id:1",
+					Permissions: map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {
+						"users:id:2",
 						"users:id:5",
 						"users:id:9",
 					}}},
 				},
 			},
 			expectedNumUsers: 3,
+		},
+		{
+			desc: "should exclude hidden users when ExcludeHiddenUsers is true and user is nil",
+			query: &org.SearchOrgUsersQuery{
+				OrgID:                    o.ID,
+				ExcludeHiddenUsers:       true,
+				User:                     nil,
+				DontEnforceAccessControl: true,
+			},
+			expectedNumUsers: 8,
+		},
+		{
+			desc: "should not exclude hidden users when ExcludeHiddenUsers is true and user is Grafana Admin",
+			query: &org.SearchOrgUsersQuery{
+				OrgID:              o.ID,
+				ExcludeHiddenUsers: true,
+				User: &user.SignedInUser{
+					OrgID:          o.ID,
+					IsGrafanaAdmin: true,
+					Permissions:    map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+			},
+			expectedNumUsers: 10,
+		},
+		{
+			desc: "should return all users if ExcludeHiddenUsers is false",
+			query: &org.SearchOrgUsersQuery{
+				OrgID:              o.ID,
+				ExcludeHiddenUsers: false,
+				User: &user.SignedInUser{
+					OrgID:       o.ID,
+					Permissions: map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+			},
+			expectedNumUsers: 10,
+		},
+		{
+			desc: "should include the hidden user when the request is made by the hidden user and ExcludeHiddenUsers is true",
+			query: &org.SearchOrgUsersQuery{
+				OrgID:              o.ID,
+				ExcludeHiddenUsers: true,
+				User: &user.SignedInUser{
+					UserID:      user1.ID,
+					Login:       user1.Login,
+					OrgID:       o.ID,
+					Permissions: map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+			},
+			expectedNumUsers: 9,
 		},
 	}
 
@@ -879,13 +937,58 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, result.OrgUsers, tt.expectedNumUsers)
 
-			if !hasWildcardScope(tt.query.User, accesscontrol.ActionOrgUsersRead) {
+			// No pagination is applied, so TotalCount should equal to number of returned users
+			assert.Equal(t, int64(tt.expectedNumUsers), result.TotalCount)
+
+			if tt.query.User != nil && !hasWildcardScope(tt.query.User, accesscontrol.ActionOrgUsersRead) && !tt.query.User.GetIsGrafanaAdmin() {
 				for _, u := range result.OrgUsers {
 					assert.Contains(t, tt.query.User.GetPermissions()[accesscontrol.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserID))
 				}
 			}
 		})
 	}
+
+	t.Run("should paginate correctly when ExcludeHiddenUsers is true", func(t *testing.T) {
+		query := &org.SearchOrgUsersQuery{
+			OrgID:              o.ID,
+			ExcludeHiddenUsers: true,
+			User: &user.SignedInUser{
+				OrgID:       o.ID,
+				Permissions: map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+			},
+			Limit: 5,
+			Page:  1,
+		}
+		result, err := orgUserStore.SearchOrgUsers(context.Background(), query)
+		require.NoError(t, err)
+		assert.Len(t, result.OrgUsers, 5)
+		assert.Equal(t, int64(8), result.TotalCount)
+
+		query.Page = 2
+		result, err = orgUserStore.SearchOrgUsers(context.Background(), query)
+		require.NoError(t, err)
+		assert.Len(t, result.OrgUsers, 3)
+		assert.Equal(t, int64(8), result.TotalCount)
+	})
+
+	t.Run("should return all users if HiddenUsers is empty", func(t *testing.T) {
+		oldHiddenUsers := cfg.HiddenUsers
+		cfg.HiddenUsers = make(map[string]struct{})
+		defer func() { cfg.HiddenUsers = oldHiddenUsers }()
+
+		query := &org.SearchOrgUsersQuery{
+			OrgID:              o.ID,
+			ExcludeHiddenUsers: true,
+			User: &user.SignedInUser{
+				OrgID:       o.ID,
+				Permissions: map[int64]map[string][]string{o.ID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+			},
+		}
+		result, err := orgUserStore.SearchOrgUsers(context.Background(), query)
+		require.NoError(t, err)
+		assert.Len(t, result.OrgUsers, 10)
+		assert.Equal(t, int64(10), result.TotalCount)
+	})
 }
 
 func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {

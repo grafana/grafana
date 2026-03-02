@@ -7,7 +7,6 @@ import (
 )
 
 var WireSet = wire.NewSet(
-	builder.ProvideDualWriterMetrics,
 	builder.ProvideBuilderMetrics,
 	ProvideEventualRestConfigProvider,
 	wire.Bind(new(RestConfigProvider), new(*eventualRestConfigProvider)),

@@ -3,14 +3,15 @@ import {
   FieldType,
   PanelDataSummary,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplierFn,
+  VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GraphFieldConfig } from '@grafana/schema';
 
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { Options, defaultOptions } from './types';
+import { Options } from './panelcfg.gen';
+import { defaultOptions } from './types';
 
 function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore {
   // look to see if the data has an explicity marker for heatmap data on it.
@@ -43,7 +44,7 @@ function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionS
   return VisualizationSuggestionScore.OK;
 }
 
-export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
+export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (
   dataSummary: PanelDataSummary
 ) => {
   if (
@@ -69,5 +70,14 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Opti
     return;
   }
 
-  return [{ score: determineScore(dataSummary) }];
+  return [
+    {
+      score: determineScore(dataSummary),
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.legend = { show: false };
+        },
+      },
+    },
+  ];
 };

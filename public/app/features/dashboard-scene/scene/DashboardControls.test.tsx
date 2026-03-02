@@ -1,10 +1,38 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
+import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import {
+  AdHocFiltersVariable,
+  GroupByVariable,
+  SceneVariableSet,
+  ScopesVariable,
+  TextBoxVariable,
+} from '@grafana/scenes';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
+
+jest.mock('app/features/playlist/PlaylistSrv', () => ({
+  playlistSrv: {
+    useState: jest.fn().mockReturnValue({ isPlaying: false }),
+    state: { isPlaying: false },
+    stop: jest.fn(),
+  },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue({ getTagKeysProvider: jest.fn() }),
+    getList: jest.fn(),
+    getInstanceSettings: jest.fn(),
+    reload: jest.fn(),
+    registerRuntimeDataSource: jest.fn(),
+  })),
+}));
 
 describe('DashboardControls', () => {
   describe('Given a standard scene', () => {
@@ -138,6 +166,57 @@ describe('DashboardControls', () => {
 
       jest.restoreAllMocks();
     });
+
+    describe('drilldown wrapper hidden variables', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+
+      beforeEach(() => {
+        config.featureToggles = {
+          dashboardNewLayouts: true,
+          dashboardAdHocAndGroupByWrapper: true,
+        };
+      });
+
+      afterEach(() => {
+        config.featureToggles = originalFeatureToggles;
+      });
+
+      it('should render hidden group-by variable in edit mode when drilldown wrapper is enabled', async () => {
+        const adHocVar = new AdHocFiltersVariable({
+          name: 'filters',
+          label: 'filters',
+          filters: [],
+          datasource: { uid: 'devscopes' },
+          applicabilityEnabled: false,
+        });
+        const groupByVar = new GroupByVariable({
+          name: 'query0',
+          value: ['instance'],
+          text: ['instance'],
+          options: [],
+          datasource: { uid: 'devscopes' },
+          hide: VariableHide.hideVariable,
+          applicabilityEnabled: false,
+        });
+
+        const dashboard = new DashboardScene({
+          uid: 'test-dashboard',
+          $variables: new SceneVariableSet({
+            variables: [adHocVar, groupByVar],
+          }),
+          controls: new DashboardControls({}),
+        });
+
+        dashboard.activate();
+        dashboard.setState({ isEditing: true });
+
+        const controls = dashboard.state.controls as DashboardControls;
+        render(<controls.Component model={controls} />);
+
+        // Hidden variables should still be visible in edit mode.
+        expect(await screen.findByText('query0')).toBeInTheDocument();
+      });
+    });
   });
 
   describe('UrlSync', () => {
@@ -221,7 +300,84 @@ describe('DashboardControls', () => {
       expect(setState).toHaveBeenCalledTimes(0);
     });
   });
+
+  describe('DashboardControlActions editable flag', () => {
+    const originalFeatureToggles = { ...config.featureToggles };
+
+    beforeEach(() => {
+      config.featureToggles.dashboardNewLayouts = true;
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
+    });
+
+    afterEach(() => {
+      config.featureToggles = originalFeatureToggles;
+      jest.clearAllMocks();
+    });
+
+    it('should show EditDashboardSwitch when editable is true', async () => {
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      render(<controls.Component model={controls} />);
+
+      expect(await screen.findByRole('button', { name: /edit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
+    });
+
+    it('should show MakeDashboardEditableButton when editable is false', async () => {
+      const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
+      render(<controls.Component model={controls} />);
+
+      expect(await screen.findByRole('button', { name: /make editable/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show edit buttons when canEditDashboard returns false', async () => {
+      const controls = buildTestSceneWithEditable({
+        editable: true,
+        canEdit: false,
+        canMakeEditable: false,
+        isSnapshot: true,
+      });
+      render(<controls.Component model={controls} />);
+
+      expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show edit buttons when playlist is playing', async () => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
+
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      render(<controls.Component model={controls} />);
+
+      expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+    });
+  });
 });
+
+function buildTestSceneWithEditable(options: {
+  editable: boolean;
+  canEdit?: boolean;
+  canMakeEditable?: boolean;
+  isSnapshot?: boolean;
+}): DashboardControls {
+  const { editable, canEdit = true, canMakeEditable = false, isSnapshot = false } = options;
+
+  const dashboard = new DashboardScene({
+    uid: 'test-uid',
+    editable,
+    meta: {
+      canEdit,
+      canMakeEditable,
+      isSnapshot,
+    },
+    controls: new DashboardControls({}),
+  });
+
+  dashboard.activate();
+
+  return dashboard.state.controls as DashboardControls;
+}
 
 function buildTestScene(state?: Partial<DashboardControlsState>): DashboardControls {
   const variable = new TextBoxVariable({

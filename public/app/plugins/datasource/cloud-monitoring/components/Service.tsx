@@ -4,8 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
+import { SLOQuery } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
-import { SLOQuery } from '../types/query';
 
 export interface Props {
   refId: string;

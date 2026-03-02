@@ -65,6 +65,12 @@
             "type": "boolean",
             "name": "includeHidden",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -374,6 +380,12 @@
             "name": "teamId",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -414,6 +426,12 @@
             "schema": {
               "$ref": "#/definitions/SetTeamRolesCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -572,6 +590,22 @@
             "name": "userId",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "name": "includeHidden",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "includeMapped",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -612,6 +646,12 @@
             "name": "userId",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -726,7 +766,7 @@
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
         "tags": [
-          "ldap_debug",
+          "admin_ldap",
           "enterprise"
         ],
         "summary": "Returns the current state of the LDAP background sync integration.",
@@ -750,7 +790,8 @@
     "/admin/provisioning/access-control/reload": {
       "post": {
         "tags": [
-          "access_control_provisioning",
+          "admin_provisioning",
+          "access_control",
           "enterprise"
         ],
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
@@ -860,6 +901,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -886,6 +932,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           },
           {
             "name": "body",
@@ -953,6 +1004,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -981,6 +1037,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2262,8 +2323,7 @@
         "operationId": "getTeamGroupsApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -2307,8 +2367,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -2349,8 +2408,7 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -2862,6 +2920,9 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "userUID": {
+          "type": "string"
         }
       }
     },
@@ -3532,9 +3593,6 @@
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
       "format": "double"
-    },
-    "CookieType": {
-      "type": "string"
     },
     "Correlation": {
       "description": "Correlation is the model for correlations definitions",
@@ -5904,7 +5962,7 @@
         },
         "key": {
           "type": "string",
-          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
+          "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697"
         },
         "name": {
           "type": "string",
@@ -6003,6 +6061,10 @@
         },
         "avatarUrl": {
           "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
         },
         "email": {
           "type": "string"
@@ -6119,12 +6181,6 @@
     "PatchPrefsCmd": {
       "type": "object",
       "properties": {
-        "cookies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CookieType"
-          }
-        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -6154,11 +6210,8 @@
           ]
         },
         "timezone": {
-          "type": "string",
-          "enum": [
-            "utc",
-            "browser"
-          ]
+          "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
+          "type": "string"
         },
         "weekStart": {
           "type": "string"
@@ -6391,15 +6444,6 @@
         }
       }
     },
-    "PreferencesCookiePreferences": {
-      "description": "+k8s:openapi-gen=true",
-      "type": "object",
-      "properties": {
-        "analytics": {},
-        "functional": {},
-        "performance": {}
-      }
-    },
     "PreferencesNavbarPreference": {
       "description": "+k8s:openapi-gen=true",
       "type": "object",
@@ -6426,9 +6470,6 @@
       "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/PreferencesCookiePreferences"
-        },
         "homeDashboardUID": {
           "description": "UID for the home dashboard",
           "type": "string"
@@ -6992,6 +7033,9 @@
     "ReportOptions": {
       "type": "object",
       "properties": {
+        "csvEncoding": {
+          "type": "string"
+        },
         "layout": {
           "type": "string"
         },
@@ -7968,6 +8012,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "uid": {
           "type": "string"
         }
@@ -8351,47 +8398,11 @@
         }
       }
     },
-    "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
-      "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
-      "properties": {
-        "ForceQuery": {
-          "type": "boolean"
-        },
-        "Fragment": {
-          "type": "string"
-        },
-        "Host": {
-          "type": "string"
-        },
-        "OmitHost": {
-          "type": "boolean"
-        },
-        "Opaque": {
-          "type": "string"
-        },
-        "Path": {
-          "type": "string"
-        },
-        "RawFragment": {
-          "type": "string"
-        },
-        "RawPath": {
-          "type": "string"
-        },
-        "RawQuery": {
-          "type": "string"
-        },
-        "Scheme": {
-          "type": "string"
-        },
-        "User": {
-          "$ref": "#/definitions/Userinfo"
-        }
-      }
-    },
-    "Unstructured": {
+    "URL": { 
+			"type": "string", 
+			"format": "url" 
+		},
+		"Unstructured": {
       "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
       "type": "object",
       "properties": {
@@ -8620,12 +8631,6 @@
     "UpdatePrefsCmd": {
       "type": "object",
       "properties": {
-        "cookies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CookieType"
-          }
-        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -8656,11 +8661,8 @@
           ]
         },
         "timezone": {
-          "type": "string",
-          "enum": [
-            "utc",
-            "browser"
-          ]
+          "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
+          "type": "string"
         },
         "weekStart": {
           "type": "string"
@@ -8907,6 +8909,10 @@
         },
         "avatarUrl": {
           "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
         },
         "email": {
           "type": "string"
@@ -10478,7 +10484,10 @@
     "searchTeamGroupsResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/SearchTeamGroupsQueryResult"
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SearchTeamGroupsQueryResult"
+        }
       }
     },
     "searchTeamsResponse": {

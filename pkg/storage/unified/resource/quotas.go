@@ -18,6 +18,26 @@ import (
 
 const DEFAULT_RESOURCE_LIMIT = 1000
 
+type QuotasConfig struct {
+	EnforceQuotas  bool
+	SupportMessage string
+}
+
+type QuotaExceededError struct {
+	Resource       string
+	Used           int64
+	Limit          int
+	SupportMessage string
+}
+
+func (e QuotaExceededError) Error() string {
+	return fmt.Sprintf("limit reached for resource %s", e.Resource)
+}
+
+func (e QuotaExceededError) Message() string {
+	return fmt.Sprintf("Limit reached for resource %s: %d/%d %s", e.Resource, e.Used, e.Limit, e.SupportMessage)
+}
+
 type OverridesService struct {
 	manager *runtimeconfig.Manager
 	logger  log.Logger
@@ -47,13 +67,14 @@ type Overrides struct {
 /*
 This service loads overrides (currently just quotas) from a YAML file with the following yaml structure:
 
-"123":
+overrides:
 
+	"123":
 	  quotas:
-		grafana.dashboard.app/dashboards:
-		  limit: 1500
-		grafana.folder.app/folders:
-		  limit: 1500
+	    dashboard.grafana.app/dashboards:
+	      limit: 1500
+	    folder.grafana.app/folders:
+	      limit: 1500
 */
 func NewOverridesService(_ context.Context, logger log.Logger, reg prometheus.Registerer, tracer trace.Tracer, opts ReloadOptions) (*OverridesService, error) {
 	// shouldn't be empty since we use file path existence to determine if we should enable the service
@@ -76,12 +97,14 @@ func NewOverridesService(_ context.Context, logger log.Logger, reg prometheus.Re
 		ReloadPeriod: opts.ReloadPeriod,
 		LoadPath:     []string{opts.FilePath},
 		Loader: func(r io.Reader) (interface{}, error) {
-			var tenants map[string]NamespaceOverrides
+			var raw struct {
+				Overrides map[string]NamespaceOverrides `yaml:"overrides"`
+			}
 			decoder := yaml.NewDecoder(r)
-			if err := decoder.Decode(&tenants); err != nil {
+			if err := decoder.Decode(&raw); err != nil {
 				return nil, err
 			}
-			return &Overrides{Namespaces: tenants}, nil
+			return &Overrides{Namespaces: raw.Overrides}, nil
 		},
 	}
 

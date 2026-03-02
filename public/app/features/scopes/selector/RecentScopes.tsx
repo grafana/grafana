@@ -9,7 +9,7 @@ import { RecentScope } from './types';
 
 interface RecentScopesProps {
   recentScopes: RecentScope[][];
-  onSelect: (scopeIds: string[], parentNodeId?: string) => void;
+  onSelect: (scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => void;
 }
 
 export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
@@ -45,7 +45,8 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
                 onClick={() => {
                   onSelect(
                     recentScopeSet.map((s) => s.metadata.name),
-                    recentScopeSet[0]?.parentNode?.metadata?.name
+                    recentScopeSet[0]?.parentNode?.metadata?.name,
+                    recentScopeSet[0]?.scopeNodeId
                   );
                 }}
               >

@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { DashboardPage, E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
@@ -78,6 +79,20 @@ export const flows = {
       await variableLabelInput.blur();
     }
   },
+  async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
+    await flows.newEditPaneVariableClick(dashboardPage, selectors);
+    await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+    // set the textbox variable value
+    const type = 'variable-type Value';
+    const fieldLabel = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
+    );
+    await expect(fieldLabel).toBeVisible();
+    const inputField = fieldLabel.locator('input');
+    await expect(inputField).toBeVisible();
+    await inputField.fill(variable.value);
+    await inputField.blur();
+  },
 };
 
 export type Variable = {
@@ -88,8 +103,16 @@ export type Variable = {
   value: string;
 };
 
-export async function saveDashboard(dashboardPage: DashboardPage, page: Page, selectors: E2ESelectorGroups) {
+export async function saveDashboard(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  title?: string
+) {
   await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+  if (title) {
+    await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
+  }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
   await expect(page.getByText('Dashboard saved')).toBeVisible();
 }
@@ -158,8 +181,16 @@ export async function verifyChanges(
   await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
 }
-
-export async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string, dashInput?: string) {
+interface ImportTestDashboardOptions {
+  checkPanelsVisible?: boolean;
+}
+export async function importTestDashboard(
+  page: Page,
+  selectors: E2ESelectorGroups,
+  title: string,
+  dashInput?: string,
+  options: ImportTestDashboardOptions = { checkPanelsVisible: true }
+) {
   await page.goto(selectors.pages.ImportDashboard.url);
   await page
     .getByTestId(selectors.components.DashboardImportPage.textarea)
@@ -174,8 +205,9 @@ export async function importTestDashboard(page: Page, selectors: E2ESelectorGrou
   if (undockMenuVisible) {
     undockMenuButton.click();
   }
-
-  await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
+  if (options.checkPanelsVisible) {
+    await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
+  }
 }
 
 export async function goToEmbeddedPanel(page: Page) {
@@ -193,6 +225,15 @@ export async function goToEmbeddedPanel(page: Page) {
   soloPanelUrl = soloPanelUrl!.replace(baseUrlRegex, baseUrl!);
 
   await page.goto(soloPanelUrl!);
+}
+
+export async function goToPanelSnapshot(page: Page) {
+  // extracting snapshot url from clipboard
+  const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
+
+  expect(snapshotUrl).toBeDefined();
+
+  await page.goto(snapshotUrl);
 }
 
 export async function moveTab(
@@ -218,9 +259,39 @@ export async function moveTab(
   await page.mouse.up();
 }
 
+export async function moveRow(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  sourceRow: string,
+  targetRow: string
+) {
+  const targetRowElement = dashboardPage
+    .getByGrafanaSelector(selectors.components.DashboardRow.wrapper(targetRow))
+    .first();
+
+  const sourceRowElement = dashboardPage
+    .getByGrafanaSelector(selectors.components.DashboardRow.title(sourceRow))
+    .first();
+
+  const targetBox = await targetRowElement.boundingBox();
+
+  // Perform drag and drop (dragTo() did not work in this case)
+  await sourceRowElement.hover();
+  await page.mouse.down();
+  // move to adjusted target position (relative to top left)
+  await page.mouse.move(targetBox?.x || 0, (targetBox?.y || 0) + (targetBox?.height || 0), { steps: 5 });
+  await page.mouse.up();
+}
+
 export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await page.getByText('Group into tab').click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addTab).click();
+}
+
+export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow).click();
 }
 
 export async function checkRepeatedTabTitles(
@@ -238,4 +309,63 @@ export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2
   const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
   const boundingBox = await tab.boundingBox();
   return boundingBox;
+}
+
+export async function getRowBox(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  rowTitle: string
+): Promise<{ x: number; y: number; width: number; height: number }> {
+  const row = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
+  await expect(row).toBeVisible();
+  const boundingBox = await row.boundingBox();
+  return boundingBox!;
+}
+
+export async function checkRepeatedRowTitles(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  title: string,
+  options: Array<string | number>
+) {
+  for (const option of options) {
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(`${title}${option}`))
+    ).toBeVisible();
+  }
+}
+
+export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage) {
+  await page.getByLabel('layout-selection-option-Auto').click();
+  // confirm layout change if applicable
+  const confirmModal = dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete);
+  if (confirmModal) {
+    await confirmModal.click();
+  }
+}
+
+export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).click();
+}
+export async function toggleRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.toggle(rowTitle)).click();
+}
+
+export function getPanelByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitle: string) {
+  return dashboardPage
+    .getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle))
+    .getByTestId(selectors.components.Panels.Panel.headerContainer);
+}
+
+export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).first();
+}
+
+export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
+}
+
+export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
 }

@@ -585,6 +585,26 @@ message ResourceTableRow {
   // they may be lost in the conversion to k8s resource
   // +optional
   bytes object = 4;
+
+  // Sort fields for the hit, encoded as strings. This can be used in ResourceSearchRequest search_after or search_before fields.
+  // +optional
+  repeated string sort_fields = 5;
+}
+
+message QuotaUsageRequest {
+  // Namespace (tenant)
+  ResourceKey key = 1;
+}
+
+message QuotaUsageResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // Current usage
+  int64 usage = 2;
+
+  // Current limit
+  int64 limit = 3;
 }
 
 // This provides the CRUD+List+Watch support needed for a k8s apiserver
@@ -630,4 +650,9 @@ service ManagedObjectIndex {
 service Diagnostics {
   // Check if the service is healthy
   rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+service Quotas {
+  // Get current quota usage and limits
+  rpc GetQuotaUsage(QuotaUsageRequest) returns (QuotaUsageResponse);
 }

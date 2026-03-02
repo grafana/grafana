@@ -110,6 +110,12 @@ func (aq *AlertQuery) String() string {
 }
 
 func (aq *AlertQuery) setModelProps() error {
+	if aq.Model == nil {
+		// No data to extract, use an empty map.
+		aq.modelProps = map[string]any{}
+		return nil
+	}
+
 	aq.modelProps = make(map[string]any)
 	err := json.Unmarshal(aq.Model, &aq.modelProps)
 	if err != nil {
@@ -341,4 +347,32 @@ func (aq *AlertQuery) InitDefaults() error {
 	}
 	aq.Model = model
 	return nil
+}
+
+// GetExpressionType returns the type of expression for this AlertQuery.
+// It returns "query" for regular datasource queries and the actual type for expressions.
+func (aq *AlertQuery) GetExpressionType() (string, error) {
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Check if this is an expression query
+	isExpr, err := aq.IsExpression()
+	if err != nil {
+		return "", err
+	}
+
+	if !isExpr {
+		return "query", nil // Regular data source query
+	}
+
+	// Extract type from model
+	if exprType, ok := aq.modelProps["type"].(string); ok {
+		return exprType, nil
+	}
+
+	return "unknown", nil
 }

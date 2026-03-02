@@ -14,9 +14,10 @@ import {
   queryTypeOptions,
 } from '../../components/LokiOptionFields';
 import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiQueryDirection, LokiQueryType } from '../../dataquery.gen';
 import { LokiDatasource } from '../../datasource';
 import { getLokiQueryType, isLogsQuery } from '../../queryUtils';
-import { LokiQuery, LokiQueryDirection, LokiQueryType, QueryStats } from '../../types';
+import { LokiQuery, QueryStats } from '../../types';
 
 export interface Props {
   query: LokiQuery;
@@ -133,7 +134,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }, [query.step, datasource]);
 
     return (
-      <Box backgroundColor={'secondary'}>
+      <Box backgroundColor={'secondary'} borderRadius="default">
         <QueryOptionGroup
           title="Options"
           collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery, isValidStep, query.direction)}

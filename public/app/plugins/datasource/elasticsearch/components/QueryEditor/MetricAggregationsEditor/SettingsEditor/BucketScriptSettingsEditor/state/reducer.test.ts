@@ -1,5 +1,4 @@
-import { PipelineVariable } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
-
+import { PipelineVariable } from '../../../../../../dataquery.gen';
 import { reducerTester } from '../../../../../reducerTester';
 
 import {

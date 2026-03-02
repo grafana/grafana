@@ -3,7 +3,7 @@
 // (a <button> with clear text, for example, does not need an aria-label as it's already labeled)
 // but you still might need to select it for testing,
 // in that case please add the attribute data-testid={selector} in the component and
-// prefix your selector string with 'data-testid' so that when create the selectors we know to search for it on the right attribute
+// prefix your selector string with 'data-testid' so that when we create the selectors we know to search for it on the right attribute
 
 import { VersionedSelectorGroup } from '../types';
 
@@ -56,13 +56,22 @@ export const versionedComponents = {
     primaryBody: {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
+    bodyContainer: {
+      '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
+    },
   },
   Sidebar: {
+    container: {
+      '12.4.0': 'data-testid Sidebar container',
+    },
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
+    },
+    newPanelButton: {
+      '12.4.0': 'data-testid sidebar add new panel',
     },
   },
   EditPaneHeader: {
@@ -79,7 +88,19 @@ export const versionedComponents = {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
     },
   },
+  LayoutContainer: {
+    '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
+  },
   TimePicker: {
+    moveBackwardButton: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-move-backward-button',
+    },
+    moveForwardButton: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-move-forward-button',
+    },
+    zoomOut: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-zoom-out-button',
+    },
     openButton: {
       [MIN_GRAFANA_VERSION]: 'data-testid TimePicker Open Button',
     },
@@ -499,6 +520,9 @@ export const versionedComponents = {
         },
       },
       TableNG: {
+        RowExpander: {
+          '12.4.0': 'data-testid tableng row expander',
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
@@ -530,6 +554,11 @@ export const versionedComponents = {
       Tooltip: {
         Wrapper: {
           '12.3.0': 'data-testid viz-tooltip-wrapper',
+        },
+      },
+      Gauge: {
+        Container: {
+          '12.4.0': 'data-testid gauge container',
         },
       },
     },
@@ -582,6 +611,9 @@ export const versionedComponents = {
       content: {
         '11.1.0': 'data-testid Panel editor option pane content',
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane content',
+      },
+      header: {
+        '12.4.0': 'data-testid Panel editor OptionsPane header',
       },
       select: {
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane select',
@@ -656,6 +688,9 @@ export const versionedComponents = {
       },
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
+      },
+      addAnnotationButton: {
+        '12.6.0': 'data-testid add annotation button',
       },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',
@@ -1054,6 +1089,7 @@ export const versionedComponents = {
   },
   PluginVisualization: {
     item: {
+      '12.4.0': (title: string) => `data-testid Plugin visualization item ${title}`,
       [MIN_GRAFANA_VERSION]: (title: string) => `Plugin visualization item ${title}`,
     },
     current: {
@@ -1270,6 +1306,9 @@ export const versionedComponents = {
     submit: {
       [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-submit',
     },
+    floatGridItemsWarning: {
+      [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-float-grid-items-warning',
+    },
   },
   PanelAlertTabContent: {
     content: {
@@ -1281,6 +1320,9 @@ export const versionedComponents = {
     card: {
       [MIN_GRAFANA_VERSION]: (name: string) => `data-testid suggestion-${name}`,
     },
+    confirm: {
+      '12.4.0': (name: string) => `data-testid suggestion-${name} confirm button`,
+    },
   },
   ColorSwatch: {
     name: {
@@ -1290,6 +1332,9 @@ export const versionedComponents = {
   DashboardRow: {
     title: {
       [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-title-${title}`,
+    },
+    toggle: {
+      [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-toggle-for-${title}`,
     },
     wrapper: {
       '12.1.0': (title: string) => `data-testid dashboard-row-wrapper-for-${title}`,
@@ -1325,6 +1370,7 @@ export const versionedComponents = {
   },
   DebugOverlay: {
     wrapper: {
+      '12.3.0': 'data-testid debug-overlay-wrapper',
       '9.2.0': 'debug-overlay',
     },
   },
@@ -1484,6 +1530,16 @@ export const versionedComponents = {
         message: {
           ['12.1.0']: 'data-testid export-image-error-message',
         },
+      },
+    },
+  },
+  VizTooltipFooter: {
+    buttons: {
+      apply: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-filters-button',
+      },
+      applyInverse: {
+        ['12.1.0']: 'data-testid viz-tooltip-footer-apply-inverse-filters-button',
       },
     },
   },

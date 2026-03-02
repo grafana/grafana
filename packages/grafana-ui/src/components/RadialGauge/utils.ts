@@ -1,19 +1,67 @@
-import { FieldDisplay } from '@grafana/data';
+import { FieldDisplay, getDisplayProcessor, Threshold, ThresholdsMode } from '@grafana/data';
 
-export function getValueAngleForValue(fieldDisplay: FieldDisplay, startAngle: number, endAngle: number) {
-  const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
-  const min = fieldDisplay.field.min ?? 0;
-  const max = fieldDisplay.field.max ?? 100;
+import { RadialGaugeDimensions } from './types';
 
-  let angle = ((fieldDisplay.display.numeric - min) / (max - min)) * angleRange;
-
-  if (angle > angleRange) {
-    angle = angleRange;
-  } else if (angle < 0) {
-    angle = 0;
+export function getFieldDisplayProcessor(displayValue: FieldDisplay) {
+  if (displayValue.view && displayValue.colIndex != null) {
+    const dp = displayValue.view.getFieldDisplayProcessor(displayValue.colIndex);
+    if (dp) {
+      return dp;
+    }
   }
 
-  return { angleRange, angle };
+  return getDisplayProcessor();
+}
+
+export function getFieldConfigMinMax(fieldDisplay: FieldDisplay) {
+  let min = fieldDisplay.field.min ?? 0;
+  let max = fieldDisplay.field.max ?? 100;
+
+  // If min and max are equal (can happen for single value fields or if all values are the same)
+  // Then we need to adjust them a bit to avoid division by zero
+  if (min === max) {
+    min -= min * 0.1;
+    max += max * 0.1;
+  }
+
+  return [min, max];
+}
+
+export function getValuePercentageForValue(fieldDisplay: FieldDisplay, value = fieldDisplay.display.numeric) {
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+  return (value - min) / (max - min);
+}
+
+export function getValueAngleForValue(
+  fieldDisplay: FieldDisplay,
+  startAngle: number,
+  endAngle: number,
+  neutral?: number
+) {
+  const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
+  const value = fieldDisplay.display.numeric;
+
+  const valueAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
+
+  let endValueAngle = valueAngle;
+
+  let startValueAngle = 0;
+  if (typeof neutral === 'number') {
+    const [min, max] = getFieldConfigMinMax(fieldDisplay);
+    const clampedNeutral = Math.min(Math.max(min, neutral), max);
+    const neutralAngle = getValuePercentageForValue(fieldDisplay, clampedNeutral) * angleRange;
+    if (neutralAngle <= valueAngle) {
+      startValueAngle = neutralAngle;
+      endValueAngle = valueAngle - neutralAngle;
+    } else {
+      startValueAngle = valueAngle;
+      endValueAngle = neutralAngle - valueAngle;
+    }
+  }
+
+  const clampedEndValueAngle = Math.min(Math.max(endValueAngle, 0), angleRange);
+
+  return { angleRange, startValueAngle, endValueAngle: clampedEndValueAngle };
 }
 
 /**
@@ -26,24 +74,19 @@ export function toRad(angle: number) {
   return ((angle - 90) * Math.PI) / 180;
 }
 
-export interface GaugeDimensions {
-  margin: number;
-  radius: number;
-  centerX: number;
-  centerY: number;
-  barWidth: number;
-  endAngle?: number;
-  barIndex: number;
-  thresholdsBarRadius: number;
-  thresholdsBarWidth: number;
-  thresholdsBarSpacing: number;
-  showScaleLabels?: boolean;
-  scaleLabelsFontSize: number;
-  scaleLabelsSpacing: number;
-  scaleLabelsRadius: number;
-  gaugeBottomY: number;
-}
-
+/**
+ * returns the calculated dimensions for the radial gauge
+ * @param width
+ * @param height
+ * @param endAngle
+ * @param glow
+ * @param roundedBars
+ * @param barWidthFactor
+ * @param barIndex
+ * @param thresholdBar
+ * @param showScaleLabels
+ * @returns {RadialGaugeDimensions}
+ */
 export function calculateDimensions(
   width: number,
   height: number,
@@ -54,7 +97,7 @@ export function calculateDimensions(
   barIndex: number,
   thresholdBar?: boolean,
   showScaleLabels?: boolean
-): GaugeDimensions {
+): RadialGaugeDimensions {
   const yMaxAngle = endAngle > 180 ? 180 : endAngle;
   let margin = 0;
 
@@ -75,12 +118,20 @@ export function calculateDimensions(
 
   const barWidth = Math.max(barWidthFactor * (maxRadius / 3), 2);
 
-  // If rounded bars is enabled they need a bit more vertical space
-  if (yMaxAngle < 180 && roundedBars) {
-    outerRadius -= barWidth;
-    maxRadiusH -= barWidth;
-    maxRadiusW -= barWidth;
-  }
+  // When enabling stroke-linecap="round" on a path, the circular endcap is appended outside of the path.
+  // If you don't adjust the positioning or the path, then the endcaps will probably clip off the bottom
+  // of the panel. To account for this, the circular endcap radius (which is half the bar width) needs
+  // to be accounted for. To get the best visual result, we will take some off the radius of the
+  // visualization overall and some off of the vertical space by offsetting the centerY upwards.
+  const totalEndcapAdjustment = yMaxAngle < 180 && roundedBars ? barWidth * 0.5 : 0;
+
+  // change the factor we multiply here to steal more or less from the size of the gauge vs. the centerY position.
+  // there's actually a range of values you could use here to make this work, the 50/50 split looks the best
+  // to me, because it handles use cases like bar glow well and avoids clipping on either vertical edge of the panel.
+  const radiusEndcapAdjustment = totalEndcapAdjustment * 0.5;
+  outerRadius -= radiusEndcapAdjustment;
+  maxRadiusH -= radiusEndcapAdjustment;
+  maxRadiusW -= radiusEndcapAdjustment;
 
   // Scale labels
   let scaleLabelsFontSize = 0;
@@ -97,6 +148,7 @@ export function calculateDimensions(
     maxRadiusW -= labelsSize;
     maxRadiusH -= labelsSize;
 
+    // FIXME: needs coverage
     // For gauges the max label needs a bit more vertical space so that it does not get clipped
     if (maxRadiusIsLimitedByHeight && endAngle < 180) {
       const amount = outerRadius * 0.07;
@@ -125,13 +177,16 @@ export function calculateDimensions(
   const belowCenterY = maxRadius * Math.sin(toRad(yMaxAngle));
   const rest = height - belowCenterY - margin * 2 - maxRadius;
   const centerX = width / 2;
-  const centerY = maxRadius + margin + rest / 2;
+  const centerYEndcapAdjustment = totalEndcapAdjustment - radiusEndcapAdjustment;
+  const centerY = maxRadius + margin + rest / 2 - centerYEndcapAdjustment;
 
   if (barIndex > 0) {
     innerRadius = innerRadius - (barWidth + 4) * barIndex;
   }
 
   return {
+    vizWidth: width,
+    vizHeight: height,
     margin,
     gaugeBottomY: centerY + belowCenterY,
     radius: innerRadius,
@@ -155,3 +210,70 @@ export function toCartesian(centerX: number, centerY: number, radius: number, an
     y: centerY + radius * Math.sin(radian),
   };
 }
+
+export function drawRadialArcPath(startAngle: number, endAngle: number, radius: number): string {
+  // For some reason a 100% full arc cannot be rendered
+  if (endAngle >= 360) {
+    endAngle = 359.99;
+  }
+
+  const startRadians = toRad(startAngle);
+  const endRadians = toRad(startAngle + endAngle);
+
+  const largeArc = endAngle > 180 ? 1 : 0;
+
+  const MAX_DECIMALS = 2;
+
+  const x1 = parseFloat((radius * Math.cos(startRadians)).toFixed(MAX_DECIMALS));
+  const y1 = parseFloat((radius * Math.sin(startRadians)).toFixed(MAX_DECIMALS));
+  const x2 = parseFloat((radius * Math.cos(endRadians)).toFixed(MAX_DECIMALS));
+  const y2 = parseFloat((radius * Math.sin(endRadians)).toFixed(MAX_DECIMALS));
+
+  return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
+}
+
+export function getAngleBetweenSegments(segmentSpacing: number, segmentCount: number, range: number) {
+  // Max spacing is 8 degrees between segments
+  // Changing this constant could be considered a breaking change
+  const maxAngleBetweenSegments = Math.max(range / 1.5 / segmentCount, 2);
+  return segmentSpacing * maxAngleBetweenSegments;
+}
+
+export function getOptimalSegmentCount(
+  dimensions: RadialGaugeDimensions,
+  segmentSpacing: number,
+  segmentCount: number,
+  range: number
+) {
+  const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, segmentCount, range);
+
+  const innerRadius = dimensions.radius - dimensions.barWidth / 2;
+  const circumference = Math.PI * innerRadius * 2 * (range / 360);
+  const maxSegments = Math.floor(circumference / (angleBetweenSegments + 3));
+
+  return Math.min(maxSegments, segmentCount);
+}
+
+export function getThresholdPercentageValue(
+  threshold: Threshold,
+  thresholdsMode: ThresholdsMode,
+  fieldDisplay: FieldDisplay
+): number {
+  if (thresholdsMode === ThresholdsMode.Percentage) {
+    return threshold.value / 100;
+  }
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+  return (threshold.value - min) / (max - min);
+}
+
+export const IS_SAFARI = (() => {
+  if (navigator == null) {
+    return false;
+  }
+  const userAgent = navigator.userAgent;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
+  if (!safariVersionMatch) {
+    return false;
+  }
+  return true;
+})();

@@ -4,12 +4,12 @@
     "currentVersion": "v1",
     "name": "LINE",
     "heading": "LINE notify settings",
-    "description": "Send notifications to LINE notify",
+    "description": "Send notifications to LINE notify. This integration is deprecated and will be removed in a future release.",
     "versions": [
       {
         "typeAlias": "line",
         "version": "v1",
-        "canCreate": true,
+        "canCreate": false,
         "options": [
           {
             "element": "input",
@@ -67,7 +67,8 @@
           }
         ]
       }
-    ]
+    ],
+    "deprecated": true
   },
   {
     "type": "dingding",
@@ -93,6 +94,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -225,6 +227,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -1300,6 +1303,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -1405,6 +1409,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2476,6 +2481,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2645,6 +2651,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2935,6 +2942,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -3139,6 +3147,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -4197,7 +4206,8 @@
               }
             ]
           }
-        ]
+        ],
+        "deprecated": true
       }
     ]
   },
@@ -4405,6 +4415,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -5334,6 +5345,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -5826,7 +5838,7 @@
             "element": "input",
             "inputType": "text",
             "label": "User key",
-            "description": "The recipient user’s user key.",
+            "description": "The recipient user's user key.",
             "placeholder": "",
             "propertyName": "user_key",
             "selectOptions": null,
@@ -5844,7 +5856,7 @@
             "element": "input",
             "inputType": "text",
             "label": "Token",
-            "description": "Your registered application’s API token, see https://pushover.net/app",
+            "description": "Your registered application's API token, see https://pushover.net/app",
             "placeholder": "",
             "propertyName": "token",
             "selectOptions": null,
@@ -6630,6 +6642,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6928,6 +6941,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "token",
@@ -6946,6 +6960,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6994,6 +7009,24 @@
             "description": "Body of the slack message",
             "placeholder": "{{ template \"slack.default.text\" . }}",
             "propertyName": "text",
+            "selectOptions": null,
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
+          },
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "Footer",
+            "description": "Templated footer of the slack message",
+            "placeholder": "{{ template \"slack.default.footer\" . }}",
+            "propertyName": "footer",
             "selectOptions": null,
             "showWhen": {
               "field": "",
@@ -9237,6 +9270,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -9344,7 +9378,7 @@
             "inputType": "text",
             "label": "Text",
             "description": "Message body template.",
-            "placeholder": "{{ template \"msteams.default.text\" . }}",
+            "placeholder": "{{ template \"msteamsv2.default.text\" . }}",
             "propertyName": "text",
             "selectOptions": null,
             "showWhen": {
@@ -11515,6 +11549,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -12308,6 +12343,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -13001,6 +13037,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -13443,6 +13480,7 @@
                       "is": ""
                     },
                     "required": true,
+                    "protected": true,
                     "validationRule": "",
                     "secure": false,
                     "dependsOn": "",
@@ -13641,6 +13679,7 @@
                           "is": ""
                         },
                         "required": false,
+                        "protected": true,
                         "validationRule": "",
                         "secure": false,
                         "dependsOn": "",
@@ -15072,6 +15111,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "secret",

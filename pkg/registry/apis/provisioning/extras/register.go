@@ -2,6 +2,8 @@ package extras
 
 import (
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
@@ -42,15 +44,45 @@ func ProvideProvisioningOSSRepositoryExtras(
 	}
 }
 
+func ProvideProvisioningOSSConnectionExtras(
+	_ *setting.Cfg,
+	decryptSvc decrypt.DecryptService,
+	ghFactory ghconnection.GithubFactory,
+) []connection.Extra {
+	decrypter := connection.ProvideDecrypter(decryptSvc)
+	return []connection.Extra{
+		ghconnection.Extra(decrypter, ghFactory),
+	}
+}
+
 func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []jobs.Worker {
 	return []jobs.Worker{pullRequestWorker}
 }
 
 func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repository.Factory, error) {
-	enabledTypes := make(map[apisprovisioning.RepositoryType]struct{}, len(cfg.ProvisioningRepositoryTypes))
-	for _, e := range cfg.ProvisioningRepositoryTypes {
+	types := cfg.ProvisioningRepositoryTypes
+	if len(types) == 0 {
+		// Enforcing default repository values if settings are not set
+		types = []string{"git", "github", "local"}
+	}
+	enabledTypes := make(map[apisprovisioning.RepositoryType]struct{}, len(types))
+	for _, e := range types {
 		enabledTypes[apisprovisioning.RepositoryType(e)] = struct{}{}
 	}
 
 	return repository.ProvideFactory(enabledTypes, extras)
+}
+
+func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Extra) (connection.Factory, error) {
+	types := cfg.ProvisioningRepositoryTypes
+	if len(types) == 0 {
+		// Enforcing default connection values if settings are not set
+		types = []string{"github"}
+	}
+	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(types))
+	for _, e := range types {
+		enabledTypes[apisprovisioning.ConnectionType(e)] = struct{}{}
+	}
+
+	return connection.ProvideFactory(enabledTypes, extras)
 }

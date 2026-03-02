@@ -28,7 +28,7 @@ interface PropsWithMinColumnWidth extends GridPropsBase {
   /** For a responsive layout, fit as many columns while maintaining this minimum column width.
    *  The real width will be calculated based on the theme spacing tokens: `theme.spacing(minColumnWidth)`
    */
-  minColumnWidth?: ResponsiveProp<1 | 2 | 3 | 5 | 8 | 13 | 21 | 34 | 44 | 55 | 72 | 89 | 144>;
+  minColumnWidth?: ResponsiveProp<1 | 2 | 3 | 5 | 8 | 13 | 16 | 21 | 34 | 44 | 55 | 72 | 89 | 144>;
 }
 
 /** 'columns' and 'minColumnWidth' are mutually exclusive */

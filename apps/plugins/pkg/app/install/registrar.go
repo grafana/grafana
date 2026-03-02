@@ -3,47 +3,51 @@ package install
 import (
 	"context"
 	"sync"
+	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 const (
 	PluginInstallSourceAnnotation = "plugins.grafana.app/install-source"
 )
 
-// Class represents the plugin class type in an unversioned internal format.
-// This intentionally duplicates the versioned API type (PluginInstallSpecClass) to decouple
-// internal code from API version changes, making it easier to support multiple API versions.
-type Class = string
-
-const (
-	ClassCore     Class = "core"
-	ClassExternal Class = "external"
-)
-
 type Source = string
 
 const (
-	SourceUnknown     Source = "unknown"
-	SourcePluginStore Source = "plugin-store"
+	SourceUnknown               Source = "unknown"
+	SourcePluginStore           Source = "plugin-store"
+	SourceChildPluginReconciler Source = "child-plugin-reconciler"
 )
 
+// Registrar is an interface for registering plugin installations.
+type Registrar interface {
+	Register(ctx context.Context, namespace string, install *PluginInstall) error
+	Unregister(ctx context.Context, namespace string, name string, source Source) error
+}
+
 type PluginInstall struct {
-	ID      string
-	Version string
-	URL     string
-	Class   Class
-	Source  Source
+	ID       string
+	Version  string
+	URL      string
+	Source   Source
+	ParentID string
 }
 
 func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alpha1.Plugin {
 	var url *string = nil
 	if p.URL != "" {
 		url = &p.URL
+	}
+	var parentID *string = nil
+	if p.ParentID != "" {
+		parentID = &p.ParentID
 	}
 	return &pluginsv0alpha1.Plugin{
 		ObjectMeta: metav1.ObjectMeta{
@@ -54,10 +58,10 @@ func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alph
 			},
 		},
 		Spec: pluginsv0alpha1.PluginSpec{
-			Id:      p.ID,
-			Version: p.Version,
-			Url:     url,
-			Class:   pluginsv0alpha1.PluginSpecClass(p.Class),
+			Id:       p.ID,
+			Version:  p.Version,
+			Url:      url,
+			ParentId: parentID,
 		},
 	}
 }
@@ -70,10 +74,10 @@ func (p *PluginInstall) ShouldUpdate(existing *pluginsv0alpha1.Plugin) bool {
 	if existing.Spec.Version != update.Spec.Version {
 		return true
 	}
-	if existing.Spec.Class != update.Spec.Class {
-		return true // this should never really happen
-	}
 	if !equalStringPointers(existing.Spec.Url, update.Spec.Url) {
+		return true
+	}
+	if !equalStringPointers(existing.Spec.ParentId, update.Spec.ParentId) {
 		return true
 	}
 	return false
@@ -94,12 +98,14 @@ type InstallRegistrar struct {
 	client          *pluginsv0alpha1.PluginClient
 	clientErr       error
 	clientOnce      sync.Once
+	logger          logging.Logger
 }
 
-func NewInstallRegistrar(clientGenerator resource.ClientGenerator) *InstallRegistrar {
+func NewInstallRegistrar(logger logging.Logger, clientGenerator resource.ClientGenerator) *InstallRegistrar {
 	return &InstallRegistrar{
 		clientGenerator: clientGenerator,
 		clientOnce:      sync.Once{},
+		logger:          logger,
 	}
 }
 
@@ -119,8 +125,17 @@ func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginClient, error) {
 
 // Register creates or updates a plugin install in the registry.
 func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
+	start := time.Now()
+	defer func() {
+		metrics.RegistrationDurationSeconds.WithLabelValues("register").Observe(time.Since(start).Seconds())
+	}()
+
+	logger := r.logger.WithContext(ctx).With("requestNamespace", namespace, "pluginId", install.ID, "version", install.Version)
+
 	client, err := r.GetClient()
 	if err != nil {
+		logger.Error("Failed to get plugin client", "error", err)
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
 		return err
 	}
 	identifier := resource.Identifier{
@@ -130,25 +145,49 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 
 	existing, err := client.Get(ctx, identifier)
 	if err != nil && !errorsK8s.IsNotFound(err) {
+		logger.Error("Failed to get existing plugin", "error", err)
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
 		return err
 	}
 
 	if existing != nil {
 		if install.ShouldUpdate(existing) {
 			_, err = client.Update(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
-			return err
+			if err != nil {
+				logger.Error("Failed to update plugin", "error", err)
+				metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
+				return err
+			}
+			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
+			return nil
 		}
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
 		return nil
 	}
 
 	_, err = client.Create(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.CreateOptions{})
-	return err
+	if err != nil {
+		logger.Error("Failed to create plugin", "error", err)
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
+		return err
+	}
+	metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
+	return nil
 }
 
 // Unregister removes a plugin install from the registry.
 func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, name string, source Source) error {
+	start := time.Now()
+	defer func() {
+		metrics.RegistrationDurationSeconds.WithLabelValues("unregister").Observe(time.Since(start).Seconds())
+	}()
+
+	logger := r.logger.WithContext(ctx).With("requestNamespace", namespace, "pluginId", name, "source", source)
+
 	client, err := r.GetClient()
 	if err != nil {
+		logger.Error("Failed to get plugin client", "error", err)
+		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
 		return err
 	}
 	identifier := resource.Identifier{
@@ -157,15 +196,26 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 	}
 	existing, err := client.Get(ctx, identifier)
 	if err != nil && !errorsK8s.IsNotFound(err) {
+		logger.Error("Failed to get existing plugin", "error", err)
+		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
 		return err
 	}
 	// if the plugin doesn't exist, nothing to unregister
 	if existing == nil {
+		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
 		return nil
 	}
 	// if the source is different, do not unregister
 	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && existingSource != source {
+		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
 		return nil
 	}
-	return client.Delete(ctx, identifier, resource.DeleteOptions{})
+	err = client.Delete(ctx, identifier, resource.DeleteOptions{})
+	if err != nil {
+		logger.Error("Failed to delete plugin", "error", err)
+		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
+		return err
+	}
+	metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
+	return err
 }

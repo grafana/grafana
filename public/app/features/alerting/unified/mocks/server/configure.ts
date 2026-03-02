@@ -1,6 +1,5 @@
 import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
-import { config } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
@@ -10,10 +9,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import {
-  getDisabledPluginHandler,
-  getPluginMissingHandler,
-} from 'app/features/alerting/unified/mocks/server/handlers/plugins';
+import { getDisabledPluginHandler } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import {
   ALERTING_API_SERVER_BASE_URL,
   getK8sResponse,
@@ -21,7 +17,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/utils';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, AlertmanagerChoice, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types/folders';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -175,6 +171,42 @@ export const setTimeIntervalsListEmpty = () => {
   return handler;
 };
 
+interface TimeIntervalConfig {
+  name: string;
+  provenance?: string;
+  canUse?: boolean;
+}
+
+/**
+ * Makes the mock server respond with custom time intervals
+ */
+export const setTimeIntervalsList = (intervals: TimeIntervalConfig[]) => {
+  const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
+  const handler = http.get(listMuteTimingsPath, () => {
+    const items = intervals.map((interval) => {
+      // Compute canUse based on provenance if not provided
+      const canUse = interval.canUse ?? interval.provenance !== 'converted_prometheus';
+      return {
+        metadata: {
+          annotations: {
+            'grafana.com/provenance': interval.provenance ?? 'none',
+            'grafana.com/canUse': canUse ? 'true' : 'false',
+          },
+          name: interval.name,
+          uid: `uid-${interval.name}`,
+          namespace: 'default',
+          resourceVersion: 'e0270bfced786660',
+        },
+        spec: { name: interval.name, time_intervals: [] },
+      };
+    });
+    return HttpResponse.json(getK8sResponse('TimeIntervalList', items));
+  });
+
+  server.use(handler);
+  return handler;
+};
+
 export function mimirDataSource() {
   const dataSource = mockDataSource(
     {
@@ -212,10 +244,29 @@ export function setGrafanaPromRules(groups: GrafanaPromRuleGroupDTO[]) {
   server.use(http.get(`/api/prometheus/grafana/api/v1/rules`, paginatedHandlerFor(groups)));
 }
 
-/** Make a given plugin ID respond with a 404, as if it isn't installed at all */
-export const removePlugin = (pluginId: string) => {
-  delete config.apps[pluginId];
-  server.use(getPluginMissingHandler(pluginId));
+/**
+ * Makes the mock server respond with a custom resolver for fetching a single silence by ID
+ */
+export const setSilenceGetResolver = (
+  resolver: HttpResponseResolver<{ datasourceUid: string; uuid: string }, Silence, undefined>
+) => {
+  server.use(
+    http.get<{ datasourceUid: string; uuid: string }, Silence, undefined>(
+      '/api/alertmanager/:datasourceUid/api/v2/silence/:uuid',
+      resolver
+    )
+  );
+};
+
+/**
+ * Makes the mock server respond with a specific list of alertmanager alerts
+ */
+export const setAlertmanagerAlertsHandler = (alerts: AlertmanagerAlert[]) => {
+  const handler = http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => {
+    return HttpResponse.json(alerts);
+  });
+  server.use(handler);
+  return handler;
 };
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */

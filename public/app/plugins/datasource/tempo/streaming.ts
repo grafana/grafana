@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   DataFrame,
   dataFrameFromJSON,
+  DataFrameJSON,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -45,7 +46,7 @@ export function doTempoSearchStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `search/${getLiveStreamKey()}`,
       data: {
         ...query,
@@ -122,7 +123,7 @@ export function doTempoMetricsStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `metrics/${key}`,
       data: {
         ...query,
@@ -165,7 +166,15 @@ export function doTempoMetricsStreaming(
           }
 
           newResult = {
-            data: data?.map(dataFrameFromJSON) ?? [],
+            data:
+              data?.map((frame: DataFrameJSON) => {
+                const df = dataFrameFromJSON(frame);
+                // preserve the query's refId to prevent conflation of series from different queries
+                if (query.refId) {
+                  df.refId = query.refId;
+                }
+                return df;
+              }) ?? [],
             state,
           };
         }

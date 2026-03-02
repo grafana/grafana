@@ -11,6 +11,7 @@ import { DataFrame } from './dataFrame';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { FieldConfigSource } from './fieldOverrides';
 import { IconName } from './icon';
+import { LinkTarget } from './linkTarget';
 import { OptionEditorConfig } from './options';
 import { PluginMeta } from './plugin';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
@@ -20,6 +21,8 @@ export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, forma
 export interface PanelPluginMeta extends PluginMeta {
   /** Indicates that panel does not issue queries */
   skipDataQuery?: boolean;
+  /** Indicates that the panel implements suggestions */
+  suggestions?: boolean;
   /** Indicates that panel should not be available in visualisation picker */
   hideFromList?: boolean;
   /** Sort order */
@@ -189,6 +192,7 @@ export interface PanelMenuItem {
   onClick?: (event: React.MouseEvent) => void;
   shortcut?: string;
   href?: string;
+  target?: LinkTarget;
   subMenu?: PanelMenuItem[];
 }
 

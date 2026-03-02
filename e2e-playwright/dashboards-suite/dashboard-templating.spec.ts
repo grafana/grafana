@@ -6,7 +6,7 @@ test.use({
   timezoneId: 'Pacific/Easter',
   featureToggles: {
     kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
-    kubernetesDashboardsV2: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 

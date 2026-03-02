@@ -2,7 +2,7 @@ import InfiniteViewer from 'infinite-viewer';
 import Moveable from 'moveable';
 import Selecto from 'selecto';
 
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import {
   CONNECTION_VERTEX_ID,

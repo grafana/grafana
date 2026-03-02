@@ -27,7 +27,7 @@ describe('PanelOptionsPane', () => {
 
       expect(panel.state.pluginId).toBe('timeseries');
 
-      optionsPane.onChangePanelPlugin({ pluginId: 'table' });
+      optionsPane.onChangePanel({ pluginId: 'table' });
 
       expect(optionsPane['_cachedPluginOptions']['timeseries']?.options).toBe(panel.state.options);
       expect(optionsPane['_cachedPluginOptions']['timeseries']?.fieldConfig).toBe(panel.state.fieldConfig);
@@ -52,7 +52,7 @@ describe('PanelOptionsPane', () => {
       panel.setState({ $data: undefined });
       panel.activate();
 
-      optionsPane.onChangePanelPlugin({
+      optionsPane.onChangePanel({
         pluginId: 'table',
         options: { showHeader: false },
         fieldConfig: {
@@ -114,7 +114,7 @@ describe('PanelOptionsPane', () => {
       expect(panel.state.fieldConfig.overrides[1].properties).toHaveLength(1);
       expect(panel.state.fieldConfig.defaults.custom).toHaveProperty('axisBorderShow');
 
-      optionsPane.onChangePanelPlugin({ pluginId: 'table' });
+      optionsPane.onChangePanel({ pluginId: 'table' });
 
       expect(mockFn).toHaveBeenCalled();
       expect(mockFn.mock.calls[0][2].defaults.color?.mode).toBe('palette-classic');
@@ -146,8 +146,8 @@ describe('PanelOptionsPane', () => {
       const mockOnFieldConfigChange = jest.fn();
       panel.onFieldConfigChange = mockOnFieldConfigChange;
 
-      // Call onChangePanelPlugin with fieldConfig that has overrides
-      optionsPane.onChangePanelPlugin({
+      // Call onChangePanel with fieldConfig that has overrides
+      optionsPane.onChangePanel({
         pluginId: 'table',
         fieldConfig: {
           defaults: { unit: 'percent' },
@@ -178,7 +178,7 @@ describe('PanelOptionsPane', () => {
       panel.onFieldConfigChange = mockOnFieldConfigChange;
 
       // Call without fieldConfig
-      optionsPane.onChangePanelPlugin({
+      optionsPane.onChangePanel({
         pluginId: 'table',
         options: { showHeader: false },
       });

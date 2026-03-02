@@ -12,7 +12,7 @@ import { Label } from './Label';
 
 export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
   /** Label for the field */
   label?: React.ReactNode;
   /** Description of the field */
@@ -85,7 +85,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
         {labelElement}
         <div>
-          <div ref={ref}>{React.cloneElement(children, childProps)}</div>
+          <div ref={ref}>{React.cloneElement(children, children.type !== React.Fragment ? childProps : undefined)}</div>
           {invalid && error && !horizontal && (
             <div
               className={cx(styles.fieldValidationWrapper, {

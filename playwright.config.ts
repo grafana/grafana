@@ -28,6 +28,7 @@ export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
   workers: process.env.CI ? 1 : undefined,
   reporter: [
     ['html'], // pretty
+    ['./e2e-playwright/utils/axe-a11y/reporter.ts'], // accessibility reporter
   ],
   expect: {
     timeout: 10_000,
@@ -180,6 +181,10 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/cloud-plugins-suite'),
     }),
     withAuth({
+      name: 'alerting',
+      testDir: path.join(testDirRoot, '/alerting-suite'),
+    }),
+    withAuth({
       name: 'dashboard-new-layouts',
       testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
     }),
@@ -202,6 +207,10 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/dashboard-cujs'),
       testMatch: ['global-teardown.spec.ts'],
       dependencies: ['dashboard-cujs'],
+    }),
+    withAuth({
+      name: 'grafana-e2etest-panel',
+      testDir: path.join(testDirRoot, '/test-plugins/grafana-test-panel'),
     }),
   ],
 });

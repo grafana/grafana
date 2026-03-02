@@ -81,93 +81,91 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 		s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	// Set inside the transaction callback
-	var row *secureValueDB
+	latest, err := s.getLatestVersionAndCreated(ctx, xkube.Namespace(sv.Namespace), sv.Name)
+	if err != nil {
+		return nil, fmt.Errorf("fetching latest secure value version: %w", err)
+	}
 
-	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		latest, err := s.getLatestVersionAndCreatedAt(ctx, xkube.Namespace(sv.Namespace), sv.Name)
+	version := int64(1)
+	if latest.version > 0 {
+		version = latest.version + 1
+	}
+
+	// Some other concurrent request may have created the version we're trying to create,
+	// if that's the case, we'll retry with a new version up to max attempts.
+	maxAttempts := 3
+	attempts := 0
+	for {
+		sv.Status.Version = version
+
+		now := s.clock.Now().UTC().Unix()
+
+		createdAt := now
+		if latest.createdAt > 0 {
+			createdAt = latest.createdAt
+		}
+		updatedAt := now
+
+		createdBy := actorUID
+		if latest.createdBy != "" {
+			createdBy = latest.createdBy
+		}
+		updatedBy := actorUID
+
+		row, err := toCreateRow(createdAt, updatedAt, keeper, sv, createdBy, updatedBy)
 		if err != nil {
-			return fmt.Errorf("fetching latest secure value version: %w", err)
+			return nil, fmt.Errorf("to create row: %w", err)
 		}
 
-		version := int64(1)
-		if latest.version > 0 {
-			version = latest.version + 1
+		req := createSecureValue{
+			SQLTemplate: sqltemplate.New(s.dialect),
+			Row:         row,
 		}
 
-		// Some other concurrent request may have created the version we're trying to create,
-		// if that's the case, we'll retry with a new version up to max attempts.
-		maxAttempts := 3
-		attempts := 0
-		for {
-			sv.Status.Version = version
+		query, err := sqltemplate.Execute(sqlSecureValueCreate, req)
+		if err != nil {
+			return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
+		}
 
-			now := s.clock.Now().UTC().Unix()
-
-			createdAt := now
-			if latest.createdAt > 0 {
-				createdAt = latest.createdAt
-			}
-			updatedAt := now
-
-			row, err = toCreateRow(createdAt, updatedAt, keeper, sv, actorUID)
-			if err != nil {
-				return fmt.Errorf("to create row: %w", err)
-			}
-
-			req := createSecureValue{
-				SQLTemplate: sqltemplate.New(s.dialect),
-				Row:         row,
-			}
-
-			query, err := sqltemplate.Execute(sqlSecureValueCreate, req)
-			if err != nil {
-				return fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
-			}
-
-			res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
-			if err != nil {
-				if sql.IsRowAlreadyExistsError(err) {
-					if attempts < maxAttempts {
-						attempts += 1
-						version += 1
-						continue
-					}
-					return fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
+		res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+		if err != nil {
+			if sql.IsRowAlreadyExistsError(err) {
+				if attempts < maxAttempts {
+					attempts += 1
+					version += 1
+					continue
 				}
-				return fmt.Errorf("inserting row: %w", err)
+				return nil, fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
 			}
-
-			rowsAffected, err := res.RowsAffected()
-			if err != nil {
-				return fmt.Errorf("getting rows affected: %w", err)
-			}
-
-			if rowsAffected != 1 {
-				return fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, row.Name, row.Namespace)
-			}
-			return nil
+			return nil, fmt.Errorf("inserting row: %w", err)
 		}
-	})
-	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
-	}
 
-	createdSecureValue, err := row.toKubernetes()
-	if err != nil {
-		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
-	}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return nil, fmt.Errorf("getting rows affected: %w", err)
+		}
 
-	return createdSecureValue, nil
+		if rowsAffected != 1 {
+			return nil, fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, row.Name, row.Namespace)
+		}
+
+		createdSecureValue, err := row.toKubernetes()
+		if err != nil {
+			return nil, fmt.Errorf("convert to kubernetes object: %w", err)
+		}
+
+		return createdSecureValue, nil
+	}
 }
 
-type versionAndCreatedAt struct {
+type versionAndCreated struct {
 	createdAt int64
+	createdBy string
 	version   int64
 }
 
-func (s *secureValueMetadataStorage) getLatestVersionAndCreatedAt(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreatedAt, error) {
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersionAndCreatedAt", trace.WithAttributes(
+func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreated, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersionAndCreated", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 	))
@@ -181,45 +179,48 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreatedAt(ctx context.Co
 
 	q, err := sqltemplate.Execute(sqlGetLatestSecureValueVersionAndCreatedAt, req)
 	if err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersionAndCreatedAt.Name(), err)
+		return versionAndCreated{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersionAndCreatedAt.Name(), err)
 	}
 
 	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
+		return versionAndCreated{}, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
 	}
 	defer func() { _ = rows.Close() }()
 
 	if err := rows.Err(); err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("error executing query: %w", err)
+		return versionAndCreated{}, fmt.Errorf("error executing query: %w", err)
 	}
 
 	if !rows.Next() {
-		return versionAndCreatedAt{}, nil
+		return versionAndCreated{}, nil
 	}
 
 	var (
 		createdAt       int64
+		createdBy       string
 		version         int64
 		active          bool
 		namespaceFromDB string
 		nameFromDB      string
 	)
-	if err := rows.Scan(&createdAt, &version, &active, &namespaceFromDB, &nameFromDB); err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("scanning version from returned rows: %w", err)
+	if err := rows.Scan(&createdAt, &createdBy, &version, &active, &namespaceFromDB, &nameFromDB); err != nil {
+		return versionAndCreated{}, fmt.Errorf("scanning version and created from returned rows: %w", err)
 	}
 
 	if namespaceFromDB != namespace.String() || nameFromDB != name {
-		return versionAndCreatedAt{}, fmt.Errorf("bug: expected to find latest version for namespace=%+v name=%+v but got version for namespace=%+v name=%+v",
+		return versionAndCreated{}, fmt.Errorf("bug: expected to find version and created for namespace=%+v name=%+v but got for namespace=%+v name=%+v",
 			namespace, name, namespaceFromDB, nameFromDB)
 	}
 
 	if !active {
 		createdAt = 0
+		createdBy = ""
 	}
 
-	return versionAndCreatedAt{
+	return versionAndCreated{
 		createdAt: createdAt,
+		createdBy: createdBy,
 		version:   version,
 	}, nil
 }

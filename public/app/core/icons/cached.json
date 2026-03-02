@@ -29,6 +29,7 @@
   "unicons/bookmark",
   "unicons/book-open",
   "unicons/brackets-curly",
+  "unicons/brain",
   "unicons/bug",
   "unicons/building",
   "unicons/calculator-alt",
@@ -62,6 +63,7 @@
   "unicons/cube",
   "unicons/dashboard",
   "unicons/database",
+  "unicons/database-observability",
   "unicons/document-info",
   "unicons/download-alt",
   "unicons/draggabledots",
@@ -193,5 +195,6 @@
   "unicons/ban",
   "unicons/git",
   "unicons/bitbucket",
-  "unicons/tachometer-fast"
+  "unicons/tachometer-fast",
+  "unicons/tachometer-empty"
 ]

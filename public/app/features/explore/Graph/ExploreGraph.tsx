@@ -34,7 +34,10 @@ import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/times
 import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { ExploreGraphStyle } from 'app/types/explore';
 
-import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import {
+  isHideSeriesOverride,
+  seriesVisibilityConfigFactory,
+} from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';
 
 import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
@@ -60,6 +63,7 @@ interface Props {
   eventBus: EventBus;
   vizLegendOverrides?: Partial<VizLegendOptions>;
   toggleLegendRef?: React.MutableRefObject<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>;
+  queriesChangedIndexAtRun?: number;
 }
 
 export function ExploreGraph({
@@ -82,6 +86,7 @@ export function ExploreGraph({
   eventBus,
   vizLegendOverrides,
   toggleLegendRef,
+  queriesChangedIndexAtRun,
 }: Props) {
   const theme = useTheme2();
 
@@ -106,6 +111,13 @@ export function ExploreGraph({
     },
     overrides: [],
   });
+
+  useEffect(() => {
+    setFieldConfig((fieldConfig) => ({
+      ...fieldConfig,
+      overrides: fieldConfig.overrides.filter((rule) => !isHideSeriesOverride(rule)),
+    }));
+  }, [queriesChangedIndexAtRun]);
 
   const styledFieldConfig = useMemo(() => {
     const withGraphStyle = applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum);

@@ -90,6 +90,7 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ inputs.grafana_commit }}
+          fetch-depth: 2  # Need HEAD~1 for e2e-selectors change detection
 
       - name: Setup Node
         uses: ./.github/actions/setup-node
@@ -127,3 +128,43 @@ jobs:
         env:
           NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
         run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
+
+      # Notify plugin-tools when e2e-selectors changes so it can update its bundled version
+      - name: Check for e2e-selectors changes
+        id: check-e2e-changes
+        run: |
+          CHANGES=$(git diff --name-only HEAD~1 HEAD -- packages/grafana-e2e-selectors | wc -l)
+          echo "changes=$CHANGES" >> "$GITHUB_OUTPUT"
+          if [ "$CHANGES" -gt 0 ]; then
+            echo "Detected $CHANGES file(s) changed in packages/grafana-e2e-selectors"
+          fi
+
+      - name: Get Vault secrets
+        if: steps.check-e2e-changes.outputs.changes > 0
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+
+      - name: Generate token for plugin-tools
+        if: steps.check-e2e-changes.outputs.changes > 0
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: '["plugin-tools"]'
+          permissions: '{"actions": "write"}'
+
+      - name: Dispatch to plugin-tools
+        if: steps.check-e2e-changes.outputs.changes > 0
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          echo "Dispatching bump-e2e-selectors workflow to grafana/plugin-tools with version $VERSION"
+          gh workflow run bump-e2e-selectors.yml \
+            --repo grafana/plugin-tools \
+            --ref main \
+            --field version="$VERSION"

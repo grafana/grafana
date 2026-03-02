@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { TimeRange } from '@grafana/data';
 
 import { PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { getMockTimeRange } from '../../../test/mocks/datasource';
 
 import { DEFAULT_RESULTS_PER_PAGE, MetricsModalContextProvider, useMetricsModal } from './MetricsModalContext';
 import { generateMetricData } from './helpers';
@@ -25,7 +26,9 @@ const mockLanguageProvider: PrometheusLanguageProviderInterface = {
 // Helper to create wrapper component
 const createWrapper = (languageProvider = mockLanguageProvider) => {
   return ({ children }: { children: ReactNode }) => (
-    <MetricsModalContextProvider languageProvider={languageProvider}>{children}</MetricsModalContextProvider>
+    <MetricsModalContextProvider languageProvider={languageProvider} timeRange={getMockTimeRange()}>
+      {children}
+    </MetricsModalContextProvider>
   );
 };
 
@@ -167,6 +170,7 @@ describe('MetricsModalContext', () => {
 
     it('should handle empty metadata response', async () => {
       (mockLanguageProvider.queryMetricsMetadata as jest.Mock).mockResolvedValue({});
+      (mockLanguageProvider.queryLabelValues as jest.Mock).mockResolvedValue(['metric1', 'metric2']);
 
       const { result } = renderHook(() => useMetricsModal(), {
         wrapper: createWrapper(),
@@ -176,7 +180,18 @@ describe('MetricsModalContext', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.filteredMetricsData).toEqual([]);
+      expect(result.current.filteredMetricsData).toEqual([
+        {
+          value: 'metric1',
+          type: 'counter',
+          description: 'Test metric',
+        },
+        {
+          value: 'metric2',
+          type: 'counter',
+          description: 'Test metric',
+        },
+      ]);
     });
 
     it('should handle metadata fetch error', async () => {
@@ -239,6 +254,7 @@ describe('MetricsModalContext', () => {
       }));
 
       (mockLanguageProvider.queryMetricsMetadata as jest.Mock).mockResolvedValue({
+        ALERTS: { type: 'gauge', help: 'Test alerts help' },
         test_metric: { type: 'counter', help: 'Test metric' },
       });
 
@@ -250,7 +266,7 @@ describe('MetricsModalContext', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.filteredMetricsData).toHaveLength(1);
+      expect(result.current.filteredMetricsData).toHaveLength(2);
       expect(result.current.selectedTypes).toEqual([]);
     });
 
@@ -318,7 +334,7 @@ describe('MetricsModalContext', () => {
       };
 
       const { getByTestId } = render(
-        <MetricsModalContextProvider languageProvider={mockLanguageProvider}>
+        <MetricsModalContextProvider languageProvider={mockLanguageProvider} timeRange={getMockTimeRange()}>
           <TestComponent />
         </MetricsModalContextProvider>
       );

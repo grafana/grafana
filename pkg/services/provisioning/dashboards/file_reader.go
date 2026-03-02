@@ -305,34 +305,6 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	// nolint:staticcheck
 	provisioningMetadata.identity = dashboardIdentity{title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderID}
 
-	// fix empty folder_uid from already provisioned dashboards
-	if upToDate && folderUID != "" {
-		// search for root dashboard with the specified uid or title
-		d, err := fr.dashboardStore.GetDashboard(
-			ctx,
-			&dashboards.GetDashboardQuery{
-				OrgID:     jsonFile.dashboard.OrgID,
-				UID:       jsonFile.dashboard.Dashboard.UID,
-				FolderUID: util.Pointer(""),
-
-				// provisioning depends on unique names
-				//nolint:staticcheck
-				Title: &jsonFile.dashboard.Dashboard.Title,
-			},
-		)
-		if err != nil {
-			// if no problematic entry is found it's safe to ignore
-			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return provisioningMetadata, err
-			}
-		} else {
-			// inconsistency is detected so force updating the dashboard
-			if d.FolderUID != folderUID {
-				upToDate = false
-			}
-		}
-	}
-
 	if upToDate {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 		// nolint:staticcheck
@@ -358,6 +330,8 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			Name:       fr.Cfg.Name,
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
+			// adds `grafana.app/managerAllowsEdits` to the provisioned dashboards in unified storage. not used if in legacy.
+			AllowUIUpdates: fr.Cfg.AllowUIUpdates,
 		}
 		_, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp)
 		if err != nil {
@@ -429,7 +403,8 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return 0, "", dashboards.ErrFolderInvalidUID
 	}
 
-	// When we expect folders in unified storage, they should have a manager indicated
+	// When we expect folders in unified storage, they should have a manager indicated.
+	// NOTE: when everything has been running in mode5 for a while, this check can be removed.
 	if err == nil && result != nil && result.ManagedBy == "" && fr.foldersInUnified {
 		result, err = service.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
 		if err != nil {

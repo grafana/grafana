@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, useAppPluginInstalled } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -27,20 +27,27 @@ export function AdvisorRedirectNotice() {
   const styles = useStyles2(getStyles);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const [showNotice, setShowNotice] = useState(false);
+  const { value: isAdvisorInstalled } = useAppPluginInstalled('grafana-advisor-app');
 
-  const canUseAdvisor = hasAdminRights && config.featureToggles.grafanaAdvisor && !!config.apps['grafana-advisor-app'];
+  const canUseAdvisor = hasAdminRights && config.featureToggles.grafanaAdvisor && Boolean(isAdvisorInstalled);
 
   useEffect(() => {
-    if (canUseAdvisor) {
-      userStorage.getItem('showNotice').then((showNotice) => {
-        if (showNotice !== 'false') {
-          setShowNotice(true);
-        }
-      });
+    if (!canUseAdvisor) {
+      return;
     }
+
+    userStorage.getItem('showNotice').then((showNotice) => {
+      if (showNotice !== 'false') {
+        setShowNotice(true);
+      }
+    });
   }, [canUseAdvisor]);
 
-  return showNotice ? (
+  if (!showNotice) {
+    return <></>;
+  }
+
+  return (
     <Alert
       severity="info"
       title=""
@@ -65,7 +72,5 @@ export function AdvisorRedirectNotice() {
         </LinkButton>
       </div>
     </Alert>
-  ) : (
-    <></>
   );
 }

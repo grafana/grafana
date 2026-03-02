@@ -3,7 +3,7 @@ package elasticsearch
 import (
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/simplejson"
 )
 
 // setFloatPath converts a string value at the specified path to float64

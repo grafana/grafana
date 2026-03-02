@@ -1,6 +1,9 @@
 package migration
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,6 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/openfga/openfga/pkg/storage/migrate"
+	"github.com/pressly/goose/v3"
+)
+
+var (
+	openFGATables = []string{"tuple", "authorization_model", "store", "assertion", "changelog", "goose_db_version"}
 )
 
 func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConfig, logger log.Logger) error {
@@ -43,7 +51,7 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConf
 		Engine: dbType,
 	}
 
-	if err := migrate.RunMigrations(migrationConfig); err != nil {
+	if err := runOpenFGAMigrations(migrationConfig, logger); err != nil {
 		return fmt.Errorf("failed to run openfga migrations: %w", err)
 	}
 
@@ -54,9 +62,53 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConf
 	return nil
 }
 
+func runOpenFGAMigrations(migrationConfig migrate.MigrationConfig, logger log.Logger) error {
+	err := migrate.RunMigrations(migrationConfig)
+	if err == nil {
+		return nil
+	}
+
+	// if an error occurs during migrations, it means that the goose schema is inconsistent with the openfga schema.
+	// since zanzana is a derived state, we can reset the schema state and retry.
+	logger.Warn("openfga migrations failed due to inconsistent goose schema/version state; resetting and retrying migrations", "error", err)
+
+	if resetErr := resetOpenFGASchema(migrationConfig.Engine, migrationConfig.URI); resetErr != nil {
+		return fmt.Errorf("schema reset failed: %w", errors.Join(err, resetErr))
+	}
+
+	if retryErr := migrate.RunMigrations(migrationConfig); retryErr != nil {
+		return retryErr
+	}
+
+	return nil
+}
+
+// resetOpenFGASchema drops the openfga tables to ensure migrations will run from a clean state.
+// openfga tables are derived state and state will be rebuilt from reconciliation.
+func resetOpenFGASchema(engine, uri string) (retErr error) {
+	db, err := openDB(engine, uri)
+	if err != nil {
+		return fmt.Errorf("failed to open db for openfga schema reset: %w", err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil && retErr == nil {
+			retErr = fmt.Errorf("failed to close db: %w", err)
+		}
+	}()
+
+	for _, table := range openFGATables {
+		// strings are hard-coded, so this is safe.
+		// #nosec G201 nosemgrep: gosec.G201
+		if _, err := db.ExecContext(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", table)); err != nil {
+			return fmt.Errorf("failed to drop openfga table %s: %w", table, err)
+		}
+	}
+
+	return nil
+}
+
 func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
-	openfgaTables := []string{"tuple", "authorization_model", "store", "assertion", "changelog"}
-	for _, table := range openfgaTables {
+	for _, table := range openFGATables {
 		m.AddMigration(fmt.Sprintf("Drop existing openfga table %s", table), migrator.NewDropTableMigration(table))
 	}
 
@@ -66,6 +118,17 @@ func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg) error {
 		sec.Key("migration_locking").MustBool(true),
 		sec.Key("locking_attempt_timeout_sec").MustInt(30),
 	)
+}
+
+func openDB(engine, uri string) (*sql.DB, error) {
+	db, err := goose.OpenDBWithDriver(engine, uri)
+	if err == nil {
+		return db, nil
+	}
+	if engine == "sqlite" {
+		return goose.OpenDBWithDriver("sqlite3", uri)
+	}
+	return nil, err
 }
 
 // constructPostgresConnStrForOpenFGA parses a PostgreSQL connection string into a map of key-value pairs

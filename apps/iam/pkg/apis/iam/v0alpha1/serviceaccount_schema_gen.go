@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaServiceAccount = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", &ServiceAccount{}, &ServiceAccountList{}, resource.WithKind("ServiceAccount"),
+	schemaServiceAccount = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewServiceAccount(), &ServiceAccountList{}, resource.WithKind("ServiceAccount"),
 		resource.WithPlural("serviceaccounts"), resource.WithScope(resource.NamespacedScope))
 	kindServiceAccount = resource.Kind{
 		Schema: schemaServiceAccount,

@@ -44,6 +44,7 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   level: number;
   isOpen: boolean;
   parentUID?: string;
+  disabled?: boolean;
 }
 
 interface RendererUserProps {
@@ -73,3 +74,18 @@ export interface BrowseDashboardsPermissions {
   canDeleteDashboards?: boolean;
   isReadOnlyRepo?: boolean;
 }
+
+interface NotificationEventData {
+  alertType: string;
+  message: string;
+}
+
+interface NotificationActionData {
+  title: string;
+  buttonLabel: string;
+  targetUrl: string;
+}
+
+export type RestoreNotificationData =
+  | { kind: 'action'; data: NotificationActionData }
+  | { kind: 'event'; data: NotificationEventData };

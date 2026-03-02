@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -173,4 +174,40 @@ func (m mockResponseWriter) Status() int {
 }
 func (m mockResponseWriter) Size() int {
 	return m.size
+}
+
+func TestMiddleware_InitializesDBQueryTimer(t *testing.T) {
+	cfg := setting.NewCfg()
+	l := Provide(cfg, featuremgmt.WithFeatures())
+
+	var capturedDBQueryTime int64
+	handler := l.Middleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.IncDBQueryTimer(r.Context(), 100)
+		log.IncDBQueryTimer(r.Context(), 50)
+		log.IncDBQueryTimer(r.Context(), 25)
+		capturedDBQueryTime = log.TotalDBQueryTime(r.Context())
+	}))
+
+	req := mustRequest(http.NewRequest(http.MethodGet, "/", nil))
+	handler.ServeHTTP(nil, req)
+
+	assert.Equal(t, int64(175), capturedDBQueryTime)
+}
+
+func TestMiddleware_InitializesDBCallCounter(t *testing.T) {
+	cfg := setting.NewCfg()
+	l := Provide(cfg, featuremgmt.WithFeatures())
+
+	var capturedDBCallCount int64
+	handler := l.Middleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.IncDBCallCounter(r.Context())
+		log.IncDBCallCounter(r.Context())
+		log.IncDBCallCounter(r.Context())
+		capturedDBCallCount = log.TotalDBCallCount(r.Context())
+	}))
+
+	req := mustRequest(http.NewRequest(http.MethodGet, "/", nil))
+	handler.ServeHTTP(nil, req)
+
+	assert.Equal(t, int64(3), capturedDBCallCount)
 }

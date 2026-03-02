@@ -16,12 +16,7 @@ import { config } from '@grafana/runtime';
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
-import {
-  addedComponentsRegistry,
-  addedFunctionsRegistry,
-  addedLinksRegistry,
-  exposedComponentsRegistry,
-} from '../extensions/registry/setup';
+import { getPluginExtensionRegistries } from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';
 
 import { importPluginModule } from './importPluginModule';
@@ -98,6 +93,8 @@ const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async 
   plugin.meta = meta;
   plugin.setComponentsFromLegacyExports(pluginExports);
 
+  const { exposedComponentsRegistry, addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry } =
+    await getPluginExtensionRegistries();
   exposedComponentsRegistry.register({ pluginId: meta.id, configs: plugin.exposedComponentConfigs || [] });
   addedComponentsRegistry.register({ pluginId: meta.id, configs: plugin.addedComponentConfigs || [] });
   addedLinksRegistry.register({ pluginId: meta.id, configs: plugin.addedLinkConfigs || [] });

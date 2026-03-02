@@ -5,16 +5,18 @@ import (
 	"errors"
 
 	"github.com/centrifugal/centrifuge"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 )
 
-//go:generate mockgen -destination=plugin_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features PluginContextGetter
+//go:generate mockery --name=PluginContextGetter --structname=MockPluginContextGetter --inpackage --filename=plugin_mock.go --with-expecter
 
 type PluginContextGetter interface {
 	GetPluginContext(ctx context.Context, user identity.Requester, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error)
@@ -86,7 +88,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user identity.Reques
 		return model.SubscribeReply{}, resp.Status, nil
 	}
 
-	submitResult, err := r.runStreamManager.SubmitStream(ctx, user, orgchannel.PrependOrgID(user.GetOrgID(), e.Channel), r.path, e.Data, pCtx, r.handler, false)
+	submitResult, err := r.runStreamManager.SubmitStream(ctx, user, orgchannel.PrependK8sNamespace(user.GetNamespace(), e.Channel), r.path, e.Data, pCtx, r.handler, false)
 	if err != nil {
 		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
 		return model.SubscribeReply{}, 0, centrifuge.ErrorInternal

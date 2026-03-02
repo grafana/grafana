@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 
 /**
@@ -11,9 +12,10 @@ import { useLogListSearchContext } from './LogListSearchContext';
 
 export const useKeyBindings = () => {
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
+  const { showDetails, detailsMode, closeDetails } = useLogDetailsContext();
 
   useEffect(() => {
-    function handleToggleSearch(event: KeyboardEvent) {
+    function handleOpenSearch(event: KeyboardEvent) {
       const isMac = navigator.userAgent.includes('Mac');
       const isFKey = event.key === 'f' || event.key === 'F';
 
@@ -21,13 +23,20 @@ export const useKeyBindings = () => {
         showSearch();
         return;
       }
+    }
+    function handleClose(event: KeyboardEvent) {
       if (event.key === 'Escape' && searchVisible) {
         hideSearch();
       }
+      if (event.key === 'Escape' && showDetails.length > 0 && detailsMode === 'sidebar') {
+        closeDetails();
+      }
     }
-    document.addEventListener('keydown', handleToggleSearch);
+    document.addEventListener('keydown', handleOpenSearch);
+    document.addEventListener('keyup', handleClose);
     return () => {
-      document.removeEventListener('keydown', handleToggleSearch);
+      document.removeEventListener('keydown', handleOpenSearch);
+      document.removeEventListener('keyup', handleClose);
     };
-  });
+  }, [closeDetails, detailsMode, hideSearch, searchVisible, showDetails.length, showSearch]);
 };

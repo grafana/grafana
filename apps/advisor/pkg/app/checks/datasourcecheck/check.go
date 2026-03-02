@@ -6,10 +6,8 @@ import (
 	sysruntime "runtime"
 	"sync"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -24,31 +22,28 @@ const (
 )
 
 type check struct {
-	DatasourceSvc             datasources.DataSourceService
+	DatasourceSvc             checks.DataSourceGetter
 	PluginStore               pluginstore.Store
-	PluginContextProvider     PluginContextProvider
-	PluginClient              plugins.Client
-	PluginRepo                repo.Service
+	PluginRepo                checks.PluginInfoGetter
 	GrafanaVersion            string
+	healthChecker             checks.HealthChecker
 	pluginCanBeInstalledCache map[string]bool
 	pluginExistsCacheMu       sync.RWMutex
 }
 
 func New(
-	datasourceSvc datasources.DataSourceService,
+	datasourceSvc checks.DataSourceGetter,
 	pluginStore pluginstore.Store,
-	pluginContextProvider PluginContextProvider,
-	pluginClient plugins.Client,
-	pluginRepo repo.Service,
+	pluginRepo checks.PluginInfoGetter,
 	grafanaVersion string,
+	healthChecker checks.HealthChecker,
 ) checks.Check {
 	return &check{
 		DatasourceSvc:             datasourceSvc,
 		PluginStore:               pluginStore,
-		PluginContextProvider:     pluginContextProvider,
-		PluginClient:              pluginClient,
 		PluginRepo:                pluginRepo,
 		GrafanaVersion:            grafanaVersion,
+		healthChecker:             healthChecker,
 		pluginCanBeInstalledCache: make(map[string]bool),
 	}
 }
@@ -107,8 +102,7 @@ func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&uidValidationStep{},
 		&healthCheckStep{
-			PluginContextProvider: c.PluginContextProvider,
-			PluginClient:          c.PluginClient,
+			HealthChecker: c.healthChecker,
 		},
 		&missingPluginStep{
 			PluginStore:    c.PluginStore,
@@ -166,8 +160,4 @@ func (c *check) canBeInstalled(ctx context.Context, pluginType string) (bool, er
 	isAvailableInRepo := len(availablePlugins) > 0
 	c.pluginCanBeInstalledCache[pluginType] = !isAvailableInRepo
 	return isAvailableInRepo, nil
-}
-
-type PluginContextProvider interface {
-	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }

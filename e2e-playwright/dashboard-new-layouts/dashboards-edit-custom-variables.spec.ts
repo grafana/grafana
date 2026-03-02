@@ -6,7 +6,6 @@ import { flows } from './utils';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
@@ -84,9 +83,9 @@ test.describe(
       refetchItems(dashboardPage, selectors);
     };
 
-    const closeModal = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
+    const applyAndcloseModal = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
       await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton)
+        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton)
         .click();
     };
 
@@ -149,7 +148,7 @@ test.describe(
       await removeItem(dashboardPage, selectors, 2);
       await checkRows(3);
       await checkPreview(dashboardPage, selectors, ['first value', 'second label', 'fourth value']);
-      await closeModal(dashboardPage, selectors);
+      await applyAndcloseModal(dashboardPage, selectors);
 
       // assert variable is visible and has the correct values
       const variableLabel = dashboardPage.getByGrafanaSelector(

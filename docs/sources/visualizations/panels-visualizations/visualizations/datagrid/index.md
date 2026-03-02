@@ -30,7 +30,9 @@ refs:
 
 # Datagrid
 
-{{< docs/experimental product="The datagrid visualization" featureFlag="`enableDatagridEditing`" >}}
+{{< admonition type="caution" >}}
+Starting with Grafana 12.4, Datagrid is deprecated. It will be removed in version 13.0.
+{{< /admonition >}}
 
 Datagrids offer you the ability to create, edit, and fine-tune data within Grafana. As such, this panel can act as a data source for other panels
 inside a dashboard.

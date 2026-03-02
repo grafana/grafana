@@ -165,11 +165,12 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
     <Grid columns={3} gap={1}>
       {transformations.map((transform) => (
         <TransformationCard
-          key={transform.id}
-          transform={transform}
-          showIllustrations={showIllustrations}
-          onClick={onClick}
           data={data}
+          fullWidth
+          key={transform.id}
+          onClick={onClick}
+          showIllustrations={showIllustrations}
+          transform={transform}
         />
       ))}
     </Grid>

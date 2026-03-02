@@ -138,7 +138,7 @@ export const navigateToExplore = (
   panel: PanelModel,
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
-  return async (dispatch) => {
+  return async () => {
     const { timeRange, getExploreUrl, openInNewWindow } = dependencies;
 
     const path = await getExploreUrl({

@@ -4,6 +4,14 @@
 
 package v0alpha1
 
+// ConnectionListerExpansion allows custom methods to be added to
+// ConnectionLister.
+type ConnectionListerExpansion interface{}
+
+// ConnectionNamespaceListerExpansion allows custom methods to be added to
+// ConnectionNamespaceLister.
+type ConnectionNamespaceListerExpansion interface{}
+
 // HistoricJobListerExpansion allows custom methods to be added to
 // HistoricJobLister.
 type HistoricJobListerExpansion interface{}

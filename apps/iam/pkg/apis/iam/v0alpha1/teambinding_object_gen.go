@@ -23,6 +23,12 @@ type TeamBinding struct {
 	Spec TeamBindingSpec `json:"spec" yaml:"spec"`
 }
 
+func NewTeamBinding() *TeamBinding {
+	return &TeamBinding{
+		Spec: *NewTeamBindingSpec(),
+	}
+}
+
 func (o *TeamBinding) GetSpec() any {
 	return o.Spec
 }
@@ -222,6 +228,10 @@ func (o *TeamBinding) DeepCopyInto(dst *TeamBinding) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (TeamBinding) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBinding"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &TeamBinding{}
 
@@ -273,6 +283,10 @@ func (o *TeamBindingList) DeepCopy() *TeamBindingList {
 
 func (o *TeamBindingList) DeepCopyInto(dst *TeamBindingList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (TeamBindingList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingList"
 }
 
 // Interface compliance compile-time check

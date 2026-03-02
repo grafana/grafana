@@ -22,6 +22,7 @@ func TestRequestConfigProvider_PluginRequestConfig_Defaults(t *testing.T) {
 
 	p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 	require.Equal(t, map[string]string{
+		"GF_LIVE_CLIENT_QUEUE_MAX_SIZE":            "0",
 		"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
@@ -219,6 +220,7 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Equal(t, map[string]string{
+			"GF_LIVE_CLIENT_QUEUE_MAX_SIZE":            "0",
 			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
@@ -256,6 +258,22 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.NotContains(t, p.PluginRequestConfig(context.Background(), "", nil), "GF_CONCURRENT_QUERY_COUNT")
+	})
+}
+
+func TestRequestConfigProvider_PluginRequestConfig_liveClientQueueMaxSize(t *testing.T) {
+	t.Run("Sets the live client queue max size only for Tempo", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.LiveClientQueueMaxSize = 123
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "tempo", nil), map[string]string{
+			"GF_LIVE_CLIENT_QUEUE_MAX_SIZE": "123",
+		})
 	})
 }
 
@@ -544,6 +562,7 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 	}
 
 	cfg.AWSAssumeRoleEnabled = false
+	cfg.AWSPerDatasourceHTTPProxyEnabled = true
 	cfg.AWSAllowedAuthProviders = []string{"grafana_assume_role", "keys"}
 	cfg.AWSExternalId = "mock_external_id"
 	cfg.AWSSessionDuration = "10m"
@@ -554,17 +573,19 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 
 	t.Run("uses the aws settings for an AWS plugin", func(t *testing.T) {
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "cloudwatch", nil), map[string]string{
-			"AWS_AUTH_AssumeRoleEnabled":     "false",
-			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
-			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
-			"AWS_AUTH_SESSION_DURATION":      "10m",
-			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
+			"AWS_AUTH_AssumeRoleEnabled":             "false",
+			"AWS_AUTH_PerDatasourceHTTPProxyEnabled": "true",
+			"AWS_AUTH_AllowedAuthProviders":          "grafana_assume_role,keys",
+			"AWS_AUTH_EXTERNAL_ID":                   "mock_external_id",
+			"AWS_AUTH_SESSION_DURATION":              "10m",
+			"AWS_CW_LIST_METRICS_PAGE_LIMIT":         "100",
 		})
 	})
 
 	t.Run("does not use the aws settings for a non-aws plugin", func(t *testing.T) {
 		m := p.PluginRequestConfig(context.Background(), "", nil)
 		require.NotContains(t, m, "AWS_AUTH_AssumeRoleEnabled")
+		require.NotContains(t, m, "AWS_AUTH_PerDatasourceHTTPProxyEnabled")
 		require.NotContains(t, m, "AWS_AUTH_AllowedAuthProviders")
 		require.NotContains(t, m, "AWS_AUTH_EXTERNAL_ID")
 		require.NotContains(t, m, "AWS_AUTH_SESSION_DURATION")
@@ -576,11 +597,12 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 
 		p = NewRequestConfigProvider(cfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "test-datasource", nil), map[string]string{
-			"AWS_AUTH_AssumeRoleEnabled":     "false",
-			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
-			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
-			"AWS_AUTH_SESSION_DURATION":      "10m",
-			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
+			"AWS_AUTH_AssumeRoleEnabled":             "false",
+			"AWS_AUTH_PerDatasourceHTTPProxyEnabled": "true",
+			"AWS_AUTH_AllowedAuthProviders":          "grafana_assume_role,keys",
+			"AWS_AUTH_EXTERNAL_ID":                   "mock_external_id",
+			"AWS_AUTH_SESSION_DURATION":              "10m",
+			"AWS_CW_LIST_METRICS_PAGE_LIMIT":         "100",
 		})
 	})
 }

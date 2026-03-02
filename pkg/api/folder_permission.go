@@ -9,10 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
@@ -90,6 +92,13 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
+	}
+
+	// Block permission changes for folders managed by provisioning,
+	// unless the provisioningFolderMetadata feature flag is enabled.
+	//nolint:staticcheck
+	if folder.ManagedBy == utils.ManagerKindRepo && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagProvisioningFolderMetadata) {
+		return response.Error(http.StatusForbidden, "Cannot update permissions for folders managed by provisioning.", nil)
 	}
 
 	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))

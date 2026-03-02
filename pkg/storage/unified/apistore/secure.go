@@ -3,11 +3,17 @@ package apistore
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
+
+// This prefix is used when modeling datasources from legacy SQL + secrets
+// We must not use the same name when saving in unified storage
+// If we try to save a secure value with this name, it will error
+const LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX = "lds-sv-"
 
 // prepareSecureValues will create any new secure values and register changes inside the provided objectForStorage
 // any call to this function MUST be followed by a call to info.finish(ctx, nil, store) to ensure that the secure values are cleaned up
@@ -87,6 +93,10 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 			// This can happen when explicitly shifting from an inline value to a shared secret
 			v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
 			v.hasChanged = true
+		}
+
+		if strings.HasPrefix(val.Name, LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX) {
+			return fmt.Errorf("unable to save secure value reference with legacy datasource prefix")
 		}
 
 		delete(previous, k)

@@ -1,7 +1,8 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
+import { DataSourceRef, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import { Panel } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
@@ -11,10 +12,10 @@ import {
   QueryVariableKind,
   LibraryPanelRef,
   LibraryPanelKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { notifyApp } from 'app/core/actions';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
@@ -95,7 +96,6 @@ export async function makeExportableV1(dashboard: DashboardModel) {
   dashboard.cleanUpRepeats();
 
   const saveModel = dashboard.getSaveModelCloneOld();
-  saveModel.id = null;
 
   // undo repeat cleanup
   dashboard.processRepeats();
@@ -199,7 +199,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
         }
       }
 
-      const panelDef: PanelPluginMeta = config.panels[panel.type];
+      const panelDef = await getPanelPluginMeta(panel.type);
       if (panelDef) {
         requires['panel' + panelDef.id] = {
           type: 'panel',

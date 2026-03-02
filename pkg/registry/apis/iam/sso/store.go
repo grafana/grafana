@@ -7,6 +7,7 @@ import (
 
 	commonv1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,12 +33,13 @@ var (
 
 var resource = iamv0.SSOSettingResourceInfo
 
-func NewLegacyStore(service ssosettings.Service) *LegacyStore {
-	return &LegacyStore{service}
+func NewLegacyStore(service ssosettings.Service, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{service, tracer}
 }
 
 type LegacyStore struct {
 	service ssosettings.Service
+	tracer  trace.Tracer
 }
 
 // Destroy implements rest.Storage.
@@ -71,6 +73,9 @@ func (s *LegacyStore) NewList() runtime.Object {
 
 // List implements rest.Lister.
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "sso.List")
+	defer span.End()
+
 	ns, _ := request.NamespaceInfoFrom(ctx, false)
 
 	settings, err := s.service.List(ctx)
@@ -88,6 +93,9 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 // Get implements rest.Getter.
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "sso.Get")
+	defer span.End()
+
 	ns, _ := request.NamespaceInfoFrom(ctx, false)
 
 	setting, err := s.service.GetForProviderWithRedactedSecrets(ctx, name)
@@ -112,6 +120,9 @@ func (s *LegacyStore) Update(
 	_ bool,
 	_ *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "sso.Update")
+	defer span.End()
+
 	const created = false
 	ident, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -148,6 +159,9 @@ func (s *LegacyStore) Delete(
 	_ rest.ValidateObjectFunc,
 	options *metav1.DeleteOptions,
 ) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "sso.Delete")
+	defer span.End()
+
 	obj, err := s.Get(ctx, name, nil)
 	if err != nil {
 		return obj, false, err

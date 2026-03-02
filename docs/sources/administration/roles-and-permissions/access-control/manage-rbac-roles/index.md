@@ -53,6 +53,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
+  rbac-terraform-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-terraform-provisioning/
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
@@ -78,74 +83,50 @@ Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/g
 
 This section includes instructions for how to view permissions associated with roles, create custom roles, and update and delete roles.
 
-The following example includes the base64 username:password Basic Authorization. You cannot use authorization tokens in the request.
+## View basic role definitions
 
-## List permissions associated with roles
+You can retrieve the full definition of a basic role, including all associated permissions, using the API or by navigating directly to the endpoint URL in your browser while logged in as an Admin.
 
-Use a `GET` command to see the actions and scopes associated with a role. For more information about seeing a list of permissions for each role, refer to [Get a role](ref:api-rbac-get-a-role).
+### Using the API
 
-To see the permissions associated with basic roles, refer to the following basic role UIDs:
+To get the definition of a basic role:
 
-| Basic role      | UID                   |
-| --------------- | --------------------- |
-| `None`          | `basic_none`          |
-| `Viewer`        | `basic_viewer`        |
-| `Editor`        | `basic_editor`        |
-| `Admin`         | `basic_admin`         |
-| `Grafana Admin` | `basic_grafana_admin` |
-
-**Example request**
-
-```
-curl --location --request GET '<grafana_url>/api/access-control/roles/qQui_LCMk' --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ='
+```bash
+GET /api/access-control/roles/basic_<role>
 ```
 
-**Example response**
+Where `<role>` is one of: `viewer`, `editor`, `admin`, or `grafana_admin`.
 
-```
-{
-    "version": 2,
-    "uid": "qQui_LCMk",
-    "name": "fixed:users:writer",
-    "displayName": "User writer",
-    "description": "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
-    "global": true,
-    "permissions": [
-        {
-            "action": "org.users:add",
-            "scope": "users:*",
-            "updated": "2021-05-17T20:49:18+02:00",
-            "created": "2021-05-17T20:49:18+02:00"
-        },
-        {
-            "action": "org.users:read",
-            "scope": "users:*",
-            "updated": "2021-05-17T20:49:18+02:00",
-            "created": "2021-05-17T20:49:18+02:00"
-        },
-        {
-            "action": "org.users:remove",
-            "scope": "users:*",
-            "updated": "2021-05-17T20:49:18+02:00",
-            "created": "2021-05-17T20:49:18+02:00"
-        },
-        {
-            "action": "org.users:write",
-            "scope": "users:*",
-            "updated": "2021-05-17T20:49:18+02:00",
-            "created": "2021-05-17T20:49:18+02:00"
-        }
-    ],
-    "updated": "2021-05-17T20:49:18+02:00",
-    "created": "2021-05-13T16:24:26+02:00"
-}
+For example, to get the Viewer role definition:
+
+```bash
+curl --location 'https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer' \
+  --header 'Authorization: Bearer <service-account-token>'
 ```
 
-Refer to the [RBAC HTTP API](ref:api-rbac-get-a-role) for more details.
+### Using the browser
+
+You can also view the role definition directly in your browser by navigating to:
+
+```
+https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer
+```
+
+This works when logged in as an Admin user.
+
+For more information, refer to [Get a role](ref:api-rbac-get-a-role).
+
+For a reference of basic and fixed role assignments, refer to [RBAC role definitions](ref:rbac-role-definitions).
 
 ## Create custom roles
 
-This section shows you how to create a custom RBAC role using Grafana provisioning and the HTTP API.
+This section shows you how to create a custom RBAC role using Grafana provisioning or the HTTP API.
+
+Creating and editing custom roles is not currently possible in the Grafana UI. To manage custom roles, use one of the following methods:
+
+- [Provisioning](ref:rbac-grafana-provisioning) (for self-managed instances)
+- [HTTP API](ref:api-rbac-create-a-new-custom-role)
+- [Terraform](ref:rbac-terraform-provisioning)
 
 Create a custom role when basic roles and fixed roles do not meet your permissions requirements.
 
@@ -153,14 +134,101 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 
 - [Plan your RBAC rollout strategy](ref:plan-rbac-rollout-strategy).
 - Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions, actions, and scopes](ref:custom-role-actions-scopes).
-- [Enable role provisioning](ref:rbac-grafana-provisioning).
 - Ensure that you have permissions to create a custom role.
   - By default, the Grafana Admin role has permission to create custom roles.
   - A Grafana Admin can delegate the custom role privilege to another user by creating a custom role with the relevant permissions and adding the `permissions:type:delegate` scope.
 
-### Create custom roles using provisioning
+### Create custom roles using the HTTP API
 
-[File-based provisioning](ref:rbac-grafana-provisioning) is one method you can use to create custom roles.
+The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role](ref:api-rbac-create-a-new-custom-role).
+
+{{< admonition type="note" >}}
+When you create a custom role you can only give it the same permissions you already have. For example, if you only have `users:create` permissions, then you can't create a role that includes other permissions.
+{{< /admonition >}}
+
+The following example creates a `custom:users:admin` role and assigns the `users:create` action to it.
+
+**Example request**
+
+```
+curl --location --request POST '<grafana_url>/api/access-control/roles/' \
+--header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "version": 1,
+    "uid": "jZrmlLCkGksdka",
+    "name": "custom:users:admin",
+    "displayName": "custom users admin",
+    "description": "My custom role which gives users permissions to create users",
+    "global": true,
+    "permissions": [
+        {
+            "action": "users:create"
+        }
+    ]
+}'
+```
+
+**Example response**
+
+```
+{
+    "version": 1,
+    "uid": "jZrmlLCkGksdka",
+    "name": "custom:users:admin",
+    "displayName": "custom users admin",
+    "description": "My custom role which gives users permissions to create users",
+    "global": true,
+    "permissions": [
+        {
+            "action": "users:create"
+            "updated": "2021-05-17T22:07:31.569936+02:00",
+            "created": "2021-05-17T22:07:31.569935+02:00"
+        }
+    ],
+    "updated": "2021-05-17T22:07:31.564403+02:00",
+    "created": "2021-05-17T22:07:31.564403+02:00"
+}
+```
+
+Refer to the [RBAC HTTP API](ref:api-rbac-create-a-new-custom-role) for more details.
+
+### Create custom roles using Terraform
+
+You can use the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to manage custom roles and their assignments. This is the recommended method for Grafana Cloud users who want to manage RBAC as code. For more information, refer to [Provisioning RBAC with Terraform](ref:rbac-terraform-provisioning).
+
+The following example creates a custom role and assigns it to a team:
+
+```terraform
+resource "grafana_role" "custom_folder_manager" {
+  name        = "custom:folders:manager"
+  description = "Custom role for reading and creating folders"
+  uid         = "custom-folders-manager"
+  version     = 1
+  global      = true
+
+  permissions {
+    action = "folders:read"
+    scope  = "folders:*"
+  }
+
+  permissions {
+    action = "folders:create"
+    scope  = "folders:uid:general" # Allows creating folders at the root level
+  }
+}
+
+resource "grafana_role_assignment" "custom_folder_manager_assignment" {
+  role_uid = grafana_role.custom_folder_manager.uid
+  teams    = ["<TEAM_UID>"]
+}
+```
+
+For more information, refer to the [`grafana_role`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) and [`grafana_role_assignment`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment) documentation in the Terraform Registry.
+
+### Create custom roles using file-based provisioning
+
+You can use [file-based provisioning](ref:rbac-grafana-provisioning) to create custom roles for self-managed instances.
 
 1. Open the YAML configuration file and locate the `roles` section.
 
@@ -250,61 +318,6 @@ roles:
         scope: 'users:*'
         state: 'absent'
 ```
-
-### Create custom roles using the HTTP API
-
-The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role](ref:api-rbac-create-a-new-custom-role).
-
-{{< admonition type="note" >}}
-You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
-{{< /admonition >}}
-
-The following example creates a `custom:users:admin` role and assigns the `users:create` action to it.
-
-**Example request**
-
-```
-curl --location --request POST '<grafana_url>/api/access-control/roles/' \
---header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "version": 1,
-    "uid": "jZrmlLCkGksdka",
-    "name": "custom:users:admin",
-    "displayName": "custom users admin",
-    "description": "My custom role which gives users permissions to create users",
-    "global": true,
-    "permissions": [
-        {
-            "action": "users:create"
-        }
-    ]
-}'
-```
-
-**Example response**
-
-```
-{
-    "version": 1,
-    "uid": "jZrmlLCkGksdka",
-    "name": "custom:users:admin",
-    "displayName": "custom users admin",
-    "description": "My custom role which gives users permissions to create users",
-    "global": true,
-    "permissions": [
-        {
-            "action": "users:create"
-            "updated": "2021-05-17T22:07:31.569936+02:00",
-            "created": "2021-05-17T22:07:31.569935+02:00"
-        }
-    ],
-    "updated": "2021-05-17T22:07:31.564403+02:00",
-    "created": "2021-05-17T22:07:31.564403+02:00"
-}
-```
-
-Refer to the [RBAC HTTP API](ref:api-rbac-create-a-new-custom-role) for more details.
 
 ## Update basic role permissions
 

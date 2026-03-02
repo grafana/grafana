@@ -2,9 +2,7 @@ import { api } from './baseAPI';
 export const addTagTypes = [
   'enterprise',
   'access_control',
-  'ldap_debug',
   'admin_ldap',
-  'access_control_provisioning',
   'admin_provisioning',
   'admin',
   'admin_users',
@@ -30,7 +28,6 @@ export const addTagTypes = [
   'invites',
   'preferences',
   'orgs',
-  'playlists',
   'query_history',
   'recording_rules',
   'reports',
@@ -61,6 +58,7 @@ const injectedRtkApi = api
           params: {
             delegatable: queryArg.delegatable,
             includeHidden: queryArg.includeHidden,
+            targetOrgId: queryArg.targetOrgId,
           },
         }),
         providesTags: ['access_control', 'enterprise'],
@@ -117,7 +115,12 @@ const injectedRtkApi = api
         providesTags: ['access_control', 'enterprise'],
       }),
       listTeamRoles: build.query<ListTeamRolesApiResponse, ListTeamRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/teams/${queryArg.teamId}/roles` }),
+        query: (queryArg) => ({
+          url: `/access-control/teams/${queryArg.teamId}/roles`,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
+        }),
         providesTags: ['access_control', 'enterprise'],
       }),
       addTeamRole: build.mutation<AddTeamRoleApiResponse, AddTeamRoleApiArg>({
@@ -133,6 +136,9 @@ const injectedRtkApi = api
           url: `/access-control/teams/${queryArg.teamId}/roles`,
           method: 'PUT',
           body: queryArg.setTeamRolesCommand,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
         }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
@@ -152,7 +158,14 @@ const injectedRtkApi = api
         invalidatesTags: ['access_control', 'enterprise'],
       }),
       listUserRoles: build.query<ListUserRolesApiResponse, ListUserRolesApiArg>({
-        query: (queryArg) => ({ url: `/access-control/users/${queryArg.userId}/roles` }),
+        query: (queryArg) => ({
+          url: `/access-control/users/${queryArg.userId}/roles`,
+          params: {
+            includeHidden: queryArg.includeHidden,
+            includeMapped: queryArg.includeMapped,
+            targetOrgId: queryArg.targetOrgId,
+          },
+        }),
         providesTags: ['access_control', 'enterprise'],
       }),
       addUserRole: build.mutation<AddUserRoleApiResponse, AddUserRoleApiArg>({
@@ -168,6 +181,9 @@ const injectedRtkApi = api
           url: `/access-control/users/${queryArg.userId}/roles`,
           method: 'PUT',
           body: queryArg.setUserRolesCommand,
+          params: {
+            targetOrgId: queryArg.targetOrgId,
+          },
         }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
@@ -232,7 +248,7 @@ const injectedRtkApi = api
       }),
       getSyncStatus: build.query<GetSyncStatusApiResponse, GetSyncStatusApiArg>({
         query: () => ({ url: `/admin/ldap-sync-status` }),
-        providesTags: ['ldap_debug', 'enterprise'],
+        providesTags: ['admin_ldap', 'enterprise'],
       }),
       reloadLdapCfg: build.mutation<ReloadLdapCfgApiResponse, ReloadLdapCfgApiArg>({
         query: () => ({ url: `/admin/ldap/reload`, method: 'POST' }),
@@ -255,7 +271,7 @@ const injectedRtkApi = api
         AdminProvisioningReloadAccessControlApiArg
       >({
         query: () => ({ url: `/admin/provisioning/access-control/reload`, method: 'POST' }),
-        invalidatesTags: ['access_control_provisioning', 'enterprise'],
+        invalidatesTags: ['admin_provisioning', 'access_control', 'enterprise'],
       }),
       adminProvisioningReloadDashboards: build.mutation<
         AdminProvisioningReloadDashboardsApiResponse,
@@ -660,10 +676,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/dashboards/db`, method: 'POST', body: queryArg.saveDashboardCommand }),
         invalidatesTags: ['dashboards'],
       }),
-      getHomeDashboard: build.query<GetHomeDashboardApiResponse, GetHomeDashboardApiArg>({
-        query: () => ({ url: `/dashboards/home` }),
-        providesTags: ['dashboards'],
-      }),
       importDashboard: build.mutation<ImportDashboardApiResponse, ImportDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/import`, method: 'POST', body: queryArg.importDashboardRequest }),
         invalidatesTags: ['dashboards'],
@@ -733,17 +745,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['dashboards', 'permissions'],
       }),
-      restoreDashboardVersionByUid: build.mutation<
-        RestoreDashboardVersionByUidApiResponse,
-        RestoreDashboardVersionByUidApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/dashboards/uid/${queryArg.uid}/restore`,
-          method: 'POST',
-          body: queryArg.restoreDashboardVersionCommand,
-        }),
-        invalidatesTags: ['dashboards', 'versions'],
-      }),
       getDashboardVersionsByUid: build.query<GetDashboardVersionsByUidApiResponse, GetDashboardVersionsByUidApiArg>({
         query: (queryArg) => ({
           url: `/dashboards/uid/${queryArg.uid}/versions`,
@@ -776,18 +777,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['datasources', 'correlations'],
-      }),
-      getDataSourceIdByName: build.query<GetDataSourceIdByNameApiResponse, GetDataSourceIdByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/id/${queryArg.name}` }),
-        providesTags: ['datasources'],
-      }),
-      deleteDataSourceByName: build.mutation<DeleteDataSourceByNameApiResponse, DeleteDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}`, method: 'DELETE' }),
-        invalidatesTags: ['datasources'],
-      }),
-      getDataSourceByName: build.query<GetDataSourceByNameApiResponse, GetDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}` }),
-        providesTags: ['datasources'],
       }),
       datasourceProxyDeleteByUiDcalls: build.mutation<
         DatasourceProxyDeleteByUiDcallsApiResponse,
@@ -893,7 +882,12 @@ const injectedRtkApi = api
         providesTags: ['datasources'],
       }),
       getDataSourceCacheConfig: build.query<GetDataSourceCacheConfigApiResponse, GetDataSourceCacheConfigApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache` }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache`,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         providesTags: ['enterprise'],
       }),
       setDataSourceCacheConfig: build.mutation<SetDataSourceCacheConfigApiResponse, SetDataSourceCacheConfigApiArg>({
@@ -901,6 +895,9 @@ const injectedRtkApi = api
           url: `/datasources/${queryArg.dataSourceUid}/cache`,
           method: 'POST',
           body: queryArg.cacheConfigSetter,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
         }),
         invalidatesTags: ['enterprise'],
       }),
@@ -909,11 +906,23 @@ const injectedRtkApi = api
         invalidatesTags: ['enterprise'],
       }),
       disableDataSourceCache: build.mutation<DisableDataSourceCacheApiResponse, DisableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/disable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/disable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       enableDataSourceCache: build.mutation<EnableDataSourceCacheApiResponse, EnableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/enable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/enable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       queryMetricsWithExpressions: build.mutation<
@@ -1027,6 +1036,7 @@ const injectedRtkApi = api
             typeFilter: queryArg.typeFilter,
             excludeUid: queryArg.excludeUid,
             folderFilter: queryArg.folderFilter,
+            folderFilterUIDs: queryArg.folderFilterUiDs,
             perPage: queryArg.perPage,
             page: queryArg.page,
           },
@@ -1256,40 +1266,6 @@ const injectedRtkApi = api
           body: queryArg.updateOrgUserCommand,
         }),
         invalidatesTags: ['orgs'],
-      }),
-      searchPlaylists: build.query<SearchPlaylistsApiResponse, SearchPlaylistsApiArg>({
-        query: (queryArg) => ({
-          url: `/playlists`,
-          params: {
-            query: queryArg.query,
-            limit: queryArg.limit,
-          },
-        }),
-        providesTags: ['playlists'],
-      }),
-      createPlaylist: build.mutation<CreatePlaylistApiResponse, CreatePlaylistApiArg>({
-        query: (queryArg) => ({ url: `/playlists`, method: 'POST', body: queryArg.createPlaylistCommand }),
-        invalidatesTags: ['playlists'],
-      }),
-      deletePlaylist: build.mutation<DeletePlaylistApiResponse, DeletePlaylistApiArg>({
-        query: (queryArg) => ({ url: `/playlists/${queryArg.uid}`, method: 'DELETE' }),
-        invalidatesTags: ['playlists'],
-      }),
-      getPlaylist: build.query<GetPlaylistApiResponse, GetPlaylistApiArg>({
-        query: (queryArg) => ({ url: `/playlists/${queryArg.uid}` }),
-        providesTags: ['playlists'],
-      }),
-      updatePlaylist: build.mutation<UpdatePlaylistApiResponse, UpdatePlaylistApiArg>({
-        query: (queryArg) => ({
-          url: `/playlists/${queryArg.uid}`,
-          method: 'PUT',
-          body: queryArg.updatePlaylistCommand,
-        }),
-        invalidatesTags: ['playlists'],
-      }),
-      getPlaylistItems: build.query<GetPlaylistItemsApiResponse, GetPlaylistItemsApiArg>({
-        query: (queryArg) => ({ url: `/playlists/${queryArg.uid}/items` }),
-        providesTags: ['playlists'],
       }),
       viewPublicDashboard: build.query<ViewPublicDashboardApiResponse, ViewPublicDashboardApiArg>({
         query: (queryArg) => ({ url: `/public/dashboards/${queryArg.accessToken}` }),
@@ -2082,6 +2058,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}` }),
         providesTags: ['sso_settings'],
       }),
+      patchProviderSettings: build.mutation<PatchProviderSettingsApiResponse, PatchProviderSettingsApiArg>({
+        query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}`, method: 'PATCH', body: queryArg.body }),
+        invalidatesTags: ['sso_settings'],
+      }),
       updateProviderSettings: build.mutation<UpdateProviderSettingsApiResponse, UpdateProviderSettingsApiArg>({
         query: (queryArg) => ({ url: `/v1/sso-settings/${queryArg.key}`, method: 'PUT', body: queryArg.body }),
         invalidatesTags: ['sso_settings'],
@@ -2096,6 +2076,7 @@ export type ListRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListRolesApiArg = {
   delegatable?: boolean;
   includeHidden?: boolean;
+  targetOrgId?: number;
 };
 export type CreateRoleApiResponse = /** status 201 (empty) */ RoleDto;
 export type CreateRoleApiArg = {
@@ -2138,6 +2119,7 @@ export type ListTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type ListTeamRolesApiArg = {
   teamId: number;
+  targetOrgId?: number;
 };
 export type AddTeamRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2149,6 +2131,7 @@ export type SetTeamRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetTeamRolesApiArg = {
   teamId: number;
+  targetOrgId?: number;
   setTeamRolesCommand: SetTeamRolesCommand;
 };
 export type RemoveTeamRoleApiResponse =
@@ -2166,6 +2149,9 @@ export type ListUsersRolesApiArg = {
 export type ListUserRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListUserRolesApiArg = {
   userId: number;
+  includeHidden?: boolean;
+  includeMapped?: boolean;
+  targetOrgId?: number;
 };
 export type AddUserRoleApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2177,6 +2163,7 @@ export type SetUserRolesApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type SetUserRolesApiArg = {
   userId: number;
+  targetOrgId?: number;
   setUserRolesCommand: SetUserRolesCommand;
 };
 export type RemoveUserRoleApiResponse =
@@ -2229,8 +2216,7 @@ export type SetResourcePermissionsForUserApiArg = {
 };
 export type GetSyncStatusApiResponse = /** status 200 (empty) */ ActiveSyncStatusDto;
 export type GetSyncStatusApiArg = void;
-export type ReloadLdapCfgApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
+export type ReloadLdapCfgApiResponse = unknown;
 export type ReloadLdapCfgApiArg = void;
 export type GetLdapStatusApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -2576,8 +2562,6 @@ export type PostDashboardApiResponse = /** status 200 (empty) */ {
 export type PostDashboardApiArg = {
   saveDashboardCommand: SaveDashboardCommand;
 };
-export type GetHomeDashboardApiResponse = /** status 200 (empty) */ GetHomeDashboardResponse;
-export type GetHomeDashboardApiArg = void;
 export type ImportDashboardApiResponse =
   /** status 200 (empty) */ ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard;
 export type ImportDashboardApiArg = {
@@ -2635,26 +2619,6 @@ export type UpdateDashboardPermissionsByUidApiArg = {
   uid: string;
   updateDashboardAclCommand: UpdateDashboardAclCommand;
 };
-export type RestoreDashboardVersionByUidApiResponse = /** status 200 (empty) */ {
-  /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
-  folderUid?: string;
-  /** ID The unique identifier (id) of the created/updated dashboard. */
-  id: number;
-  /** Status status of the response. */
-  status: string;
-  /** Slug The slug of the dashboard. */
-  title: string;
-  /** UID The unique identifier (uid) of the created/updated dashboard. */
-  uid: string;
-  /** URL The relative URL for accessing the created/updated dashboard. */
-  url: string;
-  /** Version The version of the dashboard. */
-  version: number;
-};
-export type RestoreDashboardVersionByUidApiArg = {
-  uid: string;
-  restoreDashboardVersionCommand: RestoreDashboardVersionCommand;
-};
 export type GetDashboardVersionsByUidApiResponse = /** status 200 (empty) */ DashboardVersionResponseMeta;
 export type GetDashboardVersionsByUidApiArg = {
   uid: string;
@@ -2690,26 +2654,6 @@ export type GetCorrelationsApiArg = {
   page?: number;
   /** Source datasource UID filter to be applied to correlations */
   sourceUid?: string[];
-};
-export type GetDataSourceIdByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the data source. */
-  id: number;
-};
-export type GetDataSourceIdByNameApiArg = {
-  name: string;
-};
-export type DeleteDataSourceByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the deleted data source. */
-  id: number;
-  /** Message Message of the deleted dashboard. */
-  message: string;
-};
-export type DeleteDataSourceByNameApiArg = {
-  name: string;
-};
-export type GetDataSourceByNameApiResponse = /** status 200 (empty) */ DataSource;
-export type GetDataSourceByNameApiArg = {
-  name: string;
 };
 export type DatasourceProxyDeleteByUiDcallsApiResponse = unknown;
 export type DatasourceProxyDeleteByUiDcallsApiArg = {
@@ -2803,10 +2747,12 @@ export type CallDatasourceResourceWithUidApiArg = {
 export type GetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type GetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type SetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type SetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
   cacheConfigSetter: CacheConfigSetter;
 };
 export type CleanDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
@@ -2816,10 +2762,12 @@ export type CleanDataSourceCacheApiArg = {
 export type DisableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type DisableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type EnableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type EnableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type QueryMetricsWithExpressionsApiResponse = /** status 200 (empty) */
   | QueryDataResponseContainsTheResultsFromAQueryDataRequest
@@ -2923,8 +2871,11 @@ export type GetLibraryElementsApiArg = {
   typeFilter?: string;
   /** Element UID to exclude from search results. */
   excludeUid?: string;
-  /** A comma separated list of folder ID(s) to filter the elements by. */
+  /** A comma separated list of folder ID(s) to filter the elements by.
+    Deprecated: Use FolderFilterUIDs instead. */
   folderFilter?: string;
+  /** A comma separated list of folder UID(s) to filter the elements by. */
+  folderFilterUiDs?: string;
   /** The number of results per page. */
   perPage?: number;
   /** The page for a set of records, given that only perPage records are returned at a time. Numbering starts at 1. */
@@ -3126,34 +3077,6 @@ export type UpdateOrgUserApiArg = {
   orgId: number;
   userId: number;
   updateOrgUserCommand: UpdateOrgUserCommand;
-};
-export type SearchPlaylistsApiResponse = /** status 200 (empty) */ Playlists;
-export type SearchPlaylistsApiArg = {
-  query?: string;
-  /** in:limit */
-  limit?: number;
-};
-export type CreatePlaylistApiResponse = /** status 200 (empty) */ Playlist;
-export type CreatePlaylistApiArg = {
-  createPlaylistCommand: CreatePlaylistCommand;
-};
-export type DeletePlaylistApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type DeletePlaylistApiArg = {
-  uid: string;
-};
-export type GetPlaylistApiResponse = /** status 200 (empty) */ PlaylistDto;
-export type GetPlaylistApiArg = {
-  uid: string;
-};
-export type UpdatePlaylistApiResponse = /** status 200 (empty) */ PlaylistDto;
-export type UpdatePlaylistApiArg = {
-  uid: string;
-  updatePlaylistCommand: UpdatePlaylistCommand;
-};
-export type GetPlaylistItemsApiResponse = /** status 200 (empty) */ PlaylistItemDto[];
-export type GetPlaylistItemsApiArg = {
-  uid: string;
 };
 export type ViewPublicDashboardApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
 export type ViewPublicDashboardApiArg = {
@@ -3448,19 +3371,19 @@ export type RemoveTeamGroupApiQueryApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RemoveTeamGroupApiQueryApiArg = {
   groupId?: string;
-  teamId: number;
+  teamId: string;
 };
 export type GetTeamGroupsApiApiResponse = /** status 200 (empty) */ TeamGroupDto[];
 export type GetTeamGroupsApiApiArg = {
-  teamId: number;
+  teamId: string;
 };
 export type AddTeamGroupApiApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AddTeamGroupApiApiArg = {
-  teamId: number;
+  teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
-export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
+export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult[];
 export type SearchTeamGroupsApiArg = {
   teamId: number;
   page?: number;
@@ -3844,6 +3767,16 @@ export type GetProviderSettingsApiResponse = /** status 200 (empty) */ {
 export type GetProviderSettingsApiArg = {
   key: string;
 };
+export type PatchProviderSettingsApiResponse =
+  /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
+export type PatchProviderSettingsApiArg = {
+  key: string;
+  body: {
+    settings?: {
+      [key: string]: any;
+    };
+  };
+};
 export type UpdateProviderSettingsApiResponse =
   /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type UpdateProviderSettingsApiArg = {
@@ -4118,6 +4051,7 @@ export type Annotation = {
   timeEnd?: number;
   updated?: number;
   userId?: number;
+  userUID?: string;
 };
 export type PostAnnotationsCmd = {
   dashboardId?: number;
@@ -4401,51 +4335,6 @@ export type SaveDashboardCommand = {
   overwrite?: boolean;
   userId?: number;
 };
-export type AnnotationActions = {
-  canAdd?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-};
-export type AnnotationPermission = {
-  dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
-};
-export type DashboardMeta = {
-  annotationsPermissions?: AnnotationPermission;
-  apiVersion?: string;
-  canAdmin?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-  canSave?: boolean;
-  canStar?: boolean;
-  created?: string;
-  createdBy?: string;
-  expires?: string;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderTitle?: string;
-  folderUid?: string;
-  folderUrl?: string;
-  hasAcl?: boolean;
-  isFolder?: boolean;
-  isSnapshot?: boolean;
-  isStarred?: boolean;
-  provisioned?: boolean;
-  provisionedExternalId?: string;
-  publicDashboardEnabled?: boolean;
-  slug?: string;
-  type?: string;
-  updated?: string;
-  updatedBy?: string;
-  url?: string;
-  version?: number;
-};
-export type GetHomeDashboardResponse = {
-  dashboard?: Json;
-  meta?: DashboardMeta;
-} & {
-  redirectUri?: string;
-};
 export type ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard = {
   dashboardId?: number;
   description?: string;
@@ -4537,6 +4426,45 @@ export type PublicDashboardDto = {
   timeSelectionEnabled?: boolean;
   uid?: string;
 };
+export type AnnotationActions = {
+  canAdd?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+};
+export type AnnotationPermission = {
+  dashboard?: AnnotationActions;
+  organization?: AnnotationActions;
+};
+export type DashboardMeta = {
+  annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
+  canAdmin?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+  canSave?: boolean;
+  canStar?: boolean;
+  created?: string;
+  createdBy?: string;
+  expires?: string;
+  /** Deprecated: use FolderUID instead */
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
+  hasAcl?: boolean;
+  isFolder?: boolean;
+  isSnapshot?: boolean;
+  isStarred?: boolean;
+  provisioned?: boolean;
+  provisionedExternalId?: string;
+  publicDashboardEnabled?: boolean;
+  slug?: string;
+  type?: string;
+  updated?: string;
+  updatedBy?: string;
+  url?: string;
+  version?: number;
+};
 export type DashboardFullWithMeta = {
   dashboard?: Json;
   meta?: DashboardMeta;
@@ -4577,9 +4505,6 @@ export type DashboardAclUpdateItem = {
 };
 export type UpdateDashboardAclCommand = {
   items?: DashboardAclUpdateItem[];
-};
-export type RestoreDashboardVersionCommand = {
-  version?: number;
 };
 export type DashboardVersionMeta = {
   created?: string;
@@ -5279,11 +5204,6 @@ export type AddInviteForm = {
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   sendEmail?: boolean;
 };
-export type PreferencesCookiePreferences = {
-  analytics?: any;
-  functional?: any;
-  performance?: any;
-};
 export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -5292,7 +5212,6 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  cookiePreferences?: PreferencesCookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */
@@ -5309,7 +5228,6 @@ export type PreferencesSpec = {
   /** day of the week (sunday, monday, etc) */
   weekStart?: string;
 };
-export type CookieType = string;
 export type NavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -5317,7 +5235,6 @@ export type QueryHistoryPreference = {
   homeTab?: string;
 };
 export type PatchPrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -5326,11 +5243,11 @@ export type PatchPrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export type UpdatePrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -5339,7 +5256,8 @@ export type UpdatePrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export type OrgUserDto = {
@@ -5348,6 +5266,7 @@ export type OrgUserDto = {
   };
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   isDisabled?: boolean;
   isExternallySynced?: boolean;
@@ -5386,58 +5305,6 @@ export type SearchOrgUsersQueryResult = {
   page?: number;
   perPage?: number;
   totalCount?: number;
-};
-export type Playlist = {
-  id?: number;
-  interval?: string;
-  name?: string;
-  uid?: string;
-};
-export type Playlists = Playlist[];
-export type PlaylistItem = {
-  Id?: number;
-  PlaylistId?: number;
-  order?: number;
-  title?: string;
-  type?: string;
-  value?: string;
-};
-export type CreatePlaylistCommand = {
-  interval?: string;
-  items?: PlaylistItem[];
-  name?: string;
-};
-export type PlaylistItemDto = {
-  /** Title is an unused property -- it will be removed in the future */
-  title?: string;
-  /** Type of the item. */
-  type?: string;
-  /** Value depends on type and describes the playlist item.
-    
-    dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
-    is not portable as the numerical identifier is non-deterministic between different instances.
-    Will be replaced by dashboard_by_uid in the future. (deprecated)
-    dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
-    dashboards behind the tag will be added to the playlist.
-    dashboard_by_uid: The value is the dashboard UID */
-  value?: string;
-};
-export type PlaylistDto = {
-  /** Interval sets the time between switching views in a playlist. */
-  interval?: string;
-  /** The ordered list of items that the playlist will iterate over. */
-  items?: PlaylistItemDto[];
-  /** Name of the playlist. */
-  name?: string;
-  /** Unique playlist identifier. Generated on creation, either by the
-    creator of the playlist of by the application. */
-  uid?: string;
-};
-export type UpdatePlaylistCommand = {
-  interval?: string;
-  items?: PlaylistItem[];
-  name?: string;
-  uid?: string;
 };
 export type DataSourceRef = {
   /** The plugin type-id */
@@ -5568,6 +5435,7 @@ export type ReportDashboard = {
 };
 export type Type = string;
 export type ReportOptions = {
+  csvEncoding?: string;
   layout?: string;
   orientation?: string;
   pdfCombineOneFile?: boolean;
@@ -5782,20 +5650,7 @@ export type PolicyMappingRepresentsAPolicyMappingEntryInThePolicyMappingsExtensi
 };
 export type PublicKeyAlgorithm = number;
 export type SignatureAlgorithm = number;
-export type Userinfo = object;
-export type AUrlRepresentsAParsedUrlTechnicallyAUriReference = {
-  ForceQuery?: boolean;
-  Fragment?: string;
-  Host?: string;
-  OmitHost?: boolean;
-  Opaque?: string;
-  Path?: string;
-  RawFragment?: string;
-  RawPath?: string;
-  RawQuery?: string;
-  Scheme?: string;
-  User?: Userinfo;
-};
+export type Url = string;
 export type ACertificateRepresentsAnX509Certificate = {
   AuthorityKeyId?: number[];
   /** BasicConstraintsValid indicates whether IsCA, MaxPathLen,
@@ -5940,7 +5795,7 @@ export type ACertificateRepresentsAnX509Certificate = {
   SignatureAlgorithm?: SignatureAlgorithm;
   Subject?: Name;
   SubjectKeyId?: number[];
-  URIs?: AUrlRepresentsAParsedUrlTechnicallyAUriReference[];
+  URIs?: Url[];
   /** UnhandledCriticalExtensions contains a list of extension IDs that
     were not (fully) processed when parsing. Verify will fail if this
     slice is non-empty, unless verification is delegated to an OS
@@ -5962,7 +5817,7 @@ export type JsonWebKey = {
   CertificateThumbprintSHA256?: number[];
   /** X.509 certificate chain, parsed from `x5c` header. */
   Certificates?: ACertificateRepresentsAnX509Certificate[];
-  CertificatesURL?: AUrlRepresentsAParsedUrlTechnicallyAUriReference;
+  CertificatesURL?: Url;
   /** Key is the Go in-memory representation of this key. It must have one
     of these types:
     ed25519.PublicKey
@@ -6045,6 +5900,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  teamUid?: string;
   uid?: string;
 };
 export type TeamGroupMapping = {
@@ -6125,6 +5981,7 @@ export type ChangeUserPasswordCommand = {
 export type UserSearchHitDto = {
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   id?: number;
   isAdmin?: boolean;
@@ -6621,8 +6478,6 @@ export const {
   useSearchDashboardSnapshotsQuery,
   useLazySearchDashboardSnapshotsQuery,
   usePostDashboardMutation,
-  useGetHomeDashboardQuery,
-  useLazyGetHomeDashboardQuery,
   useImportDashboardMutation,
   useInterpolateDashboardMutation,
   useListPublicDashboardsQuery,
@@ -6640,7 +6495,6 @@ export const {
   useGetDashboardPermissionsListByUidQuery,
   useLazyGetDashboardPermissionsListByUidQuery,
   useUpdateDashboardPermissionsByUidMutation,
-  useRestoreDashboardVersionByUidMutation,
   useGetDashboardVersionsByUidQuery,
   useLazyGetDashboardVersionsByUidQuery,
   useGetDashboardVersionByUidQuery,
@@ -6650,11 +6504,6 @@ export const {
   useAddDataSourceMutation,
   useGetCorrelationsQuery,
   useLazyGetCorrelationsQuery,
-  useGetDataSourceIdByNameQuery,
-  useLazyGetDataSourceIdByNameQuery,
-  useDeleteDataSourceByNameMutation,
-  useGetDataSourceByNameQuery,
-  useLazyGetDataSourceByNameQuery,
   useDatasourceProxyDeleteByUiDcallsMutation,
   useDatasourceProxyGetByUiDcallsQuery,
   useLazyDatasourceProxyGetByUiDcallsQuery,
@@ -6769,15 +6618,6 @@ export const {
   useLazySearchOrgUsersQuery,
   useRemoveOrgUserMutation,
   useUpdateOrgUserMutation,
-  useSearchPlaylistsQuery,
-  useLazySearchPlaylistsQuery,
-  useCreatePlaylistMutation,
-  useDeletePlaylistMutation,
-  useGetPlaylistQuery,
-  useLazyGetPlaylistQuery,
-  useUpdatePlaylistMutation,
-  useGetPlaylistItemsQuery,
-  useLazyGetPlaylistItemsQuery,
   useViewPublicDashboardQuery,
   useLazyViewPublicDashboardQuery,
   useGetPublicAnnotationsQuery,
@@ -6959,5 +6799,6 @@ export const {
   useRemoveProviderSettingsMutation,
   useGetProviderSettingsQuery,
   useLazyGetProviderSettingsQuery,
+  usePatchProviderSettingsMutation,
   useUpdateProviderSettingsMutation,
 } = injectedRtkApi;

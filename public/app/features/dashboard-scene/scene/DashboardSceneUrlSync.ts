@@ -1,6 +1,5 @@
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
-import { KioskMode } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
@@ -9,13 +8,14 @@ import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'kiosk', 'shareView'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -26,7 +26,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       viewPanel: state.viewPanel,
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
-      kiosk: state.kioskMode === KioskMode.Full ? 'true' : undefined,
       shareView: state.shareView,
       orgId: contextSrv.user.orgId.toString(),
     };
@@ -93,7 +92,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      update.editPanel = buildPanelEditScene(panel);
+      update.editPanel = buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
     }
@@ -117,12 +116,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     }
 
-    if (typeof values.kiosk === 'string') {
-      if (values.kiosk === 'true' || values.kiosk === '') {
-        update.kioskMode = KioskMode.Full;
-      }
-    }
-
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
     }
@@ -134,7 +127,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panel: VizPanel, libPanel: LibraryPanelBehavior) {
     const sub = libPanel.subscribeToState((state) => {
       if (state.isLoaded) {
-        this._scene.setState({ editPanel: buildPanelEditScene(panel) });
+        this._scene.setState({
+          editPanel: buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID),
+        });
         sub.unsubscribe();
       }
     });

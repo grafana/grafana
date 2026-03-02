@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -234,6 +235,12 @@ type GetUserPermissionsQuery struct {
 	Roles        []string
 	TeamIDs      []int64
 	RolePrefixes []string
+	// ExcludeRedundantManagedPermissions filters out individual dashboard/folder action permissions
+	// from managed roles when action sets are enabled. These permissions are redundant because
+	// ExpandActionSets expands action set permissions (e.g. dashboards:view) into the individual
+	// actions (e.g. dashboards:read) in memory. Excluding them from the SQL query significantly
+	// reduces the number of rows loaded for large installations.
+	ExcludeRedundantManagedPermissions bool
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -447,11 +454,17 @@ const (
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
 	ActionAlertingNotificationsTemplatesWrite  = "alert.notifications.templates:write"
 	ActionAlertingNotificationsTemplatesDelete = "alert.notifications.templates:delete"
+	ActionAlertingNotificationsTemplatesTest   = "alert.notifications.templates.test:write"
 
 	// Alerting notifications time interval actions
 	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"
 	ActionAlertingNotificationsTimeIntervalsWrite  = "alert.notifications.time-intervals:write"
 	ActionAlertingNotificationsTimeIntervalsDelete = "alert.notifications.time-intervals:delete"
+
+	// Alerting notifications inhibition rules actions
+	ActionAlertingNotificationsInhibitionRulesRead   = "alert.notifications.inhibition-rules:read"
+	ActionAlertingNotificationsInhibitionRulesWrite  = "alert.notifications.inhibition-rules:write"
+	ActionAlertingNotificationsInhibitionRulesDelete = "alert.notifications.inhibition-rules:delete"
 
 	// Alerting receiver actions
 	ActionAlertingReceiversList             = "alert.notifications.receivers:list"
@@ -459,8 +472,10 @@ const (
 	ActionAlertingReceiversReadSecrets      = "alert.notifications.receivers.secrets:read"
 	ActionAlertingReceiversCreate           = "alert.notifications.receivers:create"
 	ActionAlertingReceiversUpdate           = "alert.notifications.receivers:write"
+	ActionAlertingReceiversUpdateProtected  = "alert.notifications.receivers.protected:write"
 	ActionAlertingReceiversDelete           = "alert.notifications.receivers:delete"
-	ActionAlertingReceiversTest             = "alert.notifications.receivers:test"
+	ActionAlertingReceiversTest             = "alert.notifications.receivers:test" // This is a deprecated action, use ActionAlertingReceiversTestCreate instead
+	ActionAlertingReceiversTestCreate       = "alert.notifications.receivers.test:create"
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
@@ -591,4 +606,19 @@ var OrgsCreateAccessEvaluator = EvalAll(
 type QueryWithOrg struct {
 	OrgId  *int64 `json:"orgId"`
 	Global bool   `json:"global"`
+}
+
+type SeedPermission struct {
+	BuiltInRole string `xorm:"builtin_role"`
+	Action      string `xorm:"action"`
+	Scope       string `xorm:"scope"`
+	Origin      string `xorm:"origin"`
+}
+
+type RoleStore interface {
+	LoadRoles(ctx context.Context) (map[string]*RoleDTO, error)
+	SetRole(ctx context.Context, existingRole *RoleDTO, wantedRole RoleDTO) error
+	SetPermissions(ctx context.Context, existingRole *RoleDTO, wantedRole RoleDTO) error
+	CreateRole(ctx context.Context, role RoleDTO) error
+	DeleteRoles(ctx context.Context, roleUIDs []string) error
 }

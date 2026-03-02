@@ -6,7 +6,6 @@ import {
   FieldColorModeId as FieldColorModeIdV1,
   DataTopic,
 } from '@grafana/schema';
-import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import {
   DashboardCursorSync,
   defaultSpec as defaultDashboardV2Spec,
@@ -17,7 +16,8 @@ import {
   VariableRefresh,
   VariableSort,
   FieldColorModeId as FieldColorModeIdV2,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
 
 // used for QueryVariableKind's query prop - in schema V2 we've deprecated string type and support only DataQuery
 export const LEGACY_STRING_VALUE_KEY = '__legacyStringValue';
@@ -119,6 +119,16 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
       return 'continuous-greens';
     case FieldColorModeIdV1.ContinuousPurples:
       return 'continuous-purples';
+    case FieldColorModeIdV1.ContinuousViridis:
+      return 'continuous-viridis';
+    case FieldColorModeIdV1.ContinuousMagma:
+      return 'continuous-magma';
+    case FieldColorModeIdV1.ContinuousPlasma:
+      return 'continuous-plasma';
+    case FieldColorModeIdV1.ContinuousInferno:
+      return 'continuous-inferno';
+    case FieldColorModeIdV1.ContinuousCividis:
+      return 'continuous-cividis';
     case FieldColorModeIdV1.Fixed:
       return 'fixed';
     case FieldColorModeIdV1.Shades:

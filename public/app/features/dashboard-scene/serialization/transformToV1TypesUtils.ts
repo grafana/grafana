@@ -4,7 +4,6 @@ import {
   VariableRefresh as VariableRefreshV1,
   VariableSort as VariableSortV1,
   DashboardCursorSync as DashboardCursorSyncV1,
-  defaultDashboardCursorSync,
   MappingType as MappingTypeV1,
   ThresholdsMode as ThresholdsModeV1,
 } from '@grafana/schema';
@@ -16,7 +15,7 @@ import {
   FieldConfigSource,
   SpecialValueMatch,
   ThresholdsMode,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): VariableRefreshV1 {
   switch (refresh) {
@@ -80,7 +79,7 @@ export function transformCursorSyncV2ToV1(cursorSync: DashboardCursorSync): Dash
     case 'Off':
       return DashboardCursorSyncV1.Off;
     default:
-      return defaultDashboardCursorSync;
+      return DashboardCursorSyncV1.Off;
   }
 }
 

@@ -24,14 +24,15 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	ctx := context.Background()
 	const repo = "move-test-repo"
 	testRepo := TestRepo{
-		Name: repo,
+		Name:   repo,
+		Target: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json":    "dashboard1.json",
 			"testdata/text-options.json":  "dashboard2.json",
 			"testdata/timeline-demo.json": "folder/dashboard3.json",
 		},
 		ExpectedDashboards: 3,
-		ExpectedFolders:    1,
+		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
 	}
 	helper.CreateRepo(t, testRepo)
 
@@ -236,6 +237,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		const refRepo = "move-ref-test-repo"
 		helper.CreateRepo(t, TestRepo{
 			Name:                   refRepo,
+			Target:                 "folder",
 			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.
 		})
 
@@ -303,6 +305,54 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			helper.SyncAndWait(t, refRepo, nil)
 			_, err = helper.DashboardsV1.Resource.Get(ctx, "moveref2", metav1.GetOptions{})
 			require.NoError(t, err, "dashboard should still exist in Grafana after move")
+		})
+
+		t.Run("move resource from nested folder to root path", func(t *testing.T) {
+			// Reproduces https://github.com/grafana/git-ui-sync-project/issues/919
+			// Moving a resource from an inner folder to the base folder ("/") should
+			// relocate the file to root, not delete it.
+			rootMoveContent := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "movetoroot1"`, 1)
+			tmpRootMove := filepath.Join(tmpDir, "move-to-root-test.json")
+			require.NoError(t, os.WriteFile(tmpRootMove, []byte(rootMoveContent), 0644))
+			helper.CopyToProvisioningPath(t, tmpRootMove, "inner-folder/move-to-root.json")
+
+			helper.SyncAndWait(t, refRepo, nil)
+
+			// Verify dashboard exists before the move
+			_, err = helper.DashboardsV1.Resource.Get(ctx, "movetoroot1", metav1.GetOptions{})
+			require.NoError(t, err, "dashboard should exist before move")
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "inner-folder", "move-to-root.json")
+			require.NoError(t, err, "file should exist in nested folder before move")
+
+			spec := provisioning.JobSpec{
+				Action: provisioning.JobActionMove,
+				Move: &provisioning.MoveJobOptions{
+					TargetPath: "/",
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  "movetoroot1",
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
+						},
+					},
+				},
+			}
+
+			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
+			helper.SyncAndWait(t, refRepo, nil)
+
+			// The dashboard must NOT be deleted — it should still exist in Grafana
+			_, err = helper.DashboardsV1.Resource.Get(ctx, "movetoroot1", metav1.GetOptions{})
+			require.NoError(t, err, "dashboard should NOT be deleted when moving to root path '/'")
+
+			// The file should now live at the repository root
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "move-to-root.json")
+			require.NoError(t, err, "file should exist at root level after move to '/'")
+
+			// The file should be gone from the nested folder
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "inner-folder", "move-to-root.json")
+			require.Error(t, err, "file should be gone from nested folder after move")
+			require.True(t, apierrors.IsNotFound(err), "should be not found error")
 		})
 
 		t.Run("mixed move - paths and resources", func(t *testing.T) {

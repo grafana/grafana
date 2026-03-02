@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/golang/snappy"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -17,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	pb "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const baseIntervalSeconds = 10
@@ -51,7 +54,15 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 			name: "can save and read alert rule state",
 			setupInstances: func() []models.AlertInstance {
 				return []models.AlertInstance{
-					createAlertInstance(alertRule1.OrgID, alertRule1.UID, "labelsHash1", string(models.InstanceStateError), models.InstanceStateFiring),
+					*models.AlertInstanceGen(
+						models.InstanceMuts.WithOrgID(alertRule1.OrgID),
+						models.InstanceMuts.WithRuleUID(alertRule1.UID),
+						models.InstanceMuts.WithLabelsHash("labelsHash1"),
+						models.InstanceMuts.WithReason(string(models.InstanceStateError)),
+						models.InstanceMuts.WithState(models.InstanceStateFiring),
+						models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+						models.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
+					),
 				}
 			},
 			listQuery: &models.ListAlertInstancesQuery{
@@ -67,8 +78,22 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 			name: "can save and read alert rule state with multiple instances",
 			setupInstances: func() []models.AlertInstance {
 				return []models.AlertInstance{
-					createAlertInstance(alertRule1.OrgID, alertRule1.UID, "hash1", "", models.InstanceStateFiring),
-					createAlertInstance(alertRule1.OrgID, alertRule1.UID, "hash2", "", models.InstanceStateFiring),
+					*models.AlertInstanceGen(
+						models.InstanceMuts.WithOrgID(alertRule1.OrgID),
+						models.InstanceMuts.WithRuleUID(alertRule1.UID),
+						models.InstanceMuts.WithLabelsHash("hash1"),
+						models.InstanceMuts.WithState(models.InstanceStateFiring),
+						models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+						models.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
+					),
+					*models.AlertInstanceGen(
+						models.InstanceMuts.WithOrgID(alertRule1.OrgID),
+						models.InstanceMuts.WithRuleUID(alertRule1.UID),
+						models.InstanceMuts.WithLabelsHash("hash2"),
+						models.InstanceMuts.WithState(models.InstanceStateFiring),
+						models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+						models.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
+					),
 				}
 			},
 			listQuery: &models.ListAlertInstancesQuery{
@@ -79,6 +104,30 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 				require.Len(t, alerts, 2)
 				containsHash(t, alerts, "hash1")
 				containsHash(t, alerts, "hash2")
+			},
+		},
+		{
+			name: "truncates long LastError when saving compressed state",
+			setupInstances: func() []models.AlertInstance {
+				return []models.AlertInstance{
+					*models.AlertInstanceGen(
+						models.InstanceMuts.WithOrgID(alertRule1.OrgID),
+						models.InstanceMuts.WithRuleUID(alertRule1.UID),
+						models.InstanceMuts.WithLabelsHash("truncateHash"),
+						models.InstanceMuts.WithState(models.InstanceStateError),
+						models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+						models.InstanceMuts.WithLastError(strings.Repeat("e", 1200)),
+					),
+				}
+			},
+			listQuery: &models.ListAlertInstancesQuery{
+				RuleOrgID: alertRule1.OrgID,
+				RuleUID:   alertRule1.UID,
+			},
+			validate: func(t *testing.T, alerts []*models.AlertInstance) {
+				require.Len(t, alerts, 1)
+				require.LessOrEqual(t, len(alerts[0].LastError), 1000, "LastError should be truncated to max 1000 chars")
+				require.True(t, strings.HasSuffix(alerts[0].LastError, "... (truncated)"), "Truncated error should have suffix")
 			},
 		},
 	}
@@ -107,19 +156,6 @@ func containsHash(t *testing.T, instances []*models.AlertInstance, hash string) 
 	}
 
 	require.Fail(t, fmt.Sprintf("%v does not contain an instance with hash %s", instances, hash))
-}
-
-func createAlertInstance(orgID int64, ruleUID, labelsHash, reason string, state models.InstanceStateType) models.AlertInstance {
-	return models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  orgID,
-			RuleUID:    ruleUID,
-			LabelsHash: labelsHash,
-		},
-		CurrentState:  state,
-		CurrentReason: reason,
-		Labels:        models.InstanceLabels{"label1": "value1"},
-	}
 }
 
 func TestIntegrationAlertInstanceOperations(t *testing.T) {
@@ -296,6 +332,73 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		require.Equal(t, instance2.Labels, alerts[0].Labels)
 		require.Equal(t, instance2.CurrentState, alerts[0].CurrentState)
 	})
+
+	t.Run("truncates long LastError when saving", func(t *testing.T) {
+		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+		labels := models.InstanceLabels{"test": "truncation"}
+		_, hash, _ := labels.StringAndHash()
+
+		longError := strings.Repeat("e", 1200)
+		instance := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  alertRule.OrgID,
+				RuleUID:    alertRule.UID,
+				LabelsHash: hash,
+			},
+			CurrentState: models.InstanceStateError,
+			Labels:       labels,
+			LastError:    longError,
+		}
+		err := ng.InstanceStore.SaveAlertInstance(ctx, instance)
+		require.NoError(t, err)
+
+		listCmd := &models.ListAlertInstancesQuery{
+			RuleOrgID: instance.RuleOrgID,
+			RuleUID:   instance.RuleUID,
+		}
+		alerts, err := ng.InstanceStore.ListAlertInstances(ctx, listCmd)
+		require.NoError(t, err)
+
+		require.Len(t, alerts, 1)
+		require.LessOrEqual(t, len(alerts[0].LastError), 1000, "LastError should be truncated to max 1000 chars")
+		require.True(t, strings.HasSuffix(alerts[0].LastError, "... (truncated)"), "Truncated error should have suffix")
+	})
+
+	t.Run("can save and read alert instance with LastResult containing NaN and Inf values", func(t *testing.T) {
+		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+		labels := models.InstanceLabels{"test": "nanInfValues"}
+		_, hash, _ := labels.StringAndHash()
+
+		instance := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  alertRule.OrgID,
+				RuleUID:    alertRule.UID,
+				LabelsHash: hash,
+			},
+			CurrentState: models.InstanceStateFiring,
+			Labels:       labels,
+			LastResult: models.LastResult{
+				Values:    map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+				Condition: "A",
+			},
+		}
+		err := ng.InstanceStore.SaveAlertInstance(ctx, instance)
+		require.NoError(t, err, "SaveAlertInstance should handle NaN/Inf values in LastResult")
+
+		listCmd := &models.ListAlertInstancesQuery{
+			RuleOrgID: instance.RuleOrgID,
+			RuleUID:   instance.RuleUID,
+		}
+		alerts, err := ng.InstanceStore.ListAlertInstances(ctx, listCmd)
+		require.Len(t, alerts, 1)
+		require.NoError(t, err)
+
+		expectedLastResult := models.LastResult{
+			Values:    map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+			Condition: "A",
+		}
+		require.True(t, cmp.Equal(expectedLastResult, alerts[0].LastResult, cmpopts.EquateNaNs()), "LastResult mismatch after round-trip")
+	})
 }
 
 func TestIntegrationFullSync(t *testing.T) {
@@ -312,7 +415,10 @@ func TestIntegrationFullSync(t *testing.T) {
 
 	instances := make([]models.AlertInstance, len(ruleUIDs))
 	for i, ruleUID := range ruleUIDs {
-		instances[i] = generateTestAlertInstance(orgID, ruleUID)
+		instances[i] = *models.AlertInstanceGen(
+			models.InstanceMuts.WithOrgID(orgID),
+			models.InstanceMuts.WithRuleUID(ruleUID),
+		)
 	}
 
 	t.Run("Should do a proper full sync", func(t *testing.T) {
@@ -356,7 +462,7 @@ func TestIntegrationFullSync(t *testing.T) {
 
 	t.Run("Should add new entries on sync", func(t *testing.T) {
 		newRuleUID := "y"
-		err := ng.InstanceStore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)), batchSize, nil)
+		err := ng.InstanceStore.FullSync(ctx, append(instances, *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID(newRuleUID))), batchSize, nil)
 		require.NoError(t, err)
 
 		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
@@ -380,34 +486,40 @@ func TestIntegrationFullSync(t *testing.T) {
 
 	t.Run("Should save all instances when batch size is bigger than 1", func(t *testing.T) {
 		batchSize = 2
-		newRuleUID := "y"
-		err := ng.InstanceStore.FullSync(ctx, append(instances, generateTestAlertInstance(orgID, newRuleUID)), batchSize, nil)
+		testInstances := []models.AlertInstance{
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("batch1"), models.InstanceMuts.WithResultFingerprint("fp0")),
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("batch2"), models.InstanceMuts.WithResultFingerprint("fp1")),
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("batch3"), models.InstanceMuts.WithResultFingerprint("fp2")),
+		}
+
+		err := ng.InstanceStore.FullSync(ctx, testInstances, batchSize, nil)
 		require.NoError(t, err)
 
 		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
 			RuleOrgID: orgID,
 		})
 		require.NoError(t, err)
-		require.Len(t, res, len(instances)+1)
-		for _, ruleUID := range append(ruleUIDs, newRuleUID) {
-			found := false
-			for _, instance := range res {
-				if instance.RuleUID == ruleUID {
-					found = true
-					continue
-				}
-			}
-			if !found {
-				t.Errorf("Instance with RuleUID '%s' not found", ruleUID)
-			}
+
+		savedInstances := make([]models.AlertInstance, len(res))
+		for i, r := range res {
+			savedInstances[i] = *r
 		}
+
+		opts := []cmp.Option{
+			cmpopts.EquateApproxTime(time.Second), // we don't get the same precision back from the DB
+			cmpopts.EquateEmpty(),
+			cmpopts.SortSlices(func(a, b models.AlertInstance) bool {
+				return a.RuleUID < b.RuleUID
+			}),
+		}
+		require.Empty(t, cmp.Diff(testInstances, savedInstances, opts...))
 	})
 
 	t.Run("Should not fail when the instances are empty", func(t *testing.T) {
 		// First, insert some data into the table.
 		initialInstances := []models.AlertInstance{
-			generateTestAlertInstance(orgID, "preexisting-1"),
-			generateTestAlertInstance(orgID, "preexisting-2"),
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("preexisting-1")),
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("preexisting-2")),
 		}
 		err := ng.InstanceStore.FullSync(ctx, initialInstances, 5, nil)
 		require.NoError(t, err)
@@ -439,9 +551,9 @@ func TestIntegrationFullSync(t *testing.T) {
 
 	t.Run("Should handle invalid instances by skipping them", func(t *testing.T) {
 		// Create a batch with one valid and one invalid instance
-		validInstance := generateTestAlertInstance(orgID, "valid")
+		validInstance := *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("valid"))
 
-		invalidInstance := generateTestAlertInstance(orgID, "")
+		invalidInstance := *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID(""))
 		// Make the invalid instance actually invalid
 		invalidInstance.RuleUID = ""
 
@@ -460,8 +572,8 @@ func TestIntegrationFullSync(t *testing.T) {
 	t.Run("Should handle batchSize larger than the number of instances", func(t *testing.T) {
 		// Insert a small number of instances but use a large batchSize
 		smallSet := []models.AlertInstance{
-			generateTestAlertInstance(orgID, "batch-test1"),
-			generateTestAlertInstance(orgID, "batch-test2"),
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("batch-test1")),
+			*models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID("batch-test2")),
 		}
 
 		err := ng.InstanceStore.FullSync(ctx, smallSet, 100, nil)
@@ -493,7 +605,7 @@ func TestIntegrationFullSync(t *testing.T) {
 		largeCount := 300
 		largeSet := make([]models.AlertInstance, largeCount)
 		for i := 0; i < largeCount; i++ {
-			largeSet[i] = generateTestAlertInstance(orgID, fmt.Sprintf("large-%d", i))
+			largeSet[i] = *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID(fmt.Sprintf("large-%d", i)))
 		}
 
 		err = ng.InstanceStore.FullSync(ctx, largeSet, 50, nil)
@@ -504,6 +616,28 @@ func TestIntegrationFullSync(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, res, largeCount)
+	})
+
+	t.Run("Should truncate long LastError during FullSync", func(t *testing.T) {
+		longError := strings.Repeat("x", 1200)
+		testInstances := []models.AlertInstance{
+			*models.AlertInstanceGen(
+				models.InstanceMuts.WithOrgID(orgID),
+				models.InstanceMuts.WithRuleUID("truncate-test"),
+				models.InstanceMuts.WithLastError(longError),
+			),
+		}
+
+		err := ng.InstanceStore.FullSync(ctx, testInstances, 1, nil)
+		require.NoError(t, err)
+
+		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		require.LessOrEqual(t, len(res[0].LastError), 1000, "LastError should be truncated to max 1000 chars")
+		require.True(t, strings.HasSuffix(res[0].LastError, "... (truncated)"), "Truncated error should have suffix")
 	})
 }
 
@@ -520,7 +654,10 @@ func TestIntegrationFullSyncWithJitter(t *testing.T) {
 
 	instances := make([]models.AlertInstance, len(ruleUIDs))
 	for i, ruleUID := range ruleUIDs {
-		instances[i] = generateTestAlertInstance(orgID, ruleUID)
+		instances[i] = *models.AlertInstanceGen(
+			models.InstanceMuts.WithOrgID(orgID),
+			models.InstanceMuts.WithRuleUID(ruleUID),
+		)
 	}
 
 	// Simple jitter function for testing
@@ -565,7 +702,7 @@ func TestIntegrationFullSyncWithJitter(t *testing.T) {
 	t.Run("Should handle zero delays (immediate execution)", func(t *testing.T) {
 		testInstances := make([]models.AlertInstance, 2)
 		for i := 0; i < 2; i++ {
-			testInstances[i] = generateTestAlertInstance(orgID, fmt.Sprintf("immediate-%d", i))
+			testInstances[i] = *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID(fmt.Sprintf("immediate-%d", i)))
 		}
 
 		// Function that returns zero delays
@@ -592,7 +729,7 @@ func TestIntegrationFullSyncWithJitter(t *testing.T) {
 	t.Run("Should execute jitter delays correctly and save data", func(t *testing.T) {
 		testInstances := make([]models.AlertInstance, 4)
 		for i := 0; i < 4; i++ {
-			testInstances[i] = generateTestAlertInstance(orgID, fmt.Sprintf("jitter-test-%d", i))
+			testInstances[i] = *models.AlertInstanceGen(models.InstanceMuts.WithOrgID(orgID), models.InstanceMuts.WithRuleUID(fmt.Sprintf("jitter-test-%d", i)))
 		}
 
 		// Track jitter function calls
@@ -652,11 +789,16 @@ func TestIntegration_ProtoInstanceDBStore_VerifyCompressedData(t *testing.T) {
 
 	alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, 1)
 
-	labelsHash := "hash1"
-	reason := "reason"
-	state := models.InstanceStateFiring
 	instances := []models.AlertInstance{
-		createAlertInstance(alertRule.OrgID, alertRule.UID, labelsHash, reason, state),
+		*models.AlertInstanceGen(
+			models.InstanceMuts.WithOrgID(alertRule.OrgID),
+			models.InstanceMuts.WithRuleUID(alertRule.UID),
+			models.InstanceMuts.WithLabelsHash("hash1"),
+			models.InstanceMuts.WithReason("reason"),
+			models.InstanceMuts.WithState(models.InstanceStateFiring),
+			models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+			models.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
+		),
 	}
 
 	err := ng.InstanceStore.SaveAlertInstancesForRule(ctx, alertRule.GetKeyWithGroup(), instances)
@@ -703,26 +845,4 @@ func decompressAlertInstances(compressed []byte) ([]*pb.AlertInstance, error) {
 	}
 
 	return instances.Instances, nil
-}
-
-func generateTestAlertInstance(orgID int64, ruleID string) models.AlertInstance {
-	return models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  orgID,
-			RuleUID:    ruleID,
-			LabelsHash: "abc",
-		},
-		CurrentState: models.InstanceStateFiring,
-		Labels: map[string]string{
-			"hello": "world",
-		},
-		ResultFingerprint: "abc",
-		CurrentStateEnd:   time.Now(),
-		CurrentStateSince: time.Now(),
-		LastEvalTime:      time.Now(),
-		LastSentAt:        util.Pointer(time.Now()),
-		FiredAt:           util.Pointer(time.Now()),
-		ResolvedAt:        util.Pointer(time.Now()),
-		CurrentReason:     "abc",
-	}
 }

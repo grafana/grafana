@@ -8,7 +8,7 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
-import { getDefaultWorkflow, getWorkflowOptions } from '../components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../components/defaults';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { ProvisionedDashboardFormData } from '../types/form';
@@ -18,9 +18,16 @@ interface UseDefaultValuesParams {
   defaultTitle: string;
   defaultDescription?: string;
   loadedFromRef?: string;
+  saveAsCopy?: boolean;
 }
 
-export function useDefaultValues({ meta, defaultTitle, defaultDescription, loadedFromRef }: UseDefaultValuesParams) {
+export function useDefaultValues({
+  meta,
+  defaultTitle,
+  defaultDescription,
+  loadedFromRef,
+  saveAsCopy,
+}: UseDefaultValuesParams) {
   const annotations = meta.k8s?.annotations;
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
@@ -35,8 +42,8 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
 
   const dashboardPath = generatePath({
     timestamp,
-    pathFromAnnotation: sourcePath,
-    slug: meta.slug,
+    pathFromAnnotation: saveAsCopy ? undefined : sourcePath,
+    slug: saveAsCopy ? undefined : meta.slug,
     folderPath,
   });
 
@@ -48,7 +55,8 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
 
   return {
     values: {
-      ref: defaultWorkflow === 'branch' ? `dashboard/${timestamp}` : (repository?.branch ?? ''),
+      // When workflow is branch, we don't set a default ref, user will select from branches dropdown
+      ref: defaultWorkflow === 'branch' ? '' : (repository?.branch ?? ''),
       path: dashboardPath,
       repo: managerIdentity || repository?.name || '',
       comment: '',
@@ -56,9 +64,10 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
         uid: meta.folderUid,
         title: '',
       },
-      title: defaultTitle,
+      title: saveAsCopy ? `${defaultTitle} Copy` : defaultTitle,
       description: defaultDescription ?? '',
       workflow: getDefaultWorkflow(repository, loadedFromRef),
+      copyTags: saveAsCopy ? false : true,
     },
     isNew: !meta.k8s?.name,
     repository,
@@ -72,9 +81,9 @@ export interface ProvisionedDashboardData {
   defaultValues: ProvisionedDashboardFormData | null;
   repository?: RepositoryView;
   loadedFromRef?: string;
-  workflowOptions: Array<{ label: string; value: string }>;
   isNew: boolean;
   readOnly: boolean;
+  canPushToConfiguredBranch: boolean;
 }
 
 /**
@@ -82,7 +91,7 @@ export interface ProvisionedDashboardData {
  * It retrieves default values, repository information, and workflow options based on the current dashboard state.
  */
 
-export function useProvisionedDashboardData(dashboard: DashboardScene): ProvisionedDashboardData {
+export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCopy?: boolean): ProvisionedDashboardData {
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const [params] = useUrlParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -93,31 +102,32 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
     defaultTitle,
     defaultDescription,
     loadedFromRef,
+    saveAsCopy,
   });
 
   if (!defaultValuesResult) {
     return {
       isReady: false,
       isLoading,
+      canPushToConfiguredBranch: false,
       setIsLoading,
       defaultValues: null,
       repository: undefined,
       loadedFromRef,
-      workflowOptions: [],
       isNew: false,
       readOnly: true,
     };
   }
 
   const { values, isNew, repository } = defaultValuesResult;
-  const workflowOptions = getWorkflowOptions(repository);
+  const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
   return {
     isReady: true,
     defaultValues: values,
     repository,
     loadedFromRef,
-    workflowOptions,
+    canPushToConfiguredBranch,
     isNew,
     readOnly: getIsReadOnlyRepo(repository),
     isLoading,

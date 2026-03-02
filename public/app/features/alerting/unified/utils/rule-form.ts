@@ -610,7 +610,7 @@ const getDefaultExpressionsForRecording = (refOne: string): Array<AlertQuery<Exp
   ];
 };
 
-function getDefaultReduceExpression({
+export function getDefaultReduceExpression({
   inputRefId,
   reduceRefId,
 }: {
@@ -655,7 +655,7 @@ function getDefaultReduceExpression({
   };
 }
 
-function getDefaultThresholdExpression({
+export function getDefaultThresholdExpression({
   inputRefId,
   thresholdRefId,
 }: {
@@ -699,7 +699,7 @@ function getDefaultThresholdExpression({
   };
 }
 
-const dataQueriesToGrafanaQueries = async (
+export const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
   scopedVars: ScopedVars | {},

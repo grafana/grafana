@@ -1,14 +1,15 @@
 import { find } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import {
   DatasourceVariableKind,
   LibraryPanelKind,
   PanelKind,
   QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
@@ -22,13 +23,14 @@ import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
 import { makeExportableV1, makeExportableV2, LibraryElementExport } from './exporters';
 
-jest.mock('app/core/store', () => {
-  return {
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  store: {
     getBool: jest.fn(),
     getObject: jest.fn((_a, b) => b),
     get: jest.fn(),
-  };
-});
+  },
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -43,7 +45,6 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     buildInfo: {},
-    panels: {},
     apps: {},
     featureToggles: {
       newVariables: false,
@@ -457,23 +458,23 @@ describe('dashboard exporter v1', () => {
 
       config.buildInfo.version = '3.0.2';
 
-      config.panels['graph'] = {
-        id: 'graph',
-        name: 'Graph',
-        info: { version: '1.1.0' },
-      } as PanelPluginMeta;
-
-      config.panels['table'] = {
-        id: 'table',
-        name: 'Table',
-        info: { version: '1.1.1' },
-      } as PanelPluginMeta;
-
-      config.panels['heatmap'] = {
-        id: 'heatmap',
-        name: 'Heatmap',
-        info: { version: '1.1.2' },
-      } as PanelPluginMeta;
+      setPanelPluginMetas({
+        graph: {
+          id: 'graph',
+          name: 'Graph',
+          info: { version: '1.1.0' },
+        } as PanelPluginMeta,
+        table: {
+          id: 'table',
+          name: 'Table',
+          info: { version: '1.1.1' },
+        } as PanelPluginMeta,
+        heatmap: {
+          id: 'heatmap',
+          name: 'Heatmap',
+          info: { version: '1.1.2' },
+        } as PanelPluginMeta,
+      });
 
       dash = new DashboardModel(
         dash,
@@ -498,6 +499,10 @@ describe('dashboard exporter v1', () => {
         exported = clean;
         done();
       });
+    });
+
+    afterEach(() => {
+      setPanelPluginMetas({});
     });
 
     it('should replace datasource refs', () => {

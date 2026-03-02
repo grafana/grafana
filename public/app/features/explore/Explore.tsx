@@ -458,6 +458,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorHelperData,
     compact,
     queryLibraryRef,
+    queriesChangedIndexAtRun,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -492,6 +493,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
     queryLibraryRef,
+    queriesChangedIndexAtRun,
   };
 }
 

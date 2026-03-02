@@ -1,7 +1,17 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import { config } from '@grafana/runtime';
 
 import { ConfigEditor } from './ConfigEditor';
 import { createDefaultConfigOptions } from './mocks/configOptions';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    sigV4AuthEnabled: false,
+  },
+}));
 
 describe('ConfigEditor', () => {
   it('should render without error', () => {
@@ -67,5 +77,44 @@ describe('ConfigEditor', () => {
     render(<ConfigEditor onOptionsChange={mockOnOptionsChange} options={createDefaultConfigOptions()} />);
 
     expect(mockOnOptionsChange).toHaveBeenCalledTimes(0);
+  });
+
+  describe('Authentication options', () => {
+    it('should display API Key auth option', async () => {
+      const user = userEvent.setup();
+      render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
+
+      const authSelect = screen.getByLabelText('Authentication method');
+      await user.click(authSelect);
+
+      expect(screen.getByText('API Key')).toBeInTheDocument();
+      expect(screen.getByText('API Key authentication')).toBeInTheDocument();
+    });
+
+    it('should display SigV4 auth option when feature flag is enabled', async () => {
+      const user = userEvent.setup();
+      config.sigV4AuthEnabled = true;
+
+      render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
+
+      const authSelect = screen.getByLabelText('Authentication method');
+      await user.click(authSelect);
+
+      expect(screen.getByText('SigV4 auth')).toBeInTheDocument();
+      expect(screen.getByText('AWS Signature Version 4 authentication')).toBeInTheDocument();
+      config.sigV4AuthEnabled = false;
+    });
+
+    it('should not display SigV4 auth option when feature flag is disabled', async () => {
+      const user = userEvent.setup();
+
+      render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
+
+      const authSelect = screen.getByLabelText('Authentication method');
+      await user.click(authSelect);
+
+      expect(screen.queryByText('SigV4 auth')).not.toBeInTheDocument();
+      expect(screen.queryByText('AWS Signature Version 4 authentication')).not.toBeInTheDocument();
+    });
   });
 });

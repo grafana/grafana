@@ -1,6 +1,6 @@
 import { pick } from 'lodash';
 
-import store from 'app/core/store';
+import { store } from '@grafana/data';
 import { removePanel } from 'app/features/dashboard/utils/panel';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';

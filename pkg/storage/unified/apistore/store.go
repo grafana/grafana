@@ -57,6 +57,8 @@ type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.Resourc
 
 // Optional settings that apply to a single resource
 type StorageOptions struct {
+	Scheme *runtime.Scheme
+
 	// ????: should we constrain this to only dashboards for now?
 	// Not yet clear if this is a good general solution, or just a stop-gap
 	LargeObjectSupport LargeObjectSupport
@@ -720,6 +722,15 @@ func (s *Storage) GuaranteedUpdate(
 		return nil
 	}
 
+	return nil
+}
+
+// Added in k8s 1.35
+// See: https://github.com/kubernetes/kubernetes/blob/v1.35.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L668
+func (s *Storage) EnableResourceSizeEstimation(getKeys storage.KeysFunc) error {
+	if getKeys == nil {
+		return errors.New("KeysFunc cannot be nil")
+	}
 	return nil
 }
 

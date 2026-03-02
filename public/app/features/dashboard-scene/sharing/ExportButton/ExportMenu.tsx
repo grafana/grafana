@@ -1,13 +1,14 @@
-import { useCallback } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { IconName, Menu } from '@grafana/ui';
+import { IconName, Menu, ModalsContext } from '@grafana/ui';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
+import { SaveBeforeShareModal } from '../SaveBeforeShareModal';
 
 const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton.Menu;
 
@@ -28,6 +29,8 @@ export function addDashboardExportDrawerItem(item: ExportDrawerMenuItem) {
 }
 
 export default function ExportMenu({ dashboard }: { dashboard: DashboardScene }) {
+  const { showModal, hideModal } = useContext(ModalsContext);
+
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
   };
@@ -62,27 +65,48 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
     return menuItems.filter((item) => item.renderCondition);
   }, []);
 
-  const onClick = (item: ExportDrawerMenuItem) => {
-    DashboardInteractions.sharingCategoryClicked({
-      item: item.shareId,
-      shareResource: getTrackingSource(),
-    });
+  const onClick = useCallback(
+    (item: ExportDrawerMenuItem) => {
+      const continueAction = () => {
+        DashboardInteractions.sharingCategoryClicked({
+          item: item.shareId,
+          shareResource: getTrackingSource(),
+        });
 
-    item.onClick(dashboard);
-  };
+        item.onClick(dashboard);
+      };
+
+      if (dashboard.state.isEditing && dashboard.state.isDirty) {
+        showModal(SaveBeforeShareModal, { dashboard, onContinue: continueAction, onDismiss: hideModal });
+        return;
+      }
+
+      continueAction();
+    },
+    [dashboard, hideModal, showModal]
+  );
+
+  const menuItems = useMemo(() => buildMenuItems(), [buildMenuItems]);
+
+  const menuItemsWithHandlers = useMemo(() => {
+    return menuItems.map((item) => ({
+      ...item,
+      onSelect: () => onClick(item),
+    }));
+  }, [menuItems, onClick]);
 
   return (
     <Menu
       ariaLabel={t('dashboard.export.menu.label', 'Export dashboard menu')}
       data-testid={newExportButtonSelector.container}
     >
-      {buildMenuItems().map((item) => (
+      {menuItemsWithHandlers.map((item) => (
         <Menu.Item
           key={item.label}
           label={item.label}
           icon={item.icon}
           description={item.description}
-          onClick={() => onClick(item)}
+          onClick={item.onSelect}
           testId={item.testId}
         />
       ))}

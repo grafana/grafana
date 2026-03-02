@@ -22,6 +22,7 @@ import (
 
 	alertingInstrument "github.com/grafana/alerting/http/instrument"
 	"github.com/grafana/alerting/http/instrument/instrumenttest"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -868,7 +869,8 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 			}
 			result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
 			assert.NoError(t, err)
-			assert.Empty(t, result)
+			assert.Len(t, result, 1)
+			assert.Contains(t, result, rule.GetNamespaceUID())
 
 			assert.Len(t, ac.Calls, 1)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
@@ -893,7 +895,8 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 
 			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
 			assert.NoError(t, err)
-			assert.Empty(t, result)
+			assert.Len(t, result, 1)
+			assert.Contains(t, result, rule.GetNamespaceUID())
 
 			assert.Len(t, ac.Calls, 2)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
@@ -915,6 +918,21 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: "not-found", SignedInUser: usr})
 				require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
 			})
+		})
+
+		t.Run("should return folderUID", func(t *testing.T) {
+			for _, authBypass := range []bool{true, false} {
+				t.Run(fmt.Sprintf("authBypass=%v", authBypass), func(t *testing.T) {
+					ac := &acfakes.FakeRuleService{}
+					ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+						return authBypass, nil
+					}
+					result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+					assert.NoError(t, err)
+					assert.Len(t, result, 1)
+					assert.Contains(t, result, rule.GetNamespaceUID())
+				})
+			}
 		})
 	})
 
@@ -980,6 +998,161 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
+	// Simple history generator to avoid repetitive code in test cases.
+	simpleHistory := func(guid string) map[string][]*models.AlertRuleVersion {
+		return map[string][]*models.AlertRuleVersion{
+			guid: {
+				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-current")).Generate()},
+				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-1")).Generate()},
+				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-2")).Generate()},
+				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-3")).Generate()},
+			},
+		}
+	}
+
+	// Helper to create simple folder access override functions.
+	canReadRulesInFolders := func(folderUids ...string) func(folderUID string) (bool, error) {
+		return func(folderUID string) (bool, error) {
+			for _, f := range folderUids {
+				if folderUID == f {
+					return true, nil
+				}
+			}
+			return false, nil
+		}
+	}
+
+	// Helper to fail historical folders query.
+	failHistoryQueryHook := func(cmd any) error {
+		q, ok := cmd.(fakes.GenericRecordedQuery)
+		if !ok {
+			return nil
+		}
+		if q.Name == "GetAlertRuleVersionFolders" {
+			return errors.New("generic error")
+		}
+		return nil
+	}
+
+	cases := []struct {
+		name string
+		// Setup.
+		existingHistory map[string][]*models.AlertRuleVersion
+		canReadAllRules bool
+		rule            *models.AlertRule
+
+		// Error overrides.
+		ruleStoreHook        func(cmd any) error
+		folderAccessOverride func(folderUID string) (bool, error)
+
+		// Expected.
+		expectedFolders []string
+	}{
+		{
+			name:            "should include historical folders when user can read all rules",
+			existingHistory: simpleHistory("guid-1"),
+			canReadAllRules: true,
+			rule:            models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			expectedFolders: []string{"folder-current", "folder-historical-1", "folder-historical-2", "folder-historical-3"},
+		},
+		{
+			name:                 "should include only authorized historical folders",
+			existingHistory:      simpleHistory("guid-1"),
+			folderAccessOverride: canReadRulesInFolders("folder-current", "folder-historical-2"),
+			rule:                 models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			expectedFolders:      []string{"folder-current", "folder-historical-2"},
+		},
+		{
+			name:            "if historical folders query fails, should return current folder",
+			existingHistory: simpleHistory("guid-1"),
+			canReadAllRules: true,
+			rule:            models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			ruleStoreHook:   failHistoryQueryHook,
+			expectedFolders: []string{"folder-current"},
+		},
+		{
+			name:                 "if historical folders query fails, should return current folder",
+			existingHistory:      simpleHistory("guid-1"),
+			folderAccessOverride: canReadRulesInFolders("folder-current", "folder-historical-2"),
+			rule:                 models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			ruleStoreHook:        failHistoryQueryHook,
+			expectedFolders:      []string{"folder-current"},
+		},
+		{
+			name:            "if access check for historical folders fails, should ignore",
+			existingHistory: simpleHistory("guid-1"),
+			rule:            models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			folderAccessOverride: func(folderUID string) (bool, error) {
+				switch folderUID {
+				case "folder-current", "folder-historical-3":
+					return true, nil
+				case "folder-historical-2":
+					return false, nil
+				case "folder-historical-1":
+					return false, errors.New("generic error")
+				}
+				return false, nil
+			},
+			expectedFolders: []string{"folder-current", "folder-historical-3"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup.
+			orgID := int64(1)
+			usr := accesscontrol.BackgroundUser("test", 1, org.RoleNone, nil)
+
+			ac := &acfakes.FakeRuleService{}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+				return tc.canReadAllRules, nil
+			}
+			ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) error {
+				if tc.canReadAllRules {
+					return nil
+				}
+				hasAccess, err := tc.folderAccessOverride(namespaced.GetNamespaceUID())
+				if err != nil {
+					return err
+				}
+				if !hasAccess {
+					return rulesAuthz.ErrAuthorizationBase.Errorf("%w", err)
+				}
+				return nil
+			}
+			ac.HasAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) (bool, error) {
+				if tc.canReadAllRules {
+					return true, nil
+				}
+				return tc.folderAccessOverride(namespaced.GetNamespaceUID())
+			}
+
+			rulesStore := fakes.NewRuleStore(t)
+			rulesStore.Rules = map[int64][]*models.AlertRule{
+				orgID: {
+					tc.rule,
+					// Add some irrelevant rules to ensure they are ignored.
+					models.RuleGen.With(models.RuleMuts.WithNamespaceUID(tc.rule.GetNamespaceUID())).GenerateRef(),
+					models.RuleGen.With(models.RuleMuts.WithNamespaceUID("irrelevant-folder")).GenerateRef(),
+				},
+			}
+			rulesStore.History = tc.existingHistory
+			if tc.ruleStoreHook != nil {
+				rulesStore.Hook = tc.ruleStoreHook
+			}
+
+			loki := createTestLokiBackend(t, instrumenttest.NewFakeRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+			loki.ruleStore = rulesStore
+			loki.ac = ac
+
+			// Test conditions.
+			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: tc.rule.UID, SignedInUser: usr})
+			assert.NoError(t, err)
+			assert.ElementsMatch(t, tc.expectedFolders, result)
+		})
+	}
 }
 
 func createTestLokiBackend(t *testing.T, req alertingInstrument.Requester, met *metrics.Historian) *RemoteLokiBackend {

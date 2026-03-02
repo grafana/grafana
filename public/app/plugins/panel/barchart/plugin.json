@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Bar chart",
   "id": "barchart",
-
+  "suggestions": true,
   "info": {
     "description": "Categorical charts with group support",
     "author": {

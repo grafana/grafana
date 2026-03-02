@@ -67,7 +67,7 @@ func TestSyncer_Sync(t *testing.T) {
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -89,10 +89,42 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "incremental sync").Return()
-				incrementalSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				incrementalSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedRef:      "new-ref",
 			expectedMessages: []string{"incremental sync"},
+		},
+		{
+			name: "quota exceeded defaults to full sync",
+			options: provisioning.SyncJobOptions{
+				Incremental: true,
+			},
+			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
+				repo.MockRepository.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Status: provisioning.RepositoryStatus{
+						Sync: provisioning.SyncStatus{
+							LastRef: "old-ref",
+						},
+						Quota: provisioning.QuotaStatus{
+							MaxResourcesPerRepository: 100,
+						},
+						Conditions: []metav1.Condition{
+							{
+								Type:   provisioning.ConditionTypeResourceQuota,
+								Status: metav1.ConditionFalse,
+								Reason: provisioning.ReasonQuotaExceeded,
+							},
+						},
+					},
+				})
+				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
+				progress.On("SetMessage", mock.Anything, "full sync").Return()
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			},
+			expectedMessages: []string{"full sync"},
 		},
 		{
 			name: "latest ref error",
@@ -132,7 +164,7 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "incremental sync").Return()
-				incrementalSyncFn.On("Execute", mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("incremental sync failed"))
+				incrementalSyncFn.On("Execute", mock.Anything, mock.Anything, "old-ref", "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("incremental sync failed"))
 			},
 			expectedRef:      "new-ref",
 			expectedMessages: []string{"incremental sync"},

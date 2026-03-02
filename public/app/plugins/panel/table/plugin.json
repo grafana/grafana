@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Table",
   "id": "table",
-
+  "suggestions": true,
   "info": {
     "description": "Supports many column styles",
     "author": {

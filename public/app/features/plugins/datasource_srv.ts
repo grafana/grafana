@@ -3,7 +3,6 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceRef,
-  DataSourceSelectItem,
   ScopedVars,
   isObject,
   matchPluginId,
@@ -53,7 +52,9 @@ export class DatasourceSrv implements DataSourceService {
       }
 
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
-      this.settingsMapById[dsSettings.id] = dsSettings;
+      if (dsSettings.id) {
+        this.settingsMapById[dsSettings.id] = dsSettings;
+      }
     }
 
     for (const ds of Object.values(this.runtimeDataSources)) {
@@ -365,39 +366,6 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     return sorted;
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getExternal(): DataSourceInstanceSettings[] {
-    return this.getList();
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getAnnotationSources() {
-    return this.getList({ annotations: true, variables: true }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
-    return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
   }
 
   async reload() {

@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaTemplateGroup = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", &TemplateGroup{}, &TemplateGroupList{}, resource.WithKind("TemplateGroup"),
+	schemaTemplateGroup = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", NewTemplateGroup(), &TemplateGroupList{}, resource.WithKind("TemplateGroup"),
 		resource.WithPlural("templategroups"), resource.WithScope(resource.NamespacedScope))
 	kindTemplateGroup = resource.Kind{
 		Schema: schemaTemplateGroup,

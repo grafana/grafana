@@ -1,6 +1,7 @@
 package logsdrilldown
 
 import (
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -19,6 +20,10 @@ var (
 type LogsDrilldownAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
+}
+
+func (l *LogsDrilldownAppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return GetAuthorizer()
 }
 
 func RegisterAppInstaller(

@@ -23,6 +23,12 @@ type RoutingTree struct {
 	Spec RoutingTreeSpec `json:"spec" yaml:"spec"`
 }
 
+func NewRoutingTree() *RoutingTree {
+	return &RoutingTree{
+		Spec: *NewRoutingTreeSpec(),
+	}
+}
+
 func (o *RoutingTree) GetSpec() any {
 	return o.Spec
 }
@@ -222,6 +228,10 @@ func (o *RoutingTree) DeepCopyInto(dst *RoutingTree) {
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
+func (RoutingTree) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTree"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &RoutingTree{}
 
@@ -273,6 +283,10 @@ func (o *RoutingTreeList) DeepCopy() *RoutingTreeList {
 
 func (o *RoutingTreeList) DeepCopyInto(dst *RoutingTreeList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (RoutingTreeList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.RoutingTreeList"
 }
 
 // Interface compliance compile-time check

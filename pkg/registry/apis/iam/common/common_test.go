@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	authlib "github.com/grafana/authlib/types"
@@ -14,14 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
-
-type item struct {
-	id string
-}
-
-func (i item) AuthID() string {
-	return i.id
-}
 
 func TestList(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
@@ -83,8 +77,8 @@ func TestList(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, res.Items, 2)
 
-		assert.Equal(t, "1", res.Items[0].AuthID())
-		assert.Equal(t, "3", res.Items[1].AuthID())
+		assert.Equal(t, "1", res.Items[0].GetName())
+		assert.Equal(t, "3", res.Items[1].GetName())
 	})
 }
 
@@ -102,4 +96,159 @@ func newIdent(permissions ...accesscontrol.Permission) *identity.StaticRequester
 		OrgID:       1,
 		Permissions: map[int64]map[string][]string{1: pmap},
 	}
+}
+
+var _ metav1.Object = (*item)(nil)
+
+type item struct {
+	id string
+}
+
+// GetAnnotations implements v1.Object.
+func (i item) GetAnnotations() map[string]string {
+	panic("unimplemented")
+}
+
+// GetCreationTimestamp implements v1.Object.
+func (i item) GetCreationTimestamp() metav1.Time {
+	panic("unimplemented")
+}
+
+// GetDeletionGracePeriodSeconds implements v1.Object.
+func (i item) GetDeletionGracePeriodSeconds() *int64 {
+	panic("unimplemented")
+}
+
+// GetDeletionTimestamp implements v1.Object.
+func (i item) GetDeletionTimestamp() *metav1.Time {
+	panic("unimplemented")
+}
+
+// GetFinalizers implements v1.Object.
+func (i item) GetFinalizers() []string {
+	panic("unimplemented")
+}
+
+// GetGenerateName implements v1.Object.
+func (i item) GetGenerateName() string {
+	panic("unimplemented")
+}
+
+// GetGeneration implements v1.Object.
+func (i item) GetGeneration() int64 {
+	panic("unimplemented")
+}
+
+// GetLabels implements v1.Object.
+func (i item) GetLabels() map[string]string {
+	panic("unimplemented")
+}
+
+// GetManagedFields implements v1.Object.
+func (i item) GetManagedFields() []metav1.ManagedFieldsEntry {
+	panic("unimplemented")
+}
+
+// GetNamespace implements v1.Object.
+func (i item) GetNamespace() string {
+	panic("unimplemented")
+}
+
+// GetOwnerReferences implements v1.Object.
+func (i item) GetOwnerReferences() []metav1.OwnerReference {
+	panic("unimplemented")
+}
+
+// GetResourceVersion implements v1.Object.
+func (i item) GetResourceVersion() string {
+	panic("unimplemented")
+}
+
+// GetSelfLink implements v1.Object.
+func (i item) GetSelfLink() string {
+	panic("unimplemented")
+}
+
+// GetUID implements v1.Object.
+func (i item) GetUID() types.UID {
+	panic("unimplemented")
+}
+
+// SetAnnotations implements v1.Object.
+func (i item) SetAnnotations(annotations map[string]string) {
+	panic("unimplemented")
+}
+
+// SetCreationTimestamp implements v1.Object.
+func (i item) SetCreationTimestamp(timestamp metav1.Time) {
+	panic("unimplemented")
+}
+
+// SetDeletionGracePeriodSeconds implements v1.Object.
+func (i item) SetDeletionGracePeriodSeconds(*int64) {
+	panic("unimplemented")
+}
+
+// SetDeletionTimestamp implements v1.Object.
+func (i item) SetDeletionTimestamp(timestamp *metav1.Time) {
+	panic("unimplemented")
+}
+
+// SetFinalizers implements v1.Object.
+func (i item) SetFinalizers(finalizers []string) {
+	panic("unimplemented")
+}
+
+// SetGenerateName implements v1.Object.
+func (i item) SetGenerateName(name string) {
+	panic("unimplemented")
+}
+
+// SetGeneration implements v1.Object.
+func (i item) SetGeneration(generation int64) {
+	panic("unimplemented")
+}
+
+// SetLabels implements v1.Object.
+func (i item) SetLabels(labels map[string]string) {
+	panic("unimplemented")
+}
+
+// SetManagedFields implements v1.Object.
+func (i item) SetManagedFields(managedFields []metav1.ManagedFieldsEntry) {
+	panic("unimplemented")
+}
+
+// SetName implements v1.Object.
+func (i item) SetName(name string) {
+	panic("unimplemented")
+}
+
+// SetNamespace implements v1.Object.
+func (i item) SetNamespace(namespace string) {
+	panic("unimplemented")
+}
+
+// SetOwnerReferences implements v1.Object.
+func (i item) SetOwnerReferences([]metav1.OwnerReference) {
+	panic("unimplemented")
+}
+
+// SetResourceVersion implements v1.Object.
+func (i item) SetResourceVersion(version string) {
+	panic("unimplemented")
+}
+
+// SetSelfLink implements v1.Object.
+func (i item) SetSelfLink(selfLink string) {
+	panic("unimplemented")
+}
+
+// SetUID implements v1.Object.
+func (i item) SetUID(uid types.UID) {
+	panic("unimplemented")
+}
+
+func (i item) GetName() string {
+	return i.id
 }

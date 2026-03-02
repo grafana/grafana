@@ -9,6 +9,7 @@ import {
   SceneDataTransformer,
   sceneGraph,
   SceneGridItemStateLike,
+  SceneGridLayout,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -16,8 +17,8 @@ import {
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema/';
-import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
+import { LibraryPanel } from '@grafana/schema';
+import { Alert, Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -26,10 +27,14 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
+import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
+import { buildVizPanel } from '../serialization/layoutSerializers/utils';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getDashboardSceneFor,
   getLibraryPanelBehavior,
@@ -37,14 +42,16 @@ import {
   getQueryRunnerFor,
   isLibraryPanel,
 } from '../utils/utils';
+import { isGridLayoutItemKind, isPanelKindV2 } from '../v2schema/validation';
 
-export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
+export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames' | 'panel-layout';
 
 export interface InspectJsonTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   source: ShowContent;
   jsonText: string;
   onClose: () => void;
+  error?: string;
 }
 
 export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
@@ -66,11 +73,15 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
   public getOptions(): Array<SelectableValue<ShowContent>> {
     const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(panel);
     const dataProvider = panel.state.$data ?? panel.parent?.state.$data;
+    const isV2 = isDashboardV2Spec(dashboard.getSaveModel());
 
     const options: Array<SelectableValue<ShowContent>> = [
       {
-        label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
+        label: isV2
+          ? t('dashboard.inspect-json.panel-spec-label', 'Panel Spec')
+          : t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
         description: t(
           'dashboard.inspect-json.panel-json-description',
           'The model saved in the dashboard JSON that configures how everything works.'
@@ -78,6 +89,17 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
         value: 'panel-json',
       },
     ];
+
+    if (isV2 && panel.parent instanceof DashboardGridItem) {
+      options.push({
+        label: t('dashboard.inspect-json.panel-layout-label', 'Panel Layout'),
+        description: t(
+          'dashboard.inspect-json.panel-layout-description',
+          'The grid position and size of the panel in the dashboard.'
+        ),
+        value: 'panel-layout',
+      });
+    }
 
     if (dataProvider) {
       options.push({
@@ -102,14 +124,136 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   }
 
   public onChangeSource = (value: SelectableValue<ShowContent>) => {
-    this.setState({ source: value.value!, jsonText: getJsonText(value.value!, this.state.panelRef.resolve()) });
+    this.setState({
+      source: value.value!,
+      jsonText: getJsonText(value.value!, this.state.panelRef.resolve()),
+      error: undefined,
+    });
   };
 
   public onApplyChange = () => {
+    let jsonObj: unknown;
+    try {
+      jsonObj = JSON.parse(this.state.jsonText);
+    } catch (e) {
+      this.setState({
+        error: t('dashboard-scene.inspect-json-tab.error-invalid-json', 'Invalid JSON'),
+      });
+      return;
+    }
+
+    if (this.state.source === 'panel-layout') {
+      this.applyLayoutChange(jsonObj);
+    } else if (this.state.source === 'panel-json') {
+      this.applyPanelJsonChange(jsonObj);
+    }
+  };
+
+  private applyLayoutChange(jsonObj: unknown) {
+    if (!isGridLayoutItemKind(jsonObj)) {
+      this.setState({
+        error: t(
+          'dashboard-scene.inspect-json-tab.error-invalid-layout',
+          'Layout JSON did not pass validation. Please check the JSON and try again.'
+        ),
+      });
+      return;
+    }
+
     const panel = this.state.panelRef.resolve();
     const dashboard = getDashboardSceneFor(panel);
-    const jsonObj = JSON.parse(this.state.jsonText);
+    const gridItem = panel.parent;
 
+    if (!(gridItem instanceof DashboardGridItem)) {
+      console.error('Cannot update layout: panel parent is not a DashboardGridItem');
+      return;
+    }
+
+    const originalElementName = dashboardSceneGraph.getElementIdentifierForVizPanel(panel);
+    if (jsonObj.spec.element.name !== originalElementName) {
+      this.setState({
+        error: t(
+          'dashboard-scene.inspect-json-tab.error-element-changed',
+          'Cannot change the element reference. Only layout properties (x, y, width, height) can be modified.'
+        ),
+      });
+      return;
+    }
+
+    if (!dashboard.state.isEditing) {
+      dashboard.onEnterEditMode();
+    }
+
+    const oldState = gridItem.state;
+    const newLayoutState = {
+      x: jsonObj.spec.x,
+      y: jsonObj.spec.y,
+      width: jsonObj.spec.width,
+      height: jsonObj.spec.height,
+    };
+
+    gridItem.setState(newLayoutState);
+
+    // Force the grid layout to re-render with the new positions
+    const layout = sceneGraph.getLayout(panel);
+    if (layout instanceof SceneGridLayout) {
+      layout.forceRender();
+    }
+
+    reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+      panel_type_changed: false,
+      panel_id_changed: false,
+      panel_grid_pos_changed:
+        oldState.x !== newLayoutState.x ||
+        oldState.y !== newLayoutState.y ||
+        oldState.width !== newLayoutState.width ||
+        oldState.height !== newLayoutState.height,
+      panel_targets_changed: false,
+    });
+
+    this.state.onClose();
+  }
+
+  private applyPanelJsonChange(jsonObj: unknown) {
+    const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(panel);
+
+    if (isDashboardV2Spec(dashboard.getSaveModel())) {
+      this.applyV2PanelChange(jsonObj, panel, dashboard);
+    } else {
+      this.applyV1PanelChange(jsonObj, panel, dashboard);
+    }
+  }
+
+  private applyV2PanelChange(jsonObj: unknown, panel: VizPanel, dashboard: DashboardScene) {
+    if (!isPanelKindV2(jsonObj)) {
+      this.setState({
+        error: t(
+          'dashboard-scene.inspect-json-tab.error-invalid-v2-panel',
+          'Panel JSON did not pass validation. Please check the JSON and try again.'
+        ),
+      });
+      return;
+    }
+
+    const vizPanel = buildVizPanel(jsonObj, jsonObj.spec.id);
+
+    if (!dashboard.state.isEditing) {
+      dashboard.onEnterEditMode();
+    }
+
+    reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+      panel_type_changed: panel.state.pluginId !== jsonObj.spec.vizConfig.group,
+      panel_id_changed: getPanelIdForVizPanel(panel) !== jsonObj.spec.id,
+      panel_grid_pos_changed: false,
+      panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(vizPanel.state.$data)),
+    });
+
+    panel.setState(vizPanel.state);
+    this.state.onClose();
+  }
+
+  private applyV1PanelChange(jsonObj: unknown, panel: VizPanel, dashboard: DashboardScene) {
     const panelModel = new PanelModel(jsonObj);
     const gridItem = buildGridItemForPanel(panelModel);
     const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
@@ -119,29 +263,34 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return;
     }
 
-    this.state.onClose();
-
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
     panel.parent.setState(newState);
 
-    //Report relevant updates
+    // Force the grid layout to re-render with the new positions
+    const layout = sceneGraph.getLayout(panel);
+    if (layout instanceof SceneGridLayout) {
+      layout.forceRender();
+    }
+
     reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
       panel_type_changed: panel.state.pluginId !== panelModel.type,
       panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
       panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
       panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(newState.$data)),
     });
-  };
+
+    this.state.onClose();
+  }
 
   public onCodeEditorBlur = (value: string) => {
     this.setState({ jsonText: value });
   };
 
   public isEditable() {
-    if (this.state.source !== 'panel-json') {
+    if (!['panel-json', 'panel-layout'].includes(this.state.source)) {
       return false;
     }
 
@@ -149,11 +298,6 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
     // Library panels are not editable from the inspect
     if (isLibraryPanel(panel)) {
-      return false;
-    }
-
-    // V2 dashboard panels are not editable from the inspect
-    if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
       return false;
     }
 
@@ -170,14 +314,14 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 }
 
 function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>) {
-  const { source: show, jsonText } = model.useState();
+  const { source: show, jsonText, error } = model.useState();
   const styles = useStyles2(getPanelInspectorStyles2);
   const options = model.getOptions();
 
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
-        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
+        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1" noMargin>
           <Select
             inputId="select-source-dropdown"
             options={options}
@@ -191,6 +335,12 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
           </Button>
         )}
       </div>
+
+      {error && (
+        <Alert severity="error" title={t('dashboard-scene.inspect-json-tab.validation-error', 'Validation error')}>
+          <p>{error}</p>
+        </Alert>
+      )}
 
       <div className={styles.content}>
         <AutoSizer disableWidth>
@@ -261,6 +411,20 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
           objToStringify = getPanelDataFrames(dataProvider.state.data);
         }
       }
+      break;
+    }
+
+    case 'panel-layout': {
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelLayout');
+
+      const gridItem = panel.parent;
+
+      if (gridItem instanceof DashboardGridItem) {
+        if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
+          objToStringify = gridItemToGridLayoutItemKind(gridItem);
+        }
+      }
+      break;
     }
   }
 

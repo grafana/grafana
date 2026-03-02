@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Badge, Button, Checkbox, Column, InteractiveTable, Stack, Text } from '@grafana/ui';
+import { Badge, Button, Checkbox, Column, InteractiveTable, Stack, Text, useStyles2 } from '@grafana/ui';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { computeVersionDiff } from 'app/features/alerting/unified/utils/diff';
 import { RuleIdentifier } from 'app/types/unified-alerting';
@@ -33,6 +34,7 @@ export function VersionHistoryTable({
   onRestoreError,
   canRestore,
 }: VersionHistoryTableProps) {
+  const styles = useStyles2(getStyles);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [ruleToRestore, setRuleToRestore] = useState<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>();
   const ruleToRestoreUid = ruleToRestore?.grafana_alert?.uid ?? '';
@@ -40,6 +42,8 @@ export function VersionHistoryTable({
     () => ({ ruleSourceName: GRAFANA_RULES_SOURCE_NAME, uid: ruleToRestoreUid }),
     [ruleToRestoreUid]
   );
+
+  const hasAnyNotes = useMemo(() => ruleVersions.some((v) => v.grafana_alert.message), [ruleVersions]);
 
   const showConfirmation = (ruleToRestore: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
     setShowConfirmModal(true);
@@ -51,6 +55,15 @@ export function VersionHistoryTable({
   };
 
   const unknown = t('alerting.alertVersionHistory.unknown', 'Unknown');
+
+  const notesColumn: Column<RulerGrafanaRuleDTO<GrafanaRuleDefinition>> = {
+    id: 'notes',
+    header: t('core.versionHistory.table.notes', 'Notes'),
+    cell: ({ row }) => {
+      const message = row.original.grafana_alert.message;
+      return message || null;
+    },
+  };
 
   const columns: Array<Column<RulerGrafanaRuleDTO<GrafanaRuleDefinition>>> = [
     {
@@ -91,9 +104,12 @@ export function VersionHistoryTable({
         if (!value) {
           return unknown;
         }
-        return dateTimeFormat(value) + ' (' + dateTimeFormatTimeAgo(value) + ')';
+        return (
+          <span className={styles.nowrap}>{dateTimeFormat(value) + ' (' + dateTimeFormatTimeAgo(value) + ')'}</span>
+        );
       },
     },
+    ...(hasAnyNotes ? [notesColumn] : []),
     {
       id: 'diff',
       disableGrow: true,
@@ -179,3 +195,9 @@ export function VersionHistoryTable({
     </>
   );
 }
+
+const getStyles = () => ({
+  nowrap: css({
+    whiteSpace: 'nowrap',
+  }),
+});

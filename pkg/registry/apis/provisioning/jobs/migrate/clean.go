@@ -40,36 +40,33 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 		}
 
 		if err = resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-			result := jobs.JobResourceResult{
-				Name:   item.GetName(),
-				Kind:   item.GetKind(),
-				Group:  item.GroupVersionKind().Group,
-				Action: repository.FileActionDeleted,
-			}
+			gvk := item.GroupVersionKind()
+			resultBuilder := jobs.NewGVKResult(item.GetName(), gvk).WithAction(repository.FileActionDeleted)
 
 			// Skip provisioned resources - only delete unprovisioned (unmanaged) resources
 			meta, err := utils.MetaAccessor(item)
 			if err != nil {
-				result.Error = fmt.Errorf("extracting meta accessor for resource %s: %w", result.Name, err)
-				progress.Record(ctx, result)
+				resultBuilder.WithError(fmt.Errorf("extracting meta accessor for resource %s: %w", item.GetName(), err))
+				progress.Record(ctx, resultBuilder.Build())
 				return nil // Continue with next resource
 			}
 
 			manager, _ := meta.GetManagerProperties()
 			// Skip if resource is managed by any provisioning system
 			if manager.Identity != "" {
-				result.Action = repository.FileActionIgnored
-				progress.Record(ctx, result)
+				resultBuilder.WithAction(repository.FileActionIgnored)
+				progress.Record(ctx, resultBuilder.Build())
 				return nil // Skip this resource
 			}
 
+			// Deletion works by name, so we can use any client regardless of version
 			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil {
-				result.Error = fmt.Errorf("deleting resource %s/%s %s: %w", result.Group, result.Kind, result.Name, err)
-				progress.Record(ctx, result)
+				resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", item.GroupVersionKind().Group, item.GetKind(), item.GetName(), err))
+				progress.Record(ctx, resultBuilder.Build())
 				return fmt.Errorf("delete resource: %w", err)
 			}
 
-			progress.Record(ctx, result)
+			progress.Record(ctx, resultBuilder.Build())
 			return nil
 		}); err != nil {
 			return err

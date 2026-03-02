@@ -9,8 +9,8 @@ import {
   sceneGraph,
   SceneTimeRangeLike,
 } from '@grafana/scenes';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
@@ -62,7 +62,7 @@ export class AlertStatesDataLayer
 
   private async runWithTimeRange(timeRange: SceneTimeRangeLike) {
     const dashboard = getDashboardSceneFor(this);
-    const { uid, id } = dashboard.state;
+    const { uid } = dashboard.state;
 
     if (this.querySub) {
       this.querySub.unsubscribe();
@@ -108,7 +108,7 @@ export class AlertStatesDataLayer
                   state,
                   id: Object.keys(panelIdToAlertState).length,
                   panelId,
-                  dashboardId: id!,
+                  dashboardUID: uid,
                 };
               } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
                 panelIdToAlertState[panelId].state = AlertState.Alerting;
