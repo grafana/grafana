@@ -243,6 +243,7 @@ During conversion:
 ### Regular expression compatibility
 
 Regular expressions in SQL expressions aren't fully compatible with MySQL standards.
+This is because Grafana runs SQL expressions in a CGo-free configuration, which uses regular expression behavior that differs from MySQL in some cases.
 
 SQL expressions that use regular expression functions have limitations such as:
 
@@ -251,6 +252,8 @@ SQL expressions that use regular expression functions have limitations such as:
 - Differences in handling carriage return (`\r`) characters.
 
 There may be other minor differences as well.
+
+For implementation context, refer to the [`go-mysql-server` regex compatibility notes](https://github.com/grafana/go-mysql-server/blob/main/README.md).
 
 ### Schema changes and missing data
 
