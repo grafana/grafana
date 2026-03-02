@@ -396,6 +396,10 @@ export function useRowHeight({
     [nestedFields, typographyCtx, maxHeight]
   );
 
+  const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
+  const totalNestedWidth = useMemo(() => nestedColWidths.reduce((acc, width) => acc + width, 0), [nestedColWidths]);
+  const nestedHasOverflow = useMemo(() => totalParentWidth < totalNestedWidth, [totalParentWidth, totalNestedWidth]);
+
   const getNestedRowHeightWithCache = useMemo(() => {
     if (typeof defaultNestedHeight === 'string') {
       return () => 0;
@@ -489,7 +493,8 @@ export function useRowHeight({
           (acc, row) => acc + getNestedRowHeightWithCache(row),
           0
         );
-        return nestedRowsHeight + nestedHeaderHeight + TABLE.CELL_PADDING * 2;
+        const scrollbarHeight = nestedHasOverflow ? 16 : 0;
+        return nestedRowsHeight + nestedHeaderHeight + TABLE.CELL_PADDING * 2 + scrollbarHeight;
       }
 
       return row.__parentIndex != null ? getNestedRowHeightWithCache(row) : getRowHeightWithCache(row);
@@ -501,6 +506,7 @@ export function useRowHeight({
     defaultNestedHeight,
     hasNestedFrames,
     hasWrappedCols,
+    nestedHasOverflow,
     nestedRows,
     visibleNestedRowCounts,
   ]);
