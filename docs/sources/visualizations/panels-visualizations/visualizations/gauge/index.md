@@ -78,11 +78,11 @@ The gauge visualization can display datasets with multiple rows of data or even 
 
 ![Gauge visualization with multiple rows and columns of numeric values showing the last row](/media/docs/grafana/panels-visualizations/screenshot-gauge-multi-rows-values-v13.0.png)
 
-By default, the visualization [calculates](#value-options) a single value per column or series and to display only the last row of data. However, it derives the minimum and maximum from the full dataset, even if those values aren't visible.
+By default, the visualization [calculates](#value-options) a single value per column or series and displays only the last row of data. However, it derives the minimum and maximum from the full dataset, even if those values aren't visible.
 
 In this example, that means only the last row of data, row C, is displayed in the gauges and the minimum and maximum values are 1 and 15. The value 1 is displayed because it's in the last row, while 15 is not.
 
-If you want to show one gauge per table cell, under **Value options**, change the **Show** setting from **Calculate** to **All values**. Each gauge label is a concatenation the text column with each value's column name.
+If you want to show one gauge per table cell, under **Value options**, change the **Show** setting from **Calculate** to **All values**. Each gauge label is a concatenation of the text column with each value's column name.
 
 ![Gauge visualization with multiple rows and columns of numeric values showing all the values](/media/docs/grafana/panels-visualizations/screenshot-multi-rows-values-show-all-v13.0.png)
 
