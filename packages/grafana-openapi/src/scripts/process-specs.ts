@@ -67,16 +67,29 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
 
   // Process 'components.schemas', i.e., type definitions
   const newSchemas: Record<string, unknown> = {};
-  for (const schemaKey of Object.keys(newSpec.components.schemas)) {
+  const schemaKeys = Object.keys(newSpec.components.schemas);
+
+  // First pass: identify collisions
+  const simplifiedToOriginal = new Map<string, string[]>();
+  for (const schemaKey of schemaKeys) {
     const newKey = simplifySchemaName(schemaKey);
+    const originals = simplifiedToOriginal.get(newKey) || [];
+    originals.push(schemaKey);
+    simplifiedToOriginal.set(newKey, originals);
+  }
+
+  for (const schemaKey of schemaKeys) {
+    const simplifiedKey = simplifySchemaName(schemaKey);
+    // If there's a collision, use the original key to keep it unique
+    const newKey = (simplifiedToOriginal.get(simplifiedKey)?.length || 0) > 1 ? schemaKey : simplifiedKey;
+
     if (newSchemas[newKey]) {
-      // This can happen when invalid specs are used, although ignoring the error will work
-      // it is better to fix the spec to avoid confusion.
+      // This should now be impossible given the logic above, but keeping as a safety check
       throw new Error(`Duplicate schema key found: ${newKey}. from: ${schemaKey}`);
     }
 
     const schemaObject = newSpec.components.schemas[schemaKey];
-    updateRefs(schemaObject);
+    updateRefs(schemaObject, simplifiedToOriginal);
 
     newSchemas[newKey] = schemaObject;
   }
@@ -95,22 +108,26 @@ function filterNamespaceParameters(parameters: Array<OpenAPIV3.ReferenceObject |
 /**
  * Recursively update all $ref fields to remove k8s metadata from names
  */
-function updateRefs(obj: unknown) {
+function updateRefs(obj: unknown, collisions: Map<string, string[]>) {
   if (Array.isArray(obj)) {
     for (const item of obj) {
-      updateRefs(item);
+      updateRefs(item, collisions);
     }
   } else if (typeof obj === 'object' && obj !== null) {
     if ('$ref' in obj && typeof obj.$ref === 'string') {
       const refParts = obj.$ref.split('/');
       const lastRefPart = refParts[refParts.length - 1];
-      const newRefName = simplifySchemaName(lastRefPart);
+      const simplifiedRefName = simplifySchemaName(lastRefPart);
+
+      // Match the logic in processOpenAPISpec: use original name if there's a collision
+      const newRefName = (collisions.get(simplifiedRefName)?.length || 0) > 1 ? lastRefPart : simplifiedRefName;
+
       obj.$ref = `#/components/schemas/${newRefName}`;
     }
     for (const key in obj) {
       if (key !== '$ref') {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        updateRefs(obj[key as keyof typeof obj]);
+        updateRefs(obj[key as keyof typeof obj], collisions);
       }
     }
   }

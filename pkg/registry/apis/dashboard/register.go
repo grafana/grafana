@@ -742,6 +742,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		unified.AfterDelete = b.afterDelete
 		storage[dashboards.StoragePath()] = unified
 
+		//storage[dashboards.StoragePath("preferences")] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, unified)
+		storage[dashboards.StoragePath("preferences")] = NewPreferencesREST(storage[dashboards.StoragePath()])
+
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 			unified,
 			largeObjects,
@@ -778,6 +781,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
 	}
+
+	//storage[dashboards.StoragePath("preferences")] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, unified)
+	storage[dashboards.StoragePath("preferences")] = NewPreferencesREST(storage[dashboards.StoragePath()])
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
