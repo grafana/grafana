@@ -174,6 +174,20 @@
     },
     {
       "metadata": {
+        "name": "alertingAlertListPanelEnhancements",
+        "resourceVersion": "1772477753403",
+        "creationTimestamp": "2026-03-02T18:55:53Z"
+      },
+      "spec": {
+        "description": "Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingAlertsActivityBanner",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"

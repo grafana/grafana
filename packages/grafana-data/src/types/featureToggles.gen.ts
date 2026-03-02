@@ -649,6 +649,11 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
+  * Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking
+  * @default false
+  */
+  alertingAlertListPanelEnhancements?: boolean;
+  /**
   * Enables the new Alerting navigation structure with improved menu grouping
   * @default false
   */
