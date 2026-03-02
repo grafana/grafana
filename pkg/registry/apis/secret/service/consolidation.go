@@ -36,6 +36,7 @@ func ProvideConsolidationService(
 }
 
 func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
+	fmt.Println("ConsolidationService.Consolidate")
 	ctx, span := s.tracer.Start(ctx, "ConsolidationService.Consolidate")
 	defer span.End()
 
@@ -52,21 +53,26 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("disabling all data keys: %w", err)
 	}
+	fmt.Println("ConsolidationService.Consolidate: disabled all data keys")
 
 	// Keep track of which namespaces we have already flushed so we get to take advantage of caching the new values
 	flushedNamespaces := make(map[string]bool)
 
 	// List all encrypted values.
-	encryptedValues, err := s.globalEncryptedValueStore.ListAll(ctx, contracts.ListOpts{}, nil)
+	encryptedValues, err := s.globalEncryptedValueStore.ListAll(ctx, contracts.ListOpts{
+		OrderBy: "namespace",
+	}, nil)
 	if err != nil {
 		return fmt.Errorf("listing all encrypted values: %w", err)
 	}
-
+	fmt.Println("ConsolidationService.Consolidate: listed all encrypted values")
+	fmt.Println("ConsolidationService.Consolidate: encrypted values", len(encryptedValues))
 	for _, ev := range encryptedValues {
 		// Flush the cache for this namespace if we haven't already
 		if !flushedNamespaces[ev.Namespace] {
 			s.encryptionManager.FlushCache(xkube.Namespace(ev.Namespace))
 			flushedNamespaces[ev.Namespace] = true
+			fmt.Println("ConsolidationService.Consolidate: flushed cache for namespace", ev.Namespace)
 		}
 
 		// Decrypt the value using its old data key. Skip the cache to avoid overloading it during consolidation.
@@ -89,9 +95,11 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 			logging.FromContext(ctx).Error("Failed to update encrypted value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			continue
 		}
+		fmt.Println("ConsolidationService.Consolidate: updated encrypted value for namespace", ev.Namespace, "name", ev.Name, "version", ev.Version)
 	}
 
 	// TODO: After all values are re-encrypted, we can safely remove the old data keys.
 
+	fmt.Println("ConsolidationService.Consolidate done")
 	return nil
 }

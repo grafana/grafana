@@ -236,9 +236,17 @@ func ProvideGlobalEncryptedValueStorage(
 }
 
 func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.ListOpts, untilTime *int64) ([]*contracts.EncryptedValue, error) {
+	if opts.OrderBy == "" {
+		opts.OrderBy = "created"
+	}
+	if opts.OrderDirection == "" {
+		opts.OrderDirection = contracts.OrderDirectionDesc
+	}
 	attrs := []attribute.KeyValue{
 		attribute.Int64("limit", opts.Limit),
 		attribute.Int64("offset", opts.Offset),
+		attribute.String("orderBy", opts.OrderBy),
+		attribute.String("orderDirection", string(opts.OrderDirection)),
 	}
 	if untilTime != nil {
 		attrs = append(attrs, attribute.Int64("untilTime", *untilTime))
@@ -247,9 +255,11 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 	defer span.End()
 
 	req := listAllEncryptedValues{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Limit:       opts.Limit,
-		Offset:      opts.Offset,
+		SQLTemplate:    sqltemplate.New(s.dialect),
+		Limit:          opts.Limit,
+		Offset:         opts.Offset,
+		OrderBy:        opts.OrderBy,
+		OrderDirection: string(opts.OrderDirection),
 	}
 	if untilTime != nil {
 		req.HasUntilTime = true

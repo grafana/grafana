@@ -37,9 +37,18 @@ type EncryptedValue struct {
 
 // ListOpts defines pagination options for listing encrypted values.
 type ListOpts struct {
-	Limit  int64
-	Offset int64
+	Limit          int64
+	Offset         int64
+	OrderBy        string
+	OrderDirection OrderDirection
 }
+
+type OrderDirection string
+
+const (
+	OrderDirectionAsc  OrderDirection = "ASC"
+	OrderDirectionDesc OrderDirection = "DESC"
+)
 
 type EncryptedValueStorage interface {
 	Create(ctx context.Context, namespace xkube.Namespace, name string, version int64, encryptedData EncryptedPayload) (*EncryptedValue, error)

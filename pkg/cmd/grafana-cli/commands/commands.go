@@ -177,6 +177,41 @@ var adminCommands = []*cli.Command{
 				Name:   "consolidate",
 				Usage:  "Re-encrypts all encrypted values with new data keys and deletes the old deactivated data keys. Returns ok unless there is an error. Safe to execute multiple times.",
 				Action: runRunnerCommand(secretsconsolidation.ConsolidateSecrets),
+				Flags: []cli.Flag{
+					// Inherited by runner; also define here so they can be passed after the subcommand
+					&cli.StringFlag{
+						Name:  "config",
+						Usage: "Path to config file",
+					},
+					&cli.StringFlag{
+						Name:  "homepath",
+						Usage: "Path to Grafana install/home path, defaults to working directory",
+					},
+					&cli.StringFlag{
+						Name:  "configOverrides",
+						Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+					},
+					&cli.BoolFlag{
+						Name:  "benchmark",
+						Usage: "Print duration and enable high CPU profile rate for profiling (use with --cpuprofile for bottleneck analysis)",
+						Value: false,
+					},
+					&cli.StringFlag{
+						Name:  "cpuprofile",
+						Usage: "Write CPU profile to this file during consolidation (recommended: use with --benchmark for high sample rate)",
+						Value: "",
+					},
+					&cli.StringFlag{
+						Name:  "memprofile",
+						Usage: "Write heap profile to this file after consolidation completes",
+						Value: "",
+					},
+					&cli.IntFlag{
+						Name:  "cpu-profile-rate",
+						Usage: "CPU profile sample rate (samples per second). Default 5000; use 10000+ for high sample rate. Only applies when --cpuprofile is set.",
+						Value: 5000,
+					},
+				},
 			},
 		},
 	},

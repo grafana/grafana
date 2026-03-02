@@ -98,10 +98,12 @@ func (r deleteEncryptedValue) Validate() error {
 
 type listAllEncryptedValues struct {
 	sqltemplate.SQLTemplate
-	Limit        int64
-	Offset       int64
-	HasUntilTime bool
-	UntilTime    int64
+	Limit          int64
+	Offset         int64
+	OrderBy        string
+	OrderDirection string
+	HasUntilTime   bool
+	UntilTime      int64
 }
 
 func (r listAllEncryptedValues) Validate() error { return nil }

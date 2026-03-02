@@ -61,10 +61,10 @@ func ProvideSecureValueService(
 
 	// SeedSecureValues can be called to populate the database for testing, e.g.:
 	//   SeedSecureValues(ctx, s, 1000, 20)
-	err := SeedSecureValues(context.Background(), s, 1000, 20)
-	if err != nil {
-		panic(err)
-	}
+	// err := SeedSecureValues(context.Background(), s, 1000, 20)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	return s
 }
