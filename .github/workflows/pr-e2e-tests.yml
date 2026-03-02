@@ -111,7 +111,9 @@ jobs:
       - uses: actions/upload-artifact@v5
         with:
           name: grafana-frontend
-          path: public/build/
+          path: |
+            public/
+            !public/**/.ts
           retention-days: 1
 
       - uses: actions/upload-artifact@v5
@@ -275,8 +277,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
-        shardTotal: [6]
+        shard: [1]
+        shardTotal: [1]
 
     steps:
       - uses: actions/checkout@v5
@@ -288,14 +290,25 @@ jobs:
         with:
           name: grafana-backend
           path: bin
+
       - uses: actions/download-artifact@v4
         with:
           name: grafana-frontend
-          path: public/build
+          path: frontend-artifact
+
+      - run: rsync -a frontend-artifact/ public/
+
       - uses: actions/download-artifact@v4
         with:
           name: grafana-test-plugins
           path: e2e-playwright/test-plugins
+
+      - run: tree > tree.txt
+      - uses: actions/upload-artifact@v5
+        with:
+          name: debug-tree
+          path: tree.txt
+          retention-days: 1
 
       # Restore execute permissions stripped by actions/upload-artifact
       - name: Fix binary permissions
@@ -304,11 +317,19 @@ jobs:
       # Start Grafana using existing scripts (handles provisioning, config, etc.)
       - name: Start Grafana
         run: |
-          ./scripts/grafana-server/start-server &
-          ./scripts/grafana-server/wait-for-grafana
+          ./scripts/grafana-server/start-server
         env:
           ARCH: linux-amd64
           PORT: 3001
+
+      # # Start Grafana using existing scripts (handles provisioning, config, etc.)
+      # - name: Start Grafana
+      #   run: |
+      #     ./scripts/grafana-server/start-server &
+      #     ./scripts/grafana-server/wait-for-grafana
+      #   env:
+      #     ARCH: linux-amd64
+      #     PORT: 3001
 
       # Install test dependencies
       - uses: actions/setup-node@v6
