@@ -5,6 +5,7 @@ import { UserStorage } from '@grafana/runtime/internal';
 
 import { logError } from '../../Analytics';
 import { isLoading as isLoadingState, isUninitialized, useAsync } from '../../hooks/useAsync';
+import { parseJsonWithSchema } from '../../utils/parseJsonWithSchema';
 
 const STORAGE_NAMESPACE = 'alerting';
 const KEY_NAME_OVERRIDES = 'triagePredefinedNameOverrides';
@@ -32,19 +33,6 @@ export interface UseTriagePredefinedOverridesResult {
 const nameOverridesSchema = z.record(z.string(), z.string());
 const dismissedIdsSchema = z.array(z.string());
 const defaultSearchIdSchema = z.string().min(1).nullable();
-
-function parseJsonWithSchema<T>(raw: string | null, schema: z.ZodType<T>, fallback: T): T {
-  if (raw == null || raw === '') {
-    return fallback;
-  }
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    const result = schema.safeParse(parsed);
-    return result.success ? result.data : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 /** Data shape returned by the predefined overrides loader. */
 export interface TriagePredefinedOverridesData {

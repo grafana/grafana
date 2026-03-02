@@ -33,7 +33,7 @@ export function getTriagePredefinedSearches(): SavedSearch[] {
   return [
     {
       id: PREDEFINED_IDS[0],
-      name: t('alerting.triage.saved-searches.predefined.folder-firing', 'Filter: Firing; Group by: Folder'),
+      name: t('alerting.triage.saved-searches.predefined.folder-firing', 'Show only firing, grouped by folder'),
       isDefault: false,
       query: buildTriageQueryStringFromParts({
         filters: [{ key: 'alertstate', operator: '=', value: 'firing' }],
@@ -43,7 +43,7 @@ export function getTriagePredefinedSearches(): SavedSearch[] {
     },
     {
       id: PREDEFINED_IDS[1],
-      name: t('alerting.triage.saved-searches.predefined.firing-only', 'Filter: Firing'),
+      name: t('alerting.triage.saved-searches.predefined.firing-only', 'Show only firing'),
       isDefault: false,
       query: buildTriageQueryStringFromParts({
         filters: [{ key: 'alertstate', operator: '=', value: 'firing' }],
@@ -53,7 +53,7 @@ export function getTriagePredefinedSearches(): SavedSearch[] {
     },
     {
       id: PREDEFINED_IDS[2],
-      name: t('alerting.triage.saved-searches.predefined.folder-only', 'Group by: Folder'),
+      name: t('alerting.triage.saved-searches.predefined.folder-only', 'Grouped by folder'),
       isDefault: false,
       query: buildTriageQueryStringFromParts({
         groupBy: ['grafana_folder'],

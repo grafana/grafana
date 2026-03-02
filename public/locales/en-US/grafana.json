@@ -3429,9 +3429,9 @@
       "rules-with-pending-instances": "Alert rules with pending instances",
       "saved-searches": {
         "predefined": {
-          "firing-only": "Filter: Firing",
-          "folder-firing": "Filter: Firing; Group by: Folder",
-          "folder-only": "Group by: Folder"
+          "firing-only": "Show only firing",
+          "folder-firing": "Show only firing, grouped by folder",
+          "folder-only": "Grouped by folder"
         }
       }
     },
