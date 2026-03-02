@@ -67,7 +67,7 @@ func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 					Route: &definitions.Route{Receiver: "grafana-default"},
 				},
 				Receivers: []*definitions.PostableApiReceiver{
-					{Receiver: config.Receiver{Name: "grafana-default"}},
+					{Receiver: definitions.Receiver{Name: "grafana-default"}},
 				},
 			},
 			ExtraConfigs: []definitions.ExtraConfiguration{

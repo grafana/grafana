@@ -166,6 +166,8 @@ type OpenFgaServerSettings struct {
 	MaxAuthorizationModelSizeInBytes int
 	// Size of the authorization model cache
 	AuthorizationModelCacheSize int
+	// Size of the typesystem cache (controls how many resolved typesystems are kept in memory)
+	TypesystemCacheSize int
 	// Offset for changelog horizon
 	ChangelogHorizonOffset int
 }
@@ -330,6 +332,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.OpenFgaServerSettings.RequestTimeout = openfgaSec.Key("request_timeout").MustDuration(0)
 	zs.OpenFgaServerSettings.MaxAuthorizationModelSizeInBytes = openfgaSec.Key("max_authorization_model_size_in_bytes").MustInt(0)
 	zs.OpenFgaServerSettings.AuthorizationModelCacheSize = openfgaSec.Key("authorization_model_cache_size").MustInt(0)
+	zs.OpenFgaServerSettings.TypesystemCacheSize = openfgaSec.Key("typesystem_cache_size").MustInt(0)
 	zs.OpenFgaServerSettings.ChangelogHorizonOffset = openfgaSec.Key("changelog_horizon_offset").MustInt(0)
 
 	cfg.ZanzanaServer = zs

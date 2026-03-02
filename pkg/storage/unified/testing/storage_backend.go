@@ -1254,16 +1254,21 @@ func WithFolder(folder string) WriteEventOption {
 
 // WithValue sets the value for the write event
 func WithValue(value string) WriteEventOption {
+	return WithValueAndTitle(value, "")
+}
+
+func WithValueAndTitle(value, title string) WriteEventOption {
 	return func(o *WriteEventOptions) {
 		u := unstructured.Unstructured{
 			Object: map[string]any{
 				"apiVersion": o.Group + "/v1",
 				"kind":       o.Resource,
 				"metadata": map[string]any{
-					"name":      "name",
-					"namespace": "ns",
+					"name":      o.Name,
+					"namespace": o.Namespace,
 				},
 				"spec": map[string]any{
+					"title": title,
 					"value": value,
 				},
 			},
@@ -1273,6 +1278,7 @@ func WithValue(value string) WriteEventOption {
 }
 
 type WriteEventOptions struct {
+	Name       string
 	Namespace  string
 	Group      string
 	Resource   string
@@ -1284,6 +1290,7 @@ type WriteEventOptions struct {
 func WriteEvent(ctx context.Context, store resource.StorageBackend, name string, action resourcepb.WatchEvent_Type, opts ...WriteEventOption) (int64, error) {
 	// Default options
 	options := WriteEventOptions{
+		Name:      name,
 		Namespace: "namespace",
 		Group:     "group",
 		Resource:  "resource",
