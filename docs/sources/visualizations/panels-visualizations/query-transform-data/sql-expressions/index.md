@@ -242,7 +242,7 @@ During conversion:
 
 ### Regular expression limitations in SQL expressions
 
-SQL expressions in Grafana use the `go-mysql-server` SQL engine. Full MySQL regular expression compatibility in that engine depends on CGo, but Grafana is built without CGo.
+SQL expressions in Grafana use the `go-mysql-server` SQL engine. Full MySQL regular expression compatibility in that engine depends on `cgo`, but Grafana is built without `cgo`.
 
 SQL expressions that use regular expression functions have limitations such as:
 
