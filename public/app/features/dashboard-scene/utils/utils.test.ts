@@ -1,11 +1,22 @@
 import { config } from '@grafana/runtime';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { Dashboard, Panel, RowPanel } from '@grafana/schema';
+
+import { DashboardScene } from '../scene/DashboardScene';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
 
 import {
   isDashboardSceneEnabled,
   isPublicDashboardsSceneEnabled,
   isValidLibraryPanelRef,
   hasLibraryPanelsInV1Dashboard,
+  getLayoutForObject,
 } from './utils';
 
 describe('utils', () => {
@@ -411,4 +422,105 @@ describe('utils', () => {
       }
     );
   });
+
+  describe('getLayoutForObject', () => {
+    it('returns null for null or undefined', () => {
+      expect(getLayoutForObject(null)).toBeNull();
+      expect(getLayoutForObject(undefined)).toBeNull();
+    });
+
+    it('returns the DefaultGridLayoutManager when given the dashboard', () => {
+      const { grid: defaultGrid } = getDefaultGrid();
+      const dashboard = getDashboardWithGrid(defaultGrid);
+
+      const layout = getLayoutForObject(dashboard);
+
+      expect(layout).toBe(defaultGrid);
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+    });
+
+    it('returns the AutoGridLayoutManager when given the dashboard', () => {
+      const { grid: autoGrid } = getAutoGrid();
+      const dashboard = getDashboardWithGrid(autoGrid);
+
+      const layout = getLayoutForObject(dashboard);
+
+      expect(layout).toBe(autoGrid);
+      expect(layout).toBeInstanceOf(AutoGridLayoutManager);
+    });
+
+    it('returns the layout when given a RowItem', () => {
+      const { grid } = getDefaultGrid();
+      const row = new RowItem({ layout: grid });
+
+      const layout = getLayoutForObject(row);
+
+      expect(layout).toBe(grid);
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+    });
+
+    it('returns the layout when given a TabItem', () => {
+      const { grid } = getDefaultGrid();
+      const tab = new TabItem({ layout: grid });
+
+      const layout = getLayoutForObject(tab);
+
+      expect(layout).toBe(grid);
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+    });
+
+    it('returns itself when given a DefaultGridLayoutManager', () => {
+      const { grid: defaultGrid } = getDefaultGrid();
+      const layout = getLayoutForObject(defaultGrid);
+
+      expect(layout).toBe(defaultGrid);
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+    });
+
+    it('returns itself when given an AutoGridLayoutManager', () => {
+      const { grid: autoGrid } = getAutoGrid();
+      const layout = getLayoutForObject(autoGrid);
+
+      expect(layout).toBe(autoGrid);
+      expect(layout).toBeInstanceOf(AutoGridLayoutManager);
+    });
+
+    it('returns the grid manager when given a panel in default grid (via dashboard body)', () => {
+      const { grid: defaultGrid, panel } = getDefaultGrid();
+
+      const layout = getLayoutForObject(panel);
+
+      expect(layout).toBe(defaultGrid);
+    });
+
+    it('returns the grid manager when given a panel in auto grid', () => {
+      const { grid: autoGrid, panel } = getAutoGrid();
+
+      const layout = getLayoutForObject(panel);
+
+      expect(layout).toBe(autoGrid);
+      expect(layout).toBeInstanceOf(AutoGridLayoutManager);
+    });
+  });
 });
+
+const getDashboardWithGrid = (grid: DefaultGridLayoutManager | AutoGridLayoutManager) =>
+  new DashboardScene({ title: 'Test', uid: 'dash-1', body: grid });
+
+const getDefaultGrid = () => {
+  const panel = new VizPanel({ title: 'P', key: 'p1', pluginId: 'table' });
+  const gridItem = new DashboardGridItem({ key: 'gi1', body: panel });
+  const grid = new SceneGridLayout({ children: [gridItem] });
+  return { grid: new DefaultGridLayoutManager({ grid }), panel };
+};
+
+const getAutoGrid = () => {
+  const panel = new VizPanel({ title: 'P', key: 'p1', pluginId: 'table' });
+  const autoGridItem = new AutoGridItem({ key: 'agi1', body: panel });
+  return {
+    grid: new AutoGridLayoutManager({
+      layout: new AutoGridLayout({ children: [autoGridItem] }),
+    }),
+    panel,
+  };
+};

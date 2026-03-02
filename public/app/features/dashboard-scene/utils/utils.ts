@@ -451,7 +451,7 @@ export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrc
 }
 
 export const getLayoutForObject = (
-  object: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene | null
+  object?: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene | null
 ) => {
   if (object) {
     const gridManagerForObject = sceneGraph.findObject(
