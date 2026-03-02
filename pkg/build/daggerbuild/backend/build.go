@@ -3,7 +3,9 @@ package backend
 import (
 	"fmt"
 	"log"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"dagger.io/dagger"
@@ -67,6 +69,30 @@ func Build(
 
 	if prog := opts.GoCacheProg; prog != "" {
 		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
+	}
+
+	// go-trace-toolexec-exporter only has binaries for linux-amd64 and linux-arm64
+	if distro == DistLinuxAMD64 || distro == DistLinuxARM64 {
+		hostPath := ResolveToolexecBinary()
+		logFile := os.Getenv("GOCACHE_TOOLEXEC_TRACES_LOG_FILE")
+
+		if hostPath != "" && logFile != "" {
+			hostDir := filepath.Dir(hostPath)
+			hostFile := filepath.Base(hostPath)
+			containerPath := filepath.Join("/bin", hostFile)
+
+			builder = builder.
+				WithMountedFile(
+					containerPath,
+					d.Host().Directory(hostDir).File(hostFile),
+				).
+				WithEnvVariable("GO_TRACE_TOOLEXEC_PATH", containerPath)
+
+			logDir := filepath.Dir(logFile)
+			builder = builder.
+				WithMountedDirectory(logDir, d.Host().Directory(logDir)).
+				WithEnvVariable("GOCACHE_TOOLEXEC_TRACES_LOG_FILE", logFile)
+		}
 	}
 
 	commitInfo := GetVCSInfo(src, opts.Version, opts.Enterprise)
