@@ -3,6 +3,7 @@ import z from 'zod';
 
 import { UserStorage } from '@grafana/runtime/internal';
 
+import { logError } from '../../Analytics';
 import { isLoading as isLoadingState, isUninitialized, useAsync } from '../../hooks/useAsync';
 
 const STORAGE_NAMESPACE = 'alerting';
@@ -104,8 +105,10 @@ export function useTriagePredefinedOverrides(): UseTriagePredefinedOverridesResu
           setDismissedIdsState(data.dismissedIds);
           setDefaultSearchIdState(data.defaultSearchId);
         }
-      } catch {
-        // Ignore; useAsync tracks error state; we keep initial empty values
+      } catch (error) {
+        logError(error instanceof Error ? error : new Error('Failed to load predefined overrides from storage'), {
+          context: 'useTriagePredefinedOverrides.loadOverrides',
+        });
       }
     };
 

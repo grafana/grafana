@@ -3430,9 +3430,8 @@
       "saved-searches": {
         "predefined": {
           "firing-only": "Filter: Firing",
-          "folder-evalgroup": "Group by: Folder and Evaluation group",
-          "folder-evalgroup-firing": "Filter: Firing; Group by: Folder and Evaluation group",
-          "folder-firing": "Group by: Folder"
+          "folder-firing": "Filter: Firing; Group by: Folder",
+          "folder-only": "Group by: Folder"
         }
       }
     },

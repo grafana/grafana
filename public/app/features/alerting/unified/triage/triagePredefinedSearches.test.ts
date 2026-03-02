@@ -1,6 +1,5 @@
 import { extractFilterObjects } from './scene/triageSavedSearchUtils';
 import {
-  TRIAGE_PREDEFINED_SEARCH_IDS,
   TRIAGE_PREDEFINED_SEARCH_ID_PREFIX,
   getTriagePredefinedSearches,
   isTriagePredefinedSearchId,
@@ -27,10 +26,10 @@ describe('triagePredefinedSearches', () => {
       }
     });
 
-    it('first search has filter firing and groupBy folder and rule_group', () => {
+    it('first search has filter firing and groupBy folder', () => {
       const first = getTriagePredefinedSearches()[0];
       const params = new URLSearchParams(first.query);
-      expect(params.getAll('var-groupBy')).toEqual(['grafana_folder', 'rule_group']);
+      expect(params.getAll('var-groupBy')).toEqual(['grafana_folder']);
       const filters = extractFilterObjects(first.query);
       expect(filters).toHaveLength(1);
       expect(filters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
@@ -45,35 +44,19 @@ describe('triagePredefinedSearches', () => {
       expect(filters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
     });
 
-    it('third search has groupBy folder and rule_group only', () => {
+    it('third search has groupBy folder only', () => {
       const third = getTriagePredefinedSearches()[2];
       const params = new URLSearchParams(third.query);
-      expect(params.getAll('var-groupBy')).toEqual(['grafana_folder', 'rule_group']);
-      expect(params.has('var-filters')).toBe(false);
-    });
-
-    it('fourth search has groupBy folder only', () => {
-      const fourth = getTriagePredefinedSearches()[3];
-      const params = new URLSearchParams(fourth.query);
       expect(params.getAll('var-groupBy')).toEqual(['grafana_folder']);
       expect(params.has('var-filters')).toBe(false);
     });
   });
 
-  describe('TRIAGE_PREDEFINED_SEARCH_IDS', () => {
-    it('contains all predefined search ids', () => {
-      expect(TRIAGE_PREDEFINED_SEARCH_IDS.size).toBe(getTriagePredefinedSearches().length);
-      for (const s of getTriagePredefinedSearches()) {
-        expect(TRIAGE_PREDEFINED_SEARCH_IDS.has(s.id)).toBe(true);
-      }
-    });
-  });
-
   describe('isTriagePredefinedSearchId', () => {
     it('returns true for predefined ids', () => {
-      expect(isTriagePredefinedSearchId(`${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}folder-evalgroup`)).toBe(true);
       expect(isTriagePredefinedSearchId(`${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}folder-firing`)).toBe(true);
       expect(isTriagePredefinedSearchId(`${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}firing-only`)).toBe(true);
+      expect(isTriagePredefinedSearchId(`${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}folder-only`)).toBe(true);
     });
 
     it('returns false for user-generated ids', () => {

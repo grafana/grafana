@@ -17,7 +17,12 @@ import { useTriagePredefinedOverrides } from '../hooks/useTriagePredefinedOverri
 import { trackTriageSavedSearchApplied, useTriageSavedSearches } from '../hooks/useTriageSavedSearches';
 import { getTriagePredefinedSearches, isTriagePredefinedSearchId } from '../triagePredefinedSearches';
 
-import { applyTriageSavedSearchState, generateTriageUrl, serializeTriageState } from './triageSavedSearchUtils';
+import {
+  applyTriageSavedSearchState,
+  generateTriageUrl,
+  mergeTriageSavedSearches,
+  serializeTriageState,
+} from './triageSavedSearchUtils';
 
 /**
  * State interface for TriageSavedSearchesControl.
@@ -126,16 +131,10 @@ function TriageSavedSearchesControlRenderer({ model }: SceneComponentProps<Triag
     [savedSearches, effectiveDefaultId]
   );
 
-  // Default search first, then predefined, then user (so default is always at top)
-  const mergedSavedSearches = useMemo(() => {
-    const merged = [...predefinedList, ...savedSearchesWithDefault];
-    const defaultIndex = merged.findIndex((s) => s.id === effectiveDefaultId);
-    if (defaultIndex <= 0) {
-      return merged;
-    }
-    const defaultItem = merged[defaultIndex];
-    return [defaultItem, ...merged.slice(0, defaultIndex), ...merged.slice(defaultIndex + 1)];
-  }, [predefinedList, savedSearchesWithDefault, effectiveDefaultId]);
+  const mergedSavedSearches = useMemo(
+    () => mergeTriageSavedSearches(predefinedList, savedSearchesWithDefault, effectiveDefaultId),
+    [predefinedList, savedSearchesWithDefault, effectiveDefaultId]
+  );
 
   const handleSave = useCallback(
     async (name: string, query: string) => {

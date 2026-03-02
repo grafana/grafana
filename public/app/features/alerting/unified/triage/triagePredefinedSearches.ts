@@ -17,14 +17,10 @@ import { defaultTimeRange } from './scene/utils';
 /** Prefix for predefined search IDs; used to identify predefined items for overrides and dismissed handling. */
 export const TRIAGE_PREDEFINED_SEARCH_ID_PREFIX = 'triage-predefined-';
 
-/** Label for evaluation group in state history / GRAFANA_ALERTS metric. */
-const EVAL_GROUP_LABEL = 'rule_group';
-
 const PREDEFINED_IDS = [
-  `${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}folder-evalgroup-firing`,
-  `${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}firing-only`,
-  `${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}folder-evalgroup`,
   `${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}folder-firing`,
+  `${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}firing-only`,
+  `${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}folder-only`,
 ] as const;
 
 /**
@@ -37,16 +33,12 @@ export function getTriagePredefinedSearches(): SavedSearch[] {
   return [
     {
       id: PREDEFINED_IDS[0],
-      name: t(
-        'alerting.triage.saved-searches.predefined.folder-evalgroup-firing',
-        'Filter: Firing; Group by: Folder and Evaluation group'
-      ),
+      name: t('alerting.triage.saved-searches.predefined.folder-firing', 'Filter: Firing; Group by: Folder'),
       isDefault: false,
       query: buildTriageQueryStringFromParts({
         filters: [{ key: 'alertstate', operator: '=', value: 'firing' }],
-        groupBy: ['grafana_folder', EVAL_GROUP_LABEL],
-        from: defaultTimeRange.from,
-        to: defaultTimeRange.to,
+        groupBy: ['grafana_folder'],
+        timeRange: defaultTimeRange,
       }),
     },
     {
@@ -56,35 +48,20 @@ export function getTriagePredefinedSearches(): SavedSearch[] {
       query: buildTriageQueryStringFromParts({
         filters: [{ key: 'alertstate', operator: '=', value: 'firing' }],
         groupBy: [],
-        from: defaultTimeRange.from,
-        to: defaultTimeRange.to,
+        timeRange: defaultTimeRange,
       }),
     },
     {
       id: PREDEFINED_IDS[2],
-      name: t('alerting.triage.saved-searches.predefined.folder-evalgroup', 'Group by: Folder and Evaluation group'),
-      isDefault: false,
-      query: buildTriageQueryStringFromParts({
-        groupBy: ['grafana_folder', EVAL_GROUP_LABEL],
-        from: defaultTimeRange.from,
-        to: defaultTimeRange.to,
-      }),
-    },
-    {
-      id: PREDEFINED_IDS[3],
-      name: t('alerting.triage.saved-searches.predefined.folder-firing', 'Group by: Folder'),
+      name: t('alerting.triage.saved-searches.predefined.folder-only', 'Group by: Folder'),
       isDefault: false,
       query: buildTriageQueryStringFromParts({
         groupBy: ['grafana_folder'],
-        from: defaultTimeRange.from,
-        to: defaultTimeRange.to,
+        timeRange: defaultTimeRange,
       }),
     },
   ];
 }
-
-/** Set of predefined search IDs (e.g. for identifying predefined items when applying overrides or dismissed state). */
-export const TRIAGE_PREDEFINED_SEARCH_IDS = new Set<string>(PREDEFINED_IDS);
 
 /**
  * Returns true if the given saved search ID is a predefined search.

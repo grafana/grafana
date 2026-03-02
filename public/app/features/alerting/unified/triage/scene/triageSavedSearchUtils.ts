@@ -10,7 +10,30 @@ import { locationService } from '@grafana/runtime';
 import { AdHocFiltersVariable, GroupByVariable, SceneObject, sceneGraph } from '@grafana/scenes';
 
 import { toFilters, toUrl } from '../../../../variables/adhoc/urlParser';
+import { SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
+
+/**
+ * Merges predefined and user saved searches, with the default search first.
+ *
+ * @param predefinedSearches - Predefined searches (with isDefault applied)
+ * @param userSavedSearches - User-created saved searches (with isDefault applied)
+ * @param defaultId - ID of the search set as default, or null
+ * @returns Merged list with default item first, then predefined, then user
+ */
+export function mergeTriageSavedSearches(
+  predefinedSearches: SavedSearch[],
+  userSavedSearches: SavedSearch[],
+  defaultId: string | null
+): SavedSearch[] {
+  const merged = [...predefinedSearches, ...userSavedSearches];
+  const defaultIndex = merged.findIndex((s) => s.id === defaultId);
+  if (defaultIndex <= 0) {
+    return merged;
+  }
+  const defaultItem = merged[defaultIndex];
+  return [defaultItem, ...merged.slice(0, defaultIndex), ...merged.slice(defaultIndex + 1)];
+}
 
 /** Filter shape compatible with AdHocVariableFilter (key, operator, value). Used for building query strings. */
 export interface TriageFilterInput {
@@ -27,8 +50,7 @@ export interface TriageFilterInput {
 export function buildTriageQueryStringFromParts(input: {
   filters?: TriageFilterInput[];
   groupBy: string[];
-  from: string;
-  to: string;
+  timeRange: RawTimeRange;
 }): string {
   const params = new URLSearchParams();
 
@@ -42,8 +64,11 @@ export function buildTriageQueryStringFromParts(input: {
     params.append(URL_PARAMS.groupBy, key);
   });
 
-  params.set(URL_PARAMS.timeFrom, input.from);
-  params.set(URL_PARAMS.timeTo, input.to);
+  const fromValue =
+    typeof input.timeRange.from === 'string' ? input.timeRange.from : input.timeRange.from.toISOString();
+  const toValue = typeof input.timeRange.to === 'string' ? input.timeRange.to : input.timeRange.to.toISOString();
+  params.set(URL_PARAMS.timeFrom, fromValue);
+  params.set(URL_PARAMS.timeTo, toValue);
 
   return params.toString();
 }
@@ -89,14 +114,10 @@ export function serializeTriageState(
   timeRange: RawTimeRange
 ): string {
   const groupByArray = Array.isArray(groupBy) ? groupBy : [groupBy].filter(Boolean);
-  const fromValue = typeof timeRange.from === 'string' ? timeRange.from : timeRange.from.toISOString();
-  const toValue = typeof timeRange.to === 'string' ? timeRange.to : timeRange.to.toISOString();
-
   return buildTriageQueryStringFromParts({
     filters: filters.map((f) => ({ key: f.key, operator: f.operator, value: f.value })),
     groupBy: groupByArray,
-    from: fromValue,
-    to: toValue,
+    timeRange,
   });
 }
 
