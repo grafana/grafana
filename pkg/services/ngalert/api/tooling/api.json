@@ -1,5 +1,5 @@
 {
- "basePath": "/api",
+ "basePath": "/api/v2/",
  "consumes": [
   "application/json"
  ],
@@ -750,39 +750,54 @@
   },
   "Config": {
    "properties": {
-    "global": {
-     "$ref": "#/definitions/GlobalConfig"
+    "api_url": {
+     "$ref": "#/definitions/URL"
     },
-    "inhibit_rules": {
-     "items": {
-      "$ref": "#/definitions/InhibitRule"
-     },
-     "type": "array"
+    "custom_fields": {
+     "additionalProperties": {},
+     "type": "object"
     },
-    "mute_time_intervals": {
-     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
-     "items": {
-      "$ref": "#/definitions/MuteTimeInterval"
-     },
-     "type": "array"
+    "description": {
+     "type": "string"
     },
-    "route": {
-     "$ref": "#/definitions/Route"
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
     },
-    "templates": {
+    "issue_type": {
+     "type": "string"
+    },
+    "labels": {
      "items": {
       "type": "string"
      },
      "type": "array"
     },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeInterval"
-     },
-     "type": "array"
+    "priority": {
+     "type": "string"
+    },
+    "project": {
+     "type": "string"
+    },
+    "reopen_duration": {
+     "$ref": "#/definitions/Duration"
+    },
+    "reopen_transition": {
+     "type": "string"
+    },
+    "resolve_transition": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "summary": {
+     "type": "string"
+    },
+    "wont_fix_resolution": {
+     "type": "string"
     }
    },
-   "title": "Config is the top-level configuration for Alertmanager's config files.",
+   "title": "Config configures notifications via JIRA.",
    "type": "object"
   },
   "ContactPointExport": {
@@ -2024,7 +2039,7 @@
      "$ref": "#/definitions/Secret"
     },
     "bearer_token_file": {
-     "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
+     "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.now",
      "type": "string"
     },
     "enable_http2": {
@@ -2147,6 +2162,52 @@
      "$ref": "#/definitions/Matchers"
     }
    },
+   "type": "object"
+  },
+  "InhibitionRule": {
+   "description": "It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.",
+   "properties": {
+    "equal": {
+     "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "name": {
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "source_match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "source_match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "source_matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "target_match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "target_match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "target_matchers": {
+     "$ref": "#/definitions/Matchers"
+    }
+   },
+   "title": "InhibitionRule is the domain model for inhibition rules with metadata.",
    "type": "object"
   },
   "InspectType": {
@@ -2350,6 +2411,19 @@
      "type": "string"
     }
    },
+   "type": "object"
+  },
+  "ManagedInhibitionRules": {
+   "additionalProperties": {
+    "$ref": "#/definitions/InhibitionRule"
+   },
+   "type": "object"
+  },
+  "ManagedRoutes": {
+   "additionalProperties": {
+    "$ref": "#/definitions/Route"
+   },
+   "description": "ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate\nGroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to\ndefinitions.Route explicit.",
    "type": "object"
   },
   "MatchRegexps": {
@@ -2578,28 +2652,6 @@
     "TLSConfig": {
      "$ref": "#/definitions/TLSConfig"
     },
-    "audience": {
-     "description": "Audience optionally specifies the intended audience of the\nrequest.  If empty, the value of TokenURL is used as the\nintended audience. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
-     "type": "string"
-    },
-    "claims": {
-     "additionalProperties": {},
-     "description": "Claims is a map of claims to be added to the JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
-     "type": "object"
-    },
-    "client_certificate_key": {
-     "$ref": "#/definitions/Secret"
-    },
-    "client_certificate_key_file": {
-     "type": "string"
-    },
-    "client_certificate_key_id": {
-     "type": "string"
-    },
-    "client_certificate_key_ref": {
-     "description": "ClientCertificateKeyRef is the name of the secret within the secret manager to use as the client\nsecret.",
-     "type": "string"
-    },
     "client_id": {
      "type": "string"
     },
@@ -2618,14 +2670,6 @@
       "type": "string"
      },
      "type": "object"
-    },
-    "grant_type": {
-     "description": "GrantType is the OAuth2 grant type to use. It can be one of\n\"client_credentials\" or \"urn:ietf:params:oauth:grant-type:jwt-bearer\" (RFC 7523).\nDefault value is \"client_credentials\"",
-     "type": "string"
-    },
-    "iss": {
-     "description": "Iss is the OAuth client identifier used when communicating with\nthe configured OAuth provider. Default value is client_id. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
-     "type": "string"
     },
     "no_proxy": {
      "description": "NoProxy contains addresses that should not use a proxy.",
@@ -2646,10 +2690,6 @@
       "type": "string"
      },
      "type": "array"
-    },
-    "signature_algorithm": {
-     "description": "SignatureAlgorithm is the RSA algorithm used to sign JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".\nDefault value is RS256 and valid values RS256, RS384, RS512",
-     "type": "string"
     },
     "token_url": {
      "type": "string"
@@ -2849,6 +2889,16 @@
   "PermissionDenied": {
    "type": "object"
   },
+  "PostSilencesOKBody": {
+   "description": "PostSilencesOKBody post silences o k body",
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "PostableApiAlertingConfig": {
    "description": "nolint:revive",
    "properties": {
@@ -2898,13 +2948,13 @@
    "properties": {
     "discord_configs": {
      "items": {
-      "$ref": "#/definitions/DiscordConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "email_configs": {
      "items": {
-      "$ref": "#/definitions/EmailConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
@@ -2916,19 +2966,19 @@
     },
     "jira_configs": {
      "items": {
-      "$ref": "#/definitions/JiraConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "msteams_configs": {
      "items": {
-      "$ref": "#/definitions/MSTeamsConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "msteamsv2_configs": {
      "items": {
-      "$ref": "#/definitions/MSTeamsV2Config"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
@@ -2938,61 +2988,61 @@
     },
     "opsgenie_configs": {
      "items": {
-      "$ref": "#/definitions/OpsGenieConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "pagerduty_configs": {
      "items": {
-      "$ref": "#/definitions/PagerdutyConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "pushover_configs": {
      "items": {
-      "$ref": "#/definitions/PushoverConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "slack_configs": {
      "items": {
-      "$ref": "#/definitions/SlackConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "sns_configs": {
      "items": {
-      "$ref": "#/definitions/SNSConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "telegram_configs": {
      "items": {
-      "$ref": "#/definitions/TelegramConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "victorops_configs": {
      "items": {
-      "$ref": "#/definitions/VictorOpsConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "webex_configs": {
      "items": {
-      "$ref": "#/definitions/WebexConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "webhook_configs": {
      "items": {
-      "$ref": "#/definitions/WebhookConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     },
     "wechat_configs": {
      "items": {
-      "$ref": "#/definitions/WechatConfig"
+      "$ref": "#/definitions/Config"
      },
      "type": "array"
     }
@@ -3219,6 +3269,12 @@
       "$ref": "#/definitions/ExtraConfiguration"
      },
      "type": "array"
+    },
+    "managed_inhibition_rules": {
+     "$ref": "#/definitions/ManagedInhibitionRules"
+    },
+    "managed_routes": {
+     "$ref": "#/definitions/ManagedRoutes"
     },
     "template_files": {
      "additionalProperties": {
@@ -3498,6 +3554,7 @@
      "$ref": "#/definitions/URL"
     }
    },
+   "title": "ProxyConfig configures proxy settings.",
    "type": "object"
   },
   "ProxyHeader": {
@@ -3507,6 +3564,7 @@
     },
     "type": "array"
    },
+   "title": "ProxyHeader represents HTTP headers to send to proxies.",
    "type": "object"
   },
   "PublicError": {
@@ -3862,6 +3920,25 @@
   "RemoteWriteConfig": {
    "properties": {
     "url": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "Responder": {
+   "properties": {
+    "id": {
+     "description": "One of those 3 should be filled.",
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "type": {
+     "description": "team, user, escalation, schedule etc.",
+     "type": "string"
+    },
+    "username": {
      "type": "string"
     }
    },
@@ -4869,6 +4946,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4904,7 +4982,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "UpdateNamespaceRulesRequest": {
@@ -5704,10 +5782,15 @@
    "type": "object"
   }
  },
+ "host": "localhost",
  "info": {
-  "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Grafana Alerting API.",
-  "title": "Grafana Alerting API.",
-  "version": "1.1.0"
+  "description": "API of the Prometheus Alertmanager (https://github.com/prometheus/alertmanager)\nSchemes:\nhttp",
+  "license": {
+   "name": "Apache 2.0",
+   "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+  },
+  "title": "Alertmanager API",
+  "version": "0.0.1"
  },
  "paths": {
   "/convert/api/prom/rules": {
@@ -7495,6 +7578,204 @@
      "$ref": "#/definitions/postableAlert"
     },
     "type": "array"
+   }
+  },
+  "deleteSilenceInternalServerError": {
+   "description": "DeleteSilenceInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "deleteSilenceNotFound": {
+   "description": "DeleteSilenceNotFound A silence with the specified ID was not found"
+  },
+  "deleteSilenceOK": {
+   "description": "DeleteSilenceOK Delete silence response"
+  },
+  "getAlertGroupsBadRequest": {
+   "description": "GetAlertGroupsBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertGroupsInternalServerError": {
+   "description": "GetAlertGroupsInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertGroupsOK": {
+   "description": "GetAlertGroupsOK Get alert groups response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/alertGroups"
+   }
+  },
+  "getAlertsBadRequest": {
+   "description": "GetAlertsBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertsInternalServerError": {
+   "description": "GetAlertsInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertsOK": {
+   "description": "GetAlertsOK Get alerts response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/gettableAlerts"
+   }
+  },
+  "getReceiversOK": {
+   "description": "GetReceiversOK Get receivers response",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "items": {
+      "$ref": "#/definitions/receiver"
+     },
+     "type": "array"
+    }
+   }
+  },
+  "getSilenceInternalServerError": {
+   "description": "GetSilenceInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getSilenceNotFound": {
+   "description": "GetSilenceNotFound A silence with the specified ID was not found"
+  },
+  "getSilenceOK": {
+   "description": "GetSilenceOK Get silence response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/gettableSilence"
+   }
+  },
+  "getSilencesBadRequest": {
+   "description": "GetSilencesBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getSilencesInternalServerError": {
+   "description": "GetSilencesInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getSilencesOK": {
+   "description": "GetSilencesOK Get silences response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/gettableSilences"
+   }
+  },
+  "getStatusOK": {
+   "description": "GetStatusOK Get status response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/alertmanagerStatus"
+   }
+  },
+  "postAlertsBadRequest": {
+   "description": "PostAlertsBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postAlertsInternalServerError": {
+   "description": "PostAlertsInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postAlertsOK": {
+   "description": "PostAlertsOK Create alerts response"
+  },
+  "postSilencesBadRequest": {
+   "description": "PostSilencesBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postSilencesNotFound": {
+   "description": "PostSilencesNotFound A silence with the specified ID was not found",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postSilencesOK": {
+   "description": "PostSilencesOK Create / update silence response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/PostSilencesOKBody"
    }
   },
   "receiversResponse": {
