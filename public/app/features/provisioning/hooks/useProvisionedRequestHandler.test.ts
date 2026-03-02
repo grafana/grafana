@@ -11,15 +11,6 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: jest.fn(),
 }));
 
-jest.mock('@grafana/i18n', () => ({
-  t: jest.fn((key: string, defaultValue: string, interpolation?: Record<string, string>) => {
-    if (interpolation) {
-      return Object.entries(interpolation).reduce((str, [k, v]) => str.replace(`{{${k}}}`, v ?? ''), defaultValue);
-    }
-    return defaultValue;
-  }),
-}));
-
 const mockGetAppEvents = jest.mocked(getAppEvents);
 
 const mockDispatch = jest.fn();
