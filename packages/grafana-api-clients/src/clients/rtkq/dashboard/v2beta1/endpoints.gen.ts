@@ -833,117 +833,6 @@ export type DashboardTabRepeatOptions = {
   mode: string;
   value: string;
 };
-export type DashboardTabsLayoutTabSpec = {
-  conditionalRendering?: DashboardConditionalRenderingGroupKind;
-  layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
-  repeat?: DashboardTabRepeatOptions;
-  title?: string;
-};
-export type DashboardTabsLayoutTabKind = {
-  kind: string;
-  spec: DashboardTabsLayoutTabSpec;
-};
-export type DashboardTabsLayoutSpec = {
-  tabs: DashboardTabsLayoutTabKind[];
-};
-export type DashboardTabsLayoutKind = {
-  kind: string;
-  spec: DashboardTabsLayoutSpec;
-};
-export type DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind = {
-  AutoGridLayoutKind?: DashboardAutoGridLayoutKind;
-  GridLayoutKind?: DashboardGridLayoutKind;
-  RowsLayoutKind?: DashboardRowsLayoutKind;
-  TabsLayoutKind?: DashboardTabsLayoutKind;
-};
-export type DashboardRowRepeatOptions = {
-  mode: string;
-  value: string;
-};
-export type DashboardRowsLayoutRowSpec = {
-  collapse?: boolean;
-  conditionalRendering?: DashboardConditionalRenderingGroupKind;
-  fillScreen?: boolean;
-  hideHeader?: boolean;
-  layout: DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind;
-  repeat?: DashboardRowRepeatOptions;
-  title?: string;
-};
-export type DashboardRowsLayoutRowKind = {
-  kind: string;
-  spec: DashboardRowsLayoutRowSpec;
-};
-export type DashboardRowsLayoutSpec = {
-  rows: DashboardRowsLayoutRowKind[];
-};
-export type DashboardRowsLayoutKind = {
-  kind: string;
-  spec: DashboardRowsLayoutSpec;
-};
-export type DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind = {
-  AutoGridLayoutKind?: DashboardAutoGridLayoutKind;
-  GridLayoutKind?: DashboardGridLayoutKind;
-  RowsLayoutKind?: DashboardRowsLayoutKind;
-  TabsLayoutKind?: DashboardTabsLayoutKind;
-};
-export type DashboardDatasourceControlSourceRef = {
-  /** The plugin type-id */
-  group: string;
-  type: string;
-};
-export type DashboardDashboardLink = {
-  /** If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards */
-  asDropdown: boolean;
-  /** Icon name to be displayed with the link */
-  icon: string;
-  /** If true, includes current template variables values in the link as query params */
-  includeVars: boolean;
-  /** If true, includes current time range in the link as query params */
-  keepTime: boolean;
-  /** The source that registered the link (if any) */
-  origin?: DashboardDatasourceControlSourceRef;
-  /** Placement can be used to display the link somewhere else on the dashboard other than above the visualisations. */
-  placement?: string;
-  /** List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards */
-  tags: string[];
-  /** If true, the link will be opened in a new tab */
-  targetBlank: boolean;
-  /** Title to display with the link */
-  title: string;
-  /** Tooltip to display when the user hovers their mouse over it */
-  tooltip: string;
-  /** Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource) FIXME: The type is generated as `type: DashboardLinkType | dashboardLinkType.Link;` but it should be `type: DashboardLinkType` */
-  type: string;
-  /** Link URL. Only required/valid if the type is link */
-  url?: string;
-};
-export type DashboardTimeRangeOption = {
-  display: string;
-  from: string;
-  to: string;
-};
-export type DashboardTimeSettingsSpec = {
-  /** Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d". v1: refresh */
-  autoRefresh: string;
-  /** Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals */
-  autoRefreshIntervals: string[];
-  /** The month that the fiscal year starts on. 0 = January, 11 = December */
-  fiscalYearStartMonth: number;
-  /** Start time range for dashboard. Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z". */
-  from: string;
-  /** Whether timepicker is visible or not. v1: timepicker.hidden */
-  hideTimepicker: boolean;
-  /** Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. v1: timepicker.nowDelay */
-  nowDelay?: string;
-  /** Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI */
-  quickRanges?: DashboardTimeRangeOption[];
-  /** Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc". */
-  timezone?: string;
-  /** End time range for dashboard. Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z". */
-  to: string;
-  /** Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday". */
-  weekStart?: string;
-};
 export type DashboardV2Beta1AdhocVariableKindDatasource = {
   name?: string;
 };
@@ -968,6 +857,11 @@ export type DashboardMetricFindValue = {
   group?: string;
   text: string;
   value?: DashboardStringOrFloat64;
+};
+export type DashboardDatasourceControlSourceRef = {
+  /** The plugin type-id */
+  group: string;
+  type: string;
 };
 export type DashboardAdhocVariableSpec = {
   allowCustomValue: boolean;
@@ -1166,6 +1060,114 @@ export type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOr
     SwitchVariableKind?: DashboardSwitchVariableKind;
     TextVariableKind?: DashboardTextVariableKind;
   };
+export type DashboardTabsLayoutTabSpec = {
+  conditionalRendering?: DashboardConditionalRenderingGroupKind;
+  layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
+  repeat?: DashboardTabRepeatOptions;
+  title?: string;
+  variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
+};
+export type DashboardTabsLayoutTabKind = {
+  kind: string;
+  spec: DashboardTabsLayoutTabSpec;
+};
+export type DashboardTabsLayoutSpec = {
+  tabs: DashboardTabsLayoutTabKind[];
+};
+export type DashboardTabsLayoutKind = {
+  kind: string;
+  spec: DashboardTabsLayoutSpec;
+};
+export type DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind = {
+  AutoGridLayoutKind?: DashboardAutoGridLayoutKind;
+  GridLayoutKind?: DashboardGridLayoutKind;
+  RowsLayoutKind?: DashboardRowsLayoutKind;
+  TabsLayoutKind?: DashboardTabsLayoutKind;
+};
+export type DashboardRowRepeatOptions = {
+  mode: string;
+  value: string;
+};
+export type DashboardRowsLayoutRowSpec = {
+  collapse?: boolean;
+  conditionalRendering?: DashboardConditionalRenderingGroupKind;
+  fillScreen?: boolean;
+  hideHeader?: boolean;
+  layout: DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind;
+  repeat?: DashboardRowRepeatOptions;
+  title?: string;
+  variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
+};
+export type DashboardRowsLayoutRowKind = {
+  kind: string;
+  spec: DashboardRowsLayoutRowSpec;
+};
+export type DashboardRowsLayoutSpec = {
+  rows: DashboardRowsLayoutRowKind[];
+};
+export type DashboardRowsLayoutKind = {
+  kind: string;
+  spec: DashboardRowsLayoutSpec;
+};
+export type DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind = {
+  AutoGridLayoutKind?: DashboardAutoGridLayoutKind;
+  GridLayoutKind?: DashboardGridLayoutKind;
+  RowsLayoutKind?: DashboardRowsLayoutKind;
+  TabsLayoutKind?: DashboardTabsLayoutKind;
+};
+export type DashboardDashboardLink = {
+  /** If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards */
+  asDropdown: boolean;
+  /** Icon name to be displayed with the link */
+  icon: string;
+  /** If true, includes current template variables values in the link as query params */
+  includeVars: boolean;
+  /** If true, includes current time range in the link as query params */
+  keepTime: boolean;
+  /** The source that registered the link (if any) */
+  origin?: DashboardDatasourceControlSourceRef;
+  /** Placement can be used to display the link somewhere else on the dashboard other than above the visualisations. */
+  placement?: string;
+  /** List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards */
+  tags: string[];
+  /** If true, the link will be opened in a new tab */
+  targetBlank: boolean;
+  /** Title to display with the link */
+  title: string;
+  /** Tooltip to display when the user hovers their mouse over it */
+  tooltip: string;
+  /** Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource) FIXME: The type is generated as `type: DashboardLinkType | dashboardLinkType.Link;` but it should be `type: DashboardLinkType` */
+  type: string;
+  /** Link URL. Only required/valid if the type is link */
+  url?: string;
+};
+export type DashboardTimeRangeOption = {
+  display: string;
+  from: string;
+  to: string;
+};
+export type DashboardTimeSettingsSpec = {
+  /** Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d". v1: refresh */
+  autoRefresh: string;
+  /** Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals */
+  autoRefreshIntervals: string[];
+  /** The month that the fiscal year starts on. 0 = January, 11 = December */
+  fiscalYearStartMonth: number;
+  /** Start time range for dashboard. Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z". */
+  from: string;
+  /** Whether timepicker is visible or not. v1: timepicker.hidden */
+  hideTimepicker: boolean;
+  /** Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. v1: timepicker.nowDelay */
+  nowDelay?: string;
+  /** Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI */
+  quickRanges?: DashboardTimeRangeOption[];
+  /** Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc". */
+  timezone?: string;
+  /** End time range for dashboard. Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z". */
+  to: string;
+  /** Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday". */
+  weekStart?: string;
+};
 export type DashboardSpec = {
   annotations: DashboardAnnotationQueryKind[];
   /** Configuration of dashboard cursor sync behavior. "Off" for no shared crosshair or tooltip (default). "Crosshair" for shared crosshair. "Tooltip" for shared crosshair AND shared tooltip. */

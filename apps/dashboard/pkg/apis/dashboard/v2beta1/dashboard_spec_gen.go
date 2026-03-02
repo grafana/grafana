@@ -1237,6 +1237,7 @@ type DashboardRowsLayoutRowSpec struct {
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
+	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1574,6 +1575,7 @@ type DashboardTabsLayoutTabSpec struct {
 	Layout               DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
+	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
@@ -1604,172 +1606,6 @@ func NewDashboardTabRepeatOptions() *DashboardTabRepeatOptions {
 // OpenAPIModelName returns the OpenAPI model name for DashboardTabRepeatOptions.
 func (DashboardTabRepeatOptions) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTabRepeatOptions"
-}
-
-// Links with references to other dashboards or external resources
-// +k8s:openapi-gen=true
-type DashboardDashboardLink struct {
-	// Title to display with the link
-	Title string `json:"title"`
-	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-	// FIXME: The type is generated as `type: DashboardLinkType | dashboardLinkType.Link;` but it should be `type: DashboardLinkType`
-	Type DashboardDashboardLinkType `json:"type"`
-	// Icon name to be displayed with the link
-	Icon string `json:"icon"`
-	// Tooltip to display when the user hovers their mouse over it
-	Tooltip string `json:"tooltip"`
-	// Link URL. Only required/valid if the type is link
-	Url *string `json:"url,omitempty"`
-	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
-	Tags []string `json:"tags"`
-	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
-	AsDropdown bool `json:"asDropdown"`
-	// If true, the link will be opened in a new tab
-	TargetBlank bool `json:"targetBlank"`
-	// If true, includes current template variables values in the link as query params
-	IncludeVars bool `json:"includeVars"`
-	// If true, includes current time range in the link as query params
-	KeepTime bool `json:"keepTime"`
-	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
-	Placement *string `json:"placement,omitempty"`
-	// The source that registered the link (if any)
-	Origin *DashboardControlSourceRef `json:"origin,omitempty"`
-}
-
-// NewDashboardDashboardLink creates a new DashboardDashboardLink object.
-func NewDashboardDashboardLink() *DashboardDashboardLink {
-	return &DashboardDashboardLink{
-		Tags:        []string{},
-		AsDropdown:  false,
-		TargetBlank: false,
-		IncludeVars: false,
-		KeepTime:    false,
-		Placement:   (func(input string) *string { return &input })(DashboardDashboardLinkPlacement),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardLink.
-func (DashboardDashboardLink) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardLink"
-}
-
-// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-// +k8s:openapi-gen=true
-type DashboardDashboardLinkType string
-
-const (
-	DashboardDashboardLinkTypeLink       DashboardDashboardLinkType = "link"
-	DashboardDashboardLinkTypeDashboards DashboardDashboardLinkType = "dashboards"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardLinkType.
-func (DashboardDashboardLinkType) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardLinkType"
-}
-
-// Dashboard Link placement. Defines where the link should be displayed.
-// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
-// +k8s:openapi-gen=true
-const DashboardDashboardLinkPlacement = "inControlsMenu"
-
-// +k8s:openapi-gen=true
-type DashboardControlSourceRef = DashboardDatasourceControlSourceRef
-
-// NewDashboardControlSourceRef creates a new DashboardControlSourceRef object.
-func NewDashboardControlSourceRef() *DashboardControlSourceRef {
-	return NewDashboardDatasourceControlSourceRef()
-}
-
-// Source information for controls (e.g. variables or links)
-// +k8s:openapi-gen=true
-type DashboardDatasourceControlSourceRef struct {
-	Type string `json:"type"`
-	// The plugin type-id
-	Group string `json:"group"`
-}
-
-// NewDashboardDatasourceControlSourceRef creates a new DashboardDatasourceControlSourceRef object.
-func NewDashboardDatasourceControlSourceRef() *DashboardDatasourceControlSourceRef {
-	return &DashboardDatasourceControlSourceRef{
-		Type: "datasource",
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardDatasourceControlSourceRef.
-func (DashboardDatasourceControlSourceRef) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
-}
-
-// Time configuration
-// It defines the default time config for the time picker, the refresh picker for the specific dashboard.
-// +k8s:openapi-gen=true
-type DashboardTimeSettingsSpec struct {
-	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
-	Timezone *string `json:"timezone,omitempty"`
-	// Start time range for dashboard.
-	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
-	From string `json:"from"`
-	// End time range for dashboard.
-	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
-	To string `json:"to"`
-	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	// v1: refresh
-	AutoRefresh string `json:"autoRefresh"`
-	// Interval options available in the refresh picker dropdown.
-	// v1: timepicker.refresh_intervals
-	AutoRefreshIntervals []string `json:"autoRefreshIntervals"`
-	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-	// v1: timepicker.quick_ranges , not exposed in the UI
-	QuickRanges []DashboardTimeRangeOption `json:"quickRanges,omitempty"`
-	// Whether timepicker is visible or not.
-	// v1: timepicker.hidden
-	HideTimepicker bool `json:"hideTimepicker"`
-	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
-	WeekStart *DashboardTimeSettingsSpecWeekStart `json:"weekStart,omitempty"`
-	// The month that the fiscal year starts on. 0 = January, 11 = December
-	FiscalYearStartMonth int64 `json:"fiscalYearStartMonth"`
-	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
-	// v1: timepicker.nowDelay
-	NowDelay *string `json:"nowDelay,omitempty"`
-}
-
-// NewDashboardTimeSettingsSpec creates a new DashboardTimeSettingsSpec object.
-func NewDashboardTimeSettingsSpec() *DashboardTimeSettingsSpec {
-	return &DashboardTimeSettingsSpec{
-		Timezone:             (func(input string) *string { return &input })("browser"),
-		From:                 "now-6h",
-		To:                   "now",
-		AutoRefresh:          "",
-		AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
-		HideTimepicker:       false,
-		FiscalYearStartMonth: 0,
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardTimeSettingsSpec.
-func (DashboardTimeSettingsSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeSettingsSpec"
-}
-
-// +k8s:openapi-gen=true
-type DashboardTimeRangeOption struct {
-	Display string `json:"display"`
-	From    string `json:"from"`
-	To      string `json:"to"`
-}
-
-// NewDashboardTimeRangeOption creates a new DashboardTimeRangeOption object.
-func NewDashboardTimeRangeOption() *DashboardTimeRangeOption {
-	return &DashboardTimeRangeOption{
-		Display: "Last 6 hours",
-		From:    "now-6h",
-		To:      "now",
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardTimeRangeOption.
-func (DashboardTimeRangeOption) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeRangeOption"
 }
 
 // +k8s:openapi-gen=true
@@ -1962,6 +1798,34 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardVariableSort.
 func (DashboardVariableSort) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardVariableSort"
+}
+
+// +k8s:openapi-gen=true
+type DashboardControlSourceRef = DashboardDatasourceControlSourceRef
+
+// NewDashboardControlSourceRef creates a new DashboardControlSourceRef object.
+func NewDashboardControlSourceRef() *DashboardControlSourceRef {
+	return NewDashboardDatasourceControlSourceRef()
+}
+
+// Source information for controls (e.g. variables or links)
+// +k8s:openapi-gen=true
+type DashboardDatasourceControlSourceRef struct {
+	Type string `json:"type"`
+	// The plugin type-id
+	Group string `json:"group"`
+}
+
+// NewDashboardDatasourceControlSourceRef creates a new DashboardDatasourceControlSourceRef object.
+func NewDashboardDatasourceControlSourceRef() *DashboardDatasourceControlSourceRef {
+	return &DashboardDatasourceControlSourceRef{
+		Type: "datasource",
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDatasourceControlSourceRef.
+func (DashboardDatasourceControlSourceRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
 }
 
 // Text variable kind
@@ -2485,6 +2349,144 @@ func (DashboardSwitchVariableSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardSwitchVariableSpec"
 }
 
+// Links with references to other dashboards or external resources
+// +k8s:openapi-gen=true
+type DashboardDashboardLink struct {
+	// Title to display with the link
+	Title string `json:"title"`
+	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+	// FIXME: The type is generated as `type: DashboardLinkType | dashboardLinkType.Link;` but it should be `type: DashboardLinkType`
+	Type DashboardDashboardLinkType `json:"type"`
+	// Icon name to be displayed with the link
+	Icon string `json:"icon"`
+	// Tooltip to display when the user hovers their mouse over it
+	Tooltip string `json:"tooltip"`
+	// Link URL. Only required/valid if the type is link
+	Url *string `json:"url,omitempty"`
+	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
+	Tags []string `json:"tags"`
+	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+	AsDropdown bool `json:"asDropdown"`
+	// If true, the link will be opened in a new tab
+	TargetBlank bool `json:"targetBlank"`
+	// If true, includes current template variables values in the link as query params
+	IncludeVars bool `json:"includeVars"`
+	// If true, includes current time range in the link as query params
+	KeepTime bool `json:"keepTime"`
+	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
+	Placement *string `json:"placement,omitempty"`
+	// The source that registered the link (if any)
+	Origin *DashboardControlSourceRef `json:"origin,omitempty"`
+}
+
+// NewDashboardDashboardLink creates a new DashboardDashboardLink object.
+func NewDashboardDashboardLink() *DashboardDashboardLink {
+	return &DashboardDashboardLink{
+		Tags:        []string{},
+		AsDropdown:  false,
+		TargetBlank: false,
+		IncludeVars: false,
+		KeepTime:    false,
+		Placement:   (func(input string) *string { return &input })(DashboardDashboardLinkPlacement),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardLink.
+func (DashboardDashboardLink) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardLink"
+}
+
+// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+// +k8s:openapi-gen=true
+type DashboardDashboardLinkType string
+
+const (
+	DashboardDashboardLinkTypeLink       DashboardDashboardLinkType = "link"
+	DashboardDashboardLinkTypeDashboards DashboardDashboardLinkType = "dashboards"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardLinkType.
+func (DashboardDashboardLinkType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardLinkType"
+}
+
+// Dashboard Link placement. Defines where the link should be displayed.
+// - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
+// +k8s:openapi-gen=true
+const DashboardDashboardLinkPlacement = "inControlsMenu"
+
+// Time configuration
+// It defines the default time config for the time picker, the refresh picker for the specific dashboard.
+// +k8s:openapi-gen=true
+type DashboardTimeSettingsSpec struct {
+	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
+	Timezone *string `json:"timezone,omitempty"`
+	// Start time range for dashboard.
+	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
+	From string `json:"from"`
+	// End time range for dashboard.
+	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
+	To string `json:"to"`
+	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
+	// v1: refresh
+	AutoRefresh string `json:"autoRefresh"`
+	// Interval options available in the refresh picker dropdown.
+	// v1: timepicker.refresh_intervals
+	AutoRefreshIntervals []string `json:"autoRefreshIntervals"`
+	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+	// v1: timepicker.quick_ranges , not exposed in the UI
+	QuickRanges []DashboardTimeRangeOption `json:"quickRanges,omitempty"`
+	// Whether timepicker is visible or not.
+	// v1: timepicker.hidden
+	HideTimepicker bool `json:"hideTimepicker"`
+	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
+	WeekStart *DashboardTimeSettingsSpecWeekStart `json:"weekStart,omitempty"`
+	// The month that the fiscal year starts on. 0 = January, 11 = December
+	FiscalYearStartMonth int64 `json:"fiscalYearStartMonth"`
+	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
+	// v1: timepicker.nowDelay
+	NowDelay *string `json:"nowDelay,omitempty"`
+}
+
+// NewDashboardTimeSettingsSpec creates a new DashboardTimeSettingsSpec object.
+func NewDashboardTimeSettingsSpec() *DashboardTimeSettingsSpec {
+	return &DashboardTimeSettingsSpec{
+		Timezone:             (func(input string) *string { return &input })("browser"),
+		From:                 "now-6h",
+		To:                   "now",
+		AutoRefresh:          "",
+		AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
+		HideTimepicker:       false,
+		FiscalYearStartMonth: 0,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTimeSettingsSpec.
+func (DashboardTimeSettingsSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeSettingsSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardTimeRangeOption struct {
+	Display string `json:"display"`
+	From    string `json:"from"`
+	To      string `json:"to"`
+}
+
+// NewDashboardTimeRangeOption creates a new DashboardTimeRangeOption object.
+func NewDashboardTimeRangeOption() *DashboardTimeRangeOption {
+	return &DashboardTimeRangeOption{
+		Display: "Last 6 hours",
+		From:    "now-6h",
+		To:      "now",
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTimeRangeOption.
+func (DashboardTimeRangeOption) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeRangeOption"
+}
+
 // +k8s:openapi-gen=true
 type DashboardSpec struct {
 	Annotations []DashboardAnnotationQueryKind `json:"annotations"`
@@ -2768,20 +2770,6 @@ func (DashboardAutoGridLayoutSpecRowHeightMode) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type DashboardTimeSettingsSpecWeekStart string
-
-const (
-	DashboardTimeSettingsSpecWeekStartSaturday DashboardTimeSettingsSpecWeekStart = "saturday"
-	DashboardTimeSettingsSpecWeekStartMonday   DashboardTimeSettingsSpecWeekStart = "monday"
-	DashboardTimeSettingsSpecWeekStartSunday   DashboardTimeSettingsSpecWeekStart = "sunday"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardTimeSettingsSpecWeekStart.
-func (DashboardTimeSettingsSpecWeekStart) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeSettingsSpecWeekStart"
-}
-
-// +k8s:openapi-gen=true
 type DashboardQueryVariableSpecStaticOptionsOrder string
 
 const (
@@ -2806,6 +2794,20 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardCustomVariableSpecValuesFormat.
 func (DashboardCustomVariableSpecValuesFormat) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardCustomVariableSpecValuesFormat"
+}
+
+// +k8s:openapi-gen=true
+type DashboardTimeSettingsSpecWeekStart string
+
+const (
+	DashboardTimeSettingsSpecWeekStartSaturday DashboardTimeSettingsSpecWeekStart = "saturday"
+	DashboardTimeSettingsSpecWeekStartMonday   DashboardTimeSettingsSpecWeekStart = "monday"
+	DashboardTimeSettingsSpecWeekStartSunday   DashboardTimeSettingsSpecWeekStart = "sunday"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTimeSettingsSpecWeekStart.
+func (DashboardTimeSettingsSpecWeekStart) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeSettingsSpecWeekStart"
 }
 
 // +k8s:openapi-gen=true
