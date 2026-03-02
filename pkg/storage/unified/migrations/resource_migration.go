@@ -109,13 +109,13 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		}
 	}()
 
-	for _, org := range orgs {
-		info, err := types.ParseNamespace(types.OrgNamespaceFormatter(org.ID))
-		if err != nil {
-			r.log.Error("Failed to parse organization namespace", "org_id", org.ID, "error", err)
-			return fmt.Errorf("failed to parse namespace for org %d: %w", org.ID, err)
+	if err := r.migrateAllOrgs(ctx, sess, orgs, opts); err != nil {
+		if opts.DriverName != migrator.SQLite {
+			return err
 		}
-		if err = r.MigrateOrg(ctx, sess, info, opts); err != nil {
+		r.log.Warn("SQLite migration failed, retrying with parquet buffer", "error", err)
+		ctx = resource.ContextWithParquetBuffer(ctx)
+		if err := r.migrateAllOrgs(ctx, sess, orgs, opts); err != nil {
 			return err
 		}
 	}
@@ -130,6 +130,20 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 
 	r.log.Info("Migration completed successfully for all organizations", "org_count", len(orgs))
 
+	return nil
+}
+
+func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session, orgs []orgInfo, opts RunOptions) error {
+	for _, org := range orgs {
+		info, err := types.ParseNamespace(types.OrgNamespaceFormatter(org.ID))
+		if err != nil {
+			r.log.Error("Failed to parse organization namespace", "org_id", org.ID, "error", err)
+			return fmt.Errorf("failed to parse namespace for org %d: %w", org.ID, err)
+		}
+		if err = r.MigrateOrg(ctx, sess, info, opts); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

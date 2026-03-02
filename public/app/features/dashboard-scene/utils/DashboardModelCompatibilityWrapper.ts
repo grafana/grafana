@@ -33,6 +33,10 @@ export class DashboardModelCompatibilityWrapper {
     );
   }
 
+  public get id(): number | null {
+    return this._scene.state.id ?? null;
+  }
+
   public get uid() {
     return this._scene.state.uid ?? null;
   }

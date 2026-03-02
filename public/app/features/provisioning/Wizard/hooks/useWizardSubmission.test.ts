@@ -1,10 +1,14 @@
 import { act, renderHook } from '@testing-library/react';
 import { UseFormReturn } from 'react-hook-form';
 
+import { extractFormErrors, getFormErrors } from '../../utils/getFormErrors';
 import { Step } from '../Stepper';
 import { WizardFormData, WizardStep } from '../types';
 
 import { useWizardSubmission, UseWizardSubmissionParams } from './useWizardSubmission';
+
+const mockGetFormErrors = jest.mocked(getFormErrors);
+const mockExtractFormErrors = jest.mocked(extractFormErrors);
 
 jest.mock('@grafana/i18n', () => ({
   t: jest.fn((key: string, defaultValue: string) => defaultValue),
@@ -20,6 +24,7 @@ jest.mock('../../utils/data', () => ({
 
 jest.mock('../../utils/getFormErrors', () => ({
   getFormErrors: jest.fn(() => [['repository.url', { message: 'Invalid URL' }]]),
+  extractFormErrors: jest.fn(() => []),
 }));
 
 describe('useWizardSubmission', () => {
@@ -284,6 +289,47 @@ describe('useWizardSubmission', () => {
         expect(mockSetStepStatusInfo).toHaveBeenCalledWith({
           status: 'error',
           error: 'Repository connection failed',
+        });
+      });
+
+      it('should show error details when errors do not map to form fields', async () => {
+        mockGetFormErrors.mockReturnValueOnce([]);
+        mockExtractFormErrors.mockReturnValueOnce([
+          {
+            type: 'FieldValueForbidden',
+            field: 'spec',
+            detail: 'Maximum number of 1 repositories reached',
+          },
+        ]);
+
+        mockSubmitData.mockRejectedValue({
+          data: {
+            kind: 'TestResults',
+            apiVersion: 'provisioning.grafana.app/v0alpha1',
+            code: 422,
+            success: false,
+            errors: [
+              {
+                type: 'FieldValueForbidden',
+                field: 'spec',
+                detail: 'Maximum number of 1 repositories reached',
+              },
+            ],
+          },
+        });
+
+        const { result } = renderHook(() => useWizardSubmission(createParams()));
+
+        await act(async () => {
+          await result.current.handleSubmit();
+        });
+
+        expect(mockSetStepStatusInfo).toHaveBeenLastCalledWith({
+          status: 'error',
+          error: {
+            title: 'Repository connection failed',
+            message: ['Maximum number of 1 repositories reached'],
+          },
         });
       });
 

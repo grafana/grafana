@@ -16,6 +16,7 @@ import { QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
 const CONTROLS_ROW_HEIGHT = 'auto';
 const MIN_SIDEBAR_RATIO = 0.1;
 const MAX_SIDEBAR_RATIO = 0.5;
+const MIN_SIDEBAR_PIXELS = 220;
 const vizResizerClassName = css({ height: 2, width: '100%' });
 // Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
 const FALLBACK_SIDEBAR_RATIO = 0.25;
@@ -282,9 +283,11 @@ export function buildVizAndDataPaneGrid({
     }
   }
 
-  // Convert sidebar ratio to fractional units (ratio is clamped to [0.1, 0.5] so 0 and 1 are unreachable)
+  // Convert sidebar ratio to fractional units (ratio is clamped to [0.1, 0.5] so 0 and 1 are unreachable).
+  // minmax() enforces the pixel floor at the CSS level so window resizes can't push the sidebar
+  // below MIN_SIDEBAR_PIXELS — consistent with the same floor applied in the drag handler.
   const sidebarFr = sidebarRatio / (1 - sidebarRatio);
-  const columns = `${sidebarFr}fr 1fr`;
+  const columns = `minmax(${MIN_SIDEBAR_PIXELS}px, ${sidebarFr}fr) 1fr`;
 
   return {
     height: '100%',

@@ -29,6 +29,8 @@ type JobProgressRecorder interface {
 	StrictMaxErrors(maxErrors int)
 	SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs)
 	Complete(ctx context.Context, err error) provisioning.JobStatus
+	// ResultReasons returns the accumulated result reasons recorded during the job
+	ResultReasons() []string
 	// HasDirPathFailedCreation checks if a path has any folder creations that failed
 	HasDirPathFailedCreation(path string) bool
 	// HasDirPathFailedDeletion checks if a folderPath has any folder deletions that failed

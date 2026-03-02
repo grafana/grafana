@@ -11,6 +11,7 @@ import (
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
+	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -274,10 +275,11 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 
 func TestInitAlertBroadcast(t *testing.T) {
 	testCases := []struct {
-		name          string
-		setupPeer     func() (alertingNotify.ClusterPeer, *MockBroadcastChannel)
-		expectChannel bool
-		needsMetrics  bool
+		name            string
+		setupPeer       func() (alertingNotify.ClusterPeer, *MockBroadcastChannel)
+		expectChannel   bool
+		needsMetrics    bool
+		customQueueSize int
 	}{
 		{
 			name: "does not initialize when peer is nil",
@@ -303,13 +305,23 @@ func TestInitAlertBroadcast(t *testing.T) {
 			needsMetrics:  true,
 		},
 		{
-			name: "passes reliable delivery options",
+			name: "passes reliable delivery and queue size options",
 			setupPeer: func() (alertingNotify.ClusterPeer, *MockBroadcastChannel) {
 				ch := &MockBroadcastChannel{}
 				return &MockClusterPeer{Channel: ch}, ch
 			},
 			expectChannel: true,
 			needsMetrics:  true,
+		},
+		{
+			name: "passes custom queue size from config",
+			setupPeer: func() (alertingNotify.ClusterPeer, *MockBroadcastChannel) {
+				ch := &MockBroadcastChannel{}
+				return &MockClusterPeer{Channel: ch}, ch
+			},
+			expectChannel:   true,
+			needsMetrics:    true,
+			customQueueSize: 500,
 		},
 	}
 
@@ -321,12 +333,16 @@ func TestInitAlertBroadcast(t *testing.T) {
 				peer:   peer,
 			}
 			if tc.needsMetrics {
+				queueSize := tc.customQueueSize
+				if queueSize == 0 {
+					queueSize = 200
+				}
 				reg := prometheus.NewRegistry()
 				m := metrics.NewNGAlert(reg)
 				moa.metrics = m.GetMultiOrgAlertmanagerMetrics()
 				moa.settings = &setting.Cfg{
 					UnifiedAlerting: setting.UnifiedAlertingSettings{
-						HASingleEvaluationAlertBroadcastQueueSize: 200,
+						HASingleEvaluationAlertBroadcastQueueSize: queueSize,
 					},
 				}
 			}
@@ -342,6 +358,13 @@ func TestInitAlertBroadcast(t *testing.T) {
 
 			if mockPeer, ok := peer.(*MockClusterPeer); ok {
 				require.Len(t, mockPeer.LastOptions, 2, "expected WithReliableDelivery and WithQueueSize options")
+				resolved := alertingCluster.ResolveOptions(mockPeer.LastOptions...)
+				require.True(t, resolved.ReliableDelivery)
+				expectedQueueSize := tc.customQueueSize
+				if expectedQueueSize == 0 {
+					expectedQueueSize = 200
+				}
+				require.Equal(t, expectedQueueSize, resolved.QueueSize)
 			}
 		})
 	}

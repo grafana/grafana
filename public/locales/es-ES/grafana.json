@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Error al obtener los puntos de contacto"
     },
     "contact-points": {
-      "create": "Crear punto de contacto",
+      "create": "",
       "custom-template-value": "Valor de plantilla personalizado",
       "delete-reasons": {
         "heading": "El punto de contacto no se puede eliminar por los siguientes motivos:",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Añadir intervalo de tiempo"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Buscar por punto de contacto",
@@ -2252,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Error al obtener las plantillas de notificación"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Añadir grupo de plantillas de notificación",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Crea plantillas de notificación para personalizar tus notificaciones."
     },
     "notifications-list": {
@@ -2279,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Añade etiquetas para ayudarte a gestionar mejor tus reglas de registro.",
@@ -3350,7 +3348,7 @@
       "stop-alerting-when": "Dejar de alertar (o estado pendiente) cuando "
     },
     "time-interval": {
-      "add-time-interval": "Añadir intervalo de tiempo",
+      "add-time-interval": "",
       "save": "Guardar intervalo de tiempo",
       "saving": "Guardando intervalo de tiempo"
     },
@@ -4182,6 +4180,16 @@
       "clear": "Borrar la búsqueda y los filtros",
       "text": "No se han encontrado resultados para tu consulta"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Borrar historial",
       "error": "No se han podido cargar los dashboards vistos recientemente.",
@@ -4853,6 +4861,10 @@
       "view-json-diff": "Mostrar diferencia de JSON para ver todos los cambios"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Añadir nuevo",
     "alert": {
@@ -5054,7 +5066,7 @@
     "canvas-actions": {
       "add-panel": "Añadir panel",
       "disabled-child-contains-tabs": "No se puede cambiar a pestañas porque una fila ya contiene pestañas",
-      "disabled-nested-grouping": "La agrupación está limitada a 2 niveles",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Las pestañas no se pueden anidar dentro de otras pestañas",
       "group-into-row": "Agrupar en fila",
       "group-into-tab": "Agrupar en pestaña",
@@ -5682,10 +5694,7 @@
       "empty-state-message": "Ejecuta una consulta para visualizarla aquí o ve a todas las visualizaciones para añadir otros tipos de panel",
       "menu-open-panel-editor": "Configurar",
       "menu-use-library-panel": "Usar panel de la librería",
-      "missing-config": "Falta la configuración del panel",
-      "suggestions": {
-        "empty-state-message": "Ejecuta una consulta para comenzar a ver las visualizaciones sugeridas"
-      }
+      "missing-config": "Falta la configuración del panel"
     },
     "new-panel-title": "Nuevo panel",
     "on-create-new-row": {
@@ -6594,6 +6603,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Error al eliminar el panel de control",
       "cancel-action": "Cancelar",
@@ -6920,11 +6935,11 @@
       "static-options-legend": "Opciones estáticas"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Opciones avanzadas",
         "classic": "Clásico",
         "json": "JSON",
-        "v1-resource": "Recurso V1",
         "v2-resource": "Recurso V2",
         "yaml": "YAML"
       },
@@ -10968,7 +10983,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No se han encontrado opciones"
@@ -11924,6 +11941,10 @@
         "title": "Error",
         "try-again-button": "Intentar de nuevo"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Tipo de visualización desconocido"
     },
     "viz-type-picker": {
@@ -12367,6 +12388,11 @@
       "text-loading-teams": "Cargando equipos..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Añada una nota para describir sus cambios (opcional)",
@@ -12634,6 +12660,15 @@
       "label-read-only": "Solo lectura",
       "label-sync-interval": "Intervalo de sincronización (segundos)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "No hay resultados que coincidan con tu consulta",
       "partial-managed": "{{managedCount}}/{{resourceCount}} recursos gestionados por Git Sync.",
@@ -12767,6 +12802,14 @@
       "show-less": "mostrar menos",
       "show-more": "mostrar más",
       "truncated": "Mensaje truncado"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "repo-message": "",
+      "repo-title": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13273,6 +13316,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13300,7 +13344,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13310,9 +13355,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13356,21 +13402,20 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Seleccionar tarjeta {{id}}",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Consultas y expresiones",
       "toggle-size": "Alternar tamaño de la barra lateral",
       "transformations": "Transformaciones",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13567,6 +13612,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Incluir paneles",
       "remove-datasource-filter": "Fuente de datos: {{datasource}}",
       "sort-placeholder": "Ordenar",
