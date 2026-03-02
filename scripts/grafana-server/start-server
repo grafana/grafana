@@ -16,18 +16,11 @@ docker ps -q --filter "name=grafana-image-renderer" | xargs docker stop || true
 
 mkdir $RUNDIR
 
-echo -e "Copying grafana backend files to temp dir..."
-
-if [[ ! -f bin/"$ARCH"grafana-server ]]; then
-  echo "bin/linux-amd64/grafana-server missing, trying local grafana-server binary"
-fi
-
-echo starting server
-
 # air now deletes the binary, so we check if we need to build it before trying to start the server
 # see https://github.com/air-verse/air/issues/525
 # if this gets resolved, we could remove the go build and rely on the binary being present as before
 if [[ ! -f ./bin/"$ARCH"grafana ]]; then
+  echo "Grafana server binary not found, building it now..."
   make GO_BUILD_DEV=1 build-go
 fi
 
