@@ -39,4 +39,5 @@ export enum QueryLibraryTab {
   FAVORITES = 'favorites',
   RECENT = 'history',
   FEEDBACK = 'feedback',
+  SETTINGS = 'settings',
 }
