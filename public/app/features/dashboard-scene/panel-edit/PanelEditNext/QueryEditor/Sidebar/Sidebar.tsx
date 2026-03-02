@@ -11,8 +11,8 @@ import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorConte
 import { EMPTY_ALERT } from '../types';
 
 import { AlertsView } from './Alerts/AlertsView';
+import { SidebarFooter } from './Footer/SidebarFooter';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
-import { SidebarFooter } from './SidebarFooter';
 import { SidebarHeaderActions } from './SidebarHeaderActions';
 
 interface SidebarProps {
