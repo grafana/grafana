@@ -284,11 +284,7 @@ export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOpti
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
 
 // Type for converting a DataFrame into an array of TableRows
-export type FrameToRowsConverter = (
-  frame: DataFrame,
-  nestedFramesFieldName?: string,
-  nestedRowIndex?: number
-) => TableRow[];
+export type FrameToRowsConverter = (frame: DataFrame, nestedRowIndex?: number) => TableRow[];
 
 export interface NestedRowEntry {
   raw: TableRow[];

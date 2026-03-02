@@ -21,38 +21,38 @@ import { TableCellDisplayMode } from '../types';
 import { COLUMN, TABLE } from './constants';
 import { MeasureCellHeightEntry, TableRow } from './types';
 import {
+  applyFilter,
+  applySort,
+  buildCellHeightMeasurers,
+  buildHeaderHeightMeasurers,
+  buildInspectValue,
+  calculateFooterHeight,
+  compileFrameToRecords,
+  computeColWidths,
+  createTypographyContext,
+  displayJsonValue,
   extractPixelValue,
-  frameToRecords,
+  getAlignment,
   getAlignmentFactor,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
-  getComparator,
-  getIsNestedTable,
-  getAlignment,
-  getJustifyContent,
-  migrateTableDisplayModeToCellOptions,
   getColumnTypes,
-  computeColWidths,
-  getRowHeight,
-  buildCellHeightMeasurers,
-  buildHeaderHeightMeasurers,
-  getTextHeightEstimator,
-  createTypographyContext,
-  applySort,
-  SINGLE_LINE_ESTIMATE_THRESHOLD,
-  getTextHeightMeasurerFromUwrapCount,
+  getComparator,
   getDataLinksHeightMeasurer,
-  getPillCellHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
-  predicateByName,
+  getIsNestedTable,
+  getJustifyContent,
+  getPillCellHeightMeasurer,
+  getRowHeight,
+  getTextHeightEstimator,
+  getTextHeightMeasurerFromUwrapCount,
+  migrateTableDisplayModeToCellOptions,
   parseStyleJson,
-  calculateFooterHeight,
-  displayJsonValue,
+  predicateByName,
   prepareSparklineValue,
-  buildInspectValue,
-  applyFilter,
+  SINGLE_LINE_ESTIMATE_THRESHOLD,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -223,6 +223,7 @@ describe('TableNG utils', () => {
         ],
       });
 
+      const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
       expect(records).toHaveLength(2);
       expect(records[0]).toEqual({ __depth: 0, __index: 0, time: 1, value: 10 });
@@ -248,12 +249,13 @@ describe('TableNG utils', () => {
         ],
       });
 
-      const records = frameToRecords(parentFrame, 'nested');
+      const frameToRecords = compileFrameToRecords(parentFrame, 'nested');
+      const records = frameToRecords(parentFrame);
       expect(records).toHaveLength(4);
       expect(records[0]).toEqual({ __depth: 0, __index: 0, id: 100 });
-      expect(records[1]).toEqual({ __depth: 1, __index: 0, data: childFrame1 });
+      expect(records[1]).toEqual({ __depth: 1, __index: 0 });
       expect(records[2]).toEqual({ __depth: 0, __index: 1, id: 200 });
-      expect(records[3]).toEqual({ __depth: 1, __index: 1, data: childFrame2 });
+      expect(records[3]).toEqual({ __depth: 1, __index: 1 });
     });
 
     it('should render a nested row correctly', () => {
@@ -264,7 +266,8 @@ describe('TableNG utils', () => {
         ],
       });
 
-      const records = frameToRecords(frame, 'nested', 3);
+      const frameToRecords = compileFrameToRecords(frame);
+      const records = frameToRecords(frame, 3);
 
       expect(records).toHaveLength(2);
       expect(records[0]).toEqual({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
@@ -1245,7 +1248,9 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true } },
         },
       ];
-      rows = frameToRecords(createDataFrame({ fields }));
+      const frame = createDataFrame({ fields });
+      const frameToRecords = compileFrameToRecords(frame);
+      rows = frameToRecords(frame);
       measurers = [
         {
           measure: jest.fn(
@@ -1452,6 +1457,7 @@ describe('TableNG utils', () => {
           { name: 'value', values: [30, 20, 10] },
         ],
       });
+      const frameToRecords = compileFrameToRecords(frame);
       const sorted = applySort(frameToRecords(frame), frame.fields, [], getColumnTypes(frame.fields), false);
       expect(sorted).toMatchObject([
         { time: 1, value: 30 },
@@ -1472,6 +1478,7 @@ describe('TableNG utils', () => {
         { columnKey: 'time', direction: 'ASC' },
         { columnKey: 'value2', direction: 'DESC' },
       ];
+      const frameToRecords = compileFrameToRecords(frame);
       const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
       expect(sorted).toMatchObject([
         { time: 1, value: 10, value2: 40 },
@@ -1488,6 +1495,7 @@ describe('TableNG utils', () => {
           { name: 'value', values: [10, 20, 30] },
         ],
       });
+      const frameToRecords = compileFrameToRecords(frame);
       const rows = frameToRecords(frame);
       const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
       const sorted = applySort(rows, frame.fields, sortColumns, getColumnTypes(frame.fields), false);
@@ -1519,8 +1527,9 @@ describe('TableNG utils', () => {
           },
         ],
       });
+      const frameToRecords = compileFrameToRecords(frame, 'nested');
       const sorted = applySort(
-        frameToRecords(frame, 'nested'),
+        frameToRecords(frame),
         frame.fields,
         [
           { columnKey: 'value2', direction: 'DESC' },
@@ -1532,12 +1541,12 @@ describe('TableNG utils', () => {
 
       // the sort method won't sort the values in the nested data frame's "fields" here. useNestedRows calls applySort on the nested rows.
       expect(sorted).toMatchObject([
-        { time: 2, value: 10 },
-        { data: { fields: [{ name: 'value2', values: [40, 30] }] } },
-        { time: 1, value: 20 },
-        { data: { fields: [{ name: 'value2', values: [20, 40] }] } },
-        { time: 1, value: 30 },
-        { data: { fields: [{ name: 'value2', values: [10, 30] }] } },
+        { __depth: 0, __index: 2, time: 2, value: 10 },
+        { __depth: 1, __index: 2 },
+        { __depth: 0, __index: 1, time: 1, value: 20 },
+        { __depth: 1, __index: 1 },
+        { __depth: 0, __index: 0, time: 1, value: 30 },
+        { __depth: 1, __index: 0 },
       ]);
     });
 
@@ -1551,6 +1560,7 @@ describe('TableNG utils', () => {
 
       const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
 
+      const frameToRecords = compileFrameToRecords(frame);
       const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
 
       expect(sorted).toMatchObject([
@@ -1569,6 +1579,7 @@ describe('TableNG utils', () => {
           { name: 'value', values: [10, 20, 30] },
         ],
       });
+      const frameToRecords = compileFrameToRecords(frame);
       const filtered = applyFilter(frameToRecords(frame), {}, frame.fields, false);
       expect(filtered).toMatchObject([
         { time: 1, value: 10 },
@@ -1594,6 +1605,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
+      const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
       const filtered = applyFilter(
         records,
@@ -1624,6 +1636,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
+      const frameToRecords = compileFrameToRecords(frame);
       const filtered = applyFilter(
         frameToRecords(frame),
         {
@@ -1662,7 +1675,8 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const records = frameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const records = frameToRecords(frame);
       const filtered = applyFilter(
         records,
         {
@@ -1675,10 +1689,10 @@ describe('TableNG utils', () => {
 
       // the filter method won't filter the values in the nested data frame's "fields" here. useNestedRows calls applyFilter on the nested rows.
       expect(filtered).toMatchObject([
-        { time: 1, value: 10 },
-        { data: { fields: [{ name: 'value2', values: [10, 30] }] } },
-        { time: 1, value: 20 },
-        { data: { fields: [{ name: 'value2', values: [20, 40] }] } },
+        { time: 1, value: 10, __depth: 0 },
+        { __index: 0, __depth: 1 },
+        { time: 1, value: 20, __depth: 0 },
+        { __index: 1, __depth: 1 },
       ]);
     });
 
@@ -1699,7 +1713,8 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const records = frameToRecords(frame, 'nested', 3);
+      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const records = frameToRecords(frame, 3);
       const filtered = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 3 } },
@@ -1742,6 +1757,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
+      const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
       const filtered = applyFilter(
         records,

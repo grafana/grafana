@@ -90,10 +90,10 @@ import {
 import {
   calculateFooterHeight,
   canFieldBeColorized,
+  compileFrameToRecords,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
-  frameToRecords,
   getAlignment,
   getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
@@ -183,11 +183,22 @@ export function TableNG(props: TableNGProps) {
     }
     return getDisplayName(firstNestedField);
   }, [data, hasNestedFrames]);
-  const rows = useMemo(() => frameToRecords(data, nestedFramesFieldName), [data, nestedFramesFieldName]);
+  const frameToRecords = useMemo(
+    () => compileFrameToRecords(data, nestedFramesFieldName),
+    [data, nestedFramesFieldName]
+  );
+  const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
 
+  const nestedData = useMemo(
+    (): DataFrame[] | undefined =>
+      hasNestedFrames
+        ? data.fields.find((f) => getDisplayName(f) === nestedFramesFieldName)?.values.map((v) => v[0])
+        : undefined,
+    [data, nestedFramesFieldName, hasNestedFrames]
+  );
   const firstRowNestedData = useMemo(
-    () => (hasNestedFrames ? rows.find((r) => r.data)?.data : undefined),
-    [hasNestedFrames, rows]
+    () => (hasNestedFrames && nestedData ? nestedData[0] : undefined),
+    [nestedData, hasNestedFrames]
   );
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
@@ -202,7 +213,7 @@ export function TableNG(props: TableNGProps) {
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
-  const nestedRows = useNestedRows(rows, hasNestedFrames, nestedFramesFieldName, filter, sortColumns);
+  const nestedRows = useNestedRows(rows, nestedData, hasNestedFrames, nestedFramesFieldName, filter, sortColumns);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -864,14 +875,14 @@ export function TableNG(props: TableNGProps) {
         .filter((r) => r.__depth > 0)
         .map((r) =>
           fromFields(
-            getVisibleFields(r.data!.fields),
+            nestedVisibleFields,
             nestedFieldWidths,
-            r.data!,
+            nestedData![r.__index]!,
             nestedRows[r.__index].raw,
             nestedRows[r.__index].final
           )
         ),
-    [rows, nestedRows, nestedFieldWidths, fromFields]
+    [rows, nestedData, nestedRows, nestedVisibleFields, nestedFieldWidths, fromFields]
   );
 
   const { columns, cellRootRenderers } = useMemo(() => {

@@ -741,16 +741,11 @@ export function applyFilter(
 /**
  * @internal
  */
-export const frameToRecords = (
-  frame: DataFrame,
-  nestedFramesFieldName?: string,
-  nestedRowIndex?: number
-): TableRow[] => {
+export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
   const fnBody = `
     const rows = Array(frame.length);
     const values = frame.fields.map(f => f.values);
     const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
-    const isNestedRow = ${nestedRowIndex !== undefined};
 
     let rowCount = 0;
     for (let i = 0; i < frame.length; i++) {
@@ -759,8 +754,8 @@ export const frameToRecords = (
         __index: i,
         ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
       };
-      if (isNestedRow) {
-        rows[rowCount].__parentIndex = ${nestedRowIndex};
+      if (nestedRowIndex != null) {
+        rows[rowCount].__parentIndex = nestedRowIndex;
       }
       rowCount++;
 
@@ -768,7 +763,7 @@ export const frameToRecords = (
         const childFrame = rows[rowCount-1][${JSON.stringify(nestedFramesFieldName)}];
         if (childFrame) {
           delete rows[rowCount - 1][${JSON.stringify(nestedFramesFieldName)}];
-          rows[rowCount] = { __depth: 1, __index: i, data: childFrame[0] };
+          rows[rowCount] = { __depth: 1, __index: i };
           rowCount++;
         }
       }
@@ -779,9 +774,8 @@ export const frameToRecords = (
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const convert = new Function('frame', 'nestedFramesFieldName', 'nestedRowIndex', fnBody) as FrameToRowsConverter;
-  return convert(frame, nestedFramesFieldName, nestedRowIndex);
-};
+  return new Function('frame', 'nestedRowIndex', fnBody) as FrameToRowsConverter;
+}
 
 /* ----------------------------- Data grid comparator ---------------------------- */
 // The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences
