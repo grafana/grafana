@@ -1722,9 +1722,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 7
-    },
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItemEditor.tsx": {
