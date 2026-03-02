@@ -10,7 +10,7 @@ import { PanelEditor } from '../PanelEditor';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
-import { QueryEditorSidebar } from './QueryEditor/Sidebar/QueryEditorSidebar';
+import { Sidebar } from './QueryEditor/Sidebar/Sidebar';
 import { SidebarSize } from './constants';
 import { useVizAndDataPaneLayout } from './hooks';
 
@@ -43,7 +43,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
           <QueryEditorContextWrapper dataPane={nextDataPane}>
             <div className={styles.sidebar}>
               <div className={styles.sidebarContent}>
-                <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
+                <Sidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
               </div>
               <div className={styles.sidebarResizeHandle}>
                 <div

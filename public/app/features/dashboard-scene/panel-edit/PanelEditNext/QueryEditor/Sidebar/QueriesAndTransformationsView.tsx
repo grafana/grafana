@@ -6,11 +6,11 @@ import { LoadingBar } from '@grafana/ui';
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { AddCardButton } from './AddCardButton';
+import { QueryCard } from './Cards/QueryCard';
+import { TransformationCard } from './Cards/TransformationCard';
 import { DraggableList } from './DraggableList';
-import { QueryCard } from './QueryCard';
-import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
-import { TransformationCard } from './TransformationCard';
-import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
+import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
+import { SidebarCollapsableHeader } from './SidebarCollapsableHeader';
 
 export function QueriesAndTransformationsView() {
   const { queries, isLoading } = useQueryRunnerContext();
@@ -37,7 +37,7 @@ export function QueriesAndTransformationsView() {
 
   return (
     <>
-      <QuerySidebarCollapsableHeader
+      <SidebarCollapsableHeader
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
         isOpen={queriesOpen}
         onToggle={setQueriesOpen}
@@ -50,8 +50,8 @@ export function QueriesAndTransformationsView() {
           renderItem={(query) => <QueryCard query={query} />}
           onDragEnd={onQueryDragEnd}
         />
-      </QuerySidebarCollapsableHeader>
-      <QuerySidebarCollapsableHeader
+      </SidebarCollapsableHeader>
+      <SidebarCollapsableHeader
         label={t('query-editor-next.sidebar.transformations', 'Transformations')}
         isOpen={transformationsOpen}
         onToggle={setTransformationsOpen}
@@ -66,7 +66,7 @@ export function QueriesAndTransformationsView() {
             onDragEnd={onTransformationDragEnd}
           />
         )}
-      </QuerySidebarCollapsableHeader>
+      </SidebarCollapsableHeader>
     </>
   );
 }

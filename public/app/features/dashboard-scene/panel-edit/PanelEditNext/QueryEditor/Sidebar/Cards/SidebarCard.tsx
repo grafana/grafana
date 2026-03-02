@@ -5,17 +5,16 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { ActionItem, Actions } from '../../Actions';
+import { ActionItem, Actions } from '../../../Actions';
 import {
   QUERY_EDITOR_COLORS,
   QueryEditorType,
   SIDEBAR_CARD_HEIGHT,
   SIDEBAR_CARD_INDENT,
   getQueryEditorColors,
-} from '../../constants';
-import { getEditorBorderColor } from '../utils';
-
-import { AddCardButton } from './AddCardButton';
+} from '../../../constants';
+import { getEditorBorderColor } from '../../utils';
+import { AddCardButton } from '../AddCardButton';
 
 interface SidebarCardProps {
   children: React.ReactNode;

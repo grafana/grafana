@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
 
-interface QuerySidebarCollapsableHeaderProps {
+interface SidebarCollapsableHeaderProps {
   label: string;
   children: React.ReactNode;
   headerAction?: React.ReactNode;
@@ -11,13 +11,13 @@ interface QuerySidebarCollapsableHeaderProps {
   onToggle: (isOpen: boolean) => void;
 }
 
-export const QuerySidebarCollapsableHeader = ({
+export const SidebarCollapsableHeader = ({
   label,
   children,
   headerAction,
   isOpen,
   onToggle,
-}: QuerySidebarCollapsableHeaderProps) => {
+}: SidebarCollapsableHeaderProps) => {
   const styles = useStyles2(getStyles);
 
   return (

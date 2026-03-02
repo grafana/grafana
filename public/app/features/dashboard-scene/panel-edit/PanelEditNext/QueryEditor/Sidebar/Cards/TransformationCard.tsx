@@ -1,8 +1,8 @@
 import { Icon } from '@grafana/ui';
 
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
-import { Transformation } from '../types';
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
+import { useActionsContext, useQueryEditorUIContext } from '../../QueryEditorContext';
+import { Transformation } from '../../types';
 
 import { CardTitle } from './CardTitle';
 import { SidebarCard } from './SidebarCard';
