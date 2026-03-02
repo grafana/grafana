@@ -21,6 +21,8 @@ import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/tra
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { PanelStylesSection } from './PanelStylesSection';
+
 export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: t('dashboard-scene.get-panel-frame-options.descriptor.title.panel-options', 'Panel options'),
@@ -76,21 +78,33 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />;
         },
       })
-    )
-    .addCategory(
-      new OptionsPaneCategoryDescriptor({
-        title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
-        id: 'Panel links',
-        isOpenDefault: false,
-        itemsCount: links?.length,
-      }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
-          id: 'panel-frame-options-panel-links',
-          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
-        })
-      )
     );
+
+  if (config.featureToggles.vizPresets) {
+    descriptor.addCategory(
+      new OptionsPaneCategoryDescriptor({
+        title: t('dashboard-scene.get-panel-frame-options.title.panel-styles', 'Panel styles'),
+        id: 'panel-styles',
+        isOpenDefault: true,
+        customRender: () => <PanelStylesSection panel={panel} />,
+      })
+    );
+  }
+
+  descriptor.addCategory(
+    new OptionsPaneCategoryDescriptor({
+      title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
+      id: 'Panel links',
+      isOpenDefault: false,
+      itemsCount: links?.length,
+    }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
+        id: 'panel-frame-options-panel-links',
+        render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
+      })
+    )
+  );
 
   if (isDashboardLayoutItem(layoutElement)) {
     layoutElement.getOptions?.().forEach((category) => descriptor.addCategory(category));

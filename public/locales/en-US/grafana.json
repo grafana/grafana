@@ -5288,6 +5288,7 @@
       "panel-description": "Change panel description",
       "panel-edit": "Panel changes",
       "panel-max-repeats-per-row": "Max repeats per row",
+      "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
       "panel-title": "Change panel title",
@@ -6720,6 +6721,7 @@
       "title": {
         "description": "Description",
         "panel-links": "Panel links",
+        "panel-styles": "Panel styles",
         "title": "Title",
         "transparent-background": "Transparent background"
       }
@@ -6900,6 +6902,9 @@
           "metrics-drilldown": "Metrics drilldown"
         }
       }
+    },
+    "panel-styles": {
+      "title": "Panel styles"
     },
     "panel-viz-type-picker": {
       "button": {
@@ -11941,11 +11946,6 @@
       "aria-label-delete-button-on-panel-type-card": "Delete button on panel type card",
       "title-click-to-close": "Click again to close this section",
       "tooltip-delete": "Delete"
-    },
-    "presets": {
-      "back-button-text": "Go back",
-      "skip-button": "Skip",
-      "title": "Select style"
     },
     "visualization-suggestions": {
       "error-loading-some-suggestions": {
