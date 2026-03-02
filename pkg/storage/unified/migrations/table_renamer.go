@@ -184,6 +184,9 @@ func (r *mysqlTableRenamer) RenameTables(ctx context.Context, tables []string, d
 	}
 
 	// Collect all results; rollback successful renames if any failed.
+	resultDeadline := time.NewTimer(r.waitDeadline)
+	defer resultDeadline.Stop()
+
 	renameResults := make([]renameResult, 0, len(tablesToRename))
 	var firstErr error
 	for range tablesToRename {
@@ -196,7 +199,7 @@ func (r *mysqlTableRenamer) RenameTables(ctx context.Context, tables []string, d
 		case <-ctx.Done():
 			r.rollbackRenames(renameResults)
 			return fmt.Errorf("context cancelled while waiting for RENAME TABLE to complete: %w", ctx.Err())
-		case <-time.After(r.waitDeadline):
+		case <-resultDeadline.C:
 			r.rollbackRenames(renameResults)
 			return fmt.Errorf("timeout: only %d of %d RENAME TABLE statements completed", len(renameResults), len(tablesToRename))
 		}
@@ -215,6 +218,9 @@ func (r *mysqlTableRenamer) RenameTables(ctx context.Context, tables []string, d
 // the match will fail and this will timeout. This is acceptable because we control
 // the SQL generation in RenameTables above.
 func (r *mysqlTableRenamer) waitForRenamesQueued(ctx context.Context, pairs []renamePair) error {
+	deadline := time.NewTimer(r.waitDeadline)
+	defer deadline.Stop()
+
 	for {
 		found := 0
 		for _, p := range pairs {
@@ -238,7 +244,7 @@ func (r *mysqlTableRenamer) waitForRenamesQueued(ctx context.Context, pairs []re
 		select {
 		case <-ctx.Done():
 			return fmt.Errorf("context cancelled while waiting for RENAME statements to queue: %w", ctx.Err())
-		case <-time.After(r.waitDeadline):
+		case <-deadline.C:
 			return fmt.Errorf("timeout: only %d of %d RENAME statements confirmed in processlist", found, len(pairs))
 		case <-time.After(100 * time.Millisecond):
 		}
