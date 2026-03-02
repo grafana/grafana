@@ -64,7 +64,6 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		backend.Logger.Error("3: NEW API HANDLER IS CALLED")
 		rsp := &datasource.HealthCheckResult{}
 		rsp.Code = int(healthResponse.Status)
 		rsp.Status = healthResponse.Status.String()
