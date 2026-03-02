@@ -6,18 +6,9 @@ import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import {
-  DataSourceSrv,
-  reportInteraction,
-  setAppEvents,
-  setDataSourceSrv,
-  config,
-  setBackendSrv,
-} from '@grafana/runtime';
+import { DataSourceSrv, reportInteraction, setAppEvents, setDataSourceSrv, config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
-import { setupMockServer } from '@grafana/test-utils/server';
 import { appEvents } from 'app/core/app_events';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 

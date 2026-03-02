@@ -1,7 +1,8 @@
 // TODO assess the use of this
+// duplicates types from /Users/kristinadurivage/development/grafana/packages/grafana-api-clients/src/clients/rtkq/correlations/v0alpha1/endpoints.gen.ts
 
 export type CorrelationTargetSpec = {
-  [key: string]: any;
+  [key: string]: unknown;
 };
 export type CorrelationTransformationSpec = {
   expression?: string;
@@ -29,9 +30,10 @@ export type CorrelationSpec = {
   target?: CorrelationDataSourceRef;
   type: CorrelationCorrelationType;
 };
+
 export type Correlation = {
   apiVersion: string;
   kind: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   spec: CorrelationSpec;
 };
