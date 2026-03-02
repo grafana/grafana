@@ -148,6 +148,11 @@ export function prepareHeatmapData({
       })!;
     } else {
       let frame = frames[0];
+
+      if (!frame.fields.length) {
+        return {};
+      }
+
       let numberFields = frame.fields.filter((field) => field.type === FieldType.number);
       let allNamesNumeric = numberFields.every((field) => !Number.isNaN(parseSampleValue(field.state?.displayName!)));
 
