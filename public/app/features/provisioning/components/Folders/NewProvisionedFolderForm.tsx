@@ -1,5 +1,5 @@
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -32,6 +32,7 @@ interface Props {
 function FormContent({ initialValues, repository, canPushToConfiguredBranch, folder, onDismiss }: FormProps) {
   const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
+  const location = useLocation();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
   const methods = useForm<BaseProvisionedFormData>({
@@ -46,14 +47,17 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     const prUrl = urls?.newPullRequestURL;
     // Fall back to the repository URL if no PR URL is returned, so preview banner link button stay visible
     const paramValue = prUrl ?? repository?.url ?? '';
+    const params = new URLSearchParams(location.search);
 
-    const url = buildResourceBranchRedirectUrl({
-      paramName: 'new_pull_request_url',
-      paramValue,
-      repoType: info.repoType,
-    });
+    if (paramValue) {
+      params.set('new_pull_request_url', paramValue);
+    }
+    if (info.repoType) {
+      params.set('repo_type', info.repoType);
+    }
 
-    navigate(url);
+    const queryString = params.toString();
+    navigate(queryString ? `${location.pathname}?${queryString}` : location.pathname);
   };
 
   const onWriteSuccess = (resource: Resource<FolderDTO>) => {

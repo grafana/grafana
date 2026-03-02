@@ -15,6 +15,12 @@ import {
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
 
+const mockNavigate = jest.fn();
+const mockLocation = {
+  pathname: '/dashboards/f/folder-uid',
+  search: '?tab=browse',
+};
+
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
@@ -87,7 +93,8 @@ jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
     ...actual,
-    useNavigate: () => jest.fn(),
+    useNavigate: () => mockNavigate,
+    useLocation: () => mockLocation,
   };
 });
 
@@ -169,6 +176,8 @@ const mockHookData: ProvisionedFolderFormDataResult = {
 describe('NewProvisionedFolderForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLocation.pathname = '/dashboards/f/folder-uid';
+    mockLocation.search = '?tab=browse';
 
     // Setup default mocks
     const mockAppEvents = {
@@ -413,6 +422,41 @@ describe('NewProvisionedFolderForm', () => {
     // PR alert should be visible - use text content instead of role
     expect(screen.getByText('Pull request created')).toBeInTheDocument();
     expect(screen.getByRole('link')).toHaveTextContent('https://github.com/grafana/grafana/pull/1234');
+  });
+
+  it('should keep user on current page for branch workflow success', async () => {
+    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
+      jest.fn(),
+      {
+        ...mockRequest,
+        isSuccess: true,
+        data: {
+          ref: 'feature/new-folder',
+          path: '/dashboards/Branch Folder/',
+          urls: {
+            newPullRequestURL: 'https://github.com/grafana/grafana/pull/5678',
+          },
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        },
+      },
+    ]);
+
+    setup(
+      {},
+      {
+        ...mockHookData,
+        initialValues: {
+          ...mockHookData.initialValues!,
+          workflow: 'branch',
+        },
+      }
+    );
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/dashboards/f/folder-uid?tab=browse&new_pull_request_url=https%3A%2F%2Fgithub.com%2Fgrafana%2Fgrafana%2Fpull%2F5678&repo_type=github'
+      );
+    });
   });
 
   it('should call onDismiss when cancel button is clicked', async () => {
