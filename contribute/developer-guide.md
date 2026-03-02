@@ -243,6 +243,8 @@ make test-go-integration-postgres
   - Unzip.
   - Run `yarn playwright show-report <reportLocation>`
 
+- There are also a set of acceptance tests that can be run with `yarn e2e:acceptance`. These tests should run against a Grafana instance with the default configuration (e.g. no provisioned dashboards/datasources), and are used to verify our cloud/on-prem images are working as expected.
+
 If you are curious about other commands, you can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options).
 
 ## Configure Grafana for development

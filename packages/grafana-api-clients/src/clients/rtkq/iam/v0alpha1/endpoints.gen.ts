@@ -190,6 +190,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             page: queryArg.page,
             offset: queryArg.offset,
+            accesscontrol: queryArg.accesscontrol,
             sort: queryArg.sort,
           },
         }),
@@ -960,6 +961,8 @@ export type GetSearchUsersApiArg = {
   page?: number;
   /** number of results to skip */
   offset?: number;
+  /** when true, includes access control metadata in the response */
+  accesscontrol?: boolean;
   /** sortable field */
   sort?: string;
 };

@@ -57,7 +57,7 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 
 	// Verify that the warning message mentions the malformed resource
 	found := false
-	expectedWarningMsg := "writing resource from file dashboard1.json: failed to parse file: resource validation failed: unable to read file (file: dashboard1.json, name: , action: created)"
+	expectedWarningMsg := "writing resource from file dashboard1.json: failed to parse file: resource validation failed: file does not contain a valid resource: unable to read file (file: dashboard1.json, name: , action: created)"
 	for _, warningMsg := range jobObj.Status.Warnings {
 		fmt.Println(warningMsg)
 		if warningMsg == expectedWarningMsg {

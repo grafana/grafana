@@ -250,8 +250,16 @@ export function addDataSource(
       access: 'proxy',
     };
 
-    const result = await api.createDataSource(newInstance);
-    const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);
+    let uid,
+      version = '';
+    if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
+      const result = await api.createDataSourceWithK8sAPI(newInstance);
+      uid = result.metadata.name;
+    } else {
+      const result = await api.createDataSource(newInstance);
+      uid = result.datasource.uid;
+      version = result.meta?.info?.version;
+    }
 
     await getDatasourceSrv().reload();
     await contextSrv.fetchUserPermissions();
@@ -259,12 +267,12 @@ export function addDataSource(
     trackDataSourceCreated({
       grafana_version: config.buildInfo.version,
       plugin_id: plugin.id,
-      datasource_uid: result.datasource.uid,
-      plugin_version: result.meta?.info?.version,
+      datasource_uid: uid,
+      plugin_version: version,
       path: window.location.pathname,
     });
 
-    locationService.push(editLink);
+    locationService.push(editRoute.replace(/:uid/gi, uid));
   };
 }
 

@@ -1,6 +1,8 @@
 import { VizPanel } from '@grafana/scenes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { DashboardScene } from '../DashboardScene';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -24,16 +26,23 @@ jest.mock('../../edit-pane/shared', () => ({
       perform();
       lastUndo = undo;
     }),
+    edit: jest.fn(({ perform }) => {
+      perform();
+    }),
   },
   ObjectsReorderedOnCanvasEvent: jest.fn().mockImplementation(() => ({})),
 }));
 
+function buildTabsLayoutManager(tabs: TabItem[]) {
+  const tabsLayoutManager = new TabsLayoutManager({ tabs });
+  new DashboardScene({ body: tabsLayoutManager });
+  return tabsLayoutManager;
+}
+
 describe('TabsLayoutManager', () => {
-  describe('url sync', () => {
+  describe('URL sync', () => {
     it('when on top level', () => {
-      const tabsLayoutManager = new TabsLayoutManager({
-        tabs: [new TabItem({ title: 'Performance' })],
-      });
+      const tabsLayoutManager = buildTabsLayoutManager([new TabItem({ title: 'Performance' })]);
 
       // currentTabSlug is set during rendering so forcing here
       tabsLayoutManager.setState({ currentTabSlug: tabsLayoutManager.getCurrentTab()?.getSlug() });
@@ -43,30 +52,25 @@ describe('TabsLayoutManager', () => {
     });
 
     it('when nested under row and parent tab', () => {
-      const innerMostTabs = new TabsLayoutManager({
+      const innerMostTabsLayoutManager = new TabsLayoutManager({
         tabs: [new TabItem({ title: 'Performance' })],
       });
 
       // currentTabSlug is set during rendering so forcing here
-      innerMostTabs.setState({ currentTabSlug: innerMostTabs.getCurrentTab()?.getSlug() });
+      innerMostTabsLayoutManager.setState({ currentTabSlug: innerMostTabsLayoutManager.getCurrentTab()?.getSlug() });
 
       new RowsLayoutManager({
         rows: [
           new RowItem({
             title: 'Overview',
             layout: new TabsLayoutManager({
-              tabs: [
-                new TabItem({
-                  title: 'Frontend',
-                  layout: innerMostTabs,
-                }),
-              ],
+              tabs: [new TabItem({ title: 'Frontend', layout: innerMostTabsLayoutManager })],
             }),
           }),
         ],
       });
 
-      const urlState = innerMostTabs.getUrlState();
+      const urlState = innerMostTabsLayoutManager.getUrlState();
       expect(urlState).toEqual({
         ['overview-frontend-dtab']: 'performance',
       });
@@ -79,102 +83,128 @@ describe('TabsLayoutManager', () => {
     });
 
     it('should add a new tab with default title when no title is provided', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const newTab = manager.addNewTab();
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const newTab = tabsLayoutManager.addNewTab();
 
       expect(newTab).toBeInstanceOf(TabItem);
       expect(newTab.state.title).toBe('New tab');
-      expect(manager.state.tabs).toHaveLength(1);
-      expect(manager.state.tabs[0]).toBe(newTab);
+      expect(tabsLayoutManager.state.tabs).toHaveLength(1);
+      expect(tabsLayoutManager.state.tabs[0]).toBe(newTab);
+      expect(tabsLayoutManager.state.currentTabSlug).toBe(newTab.getSlug());
     });
 
     it('should add a tab with the provided title if it is unique', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const newTab = manager.addNewTab(new TabItem({ title: 'Unique Title' }));
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const newTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Unique Title' }));
 
       expect(newTab.state.title).toBe('Unique Title');
-      expect(manager.state.tabs).toHaveLength(1);
-      expect(manager.state.tabs[0]).toBe(newTab);
+      expect(tabsLayoutManager.state.tabs).toHaveLength(1);
+      expect(tabsLayoutManager.state.tabs[0]).toBe(newTab);
+      expect(tabsLayoutManager.state.currentTabSlug).toBe(newTab.getSlug());
     });
 
     it('should generate a unique title when adding a tab with a duplicate title', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const firstTab = manager.addNewTab(new TabItem({ title: 'Test Title' }));
-      const secondTab = manager.addNewTab(new TabItem({ title: 'Test Title' }));
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Test Title' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Test Title' }));
 
+      expect(tabsLayoutManager.state.tabs).toHaveLength(2);
       expect(firstTab.state.title).toBe('Test Title');
       expect(secondTab.state.title).toBe('Test Title 1');
-      expect(manager.state.tabs).toHaveLength(2);
+      expect(tabsLayoutManager.state.currentTabSlug).toBe(secondTab.getSlug());
     });
 
     it('should increment the number in the title for multiple duplicates', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const firstTab = manager.addNewTab(new TabItem({ title: 'Test Title' }));
-      const secondTab = manager.addNewTab(new TabItem({ title: 'Test Title' }));
-      const thirdTab = manager.addNewTab(new TabItem({ title: 'Test Title' }));
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Test Title' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Test Title' }));
+      const thirdTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Test Title' }));
 
+      expect(tabsLayoutManager.state.tabs).toHaveLength(3);
       expect(firstTab.state.title).toBe('Test Title');
       expect(secondTab.state.title).toBe('Test Title 1');
       expect(thirdTab.state.title).toBe('Test Title 2');
-      expect(manager.state.tabs).toHaveLength(3);
+      expect(tabsLayoutManager.state.currentTabSlug).toBe(thirdTab.getSlug());
     });
 
     it('should handle undo action correctly', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      manager.addNewTab(new TabItem({ title: 'Test Title' }));
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      tabsLayoutManager.addNewTab(new TabItem({ title: 'Test Title' }));
 
-      expect(manager.state.tabs).toHaveLength(1);
+      expect(tabsLayoutManager.state.tabs).toHaveLength(1);
 
       // Use the real undo function from the mock
       expect(typeof lastUndo).toBe('function');
-      lastUndo && lastUndo();
+      lastUndo!();
 
-      expect(manager.state.tabs).toHaveLength(0);
+      expect(tabsLayoutManager.state.tabs).toHaveLength(0);
     });
   });
 
   describe('removeTab', () => {
     beforeEach(() => {
       lastUndo = undefined;
+      jest.clearAllMocks();
     });
 
-    it('should remove the current tab using removeElement', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
-      const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
+    it('should remove a tab and call the removeElement action', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 1' }));
+      const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 2' }));
+      const tab3 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 3' }));
 
-      expect(manager.state.tabs).toHaveLength(2);
-      expect(manager.state.currentTabSlug).toBe(tab2.getSlug()); // tab2 is current
+      tabsLayoutManager.removeTab(tab3);
 
-      manager.removeTab(tab2);
-
-      expect(manager.state.tabs).toHaveLength(1);
-      expect(manager.state.tabs[0]).toBe(tab1);
-      expect(manager.state.currentTabSlug).toBe(tab1.getSlug());
+      expect(tabsLayoutManager.state.tabs).toHaveLength(2);
+      expect(tabsLayoutManager.state.tabs[0]).toBe(tab1);
+      expect(tabsLayoutManager.state.tabs[1]).toBe(tab2);
+      expect(tabsLayoutManager.state.currentTabSlug).toBe(tab2.getSlug());
       expect(dashboardEditActions.removeElement).toHaveBeenCalled();
     });
 
-    it('should handle undo action correctly when removing the current tab', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
-      const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
+    it('should handle undo action correctly', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 1' }));
+      const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 2' }));
 
-      expect(manager.state.tabs).toHaveLength(2);
-      expect(manager.state.currentTabSlug).toBe(tab2.getSlug()); // tab2 is current
-
-      manager.removeTab(tab2);
-
-      expect(manager.state.tabs).toHaveLength(1);
-      expect(manager.state.tabs[0]).toBe(tab1);
+      tabsLayoutManager.removeTab(tab2);
 
       // Use the real undo function from the mock
       expect(typeof lastUndo).toBe('function');
-      lastUndo && lastUndo();
+      lastUndo!();
 
-      expect(manager.state.tabs).toHaveLength(2);
-      expect(manager.state.tabs).toContain(tab1);
-      expect(manager.state.tabs).toContain(tab2);
-      expect(manager.state.currentTabSlug).toBe(tab2.getSlug()); // tab2 should be current again
+      expect(tabsLayoutManager.state.tabs).toHaveLength(2);
+      expect(tabsLayoutManager.state.tabs[0]).toBe(tab1);
+      expect(tabsLayoutManager.state.tabs[1]).toBe(tab2);
+      expect(tabsLayoutManager.state.currentTabSlug).toBe(tab2.getSlug()); // tab2 should be current again
+    });
+
+    describe('when the last tab is removed', () => {
+      it('should switch the parent layout to an empty auto grid layout', () => {
+        const tabsLayoutManager = buildTabsLayoutManager([]);
+        const tab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Only Tab' }));
+
+        tabsLayoutManager.removeTab(tab);
+
+        const parentLayoutManager = (tabsLayoutManager.parent as DashboardScene).state.body;
+        expect(parentLayoutManager).toBeInstanceOf(AutoGridLayoutManager);
+        expect(parentLayoutManager.getVizPanels()).toHaveLength(0);
+      });
+
+      it('should handle undo action correctly', () => {
+        const tabsLayoutManager = buildTabsLayoutManager([]);
+        const tab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Only Tab' }));
+        const parent = tabsLayoutManager.parent as DashboardScene;
+
+        tabsLayoutManager.removeTab(tab);
+
+        expect(typeof lastUndo).toBe('function');
+        lastUndo!();
+
+        expect(parent.state.body).toBe(tabsLayoutManager);
+        expect(tabsLayoutManager.state.tabs).toHaveLength(1);
+        expect(tabsLayoutManager.state.tabs[0]).toBe(tab);
+      });
     });
   });
 
@@ -185,57 +215,68 @@ describe('TabsLayoutManager', () => {
     });
 
     it('should move a tab to a new position', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
-      const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
-      const tab3 = manager.addNewTab(new TabItem({ title: 'Tab 3' }));
+      const tabsLayoutManager = buildTabsLayoutManager([]);
 
-      expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
+      const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 1' }));
+      const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 2' }));
+      const tab3 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 3' }));
 
-      manager.moveTab(0, 2);
+      tabsLayoutManager.moveTab(0, 2);
 
-      expect(manager.state.tabs).toEqual([tab2, tab3, tab1]);
+      expect(tabsLayoutManager.state.tabs[0]).toBe(tab2);
+      expect(tabsLayoutManager.state.tabs[1]).toBe(tab3);
+      expect(tabsLayoutManager.state.tabs[2]).toBe(tab1);
       expect(dashboardEditActions.moveElement).toHaveBeenCalled();
     });
 
-    it('should handle undo action correctly when moving a tab', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
-      const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
-      const tab3 = manager.addNewTab(new TabItem({ title: 'Tab 3' }));
+    describe('undo', () => {
+      it('should handle undo action correctly', () => {
+        const tabsLayoutManager = buildTabsLayoutManager([]);
 
-      expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
+        const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 1' }));
+        const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 2' }));
+        const tab3 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 3' }));
 
-      manager.moveTab(0, 2);
+        tabsLayoutManager.moveTab(0, 2);
 
-      expect(manager.state.tabs).toEqual([tab2, tab3, tab1]);
+        expect(tabsLayoutManager.state.tabs[0]).toBe(tab2);
+        expect(tabsLayoutManager.state.tabs[1]).toBe(tab3);
+        expect(tabsLayoutManager.state.tabs[2]).toBe(tab1);
 
-      // Use the real undo function from the mock
-      expect(typeof lastUndo).toBe('function');
-      lastUndo && lastUndo();
+        // Use the real undo function from the mock
+        expect(typeof lastUndo).toBe('function');
+        lastUndo!();
 
-      expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
-    });
+        expect(tabsLayoutManager.state.tabs[0]).toBe(tab1);
+        expect(tabsLayoutManager.state.tabs[1]).toBe(tab2);
+        expect(tabsLayoutManager.state.tabs[2]).toBe(tab3);
+      });
 
-    it('should update currentTabIndex when moving the current tab', () => {
-      const manager = new TabsLayoutManager({ tabs: [] });
-      const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
-      const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
-      const tab3 = manager.addNewTab(new TabItem({ title: 'Tab 3' }));
+      it('should update currentTabIndex when moving the current tab', () => {
+        const tabsLayoutManager = buildTabsLayoutManager([]);
 
-      // Set tab2 as current
-      manager.setState({ currentTabSlug: tab2.getSlug() });
+        const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 1' }));
+        const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 2' }));
+        const tab3 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab 3' }));
 
-      manager.moveTab(1, 0);
+        // Set tab2 as current
+        tabsLayoutManager.setState({ currentTabSlug: tab2.getSlug() });
+        tabsLayoutManager.moveTab(1, 0);
 
-      expect(manager.state.tabs).toEqual([tab2, tab1, tab3]);
-      expect(manager.state.currentTabSlug).toBe(tab2.getSlug());
+        expect(tabsLayoutManager.state.tabs[0]).toBe(tab2);
+        expect(tabsLayoutManager.state.tabs[1]).toBe(tab1);
+        expect(tabsLayoutManager.state.tabs[2]).toBe(tab3);
+        expect(tabsLayoutManager.state.currentTabSlug).toBe(tab2.getSlug());
 
-      // Undo should restore the original state
-      lastUndo && lastUndo();
+        // Undo should restore the original state
+        expect(typeof lastUndo).toBe('function');
+        lastUndo!();
 
-      expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
-      expect(manager.state.currentTabSlug).toBe(tab2.getSlug());
+        expect(tabsLayoutManager.state.tabs[0]).toBe(tab1);
+        expect(tabsLayoutManager.state.tabs[1]).toBe(tab2);
+        expect(tabsLayoutManager.state.tabs[2]).toBe(tab3);
+        expect(tabsLayoutManager.state.currentTabSlug).toBe(tab2.getSlug());
+      });
     });
   });
 

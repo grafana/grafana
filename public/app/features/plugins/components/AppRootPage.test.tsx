@@ -55,6 +55,8 @@ const getPluginSettingsMock = getPluginSettings as jest.Mock<
   Parameters<typeof getPluginSettings>
 >;
 
+// don't care about this component - it's just for a test
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 class RootComponent extends Component<AppRootProps> {
   static timesRendered = 0;
   render() {

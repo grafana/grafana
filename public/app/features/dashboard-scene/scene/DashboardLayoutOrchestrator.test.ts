@@ -266,7 +266,25 @@ describe('DashboardLayoutOrchestrator', () => {
   });
 
   describe('tab dragging', () => {
-    [
+    let elementsFromPointSpy: jest.SpyInstance<Element[], [number, number]>;
+
+    beforeAll(() => {
+      // polyfill for jsdom
+      if (!('elementsFromPoint' in document)) {
+        Object.defineProperty(document, 'elementsFromPoint', {
+          configurable: true,
+          writable: true,
+          value: () => [] as Element[],
+        });
+      }
+      elementsFromPointSpy = jest.spyOn(document, 'elementsFromPoint').mockReturnValue([]);
+    });
+
+    afterAll(() => {
+      elementsFromPointSpy?.mockRestore();
+    });
+
+    return [
       {
         name: 'Same row: move non-repeated tabs',
         tabs: ['a b c'],

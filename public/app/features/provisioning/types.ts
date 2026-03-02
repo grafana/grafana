@@ -97,6 +97,7 @@ export interface TreeItem {
   hash?: string;
   status?: SyncStatus;
   hasFile?: boolean;
+  missingFolderMetadata?: boolean;
 }
 
 export interface FlatTreeItem {

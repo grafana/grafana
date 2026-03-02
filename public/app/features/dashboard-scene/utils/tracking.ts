@@ -1,7 +1,7 @@
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { SceneGridItemLike } from '@grafana/scenes';
+import { isTemplateDashboardAssistantEnabled } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -41,7 +41,7 @@ export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   });
 };
 
-export function trackDashboardSceneCreatedOrSaved(
+export async function trackDashboardSceneCreatedOrSaved(
   isNew: boolean,
   dashboard: DashboardScene,
   initialProperties: {
@@ -62,7 +62,7 @@ export function trackDashboardSceneCreatedOrSaved(
       return acc;
     }, {});
 
-  const dashboardLibraryProperties = getDashboardLibraryTrackingProperties(dashboard);
+  const dashboardLibraryProperties = await getDashboardLibraryTrackingProperties(dashboard);
 
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
@@ -98,7 +98,7 @@ export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
   }
 }
 
-function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) {
+async function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) {
   const isDashboardLibraryEnabled =
     config.featureToggles.dashboardLibrary ||
     config.featureToggles.dashboardTemplates ||
@@ -119,19 +119,11 @@ function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) {
   // Extract datasourceTypes from URL params (supports both community and provisioned dashboards) or dashboard panels
   const datasourceTypes = getDatasourceTypes(dashboard);
 
-  const isDashboardTemplatesAssistantButtonEnabled = getFeatureFlagClient().getBooleanValue(
-    'dashboardTemplatesAssistantButton',
-    false
-  );
-  const isDashboardTemplatesAssistantToolEnabled = getFeatureFlagClient().getBooleanValue(
-    'assistant.frontend.tools.dashboardTemplates',
-    false
-  );
+  const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
 
   return {
     isDashboardTemplatesEnabled: config.featureToggles.dashboardTemplates ?? false,
-    isDashboardTemplatesAssistantEnabled:
-      isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled,
+    isDashboardTemplatesAssistantEnabled,
     datasourceTypes,
     sourceEntryPoint,
     libraryItemId,

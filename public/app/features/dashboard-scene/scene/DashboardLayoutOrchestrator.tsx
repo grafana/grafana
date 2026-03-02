@@ -273,6 +273,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   public startTabDrag(sourceTabsManagerId: string, draggedTabId: string): void {
     this._sourceDropTarget = this._findDropTargetByKey(sourceTabsManagerId);
+    this._targetTabIndex = undefined;
 
     this._draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
     if (this._sourceDropTarget instanceof TabsLayoutManager) {
@@ -295,47 +296,25 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   private _onTabDragPointerMove(evt: PointerEvent) {
+    // Note this will never be the same as source - _getDropTargetUnderMouse prevents it.
     const dropTarget = this._getDropTargetUnderMouse(evt);
 
-    if (!(dropTarget instanceof TabsLayoutManager)) {
-      this.cleanUpTabDrag();
-      return;
-    }
-
-    // moving to a new manager
-    if (dropTarget !== this._lastDropTarget) {
-      this.cleanUpTabDrag();
+    // Tabs can be dropped only to TabsLayoutManager
+    if (dropTarget instanceof TabsLayoutManager) {
       this._lastDropTarget = dropTarget;
-
-      // Handled by hello-pangea/dnd - skip calculations
-      if (dropTarget === this._sourceDropTarget) {
-        return;
-      }
-      dropTarget.setIsDropTarget(true);
-    }
-
-    const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY, this._draggedTab!.state.key);
-    const targetTabIndex = dropTarget?.getTabsIncludingRepeats().findIndex((t) => t.state.key === tabUnderMouse);
-
-    // move placeholder only when hovering over a tab, if not we may be outside of the drop area or over a placeholder
-    if (targetTabIndex !== -1) {
-      this._tabPlaceholderIndex = targetTabIndex === this._tabPlaceholderIndex ? targetTabIndex + 1 : targetTabIndex;
-      dropTarget.setPlaceholder({
-        width: this._draggedTabWidth!, // guaranteed as it's calculated on mousedown
-        height: this._draggedTabHeight!, // guaranteed as it's calculated on mousedown
-        index: this._tabPlaceholderIndex,
-      });
+    } else {
+      this._lastDropTarget = null;
     }
   }
 
-  private cleanUpTabDrag() {
+  private _onTabDragPointerUp(evt: PointerEvent) {
     if (this._lastDropTarget && this._lastDropTarget instanceof TabsLayoutManager) {
-      this._lastDropTarget.setIsDropTarget?.(false);
+      const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY);
+      this._targetTabIndex = this._lastDropTarget
+        ?.getTabsIncludingRepeats()
+        .findIndex((t) => t.state.key === tabUnderMouse);
     }
-    this._lastDropTarget = null;
-  }
 
-  private _onTabDragPointerUp() {
     document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
     document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
     // Note: do not handle dropping yet as pangea is still waiting for events to be fired from the dragged tab.
@@ -352,38 +331,33 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return;
     }
 
-    const sourceManager = this._sourceDropTarget;
-    const destinationManager = this._lastDropTarget;
-
-    if (!targetIndex && destinationManager && destinationManager instanceof TabsLayoutManager) {
-      targetIndex = this._tabPlaceholderIndex ?? destinationManager.getTabsIncludingRepeats().length;
-    }
-
     const tab = this._draggedTab;
-
-    if (!tab) {
-      return;
-    }
-
+    const sourceManager = this._sourceDropTarget;
     const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === tab);
-    this._draggedTab = undefined;
 
-    // moving within the same TabsLayoutManager
-    if (sourceManager === destinationManager) {
+    // targetIndex !== undefined => dropped in the same manager, target index provided by hello-pangea
+    if (targetIndex !== undefined) {
       if (sourceIndex === targetIndex) {
         return;
       }
-      sourceManager.moveTab(sourceIndex, targetIndex!);
+      sourceManager.moveTab(sourceIndex, targetIndex);
       return;
     }
-    // moving to a different TabsLayoutManager
-    else if (destinationManager && destinationManager instanceof TabsLayoutManager) {
-      const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex!);
+
+    // dropped in a different manager => handled by the orchestrator
+    if (this._lastDropTarget instanceof TabsLayoutManager) {
+      const destinationManager = this._lastDropTarget;
+      targetIndex = targetIndex ?? this._targetTabIndex ?? destinationManager.getTabsIncludingRepeats().length;
+
+      if (!tab) {
+        return;
+      }
+
+      this._draggedTab = undefined;
+      const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex);
       // When moving a tab into a new tab group, make it the active tab.
       this._moveTabBetweenManagers(tab, sourceManager, destinationManager, realDestinationIndex);
     }
-
-    this.cleanUpTabDrag();
   }
 
   private _moveTabBetweenManagers(

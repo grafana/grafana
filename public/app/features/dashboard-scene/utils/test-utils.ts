@@ -441,14 +441,41 @@ export function setupTabsTest(senario: TabsTestSetup) {
   dashboard.activate?.();
   const orchestrator = dashboard.state.layoutOrchestrator!;
 
+  function simulateMoveOverTheSameManager() {
+    document.body.dispatchEvent(new MouseEvent('pointerdown'));
+    orchestrator.startTabDrag(sourceManager!.state.key!, drag!.state.key!);
+
+    document.body.dispatchEvent(new MouseEvent('pointermove'));
+    // @ts-expect-error - accessing private property for testing
+    orchestrator._lastDropTarget = undefined; // orchestrator keeps track only of different targets
+
+    document.body.dispatchEvent(new MouseEvent('pointerup'));
+    // @ts-expect-error - accessing private property for testing
+    orchestrator._targetTabIndex = -1; // orchestrator will show no valid index as lastDropTargetIs undefined
+    orchestrator.stopTabDrag(destIndex); // hello-pangea provides the index
+  }
+
+  function simulateMoveOverDifferentManager() {
+    document.body.dispatchEvent(new MouseEvent('pointerdown'));
+    orchestrator.startTabDrag(sourceManager!.state.key!, drag!.state.key!);
+
+    document.body.dispatchEvent(new MouseEvent('pointermove'));
+    // @ts-expect-error - accessing private property for testing
+    orchestrator._lastDropTarget = destManager!;
+
+    document.body.dispatchEvent(new MouseEvent('pointerup'));
+    // @ts-expect-error - accessing private property for testing
+    orchestrator._targetTabIndex = destIndex;
+    orchestrator.stopTabDrag(undefined);
+  }
+
   return {
     performDrag: () => {
-      // Simulate dnd start
-      orchestrator.startTabDrag(sourceManager!.state.key!, drag!.state.key!);
-      // Simulate pointer move over destination tabs manager so orchestrator considers it a valid drop target
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = destManager!;
-      orchestrator.stopTabDrag(destIndex);
+      if (sourceManager!.state.key! === destManager!.state.key!) {
+        simulateMoveOverTheSameManager();
+      } else {
+        simulateMoveOverDifferentManager();
+      }
     },
     assertExpectedTabs: () => {
       const all = managers.map((manager) => {

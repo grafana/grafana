@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -217,7 +216,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 		require.True(t, responder.called)
 		require.NotNil(t, responder.err)
-		require.Equal(t, "search failed", responder.err.Error())
+		require.Contains(t, responder.err.Error(), "search failed")
 	})
 
 	t.Run("should return JSON response with teams", func(t *testing.T) {
@@ -269,12 +268,11 @@ func TestUserTeamREST_Connect(t *testing.T) {
 
 		httpHandler.ServeHTTP(w, req)
 
-		require.False(t, responder.called)
-		require.Equal(t, http.StatusOK, w.Code)
+		require.True(t, responder.called)
+		require.Equal(t, http.StatusOK, responder.code)
 
-		var result iamv0alpha1.GetTeamsBody
-		err = json.Unmarshal(w.Body.Bytes(), &result)
-		require.NoError(t, err)
+		result, ok := responder.obj.(*iamv0alpha1.GetTeamsResponse)
+		require.True(t, ok)
 		require.Len(t, result.Items, 2)
 		require.Equal(t, "user1", result.Items[0].User)
 		require.Equal(t, "team1", result.Items[0].Team)

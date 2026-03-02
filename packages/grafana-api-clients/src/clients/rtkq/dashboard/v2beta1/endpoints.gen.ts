@@ -833,11 +833,239 @@ export type DashboardTabRepeatOptions = {
   mode: string;
   value: string;
 };
+export type DashboardV2Beta1AdhocVariableKindDatasource = {
+  name?: string;
+};
+export type DashboardAdHocFilterWithLabels = {
+  /** @deprecated */
+  condition?: string;
+  forceEdit?: boolean;
+  key: string;
+  keyLabel?: string;
+  operator: string;
+  origin?: string;
+  value: string;
+  valueLabels?: string[];
+  values?: string[];
+};
+export type DashboardStringOrFloat64 = {
+  Float64?: number;
+  String?: string;
+};
+export type DashboardMetricFindValue = {
+  expandable?: boolean;
+  group?: string;
+  text: string;
+  value?: DashboardStringOrFloat64;
+};
+export type DashboardDatasourceControlSourceRef = {
+  /** The plugin type-id */
+  group: string;
+  type: string;
+};
+export type DashboardAdhocVariableSpec = {
+  allowCustomValue: boolean;
+  baseFilters: DashboardAdHocFilterWithLabels[];
+  defaultKeys: DashboardMetricFindValue[];
+  description?: string;
+  filters: DashboardAdHocFilterWithLabels[];
+  hide: string;
+  label?: string;
+  name: string;
+  origin?: DashboardDatasourceControlSourceRef;
+  skipUrlSync: boolean;
+};
+export type DashboardAdhocVariableKind = {
+  datasource?: DashboardV2Beta1AdhocVariableKindDatasource;
+  group: string;
+  kind: string;
+  spec: DashboardAdhocVariableSpec;
+};
+export type DashboardStringOrArrayOfString = {
+  ArrayOfString?: string[];
+  String?: string;
+};
+export type DashboardVariableOption = {
+  /** Additional properties for multi-props variables */
+  properties?: {
+    [key: string]: string;
+  };
+  /** Whether the option is selected or not */
+  selected?: boolean;
+  /** Text to be displayed for the option */
+  text: DashboardStringOrArrayOfString;
+  /** Value of the option */
+  value: DashboardStringOrArrayOfString;
+};
+export type DashboardConstantVariableSpec = {
+  current: DashboardVariableOption;
+  description?: string;
+  hide: string;
+  label?: string;
+  name: string;
+  origin?: DashboardDatasourceControlSourceRef;
+  query: string;
+  skipUrlSync: boolean;
+};
+export type DashboardConstantVariableKind = {
+  kind: string;
+  spec: DashboardConstantVariableSpec;
+};
+export type DashboardCustomVariableSpec = {
+  allValue?: string;
+  allowCustomValue: boolean;
+  current: DashboardVariableOption;
+  description?: string;
+  hide: string;
+  includeAll: boolean;
+  label?: string;
+  multi: boolean;
+  name: string;
+  options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
+  query: string;
+  skipUrlSync: boolean;
+  valuesFormat?: string;
+};
+export type DashboardCustomVariableKind = {
+  kind: string;
+  spec: DashboardCustomVariableSpec;
+};
+export type DashboardDatasourceVariableSpec = {
+  allValue?: string;
+  allowCustomValue: boolean;
+  current: DashboardVariableOption;
+  description?: string;
+  hide: string;
+  includeAll: boolean;
+  label?: string;
+  multi: boolean;
+  name: string;
+  options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
+  pluginId: string;
+  refresh: string;
+  regex: string;
+  skipUrlSync: boolean;
+};
+export type DashboardDatasourceVariableKind = {
+  kind: string;
+  spec: DashboardDatasourceVariableSpec;
+};
+export type DashboardV2Beta1GroupByVariableKindDatasource = {
+  name?: string;
+};
+export type DashboardGroupByVariableSpec = {
+  current: DashboardVariableOption;
+  defaultValue?: DashboardVariableOption;
+  description?: string;
+  hide: string;
+  label?: string;
+  multi: boolean;
+  name: string;
+  options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
+  skipUrlSync: boolean;
+};
+export type DashboardGroupByVariableKind = {
+  datasource?: DashboardV2Beta1GroupByVariableKindDatasource;
+  group: string;
+  kind: string;
+  spec: DashboardGroupByVariableSpec;
+};
+export type DashboardIntervalVariableSpec = {
+  auto: boolean;
+  auto_count: number;
+  auto_min: string;
+  current: DashboardVariableOption;
+  description?: string;
+  hide: string;
+  label?: string;
+  name: string;
+  options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
+  query: string;
+  refresh: string;
+  skipUrlSync: boolean;
+};
+export type DashboardIntervalVariableKind = {
+  kind: string;
+  spec: DashboardIntervalVariableSpec;
+};
+export type DashboardQueryVariableSpec = {
+  allValue?: string;
+  allowCustomValue: boolean;
+  current: DashboardVariableOption;
+  definition?: string;
+  description?: string;
+  hide: string;
+  includeAll: boolean;
+  label?: string;
+  multi: boolean;
+  name: string;
+  options: DashboardVariableOption[];
+  origin?: DashboardDatasourceControlSourceRef;
+  placeholder?: string;
+  query: DashboardDataQueryKind;
+  refresh: string;
+  regex: string;
+  regexApplyTo?: string;
+  skipUrlSync: boolean;
+  sort: string;
+  staticOptions?: DashboardVariableOption[];
+  staticOptionsOrder?: string;
+};
+export type DashboardQueryVariableKind = {
+  kind: string;
+  spec: DashboardQueryVariableSpec;
+};
+export type DashboardSwitchVariableSpec = {
+  current: string;
+  description?: string;
+  disabledValue: string;
+  enabledValue: string;
+  hide: string;
+  label?: string;
+  name: string;
+  origin?: DashboardDatasourceControlSourceRef;
+  skipUrlSync: boolean;
+};
+export type DashboardSwitchVariableKind = {
+  kind: string;
+  spec: DashboardSwitchVariableSpec;
+};
+export type DashboardTextVariableSpec = {
+  current: DashboardVariableOption;
+  description?: string;
+  hide: string;
+  label?: string;
+  name: string;
+  origin?: DashboardDatasourceControlSourceRef;
+  query: string;
+  skipUrlSync: boolean;
+};
+export type DashboardTextVariableKind = {
+  kind: string;
+  spec: DashboardTextVariableSpec;
+};
+export type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind =
+  {
+    AdhocVariableKind?: DashboardAdhocVariableKind;
+    ConstantVariableKind?: DashboardConstantVariableKind;
+    CustomVariableKind?: DashboardCustomVariableKind;
+    DatasourceVariableKind?: DashboardDatasourceVariableKind;
+    GroupByVariableKind?: DashboardGroupByVariableKind;
+    IntervalVariableKind?: DashboardIntervalVariableKind;
+    QueryVariableKind?: DashboardQueryVariableKind;
+    SwitchVariableKind?: DashboardSwitchVariableKind;
+    TextVariableKind?: DashboardTextVariableKind;
+  };
 export type DashboardTabsLayoutTabSpec = {
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
   repeat?: DashboardTabRepeatOptions;
   title?: string;
+  variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
 };
 export type DashboardTabsLayoutTabKind = {
   kind: string;
@@ -868,6 +1096,7 @@ export type DashboardRowsLayoutRowSpec = {
   layout: DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind;
   repeat?: DashboardRowRepeatOptions;
   title?: string;
+  variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
 };
 export type DashboardRowsLayoutRowKind = {
   kind: string;
@@ -895,6 +1124,8 @@ export type DashboardDashboardLink = {
   includeVars: boolean;
   /** If true, includes current time range in the link as query params */
   keepTime: boolean;
+  /** The source that registered the link (if any) */
+  origin?: DashboardDatasourceControlSourceRef;
   /** Placement can be used to display the link somewhere else on the dashboard other than above the visualisations. */
   placement?: string;
   /** List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards */
@@ -937,219 +1168,6 @@ export type DashboardTimeSettingsSpec = {
   /** Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday". */
   weekStart?: string;
 };
-export type DashboardV2Beta1AdhocVariableKindDatasource = {
-  name?: string;
-};
-export type DashboardAdHocFilterWithLabels = {
-  /** @deprecated */
-  condition?: string;
-  forceEdit?: boolean;
-  key: string;
-  keyLabel?: string;
-  operator: string;
-  origin?: string;
-  value: string;
-  valueLabels?: string[];
-  values?: string[];
-};
-export type DashboardStringOrFloat64 = {
-  Float64?: number;
-  String?: string;
-};
-export type DashboardMetricFindValue = {
-  expandable?: boolean;
-  group?: string;
-  text: string;
-  value?: DashboardStringOrFloat64;
-};
-export type DashboardAdhocVariableSpec = {
-  allowCustomValue: boolean;
-  baseFilters: DashboardAdHocFilterWithLabels[];
-  defaultKeys: DashboardMetricFindValue[];
-  description?: string;
-  filters: DashboardAdHocFilterWithLabels[];
-  hide: string;
-  label?: string;
-  name: string;
-  skipUrlSync: boolean;
-};
-export type DashboardAdhocVariableKind = {
-  datasource?: DashboardV2Beta1AdhocVariableKindDatasource;
-  group: string;
-  kind: string;
-  spec: DashboardAdhocVariableSpec;
-};
-export type DashboardStringOrArrayOfString = {
-  ArrayOfString?: string[];
-  String?: string;
-};
-export type DashboardVariableOption = {
-  /** Additional properties for multi-props variables */
-  properties?: {
-    [key: string]: string;
-  };
-  /** Whether the option is selected or not */
-  selected?: boolean;
-  /** Text to be displayed for the option */
-  text: DashboardStringOrArrayOfString;
-  /** Value of the option */
-  value: DashboardStringOrArrayOfString;
-};
-export type DashboardConstantVariableSpec = {
-  current: DashboardVariableOption;
-  description?: string;
-  hide: string;
-  label?: string;
-  name: string;
-  query: string;
-  skipUrlSync: boolean;
-};
-export type DashboardConstantVariableKind = {
-  kind: string;
-  spec: DashboardConstantVariableSpec;
-};
-export type DashboardCustomVariableSpec = {
-  allValue?: string;
-  allowCustomValue: boolean;
-  current: DashboardVariableOption;
-  description?: string;
-  hide: string;
-  includeAll: boolean;
-  label?: string;
-  multi: boolean;
-  name: string;
-  options: DashboardVariableOption[];
-  query: string;
-  skipUrlSync: boolean;
-  valuesFormat?: string;
-};
-export type DashboardCustomVariableKind = {
-  kind: string;
-  spec: DashboardCustomVariableSpec;
-};
-export type DashboardDatasourceVariableSpec = {
-  allValue?: string;
-  allowCustomValue: boolean;
-  current: DashboardVariableOption;
-  description?: string;
-  hide: string;
-  includeAll: boolean;
-  label?: string;
-  multi: boolean;
-  name: string;
-  options: DashboardVariableOption[];
-  pluginId: string;
-  refresh: string;
-  regex: string;
-  skipUrlSync: boolean;
-};
-export type DashboardDatasourceVariableKind = {
-  kind: string;
-  spec: DashboardDatasourceVariableSpec;
-};
-export type DashboardV2Beta1GroupByVariableKindDatasource = {
-  name?: string;
-};
-export type DashboardGroupByVariableSpec = {
-  current: DashboardVariableOption;
-  defaultValue?: DashboardVariableOption;
-  description?: string;
-  hide: string;
-  label?: string;
-  multi: boolean;
-  name: string;
-  options: DashboardVariableOption[];
-  skipUrlSync: boolean;
-};
-export type DashboardGroupByVariableKind = {
-  datasource?: DashboardV2Beta1GroupByVariableKindDatasource;
-  group: string;
-  kind: string;
-  spec: DashboardGroupByVariableSpec;
-};
-export type DashboardIntervalVariableSpec = {
-  auto: boolean;
-  auto_count: number;
-  auto_min: string;
-  current: DashboardVariableOption;
-  description?: string;
-  hide: string;
-  label?: string;
-  name: string;
-  options: DashboardVariableOption[];
-  query: string;
-  refresh: string;
-  skipUrlSync: boolean;
-};
-export type DashboardIntervalVariableKind = {
-  kind: string;
-  spec: DashboardIntervalVariableSpec;
-};
-export type DashboardQueryVariableSpec = {
-  allValue?: string;
-  allowCustomValue: boolean;
-  current: DashboardVariableOption;
-  definition?: string;
-  description?: string;
-  hide: string;
-  includeAll: boolean;
-  label?: string;
-  multi: boolean;
-  name: string;
-  options: DashboardVariableOption[];
-  placeholder?: string;
-  query: DashboardDataQueryKind;
-  refresh: string;
-  regex: string;
-  regexApplyTo?: string;
-  skipUrlSync: boolean;
-  sort: string;
-  staticOptions?: DashboardVariableOption[];
-  staticOptionsOrder?: string;
-};
-export type DashboardQueryVariableKind = {
-  kind: string;
-  spec: DashboardQueryVariableSpec;
-};
-export type DashboardSwitchVariableSpec = {
-  current: string;
-  description?: string;
-  disabledValue: string;
-  enabledValue: string;
-  hide: string;
-  label?: string;
-  name: string;
-  skipUrlSync: boolean;
-};
-export type DashboardSwitchVariableKind = {
-  kind: string;
-  spec: DashboardSwitchVariableSpec;
-};
-export type DashboardTextVariableSpec = {
-  current: DashboardVariableOption;
-  description?: string;
-  hide: string;
-  label?: string;
-  name: string;
-  query: string;
-  skipUrlSync: boolean;
-};
-export type DashboardTextVariableKind = {
-  kind: string;
-  spec: DashboardTextVariableSpec;
-};
-export type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind =
-  {
-    AdhocVariableKind?: DashboardAdhocVariableKind;
-    ConstantVariableKind?: DashboardConstantVariableKind;
-    CustomVariableKind?: DashboardCustomVariableKind;
-    DatasourceVariableKind?: DashboardDatasourceVariableKind;
-    GroupByVariableKind?: DashboardGroupByVariableKind;
-    IntervalVariableKind?: DashboardIntervalVariableKind;
-    QueryVariableKind?: DashboardQueryVariableKind;
-    SwitchVariableKind?: DashboardSwitchVariableKind;
-    TextVariableKind?: DashboardTextVariableKind;
-  };
 export type DashboardSpec = {
   annotations: DashboardAnnotationQueryKind[];
   /** Configuration of dashboard cursor sync behavior. "Off" for no shared crosshair or tooltip (default). "Crosshair" for shared crosshair. "Tooltip" for shared crosshair AND shared tooltip. */
