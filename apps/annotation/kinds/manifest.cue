@@ -6,6 +6,7 @@ manifest: {
 	versions: {
 	    "v0alpha1": v0alpha1
 	}
+	roles: {}
 }
 
 v0alpha1: {
@@ -19,6 +20,15 @@ v0alpha1: {
                             tag: string
                             count: number
                         }]
+                    }
+                }
+            }
+            "/search": {
+                "GET": {
+                    response: {
+                        apiVersion: string
+                        kind: string
+                        items: [..._]
                     }
                 }
             }

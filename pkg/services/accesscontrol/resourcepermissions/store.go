@@ -88,6 +88,31 @@ func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd 
 	return err
 }
 
+func (s *store) GetPermissionIDByRoleName(ctx context.Context, orgID int64, roleName string) (int64, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissionIDByRoleName")
+	defer span.End()
+
+	var permissionID int64
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.SQL(`
+			SELECT p.id 
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			WHERE r.name = ? AND r.org_id = ?
+			LIMIT 1
+		`, roleName, orgID).Get(&permissionID)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return fmt.Errorf("permission not found for role")
+		}
+		return nil
+	})
+
+	return permissionID, err
+}
+
 func (s *store) SetUserResourcePermission(
 	ctx context.Context, orgID int64, usr accesscontrol.User,
 	cmd SetResourcePermissionCommand,

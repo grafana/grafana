@@ -882,7 +882,12 @@ const injectedRtkApi = api
         providesTags: ['datasources'],
       }),
       getDataSourceCacheConfig: build.query<GetDataSourceCacheConfigApiResponse, GetDataSourceCacheConfigApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache` }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache`,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         providesTags: ['enterprise'],
       }),
       setDataSourceCacheConfig: build.mutation<SetDataSourceCacheConfigApiResponse, SetDataSourceCacheConfigApiArg>({
@@ -890,6 +895,9 @@ const injectedRtkApi = api
           url: `/datasources/${queryArg.dataSourceUid}/cache`,
           method: 'POST',
           body: queryArg.cacheConfigSetter,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
         }),
         invalidatesTags: ['enterprise'],
       }),
@@ -898,11 +906,23 @@ const injectedRtkApi = api
         invalidatesTags: ['enterprise'],
       }),
       disableDataSourceCache: build.mutation<DisableDataSourceCacheApiResponse, DisableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/disable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/disable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       enableDataSourceCache: build.mutation<EnableDataSourceCacheApiResponse, EnableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/enable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/enable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       queryMetricsWithExpressions: build.mutation<
@@ -2727,10 +2747,12 @@ export type CallDatasourceResourceWithUidApiArg = {
 export type GetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type GetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type SetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type SetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
   cacheConfigSetter: CacheConfigSetter;
 };
 export type CleanDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
@@ -2740,10 +2762,12 @@ export type CleanDataSourceCacheApiArg = {
 export type DisableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type DisableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type EnableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type EnableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type QueryMetricsWithExpressionsApiResponse = /** status 200 (empty) */
   | QueryDataResponseContainsTheResultsFromAQueryDataRequest
@@ -4027,6 +4051,7 @@ export type Annotation = {
   timeEnd?: number;
   updated?: number;
   userId?: number;
+  userUID?: string;
 };
 export type PostAnnotationsCmd = {
   dashboardId?: number;
@@ -5625,20 +5650,7 @@ export type PolicyMappingRepresentsAPolicyMappingEntryInThePolicyMappingsExtensi
 };
 export type PublicKeyAlgorithm = number;
 export type SignatureAlgorithm = number;
-export type Userinfo = object;
-export type AUrlRepresentsAParsedUrlTechnicallyAUriReference = {
-  ForceQuery?: boolean;
-  Fragment?: string;
-  Host?: string;
-  OmitHost?: boolean;
-  Opaque?: string;
-  Path?: string;
-  RawFragment?: string;
-  RawPath?: string;
-  RawQuery?: string;
-  Scheme?: string;
-  User?: Userinfo;
-};
+export type Url = string;
 export type ACertificateRepresentsAnX509Certificate = {
   AuthorityKeyId?: number[];
   /** BasicConstraintsValid indicates whether IsCA, MaxPathLen,
@@ -5783,7 +5795,7 @@ export type ACertificateRepresentsAnX509Certificate = {
   SignatureAlgorithm?: SignatureAlgorithm;
   Subject?: Name;
   SubjectKeyId?: number[];
-  URIs?: AUrlRepresentsAParsedUrlTechnicallyAUriReference[];
+  URIs?: Url[];
   /** UnhandledCriticalExtensions contains a list of extension IDs that
     were not (fully) processed when parsing. Verify will fail if this
     slice is non-empty, unless verification is delegated to an OS
@@ -5805,7 +5817,7 @@ export type JsonWebKey = {
   CertificateThumbprintSHA256?: number[];
   /** X.509 certificate chain, parsed from `x5c` header. */
   Certificates?: ACertificateRepresentsAnX509Certificate[];
-  CertificatesURL?: AUrlRepresentsAParsedUrlTechnicallyAUriReference;
+  CertificatesURL?: Url;
   /** Key is the Go in-memory representation of this key. It must have one
     of these types:
     ed25519.PublicKey

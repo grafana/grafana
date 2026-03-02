@@ -1,14 +1,15 @@
 import { HttpResponse, http } from 'msw';
 
+import { API_GROUP, API_VERSION, Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import {
   getAlertmanagerConfig,
   setAlertmanagerConfig,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
-import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
+import { receiverConfigToK8sIntegration } from 'app/features/alerting/unified/utils/k8s/utils';
 
 const usedByPolicies = ['grafana-default-email'];
 const usedByRules = ['grafana-default-email'];
@@ -28,6 +29,8 @@ const getReceiversList = () => {
       // Only receivers from Grafana configuration can be used (not imported ones)
       const canUse = provenance !== KnownProvenance.ConvertedPrometheus;
       return {
+        apiVersion: `${API_GROUP}/${API_VERSION}`,
+        kind: 'Receiver',
         metadata: {
           // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
           uid: contactPoint.name,
@@ -43,15 +46,12 @@ const getReceiversList = () => {
         },
         spec: {
           title: contactPoint.name,
-          integrations: contactPoint.grafana_managed_receiver_configs || [],
+          integrations: (contactPoint.grafana_managed_receiver_configs || []).map(receiverConfigToK8sIntegration),
         },
       };
     }) || [];
 
-  return getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver>(
-    'ReceiverList',
-    mappedReceivers
-  );
+  return getK8sResponse<Receiver>('ReceiverList', mappedReceivers);
 };
 
 const listNamespacedReceiverHandler = () =>

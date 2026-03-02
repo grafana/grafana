@@ -53,11 +53,12 @@ describe('QueryEditorDetailsSidebar', () => {
     expect(screen.getByLabelText('Time shift')).toBeInTheDocument();
   });
 
-  it('should close sidebar when header is clicked', async () => {
-    renderSidebar();
+  it('should close sidebar when clicking outside', async () => {
+    const { user } = renderSidebar();
 
-    const header = screen.getByRole('button', { name: /query options/i });
-    fireEvent.click(header);
+    // ClickOutsideWrapper calls closeSidebar when a click lands outside the sidebar.
+    // Simulate by clicking the document body directly.
+    await user.click(document.body);
 
     expect(mockCloseSidebar).toHaveBeenCalled();
   });
@@ -203,8 +204,8 @@ describe('QueryEditorDetailsSidebar', () => {
     it('should display computed interval from data request', () => {
       renderSidebar();
 
-      // The interval should be displayed as read-only text
-      expect(screen.getByText('15s')).toBeInTheDocument();
+      // Interval is rendered as a disabled input — use getByDisplayValue.
+      expect(screen.getByDisplayValue('15s')).toBeInTheDocument();
     });
 
     it('should display dash when interval is not available', () => {
@@ -216,8 +217,8 @@ describe('QueryEditorDetailsSidebar', () => {
 
       renderSidebar(mockOptions, qrStateWithoutInterval);
 
-      // Should show "-" when no interval
-      expect(screen.getByText('-')).toBeInTheDocument();
+      // Should show "-" in the disabled interval input when no interval is available.
+      expect(screen.getByDisplayValue('-')).toBeInTheDocument();
     });
   });
 });

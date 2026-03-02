@@ -194,7 +194,7 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 		AppModeProduction:     true,
 		DisableAnonymous:      true,
 		APIServerStorageType:  "unified",
-		DBMaxConns:            4,
+		DBMaxConns:            50,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
 				DualWriterMode: rest.Mode5,
@@ -2222,10 +2222,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 							"spec": {
 								"title": "%s",
 								"schemaVersion": 42,
-								"layout": {
-									"kind": "GridLayout",
-									"items": []
-								}
+								"panels": []
 							}
 						}`, metadata, dashboardTitle)
 

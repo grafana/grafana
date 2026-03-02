@@ -173,6 +173,69 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 	return keys, err
 }
 
+// getFolderFullpaths fetches fullpaths for multiple folders using a background user.
+// Returns a map of folder UID -> fullpath, or nil if FolderService is not configured.
+func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUIDs []string) (map[string]string, error) {
+	if st.FolderService == nil {
+		return nil, fmt.Errorf("folder service is not configured")
+	}
+	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
+		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+	})
+	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+		OrgID:        orgID,
+		UIDs:         folderUIDs,
+		WithFullpath: true,
+		SignedInUser: bgUser,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string, len(folders))
+	for _, f := range folders {
+		result[f.UID] = f.Fullpath
+	}
+	return result, nil
+}
+
+// UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules
+// in the specified folders using the K8s folder service.
+func (st DBstore) UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
+	if len(folderUIDs) == 0 {
+		return nil
+	}
+
+	logger := st.Logger.New("org_id", orgID, "folder_uid_count", len(folderUIDs))
+
+	folderPaths, err := st.getFolderFullpaths(ctx, orgID, folderUIDs)
+	if err != nil {
+		logger.Error("Failed to fetch folders from folder service", "error", err)
+		return err
+	}
+
+	// Update alert rules for each folder
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		for _, folderUID := range folderUIDs {
+			fullpath, ok := folderPaths[folderUID]
+			if !ok {
+				logger.Warn("Folder not found, skipping fullpath update", "folder_uid", folderUID)
+				continue
+			}
+
+			// Update all rules in this folder
+			_, err := sess.Table(alertRule{}).
+				Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).
+				MustCols("folder_fullpath").
+				Update(map[string]any{"folder_fullpath": fullpath})
+			if err != nil {
+				logger.Error("Failed to update folder_fullpath for folder", "error", err, "folder_uid", folderUID)
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // GetAlertRuleByUID is a handler for retrieving an alert rule from that database by its UID and organisation ID.
 // It returns ngmodels.ErrAlertRuleNotFound if no alert rule is found for the provided ID.
 func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (result *ngmodels.AlertRule, err error) {
@@ -358,11 +421,73 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 	return result, err
 }
 
+// orgNamespaces represents a collection of unique namespace UIDs for a specific organization.
+type orgNamespaces struct {
+	OrgID         int64
+	NamespaceUIDs []string
+}
+
+// collectNamespaceUIDsByOrg extracts unique namespace UIDs grouped by org ID from a slice of alert rules.
+// Returns a slice of orgNamespaces, one per organization.
+func collectNamespaceUIDsByOrg(rules []*ngmodels.AlertRule) []orgNamespaces {
+	// Use map to collect unique namespace UIDs per org
+	namespaceUIDsByOrg := make(map[int64]map[string]struct{})
+	for _, rule := range rules {
+		if rule.NamespaceUID != "" {
+			if namespaceUIDsByOrg[rule.OrgID] == nil {
+				namespaceUIDsByOrg[rule.OrgID] = make(map[string]struct{})
+			}
+			namespaceUIDsByOrg[rule.OrgID][rule.NamespaceUID] = struct{}{}
+		}
+	}
+
+	// Convert to slice of orgNamespaces
+	result := make([]orgNamespaces, 0, len(namespaceUIDsByOrg))
+	for orgID, namespaceUIDs := range namespaceUIDsByOrg {
+		uids := make([]string, 0, len(namespaceUIDs))
+		for uid := range namespaceUIDs {
+			uids = append(uids, uid)
+		}
+		result = append(result, orgNamespaces{
+			OrgID:         orgID,
+			NamespaceUIDs: uids,
+		})
+	}
+	return result
+}
+
+// fetchFolderFullpathsByOrg fetches folder fullpaths for all namespace UIDs grouped by org ID.
+// Returns a map where keys are org IDs and values are maps of namespace UID to folder fullpath.
+// If fetching fails for an org, that org will not be in the result map.
+func (st DBstore) fetchFolderFullpathsByOrg(ctx context.Context, orgNamespaces []orgNamespaces) map[int64]map[string]string {
+	folderFullpathsByOrg := make(map[int64]map[string]string)
+	for _, org := range orgNamespaces {
+		paths, err := st.getFolderFullpaths(ctx, org.OrgID, org.NamespaceUIDs)
+		if err != nil {
+			st.Logger.Warn("Failed to fetch folder fullpaths", "org_id", org.OrgID, "error", err)
+			continue
+		}
+		if paths != nil {
+			folderFullpathsByOrg[org.OrgID] = paths
+		}
+	}
+	return folderFullpathsByOrg
+}
+
 // InsertAlertRules is a handler for creating/updating alert rules.
 // Returns the UID and ID of rules that were created in the same order as the input rules.
 func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.InsertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
+
+	alertRules := make([]*ngmodels.AlertRule, len(rules))
+	for i := range rules {
+		alertRules[i] = &rules[i].AlertRule
+	}
+
+	orgNamespaces := collectNamespaceUIDsByOrg(alertRules)
+	folderFullpathsByOrg := st.fetchFolderFullpathsByOrg(ctx, orgNamespaces)
+
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		newRules := make([]alertRule, 0, len(rules))
 		ruleVersions := make([]alertRuleVersion, 0, len(rules))
@@ -381,6 +506,13 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			}
 			if err := (&r).PreSave(TimeNow, user); err != nil {
 				return err
+			}
+
+			// Populate folder fullpath from pre-fetched map
+			if r.NamespaceUID != "" {
+				if orgPaths, ok := folderFullpathsByOrg[r.OrgID]; ok {
+					r.FolderFullpath = orgPaths[r.NamespaceUID]
+				}
 			}
 
 			converted, err := alertRuleFromModelsAlertRule(r.AlertRule)
@@ -432,6 +564,14 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 
 // UpdateAlertRules is a handler for updating alert rules.
 func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.UpdateRule) error {
+	alertRules := make([]*ngmodels.AlertRule, len(rules))
+	for i := range rules {
+		alertRules[i] = &rules[i].New
+	}
+
+	orgNamespaces := collectNamespaceUIDsByOrg(alertRules)
+	folderFullpathsByOrg := st.fetchFolderFullpathsByOrg(ctx, orgNamespaces)
+
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		err := st.preventIntermediateUniqueConstraintViolations(sess, rules)
 		if err != nil {
@@ -453,6 +593,14 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			if err := (&r.New).PreSave(TimeNow, user); err != nil {
 				return err
 			}
+
+			// Populate folder fullpath from pre-fetched map
+			if r.New.NamespaceUID != "" {
+				if orgPaths, ok := folderFullpathsByOrg[r.New.OrgID]; ok {
+					r.New.FolderFullpath = orgPaths[r.New.NamespaceUID]
+				}
+			}
+
 			converted, err := alertRuleFromModelsAlertRule(r.New)
 			if err != nil {
 				return fmt.Errorf("failed to convert alert rule %s to storage model: %w", r.New.UID, err)
@@ -684,6 +832,9 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				NamespaceUID: converted.NamespaceUID,
 				RuleGroup:    converted.RuleGroup,
 			}
+			if query.SortByFullpath {
+				key.FolderFullpath = converted.FolderFullpath
+			}
 			if key != cursor {
 				// Check if we've reached the group limit
 				if query.Limit > 0 && groupsFetched == query.Limit {
@@ -718,6 +869,15 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 }
 
 func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
+	if c.FolderFullpath != "" {
+		return sess.And(
+			"((folder_fullpath > ?) OR (folder_fullpath = ? AND namespace_uid > ?) OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group > ?))",
+			c.FolderFullpath,
+			c.FolderFullpath, c.NamespaceUID,
+			c.FolderFullpath, c.NamespaceUID, c.RuleGroup,
+		)
+	}
+	// fallback to previous cursor condition if folder fullpath is not available, this means that pagination will be less efficient as it cannot take advantage of folder fullpath ordering, but at least it will work and not return duplicate or missing groups.
 	return sess.And(
 		"((namespace_uid > ?) OR (namespace_uid = ? AND rule_group > ?))",
 		c.NamespaceUID, c.NamespaceUID, c.RuleGroup,
@@ -991,11 +1151,23 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	case ngmodels.RuleTypeFilterAll:
 		// no additional filter
 	default:
-		return nil, groupsSet, fmt.Errorf("unknown rule type filter %q", query.RuleType)
+		return nil, groupsSet, fmt.Errorf("unknown rule type filter %v", query.RuleType)
 	}
 
-	q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+	if query.SortByFullpath {
+		q = applyListAlertRulesOrderByFullpath(q)
+	} else {
+		q = applyListAlertRulesOrderByNamespace(q)
+	}
 	return q, groupsSet, nil
+}
+
+func applyListAlertRulesOrderByNamespace(q *xorm.Session) *xorm.Session {
+	return q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+}
+
+func applyListAlertRulesOrderByFullpath(q *xorm.Session) *xorm.Session {
+	return q.Asc("folder_fullpath", "namespace_uid", "rule_group", "rule_group_idx", "id")
 }
 
 func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}) (*ngmodels.AlertRule, bool) {
@@ -1131,7 +1303,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 	var result []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		alertRulesSql := sess.Table("alert_rule").Select("org_id, uid, version")
-		var disabledOrgs []int64
+		disabledOrgs := make([]int64, 0, len(st.Cfg.DisabledOrgs))
 
 		for orgID := range st.Cfg.DisabledOrgs {
 			disabledOrgs = append(disabledOrgs, orgID)
@@ -1154,7 +1326,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var disabledOrgs []int64
+		disabledOrgs := make([]int64, 0, len(st.Cfg.DisabledOrgs))
 		for orgID := range st.Cfg.DisabledOrgs {
 			disabledOrgs = append(disabledOrgs, orgID)
 		}

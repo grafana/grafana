@@ -38,7 +38,7 @@ func TestIntegrationCreate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db)
+	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -168,7 +168,7 @@ func TestIntegrationDelete(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db)
+	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -179,8 +179,8 @@ func TestIntegrationDelete(t *testing.T) {
 		})
 	*/
 
-	ancestorUIDs := CreateSubtree(t, folderStore, orgID, "", folder.MaxNestedFolderDepth, "")
-	require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
+	ancestorUIDs := CreateSubtree(t, folderStore, orgID, "", cfg.MaxNestedFolderDepth, "")
+	require.Len(t, ancestorUIDs, cfg.MaxNestedFolderDepth)
 
 	t.Cleanup(func() {
 		for _, uid := range ancestorUIDs[1:] {
@@ -213,7 +213,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db)
+	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -386,7 +386,7 @@ func TestIntegrationGet(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db)
+	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -519,7 +519,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db)
+	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -572,7 +572,7 @@ func TestIntegrationGetParents(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		parentUIDs := make([]string, 0)
+		parentUIDs := make([]string, 0, len(parents))
 		for _, p := range parents {
 			assert.NotEmpty(t, p.URL)
 			parentUIDs = append(parentUIDs, p.UID)
@@ -585,7 +585,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db)
+	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -818,7 +818,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db)
+	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -849,7 +849,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 
 	foldersNum := 10
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db)
+	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -1078,7 +1078,8 @@ func assertAncestorUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, 
 		OrgID: f.OrgID,
 	})
 	require.NoError(t, err)
-	actualAncestorsUIDs := []string{folder.GeneralFolderUID}
+	actualAncestorsUIDs := make([]string, 0, 1+len(ancestors))
+	actualAncestorsUIDs = append(actualAncestorsUIDs, folder.GeneralFolderUID)
 	for _, f := range ancestors {
 		actualAncestorsUIDs = append(actualAncestorsUIDs, f.UID)
 	}
@@ -1093,7 +1094,7 @@ func assertChildrenUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, 
 		OrgID: f.OrgID,
 	})
 	require.NoError(t, err)
-	actualChildrenUIDs := make([]string, 0)
+	actualChildrenUIDs := make([]string, 0, len(ancestors))
 	for _, f := range ancestors {
 		actualChildrenUIDs = append(actualChildrenUIDs, f.UID)
 	}

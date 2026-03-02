@@ -37,10 +37,11 @@ import (
 type Scheme string
 
 const (
-	HTTPScheme   Scheme = "http"
-	HTTPSScheme  Scheme = "https"
-	HTTP2Scheme  Scheme = "h2"
-	SocketScheme Scheme = "socket"
+	HTTPScheme        Scheme = "http"
+	HTTPSScheme       Scheme = "https"
+	HTTP2Scheme       Scheme = "h2"
+	SocketScheme      Scheme = "socket"
+	SocketHTTP2Scheme Scheme = "socket_h2"
 )
 
 const (
@@ -105,6 +106,7 @@ type Cfg struct {
 	ServeFromSubPath  bool
 	StaticRootPath    string
 	Protocol          Scheme
+	ServeOnSocket     bool
 	SocketGid         int
 	SocketMode        int
 	SocketPath        string
@@ -175,6 +177,7 @@ type Cfg struct {
 	RendererDefaultImageWidth      int
 	RendererDefaultImageHeight     int
 	RendererDefaultImageScale      float64
+	RendererCACert                 string
 
 	// Security
 	DisableInitAdminCreation             bool
@@ -361,6 +364,7 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
+	KubernetesAnnotationsAppEnabled    bool
 
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
@@ -526,6 +530,10 @@ type Cfg struct {
 
 	Search SearchSettings
 
+	// MaxNestedFolderDepth is the hard ceiling for folder nesting depth.
+	// The SQL query builders use this value to generate JOIN chains.
+	MaxNestedFolderDepth int
+
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
 	// SAML Auth
@@ -597,7 +605,14 @@ type Cfg struct {
 	UnifiedStorage map[string]UnifiedStorageConfig
 	// DisableDataMigrations will disable resources data migration to unified storage at startup
 	DisableDataMigrations bool
-	MaxPageSizeBytes      int
+	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
+	// Larger values reduce lock contention. Default: 50000 (50MB).
+	MigrationCacheSizeKB int
+	// MigrationParquetBuffer enables bulk migration data through a temporary Parquet file.
+	// This separates the read phase (legacy DB) from the write phase (unified storage)
+	// Default: false.
+	MigrationParquetBuffer bool
+	MaxPageSizeBytes       int
 	// IndexPath the directory where index files are stored.
 	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
@@ -636,12 +651,20 @@ type Cfg struct {
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
 	EnableGarbageCollection                    bool
+	GarbageCollectionDryRun                    bool
 	GarbageCollectionInterval                  time.Duration
 	GarbageCollectionBatchSize                 int
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
+
+	EventRetentionPeriod time.Duration
+	EventPruningInterval time.Duration
+
 	// SimulatedNetworkLatency is used for testing only
-	SimulatedNetworkLatency time.Duration
+	SimulatedNetworkLatency       time.Duration
+	TenantApiServerAddress        string
+	TenantWatcherAllowInsecureTLS bool
+	TenantWatcherCAFile           string
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -831,6 +854,8 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
+	cfg.KubernetesAnnotationsAppEnabled = section.Key("kubernetes_annotations_app_enabled").MustBool(false)
+
 	switch {
 	case cfg.AnnotationMaximumTagsLength > 4096:
 		// ensure that the configuration does not exceed the respective column size
@@ -1115,6 +1140,8 @@ func NewCfg() *Cfg {
 		IsFeatureToggleEnabled: func(_ string) bool {
 			return false
 		},
+
+		MaxNestedFolderDepth: maxDeptFolderSettings(nil),
 	}
 }
 
@@ -1421,6 +1448,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
+	cfg.MaxNestedFolderDepth = maxDeptFolderSettings(iniFile)
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
@@ -1934,6 +1962,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	cfg.RendererDefaultImageWidth = renderSec.Key("default_image_width").MustInt(1000)
 	cfg.RendererDefaultImageHeight = renderSec.Key("default_image_height").MustInt(500)
 	cfg.RendererDefaultImageScale = renderSec.Key("default_image_scale").MustFloat64(1)
+	cfg.RendererCACert = valueAsString(renderSec, "ca_cert_file_path", "")
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
@@ -1980,23 +2009,38 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	protocolStr := valueAsString(server, "protocol", "http")
 
-	if protocolStr == "https" {
+	cfg.ServeOnSocket = server.Key("serve_on_socket").MustBool(false)
+	if cfg.ServeOnSocket && (protocolStr == "http" || protocolStr == "https" || protocolStr == "h2") {
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+	}
+
+	switch protocolStr {
+	case "https":
 		cfg.Protocol = HTTPSScheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
 		cfg.CertPassword = server.Key("cert_pass").String()
-	}
-	if protocolStr == "h2" {
+	case "h2":
 		cfg.Protocol = HTTP2Scheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
 		cfg.CertPassword = server.Key("cert_pass").String()
-	}
-	if protocolStr == "socket" {
+	case "socket":
 		cfg.Protocol = SocketScheme
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
 		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
+	case "socket_h2":
+		cfg.Protocol = SocketHTTP2Scheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
+	default:
 	}
 
 	cfg.MinTLSVersion = valueAsString(server, "min_tls_version", "TLS1.2")
@@ -2168,7 +2212,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		}
 	}
 
-	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", "github|local"))
+	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", ""))
 	if repositoryTypes != "|" && repositoryTypes != "" {
 		cfg.ProvisioningRepositoryTypes = strings.Split(repositoryTypes, "|")
 		for i, s := range cfg.ProvisioningRepositoryTypes {

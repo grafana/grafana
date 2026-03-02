@@ -67,11 +67,9 @@ ARG WIRE_TAGS="oss"
 
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache \
-  # This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
-  binutils-gold \
   bash \
   # Install build dependencies
-  gcc g++ make git; \
+  make git; \
   fi
 
 WORKDIR /tmp/grafana
@@ -123,11 +121,12 @@ COPY apps/example apps/example
 
 RUN go mod download
 
-COPY embed.go Makefile build.go package.json ./
+COPY embed.go Makefile package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
+COPY packages/grafana-data/src/themes/themeDefinitions packages/grafana-data/src/themes/themeDefinitions
 COPY public/app/plugins public/app/plugins
 COPY public/api-merged.json public/api-merged.json
 COPY pkg pkg
@@ -140,6 +139,8 @@ ENV BUILD_BRANCH=${BUILD_BRANCH}
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
+RUN mkdir -p data/plugins-bundled
+
 # From-tarball build stage
 FROM ${BASE_IMAGE} AS tgz-builder
 
@@ -151,6 +152,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # add -v to make tar print every file it extracts
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
+
+RUN mkdir -p data/plugins-bundled
 
 # helpers for COPY --from
 FROM ${GO_SRC} AS go-src
@@ -239,6 +242,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
+COPY --from=go-src /tmp/grafana/data/plugins-bundled ./data/plugins-bundled
 
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version
