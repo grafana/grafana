@@ -1,4 +1,4 @@
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAlertGroupsKey } from './utils';
 
@@ -13,7 +13,7 @@ const makeGroup = (...fingerprints: string[]): AlertmanagerGroup => ({
     labels: {},
     annotations: {},
     receivers: [],
-    status: { state: 'active' as const, silencedBy: [], inhibitedBy: [] },
+    status: { state: AlertState.Active, silencedBy: [], inhibitedBy: [] },
   })),
 });
 
