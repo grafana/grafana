@@ -21,7 +21,7 @@ interface PanelWrapperProps {
 function PanelWrapper({ panel, isLazy, containerRef }: PanelWrapperProps) {
   if (isLazy) {
     return (
-      <LazyLoader key={panel.state.key!} ref={containerRef} className={panelWrapper}>
+      <LazyLoader key={panel.state.key!} ref={containerRef} className={panelWrapper} mode="query">
         <panel.Component model={panel} />
       </LazyLoader>
     );
