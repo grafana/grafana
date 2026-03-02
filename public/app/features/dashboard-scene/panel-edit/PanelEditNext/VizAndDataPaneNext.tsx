@@ -91,6 +91,8 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     }),
     versionToggle: css({
       gridArea: 'version-toggle',
+      minWidth: 0,
+      overflow: 'hidden',
       ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
