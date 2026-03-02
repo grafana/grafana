@@ -19,12 +19,6 @@ labels:
 menuTitle: Google authentication
 title: Google authentication
 weight: 200
-refs:
-  configure-gcm:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/
 ---
 
 # Google authentication
