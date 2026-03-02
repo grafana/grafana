@@ -11,6 +11,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { StatusInfo } from '../../types';
 import { BaseProvisionedFormData } from '../../types/form';
+import { useGetActiveJob } from '../../useGetActiveJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../defaults';
@@ -123,6 +124,8 @@ function FixFolderMetadataForm({
   onSubmitError,
 }: FixFolderMetadataFormProps) {
   const [createJob, createJobState] = useCreateRepositoryJobsMutation();
+  const activeJob = useGetActiveJob(repositoryName);
+  const isJobActive = activeJob?.status?.state === 'working' || activeJob?.status?.state === 'pending';
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues });
   const { handleSubmit } = methods;
@@ -162,14 +165,14 @@ function FixFolderMetadataForm({
               resourceType="folder"
               canPushToConfiguredBranch={canPushToConfiguredBranch}
               repository={repository}
-              hidePath
+              hiddenFields={['path', 'comment']}
             />
 
             <Stack gap={2}>
               <Button variant="secondary" fill="outline" onClick={onDismiss}>
                 <Trans i18nKey="provisioning.fix-folder-metadata-drawer.cancel">Cancel</Trans>
               </Button>
-              <Button type="submit" disabled={createJobState.isLoading}>
+              <Button type="submit" disabled={createJobState.isLoading || isJobActive}>
                 {createJobState.isLoading
                   ? t('provisioning.fix-folder-metadata-drawer.submitting', 'Fixing...')
                   : t('provisioning.fix-folder-metadata-drawer.submit', 'Fix folder IDs')}

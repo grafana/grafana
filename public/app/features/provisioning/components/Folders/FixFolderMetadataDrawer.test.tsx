@@ -43,13 +43,13 @@ describe('FixFolderMetadataDrawer', () => {
     );
   });
 
-  it('renders branch and comment fields', async () => {
+  it('renders branch field but not comment field', async () => {
     setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
     // Wait for the drawer to load the repository and render the form
     expect(await screen.findByRole('button', { name: /fix folder ids/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/branch/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/comment/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/comment/i)).not.toBeInTheDocument();
   });
 
   it('renders cancel and submit buttons', async () => {
@@ -95,6 +95,40 @@ describe('FixFolderMetadataDrawer', () => {
         action: 'fixFolderMetadata',
         fixFolderMetadata: expect.objectContaining({
           ref: 'main',
+        }),
+      })
+    );
+  });
+
+  it('submits job with custom branch', async () => {
+    let capturedBody: unknown;
+    const jobResponse = {
+      metadata: { name: 'job-1', uid: 'job-uid-1', labels: { 'provisioning.grafana.app/repository': REPO_NAME } },
+      spec: { action: 'fixFolderMetadata' },
+      status: { state: 'success' },
+    };
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        capturedBody = await request.json();
+        return HttpResponse.json(jobResponse);
+      }),
+      http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [jobResponse] }))
+    );
+
+    const { user } = setup(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+
+    const branchInput = await screen.findByRole('combobox', { name: /branch/i });
+    await user.clear(branchInput);
+    await user.type(branchInput, 'feature-branch');
+    await user.keyboard('{Enter}');
+
+    await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
+
+    expect(capturedBody).toEqual(
+      expect.objectContaining({
+        action: 'fixFolderMetadata',
+        fixFolderMetadata: expect.objectContaining({
+          ref: 'feature-branch',
         }),
       })
     );

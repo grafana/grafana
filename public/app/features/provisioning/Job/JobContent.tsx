@@ -8,12 +8,13 @@ import { PullRequestButtons } from '../Repository/PullRequestButtons';
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
 import { StepStatusInfo } from '../Wizard/types';
+import { JobType } from '../types';
 
 import { JobSummary } from './JobSummary';
 import { getJobMessages } from './getJobMessage';
 
 export interface JobContentProps {
-  jobType: 'sync' | 'delete' | 'move' | 'fix';
+  jobType: JobType;
   job?: Job;
   isFinishedJob?: boolean;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
