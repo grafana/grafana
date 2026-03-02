@@ -31,7 +31,6 @@ import (
 	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -224,9 +223,7 @@ func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) 
 }
 
 func (c *K8sTestHelper) SetQuotaStatus(status provisioning.QuotaStatus) {
-	if fq, ok := c.env.QuotaGetter.(*quotas.FixedQuotaGetter); ok {
-		fq.SetQuotaStatus(status)
-	}
+	c.env.QuotaGetter.SetQuotaStatus(status)
 }
 
 func (c *K8sTestHelper) GetListenerAddress() string {

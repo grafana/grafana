@@ -110,17 +110,19 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
 	}
 
-	// Check repository limit (0 = unlimited, > 0 = use value)
+	// Check repository limit (0 = unlimited, > 0 = use value).
+	// Only enforce on creation — updating an existing repo should never be
+	// blocked by a quota that was lowered after the repo was created.
 	maxRepos := quotaStatus.MaxRepositories
-	// Early return if unlimited (0) to avoid unnecessary counting.
 	if maxRepos == 0 {
 		return nil
 	}
 
-	// Count repositories excluding the current one being created/updated
 	count := 0
 	for _, v := range all {
-		if v.Name != cfg.Name {
+		if v.Name == cfg.Name {
+			return nil
+		} else {
 			count++
 		}
 	}

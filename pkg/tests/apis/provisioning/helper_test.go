@@ -706,6 +706,23 @@ func (h *provisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
 }
 
+// TriggerRepositoryReconciliation forces the controller to re-process a repo
+// by touching its status (aging the health timestamp by 1ms).
+func (h *provisioningTestHelper) TriggerRepositoryReconciliation(t *testing.T, name string) {
+	t.Helper()
+	ctx := t.Context()
+	repo, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get repository %s", name)
+
+	health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
+	require.True(t, ok, "missing status.health on repository %s", name)
+
+	health["checked"] = time.Now().UnixMilli() - 1
+
+	_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
+	require.NoError(t, err, "failed to update status for repository %s", name)
+}
+
 // WaitForHealthyRepository waits for a repository to become healthy.
 func (h *provisioningTestHelper) WaitForHealthyRepository(t *testing.T, name string) {
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {

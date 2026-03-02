@@ -3,6 +3,7 @@ package quotas
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -117,30 +118,38 @@ type QuotaGetter interface {
 	GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error)
 }
 
+// OverridableQuotaGetter is a QuotaGetter that also supports updating the quota status at runtime.
+// It is intended for use in test environments where quota limits need to be changed dynamically.
+type OverridableQuotaGetter interface {
+	QuotaGetter
+	SetQuotaStatus(status provisioning.QuotaStatus)
+}
+
 // FixedQuotaGetter returns fixed quota values from static configuration.
 type FixedQuotaGetter struct {
-	quotaStatus provisioning.QuotaStatus
+	quotaStatus atomic.Value // stores provisioning.QuotaStatus
 }
 
 // NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaStatus.
 func NewFixedQuotaGetter(quotaStatus provisioning.QuotaStatus) *FixedQuotaGetter {
-	return &FixedQuotaGetter{
-		quotaStatus: quotaStatus,
-	}
+	f := &FixedQuotaGetter{}
+	f.quotaStatus.Store(quotaStatus)
+	return f
 }
 
 // GetQuotaStatus returns the configured quota limits as a QuotaStatus.
-func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error) {
-	return f.quotaStatus, nil
+func (f *FixedQuotaGetter) GetQuotaStatus(_ context.Context, _ string) (provisioning.QuotaStatus, error) {
+	return f.quotaStatus.Load().(provisioning.QuotaStatus), nil
 }
 
 // SetQuotaStatus updates the quota status, allowing runtime changes (primarily for testing).
 func (f *FixedQuotaGetter) SetQuotaStatus(status provisioning.QuotaStatus) {
-	f.quotaStatus = status
+	f.quotaStatus.Store(status)
 }
 
-// Ensure FixedQuotaGetter implements QuotaGetter interface.
+// Ensure FixedQuotaGetter implements both QuotaGetter and MutableQuotaGetter interfaces.
 var _ QuotaGetter = (*FixedQuotaGetter)(nil)
+var _ OverridableQuotaGetter = (*FixedQuotaGetter)(nil)
 
 func NewQuotaExceededError(err error) *QuotaExceededError {
 	return &QuotaExceededError{Err: err}

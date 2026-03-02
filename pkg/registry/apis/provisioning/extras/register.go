@@ -74,7 +74,7 @@ func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repo
 	return repository.ProvideFactory(enabledTypes, extras)
 }
 
-func ProvideQuotaGetter(cfg *setting.Cfg) quotas.QuotaGetter {
+func ProvideQuotaGetter(cfg *setting.Cfg) quotas.OverridableQuotaGetter {
 	return quotas.NewFixedQuotaGetter(apisprovisioning.QuotaStatus{
 		MaxResourcesPerRepository: cfg.ProvisioningMaxResourcesPerRepository,
 		MaxRepositories:           cfg.ProvisioningMaxRepositories,
