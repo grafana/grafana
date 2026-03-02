@@ -38,7 +38,9 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+import { TRIAGE_DEFAULT_SEARCH_ID_STORAGE_KEY } from './useTriagePredefinedOverrides';
 import {
+  TRIAGE_SAVED_SEARCHES_STORAGE_KEY,
   loadDefaultTriageSavedSearch,
   trackTriageSavedSearchApplied,
   useTriageSavedSearches,
@@ -349,13 +351,25 @@ describe('useTriageSavedSearches', () => {
 });
 
 describe('loadDefaultTriageSavedSearch', () => {
+  function mockStorage(defaultId: string | null, savedSearches: unknown) {
+    mockUserStorage.getItem.mockImplementation((key: string) => {
+      if (key === TRIAGE_DEFAULT_SEARCH_ID_STORAGE_KEY) {
+        return Promise.resolve(defaultId !== null ? JSON.stringify(defaultId) : null);
+      }
+      if (key === TRIAGE_SAVED_SEARCHES_STORAGE_KEY) {
+        return Promise.resolve(savedSearches != null ? JSON.stringify(savedSearches) : null);
+      }
+      return Promise.resolve(null);
+    });
+  }
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockUserStorage.getItem.mockResolvedValue(null);
   });
 
-  it('should return default search when one exists', async () => {
-    mockUserStorage.getItem.mockResolvedValue(JSON.stringify(mockSavedSearches));
+  it('should return default search when one exists in saved list (legacy)', async () => {
+    mockStorage(null, mockSavedSearches);
 
     const result = await loadDefaultTriageSavedSearch();
 
@@ -363,9 +377,18 @@ describe('loadDefaultTriageSavedSearch', () => {
     expect(result?.isDefault).toBe(true);
   });
 
+  it('should return predefined search when default ID is predefined', async () => {
+    mockStorage('triage-predefined-firing-only', null);
+
+    const result = await loadDefaultTriageSavedSearch();
+
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe('triage-predefined-firing-only');
+  });
+
   it('should return null when no default search exists', async () => {
     const noDefaultSearches = mockSavedSearches.map((s) => ({ ...s, isDefault: false }));
-    mockUserStorage.getItem.mockResolvedValue(JSON.stringify(noDefaultSearches));
+    mockStorage(null, noDefaultSearches);
 
     const result = await loadDefaultTriageSavedSearch();
 
@@ -373,7 +396,7 @@ describe('loadDefaultTriageSavedSearch', () => {
   });
 
   it('should return null when storage is empty', async () => {
-    mockUserStorage.getItem.mockResolvedValue(null);
+    mockStorage(null, null);
 
     const result = await loadDefaultTriageSavedSearch();
 

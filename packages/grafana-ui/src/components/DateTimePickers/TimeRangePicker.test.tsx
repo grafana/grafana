@@ -145,9 +145,11 @@ it('does not submit wrapping forms', async () => {
     </form>
   );
 
-  const clicks = screen.getAllByRole('button').map((button) => userEvent.click(button));
+  const buttons = screen.getAllByRole('button');
 
-  await Promise.all(clicks);
+  for (const button of buttons) {
+    await userEvent.click(button);
+  }
 
   expect(onSubmit).not.toHaveBeenCalled();
 });

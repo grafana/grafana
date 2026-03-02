@@ -91,4 +91,5 @@ v0alpha1: {
 	lastSeenAtAge: string
 	provisioned: bool
 	score: float64
+	accessControl?: {[string]: bool}
 }
