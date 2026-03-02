@@ -227,7 +227,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 7
+      "count": 2
     }
   },
   "packages/grafana-data/src/types/options.ts": {
@@ -1044,9 +1044,9 @@
       "count": 1
     }
   },
-  "public/app/core/components/SharedPreferences/SharedPreferences.tsx": {
+  "public/app/core/components/SharedPreferences/SharedPreferencesOld.tsx": {
     "no-restricted-syntax": {
-      "count": 8
+      "count": 6
     },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -1393,11 +1393,6 @@
   "public/app/features/alerting/unified/components/rule-editor/FolderSelector.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
-    "no-restricted-syntax": {
-      "count": 10
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx": {
