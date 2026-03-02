@@ -207,26 +207,26 @@ describe('Logs', () => {
             loadLogsVolumeData={() => undefined}
             logRows={[]}
             onStartScanning={scanningStarted}
-          timeZone={'utc'}
-          width={50}
-          loading={false}
-          loadingState={LoadingState.Done}
-          absoluteRange={{
-            from: toUtc('2019-01-01 10:00:00').valueOf(),
-            to: toUtc('2019-01-01 16:00:00').valueOf(),
-          }}
-          range={{
-            from: toUtc('2019-01-01 10:00:00'),
-            to: toUtc('2019-01-01 16:00:00'),
-            raw: { from: 'now-1h', to: 'now' },
-          }}
-          onChangeTime={() => {}}
-          getFieldLinks={() => {
-            return [];
-          }}
-          eventBus={new EventBusSrv()}
-          isFilterLabelActive={jest.fn()}
-        />
+            timeZone={'utc'}
+            width={50}
+            loading={false}
+            loadingState={LoadingState.Done}
+            absoluteRange={{
+              from: toUtc('2019-01-01 10:00:00').valueOf(),
+              to: toUtc('2019-01-01 16:00:00').valueOf(),
+            }}
+            range={{
+              from: toUtc('2019-01-01 10:00:00'),
+              to: toUtc('2019-01-01 16:00:00'),
+              raw: { from: 'now-1h', to: 'now' },
+            }}
+            onChangeTime={() => {}}
+            getFieldLinks={() => {
+              return [];
+            }}
+            eventBus={new EventBusSrv()}
+            isFilterLabelActive={jest.fn()}
+          />
         </OpenFeatureProvider>
       </Provider>
     );
@@ -258,25 +258,25 @@ describe('Logs', () => {
             logRows={[]}
             scanning={true}
             timeZone={'utc'}
-          width={50}
-          loading={false}
-          loadingState={LoadingState.Done}
-          absoluteRange={{
-            from: toUtc('2019-01-01 10:00:00').valueOf(),
-            to: toUtc('2019-01-01 16:00:00').valueOf(),
-          }}
-          range={{
-            from: toUtc('2019-01-01 10:00:00'),
-            to: toUtc('2019-01-01 16:00:00'),
-            raw: { from: 'now-1h', to: 'now' },
-          }}
-          onChangeTime={() => {}}
-          getFieldLinks={() => {
-            return [];
-          }}
-          eventBus={new EventBusSrv()}
-          isFilterLabelActive={jest.fn()}
-        />
+            width={50}
+            loading={false}
+            loadingState={LoadingState.Done}
+            absoluteRange={{
+              from: toUtc('2019-01-01 10:00:00').valueOf(),
+              to: toUtc('2019-01-01 16:00:00').valueOf(),
+            }}
+            range={{
+              from: toUtc('2019-01-01 10:00:00'),
+              to: toUtc('2019-01-01 16:00:00'),
+              raw: { from: 'now-1h', to: 'now' },
+            }}
+            onChangeTime={() => {}}
+            getFieldLinks={() => {
+              return [];
+            }}
+            eventBus={new EventBusSrv()}
+            isFilterLabelActive={jest.fn()}
+          />
         </OpenFeatureProvider>
       </Provider>
     );
@@ -310,26 +310,26 @@ describe('Logs', () => {
             logRows={[]}
             scanning={true}
             onStopScanning={scanningStopped}
-          timeZone={'utc'}
-          width={50}
-          loading={false}
-          loadingState={LoadingState.Done}
-          absoluteRange={{
-            from: toUtc('2019-01-01 10:00:00').valueOf(),
-            to: toUtc('2019-01-01 16:00:00').valueOf(),
-          }}
-          range={{
-            from: toUtc('2019-01-01 10:00:00'),
-            to: toUtc('2019-01-01 16:00:00'),
-            raw: { from: 'now-1h', to: 'now' },
-          }}
-          onChangeTime={() => {}}
-          getFieldLinks={() => {
-            return [];
-          }}
-          eventBus={new EventBusSrv()}
-          isFilterLabelActive={jest.fn()}
-        />
+            timeZone={'utc'}
+            width={50}
+            loading={false}
+            loadingState={LoadingState.Done}
+            absoluteRange={{
+              from: toUtc('2019-01-01 10:00:00').valueOf(),
+              to: toUtc('2019-01-01 16:00:00').valueOf(),
+            }}
+            range={{
+              from: toUtc('2019-01-01 10:00:00'),
+              to: toUtc('2019-01-01 16:00:00'),
+              raw: { from: 'now-1h', to: 'now' },
+            }}
+            onChangeTime={() => {}}
+            getFieldLinks={() => {
+              return [];
+            }}
+            eventBus={new EventBusSrv()}
+            isFilterLabelActive={jest.fn()}
+          />
         </OpenFeatureProvider>
       </Provider>
     );

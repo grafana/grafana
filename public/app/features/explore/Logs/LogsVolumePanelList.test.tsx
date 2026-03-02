@@ -21,17 +21,17 @@ function renderPanel(logsVolumeData?: DataQueryResponse, onLoadLogsVolume = () =
   render(
     <OpenFeatureProvider client={getTestFeatureFlagClient()}>
       <LogsVolumePanelList
-      absoluteRange={{ from: 0, to: 1 }}
-      timeZone="timeZone"
-      splitOpen={() => {}}
-      width={100}
-      onUpdateTimeRange={() => {}}
-      logsVolumeData={logsVolumeData}
-      onLoadLogsVolume={onLoadLogsVolume}
-      onDisplayedSeriesChanged={() => null}
-      eventBus={new EventBusSrv()}
-      logs={logs}
-    />
+        absoluteRange={{ from: 0, to: 1 }}
+        timeZone="timeZone"
+        splitOpen={() => {}}
+        width={100}
+        onUpdateTimeRange={() => {}}
+        logsVolumeData={logsVolumeData}
+        onLoadLogsVolume={onLoadLogsVolume}
+        onDisplayedSeriesChanged={() => null}
+        eventBus={new EventBusSrv()}
+        logs={logs}
+      />
     </OpenFeatureProvider>
   );
 }

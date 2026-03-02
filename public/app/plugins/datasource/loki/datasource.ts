@@ -363,7 +363,10 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (getFeatureFlagClient().getBooleanValue('lokiShardSplitting', false) && requestSupportsSharding(fixedRequest.targets)) {
+    if (
+      getFeatureFlagClient().getBooleanValue('lokiShardSplitting', false) &&
+      requestSupportsSharding(fixedRequest.targets)
+    ) {
       return runShardSplitQuery(this, fixedRequest);
     } else if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
       return runSplitQuery(this, fixedRequest);

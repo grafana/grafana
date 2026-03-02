@@ -127,8 +127,7 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  const canShowPartialData =
-    lokiShardSplitting && logsVolumeData && logsVolumeData.data.length > 0;
+  const canShowPartialData = lokiShardSplitting && logsVolumeData && logsVolumeData.data.length > 0;
   const timeoutError = isTimeoutErrorResponse(logsVolumeData);
   const maxBytesError = isMaxBytesErrorResponse(logsVolumeData);
   const queryTooLargeError = timeoutError || maxBytesError;
