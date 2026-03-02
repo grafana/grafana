@@ -24,7 +24,7 @@ const FALLBACK_SIDEBAR_RATIO = 0.25;
 type UseRatioResizeOptions = {
   direction: 'horizontal' | 'vertical';
   initialRatio: number;
-  containerRef: RefObject<HTMLElement>;
+  containerRef: RefObject<HTMLElement | null>;
   /**
    * If provided, called once at mount with the container's measured size to compute a
    * responsive initial ratio (e.g. different defaults for small vs large screens).
@@ -169,7 +169,7 @@ export function getDefaultSidebarRatio(containerWidth: number): number {
   return 0.25;
 }
 
-export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObject<HTMLDivElement>) {
+export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObject<HTMLDivElement | null>) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, tableView } = model.useState();
   const panel = model.getPanel();

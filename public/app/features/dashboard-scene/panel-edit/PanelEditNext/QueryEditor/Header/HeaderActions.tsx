@@ -14,7 +14,7 @@ import { TransformationActionButtons } from './TransformationActionButtons';
 import { WarningBadges } from './WarningBadges';
 
 interface HeaderActionsProps {
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
 }
 
 /**

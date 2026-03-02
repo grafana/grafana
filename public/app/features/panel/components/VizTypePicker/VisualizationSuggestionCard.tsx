@@ -60,12 +60,7 @@ export function VisualizationSuggestionCard({
 
     content = (
       <button {...commonButtonProps}>
-        {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
-        <div
-          style={innerStyles}
-          className={cx(styles.renderContainer, isSelected && styles.selectedSuggestion)}
-          {...{ inert: '' }}
-        >
+        <div style={innerStyles} className={cx(styles.renderContainer, isSelected && styles.selectedSuggestion)} inert>
           <PanelRenderer
             title=""
             data={data}

@@ -6,7 +6,7 @@ const { EsbuildPlugin } = require('esbuild-loader');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
-const { EnvironmentPlugin } = require('webpack');
+const { EnvironmentPlugin, NormalModuleReplacementPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
@@ -28,7 +28,7 @@ const esbuildOptions = {
 const envConfig = getEnvConfig();
 
 module.exports = (env = {}) =>
-  merge(common(env), {
+  merge(common, {
     mode: 'production',
     devtool: 'source-map',
 
@@ -75,8 +75,13 @@ module.exports = (env = {}) =>
           },
 
     plugins: [
+      // Replace any imports of test libraries with empty modules to prevent them from being bundled
+      // TODO figure out where these are being included, stop that from happening and remove this
+      new NormalModuleReplacementPlugin(/@testing-library/, (resource) => {
+        resource.request = require.resolve('./empty.js');
+      }),
       new MiniCssExtractPlugin({
-        filename: env.react19 ? 'grafana.[name]-react19.[contenthash].css' : 'grafana.[name].[contenthash].css',
+        filename: 'grafana.[name].[contenthash].css',
       }),
       new SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
@@ -104,10 +109,9 @@ module.exports = (env = {}) =>
 
           return result;
         },
-        output: env.react19 ? 'assets-manifest-react19.json' : 'assets-manifest.json',
       }),
       new WebpackManifestPlugin({
-        fileName: path.join(process.cwd(), env.react19 ? 'manifest-react19.json' : 'manifest.json'),
+        fileName: path.join(process.cwd(), 'manifest.json'),
         filter: (file) => !file.name.endsWith('.map'),
       }),
       function () {

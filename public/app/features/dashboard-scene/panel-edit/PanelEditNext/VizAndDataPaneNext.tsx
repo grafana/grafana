@@ -15,7 +15,7 @@ import { SidebarSize } from './constants';
 import { useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const { scene, layout, actions } = useVizAndDataPaneLayout(model, containerRef);
   const styles = useStyles2(getStyles, layout.sidebarSize);
 

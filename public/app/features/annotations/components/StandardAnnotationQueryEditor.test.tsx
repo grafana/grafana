@@ -67,7 +67,7 @@ describe('StandardAnnotationQueryEditor', () => {
       expect.objectContaining({
         query: expect.objectContaining({ queryType: 'defaultAnnotationsQuery', refId: 'initialAnnotationRef' }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -85,7 +85,7 @@ describe('StandardAnnotationQueryEditor', () => {
       expect.objectContaining({
         query: expect.objectContaining({ refId: 'initialAnnotationRef' }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -204,7 +204,7 @@ describe('StandardAnnotationQueryEditor', () => {
           refId: 'A',
         }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -242,7 +242,7 @@ describe('StandardAnnotationQueryEditor', () => {
           legendFormat: '{{method}} {{endpoint}}',
         }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -284,7 +284,7 @@ describe('StandardAnnotationQueryEditor', () => {
           refId: 'AnnoTarget',
         }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -320,7 +320,7 @@ describe('StandardAnnotationQueryEditor', () => {
           expr: 'up',
         }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
