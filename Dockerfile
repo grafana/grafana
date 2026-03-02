@@ -123,7 +123,7 @@ COPY apps/example apps/example
 
 RUN go mod download
 
-COPY embed.go Makefile build.go package.json ./
+COPY embed.go Makefile package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
 COPY local local
