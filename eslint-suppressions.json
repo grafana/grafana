@@ -1044,9 +1044,9 @@
       "count": 1
     }
   },
-  "public/app/core/components/SharedPreferences/SharedPreferences.tsx": {
+  "public/app/core/components/SharedPreferences/SharedPreferencesOld.tsx": {
     "no-restricted-syntax": {
-      "count": 8
+      "count": 6
     },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1

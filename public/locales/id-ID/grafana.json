@@ -903,7 +903,7 @@
       "title-failed-to-fetch-contact-points": "Gagal mengambil titik kontak"
     },
     "contact-points": {
-      "create": "Buat titik kontak",
+      "create": "",
       "custom-template-value": "Nilai templat kustom",
       "delete-reasons": {
         "heading": "Titik kontak tidak dapat dihapus karena alasan berikut:",
@@ -2120,7 +2120,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Tambahkan interval waktu"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2164,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,14 +2172,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Cari berdasarkan titik kontak",
@@ -2241,7 +2242,7 @@
       "title-failed-to-fetch-notification-templates": "Gagal mengambil templat pemberitahuan"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Tambah grup templat pemberitahuan",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Buat templat pemberitahuan untuk menyesuaikan pemberitahuan Anda."
     },
     "notifications-list": {
@@ -2268,6 +2269,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2291,15 +2293,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Tambahkan label untuk membantu Anda mengelola aturan perekaman dengan lebih baik.",
@@ -3332,7 +3334,7 @@
       "stop-alerting-when": "Hentikan peringatan (atau status tertunda) jika"
     },
     "time-interval": {
-      "add-time-interval": "Tambahkan interval waktu",
+      "add-time-interval": "",
       "save": "Simpan interval waktu",
       "saving": "Menyimpan interval waktu"
     },
@@ -6576,6 +6578,12 @@
           "row-title": "Judul baris"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Gagal menghapus dasbor",
@@ -12598,6 +12606,12 @@
       "label-read-only": "Hanya baca",
       "label-sync-interval": "Interval Sinkronisasi (detik)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12737,6 +12751,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13243,6 +13259,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
