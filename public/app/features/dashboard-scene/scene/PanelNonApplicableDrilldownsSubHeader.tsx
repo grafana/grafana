@@ -40,15 +40,15 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     const filterValues = [...filters, ...originFilters];
 
     if (filterValues.length) {
-      const nonApplicableFilters = filterValues
-        .map((filter, i) => {
-          const result = i < applicability.length ? applicability[i] : undefined;
-          if (result && !result.applicable) {
-            return { filter, reason: result.reason };
-          }
-          return null;
-        })
-        .filter(Boolean) as Array<{ filter: (typeof filterValues)[number]; reason?: string }>;
+      const nonApplicableFilters = filterValues.reduce<
+        Array<{ filter: (typeof filterValues)[number]; reason?: string }>
+      >((acc, filter, i) => {
+        const result = i < applicability.length ? applicability[i] : undefined;
+        if (result && !result.applicable) {
+          acc.push({ filter, reason: result.reason });
+        }
+        return acc;
+      }, []);
 
       items.push(
         ...nonApplicableFilters.map(({ filter, reason }) => {

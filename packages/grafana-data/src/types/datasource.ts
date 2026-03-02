@@ -694,7 +694,10 @@ export interface DrilldownRecommendation {
 export interface DrilldownsApplicability {
   key: string;
   applicable: boolean;
+  // message explaining why the filter is not applicable
   reason?: string;
+  // needed to differentiate between filters with same key
+  // but different origin
   origin?: string;
 }
 
