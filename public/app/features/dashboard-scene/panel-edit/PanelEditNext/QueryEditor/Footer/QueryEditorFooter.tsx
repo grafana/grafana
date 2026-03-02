@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_COLORS, TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { FOOTER_HEIGHT, getQueryEditorColors, TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
@@ -117,6 +117,7 @@ export function QueryEditorFooter() {
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const themeColors = getQueryEditorColors(theme);
   return {
     container: css({
       position: 'sticky',
@@ -124,13 +125,13 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      backgroundColor: QUERY_EDITOR_COLORS.footerBackground,
+      backgroundColor: themeColors.footerBackground,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
-      padding: theme.spacing(0.5, 0.5, 0.5, 1.5),
+      padding: theme.spacing(0, 0.5, 0, 1.5),
       zIndex: theme.zIndex.navbarFixed,
-      minHeight: 26,
+      height: FOOTER_HEIGHT,
       overflow: 'hidden',
     }),
     itemsList: css({
@@ -184,21 +185,21 @@ function getStyles(theme: GrafanaTheme2) {
       transform: 'rotate(180deg)',
     }),
     queryOptionsWrapper: css({
-      position: 'relative',
       flexShrink: 0,
       display: 'flex',
       alignItems: 'center',
 
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        right: '100%',
-        top: 0,
-        bottom: 0,
-        width: theme.spacing(4),
-        background: `linear-gradient(to right, transparent, ${QUERY_EDITOR_COLORS.footerBackground})`,
-        pointerEvents: 'none',
-      },
+      // TODO: Add this back once all the new colors are finalized
+      // '&::before': {
+      //   content: '""',
+      //   position: 'absolute',
+      //   right: '100%',
+      //   top: 0,
+      //   bottom: 0,
+      //   width: theme.spacing(4),
+      //   background: `linear-gradient(to right, transparent, ${getQueryEditorColors(theme).footerBackground})`,
+      //   pointerEvents: 'none',
+      // },
     }),
   };
 }

@@ -2,7 +2,34 @@ import { FieldType } from '@grafana/data';
 
 import { EmptyLabelValue } from '../types';
 
-import { convertToWorkbenchRows } from './dataTransform';
+import { convertToWorkbenchRows, normalizeFrame } from './dataTransform';
+
+describe('normalizeFrame', () => {
+  it('should return the same frame reference when no Value # fields exist', () => {
+    const frame = {
+      fields: [{ name: 'Value', type: FieldType.number, values: [1], config: {} }],
+      length: 1,
+    };
+
+    expect(normalizeFrame(frame)).toBe(frame);
+  });
+
+  it('should rename Value #<refId> field to Value and preserve its values', () => {
+    const frame = {
+      fields: [
+        { name: 'alertstate', type: FieldType.string, values: ['firing', 'pending'], config: {} },
+        { name: 'Value #B', type: FieldType.number, values: [3, 7], config: {} },
+      ],
+      length: 2,
+    };
+
+    const result = normalizeFrame(frame);
+
+    expect(result).not.toBe(frame);
+    expect(result.fields.map((f) => f.name)).toEqual(['alertstate', 'Value']);
+    expect(result.fields[1].values).toEqual([3, 7]);
+  });
+});
 
 /**
  * convertToWorkbenchRows transforms alert instance count data into a hierarchical structure of alert rules.
@@ -29,23 +56,6 @@ describe('convertToWorkbenchRows', () => {
         {
           fields: [],
           length: 0,
-        },
-      ]);
-
-      expect(result).toEqual([]);
-    });
-
-    it('should return empty array when frame is missing required Time field', () => {
-      const result = convertToWorkbenchRows([
-        {
-          fields: [
-            { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
-            { name: 'grafana_folder', type: FieldType.string, values: ['folder'], config: {} },
-            { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
-            { name: 'alertstate', type: FieldType.string, values: ['firing'], config: {} },
-            { name: 'Value', type: FieldType.number, values: [1], config: {} },
-          ],
-          length: 1,
         },
       ]);
 
@@ -103,11 +113,10 @@ describe('convertToWorkbenchRows', () => {
       expect(result).toEqual([]);
     });
 
-    it('should return empty array when frame is missing alertstate field', () => {
+    it('should return rule rows with zero instance counts when alertstate field is missing', () => {
       const result = convertToWorkbenchRows([
         {
           fields: [
-            { name: 'Time', type: FieldType.time, values: [1000], config: {} },
             { name: 'alertname', type: FieldType.string, values: ['TestAlert'], config: {} },
             { name: 'grafana_folder', type: FieldType.string, values: ['Folder'], config: {} },
             { name: 'grafana_rule_uid', type: FieldType.string, values: ['uid'], config: {} },
@@ -117,7 +126,13 @@ describe('convertToWorkbenchRows', () => {
         },
       ]);
 
-      expect(result).toEqual([]);
+      expect(result).toEqual([
+        {
+          type: 'alertRule',
+          metadata: { title: 'TestAlert', folder: 'Folder', ruleUID: 'uid' },
+          instanceCounts: { firing: 0, pending: 0 },
+        },
+      ]);
     });
   });
 
