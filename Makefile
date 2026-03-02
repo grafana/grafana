@@ -14,10 +14,6 @@ GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
-GO_BUILD_FLAGS += $(GO_RACE_FLAG)
-
 # Backend build version and ldflags (aligned with pkg/build/daggerbuild/backend).
 BUILD_NUMBER ?= local
 BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
@@ -289,25 +285,13 @@ update-workspace: gen-go
 .PHONY: build-go
 build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
 	@echo "build go binaries"
-	$(GO) build -buildvcs=false \
-		-trimpath \
-		$(GO_RACE_FLAG) 
-		$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
-		-ldflags "$(GO_LDFLAGS)" \
-		-o ./bin/grafana \
-		./pkg/cmd/grafana
-
-.PHONY: build-go-fast
-build-go-fast: ## Build all Go binaries without updating workspace.
-	@echo "!!! [DEPRECATED] use build-go, they do the same thing now. This command will be removed soon"
-
-.PHONY: build-backend
-build-backend: gen-themes ## Build Grafana backend.
-	@echo "build backend"
 	$(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
 
+.PHONY: build-backend
+build-backend: build-go
+
 .PHONY: build-air
-build-air: build-backend
+build-air: build-go
 	@cp ./bin/grafana ./bin/grafana-air
 
 .PHONY: build-js
