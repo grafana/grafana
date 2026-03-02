@@ -63,16 +63,16 @@ describe('useFolderMetadataStatus', () => {
       });
 
       const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('loading');
+      expect(result.current.status).toBe('loading');
     });
 
-    it('when file query is fetching', () => {
+    it('when file query is loading', () => {
       setupMocks({
-        fileQueryOverrides: { isFetching: true },
+        fileQueryOverrides: { isLoading: true },
       });
 
       const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('loading');
+      expect(result.current.status).toBe('loading');
     });
   });
 
@@ -86,7 +86,8 @@ describe('useFolderMetadataStatus', () => {
       });
 
       const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('missing');
+      expect(result.current.status).toBe('missing');
+      expect(result.current.repositoryName).toBe('my-repo');
     });
   });
 
@@ -100,7 +101,7 @@ describe('useFolderMetadataStatus', () => {
       });
 
       const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('error');
+      expect(result.current.status).toBe('error');
     });
   });
 
@@ -109,7 +110,7 @@ describe('useFolderMetadataStatus', () => {
       setupMocks();
 
       const { result } = renderHook(() => useFolderMetadataStatus('folder-uid'));
-      expect(result.current).toBe('ok');
+      expect(result.current.status).toBe('ok');
     });
   });
 

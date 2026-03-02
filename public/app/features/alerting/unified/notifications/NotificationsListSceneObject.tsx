@@ -7,7 +7,7 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import {
   CreateNotificationqueryMatcher,
   CreateNotificationqueryNotificationEntry,
-  CreateNotificationqueryNotificationEntryAlert,
+  CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
@@ -24,8 +24,10 @@ import {
 import {
   Alert,
   Badge,
+  Icon,
   LoadingBar,
   Pagination,
+  Spinner,
   Stack,
   Text,
   TextLink,
@@ -36,6 +38,7 @@ import {
 
 import { CollapseToggle } from '../components/CollapseToggle';
 import { StateTag } from '../components/StateTag';
+import { useNotificationAlerts } from '../hooks/useNotificationAlerts';
 import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
@@ -94,7 +97,7 @@ export const NotificationsList = React.memo(function NotificationsList({
         createNotificationqueryRequestBody: {
           from: fromDate,
           to: toDate,
-          limit: 1000,
+          limit: 100,
           status: isNotificationStatus(statusFilter) ? statusFilter : undefined,
           outcome: isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
           receiver: receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
@@ -285,15 +288,14 @@ interface NotificationDetailsProps {
 function NotificationDetails({ record }: NotificationDetailsProps) {
   const styles = useStyles2(getStyles);
 
-  // Split alerts into firing and resolved
-  const firingAlerts = record.alerts.filter(
-    (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'firing'
-  );
-  const resolvedAlerts = record.alerts.filter(
-    (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'resolved'
-  );
+  const {
+    alerts,
+    firingAlerts,
+    resolvedAlerts,
+    isLoading: alertsLoading,
+  } = useNotificationAlerts(record.uuid, record.timestamp);
 
-  const renderAlert = (alert: CreateNotificationqueryNotificationEntryAlert, index: number) => {
+  const renderAlert = (alert: CreateNotificationsqueryalertsNotificationEntryAlert, index: number) => {
     const ruleUid = alert.labels?.__alert_rule_uid__;
     const alertName = alert.labels?.alertname || 'Alert';
     const folderName = alert.labels?.grafana_folder || '';
@@ -395,13 +397,25 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
           {record.error}
         </Alert>
       )}
+      {alertsLoading && <Spinner />}
+      {!alertsLoading && alerts.length < record.alertCount && (
+        <Stack direction="row" gap={0.5} alignItems="center">
+          <Icon name="info-circle" size="xs" />
+          <Text variant="bodySmall" color="secondary">
+            <Trans
+              i18nKey="alerting.notifications-scene.showing-alerts"
+              values={{ showing: alerts.length, total: record.alertCount }}
+            >
+              {'Showing {{ showing }} out of {{ total }} alerts'}
+            </Trans>
+          </Text>
+        </Stack>
+      )}
       {/* Firing alerts section */}
       {firingAlerts.length > 0 && (
         <Stack direction="column" gap={2}>
           <Text variant="h6">
-            <Trans i18nKey="alerting.notifications-scene.firing-alerts" values={{ count: firingAlerts.length }}>
-              Firing Alerts ({{ count: firingAlerts.length }})
-            </Trans>
+            <Trans i18nKey="alerting.notifications-scene.firing-alerts">Firing Alerts</Trans>
           </Text>
           {firingAlerts.map(renderAlert)}
         </Stack>
@@ -410,9 +424,7 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
       {resolvedAlerts.length > 0 && (
         <Stack direction="column" gap={2}>
           <Text variant="h6">
-            <Trans i18nKey="alerting.notifications-scene.resolved-alerts" values={{ count: resolvedAlerts.length }}>
-              Resolved Alerts ({{ count: resolvedAlerts.length }})
-            </Trans>
+            <Trans i18nKey="alerting.notifications-scene.resolved-alerts">Resolved Alerts</Trans>
           </Text>
           {resolvedAlerts.map(renderAlert)}
         </Stack>
