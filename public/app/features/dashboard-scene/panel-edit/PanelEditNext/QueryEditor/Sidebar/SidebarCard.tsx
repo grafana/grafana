@@ -155,7 +155,7 @@ function getStyles(
   });
 
   const themeColors = getQueryEditorColors(theme);
-  const backgroundColor = isSelected ? themeColors.card.activeBg : themeColors.card.hoverBg;
+  const hoverBackgroundColor = isSelected ? themeColors.card.activeBg : themeColors.card.hoverBg;
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -166,7 +166,7 @@ function getStyles(
     paddingRight: theme.spacing(1),
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
-    background: `linear-gradient(270deg, ${backgroundColor} 80%, transparent 100%)`,
+    background: `linear-gradient(270deg, ${hoverBackgroundColor} 80%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
@@ -232,7 +232,7 @@ function getStyles(
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      background: isSelected ? themeColors.card.activeBg : 'none',
+      background: isSelected ? themeColors.card.activeBg : themeColors.card.background,
       borderLeft: `${isSelected ? 3 : 1}px solid ${borderColor}`,
       cursor: 'pointer',
 
@@ -243,7 +243,7 @@ function getStyles(
         }),
       },
       '&:hover': {
-        background: backgroundColor,
+        background: hoverBackgroundColor,
       },
       [`&:hover .${hoverActions}`]: {
         opacity: 1,
