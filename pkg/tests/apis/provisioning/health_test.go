@@ -583,7 +583,9 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 				},
 			},
 			"secure": map[string]any{
-				"token": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
+				"token": map[string]any{
+					"create": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
+				},
 			},
 		}
 
@@ -697,7 +699,9 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 					},
 				},
 				"secure": map[string]any{
-					"token": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
+					"token": map[string]any{
+						"create": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
+					},
 				},
 			},
 		}
@@ -729,10 +733,10 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 				},
 				"spec": map[string]any{
 					"title": "Test Git DryRun Read-Only",
-					"type":  "github",
-					"github": map[string]any{
-						"repository": "grafana/grafana",
-						"ref":        "main",
+					"type":  "git",
+					"git": map[string]any{
+						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+						"branch": "integration-test",
 					},
 					// No workflows = read-only
 					"sync": map[string]any{
@@ -786,7 +790,9 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 					},
 				},
 				"secure": map[string]any{
-					"token": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
+					"token": map[string]any{
+						"create": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
+					},
 				},
 			},
 		}
@@ -804,11 +810,7 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 		require.NoError(t, err)
 
 		// Extract health status
-		status, found, err := unstructured.NestedMap(repo.Object, "status")
-		require.NoError(t, err)
-		require.True(t, found, "status should be present")
-
-		healthy, found, err := unstructured.NestedBool(status, "healthy")
+		healthy, found, err := unstructured.NestedBool(repo.Object, "status", "health", "healthy")
 		require.NoError(t, err)
 		require.True(t, found, "healthy field should be present")
 		require.False(t, healthy, "repository with workflows should be unhealthy without write permission")
