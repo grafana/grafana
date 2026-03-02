@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -25,7 +26,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -350,6 +351,7 @@ export const LogLineContext = memo(
         setDefaultDisplayedFields(value);
       }
     }, []);
+    const logsContextDatasourceUi = useBooleanFlagValue('logsContextDatasourceUi', false);
 
     return (
       <Modal
@@ -359,9 +361,7 @@ export const LogLineContext = memo(
         className={styles.modal}
         onDismiss={handleClose}
       >
-        {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
-          <div>{getLogRowContextUi(log, updateResults)}</div>
-        )}
+        {logsContextDatasourceUi && getLogRowContextUi && <div>{getLogRowContextUi(log, updateResults)}</div>}
         <Collapse
           isOpen={showLog}
           onToggle={() => setShowLog(!showLog)}
