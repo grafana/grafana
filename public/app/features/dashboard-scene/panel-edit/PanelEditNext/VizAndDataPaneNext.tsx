@@ -23,55 +23,55 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
 
   return (
     <div ref={containerRef} className={styles.pageContainer} style={layout.gridStyles}>
+      {scene.controls && (
+        <div className={styles.controlsWrapper}>
+          <scene.controls.Component model={scene.controls} />
+        </div>
+      )}
+      <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
+        <scene.panelToShow.Component model={scene.panelToShow} />
+        {nextDataPane && (
+          <div className={styles.vizResizeHandle}>
+            <div
+              ref={layout.vizResizeHandle.ref}
+              className={layout.vizResizeHandle.className}
+              data-testid="viz-resizer"
+            />
+          </div>
+        )}
+      </div>
       {nextDataPane && (
-        <>
-          {scene.controls && (
-            <div className={styles.controlsWrapper}>
-              <scene.controls.Component model={scene.controls} />
+        <QueryEditorContextWrapper dataPane={nextDataPane}>
+          <div className={styles.sidebar}>
+            <div className={styles.sidebarContent}>
+              <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
             </div>
-          )}
-          <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
-            <scene.panelToShow.Component model={scene.panelToShow} />
-            <div className={styles.vizResizeHandle}>
+            <div className={styles.sidebarResizeHandle}>
               <div
-                ref={layout.vizResizeHandle.ref}
-                className={layout.vizResizeHandle.className}
-                data-testid="viz-resizer"
+                ref={layout.sidebarResizeHandle.ref}
+                className={cx(layout.sidebarResizeHandle.className, styles.resizeHandlePill)}
+                data-testid="sidebar-resizer"
               />
             </div>
           </div>
-          <QueryEditorContextWrapper dataPane={nextDataPane}>
-            <div className={styles.sidebar}>
-              <div className={styles.sidebarContent}>
-                <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
-              </div>
-              <div className={styles.sidebarResizeHandle}>
-                <div
-                  ref={layout.sidebarResizeHandle.ref}
-                  className={cx(layout.sidebarResizeHandle.className, styles.resizeHandlePill)}
-                  data-testid="sidebar-resizer"
+          <div className={styles.dataPane}>
+            {layout.isDataPaneCollapsed ? (
+              <div className={styles.expandDataPane}>
+                <Button
+                  tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
+                  icon={'arrow-to-right'}
+                  onClick={actions.onToggleCollapse}
+                  variant="secondary"
+                  size="sm"
+                  className={styles.openDataPaneButton}
+                  aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
                 />
               </div>
-            </div>
-            <div className={styles.dataPane}>
-              {layout.isDataPaneCollapsed ? (
-                <div className={styles.expandDataPane}>
-                  <Button
-                    tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
-                    icon={'arrow-to-right'}
-                    onClick={actions.onToggleCollapse}
-                    variant="secondary"
-                    size="sm"
-                    className={styles.openDataPaneButton}
-                    aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
-                  />
-                </div>
-              ) : (
-                <nextDataPane.Component model={nextDataPane} />
-              )}
-            </div>
-          </QueryEditorContextWrapper>
-        </>
+            ) : (
+              <nextDataPane.Component model={nextDataPane} />
+            )}
+          </div>
+        </QueryEditorContextWrapper>
       )}
     </div>
   );
