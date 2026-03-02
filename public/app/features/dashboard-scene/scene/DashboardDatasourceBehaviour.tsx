@@ -114,6 +114,25 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         shouldRunQueries = true;
       }
 
+      // Only re-run if there's actually new data to process.
+      // This prevents re-running when the source panel is cancelled, which only changes
+      // the loading state but keeps the same requestId.
+      // We trigger when:
+      // 1. requestId changed (new query completed)
+      // 2. isStreaming (continuous data updates)
+      const onSourceDataChange = (
+        newState: { data?: typeof sourcePanelQueryRunner.state.data },
+        oldState: { data?: typeof sourcePanelQueryRunner.state.data }
+      ) => {
+        const newRequestId = newState.data?.request?.requestId;
+        const oldRequestId = oldState.data?.request?.requestId;
+        const hasNewRequest = newRequestId !== oldRequestId;
+        const isStreaming = newState.data?.state === LoadingState.Streaming;
+        if (newState.data !== oldState.data && (hasNewRequest || isStreaming)) {
+          queryRunner.runQueries();
+        }
+      };
+
       const dataTransformer = sourcePanelQueryRunner.parent;
 
       if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
@@ -121,23 +140,15 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         // the data transformer will emit but there will be no subscription and thus no visual update
         // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
         // since we never re-run the query, only reprocess the transformations, the panel will not update.
-        const transformerSub = dataTransformer.subscribeToState((newState, oldState) => {
-          // Only re-run if there's actually new data to process.
-          // This prevents re-running when the source panel is cancelled, which only changes
-          // the loading state but keeps the same requestId.
-          // We trigger when:
-          // 1. requestId changed (new query completed)
-          // 2. isStreaming (continuous data updates)
-          const newRequestId = newState.data?.request?.requestId;
-          const oldRequestId = oldState.data?.request?.requestId;
-          const hasNewRequest = newRequestId !== oldRequestId;
-          const isStreaming = newState.data?.state === LoadingState.Streaming;
-
-          if (newState.data !== oldState.data && (hasNewRequest || isStreaming)) {
-            queryRunner.runQueries();
-          }
-        });
+        const transformerSub = dataTransformer.subscribeToState(onSourceDataChange);
         transformerSubs.push(transformerSub);
+      } else {
+        // Source panel has no transformer (or empty transformations). Subscribe to the query runner
+        // so we re-run when the source panel's data updates (e.g. after variable resolution or
+        // time range change). Without this, the dashboard-datasource panel can read stale data
+        // when it runs before the source panels complete and never updates.
+        const queryRunnerSub = sourcePanelQueryRunner.subscribeToState(onSourceDataChange);
+        transformerSubs.push(queryRunnerSub);
       }
     }
 

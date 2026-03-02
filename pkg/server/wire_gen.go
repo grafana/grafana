@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/registry/apis"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -589,8 +590,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator)
-	unifiedMigrator := migrations2.ProvideUnifiedMigrator(legacyDatabaseProvider, resourceClient, migrationRegistry)
-	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
+	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
+	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
 	migrationStatusReader := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry)
 	dualwriteMetrics := dualwrite.ProvideMetrics(registerer)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService, migrationStatusReader, dualwriteMetrics)
@@ -769,7 +770,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	idimplService := idimpl.ProvideService(cfg, localSigner, remoteCache, authnService, registerer, tracer)
 	verifier := userimpl.ProvideVerifier(cfg, userService, tempuserService, notificationService, idimplService)
-	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service15, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, storageService, notificationService, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service13, avatarCacheServer, prefService, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, playlistService, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, apiApi, userService, tempuserService, loginattemptimplService, orgService, deletionService, teamService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokenService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, eventualRestConfigProvider, anonDeviceService, verifier, preinstallImpl)
+	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service15, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, storageService, notificationService, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service13, avatarCacheServer, prefService, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, playlistService, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, apiApi, userService, tempuserService, loginattemptimplService, orgService, deletionService, teamService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokenService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, eventualRestConfigProvider, anonDeviceService, verifier, preinstallImpl, publicDashboardServiceImpl)
 	if err != nil {
 		return nil, err
 	}
@@ -910,9 +911,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := iam.ProvideNoopGlobalRoleApiInstaller()
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
+	externalGroupMappingApiInstaller := iam.ProvideNoopExternalGroupMappingApiInstaller()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller, tracingService, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -958,11 +960,15 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, pluginsourcesService, service13, accessControl)
+	if err != nil {
+		return nil, err
+	}
 	provisioningDependencyRegisterer, err := provisioning2.RegisterDependencies(cfg, acimplService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, ofrepAPIBuilder, appPluginAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
@@ -1280,8 +1286,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator)
-	unifiedMigrator := migrations2.ProvideUnifiedMigrator(legacyDatabaseProvider, resourceClient, migrationRegistry)
-	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
+	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
+	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
 	migrationStatusReader := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry)
 	dualwriteMetrics := dualwrite.ProvideMetrics(registerer)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService, migrationStatusReader, dualwriteMetrics)
@@ -1462,7 +1468,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	idimplService := idimpl.ProvideService(cfg, localSigner, remoteCache, authnService, registerer, tracer)
 	verifier := userimpl.ProvideVerifier(cfg, userService, tempuserService, notificationServiceMock, idimplService)
-	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service15, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, storageService, notificationServiceMock, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service13, avatarCacheServer, prefService, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, playlistService, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, apiApi, userService, tempuserService, loginattemptimplService, orgService, deletionService, teamService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokentestService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, eventualRestConfigProvider, anonDeviceService, verifier, preinstallImpl)
+	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service15, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, storageService, notificationServiceMock, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service13, avatarCacheServer, prefService, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, playlistService, apikeyService, kvStore, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, apiApi, userService, tempuserService, loginattemptimplService, orgService, deletionService, teamService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokentestService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, eventualRestConfigProvider, anonDeviceService, verifier, preinstallImpl, publicDashboardServiceImpl)
 	if err != nil {
 		return nil, err
 	}
@@ -1603,9 +1609,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := iam.ProvideNoopGlobalRoleApiInstaller()
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
+	externalGroupMappingApiInstaller := iam.ProvideNoopExternalGroupMappingApiInstaller()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller, tracingService, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1651,11 +1658,15 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, pluginsourcesService, service13, accessControl)
+	if err != nil {
+		return nil, err
+	}
 	provisioningDependencyRegisterer, err := provisioning2.RegisterDependencies(cfg, acimplService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, ofrepAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, ofrepAPIBuilder, appPluginAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err

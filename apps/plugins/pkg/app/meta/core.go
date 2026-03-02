@@ -55,9 +55,24 @@ func NewCoreProviderWithTTL(logger logging.Logger, pluginsPathFunc func() (strin
 	}
 }
 
+func (p *CoreProvider) Init(ctx context.Context) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.initialized {
+		return nil
+	}
+
+	if err := p.loadPlugins(ctx); err != nil {
+		p.logger.WithContext(ctx).Error("Could not load core plugins", "error", err)
+		p.initialized = true
+		return err
+	}
+	p.initialized = true
+	return nil
+}
+
 // GetMeta retrieves plugin metadata for core plugins.
 func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
-	// Check cache first
 	p.mu.RLock()
 	if meta, found := p.loadedPlugins[ref.ID]; found {
 		p.mu.RUnlock()
@@ -66,33 +81,22 @@ func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 			TTL:  p.ttl,
 		}, nil
 	}
+	initialized := p.initialized
 	p.mu.RUnlock()
 
-	// Initialize cache if not already done
-	p.mu.Lock()
-	defer p.mu.Unlock()
+	if initialized {
+		return nil, ErrMetaNotFound
+	}
 
-	// Double-check after acquiring write lock
+	if err := p.Init(ctx); err != nil {
+		return nil, ErrMetaNotFound
+	}
+
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	if meta, found := p.loadedPlugins[ref.ID]; found {
 		return &Result{
 			Meta: meta,
-			TTL:  p.ttl,
-		}, nil
-	}
-
-	if !p.initialized {
-		if err := p.loadPlugins(ctx); err != nil {
-			p.logger.WithContext(ctx).Error("Could not load core plugins", "error", err)
-			// Mark as initialized even on failure so we don't keep trying
-			p.initialized = true
-			return nil, ErrMetaNotFound
-		}
-		p.initialized = true
-	}
-
-	if spec, found := p.loadedPlugins[ref.ID]; found {
-		return &Result{
-			Meta: spec,
 			TTL:  p.ttl,
 		}, nil
 	}

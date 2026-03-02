@@ -469,10 +469,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externe Alertmanager",
-      "extra-config-warning": {
-        "content": "Hier sehen Sie die verbundene Konfiguration von Grafana Alertmanager mit importierten Konfigurationen. Diese verbundene Ansicht ist in der Benutzeroberfläche schreibgeschützt.",
-        "title": "Importierte Konfiguration"
-      },
       "noOptionsMessage-no-datasources-found": "Keine Datenquellen gefunden"
     },
     "alert-menu": {
@@ -910,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Kontaktpunkte konnten nicht abgerufen werden"
     },
     "contact-points": {
-      "create": "Kontaktpunkt erstellen",
+      "create": "",
       "custom-template-value": "Benutzerdefinierter Vorlagenwert",
       "delete-reasons": {
         "heading": "Der Kontaktpunkt kann aus folgenden Gründen nicht gelöscht werden:",
@@ -2133,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Zeitintervall hinzufügen"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2177,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2184,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Suche nach Kontaktpunkt",
@@ -2256,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Abrufen der Benachrichtigungsvorlagen fehlgeschlagen"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Benachrichtigungsvorlagengruppe hinzufügen",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Erstellen Sie Benachrichtigungsvorlagen, um Ihre Benachrichtigungen anzupassen."
     },
     "notifications-list": {
@@ -2283,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2306,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Fügen Sie Labels hinzu, um Ihre Aufnahmeregeln besser verwalten zu können.",
@@ -3354,7 +3348,7 @@
       "stop-alerting-when": "Warnung (oder ausstehenden Status) stoppen, wenn"
     },
     "time-interval": {
-      "add-time-interval": "Zeitintervall hinzufügen",
+      "add-time-interval": "",
       "save": "Zeitintervall speichern",
       "saving": "Zeitintervall wird gespeichert"
     },
@@ -4186,6 +4180,16 @@
       "clear": "Suche und Filter löschen",
       "text": "Keine Ergebnisse für deine Abfrage gefunden"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Verlauf löschen",
       "error": "Zuletzt angesehene Dashboards konnten nicht geladen werden.",
@@ -4857,6 +4861,10 @@
       "view-json-diff": "JSON-Diff anzeigen, um alle Änderungen zu sehen"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Neu",
     "alert": {
@@ -5003,6 +5011,7 @@
       "description-color-annotation-event-markers": "Farbe, die für Ereignismarkierungen von Anmerkungen verwendet werden soll",
       "description-enabled-annotation-query-issued-every-dashboard": "Wenn dies aktiviert ist, wird bei jeder Aktualisierung des Dashboards eine Anmerkungsabfrage ausgegeben",
       "description-hidden": "Anmerkungsabfragen können im oberen Bereich des Dashboards ein- oder ausgeschaltet werden. Wenn diese Option aktiviert ist, wird dieser Schalter ausgeblendet.",
+      "error-loading-panels": "",
       "label-color": "Farbe",
       "label-data-source": "Datenquelle",
       "label-enabled": "Aktiviert",
@@ -5057,7 +5066,7 @@
     "canvas-actions": {
       "add-panel": "Panel hinzufügen",
       "disabled-child-contains-tabs": "Kann nicht zu Tabs geändert werden, da eine Zeile bereits Tabs enthält",
-      "disabled-nested-grouping": "Die Gruppierung ist auf 2 Ebenen beschränkt",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Tabs können nicht in andere Tabs verschachtelt werden",
       "group-into-row": "In Zeile gruppieren",
       "group-into-tab": "In Registerkarte gruppieren",
@@ -5685,10 +5694,7 @@
       "empty-state-message": "Führen Sie eine Abfrage aus, um sie hier zu visualisieren, oder gehen Sie weiter zu allen Visualisierungen, um andere Panel-Typen hinzuzufügen",
       "menu-open-panel-editor": "Konfigurieren",
       "menu-use-library-panel": "Bibliotheks-Panel verwenden",
-      "missing-config": "Fehlende Panel-Konfiguration",
-      "suggestions": {
-        "empty-state-message": "Führen Sie eine Abfrage aus, um vorgeschlagene Visualisierungen anzuzeigen"
-      }
+      "missing-config": "Fehlende Panel-Konfiguration"
     },
     "new-panel-title": "Neues Panel",
     "on-create-new-row": {
@@ -6444,6 +6450,7 @@
       "delete": "Löschen",
       "description-color-annotation-event-markers": "Farbe, die für Ereignismarkierungen von Anmerkungen verwendet werden soll",
       "description-enabled-annotation-query-issued-every-dashboard": "Wenn dies aktiviert ist, wird bei jeder Aktualisierung des Dashboards eine Anmerkungsabfrage ausgegeben",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Anmerkungssteuerung anzeigen in",
       "label-color": "Farbe",
       "label-data-source": "Datenquelle",
@@ -6595,6 +6602,12 @@
           "row-title": "Zeilentitel"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Das Dashboard konnte nicht gelöscht werden",
@@ -6922,11 +6935,11 @@
       "static-options-legend": "Statische Optionen"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Erweiterte Optionen",
         "classic": "Klassisch",
         "json": "JSON",
-        "v1-resource": "V1-Ressource",
         "v2-resource": "V2-Ressource",
         "yaml": "YAML"
       },
@@ -10970,7 +10983,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Keine Optionen gefunden"
@@ -11926,6 +11941,10 @@
         "title": "Fehler",
         "try-again-button": "Erneut versuchen"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Unbekannter Visualisierungstyp"
     },
     "viz-type-picker": {
@@ -12369,6 +12388,11 @@
       "text-loading-teams": "Teams werden geladen ..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Fügen Sie eine Notiz hinzu, um Ihre Änderungen zu beschreiben (optional)",
@@ -12636,6 +12660,15 @@
       "label-read-only": "Nur lesen",
       "label-sync-interval": "Synchronisierungsintervall (Sekunden)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Keine passenden Ergebnisse zu Ihrer Abfrage",
       "partial-managed": "{{managedCount}}/{{resourceCount}} Ressourcen werden von Git sync verwaltet.",
@@ -12770,6 +12803,14 @@
       "show-more": "mehr anzeigen",
       "truncated": "Nachricht gekürzt"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "repo-message": "",
+      "repo-title": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "Die vollständige Instanzensynchronisierung ist deaktiviert, da bereits ein anderer Ordner mit einem Repository synchronisiert ist.",
@@ -12900,6 +12941,7 @@
       "header-status": "Status",
       "header-title": "Titel",
       "header-type": "Typ",
+      "missing-folder-metadata": "",
       "search-placeholder": "Nach Pfad oder Titel suchen",
       "source": "Quelle",
       "status-pending": "Ausstehend",
@@ -13274,6 +13316,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13301,7 +13344,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13311,9 +13355,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13357,20 +13402,20 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Karte {{id}} auswählen",
       "data": "",
+      "loading-queries-transformations": "",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
       "transformations": "Transformationen",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13567,6 +13612,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Panels einschließen",
       "remove-datasource-filter": "Datenquelle: {{datasource}}",
       "sort-placeholder": "Sortieren",

@@ -582,6 +582,9 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
 
+	hasQuotaChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository
+
 	var shouldGenerateToken bool
 	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
 		shouldGenerateToken = rc.shouldGenerateTokenFromConnection(obj)
@@ -603,6 +606,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		logger.Info("repository was blocked but now within quota, processing to unblock")
 	case shouldGenerateToken:
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
+	case hasQuotaChanged:
+		logger.Info("quota changed", "quota", newQuota)
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
@@ -619,19 +624,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Set quota information from configuration (only if changed)
-	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
-		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
+	if hasQuotaChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/quota",
 			"value": newQuota,
 		})
-	}
-
-	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
-	); conditionPatchOps != nil {
-		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
 
 	// Repository needs to be blocked.
@@ -641,6 +639,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"namespace", namespace,
 			"max_repositories", newQuota.MaxRepositories,
 		)
+
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
+		); conditionPatchOps != nil {
+			patchOperations = append(patchOperations, conditionPatchOps...)
+		}
 
 		// Mark the repository as unhealthy
 		patchOperations = append(patchOperations, map[string]interface{}{
@@ -661,15 +665,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			}
 		}
 		return nil
-	}
-
-	// We're unblocking the repository. Here - we should set the condition correctly, to match this case.
-	if forceProcessForUnblock {
-		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
-		); conditionPatchOps != nil {
-			patchOperations = append(patchOperations, conditionPatchOps...)
-		}
 	}
 
 	if shouldGenerateToken {
@@ -739,14 +734,23 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
+	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
 	}
+	testResults := healthResult.TestResults
+	healthStatus := healthResult.HealthStatus
 
-	// Add health patch operations first
-	if len(healthPatchOps) > 0 {
-		patchOperations = append(patchOperations, healthPatchOps...)
+	// Add health patch operations
+	if len(healthResult.PatchOps) > 0 {
+		patchOperations = append(patchOperations, healthResult.PatchOps...)
+	}
+
+	// Build ALL condition patches together to avoid one overwriting another.
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
+	); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
 
 	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors

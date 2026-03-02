@@ -22,7 +22,18 @@ routes: {
 					body: #NotificationQuery
 				}
 				response: #NotificationQueryResult
-				responseMetadata: typeMeta: false				
+				responseMetadata: typeMeta: false
+			}
+		}
+
+		// Query alerts within notification history.
+		"/notifications/queryalerts": {
+			"POST": {
+				request: {
+					body: #AlertQuery
+				}
+				response: #AlertQueryResult
+				responseMetadata: typeMeta: false
 			}
 		}
 	}

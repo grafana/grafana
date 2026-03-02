@@ -312,6 +312,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += '&panelType=' + query.panel_type;
     }
 
+    if (query.createdBy?.length) {
+      uri += '&createdBy=' + encodeURIComponent(query.createdBy);
+    }
+
     if (query.panelTitleSearch) {
       uri += '&panelTitleSearch=true';
     }
