@@ -12675,6 +12675,7 @@
       "read-only-message": "This repository is read-only. Folder metadata cannot be fixed automatically.",
       "submit": "Fix folder IDs",
       "submitting": "Fixing...",
+      "success-title": "Folder metadata fixed successfully",
       "title": "Fix folder metadata"
     },
     "folder-permissions": {

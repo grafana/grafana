@@ -23,9 +23,15 @@ interface FixFolderMetadataDrawerProps {
 export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolderMetadataDrawerProps) {
   const [submittedJob, setSubmittedJob] = useState<Job>();
   const [jobError, setJobError] = useState<string | StatusInfo>();
+  const [jobSuccess, setJobSuccess] = useState<string | StatusInfo>();
   const { repository, isReadOnlyRepo, isLoading: repoLoading } = useGetResourceRepositoryView({ name: repositoryName });
 
   const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
+    if (statusInfo.status === 'success') {
+      setJobSuccess({
+        title: t('provisioning.fix-folder-metadata-drawer.success-title', 'Folder metadata fixed successfully'),
+      });
+    }
     if (statusInfo.status === 'error' && statusInfo.error) {
       setJobError(statusInfo.error);
     }
@@ -40,7 +46,7 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
   if (submittedJob) {
     return (
       <Drawer title={drawerTitle} onClose={onDismiss}>
-        <ProvisioningAlert error={jobError} />
+        <ProvisioningAlert error={jobError} success={jobSuccess} />
         <JobStatus watch={submittedJob} jobType="fix" onStatusChange={handleJobStatusChange} />
       </Drawer>
     );
