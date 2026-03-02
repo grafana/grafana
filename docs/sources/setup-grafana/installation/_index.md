@@ -88,7 +88,7 @@ Small deployments suit small teams, internal tooling, and low-traffic environmen
 | Disk | 10 – 20 GB SSD (database host) |
 | Instances | 1 |
 
-**Database:** SQLite is acceptable for development and evaluation only. Use an external MySQL or PostgreSQL instance for production. For more information, refer to [Supported databases](#supported-databases).
+**Database:** SQLite works for small environments. Refer to [Appropriate uses for SQLite](https://www.sqlite.org/whentouse.html) to assess whether it suits your use case. For higher reliability and growth capacity, consider an external MySQL or PostgreSQL instance. For more information, refer to [Supported databases](#supported-databases).
 
 **Image rendering:** optional; can run on the same host for light use. Refer to [Server-side image rendering](/grafana/plugins/grafana-image-renderer#requirements).
 
@@ -107,7 +107,7 @@ Medium deployments suit shared team environments and departmental observability 
 
 **Image rendering:** run the image renderer as a separate process or container. Each renderer worker uses approximately 1 GB of memory; size your renderer host accordingly. Refer to [Server-side image rendering](/grafana/plugins/grafana-image-renderer#requirements).
 
-**High availability:** if you run two or more Grafana instances, configure a shared session store (Redis) or enable sticky sessions at the load balancer to prevent users from being signed out between requests. Refer to [Set up Grafana for high availability](../../setup-grafana/set-up-for-high-availability/).
+**High availability:** if you run two or more Grafana instances, configure a Redis session store or enable sticky sessions at the load balancer to prevent users from being signed out between requests. Refer to [Set up Grafana for high availability](../../setup-grafana/set-up-for-high-availability/).
 
 #### Large
 
@@ -121,11 +121,11 @@ Large deployments suit organization-wide platforms and high-traffic production e
 | Instances | 3+ (load-balanced) |
 | Network | 10 Gbps or faster |
 
-**Database:** a highly available MySQL or PostgreSQL cluster is required. Refer to [Supported databases](#supported-databases).
+**Database:** a highly available MySQL or PostgreSQL cluster is strongly advised at this tier. Refer to [Supported databases](#supported-databases).
 
 **Image rendering:** run a dedicated renderer fleet with multiple workers, isolated from Grafana instances. Each renderer worker uses approximately 1 GB of memory. Refer to [Server-side image rendering](/grafana/plugins/grafana-image-renderer#requirements).
 
-**Alert evaluation:** with more than 1,000 alert rules or short evaluation intervals (under one minute), alert evaluation can saturate CPU and degrade dashboard query performance on the same instance. Isolate alert evaluation to one or more dedicated Grafana instances in [remote evaluation mode](../../alerting/) to prevent this. Refer to [Performance considerations and limitations](../../alerting/set-up/performance-limitations/).
+**Alert evaluation:** with more than 1,000 alert rules or short evaluation intervals of under one minute, alert evaluation can saturate CPU and degrade dashboard query performance on the same instance. Isolate alert evaluation to one or more dedicated Grafana instances in [remote evaluation mode](../../alerting/) to prevent this. Refer to [Performance considerations and limitations](../../alerting/set-up/performance-limitations/).
 
 **High availability:** sticky sessions or a shared Redis session store are required. Refer to [Set up Grafana for high availability](../../setup-grafana/set-up-for-high-availability/).
 
