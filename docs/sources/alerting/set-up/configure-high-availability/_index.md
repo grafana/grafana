@@ -37,7 +37,7 @@ Grafana Alerting uses the Prometheus model of separating the evaluation of alert
 
 {{< figure src="/static/img/docs/alerting/unified/high-availability-ua.png" class="docs-image--no-shadow" max-width= "750px" caption="High availability" >}}
 
-When running multiple instances of Grafana, all alert rules are evaluated on all instances by default. You can think of the evaluation of alert rules as being duplicated by the number of running Grafana instances. This is how Grafana Alerting makes sure that as long as at least one Grafana instance is working, alert rules are still be evaluated and notifications for alerts are still sent.
+When running multiple instances of Grafana, all alert rules are evaluated on all instances by default. You can think of the evaluation of alert rules as being duplicated by the number of running Grafana instances. This is how Grafana Alerting ensures that as long as at least one Grafana instance is working, alert rules are still evaluated and notifications for alerts are still sent.
 
 If you want to reduce this duplication, you can enable [single-node evaluation mode](#single-node-evaluation-mode) so that only one instance evaluates alert rules.
 

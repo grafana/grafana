@@ -1917,7 +1917,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 #### `ha_single_node_evaluation`
 
-Enable single-node evaluation mode for alerting in high availability. When enabled, only one Grafana instance in the cluster evaluates alert rules, instead of all instances evaluating all rules. This reduces query load on data sources from N times to 1. The default value is `false`.
+Enable single-node evaluation mode for alerting in high availability. When enabled, only one Grafana instance in the cluster evaluates alert rules instead of all instances evaluating all rules. This reduces query load on data sources from N times to 1. The default value is `false`.
 
 Requires high availability clustering to be configured (either Memberlist or Redis).
 
