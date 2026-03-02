@@ -752,8 +752,8 @@ export class PrometheusDatasource
     }
 
     const finalQuery = filters.map(remapOneOf).reduce((acc, filter) => {
-      const { key } = filter;
-      let { value, operator } = filter;
+      const { key, operator } = filter;
+      let { value } = filter;
 
       if (operator === '=~' || operator === '!~') {
         value = prometheusRegularEscape(value);
@@ -925,13 +925,11 @@ export const extractResourceMatcher = (
 
 export function remapOneOf(filter: AdHocVariableFilter) {
   let { operator, value, values } = filter;
-  if (operator === '=|') {
-    operator = '=~';
-    value = values?.map(prometheusRegularEscape).join('|') ?? '';
-  } else if (operator === '!=|') {
-    operator = '!~';
+  if (operator === '=|' || operator === '!=|') {
+    operator = operator === '=|' ? '=~' : '!~';
     value = values?.map(prometheusRegularEscape).join('|') ?? '';
   }
+
   return {
     ...filter,
     operator,
