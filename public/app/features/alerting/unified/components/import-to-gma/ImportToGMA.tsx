@@ -328,7 +328,9 @@ function ImportWizardContent() {
 
       setTimeout(() => {
         setShowConfirmModal(false);
-        notifyApp.success(t('alerting.import-to-gma.success', 'Successfully imported resources to Grafana Alerting.'));
+        notifyApp.success(
+          t('alerting.import-to-gma.success', 'Successfully imported alert rules to Grafana-managed rules.')
+        );
         locationService.push(ruleListUrl);
       }, 1500);
     } catch (err) {
@@ -337,7 +339,11 @@ function ImportWizardContent() {
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
       });
-      notifyApp.error(t('alerting.import-to-gma.error', 'Failed to import resources'), stringifyErrorLike(err));
+      notifyApp.error(
+        t('alerting.import-to-gma.error', 'Failed to import alert rules: {{error}}', {
+          error: stringifyErrorLike(err),
+        })
+      );
     }
   }, [getValues, importNotifications, importRules, rulesFromDatasource, notifyApp]);
 

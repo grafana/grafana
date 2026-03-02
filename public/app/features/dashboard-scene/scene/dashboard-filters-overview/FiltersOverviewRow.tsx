@@ -103,10 +103,10 @@ export const FilterRow = memo(
         <div className={styles.valueCell}>
           {isMultiOperator ? (
             <MultiCombobox
-              aria-label={t('dashboard.filters-overview.value', 'Value')}
+              aria-label={t('dashboard.filters-overview.multi.value', 'Value')}
               options={(inputValue: string) => getValueOptions(keyValue, operatorValue, inputValue)}
               value={multiValues}
-              placeholder={t('dashboard.filters-overview.value.placeholder', 'Select values')}
+              placeholder={t('dashboard.filters-overview.multi.value.placeholder', 'Select values')}
               isClearable={true}
               onChange={(selections: Array<ComboboxOption<string>>) => {
                 onMultiValuesChange(
@@ -117,10 +117,10 @@ export const FilterRow = memo(
             />
           ) : (
             <Combobox
-              aria-label={t('dashboard.filters-overview.value', 'Value')}
+              aria-label={t('dashboard.filters-overview.single.value', 'Value')}
               options={(inputValue: string) => getValueOptions(keyValue, operatorValue, inputValue)}
               value={singleValue ? { label: singleValue, value: singleValue } : null}
-              placeholder={t('dashboard.filters-overview.value.placeholder', 'Select value')}
+              placeholder={t('dashboard.filters-overview.single.value.placeholder', 'Select value')}
               isClearable={true}
               onChange={(selection: ComboboxOption<string> | null) => {
                 onSingleValueChange(keyValue, selection?.value ?? '');

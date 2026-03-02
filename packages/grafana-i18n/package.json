@@ -62,7 +62,9 @@
     "react-i18next": "^15.0.0"
   },
   "devDependencies": {
+    "@swc/core": "^1.0.0",
     "@types/react": "18.3.18",
+    "i18next-cli": "^1.24.22",
     "rollup": "^4.22.4",
     "rollup-plugin-copy": "3.5.0",
     "typescript": "5.9.2"

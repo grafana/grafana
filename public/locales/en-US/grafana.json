@@ -1627,7 +1627,7 @@
         "label": "Data source",
         "required-message": "Please select a data source"
       },
-      "error": "Failed to import resources",
+      "error": "Failed to import alert rules: {{error}}",
       "group": {
         "description": "Type to search for an existing group",
         "label": "Group"
@@ -1777,7 +1777,7 @@
         "yaml-file": "Rules YAML file",
         "yaml-required": "Please select a file"
       },
-      "success": "Successfully imported resources to Grafana Alerting.",
+      "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {
         "description": "The folder to import the rules to",
         "label": "Target folder"
@@ -5440,13 +5440,18 @@
       "empty": "No labels available",
       "groupby": "GroupBy",
       "missing-adhoc": "No ad hoc filters available",
+      "multi": {
+        "value": "Value"
+      },
       "operator": "Operator",
       "search": {
         "aria-label": "Search filters",
         "placeholder": "Search..."
       },
-      "title": "Edit filters",
-      "value": "Value"
+      "single": {
+        "value": "Value"
+      },
+      "title": "Edit filters"
     },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Send custom feedback",
@@ -6295,6 +6300,9 @@
       "use-dashboard-button": "Use dashboard",
       "view-template-button": "View template"
     },
+    "community-dashboard-section": {
+      "community-error-title": "Error loading community dashboards"
+    },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
     "community-error": "Failed to load community dashboards. Please try again.",
@@ -6639,7 +6647,6 @@
       }
     },
     "empty-transformations-message": {
-      "add-transformation": "Add transformation",
       "show-more": "Show more",
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
@@ -6785,6 +6792,11 @@
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
       "save-and-overwrite": "Save and overwrite"
+    },
+    "legacy": {
+      "empty-transformations-message": {
+        "add-transformation": "Add transformation"
+      }
     },
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}} by <person />",
@@ -7340,8 +7352,9 @@
       "title": "Versions"
     }
   },
+  "dashboard.filters-overview.multi.value.placeholder": "Select values",
   "dashboard.filters-overview.operator.placeholder": "Select operator",
-  "dashboard.filters-overview.value.placeholder": "Select values",
+  "dashboard.filters-overview.single.value.placeholder": "Select value",
   "dashboards": {
     "filters-overview": {
       "all-filters": "All filters",
@@ -12672,6 +12685,9 @@
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
+      "free-tier-limit": {
+        "message-connection": "Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,"
+      },
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
@@ -12680,7 +12696,7 @@
     },
     "free-tier-limit": {
       "message": "Free-tier accounts are capped to 1 connection, and 20 resources per folder",
-      "message-connection": "Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,",
+      "message-connection": "Free-tier accounts are limited to 1 connection. To add more connections,",
       "message-resource": "Free-tier accounts are limited to 20 resources per folder. To add more resources,",
       "note": "Note:",
       "upgrade-link": "upgrade your account"
@@ -14657,9 +14673,17 @@
     "no-transformation-editor-title": "Transformation does not have an editor component"
   },
   "transformations": {
-    "empty": {
-      "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<br />This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
-      "add-transformation-header": "Start transforming data"
+    "legacy": {
+      "empty": {
+        "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<br />This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
+        "add-transformation-header": "Start transforming data"
+      }
+    },
+    "new": {
+      "empty": {
+        "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<br />This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
+        "add-transformation-header": "Add a Transformation"
+      }
     }
   },
   "transformers": {

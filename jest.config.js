@@ -35,6 +35,21 @@ const esModules = [
   'earcut',
   'pbf',
   'geotiff',
+  'i18next-cli',
+  'chalk',
+  'ora',
+  'cli-cursor',
+  'restore-cursor',
+  'onetime',
+  'cli-spinners',
+  'log-symbols',
+  'strip-ansi',
+  'ansi-regex',
+  'string-width',
+  'get-east-asian-width',
+  'is-interactive',
+  'is-unicode-supported',
+  'stdin-discarder',
 ].join('|');
 
 module.exports = {

@@ -44,10 +44,10 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
     <Box alignItems="center" padding={4}>
       <Stack direction="column" alignItems="center" gap={2}>
         <Text element="h3" textAlignment="center">
-          <Trans i18nKey="transformations.empty.add-transformation-header">Start transforming data</Trans>
+          <Trans i18nKey="transformations.legacy.empty.add-transformation-header">Start transforming data</Trans>
         </Text>
         <Text element="p" textAlignment="center" data-testid={selectors.components.Transforms.noTransformationsMessage}>
-          <Trans i18nKey="transformations.empty.add-transformation-body">
+          <Trans i18nKey="transformations.legacy.empty.add-transformation-body">
             Transformations allow data to be changed in various ways before your visualization is shown.
             <br />
             This includes joining data together, renaming fields, making calculations, formatting data for display, and
@@ -61,7 +61,9 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
           onClick={onShowPicker}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          <Trans i18nKey="dashboard-scene.empty-transformations-message.add-transformation">Add transformation</Trans>
+          <Trans i18nKey="dashboard-scene.legacy.empty-transformations-message.add-transformation">
+            Add transformation
+          </Trans>
         </Button>
       </Stack>
     </Box>
@@ -118,10 +120,10 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
         {showHeaderText && (
           <Stack direction="column" alignItems="start" gap={1}>
             <Text element="h3" textAlignment="start">
-              <Trans i18nKey="transformations.empty.add-transformation-header">Add a Transformation</Trans>
+              <Trans i18nKey="transformations.new.empty.add-transformation-header">Add a Transformation</Trans>
             </Text>
             <Text element="p" textAlignment="start" color="secondary">
-              <Trans i18nKey="transformations.empty.add-transformation-body">
+              <Trans i18nKey="transformations.new.empty.add-transformation-body">
                 Transformations allow data to be changed in various ways before your visualization is shown.
                 <br />
                 This includes joining data together, renaming fields, making calculations, formatting data for display,
