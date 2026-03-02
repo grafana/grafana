@@ -251,7 +251,7 @@ function getStyles(
         pointerEvents: 'auto',
       },
       '[data-is-dragging] &': {
-        background: isSelected ? themeColors.card.activeBg : themeColors.card.hoverBg,
+        background: hoverBackgroundColor,
       },
     }),
     hoverActions,
