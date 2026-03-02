@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -25,6 +26,7 @@ import (
 
 func ProvidePullRequestWorker(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
@@ -37,7 +39,7 @@ func ProvidePullRequestWorker(
 	// FIXME: we should create providers for client and parsers, so that we don't have
 	// multiple connections for webhooks
 	clients := resources.NewClientFactory(configProvider)
-	parsers := resources.NewParserFactory(clients)
+	parsers := resources.NewParserFactory(clients, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)) //nolint:staticcheck
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
 	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering)

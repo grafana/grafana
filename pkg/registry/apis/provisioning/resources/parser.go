@@ -42,11 +42,12 @@ type Parser interface {
 }
 
 type parserFactory struct {
-	ClientFactory ClientFactory
+	ClientFactory         ClientFactory
+	folderMetadataEnabled bool
 }
 
-func NewParserFactory(clientFactory ClientFactory) ParserFactory {
-	return &parserFactory{clientFactory}
+func NewParserFactory(clientFactory ClientFactory, folderMetadataEnabled bool) ParserFactory {
+	return &parserFactory{clientFactory, folderMetadataEnabled}
 }
 
 func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
@@ -65,9 +66,10 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
-		urls:    urls,
-		clients: clients,
-		config:  config,
+		urls:                  urls,
+		clients:               clients,
+		config:                config,
+		folderMetadataEnabled: f.folderMetadataEnabled,
 	}, nil
 }
 
@@ -82,6 +84,8 @@ type parser struct {
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
+
+	folderMetadataEnabled bool
 }
 
 type ParsedResource struct {
@@ -152,7 +156,11 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
-		return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
+		// When the feature flag is on, _folder.json is a system-created manifest — allow it through.
+		isFolderManifest := r.folderMetadataEnabled && path.Base(info.Path) == FolderMetadataFileName
+		if !isFolderManifest {
+			return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
+		}
 	}
 
 	// Remove the internal dashboard UID,version and id if they exist
