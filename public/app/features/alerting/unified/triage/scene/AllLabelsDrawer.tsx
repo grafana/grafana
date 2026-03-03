@@ -241,6 +241,7 @@ const getContentStyles = (theme: GrafanaTheme2) => ({
   }),
   labelKeyButton: css({
     fontWeight: theme.typography.fontWeightBold,
+    color: theme.colors.text.secondary,
     minWidth: 0,
     '& > span': {
       overflow: 'hidden',

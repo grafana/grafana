@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
-import { Icon, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Icon, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { AllLabelsContent } from './AllLabelsDrawer';
 import { countInstances } from './SummaryStats';
@@ -12,34 +13,60 @@ import { useLabelsBreakdown } from './useLabelsBreakdown';
 import { addOrReplaceFilter, removeFilter, useFilterValue, useQueryFilter } from './utils';
 
 export const LABELS_COLUMN_WIDTH = 250;
+const COLLAPSED_WIDTH = 36;
 
 /**
  * Always-visible labels column rendered to the left of the main workbench content.
  * Contains a state filter (firing / pending) and the full label breakdown.
  */
 export function LabelsColumn() {
-  const styles = useStyles2(getStyles);
   const { labels, isLoading } = useLabelsBreakdown();
+  const [open, toggleOpen] = useToggle(true);
+  const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.column}>
-      <ScrollContainer scrollbarWidth="thin">
-        <div className={styles.inner}>
-          <div className={styles.section}>
-            <Text weight="medium" variant="bodySmall" color="secondary">
-              <Trans i18nKey="alerting.triage.state-filter-title">State</Trans>
-            </Text>
-            <StateFilter />
+    <div className={cx(styles.column, !open && styles.columnCollapsed)}>
+      <div className={styles.collapseButtonRow}>
+        <Tooltip
+          content={
+            open
+              ? t('alerting.triage.collapse-sidebar', 'Collapse sidebar')
+              : t('alerting.triage.expand-sidebar', 'Expand sidebar')
+          }
+          placement="right"
+        >
+          <button
+            className={styles.collapseButton}
+            onClick={toggleOpen}
+            aria-label={
+              open
+                ? t('alerting.triage.collapse-sidebar', 'Collapse sidebar')
+                : t('alerting.triage.expand-sidebar', 'Expand sidebar')
+            }
+          >
+            <Icon name={open ? 'angle-left' : 'angle-right'} size="sm" />
+          </button>
+        </Tooltip>
+      </div>
+      {open && (
+        <ScrollContainer scrollbarWidth="thin">
+          <div className={styles.inner}>
+            <div className={styles.section}>
+              <Text weight="medium" variant="bodySmall" color="secondary">
+                <Trans i18nKey="alerting.triage.state-filter-title">State</Trans>
+              </Text>
+              <StateFilter />
+            </div>
+            <div className={styles.divider} />
+            <div className={styles.labelsSectionHeader}>
+              <Text weight="medium" variant="bodySmall" color="secondary">
+                <Trans i18nKey="alerting.triage.labels-column-title">Labels</Trans>
+              </Text>
+            </div>
+            {!isLoading && labels.length > 0 && <AllLabelsContent allLabels={labels} />}
           </div>
-          <div className={styles.divider} />
-          <div className={styles.labelsSectionHeader}>
-            <Text weight="medium" variant="bodySmall" color="secondary">
-              <Trans i18nKey="alerting.triage.labels-column-title">Labels</Trans>
-            </Text>
-          </div>
-          {!isLoading && labels.length > 0 && <AllLabelsContent allLabels={labels} />}
-        </div>
-      </ScrollContainer>
+        </ScrollContainer>
+      )}
     </div>
   );
 }
@@ -119,6 +146,38 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: theme.spacing(2),
     borderRight: `1px solid ${theme.colors.border.weak}`,
     overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  columnCollapsed: css({
+    width: COLLAPSED_WIDTH,
+    minWidth: COLLAPSED_WIDTH,
+    maxWidth: COLLAPSED_WIDTH,
+    borderRight: 'none',
+  }),
+  collapseButtonRow: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+    padding: theme.spacing(0.5),
+    flexShrink: 0,
+  }),
+  collapseButton: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 24,
+    height: 24,
+    padding: 0,
+    background: 'none',
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    cursor: 'pointer',
+    color: theme.colors.text.secondary,
+    flexShrink: 0,
+    '&:hover': {
+      background: theme.colors.action.hover,
+      color: theme.colors.text.primary,
+    },
   }),
   inner: css({
     display: 'flex',
@@ -141,7 +200,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
     flexShrink: 0,
   }),
-
   stateButton: css({
     display: 'flex',
     alignItems: 'center',
@@ -152,7 +210,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid transparent`,
     borderRadius: theme.shape.radius.default,
     cursor: 'pointer',
-    color: theme.colors.text.primary,
+    color: theme.colors.text.secondary,
     textAlign: 'left',
     '&:hover': {
       background: theme.colors.action.hover,
@@ -163,6 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderColor: theme.colors.border.medium,
   }),
   stateLabel: css({
+    color: theme.colors.text.secondary,
     fontSize: theme.typography.bodySmall.fontSize,
   }),
   firingIcon: css({

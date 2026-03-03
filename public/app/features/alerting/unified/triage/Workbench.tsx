@@ -6,7 +6,7 @@ import { useMeasure } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneQueryRunner } from '@grafana/scenes';
-import { Box, Button, EmptyState, ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
+import { Box, Button, EmptyState, ScrollContainer, Text, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
@@ -230,6 +230,15 @@ export function Workbench({
                       <Trans i18nKey="alerting.triage.expand-all">Expand all</Trans>
                     )}
                   </Button>
+                  <span
+                    style={{ position: 'absolute', right: `calc(100% - ${leftColumnWidth}px)`, textAlign: 'right' }}
+                  >
+                    <Text variant="bodySmall" color="secondary">
+                      <Trans i18nKey="alerting.triage.showing-groups-count" values={{ count: data.length }}>
+                        {'Showing {{count}} groups'}
+                      </Trans>
+                    </Text>
+                  </span>
                 </div>
               )}
               <div className={styles.virtualizedContainer}>
@@ -294,7 +303,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     headerContainer: css({}),
     expandCollapseToolbar: css({
+      position: 'relative',
       display: 'flex',
+      alignItems: 'center',
       gap: theme.spacing(0.5),
       marginBottom: theme.spacing(1),
     }),
