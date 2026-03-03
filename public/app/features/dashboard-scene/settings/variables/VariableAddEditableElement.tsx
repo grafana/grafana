@@ -4,7 +4,14 @@ import { useCallback, useId, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { sceneGraph, SceneObjectBase, SceneObjectRef, SceneObjectState, SceneVariableSet } from '@grafana/scenes';
+import {
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  SceneVariableSet,
+  sceneGraph,
+} from '@grafana/scenes';
 import { Box, Card, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -21,11 +28,26 @@ export function openAddVariablePane(dashboard: DashboardScene) {
   dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
 }
 
+export function openAddSectionVariablePane(dashboard: DashboardScene, sectionOwner: SceneObject) {
+  const element = new SectionVariableAdd({
+    dashboardRef: dashboard.getRef(),
+    sectionOwnerRef: sectionOwner.getRef(),
+  });
+  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
+}
+
 export interface VariableAddState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
 export class VariableAdd extends SceneObjectBase<VariableAddState> {}
+
+export interface SectionVariableAddState extends SceneObjectState {
+  dashboardRef: SceneObjectRef<DashboardScene>;
+  sectionOwnerRef: SceneObjectRef<SceneObject>;
+}
+
+export class SectionVariableAdd extends SceneObjectBase<SectionVariableAddState> {}
 
 function useEditPaneOptions(
   this: VariableAddEditableElement,
@@ -61,6 +83,42 @@ export class VariableAddEditableElement implements EditableDashboardElement {
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.variableAdd);
+}
+
+function useSectionEditPaneOptions(
+  this: SectionVariableAddEditableElement,
+  sectionVariableAdd: SectionVariableAdd
+): OptionsPaneCategoryDescriptor[] {
+  const id = useId();
+  const options = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'section-variables' }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id,
+        skipField: true,
+        render: () => <SectionVariableTypeSelection sectionVariableAdd={sectionVariableAdd} />,
+      })
+    );
+  }, [sectionVariableAdd, id]);
+
+  return [options];
+}
+
+export class SectionVariableAddEditableElement implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
+  public readonly typeName = 'Variable';
+
+  public constructor(private sectionVariableAdd: SectionVariableAdd) {}
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return {
+      typeName: t('dashboard.edit-pane.elements.section-variable', 'Section Variables'),
+      icon: 'x',
+      instanceName: t('dashboard.edit-pane.elements.section-variable', 'Section Variables'),
+    };
+  }
+
+  public useEditPaneOptions = useSectionEditPaneOptions.bind(this, this.sectionVariableAdd);
 }
 
 /** @internal Exported for testing */
@@ -99,6 +157,57 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
             key={option.value}
             title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
             data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
+          >
+            <Card.Heading>{option.label}</Card.Heading>
+            <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>
+          </Card>
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
+
+function SectionVariableTypeSelection({
+  sectionVariableAdd,
+}: {
+  sectionVariableAdd: SectionVariableAdd;
+}) {
+  const options = useMemo(() => getVariableTypeSelectOptions(), []);
+  const styles = useStyles2(getStyles);
+
+  const onAddVariable = useCallback(
+    (type: EditableVariableType) => {
+      const dashboard = sectionVariableAdd.state.dashboardRef.resolve();
+      const sectionOwner = sectionVariableAdd.state.sectionOwnerRef.resolve();
+
+      let variablesSet = sectionOwner.state.$variables;
+      if (!(variablesSet instanceof SceneVariableSet)) {
+        variablesSet = new SceneVariableSet({ variables: [] });
+        sectionOwner.setState({ $variables: variablesSet });
+      }
+
+      const newVar = getVariableScene(type, {
+        name: getNextAvailableId(type, variablesSet.state.variables ?? []),
+      });
+      dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
+      dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
+    },
+    [sectionVariableAdd]
+  );
+
+  return (
+    <Stack direction="column" gap={0}>
+      <Box paddingBottom={1} display={'flex'}>
+        <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
+      </Box>
+      <Stack direction="column" gap={1}>
+        {options.map((option) => (
+          <Card
+            noMargin
+            isCompact
+            onClick={() => onAddVariable(option.value!)}
+            key={option.value}
+            title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
           >
             <Card.Heading>{option.label}</Card.Heading>
             <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>

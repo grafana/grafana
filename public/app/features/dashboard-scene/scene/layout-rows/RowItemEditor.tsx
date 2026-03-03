@@ -3,8 +3,8 @@ import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { SceneVariable, SceneVariableSet, SceneVariables, sceneUtils } from '@grafana/scenes';
-import { Alert, Button, Field, Input, Stack, Switch, Text, TextLink } from '@grafana/ui';
+import { SceneVariableSet } from '@grafana/scenes';
+import { Alert, Button, Field, Input, Stack, Switch, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -13,12 +13,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
-import {
-  EditableVariableType,
-  getNextAvailableId,
-  getVariableScene,
-  getVariableTypeSelectOptions,
-} from '../../settings/variables/utils';
+import { openAddSectionVariablePane } from '../../settings/variables/VariableAddEditableElement';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
@@ -80,22 +75,25 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
   const layoutCategory = useLayoutCategory(layout);
 
   const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
-  const sectionVariablesCategory = useMemo(
-    () =>
-      new OptionsPaneCategoryDescriptor({
-        title: t('dashboard.rows-layout.row-options.section-variables.title', 'Section variables'),
-        id: 'dash-row-section-variables',
-        isOpenDefault: false,
-      }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: 'dash-row-section-variables-list',
-          skipField: true,
-          render: () => <RowSectionVariables row={model} />,
-        })
-      ),
-    [model]
-  );
+  const sectionVariablesCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
+      id: 'dash-row-section-variables',
+      isOpenDefault: true,
+      renderTitle: (isExpanded: boolean) => <SectionVariablesCategoryTitle row={model} isExpanded={isExpanded} />,
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'dash-row-section-variables-list',
+        skipField: true,
+        render: () => <RowSectionVariablesList row={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
 
   const editOptions = sectionVariablesEnabled
     ? [rowCategory, sectionVariablesCategory, ...layoutCategory, repeatCategory]
@@ -223,111 +221,59 @@ function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
   });
 }
 
-function RowSectionVariables({ row }: { row: RowItem }) {
-  const variableSet = row.state.$variables;
-  const variables = variableSet?.useState().variables ?? [];
+function SectionVariablesCategoryTitle({ row, isExpanded }: { row: RowItem; isExpanded: boolean }) {
   const dashboard = getDashboardSceneFor(row);
-  const variableTypeOptions = getVariableTypeSelectOptions();
-
-  const onAddVariable = (varType: EditableVariableType) => {
-    const set = ensureRowVariableSet(row, variableSet);
-    if (!set) {
-      return;
-    }
-
-    const newVar = getVariableScene(varType, {
-      name: getNextAvailableId(varType, set.state.variables ?? []),
-    });
-    dashboardEditActions.addVariable({ source: set, addedObject: newVar });
-    const variableKey = newVar.state.key ?? newVar.state.name;
-    dashboard.state.editPane.selectObject(newVar, variableKey, { force: true, multi: false });
-  };
+  const variableSet = row.state.$variables;
+  const variableCount = variableSet instanceof SceneVariableSet ? variableSet.state.variables.length : 0;
 
   return (
-    <Stack direction="column" gap={1}>
-      <Text>
-        <Trans i18nKey="dashboard.rows-layout.row-options.section-variables.description">
-          Add variables that only apply to this row.
-        </Trans>
-      </Text>
-      <Stack direction="row" gap={1} wrap="wrap">
-        {variableTypeOptions.map((option) => (
-          <Button key={option.value} variant="secondary" size="sm" onClick={() => onAddVariable(option.value!)}>
-            {option.label}
-          </Button>
-        ))}
-      </Stack>
-      {variables.length === 0 ? (
-        <Text color="secondary">
-          <Trans i18nKey="dashboard.rows-layout.row-options.section-variables.empty">No section variables yet.</Trans>
-        </Text>
-      ) : (
-        <Stack direction="column" gap={0}>
-          {variables.map((variable) => (
-            <Button
-              key={variable.state.key ?? variable.state.name}
-              variant="secondary"
-              size="sm"
-              fill="text"
-              onClick={() =>
-                dashboard.state.editPane.selectObject(variable, variable.state.key ?? variable.state.name, {
-                  force: true,
-                })
-              }
-            >
-              {getSectionVariableLabel(variable)}
-            </Button>
-          ))}
-        </Stack>
-      )}
+    <Stack direction="row" alignItems="center" gap={1} flex={1}>
+      <span style={{ flexGrow: 1 }}>
+        {isExpanded || variableCount === 0
+          ? t('dashboard.rows-layout.row-options.section-variables.title', 'Variables')
+          : `${t('dashboard.rows-layout.row-options.section-variables.title', 'Variables')} (${variableCount})`}
+      </span>
+      <Button
+        icon="plus"
+        variant="secondary"
+        size="sm"
+        fill="text"
+        onClick={(e) => {
+          e.stopPropagation();
+          openAddSectionVariablePane(dashboard, row);
+        }}
+        tooltip={t('dashboard.rows-layout.row-options.section-variables.add-tooltip', 'Add variable')}
+      />
     </Stack>
   );
 }
 
-function ensureRowVariableSet(row: RowItem, currentSet?: SceneVariables): SceneVariableSet {
-  if (currentSet instanceof SceneVariableSet) {
-    return currentSet;
+function RowSectionVariablesList({ row }: { row: RowItem }) {
+  const variableSet = row.state.$variables;
+  const variables = variableSet instanceof SceneVariableSet ? variableSet.useState().variables : [];
+  const dashboard = getDashboardSceneFor(row);
+
+  if (variables.length === 0) {
+    return null;
   }
 
-  const newSet = new SceneVariableSet({ variables: [] });
-  const currentState = row.state.$variables;
-  dashboardEditActions.edit({
-    description: t('dashboard.rows-layout.row-options.section-variables.create', 'Create section variables'),
-    source: row,
-    perform: () => row.setState({ $variables: newSet }),
-    undo: () => row.setState({ $variables: currentState }),
-  });
-  return newSet;
-}
-
-function getSectionVariableLabel(variable: SceneVariable) {
-  const name = variable.state.label || variable.state.name;
-  if (sceneUtils.isAdHocVariable(variable)) {
-    return `Ad hoc: ${name}`;
-  }
-  if (sceneUtils.isGroupByVariable(variable)) {
-    return `Group by: ${name}`;
-  }
-  if (sceneUtils.isQueryVariable(variable)) {
-    return `Query: ${name}`;
-  }
-  if (sceneUtils.isCustomVariable(variable)) {
-    return `Custom: ${name}`;
-  }
-  if (sceneUtils.isDataSourceVariable(variable)) {
-    return `Datasource: ${name}`;
-  }
-  if (sceneUtils.isIntervalVariable(variable)) {
-    return `Interval: ${name}`;
-  }
-  if (sceneUtils.isConstantVariable(variable)) {
-    return `Constant: ${name}`;
-  }
-  if (sceneUtils.isTextBoxVariable(variable)) {
-    return `Text: ${name}`;
-  }
-  if (sceneUtils.isSwitchVariable(variable)) {
-    return `Switch: ${name}`;
-  }
-  return name;
+  return (
+    <Stack direction="column" gap={0}>
+      {variables.map((variable) => (
+        <Button
+          key={variable.state.key ?? variable.state.name}
+          variant="secondary"
+          size="sm"
+          fill="text"
+          onClick={() =>
+            dashboard.state.editPane.selectObject(variable, variable.state.key ?? variable.state.name, {
+              force: true,
+            })
+          }
+        >
+          {variable.state.name}
+        </Button>
+      ))}
+    </Stack>
+  );
 }
