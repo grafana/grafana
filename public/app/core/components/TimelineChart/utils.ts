@@ -54,6 +54,7 @@ interface UPlotConfigOptions {
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
   axisWidth?: number;
+  namePosition?: 'left' | 'top';
 }
 
 /**
@@ -94,6 +95,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   getValueColor,
   hoverMulti,
   xAxisConfig,
+  namePosition,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -140,12 +142,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
     hoverMulti,
+    namePosition,
   };
 
   const coreConfig = getConfig(opts);
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
+
+  if (coreConfig.drawSeriesLabels) {
+    builder.addHook('draw', coreConfig.drawSeriesLabels);
+  }
 
   builder.setPrepData((frames) => preparePlotData2(frames[0], getStackingGroups(frames[0])));
 
@@ -210,7 +217,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
   const yCustomConfig = frame.fields[1].config.custom;
   const yAxisWidth = yCustomConfig.axisWidth;
-  const yAxisHidden = yCustomConfig.axisPlacement === AxisPlacement.Hidden;
+  const yAxisHidden = namePosition === 'top' || yCustomConfig.axisPlacement === AxisPlacement.Hidden;
 
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
