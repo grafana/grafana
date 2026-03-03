@@ -12420,13 +12420,18 @@
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
+      "description-filename": "File name for the dashboard (.json or .yaml)",
+      "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "info-branch-disabled": "Push to configured branch is disabled",
       "label-branch": "Branch",
       "label-comment": "Comment",
+      "label-filename": "Filename",
+      "label-folder": "Folder",
       "label-path": "Path",
       "placeholder-branch": "Select or enter branch name",
+      "placeholder-folder": "Select or enter folder path",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
       "suffix-new-branch": "New branch",
@@ -12540,6 +12545,8 @@
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
     "connect-step": {
+      "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",
+      "text-repository-folders-not-ready": "There was an issue connecting to the repository. You can still manually enter the folder path.",
       "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
     },
     "connection": {
