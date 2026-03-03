@@ -3262,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Vorlagenformular",
+      "body-legacy": "",
       "label-examples-documentation": "Beispiele Dokumentation",
       "label-template-group": "Vorlagengruppe",
       "label-template-group-name": "Name der Vorlagengruppe",
@@ -3270,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Benennen Sie Ihre Vorlagengruppe",
       "title-error-saving-template": "Fehler beim Speichern der Vorlage",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Vorlagen-Cheat-Sheet"
     },
     "template-preview": {
@@ -3310,6 +3312,8 @@
       "help": {
         "intro": "Für Benachrichtigungsvorlagen wird die Vorlagensprache Go zum Erstellen von Benachrichtigungen verwendet.\n\nIn Grafana kann eine Vorlagengruppe mehrere Benachrichtigungsvorlagen mit {{ define \"<NAME>\" }} definieren.\nDiese Vorlagen können dann in Kontaktpunkten und in anderen Benachrichtigungsvorlagen verwendet werden, indem {{ template \"<NAME>\" }} aufgerufen wird.\nAusführliche Informationen zu Benachrichtigungsvorlagen finden Sie in unserer Dokumentation."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Falsch konfiguriert",
       "misconfigured-warning": "Diese Vorlage ist falsch konfiguriert.",
       "misconfigured-warning-details": "Vorlagen müssen sowohl in den Abschnitten <2></2> als auch <5></5> Ihrer Alertmanager-Konfiguration definiert werden."
@@ -3420,7 +3424,14 @@
         "title": "Regel nicht gefunden"
       },
       "rules-with-firing-instances": "Warnregeln mit auslösenden Instanzen",
-      "rules-with-pending-instances": "Warnregeln mit ausstehenden Instanzen"
+      "rules-with-pending-instances": "Warnregeln mit ausstehenden Instanzen",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Ausdruck hinzufügen"
@@ -4183,7 +4194,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -7817,7 +7827,10 @@
     "pro-tip": "Profitipp: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Wir haben {{lowerCaseEntity}} gesucht, konnten es aber nicht finden. Versuchen Sie, zur <4>Startseite</4> zurückzukehren, oder suchen Sie auf der <7>Community-Website nach Hilfe.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -11930,8 +11943,6 @@
       "tooltip-delete": "Löschen"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Einige Vorschläge konnten nicht geladen werden"
       },
@@ -14364,6 +14375,11 @@
           "settings": "Einstellungen"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Synchronisierung der externen Gruppe"
@@ -14420,6 +14436,19 @@
       "loading-teams": "Teams werden geladen …",
       "new-team": "Neues Team",
       "placeholder-search-teams": "Teams suchen"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Dies ist optional und wird hauptsächlich für die Festlegung eines Teamprofil-Avatars genutzt (über den Gravatar-Dienst)",
