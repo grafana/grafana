@@ -308,18 +308,9 @@ func (hs *HTTPServer) GetFolderDescendantCounts(c *contextmodel.ReqContext) resp
 func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folder) (dtos.Folder, error) {
 	ctx := c.Req.Context()
 	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)
-		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scope)
+		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 		canEdit, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canEditEvaluator)
-		// CanSave must reflect whether the user can create/update/delete alert rules in this folder.
-		// View-only permission must not allow editing alert rules (fixes #119080).
-		canSaveAlertRulesEvaluator := accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleCreate, scope),
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleUpdate, scope),
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, scope),
-		)
-		canSaveAlertRules, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canSaveAlertRulesEvaluator)
-		canSave := canEdit || canSaveAlertRules
+		canSave := canEdit
 		canAdminEvaluator := accesscontrol.EvalAll(
 			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
 			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
