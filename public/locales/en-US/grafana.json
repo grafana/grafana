@@ -98,6 +98,28 @@
     "change-org-button": {
       "confirmText-save": "Save"
     },
+    "custom-themes": {
+      "add-button": "Add custom theme",
+      "delete-modal": {
+        "body": "Are you sure you want to delete the {{name}} theme?",
+        "confirm-text": "Delete",
+        "title": "Delete custom theme"
+      },
+      "empty-state": "No custom themes",
+      "empty-state-description": "Add a custom theme to apply a unique look and feel to your organization."
+    },
+    "edit-custom-theme-page": {
+      "cancel": "Cancel",
+      "field-theme-json": "Theme JSON",
+      "field-theme-name": "Theme name",
+      "page-nav": {
+        "subTitle": {
+          "custom-theme-organization": "Edit a custom theme for your organization."
+        },
+        "text": "Edit custom theme"
+      },
+      "submit": "Save custom theme"
+    },
     "edit-org": {
       "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
       "heading": "Edit Organization",
@@ -188,6 +210,19 @@
     },
     "ldap-user-info": {
       "no-team": "No teams found via LDAP"
+    },
+    "new-custom-theme-page": {
+      "field-theme-json": "Theme JSON",
+      "field-theme-name": "Theme name",
+      "page-nav": {
+        "subTitle": {
+          "custom-theme-organization": "Add a custom theme for your organization."
+        },
+        "text": {
+          "add-custom-theme": "Add custom theme"
+        }
+      },
+      "submit": "Add custom theme"
     },
     "org-role-picker": {
       "placeholder-choose-role": "Choose role..."
@@ -344,6 +379,9 @@
       "tooltip-assigned-role": "A licensed role will be assigned when this user signs in"
     }
   },
+  "admin.edit-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
+  "admin.new-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
+  "admin.new-custom-theme-page.field-theme-name.validation-required": "Theme name is required",
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"
@@ -13920,6 +13958,8 @@
     "preferences": {
       "theme": {
         "dark-label": "Dark",
+        "delete": "Delete theme: {{name}}",
+        "edit": "Edit theme: {{name}}",
         "light-label": "Light",
         "system-label": "System preference"
       }
