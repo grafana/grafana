@@ -122,7 +122,8 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
         }
       }
     } else if (clusteringMode === ClusteringMode.Hover) {
-      // TODO remove? check with @leon
+      // @todo Have the tooltip be clustered, but not the annotations
+      // create issue
       console.warn('Hover mode not implemented');
     }
 
