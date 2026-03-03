@@ -25,6 +25,12 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+// Mock getDashboardScenePageStateManager
+const mockGetDashboardScenePageStateManager = jest.fn();
+jest.mock('app/features/dashboard-scene/pages/DashboardScenePageStateManager', () => ({
+  getDashboardScenePageStateManager: () => mockGetDashboardScenePageStateManager(),
+}));
+
 describe('ScopesSelectorService', () => {
   let service: ScopesSelectorService;
   let apiClient: jest.Mocked<ScopesApiClient>;
@@ -64,6 +70,17 @@ describe('ScopesSelectorService', () => {
 
     // Mock locationService to return a default location
     (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-page' });
+
+    // Mock getDashboardScenePageStateManager to return default state (not editing)
+    mockGetDashboardScenePageStateManager.mockReturnValue({
+      state: {
+        dashboard: {
+          state: {
+            isEditing: false,
+          },
+        },
+      },
+    });
 
     apiClient = {
       fetchScope: jest.fn().mockResolvedValue(mockScope),
@@ -1155,6 +1172,41 @@ describe('ScopesSelectorService', () => {
       // Should redirect to the first one
       expect(locationService.push).toHaveBeenCalledWith('/d/first-dashboard');
       expect(locationService.push).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT redirect when dashboard is in edit mode', async () => {
+      // Mock dashboard state to indicate edit mode is active
+      mockGetDashboardScenePageStateManager.mockReturnValue({
+        state: {
+          dashboard: {
+            state: {
+              isEditing: true,
+            },
+          },
+        },
+      });
+
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: {
+            scope: 'test-scope',
+            url: '/d/dashboard1',
+          },
+          status: {
+            title: 'Dashboard 1',
+            groups: [],
+          },
+          metadata: {
+            name: 'dashboard1',
+          },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      await service.changeScopes(['test-scope']);
+
+      // Should NOT redirect because we're editing
+      expect(locationService.push).not.toHaveBeenCalled();
     });
 
     it('should redirect to redirectUrl when scope node has explicit redirectUrl', async () => {
