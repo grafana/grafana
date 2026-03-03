@@ -26,6 +26,20 @@ const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) 
  */
 
 /**
+ * Default preset
+ */
+const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
+  name: t('timeseries.presets.default', 'Default'),
+  fieldConfig: {
+    defaults: {
+      custom: {},
+    },
+    overrides: [],
+  },
+  cardOptions: { previewModifier },
+});
+
+/**
  * Smooth preset with visible points - TS3
  */
 const smoothPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
@@ -150,5 +164,5 @@ const stepHuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
 });
 
 export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = (context) => {
-  return [smoothPreset(), areaPreset(), stepPreset(), stepFilledPreset(), stepHuePreset()];
+  return [defaultPreset(), smoothPreset(), areaPreset(), stepPreset(), stepFilledPreset(), stepHuePreset()];
 };

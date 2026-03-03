@@ -44,8 +44,8 @@ export function PanelStylesSection({ panel }: { panel: VizPanel }) {
         dashboardEditActions.edit({
           description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
           source: panel,
-          perform: () => panel.onFieldConfigChange(preset.fieldConfig!, false),
-          undo: () => panel.onFieldConfigChange(prevFieldConfig, false),
+          perform: () => panel.onFieldConfigChange(preset.fieldConfig!, true),
+          undo: () => panel.onFieldConfigChange(prevFieldConfig, true),
         });
       }
     },
