@@ -69,8 +69,11 @@ We use [ESLint](https://eslint.org/) to enforce code style and best practices, a
   - You may get an error when trying to commit something that decreases the overall code quality. You can either fix these errors or temporarily override the checks (for example, to commit something that's a work in progress). To do so, use `git commit --no-verify`. All errors will eventually have to be fixed before your code can be merged because...
 - **ESLint also runs as part of our CI**:
   - If you have fixed suppressed issues but not updated the suppressions file, you may see the following error message in the CI: `There are suppressions left that do not occur anymore.`.
-    To resolve the error, run the following command: `yarn lint:prune` and commit the changes.
-  - You may see merge conflicts for the `eslint-suppressions.json` file. To resolve, merge with the target branch (usually `main`) and resolve conflicts however you like, and then run `yarn lint:prune` to ensure the file is up to date and commit.
+    To resolve the error, run the following command: `yarn lint:suppressions:prune` and commit the changes.
+  - You may see merge conflicts for the `eslint-suppressions.json` file. To resolve, merge with the target branch (usually `main`) and resolve conflicts however you like, and then run `yarn lint:suppressions:prune` to ensure the file is up to date and commit.
+- **We should strive to reduce suppressions over time, so there are some scripts to help with that**:
+  - If you _have_ to add new suppressions, `yarn lint:suppressions:add` will add any new ESLint issues to as suppressions to the JSON file. **You should only use this with the intent of unblocking a "greater good,"** like enabling a beneficial rule for code with the intent of fixing the suppressions in the near term.
+  - To view a leaderboard with counts of ESLint suppressions by codeowner, run `yarn lint:suppressions:by-codeowner`. To view a list of your suppressions, run with your team name in a positional arg `yarn lint:suppressions:by-codeowner @grafana/dataviz-squad`.
 
 ## Guidelines for backend development
 
