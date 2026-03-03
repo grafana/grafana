@@ -86,19 +86,19 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'plugins-bundled/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
+          key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
           path: |
             public/build
+            public/app/plugins/*/*/dist
             e2e-playwright/test-plugins
 
-      - uses: actions/setup-node@v6
+      - name: Setup Node.js
         if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          node-version-file: '.nvmrc'
+        uses: ./.github/actions/setup-node
 
-      - name: Install dependencies
+      - name: Install yarn dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: yarn install --immutable
+        uses: ./.github/actions/yarn-install
 
       - name: Build frontend
         if: steps.cache.outputs.cache-hit != 'true'
@@ -116,6 +116,7 @@ jobs:
             !public/**/*.ts
             !public/**/*.tsx
             !public/**/node_modules/
+            !public/locales/
           retention-days: 1
 
       - uses: actions/upload-artifact@v5
@@ -149,100 +150,6 @@ jobs:
           path: grafana-misc/
           retention-days: 1
 
-  build-grafana:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
-    name: Build Grafana artifacts
-    runs-on: ubuntu-x64-xlarge
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Build all artifacts via Dagger
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        env:
-          CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/cmd artifacts -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
-
-      - name: Upload grafana tarball
-        uses: actions/upload-artifact@v5
-        with:
-          retention-days: 1
-          name: grafana-tar-gz
-          path: dist/*tar.gz
-
-      - name: Upload grafana docker tarball
-        uses: actions/upload-artifact@v5
-        with:
-          retention-days: 1
-          name: grafana-docker-tar-gz
-          path: dist/*.docker.tar.gz
-
-  push-docker-image:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-    permissions:
-      contents: read
-      id-token: write
-    runs-on: ubuntu-latest
-    needs:
-      - build-grafana
-    steps:
-      - id: get-github-token
-        name: "create github app token"
-        uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
-        with:
-          github_app: "delivery-bot-app"
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        id: login-to-gar
-        with:
-          registry: 'us-docker.pkg.dev'
-          environment: 'dev'
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
-        with:
-          name: grafana-docker-tar-gz
-          path: .
-      - name: Load & Push Docker image
-        env:
-          BUILD_ID: ${{ github.run_id }}
-        run: |
-          set -euo pipefail
-          LOADED_IMAGE_NAME=$(docker load -i *.docker.tar.gz | sed 's/Loaded image: //g')
-          VERSION=$(echo "${LOADED_IMAGE_NAME}" | cut -d ':' -f 2 | cut -d '-' -f 1)
-          DOCKER_IMAGE="us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev/grafana:${VERSION}-${BUILD_ID}"
-          docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
-          docker push "${DOCKER_IMAGE}"
-          echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
-      - name: Add PR status check
-        env:
-          GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/grafana/grafana/check-runs \
-           -f "name=${IMAGE}" \
-           -f "head_sha=${SHA}" \
-           -f 'status=completed' \
-           -f 'conclusion=neutral' \
-           -f 'output[title]=Docker image' \
-           -f "output[summary]=${IMAGE}" \
-           -f "output[text]=${IMAGE}"
-
   run-storybook-test:
     name: Verify Storybook (Playwright)
     runs-on: ubuntu-latest
@@ -265,18 +172,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+        uses: ./.github/actions/setup-node
 
-      - uses: actions/cache@v4
-        with:
-          key: storybook-yarn-${{ hashFiles('yarn.lock') }}
-          path: |
-            node_modules
-            .yarn/cache
-      - name: Install dependencies
-        run: yarn install --immutable
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Get Playwright version
         id: pw-version
@@ -313,33 +212,30 @@ jobs:
         with:
           persist-credentials: false
 
-      # Download backend binaries → grafana-server/bin/
-      - uses: actions/download-artifact@v4
+      ##
+      # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
+      ##
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v4
         with:
           name: grafana-backend
           path: grafana-server/bin
-
-      # Restore execute permissions stripped by actions/upload-artifact
       - name: Fix binary permissions
         run: chmod +x grafana-server/bin/grafana*
-
-      # Download frontend assets → grafana-server/public/
-      - uses: actions/download-artifact@v4
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
         with:
           name: grafana-frontend
           path: grafana-server/public
-
-      # Download test plugins → grafana-server/data/plugins/
+      - name: Download misc artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: grafana-misc
+          path: grafana-server
       - uses: actions/download-artifact@v4
         with:
           name: grafana-test-plugins
           path: grafana-server/data/plugins
-
-      # Download misc files (conf/, tools/, plugins-bundled/) → grafana-server/
-      - uses: actions/download-artifact@v4
-        with:
-          name: grafana-misc
-          path: grafana-server
 
       # Apply E2E test configuration on top of the production-mirrored distribution
       - name: Configure for E2E testing
@@ -350,13 +246,6 @@ jobs:
           cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
           cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
           cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
-
-      - run: tree grafana-server > tree.txt
-      - uses: actions/upload-artifact@v5
-        with:
-          name: debug-tree-shard-${{ matrix.shard }}
-          path: tree.txt
-          retention-days: 1
 
       # Start Grafana from the standalone directory
       - name: Start Grafana
@@ -381,10 +270,10 @@ jobs:
           done
           printf "\nGrafana is ready\n"
 
-      # Install test dependencies
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - run: yarn install --immutable
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Get Playwright version
         id: pw-version
@@ -395,7 +284,6 @@ jobs:
           path: ~/.cache/ms-playwright
       - run: npx playwright install chromium --with-deps
 
-      # Run tests — Grafana is running standalone on localhost:3001
       - name: Run Playwright tests
         run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
         env:
@@ -527,8 +415,10 @@ jobs:
           persist-credentials: false
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - name: Install dependencies
-        run: yarn install --immutable
+        with:
+          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:

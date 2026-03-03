@@ -120,6 +120,7 @@ runs:
         YARN_NM_MODE: 'hardlinks-local' # Reduce node_modules size
         YARN_INSTALL_STATE_PATH: '.yarn/install-state.gz' # Might speed up resolution step when node_modules present
         YARN_ENABLE_HARDENED_MODE: ${{ (github.event.pull_request.head.repo.fork == true || inputs.hardened-mode == 'true') && '1' || '0' }} # Always enabled for forks; for internal PRs, enabled when hardened-mode is 'true'
+        YARN_ENABLE_HARDENED_MODE: 0
         # Skip big post-install dependencies
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0
