@@ -5,8 +5,6 @@ import {
   type ErrorDetails,
   type JobSpec,
   type JobStatus,
-  type ListConnectionApiArg,
-  type ListRepositoryApiArg,
   type RepositorySpec,
   type RepositoryStatus,
   type Status,
@@ -82,34 +80,18 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         params: queryArg,
       }),
       onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories', {
-        onError: (_error, _updateCachedData, dispatch, arg) => {
-          if (!arg) {
-            return;
-          }
-
-          const pollTimer = setInterval(async () => {
-            try {
-              await dispatch(
-                generatedAPI.endpoints.listRepository.initiate(arg satisfies ListRepositoryApiArg, {
-                  forceRefetch: true,
-                })
-              ).unwrap();
-            } catch {
-              dispatch(
-                notifyApp(
-                  createWarningNotification(
-                    t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
-                    t(
-                      'provisioning.watch-stream.error-description',
-                      'Real-time updates could not be started. Refresh the page to see the latest data.'
-                    )
-                  )
+        onError: (_error, _updateCachedData, dispatch) => {
+          dispatch(
+            notifyApp(
+              createWarningNotification(
+                t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
+                t(
+                  'provisioning.watch-stream.error-description',
+                  'Real-time updates could not be started. Refresh the page to see the latest data.'
                 )
-              );
-            }
-          }, 5000);
-
-          return () => clearInterval(pollTimer);
+              )
+            )
+          );
         },
       }),
     },
@@ -119,34 +101,18 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         params: queryArg,
       }),
       onCacheEntryAdded: createOnCacheEntryAdded<ConnectionSpec, ConnectionStatus>('connections', {
-        onError: (_error, _updateCachedData, dispatch, arg) => {
-          if (!arg) {
-            return;
-          }
-
-          const pollTimer = setInterval(async () => {
-            try {
-              await dispatch(
-                generatedAPI.endpoints.listConnection.initiate(arg satisfies ListConnectionApiArg, {
-                  forceRefetch: true,
-                })
-              ).unwrap();
-            } catch {
-              dispatch(
-                notifyApp(
-                  createWarningNotification(
-                    t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
-                    t(
-                      'provisioning.watch-stream.error-description',
-                      'Real-time updates could not be started. Refresh the page to see the latest data.'
-                    )
-                  )
+        onError: (_error, _updateCachedData, dispatch) => {
+          dispatch(
+            notifyApp(
+              createWarningNotification(
+                t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
+                t(
+                  'provisioning.watch-stream.error-description',
+                  'Real-time updates could not be started. Refresh the page to see the latest data.'
                 )
-              );
-            }
-          }, 5000);
-
-          return () => clearInterval(pollTimer);
+              )
+            )
+          );
         },
       }),
       providesTags: (result) =>
