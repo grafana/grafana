@@ -1,11 +1,18 @@
 name: Setup Node.js
 description: Sets up a node.js environment with presets for the Grafana repository.
 
+inputs:
+  cache:
+    description: Whether to cache the yarn dependencies
+    required: false
+    default: 'true'
+
 runs:
   using: "composite"
   steps:
     - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+        cache: ${{ inputs.cache == 'true' && 'yarn' || '' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && 'yarn.lock' || '' }}
+        package-manager-cache: ${{ inputs.cache == 'true' && 'yarn' || 'false' }}
