@@ -6,12 +6,12 @@ import { useMeasure } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneQueryRunner } from '@grafana/scenes';
-import { Box, EmptyState, ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
+import { Box, Button, EmptyState, ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 
-import { WorkbenchProvider } from './WorkbenchContext';
+import { WorkbenchProvider, useExpandCollapseAll } from './WorkbenchContext';
 import { AlertRuleRow } from './rows/AlertRuleRow';
 import { FolderGroupRow } from './rows/FolderGroupRow';
 import { GroupRow } from './rows/GroupRow';
@@ -131,6 +131,18 @@ export function Workbench({
   const styles = useStyles2(getStyles);
 
   const [pageIndex, setPageIndex] = useState<number>(1);
+  const [allExpanded, setAllExpanded] = useState(true);
+  const { expandGeneration, collapseGeneration, expandAll, collapseAll } = useExpandCollapseAll();
+
+  const toggleExpandAll = () => {
+    if (allExpanded) {
+      collapseAll();
+      setAllExpanded(false);
+    } else {
+      expandAll();
+      setAllExpanded(true);
+    }
+  };
 
   // Calculate once: show folder metadata only if not grouping by grafana_folder
   const enableFolderMeta = !groupBy?.includes('grafana_folder');
@@ -204,12 +216,30 @@ export function Workbench({
                 <SummaryStatsReact />
                 <SummaryChartReact />
               </div>
+              {groupBy && groupBy.length > 0 && (
+                <div className={styles.expandCollapseToolbar}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={allExpanded ? 'table-collapse-all' : 'table-expand-all'}
+                    onClick={toggleExpandAll}
+                  >
+                    {allExpanded ? (
+                      <Trans i18nKey="alerting.triage.collapse-all">Collapse all</Trans>
+                    ) : (
+                      <Trans i18nKey="alerting.triage.expand-all">Expand all</Trans>
+                    )}
+                  </Button>
+                </div>
+              )}
               <div className={styles.virtualizedContainer}>
                 <WorkbenchProvider
                   leftColumnWidth={leftColumnWidth}
                   rightColumnWidth={rightColumnWidth}
                   domain={domain}
                   queryRunner={queryRunner}
+                  expandGeneration={expandGeneration}
+                  collapseGeneration={collapseGeneration}
                 >
                   <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
                     {isLoading && (
@@ -266,6 +296,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     headerContainer: css({
       top: summaryHeight,
+    }),
+    expandCollapseToolbar: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      marginBottom: theme.spacing(1),
     }),
     flexFull: css({
       flex: 1,

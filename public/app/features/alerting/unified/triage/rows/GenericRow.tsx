@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { Spacer } from '../../components/Spacer';
+import { useWorkbenchContext } from '../WorkbenchContext';
 
 interface GenericRowProps {
   width: number;
@@ -21,6 +22,11 @@ interface GenericRowProps {
   rightColumnClassName?: string;
   depth?: number; // for indentation of nested rows
   showIndentBorder?: boolean; // draw a left border when depth > 0 (leaf rows only)
+  /**
+   * When false, expand-all signals from WorkbenchContext are ignored.
+   * Use this for rows whose children should not be auto-expanded (e.g. AlertRuleRow instance list).
+   */
+  expandable?: boolean;
 }
 
 export const GenericRow = ({
@@ -35,11 +41,42 @@ export const GenericRow = ({
   rightColumnClassName,
   depth = 0,
   showIndentBorder = false,
+  expandable = true,
 }: GenericRowProps) => {
   const styles = useStyles2(getStyles);
-  const [isOpen, handleToggle] = useToggle(isOpenByDefault);
+  const { expandGeneration, collapseGeneration } = useWorkbenchContext();
 
   const hasChildren = Boolean(children);
+
+  // Compute the effective initial state: honour expand/collapse signals that were
+  // already active when this row mounted (e.g. a parent just opened revealing us).
+  const effectiveInitialOpen = (() => {
+    if (collapseGeneration > 0) {
+      return false;
+    }
+    if (expandGeneration > 0 && expandable) {
+      return true;
+    }
+    return isOpenByDefault;
+  })();
+
+  const [isOpen, handleToggle] = useToggle(effectiveInitialOpen);
+
+  // Respond to expand-all / collapse-all signals for already-mounted rows.
+  useEffect(() => {
+    if (expandGeneration > 0 && expandable && hasChildren && !isOpen) {
+      handleToggle(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandGeneration]);
+
+  useEffect(() => {
+    if (collapseGeneration > 0 && hasChildren && isOpen) {
+      handleToggle(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collapseGeneration]);
+
   const showChildContent = isOpen && hasChildren;
 
   return (

@@ -69,6 +69,7 @@ export const AlertRuleRow = ({
         content={<AlertRuleSummary ruleUID={ruleUID} />}
         depth={depth}
         showIndentBorder
+        expandable={false}
       >
         <AlertRuleInstances ruleUID={ruleUID} depth={depth} />
       </GenericRow>
