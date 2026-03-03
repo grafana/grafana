@@ -11,6 +11,12 @@ const server = setupProvisioningMswServer();
 
 const REPO_NAME = 'test-repo';
 
+const jobResponse = {
+  metadata: { name: 'job-1', uid: 'job-uid-1', labels: { 'provisioning.grafana.app/repository': REPO_NAME } },
+  spec: { action: 'fixFolderMetadata' },
+  status: { state: 'success' },
+};
+
 const defaultSettings = {
   items: [
     {
@@ -66,11 +72,6 @@ describe('FixFolderMetadataDrawer', () => {
 
   it('submits job with ref from form', async () => {
     let capturedBody: unknown;
-    const jobResponse = {
-      metadata: { name: 'job-1', uid: 'job-uid-1', labels: { 'provisioning.grafana.app/repository': REPO_NAME } },
-      spec: { action: 'fixFolderMetadata' },
-      status: { state: 'success' },
-    };
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
         capturedBody = await request.json();
@@ -99,11 +100,6 @@ describe('FixFolderMetadataDrawer', () => {
 
   it('submits job with custom branch', async () => {
     let capturedBody: unknown;
-    const jobResponse = {
-      metadata: { name: 'job-1', uid: 'job-uid-1', labels: { 'provisioning.grafana.app/repository': REPO_NAME } },
-      spec: { action: 'fixFolderMetadata' },
-      status: { state: 'success' },
-    };
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
         capturedBody = await request.json();
@@ -150,11 +146,6 @@ describe('FixFolderMetadataDrawer', () => {
   });
 
   it('does not close drawer on job success', async () => {
-    const jobResponse = {
-      metadata: { name: 'job-1', uid: 'job-uid-1', labels: { 'provisioning.grafana.app/repository': REPO_NAME } },
-      spec: { action: 'fixFolderMetadata' },
-      status: { state: 'success' },
-    };
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json(jobResponse)),
       http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [jobResponse] }))
