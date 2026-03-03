@@ -6,6 +6,7 @@ import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unif
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
+import { getExploreAssistantFunctionConfig } from 'app/features/explore/assistant/exploreAssistantIntegration';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -23,11 +24,21 @@ function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   return { addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry, exposedComponentsRegistry };
 }
 
-function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry }: PluginExtensionRegistries) {
+function registerCoreExtensions({
+  addedLinksRegistry,
+  exposedComponentsRegistry,
+  addedFunctionsRegistry,
+}: PluginExtensionRegistries) {
   // Registering core extension links
   addedLinksRegistry.register({
     pluginId: 'grafana',
     configs: getCoreExtensionConfigurations(),
+  });
+
+  // Registering core extension functions (for Grafana Assistant integration)
+  addedFunctionsRegistry.register({
+    pluginId: 'grafana',
+    configs: [getExploreAssistantFunctionConfig()],
   });
 
   // Registering core exposed components

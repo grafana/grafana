@@ -4,6 +4,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useMeasure } from 'react-use';
 
+import { createAssistantContextItem, useProvidePageContext } from '@grafana/assistant';
 import {
   CoreApp,
   DataFrame,
@@ -163,6 +164,25 @@ export function Blocks(props: Props) {
   const queryLibraryRef = useSelector(getQueryLibraryRef);
   const history = useSelector(getHistory);
   const blocks = useSelector(getBlocks);
+
+  // Provide current Explore state as context for the Grafana Assistant
+  const setPageContext = useProvidePageContext(/\/explore/);
+  useEffect(() => {
+    const context = [
+      createAssistantContextItem('datasource', {
+        datasourceUid: dsSettings.uid,
+      }),
+      createAssistantContextItem('structured', {
+        title: 'Explore blocks',
+        data: { blocks },
+      }),
+      createAssistantContextItem('structured', {
+        title: 'Explore queries',
+        data: { queries },
+      }),
+    ];
+    setPageContext(context);
+  }, [setPageContext, blocks, queries, dsSettings.uid]);
 
   const onChange = useCallback(
     (newQueries: DataQuery[], options?: { skipAutoImport?: boolean }) => {

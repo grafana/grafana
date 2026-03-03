@@ -763,6 +763,69 @@ describe('reducer', () => {
         } as unknown as ExploreItemState);
     });
 
+    describe('removeBlockAction', () => {
+      it('should remove a text block at the given index', () => {
+        reducerTester<ExploreItemState>()
+          .givenReducer(queryReducer, {
+            queries: [{ refId: 'A', key: 'key-A' }],
+            blocks: [
+              { type: 'query', queryRef: 'A' },
+              { type: 'text', text: 'hello' },
+            ],
+          } as unknown as ExploreItemState)
+          .whenActionIsDispatched(actions.removeBlockAction({ exploreId: 'left', index: 1 }))
+          .thenStateShouldEqual({
+            queries: [{ refId: 'A', key: 'key-A' }],
+            queryKeys: ['key-A-0'],
+            blocks: [{ type: 'query', queryRef: 'A' }],
+          } as unknown as ExploreItemState);
+      });
+
+      it('should remove a query block and its associated query', () => {
+        reducerTester<ExploreItemState>()
+          .givenReducer(queryReducer, {
+            queries: [
+              { refId: 'A', key: 'key-A' },
+              { refId: 'B', key: 'key-B' },
+            ],
+            blocks: [
+              { type: 'query', queryRef: 'A' },
+              { type: 'query', queryRef: 'B' },
+            ],
+          } as unknown as ExploreItemState)
+          .whenActionIsDispatched(actions.removeBlockAction({ exploreId: 'left', index: 0 }))
+          .thenStateShouldEqual({
+            queries: [{ refId: 'B', key: 'key-B' }],
+            queryKeys: ['key-B-0'],
+            blocks: [{ type: 'query', queryRef: 'B' }],
+          } as unknown as ExploreItemState);
+      });
+
+      it('should not modify state for out-of-bounds index', () => {
+        const initialState = {
+          queries: [{ refId: 'A', key: 'key-A' }],
+          blocks: [{ type: 'query', queryRef: 'A' }],
+        } as unknown as ExploreItemState;
+
+        reducerTester<ExploreItemState>()
+          .givenReducer(queryReducer, initialState)
+          .whenActionIsDispatched(actions.removeBlockAction({ exploreId: 'left', index: 5 }))
+          .thenStateShouldEqual(initialState);
+      });
+
+      it('should not modify state for negative index', () => {
+        const initialState = {
+          queries: [{ refId: 'A', key: 'key-A' }],
+          blocks: [{ type: 'query', queryRef: 'A' }],
+        } as unknown as ExploreItemState;
+
+        reducerTester<ExploreItemState>()
+          .givenReducer(queryReducer, initialState)
+          .whenActionIsDispatched(actions.removeBlockAction({ exploreId: 'left', index: -1 }))
+          .thenStateShouldEqual(initialState);
+      });
+    });
+
     describe('addQueryRow', () => {
       it('adds a query from root datasource if root is not mixed and there are no queries', async () => {
         const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({

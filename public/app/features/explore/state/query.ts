@@ -118,6 +118,12 @@ export interface UpdateExpressionBlockPayload {
 }
 export const updateExpressionBlockAction = createAction<UpdateExpressionBlockPayload>('explore/updateExpressionBlock');
 
+export interface RemoveBlockPayload {
+  exploreId: string;
+  index: number;
+}
+export const removeBlockAction = createAction<RemoveBlockPayload>('explore/removeBlock');
+
 /**
  * Query change handler for the query row with the given index.
  * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
@@ -307,6 +313,12 @@ export function addBlock(exploreId: string, block: Block): ThunkResult<void> {
 export function updateTextBlock(exploreId: string, index: number, text: string): ThunkResult<void> {
   return (dispatch) => {
     dispatch(updateTextBlockAction({ exploreId, index, text }));
+  };
+}
+
+export function removeBlock(exploreId: string, index: number): ThunkResult<void> {
+  return (dispatch) => {
+    dispatch(removeBlockAction({ exploreId, index }));
   };
 }
 
@@ -1134,6 +1146,31 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     return {
       ...state,
+      blocks: nextBlocks,
+    };
+  }
+
+  if (removeBlockAction.match(action)) {
+    const { index } = action.payload;
+    const blocks = ensureBlocks(state);
+    if (index < 0 || index >= blocks.length) {
+      return state;
+    }
+
+    const blockToRemove = blocks[index];
+
+    // If removing a query block, also remove the associated query
+    let nextQueries = state.queries;
+    if (blockToRemove.type === 'query') {
+      nextQueries = state.queries.filter((q) => q.refId !== blockToRemove.queryRef);
+    }
+
+    const nextBlocks = [...blocks.slice(0, index), ...blocks.slice(index + 1)];
+
+    return {
+      ...state,
+      queries: nextQueries,
+      queryKeys: getQueryKeys(nextQueries),
       blocks: nextBlocks,
     };
   }
