@@ -3262,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Modulo modelli",
+      "body-legacy": "",
       "label-examples-documentation": "Documentazione di esempio",
       "label-template-group": "Gruppo modelli",
       "label-template-group-name": "Nome del gruppo di modelli",
@@ -3270,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Assegna un nome al gruppo di modelli",
       "title-error-saving-template": "Errore durante il salvataggio del modello",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Foglio di riferimento per la creazione di modelli"
     },
     "template-preview": {
@@ -3310,6 +3312,8 @@
       "help": {
         "intro": "I modelli di notifica utilizzano il linguaggio di modellazione Go per creare messaggi di notifica.\n\nIn Grafana, un gruppo di modelli può definire più modelli di notifica utilizzando {{ define \"<NAME>\" }}.\nQuesti modelli possono quindi essere utilizzati nei punti di contatto e all'interno di altri modelli di notifica richiamando {{ template \"<NAME>\" }}.\nPer informazioni dettagliate sui modelli di notifica, consulta la nostra documentazione."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Configurazione errata",
       "misconfigured-warning": "Questo modello non è configurato correttamente.",
       "misconfigured-warning-details": "I modelli devono essere definiti in entrambe le sezioni <2></2> e <5></5> della configurazione di Alertmanager."
@@ -3420,7 +3424,14 @@
         "title": "Regola non trovata"
       },
       "rules-with-firing-instances": "Regole di avviso con istanze attive",
-      "rules-with-pending-instances": "Regole di avviso con istanze in sospeso"
+      "rules-with-pending-instances": "Regole di avviso con istanze in sospeso",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Aggiungi espressione"
@@ -4183,7 +4194,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -7817,7 +7827,10 @@
     "pro-tip": "Suggerimento pro: {{proTip}} "
   },
   "entity-not-found": {
-    "description": "Stiamo cercando ma non riusciamo a trovare {{lowerCaseEntity}}. Prova a tornare alla <4>Home</4> o a cercare aiuto sul <7>sito della community.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -11930,8 +11943,6 @@
       "tooltip-delete": "Elimina"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Impossibile caricare alcuni suggerimenti"
       },
@@ -14364,6 +14375,11 @@
           "settings": "Impostazioni"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Sincronizzazione gruppo esterno"
@@ -14420,6 +14436,19 @@
       "loading-teams": "Caricamento team in corso...",
       "new-team": "Nuovo team",
       "placeholder-search-teams": "Cerca team"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Questo è facoltativo e viene utilizzato principalmente per impostare l'avatar del profilo del team (tramite il servizio Gravatar)",
