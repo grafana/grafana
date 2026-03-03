@@ -4474,8 +4474,8 @@
     {
       "metadata": {
         "name": "vizLegendSeriesLimit",
-        "resourceVersion": "1772504843214",
-        "creationTimestamp": "2026-03-03T02:27:23Z"
+        "resourceVersion": "1772507615654",
+        "creationTimestamp": "2026-03-03T03:13:35Z"
       },
       "spec": {
         "description": "Limit the number of legend items by default, with an option to show all",
