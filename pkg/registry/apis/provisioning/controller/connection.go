@@ -250,12 +250,22 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Handle health checks using the health checker
-	testResults, healthStatus, healthPatchOps, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
+	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
 	if err != nil {
 		logger.Error("failed to get updated health status", "error", err)
 		return fmt.Errorf("update health status: %w", err)
 	}
-	patchOperations = append(patchOperations, healthPatchOps...)
+	testResults := healthResult.TestResults
+	healthStatus := healthResult.HealthStatus
+
+	if len(healthResult.PatchOps) > 0 {
+		patchOperations = append(patchOperations, healthResult.PatchOps...)
+	}
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+		conn.Status.Conditions, conn.GetGeneration(), healthResult.ReadyCondition,
+	); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
+	}
 
 	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
 	fieldErrors := testResults.Errors

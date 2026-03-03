@@ -95,6 +95,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-01-10,alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 2024-01-18,jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 2025-12-29,auditLoggingAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2025-07-31,secretsManagementAppPlatformUI,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2025-08-01,secretsManagementAppPlatformUI,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-02-18,secretsKeeperUI,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2024-01-23,alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
@@ -113,6 +114,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-19,refreshTokenRequired,experimental,@grafana/identity-access-team,false,false,false
 2024-04-04,newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 2025-12-18,dashboardAdHocAndGroupByWrapper,experimental,@grafana/dashboards-squad,false,false,false
+2026-03-02,adHocFilterDefaultValues,experimental,@grafana/dashboards-squad,false,false,true
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/oss-big-tent,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
@@ -302,6 +304,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-19,kubernetesExternalGroupMappingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
+2026-02-11,appPluginAPIServer,experimental,@grafana/plugins-platform-backend,false,true,false
 2026-02-18,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryRuleViewer,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false

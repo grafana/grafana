@@ -25,7 +25,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
   const baseConfig = {
     url: data.url || '',
-    branch: data.branch || (data.type !== 'github' ? 'main' : ''),
+    branch: data.branch || '',
     path: data.path,
   };
 
