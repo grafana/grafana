@@ -95,6 +95,7 @@ export interface SearchState {
   query: string;
   tag: string[];
   starred: boolean;
+  teamFolders?: boolean;
   explain?: boolean; // adds debug info
   datasource?: string;
   panel_type?: string;
@@ -121,6 +122,7 @@ export interface SearchQueryParams {
   query?: string | null;
   sort?: string | null;
   starred?: boolean | null;
+  teamFolders?: boolean | null;
   tag?: string[] | null;
   layout?: SearchLayout | null;
   folder?: string | null;
