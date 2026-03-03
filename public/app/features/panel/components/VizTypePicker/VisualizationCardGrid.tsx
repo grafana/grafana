@@ -20,9 +20,10 @@ export interface Props {
   data: PanelData;
   onItemClick: (item: PanelPluginVisualizationSuggestion, index: number) => void;
   getItemKey: (item: PanelPluginVisualizationSuggestion) => string;
+  selectedKey?: string;
 }
 
-export function VisualizationCardGrid({ items, groups, data, onItemClick, getItemKey }: Props) {
+export function VisualizationCardGrid({ items, groups, data, onItemClick, getItemKey, selectedKey }: Props) {
   const styles = useStyles2(getStyles);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
 
@@ -67,6 +68,7 @@ export function VisualizationCardGrid({ items, groups, data, onItemClick, getIte
           data={data}
           suggestion={item}
           width={width}
+          isSelected={selectedKey !== undefined && getItemKey(item) === selectedKey}
           onClick={() => onItemClick(item, itemIndex)}
         />
       </div>

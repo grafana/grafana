@@ -13,9 +13,10 @@ export interface Props extends HTMLAttributes<HTMLButtonElement> {
   data: PanelData;
   width: number;
   suggestion: PanelPluginVisualizationSuggestion;
+  isSelected?: boolean;
 }
 
-export function VisualizationSuggestionCard({ data, suggestion, width, className, ...restProps }: Props) {
+export function VisualizationSuggestionCard({ data, suggestion, width, className, isSelected, ...restProps }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
@@ -23,7 +24,7 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: cx(className, styles.vizBox),
+    className: cx(className, styles.vizBox, isSelected && styles.selected),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
     tabIndex: -1, // selection is handled by parent container
@@ -93,6 +94,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.background.secondary,
         borderColor: theme.colors.primary.border,
       },
+    }),
+    selected: css({
+      borderColor: theme.colors.primary.border,
+      background: theme.colors.background.secondary,
     }),
     imgBox: css({
       display: 'flex',
