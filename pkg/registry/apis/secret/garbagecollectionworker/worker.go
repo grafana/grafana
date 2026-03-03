@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"sync"
 	"time"
 
@@ -88,6 +90,33 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 	}
 
 	wg.Wait()
+
+	secureValuesWithError := make([]string, 0)
+	for i, sv := range secureValues {
+		if errs[i] == nil {
+			continue
+		}
+		secureValuesWithError = append(secureValuesWithError, string(sv.UID))
+	}
+
+	if len(secureValuesWithError) > 0 {
+		counts, err := w.secureValueMetadataStorage.AddGCAttemptCount(ctx, secureValuesWithError)
+		if err != nil {
+			return secureValues, errors.Join(append(errs, fmt.Errorf("incrementing gc retry count for secure values: %w", err))...)
+		}
+
+		// Remove secure values that haven't reached the max number of attemps yet
+		maps.DeleteFunc(counts, func(id string, count int) bool {
+			return count < w.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue
+		})
+
+		if len(counts) > 0 {
+			secureValueIDs := slices.Collect(maps.Keys(counts))
+			if err := w.secureValueMetadataStorage.MoveToDLQ(ctx, secureValueIDs); err != nil {
+				return secureValues, errors.Join(append(errs, fmt.Errorf("moving secure values to dead letter queue: %w", err))...)
+			}
+		}
+	}
 
 	return secureValues, errors.Join(errs...)
 }

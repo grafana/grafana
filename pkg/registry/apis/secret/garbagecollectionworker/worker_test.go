@@ -122,6 +122,10 @@ func TestBasic(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
 	})
+
+	t.Run("worker moves secure values to dead letter queue on too many failures", func(t *testing.T) {
+		panic("TODO")
+	})
 }
 
 func TestProperty(t *testing.T) {

@@ -238,7 +238,7 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 			"lease": func(t *rapid.T) {
 				// Taken from secureValueMetadataStorage.acquireLeases
 				minAge := 300 * time.Second
-				leaseTTL := 30 * time.Second
+				leaseTTL := 300 * time.Second
 				maxBatchSize := rapid.Uint16Range(1, 10).Draw(t, "maxBatchSize")
 				modelSvs, modelErr := model.LeaseInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
 				svs, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), maxBatchSize)
