@@ -72,7 +72,7 @@ describe('SidebarFooter', () => {
         uiStateOverrides: { cardType: QueryEditorType.Alert },
       });
 
-      expect(screen.getByText('2 items')).toBeInTheDocument();
+      expect(screen.getByText('2 alerts')).toBeInTheDocument();
       expect(screen.queryByTestId('icon-eye')).not.toBeInTheDocument();
       expect(screen.queryByTestId('icon-eye-slash')).not.toBeInTheDocument();
     });
@@ -82,7 +82,7 @@ describe('SidebarFooter', () => {
         uiStateOverrides: { cardType: QueryEditorType.Alert },
       });
 
-      expect(screen.getByText('0 items')).toBeInTheDocument();
+      expect(screen.getByText('0 alerts')).toBeInTheDocument();
       expect(screen.queryByTestId('icon-eye')).not.toBeInTheDocument();
       expect(screen.queryByTestId('icon-eye-slash')).not.toBeInTheDocument();
     });

@@ -97,7 +97,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 
 	r := NewExportWorker(nil, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true)
 	err := r.Process(context.Background(), mockRepo, job, nil)
-	require.EqualError(t, err, "this repository is read only")
+	require.EqualError(t, err, "repositories.provisioning.grafana.app is forbidden: write operations are not allowed for this repository")
 }
 
 func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
@@ -121,7 +121,7 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 
 	r := NewExportWorker(nil, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true)
 	err := r.Process(context.Background(), mockRepo, job, nil)
-	require.EqualError(t, err, "this repository does not support the branch workflow")
+	require.EqualError(t, err, "repositories.provisioning.grafana.app is forbidden: branch workflow is not allowed for this repository")
 }
 
 func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
@@ -456,7 +456,7 @@ func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing
 
 	r := NewExportWorker(nil, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
-	require.EqualError(t, err, "this repository does not support the branch workflow")
+	require.EqualError(t, err, "repositories.provisioning.grafana.app is forbidden: branch workflow is not allowed for this repository")
 }
 
 func TestExportWorker_ProcessGitRepository(t *testing.T) {

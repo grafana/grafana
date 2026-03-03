@@ -1,5 +1,3 @@
-//go:build !cgo
-
 package sqlite
 
 import (
@@ -20,9 +18,9 @@ type Driver = sqlite.Driver
 // until we rewrite the tests not to depend on the sqlite3 package internals directly.
 // Note: Since modernc.org/sqlite driver does not expose error codes like sqlite3, we cannot use the same approach.
 var (
-	TestErrUniqueConstraintViolation = errors.New("unique constraint violation (simulated)")
-	TestErrBusy                      = errors.New("database is busy (simulated)")
-	TestErrLocked                    = errors.New("database is locked (simulated)")
+	ErrTestUniqueConstraintViolation = errors.New("unique constraint violation (simulated)")
+	ErrTestBusy                      = errors.New("database is busy (simulated)")
+	ErrTestLocked                    = errors.New("database is locked (simulated)")
 )
 
 var dsnAlias = map[string]string{
@@ -113,7 +111,7 @@ func init() {
 }
 
 func DriverType() string {
-	return "modernc.org/sqlite (CGO disabled)"
+	return "modernc.org/sqlite"
 }
 
 func IsBusyOrLocked(err error) bool {
@@ -123,7 +121,7 @@ func IsBusyOrLocked(err error) bool {
 		code := sqliteErr.Code() & 0xff
 		return code == sqlite3.SQLITE_BUSY || code == sqlite3.SQLITE_LOCKED
 	}
-	if errors.Is(err, TestErrBusy) || errors.Is(err, TestErrLocked) {
+	if errors.Is(err, ErrTestBusy) || errors.Is(err, ErrTestLocked) {
 		return true
 	}
 	return false
@@ -135,7 +133,7 @@ func IsUniqueConstraintViolation(err error) bool {
 		// These constants are extended codes combined with primary code, so we can check them directly.
 		return sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY || sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE
 	}
-	if errors.Is(err, TestErrUniqueConstraintViolation) {
+	if errors.Is(err, ErrTestUniqueConstraintViolation) {
 		return true
 	}
 	return false
@@ -146,5 +144,5 @@ func ErrorMessage(err error) string {
 	if errors.As(err, &sqliteErr) {
 		return sqliteErr.Error()
 	}
-	return ""
+	return err.Error()
 }

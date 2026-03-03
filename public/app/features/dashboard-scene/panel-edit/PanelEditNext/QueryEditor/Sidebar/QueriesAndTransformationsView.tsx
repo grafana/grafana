@@ -1,3 +1,5 @@
+import { useCallback, useState } from 'react';
+
 import { t } from '@grafana/i18n';
 import { LoadingBar } from '@grafana/ui';
 
@@ -15,6 +17,12 @@ export function QueriesAndTransformationsView() {
   const { transformations } = usePanelContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
+  const [queriesOpen, setQueriesOpen] = useState(true);
+  const [transformationsOpen, setTransformationsOpen] = useState(true);
+
+  const expandQueries = useCallback(() => setQueriesOpen(true), []);
+  const expandTransformations = useCallback(() => setTransformationsOpen(true), []);
+
   if (isLoading) {
     return (
       <LoadingBar
@@ -31,7 +39,9 @@ export function QueriesAndTransformationsView() {
     <>
       <QuerySidebarCollapsableHeader
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
-        headerAction={<AddCardButton variant="query" alwaysVisible />}
+        isOpen={queriesOpen}
+        onToggle={setQueriesOpen}
+        headerAction={<AddCardButton variant="query" alwaysVisible onAdd={expandQueries} />}
       >
         <DraggableList
           droppableId="query-sidebar-queries"
@@ -43,7 +53,9 @@ export function QueriesAndTransformationsView() {
       </QuerySidebarCollapsableHeader>
       <QuerySidebarCollapsableHeader
         label={t('query-editor-next.sidebar.transformations', 'Transformations')}
-        headerAction={<AddCardButton variant="transformation" alwaysVisible />}
+        isOpen={transformationsOpen}
+        onToggle={setTransformationsOpen}
+        headerAction={<AddCardButton variant="transformation" alwaysVisible onAdd={expandTransformations} />}
       >
         {transformations.length > 0 && (
           <DraggableList

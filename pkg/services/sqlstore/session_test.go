@@ -143,7 +143,7 @@ func getRetryErrors(t *testing.T, store *SQLStore) []error {
 	var retryErrors []error
 	switch store.GetDialect().DriverName() {
 	case migrator.SQLite:
-		retryErrors = []error{sqlite.TestErrBusy, sqlite.TestErrLocked}
+		retryErrors = []error{sqlite.ErrTestBusy, sqlite.ErrTestLocked}
 	}
 
 	if len(retryErrors) == 0 {

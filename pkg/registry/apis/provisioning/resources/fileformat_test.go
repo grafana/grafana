@@ -261,3 +261,54 @@ spec:
 		require.NotNil(t, spec["title"])
 	})
 }
+
+func TestParseFileResource(t *testing.T) {
+	t.Run("k8s resource parsed directly", func(t *testing.T) {
+		info := &repository.FileInfo{
+			Data: []byte(`{
+				"apiVersion": "playlist.grafana.app/v0alpha1",
+				"kind": "Playlist",
+				"metadata": { "name": "hello" },
+				"spec": { "title": "A playlist" }
+			}`),
+		}
+		obj, gvk, classic, err := ParseFileResource(context.Background(), info)
+		require.NoError(t, err)
+		require.NotNil(t, obj)
+		require.NotNil(t, gvk)
+		require.Equal(t, "Playlist", gvk.Kind)
+		require.Empty(t, classic, "k8s resources should not have a classic type")
+	})
+
+	t.Run("classic dashboard parsed via fallback", func(t *testing.T) {
+		info := &repository.FileInfo{
+			Data: []byte(`{
+				"uid": "my-dash",
+				"schemaVersion": 7,
+				"panels": [],
+				"tags": []
+			}`),
+		}
+		obj, gvk, classic, err := ParseFileResource(context.Background(), info)
+		require.NoError(t, err)
+		require.NotNil(t, obj)
+		require.NotNil(t, gvk)
+		require.Equal(t, "Dashboard", gvk.Kind)
+		require.Equal(t, provisioning.ClassicDashboard, classic)
+		require.Equal(t, "my-dash", obj.GetName())
+	})
+
+	t.Run("non-resource JSON returns validation error", func(t *testing.T) {
+		info := &repository.FileInfo{
+			Data: []byte(`{"random": "data"}`),
+		}
+		obj, gvk, _, err := ParseFileResource(context.Background(), info)
+		require.Error(t, err)
+		require.Nil(t, obj)
+		require.Nil(t, gvk)
+
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr, "should be a ResourceValidationError")
+		require.Contains(t, err.Error(), "file does not contain a valid resource")
+	})
+}

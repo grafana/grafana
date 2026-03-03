@@ -8,10 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-// DefaultAutoMigrationThreshold is the default threshold for auto migration switching.
-// If a resource has entries at or below this count, it will be migrated.
-const DefaultAutoMigrationThreshold = 10
-
 const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
 	FolderResource    = "folders.folder.grafana.app"
@@ -22,16 +18,9 @@ const (
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:  true, // enabled by default
-	FolderResource:    false,
-	DashboardResource: false,
-	ShortURLResource:  false,
-}
-
-// AutoMigratedUnifiedResources maps resources that support auto-migration
-// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
-var AutoMigratedUnifiedResources = map[string]bool{
 	FolderResource:    true,
 	DashboardResource: true,
+	ShortURLResource:  false,
 }
 
 // read storage configs from ini file. They look like:
@@ -60,17 +49,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			enableMigration = section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
 		}
 
-		// parse autoMigrationThreshold from resource section
-		autoMigrationThreshold := 0
-		autoMigrate := AutoMigratedUnifiedResources[resourceName]
-		if autoMigrate {
-			autoMigrationThreshold = section.Key("autoMigrationThreshold").MustInt(DefaultAutoMigrationThreshold)
-		}
-
 		storageConfig[resourceName] = UnifiedStorageConfig{
-			DualWriterMode:         rest.DualWriterMode(dualWriterMode),
-			EnableMigration:        enableMigration,
-			AutoMigrationThreshold: autoMigrationThreshold,
+			DualWriterMode:  rest.DualWriterMode(dualWriterMode),
+			EnableMigration: enableMigration,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -78,7 +59,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
-	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(50000)
+	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
+	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs enforced")
@@ -126,13 +108,18 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// tenant watcher
 	cfg.TenantApiServerAddress = section.Key("tenant_api_server_address").String()
 	cfg.TenantWatcherAllowInsecureTLS = section.Key("tenant_watcher_allow_insecure_tls").MustBool(false)
+	cfg.TenantWatcherCAFile = section.Key("tenant_watcher_ca_file").String()
 
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
+	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(true)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
 	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(24 * time.Hour)
 	cfg.DashboardsGarbageCollectionMaxAge = section.Key("dashboards_garbage_collection_max_age").MustDuration(365 * 24 * time.Hour)
+
+	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
+	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)

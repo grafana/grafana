@@ -19,15 +19,16 @@ afterEach(() => {
   resetGrafanaSearcher();
 });
 
-type DeepPartial<T> = T extends object
-  ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
-  : T;
-
 const dashboardUID = '1';
 
-const baseLinkProps: ComponentProps<typeof DashboardLinksDashboard>['link'] = {
+type DashboardLinkProps = ComponentProps<typeof DashboardLinksDashboard>['link'];
+type DashboardLinksDashboardProps = Partial<
+  Omit<ComponentProps<typeof DashboardLinksDashboard>, 'link'> & {
+    link: Partial<DashboardLinkProps>;
+  }
+>;
+
+const baseLinkProps: DashboardLinkProps = {
   asDropdown: true,
   icon: 'some icon',
   includeVars: false,
@@ -43,12 +44,12 @@ const baseLinkProps: ComponentProps<typeof DashboardLinksDashboard>['link'] = {
 const getDashboardLink = (inDropdown: boolean) =>
   screen.findByRole(inDropdown ? 'menuitem' : 'link', { name: new RegExp(dashbdD.item.title) });
 
-const renderComponent = (props: DeepPartial<ComponentProps<typeof DashboardLinksDashboard>> = {}) => {
+const renderComponent = (props: DashboardLinksDashboardProps = {}) => {
   return render(
     <DashboardLinksDashboard
       link={{ ...baseLinkProps, ...props.link, tags: (props.link?.tags || []) as string[] }}
       dashboardUID={props.dashboardUID || dashboardUID}
-      linkInfo={{ title: 'some title', ...props.linkInfo }}
+      linkInfo={{ title: props.linkInfo?.title || 'some title' }}
     />
   );
 };
