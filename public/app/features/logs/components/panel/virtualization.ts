@@ -279,7 +279,17 @@ export function getLogLineSize(
     return 0;
   }
   // !logs[index] means the line is not yet loaded by infinite scrolling
-  if (!wrap || !logs[index]) {
+  if (!logs[index]) {
+    return virtualization.getLineHeight() + virtualization.getPaddingBottom();
+  }
+
+  const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container);
+  if (storedSize) {
+    return storedSize;
+  }
+
+  // Unwrapped logs always measure 1 line
+  if (!wrap) {
     return virtualization.getLineHeight() + virtualization.getPaddingBottom();
   }
 
@@ -289,11 +299,6 @@ export function getLogLineSize(
   logs[index].updateCollapsedState(displayedFields, container);
   if (logs[index].collapsed) {
     return (virtualization.getTruncationLineCount() + 1) * virtualization.getLineHeight();
-  }
-
-  const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container);
-  if (storedSize) {
-    return storedSize;
   }
 
   let textToMeasure = '';
@@ -341,10 +346,19 @@ export function getLogLineDOMHeight(
   calculatedHeight?: number,
   collapsed?: boolean
 ): number | null {
+  /**
+   * Extreme edge case: inline log details is open, the element is outside the viewport and will be removed
+   * from the DOM, so we can't relly on it's measurement.
+   * Possibly related with node reuse by react window or timing of useLayoutEffect.
+   */
+  if (element.querySelector('.log-line-inline-details') && element.scrollHeight < 100) {
+    return null;
+  }
+
   // Line overflows or is smaller than container
   let measuredHeight = element.scrollHeight;
-  const height = calculatedHeight ?? element.clientHeight;
-  if (measuredHeight !== height) {
+  const height = calculatedHeight ?? element.scrollHeight;
+  if (measuredHeight > 0 && measuredHeight !== height) {
     return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
   }
 
