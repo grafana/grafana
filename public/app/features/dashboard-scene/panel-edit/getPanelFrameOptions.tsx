@@ -23,6 +23,17 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelStylesSection } from './PanelStylesSection';
 
+export function createPresetApplyHandler(panel: VizPanel) {
+  return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
+      source: panel,
+      perform: () => panel.onFieldConfigChange(preset.fieldConfig!, true),
+      undo: () => panel.onFieldConfigChange(prevFieldConfig, true),
+    });
+  };
+}
+
 export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: t('dashboard-scene.get-panel-frame-options.descriptor.title.panel-options', 'Panel options'),
@@ -87,18 +98,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         id: 'panel-styles',
         isOpenDefault: true,
         customRender: () => (
-          <PanelStylesSection
-            key="panel-styles"
-            panel={panel}
-            onApplyPreset={(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) => {
-              dashboardEditActions.edit({
-                description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
-                source: panel,
-                perform: () => panel.onFieldConfigChange(preset.fieldConfig!, true),
-                undo: () => panel.onFieldConfigChange(prevFieldConfig, true),
-              });
-            }}
-          />
+          <PanelStylesSection key="panel-styles" panel={panel} onApplyPreset={createPresetApplyHandler(panel)} />
         ),
       })
     );
