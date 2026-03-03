@@ -14682,6 +14682,12 @@
       "no-data-found-in-response": "No data found in response"
     }
   },
+  "transformation-editor": {
+    "no-options": {
+      "description": "{{name}} will be applied automatically to your data unless the transformation is disabled.",
+      "title": "No options to configure"
+    }
+  },
   "transformation-editor-renderer": {
     "no-transformation-editor-title": "Transformation does not have an editor component"
   },
