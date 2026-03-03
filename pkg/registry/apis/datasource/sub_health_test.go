@@ -114,7 +114,7 @@ func TestSubHealthREST_Connect(t *testing.T) {
 
 		require.Error(t, err)
 		require.Nil(t, handler)
-		require.Contains(t, err.Error(), "data source not found")
+		require.Contains(t, err.Error(), "\"test-ds\" not found")
 	})
 
 	t.Run("returns error when PluginContextForDataSource fails", func(t *testing.T) {

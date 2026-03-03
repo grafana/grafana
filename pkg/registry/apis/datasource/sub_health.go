@@ -52,6 +52,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
 		}
+		return nil, err
 	}
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
