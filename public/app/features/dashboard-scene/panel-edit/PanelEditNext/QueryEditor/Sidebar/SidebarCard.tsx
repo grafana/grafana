@@ -147,6 +147,7 @@ function getStyles(
     item: ActionItem;
   }
 ) {
+  // TODO: I think we should refactor this so we aren't relying on this border color for the selected card.
   const borderColor = getEditorBorderColor({
     theme,
     editorType: item.type,
@@ -155,7 +156,7 @@ function getStyles(
   });
   const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
-  const backgroundColor = isSelected ? selectedBg : theme.isDark ? themeColors.card.hoverBg : '#F5F5F5';
+  const backgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
 
   const hoverActions = css({
     position: 'absolute',
@@ -168,7 +169,7 @@ function getStyles(
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
     borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
-    background: `linear-gradient(270deg, ${backgroundColor} 70%, ${theme.isDark ? 'rgba(32, 38, 47, 0.00)' : 'rgba(255, 255, 255, 0.00)'}  100%)`,
+    background: `linear-gradient(270deg, ${backgroundColor} 70%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
@@ -238,7 +239,7 @@ function getStyles(
       alignItems: 'center',
       justifyContent: 'space-between',
       width: '100%',
-      background: isSelected ? selectedBg : 'transparent',
+      background: isSelected ? selectedBg : themeColors.card.bg,
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',
 
