@@ -26,12 +26,14 @@ function getLayoutOptions() {
 interface ActionRowProps {
   state: SearchState;
   showStarredFilter?: boolean;
+  showTeamFoldersFilter?: boolean;
   showLayout?: boolean;
   sortPlaceholder?: string;
 
   onLayoutChange: (layout: SearchLayout) => void;
   onSortChange: (value?: string) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
+  onTeamFoldersFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
@@ -46,7 +48,7 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
 
   // Folders is not valid when a query exists
   if (layout === SearchLayout.Folders) {
-    if (q.query || q.sort || q.starred || q.tag.length > 0 || q.createdBy) {
+    if (q.query || q.sort || q.starred || q.teamFolders || q.tag.length > 0 || q.createdBy) {
       return SearchLayout.List;
     }
   }
@@ -57,11 +59,13 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
 export const ActionRow = ({
   state,
   showStarredFilter,
+  showTeamFoldersFilter,
   showLayout,
   sortPlaceholder,
   onLayoutChange,
   onSortChange,
   onStarredFilterChange = () => {},
+  onTeamFoldersFilterChange = () => {},
   onTagFilterChange,
   getTagOptions,
   getSortOptions,
@@ -79,7 +83,7 @@ export const ActionRow = ({
 
   // Disabled folder layout option when query is present
   const disabledOptions =
-    state.tag.length || state.starred || state.query || state.datasource || state.panel_type || state.createdBy
+    state.tag.length || state.starred || state.teamFolders || state.query || state.datasource || state.panel_type || state.createdBy
       ? [SearchLayout.Folders]
       : [];
 
@@ -106,6 +110,15 @@ export const ActionRow = ({
               label={t('search.actions.starred', 'Starred')}
               onChange={onStarredFilterChange}
               value={state.starred}
+            />
+          </div>
+        )}
+        {showTeamFoldersFilter && (
+          <div className={styles.checkboxWrapper}>
+            <Checkbox
+              label={t('search.actions.team-folders', 'My team folders')}
+              onChange={onTeamFoldersFilterChange}
+              value={state.teamFolders}
             />
           </div>
         )}
