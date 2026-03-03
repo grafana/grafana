@@ -37,7 +37,6 @@ func TestIntegrationTeamSearch(t *testing.T) {
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 			doTeamSearchTests(t, helper)
 		})
