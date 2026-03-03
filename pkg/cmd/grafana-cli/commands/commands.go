@@ -217,6 +217,11 @@ var adminCommands = []*cli.Command{
 						Usage: "Number of encrypted values per bulk update. Default 100. Increase for fewer round-trips; decrease if hitting query size limits.",
 						Value: 100,
 					},
+					&cli.IntFlag{
+						Name:  "threads",
+						Usage: "Number of concurrent namespace finalize workers. Default 1.",
+						Value: 1,
+					},
 				},
 			},
 		},

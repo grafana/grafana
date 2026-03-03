@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -37,6 +38,12 @@ func ProvideConsolidationService(
 }
 
 func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.ConsolidateOptions) (err error) {
+	// some stats
+	consolidateStart := time.Now()
+	totalComputeTime := int64(0)
+	numberOfBatches := 0
+	numberOfValues := 0
+
 	ctx, span := s.tracer.Start(ctx, "ConsolidationService.Consolidate")
 	defer span.End()
 
@@ -50,6 +57,10 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 	chunkSize := 100
 	if opts != nil && opts.ChunkSize > 0 {
 		chunkSize = opts.ChunkSize
+	}
+	workers := 1
+	if opts != nil && opts.Workers > 0 {
+		workers = opts.Workers
 	}
 
 	// Disable all active data keys so no new data is encrypted with old keys.
@@ -65,12 +76,16 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 		return fmt.Errorf("listing all encrypted values: %w", err)
 	}
 
-	var currentNamespace string
-	var batch []*contracts.EncryptedValue
-	lastFinalizedTime := time.Now()
 	log := logging.FromContext(ctx)
+	sem := make(chan struct{}, workers)
+	var wg sync.WaitGroup
+	var firstErr error
+	var firstErrMu sync.Mutex
 
 	finalize := func(ns string, values []*contracts.EncryptedValue) error {
+		numberOfBatches++
+		numberOfValues += len(values)
+		start := time.Now()
 		log.Debug("ConsolidationService.Consolidate: finalizing namespace", "namespace", ns, "values", len(values))
 		if len(values) == 0 {
 			return nil
@@ -98,26 +113,53 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 				return fmt.Errorf("bulk updating namespace %s: %w", ns, err)
 			}
 		}
-		log.Debug("ConsolidationService.Consolidate: finalized namespace", "namespace", ns, "values", len(values), "time", time.Since(lastFinalizedTime))
-		lastFinalizedTime = time.Now()
+		log.Debug("ConsolidationService.Consolidate: finalized namespace", "namespace", ns, "values", len(values), "time", time.Since(start))
+		totalComputeTime += time.Since(start).Milliseconds()
 		return nil
+	}
+
+	var currentNamespace string
+	var batch []*contracts.EncryptedValue
+
+	launchFinalize := func(ns string, values []*contracts.EncryptedValue) {
+		if len(values) == 0 && ns == "" {
+			return
+		}
+		// Copy slice so goroutine sees immutable data
+		valuesCopy := make([]*contracts.EncryptedValue, len(values))
+		copy(valuesCopy, values)
+		wg.Add(1)
+		go func(ns string, values []*contracts.EncryptedValue) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			if err := finalize(ns, values); err != nil {
+				firstErrMu.Lock()
+				if firstErr == nil {
+					firstErr = err
+				}
+				firstErrMu.Unlock()
+			}
+		}(ns, valuesCopy)
 	}
 
 	for _, ev := range encryptedValues {
 		if ev.Namespace != currentNamespace {
-			if err = finalize(currentNamespace, batch); err != nil {
-				return err
-			}
+			launchFinalize(currentNamespace, batch)
 			currentNamespace = ev.Namespace
 			batch = nil
 		}
 		batch = append(batch, ev)
 	}
-	if err = finalize(currentNamespace, batch); err != nil {
-		return err
+	launchFinalize(currentNamespace, batch)
+
+	wg.Wait()
+	if firstErr != nil {
+		return firstErr
 	}
 
 	// TODO: After all values are re-encrypted, we can safely remove the old data keys.
 
+	log.Debug("ConsolidationService.Consolidate: finished", "duration", time.Since(consolidateStart), "totalComputeTime", totalComputeTime, "numberOfNamespaces", numberOfBatches, "numberOfValues", numberOfValues)
 	return nil
 }

@@ -79,6 +79,8 @@ type EncryptedValueMigrationExecutor interface {
 type ConsolidateOptions struct {
 	// ChunkSize is the number of encrypted values per bulk update. Default 100 if <= 0.
 	ChunkSize int
+	// Workers is the number of concurrent namespace finalize goroutines. Default 1 if <= 0.
+	Workers int
 }
 
 type ConsolidationService interface {

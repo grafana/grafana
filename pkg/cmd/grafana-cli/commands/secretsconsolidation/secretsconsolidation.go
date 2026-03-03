@@ -47,10 +47,15 @@ func ConsolidateSecrets(cmd utils.CommandLine, runner server.Runner) error {
 	if chunkSize <= 0 {
 		chunkSize = 100
 	}
+	threads := cmd.Int("threads")
+	if threads <= 0 {
+		threads = 1
+	}
 
 	start := time.Now()
 	err := runner.SecretsConsolidationService.Consolidate(ctx, &contracts.ConsolidateOptions{
 		ChunkSize: chunkSize,
+		Workers:   threads,
 	})
 	elapsed := time.Since(start)
 
