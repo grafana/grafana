@@ -723,6 +723,23 @@ func (h *provisioningTestHelper) WaitForHealthyRepository(t *testing.T, name str
 	}, waitTimeoutDefault, waitIntervalDefault, "repository %s should become healthy", name)
 }
 
+func (h *provisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name string) {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoStatus, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository status") {
+			return
+		}
+		// Check that health check has run (Checked > 0)
+		checked, found := mustNestedInt64(repoStatus.Object, "status", "health", "checked")
+		assert.True(collect, found, "repository %s does not have checked field", name)
+		assert.Greater(collect, checked, int64(0), "repository %s health check has not run yet", name)
+		// Check that repository is unhealthy
+		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
+		assert.True(collect, found, "repository %s does not have health status", name)
+		assert.False(collect, status, "repository %s should be unhealthy", name)
+	}, waitTimeoutDefault, waitIntervalDefault, "repository %s should become unhealthy", name)
+}
+
 type grafanaOption func(opts *testinfra.GrafanaOpts)
 
 // Useful for debugging a test in development.
@@ -879,6 +896,14 @@ func mustNestedStringSlice(obj map[string]interface{}, fields ...string) []strin
 		panic(err)
 	}
 	return v
+}
+
+func mustNestedInt64(obj map[string]interface{}, fields ...string) (int64, bool) {
+	v, found, err := unstructured.NestedInt64(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
+	return v, found
 }
 
 func asJSON(obj any) []byte {
