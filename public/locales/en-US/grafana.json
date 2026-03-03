@@ -388,7 +388,6 @@
         "timing-options": "Timings"
       },
       "pending-period": "Pending period",
-      "rule": "Rule",
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
@@ -3497,7 +3496,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Details",
           "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
