@@ -919,6 +919,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "adHocFilterDefaultValues",
+			Description:  "Enables configuring default origin filters for ad-hoc filter variables",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "cloudWatchNewLabelParsing",
 			Description:  "Updates CloudWatch label parsing to be more accurate",
 			Stage:        FeatureStageGeneralAvailability,

@@ -589,6 +589,11 @@ export interface FeatureToggles {
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
   /**
+  * Enables configuring default origin filters for ad-hoc filter variables
+  * @default false
+  */
+  adHocFilterDefaultValues?: boolean;
+  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
