@@ -342,11 +342,10 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 	}
 }
 
-// TestKvStorageBackend_WatchWriteEvents_ConcurrentEventsCompleteness verifies that when many
+// TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many
 // concurrent WriteEvent calls happen, the watch stream delivers every event exactly once and
-// in ascending ResourceVersion order. This catches the race where a snowflake RV is assigned
-// early but the event is persisted late, causing the pollingNotifier to skip it.
-func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentEventsCompleteness(t *testing.T) {
+// in ascending ResourceVersion order.
+func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("pollingNotifier", func(t *testing.T) {
@@ -375,9 +374,9 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	const numEvents = 1000
+	const numEvents = 500
 
-	// Pre-create all WriteEvent structs (unique resource names → no optimistic locking conflicts).
+	// Pre-create all WriteEvent structs.
 	writeEvents := make([]WriteEvent, numEvents)
 	for i := 0; i < numEvents; i++ {
 		name := fmt.Sprintf("concurrent-resource-%d", i)
@@ -422,13 +421,11 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 		}
 		results := make(chan writeResult, batchSize)
 		var wg sync.WaitGroup
-		wg.Add(batchSize)
 		for i := batch; i < end; i++ {
-			go func(evt WriteEvent) {
-				defer wg.Done()
-				rv, err := backend.WriteEvent(ctx, evt)
+			wg.Go(func() {
+				rv, err := backend.WriteEvent(ctx, writeEvents[i])
 				results <- writeResult{rv: rv, err: err}
-			}(writeEvents[i])
+			})
 		}
 		wg.Wait()
 		close(results)

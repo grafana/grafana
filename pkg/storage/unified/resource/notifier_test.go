@@ -37,7 +37,7 @@ func TestIntegrationNewNotifier(t *testing.T) {
 func TestDefaultWatchOptions(t *testing.T) {
 	opts := defaultWatchOptions()
 
-	assert.Equal(t, defaultLookbackPeriod, opts.LookbackPeriod)
+	assert.Equal(t, defaultSettleDelay, opts.SettleDelay)
 	assert.Equal(t, defaultBufferSize, opts.BufferSize)
 }
 
@@ -102,62 +102,6 @@ func testNotifierLastEventResourceVersion(t *testing.T, ctx context.Context, not
 	assert.Equal(t, int64(2000), rv)
 }
 
-func TestIntegrationNotifier_cachekey(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierCachekey)
-	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierCachekey)
-}
-
-func testNotifierCachekey(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
-	tests := []struct {
-		name     string
-		event    Event
-		expected string
-	}{
-		{
-			name: "basic event",
-			event: Event{
-				Namespace:       "default",
-				Group:           "apps",
-				Resource:        "resource",
-				Name:            "test-resource",
-				ResourceVersion: 1000,
-			},
-			expected: "default~apps~resource~test-resource~1000",
-		},
-		{
-			name: "empty namespace",
-			event: Event{
-				Namespace:       "",
-				Group:           "apps",
-				Resource:        "resource",
-				Name:            "test-resource",
-				ResourceVersion: 2000,
-			},
-			expected: "~apps~resource~test-resource~2000",
-		},
-		{
-			name: "special characters in name",
-			event: Event{
-				Namespace:       "test-ns",
-				Group:           "apps",
-				Resource:        "resource",
-				Name:            "test-resource-with-dashes",
-				ResourceVersion: 3000,
-			},
-			expected: "test-ns~apps~resource~test-resource-with-dashes~3000",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := notifier.cacheKey(tt.event)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
 func TestIntegrationNotifier_Watch_NoEvents(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -184,10 +128,9 @@ func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *poll
 	require.NoError(t, err)
 
 	opts := watchOptions{
-		LookbackPeriod: 100 * time.Millisecond,
-		BufferSize:     10,
-		MinBackoff:     50 * time.Millisecond,
-		MaxBackoff:     500 * time.Millisecond,
+		BufferSize: 10,
+		MinBackoff: 50 * time.Millisecond,
+		MaxBackoff: 500 * time.Millisecond,
 	}
 
 	events := notifier.Watch(ctx, opts)
@@ -209,7 +152,7 @@ func TestIntegrationNotifier_Watch_WithExistingEvents(t *testing.T) {
 }
 
 func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	// Save some initial events
@@ -242,10 +185,9 @@ func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, noti
 	}
 
 	opts := watchOptions{
-		LookbackPeriod: 100 * time.Millisecond,
-		BufferSize:     10,
-		MinBackoff:     50 * time.Millisecond,
-		MaxBackoff:     500 * time.Millisecond,
+		BufferSize: 10,
+		MinBackoff: 50 * time.Millisecond,
+		MaxBackoff: 500 * time.Millisecond,
 	}
 
 	// Start watching
@@ -266,82 +208,14 @@ func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, noti
 	err := eventStore.Save(ctx, newEvent)
 	require.NoError(t, err)
 
-	// Should receive the new event
+	// Should receive the new event (settle delay adds ~500ms)
 	select {
 	case receivedEvent := <-events:
 		assert.Equal(t, newEvent.Name, receivedEvent.Name)
 		assert.Equal(t, newEvent.ResourceVersion, receivedEvent.ResourceVersion)
 		assert.Equal(t, newEvent.Action, receivedEvent.Action)
-	case <-time.After(500 * time.Millisecond):
+	case <-time.After(2 * time.Second):
 		t.Fatal("Expected to receive an event, but timed out")
-	}
-}
-
-func TestIntegrationNotifier_Watch_EventDeduplication(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchEventDeduplication)
-	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchEventDeduplication)
-}
-
-func testNotifierWatchEventDeduplication(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-
-	// Add an initial event so that lastEventResourceVersion doesn't return ErrNotFound
-	initialEvent := Event{
-		Namespace:       "default",
-		Group:           "apps",
-		Resource:        "resource",
-		Name:            "initial-resource",
-		ResourceVersion: time.Now().UnixNano(),
-		Action:          DataActionCreated,
-		Folder:          "test-folder",
-		PreviousRV:      0,
-	}
-	err := eventStore.Save(ctx, initialEvent)
-	require.NoError(t, err)
-
-	opts := watchOptions{
-		LookbackPeriod: time.Second,
-		BufferSize:     10,
-		MinBackoff:     20 * time.Millisecond,
-		MaxBackoff:     200 * time.Millisecond,
-	}
-
-	// Start watching
-	events := notifier.Watch(ctx, opts)
-
-	// Save an event
-	event := Event{
-		Namespace:       "default",
-		Group:           "apps",
-		Resource:        "resource",
-		Name:            "test-resource",
-		ResourceVersion: time.Now().UnixNano(),
-		Action:          DataActionCreated,
-		Folder:          "test-folder",
-		PreviousRV:      0,
-	}
-
-	err = eventStore.Save(ctx, event)
-	require.NoError(t, err)
-
-	// Should receive the event once
-	select {
-	case receivedEvent := <-events:
-		assert.Equal(t, event.Name, receivedEvent.Name)
-		assert.Equal(t, event.ResourceVersion, receivedEvent.ResourceVersion)
-	case <-time.After(200 * time.Millisecond):
-		t.Fatal("Expected to receive an event, but timed out")
-	}
-
-	// Should not receive the same event again (due to caching)
-	select {
-	case duplicateEvent := <-events:
-		t.Fatalf("Expected no duplicate events, but got: %+v", duplicateEvent)
-	case <-time.After(100 * time.Millisecond):
-		// Expected - no duplicate events
 	}
 }
 
@@ -370,10 +244,9 @@ func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, not
 	require.NoError(t, err)
 
 	opts := watchOptions{
-		LookbackPeriod: 100 * time.Millisecond,
-		BufferSize:     10,
-		MinBackoff:     20 * time.Millisecond,
-		MaxBackoff:     200 * time.Millisecond,
+		BufferSize: 10,
+		MinBackoff: 20 * time.Millisecond,
+		MaxBackoff: 200 * time.Millisecond,
 	}
 
 	events := notifier.Watch(ctx, opts)
@@ -401,7 +274,7 @@ func TestIntegrationNotifier_Watch_MultipleEvents(t *testing.T) {
 }
 
 func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	rv := time.Now().UnixNano()
 	// Add an initial event so that lastEventResourceVersion doesn't return ErrNotFound
@@ -419,10 +292,9 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 	require.NoError(t, err)
 
 	opts := watchOptions{
-		LookbackPeriod: time.Second,
-		BufferSize:     10,
-		MinBackoff:     20 * time.Millisecond,
-		MaxBackoff:     200 * time.Millisecond,
+		BufferSize: 10,
+		MinBackoff: 20 * time.Millisecond,
+		MaxBackoff: 200 * time.Millisecond,
 	}
 
 	// Start watching
@@ -477,7 +349,7 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 			receivedEvents = append(receivedEvents, event.Name)
 		case err := <-errCh:
 			require.NoError(t, err)
-		case <-time.After(1 * time.Second):
+		case <-time.After(3 * time.Second):
 			t.Fatalf("Timed out waiting for event %d", len(receivedEvents)+1)
 		}
 	}
