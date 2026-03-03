@@ -10,6 +10,7 @@ import { arrayToDataFrame, DataFrame, DataFrameView, getDisplayProcessor, Select
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
+import { legacyAPI } from 'app/api/clients/legacy';
 import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -108,6 +109,27 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
     // Nothing is starred
     return noDataResponse();
+  }
+
+  async teamFolders(query: SearchQuery): Promise<QueryResponse> {
+    if (query.facet?.length) {
+      throw new Error('facets not supported!');
+    }
+
+    const userTeamsResult = await dispatch(legacyAPI.endpoints.getSignedInUserTeamList.initiate());
+
+    const { data: teams } = userTeamsResult;
+    if (!teams?.length) {
+      return noDataResponse();
+    }
+
+    const ownerReferences = teams.map((team) => `iam.grafana.app/Team/${team.uid}`);
+
+    return this.doSearchQuery({
+      ...query,
+      ownerReferences,
+      query: query.query ?? '*',
+    });
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
@@ -353,6 +375,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
     if (query.permission) {
       uri += `&permission=${query.permission}`;
+    }
+
+    if (query.ownerReferences?.length) {
+      uri += '&' + query.ownerReferences.map((ref) => `ownerReference=${encodeURIComponent(ref)}`).join('&');
     }
 
     if (query.deleted) {
