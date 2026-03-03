@@ -116,24 +116,28 @@ func TestIntegrationTestDatasource(t *testing.T) {
 						"hello": "world",
 					},
 				},
+				"secure": map[string]any{
+					"aaa": map[string]any{
+						"remove": true,
+					},
+					"ccc": map[string]any{
+						"create": "CCC",
+					},
+				},
 			},
 		}, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "test", out.GetName())
 		require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 
-		url, _, _ := unstructured.NestedString(out.Object)
-		require.Equal(t, "http://fake.url", url) // it changed
-
-		obj, err := utils.MetaAccessor(out)
+		ds, err := datasourceV0alpha1.FromUnstructured(out)
 		require.NoError(t, err)
 
-		// Secure values do not change
-		secure, err := obj.GetSecureValues()
-		require.NoError(t, err)
+		require.Equal(t, "http://fake.url", ds.Spec.URL())
+		require.Equal(t, "testdb", ds.Spec.Database())
 
-		keys := slices.Collect(maps.Keys(secure))
-		require.ElementsMatch(t, []string{"bbb", "ccc"}, keys)
+		keys := slices.Collect(maps.Keys(ds.Secure))
+		require.ElementsMatch(t, []string{"bbb", "ccc"}, keys) // removed A and added C
 	})
 
 	t.Run("list", func(t *testing.T) {
