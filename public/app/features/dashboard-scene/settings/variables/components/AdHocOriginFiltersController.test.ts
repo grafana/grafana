@@ -119,15 +119,16 @@ describe('AdHocOriginFiltersController', () => {
       const existing = makeFilter({ value: 'a' });
       const { controller, setFilters } = createController({ filters: [existing] });
 
-      controller.updateFilter({ key: 'host', operator: '=', value: 'a' }, { value: 'b' });
+      controller.updateFilter(existing, { value: 'b' });
 
       expect(setFilters).toHaveBeenCalledWith([makeFilter({ value: 'b' })]);
     });
 
     it('should preserve origin on update', () => {
-      const { controller, setFilters } = createController({ filters: [makeFilter()] });
+      const existing = makeFilter();
+      const { controller, setFilters } = createController({ filters: [existing] });
 
-      controller.updateFilter({ key: 'host', operator: '=', value: 'localhost' }, { operator: '!=' });
+      controller.updateFilter(existing, { operator: '!=' });
 
       expect(setFilters).toHaveBeenCalledWith([expect.objectContaining({ origin: 'dashboard', operator: '!=' })]);
     });
@@ -135,16 +136,17 @@ describe('AdHocOriginFiltersController', () => {
     it('should not update if filter is not found', () => {
       const { controller, setFilters } = createController({ filters: [makeFilter()] });
 
-      controller.updateFilter({ key: 'nonexistent', operator: '=', value: 'x' }, { value: 'y' });
+      controller.updateFilter(makeFilter({ key: 'nonexistent', value: 'x' }), { value: 'y' });
 
       expect(setFilters).not.toHaveBeenCalled();
     });
   });
 
   it('updateToMatchAll should remove the matching filter', () => {
-    const { controller, setFilters } = createController({ filters: [makeFilter()] });
+    const existing = makeFilter();
+    const { controller, setFilters } = createController({ filters: [existing] });
 
-    controller.updateToMatchAll({ key: 'host', operator: '=', value: 'localhost' });
+    controller.updateToMatchAll(existing);
 
     expect(setFilters).toHaveBeenCalledWith([]);
   });
@@ -154,7 +156,7 @@ describe('AdHocOriginFiltersController', () => {
       const filters = [makeFilter({ value: 'a' }), makeFilter({ key: 'instance', value: 'b' })];
       const { controller, setFilters } = createController({ filters });
 
-      controller.removeFilter({ key: 'host', operator: '=', value: 'a' });
+      controller.removeFilter(filters[0]);
 
       expect(setFilters).toHaveBeenCalledWith([filters[1]]);
     });
@@ -163,18 +165,18 @@ describe('AdHocOriginFiltersController', () => {
       const filters = [makeFilter({ value: 'a' }), makeFilter({ value: 'a' })];
       const { controller, setFilters } = createController({ filters });
 
-      controller.removeFilter({ key: 'host', operator: '=', value: 'a' });
+      controller.removeFilter(filters[0]);
 
       expect(setFilters).toHaveBeenCalledWith([filters[1]]);
     });
 
     it('should not modify filters if not found or empty', () => {
       const { controller: c1, setFilters: sf1 } = createController({ filters: [] });
-      c1.removeFilter({ key: 'host', operator: '=', value: 'localhost' });
+      c1.removeFilter(makeFilter());
       expect(sf1).not.toHaveBeenCalled();
 
       const { controller: c2, setFilters: sf2 } = createController({ filters: [makeFilter()] });
-      c2.removeFilter({ key: 'nonexistent', operator: '=', value: 'x' });
+      c2.removeFilter(makeFilter({ key: 'nonexistent', value: 'x' }));
       expect(sf2).not.toHaveBeenCalled();
     });
   });
@@ -215,7 +217,7 @@ describe('AdHocOriginFiltersController', () => {
       ];
       const { controller, setFilters } = createController({ filters });
 
-      controller.handleComboboxBackspace({ key: 'b', operator: '=', value: '2' });
+      controller.handleComboboxBackspace(filters[1]);
 
       expect(setFilters).toHaveBeenCalledWith([
         { ...filters[0], forceEdit: true },
@@ -227,11 +229,11 @@ describe('AdHocOriginFiltersController', () => {
     it('should do nothing when filter is at index 0 or not found', () => {
       const filters = [makeFilter({ key: 'a', value: '1' })];
       const { controller: c1, setFilters: sf1 } = createController({ filters });
-      c1.handleComboboxBackspace({ key: 'a', operator: '=', value: '1' });
+      c1.handleComboboxBackspace(filters[0]);
       expect(sf1).not.toHaveBeenCalled();
 
       const { controller: c2, setFilters: sf2 } = createController({ filters: [makeFilter()] });
-      c2.handleComboboxBackspace({ key: 'nonexistent', operator: '=', value: 'x' });
+      c2.handleComboboxBackspace(makeFilter({ key: 'nonexistent', value: 'x' }));
       expect(sf2).not.toHaveBeenCalled();
     });
   });

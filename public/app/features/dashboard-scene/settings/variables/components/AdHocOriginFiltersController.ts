@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AdHocFiltersController, AdHocFilterWithLabels } from '@grafana/scenes';
@@ -41,9 +43,7 @@ export class AdHocOriginFiltersController implements AdHocFiltersController {
   }
 
   private findFilterIndex(filter: AdHocFilterWithLabels): number {
-    return this.filters.findIndex(
-      (f) => f.key === filter.key && f.operator === filter.operator && f.value === filter.value
-    );
+    return this.filters.findIndex((f) => isEqual(f, filter));
   }
 
   updateFilter(filter: AdHocFilterWithLabels, update: Partial<AdHocFilterWithLabels>): void {
