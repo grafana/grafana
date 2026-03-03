@@ -7058,6 +7058,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
+      "disabled-tooltip": "Save the dashboard before creating alert rules",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
@@ -13464,6 +13465,7 @@
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
       "loading-queries-transformations": "Loading queries and transformations",
+      "new-type": "New {{type}}",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
@@ -14721,6 +14723,12 @@
     "name-show-matches-only": "Show matches only",
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "{{name}} will be applied automatically to your data unless the transformation is disabled.",
+      "title": "No options to configure"
     }
   },
   "transformation-editor-renderer": {
