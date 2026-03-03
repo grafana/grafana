@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, TextLink, useStyles2 } from '@grafana/ui';
+import { Button, Icon, IconButton, LinkButton, useStyles2 } from '@grafana/ui';
 
 import { QUERY_EDITOR_BANNER_FEEDBACK_URL, getQueryEditorBannerColors } from './PanelEditNext/constants';
 
@@ -33,20 +33,26 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
       </div>
       <div className={styles.right}>
         {useQueryExperienceNext && (
-          <TextLink href={QUERY_EDITOR_BANNER_FEEDBACK_URL} external inline icon="comment-alt" variant="bodySmall">
+          <LinkButton
+            variant="primary"
+            fill="text"
+            size="sm"
+            icon="comment-alt"
+            href={QUERY_EDITOR_BANNER_FEEDBACK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
-          </TextLink>
+          </LinkButton>
         )}
         {useQueryExperienceNext ? (
-          <button className={styles.actionLink} onClick={onToggle}>
-            <Icon name="history" size="sm" />
+          <Button variant="secondary" fill="text" size="sm" icon="history" onClick={onToggle}>
             {t('dashboard-scene.query-editor-banner.go-back', 'Go back to classic')}
-          </button>
+          </Button>
         ) : (
-          <button className={styles.tryItButton} onClick={onToggle}>
-            <Icon name="rocket" size="sm" />
+          <Button variant="primary" fill="text" size="sm" icon="rocket" onClick={onToggle}>
             {t('dashboard-scene.query-editor-banner.try-it', 'Try it out')}
-          </button>
+          </Button>
         )}
         <IconButton
           name="times"
@@ -98,12 +104,10 @@ function getStyles(theme: GrafanaTheme2) {
     title: css({
       color: bannerColors.accent,
       fontWeight: theme.typography.fontWeightMedium,
-      fontSize: theme.typography.body.fontSize,
       whiteSpace: 'nowrap',
     }),
     description: css({
       color: theme.colors.text.secondary,
-      fontSize: theme.typography.body.fontSize,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -111,44 +115,9 @@ function getStyles(theme: GrafanaTheme2) {
     right: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       flexShrink: 0,
-      marginLeft: theme.spacing(2),
-    }),
-    actionLink: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      whiteSpace: 'nowrap',
-      textDecoration: 'none',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      padding: 0,
-      '&:hover': {
-        color: theme.colors.text.primary,
-        textDecoration: 'underline',
-      },
-    }),
-    tryItButton: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      color: bannerColors.accent,
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      whiteSpace: 'nowrap',
-      textDecoration: 'none',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      padding: 0,
-      '&:hover': {
-        color: theme.colors.text.primary,
-        textDecoration: 'underline',
-      },
+      marginLeft: theme.spacing(2), // minimum gap when left content is wide
     }),
     closeButton: css({
       color: theme.colors.text.secondary,
