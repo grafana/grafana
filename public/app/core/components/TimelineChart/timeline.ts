@@ -118,7 +118,8 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
-  const labelHeightPx = namePosition === 'top' ? Math.round(12 * devicePixelRatio) + Math.round(4 * devicePixelRatio) : 0;
+  const labelHeightPx =
+    namePosition === 'top' ? Math.round(12 * devicePixelRatio) + Math.round(4 * devicePixelRatio) : 0;
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hoveredAtCursor: Rect | null = null;
 
