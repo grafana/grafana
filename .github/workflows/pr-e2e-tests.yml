@@ -86,7 +86,7 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'plugins-bundled/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
+          key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
           path: |
             public/build
             public/app/plugins/*/*/dist
@@ -98,10 +98,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: yarn install --immutable
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
+        uses: ./.github/actions/yarn-install
 
       - name: Build frontend
         if: steps.cache.outputs.cache-hit != 'true'
@@ -268,15 +265,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+        uses: ./.github/actions/setup-node
 
       - name: Install yarn dependencies
-        run: yarn install --immutable
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
+        uses: ./.github/actions/yarn-install
 
       - name: Get Playwright version
         id: pw-version
@@ -313,33 +305,30 @@ jobs:
         with:
           persist-credentials: false
 
-      # Download backend binaries → grafana-server/bin/
-      - uses: actions/download-artifact@v4
+      ##
+      # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
+      ##
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v4
         with:
           name: grafana-backend
           path: grafana-server/bin
-
-      # Restore execute permissions stripped by actions/upload-artifact
       - name: Fix binary permissions
         run: chmod +x grafana-server/bin/grafana*
-
-      # Download frontend assets → grafana-server/public/
-      - uses: actions/download-artifact@v4
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
         with:
           name: grafana-frontend
           path: grafana-server/public
-
-      # Download test plugins → grafana-server/data/plugins/
+      - name: Download misc artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: grafana-misc
+          path: grafana-server
       - uses: actions/download-artifact@v4
         with:
           name: grafana-test-plugins
           path: grafana-server/data/plugins
-
-      # Download misc files (conf/, tools/, plugins-bundled/) → grafana-server/
-      - uses: actions/download-artifact@v4
-        with:
-          name: grafana-misc
-          path: grafana-server
 
       # Apply E2E test configuration on top of the production-mirrored distribution
       - name: Configure for E2E testing
@@ -350,13 +339,6 @@ jobs:
           cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
           cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
           cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
-
-      - run: tree grafana-server > tree.txt
-      - uses: actions/upload-artifact@v5
-        with:
-          name: debug-tree-shard-${{ matrix.shard }}
-          path: tree.txt
-          retention-days: 1
 
       # Start Grafana from the standalone directory
       - name: Start Grafana
@@ -381,14 +363,10 @@ jobs:
           done
           printf "\nGrafana is ready\n"
 
-      # Install test dependencies
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
       - name: Install yarn dependencies
-        run: yarn install --immutable
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
+        uses: ./.github/actions/yarn-install
 
       - name: Get Playwright version
         id: pw-version
@@ -399,7 +377,6 @@ jobs:
           path: ~/.cache/ms-playwright
       - run: npx playwright install chromium --with-deps
 
-      # Run tests — Grafana is running standalone on localhost:3001
       - name: Run Playwright tests
         run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
         env:
@@ -579,10 +556,7 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
       - name: Install yarn dependencies
-        run: yarn install --immutable
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
+        uses: ./.github/actions/yarn-install
       - name: Get pa11y results
         uses: actions/download-artifact@v6
         with:
