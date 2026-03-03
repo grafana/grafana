@@ -11,10 +11,10 @@ import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
 import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
+import { LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
-import { LogListFontSize } from './LogList';
 
 export interface Props {
   containerElement: HTMLDivElement;
@@ -77,10 +77,10 @@ LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
-    const { app, noInteractions, wrapLogMessage } = useLogListContext();
+    const { app, fontSize, noInteractions, wrapLogMessage } = useLogListContext();
     const { currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
 
-    const styles = useStyles2(getStyles, 'sidebar');
+    const styles = useStyles2(getStyles, 'sidebar', undefined, fontSize);
 
     useEffect(() => {
       // When wrapping is enabled and details is in sidebar mode, the logs panel width changes and the
