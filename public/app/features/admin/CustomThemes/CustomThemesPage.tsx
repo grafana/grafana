@@ -39,7 +39,7 @@ export default function CustomThemesPage() {
             <ThemeCard
               themeOption={{
                 id: themeOption.metadata.uid!,
-                name: themeOption.metadata.name!,
+                name: themeOption.spec.name,
                 isExtra: true,
                 build: () => createTheme(themeOption.spec),
               }}
