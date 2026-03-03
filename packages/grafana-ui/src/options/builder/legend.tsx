@@ -1,6 +1,6 @@
 import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
+import { LegendDisplayMode, OptionsWithLegend, SortOrder } from '@grafana/schema';
 
 /**
  * @alpha
@@ -46,6 +46,30 @@ export function addLegendOptions<T extends OptionsWithLegend>(
         ],
       },
       showIf: (c) => c.legend.showLegend,
+    })
+    .addRadio({
+      path: 'legend.sortOrder',
+      name: t('grafana-ui.builder.legend.name-sort-order', 'Sort by'),
+      category,
+      description: '',
+      defaultValue: SortOrder.None,
+      settings: {
+        options: [
+          {
+            value: SortOrder.None,
+            label: t('grafana-ui.builder.legend.sort-order-options.label-none', 'None'),
+          },
+          {
+            value: SortOrder.Ascending,
+            label: t('grafana-ui.builder.legend.sort-order-options.label-asc', 'A-Z'),
+          },
+          {
+            value: SortOrder.Descending,
+            label: t('grafana-ui.builder.legend.sort-order-options.label-desc', 'Z-A'),
+          },
+        ],
+      },
+      showIf: (c) => c.legend.showLegend && c.legend.displayMode === LegendDisplayMode.List,
     })
     .addNumberInput({
       path: 'legend.width',

@@ -8,9 +8,9 @@ import { Icon } from '../Icon/Icon';
 
 import { LegendTableItem } from './VizLegendTableItem';
 import { VizLegendItem, VizLegendTableProps } from './types';
+import { naturalCompare } from './utils';
 
 const nameSortKey = 'Name';
-const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
 
 /**
  * @internal

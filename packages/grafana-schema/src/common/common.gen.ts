@@ -655,17 +655,53 @@ export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, 
 }
 
 /**
- * TODO docs
+ * Configuration options for the visualization legend.
+ * Controls how series information is displayed alongside visualizations.
  */
 export interface VizLegendOptions {
+  /**
+   * Deprecated: use displayMode instead.
+   */
   asTable?: boolean;
+  /**
+   * List of calculations to display in the legend (e.g., "mean", "lastNotNull").
+   */
   calcs: Array<string>;
+  /**
+   * Display mode for the legend.
+   */
   displayMode: LegendDisplayMode;
+  /**
+   * Deprecated: use showLegend instead.
+   */
   isVisible?: boolean;
+  /**
+   * Placement of the legend relative to the visualization.
+   */
   placement: LegendPlacement;
+  /**
+   * Whether to show the legend.
+   */
   showLegend: boolean;
+  /**
+   * Column name to sort by in Table display mode.
+   * Used with sortDesc for interactive column header sorting.
+   */
   sortBy?: string;
+  /**
+   * Sort direction in Table display mode (true for descending).
+   * Used with sortBy for interactive column header sorting.
+   */
   sortDesc?: boolean;
+  /**
+   * Sort order for legend items in List display mode.
+   * Uses lexical (alphabetical) sorting with natural number comparison.
+   * Defaults to None for backward compatibility.
+   */
+  sortOrder?: SortOrder;
+  /**
+   * Width of the legend in pixels (for right placement).
+   */
   width?: number;
 }
 
