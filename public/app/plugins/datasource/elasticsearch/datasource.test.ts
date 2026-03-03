@@ -1000,7 +1000,7 @@ describe('ElasticDatasource', () => {
         });
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
-          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc"}}]}},"size":10000}\n'
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc"}}]}},"size":10000}\n'
         );
       });
 
@@ -1030,7 +1030,7 @@ describe('ElasticDatasource', () => {
         });
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
-          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@timestamp":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}}]}},"size":10000}\n'
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@timestamp":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}}]}},"size":10000}\n'
         );
       });
 
@@ -1087,7 +1087,7 @@ describe('ElasticDatasource', () => {
         });
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
-          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc AND abc_key:\\"abc_value\\""}}]}},"size":10000}\n'
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc AND abc_key:\\"abc_value\\""}}]}},"size":10000}\n'
         );
       });
     });
