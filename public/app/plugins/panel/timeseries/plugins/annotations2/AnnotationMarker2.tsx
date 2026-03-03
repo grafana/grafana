@@ -31,8 +31,6 @@ interface AnnoBoxProps {
   isPinned: boolean;
   showOnHover: boolean;
 }
-const STATE_DEFAULT = 0;
-const STATE_EDITING = 1;
 
 export const AnnotationMarker2 = ({
   frame,
@@ -52,7 +50,8 @@ export const AnnotationMarker2 = ({
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
 
-  const [isEditing, setIsEditing] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
+  // Set when editing
+  const [editAnnotationId, setEditAnnotationId] = useState(exitWipEdit != null ? annoIdx : null);
   const [isHovering, setIsHovering] = useState(false);
   // @todo find what is setting null vs undefined
   const isClustering =
@@ -86,11 +85,17 @@ export const AnnotationMarker2 = ({
     });
   }
 
-  const showTooltip =
-    (isPinned && !(isEditing === STATE_EDITING)) || (showOnHover && isHovering && !(isEditing === STATE_EDITING));
+  const isEditing = editAnnotationId !== null;
+  const showTooltip = (isPinned && !isEditing) || (showOnHover && isHovering && !isEditing);
+
+  // We cannot use the array index for editing annotations since clustered and wip annotations will get sorted by date, so we need to grab them by the 'id' field which is populated by the annotations API
+  const annoId: number = annoVals?.id?.[annoIdx];
+  const _editIdx = annoVals?.id?.findIndex((annoId) => annoId === editAnnotationId);
+  // wip will not have an id to set, so we need to pass in the raw idx of this annotation, as long as wip is not already clustered, this should continue to work
+  const editIdx = _editIdx > -1 ? _editIdx : annoIdx;
 
   const contents =
-    showTooltip && isClustering ? (
+    !isEditing && showTooltip && isClustering ? (
       <AnnotationTooltip2Cluster
         actions={actions}
         links={links}
@@ -99,7 +104,7 @@ export const AnnotationMarker2 = ({
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
-        onEdit={() => setIsEditing(STATE_EDITING)}
+        onEdit={(annotationId: number) => setEditAnnotationId(annotationId)}
       />
     ) : showTooltip ? (
       <AnnotationTooltip2
@@ -108,19 +113,19 @@ export const AnnotationMarker2 = ({
         timeZone={timeZone}
         onClose={onClose}
         isPinned={isPinned}
-        onEdit={() => setIsEditing(STATE_EDITING)}
+        onEdit={() => setEditAnnotationId(annoId)}
         links={links}
         actions={actions}
       />
-    ) : isEditing === STATE_EDITING ? (
+    ) : isEditing ? (
       <AnnotationEditor2
         isPinned={isPinned}
-        annoIdx={annoIdx}
+        annoIdx={editIdx}
         annoVals={annoVals}
         timeZone={timeZone}
         dismiss={() => {
           exitWipEdit?.();
-          setIsEditing(STATE_DEFAULT);
+          setEditAnnotationId(null);
           onClose();
         }}
       />

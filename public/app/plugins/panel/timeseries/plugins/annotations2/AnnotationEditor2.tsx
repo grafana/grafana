@@ -72,12 +72,13 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, isPinn
     <div ref={clickAwayRef} className={styles.editor} {...otherProps}>
       <div className={styles.header}>
         <Stack justifyContent={'space-between'} alignItems={'center'}>
-          <div>
+          <Stack width={'100%'} justifyContent={'space-between'} alignItems={'center'}>
             {isUpdatingAnnotation
               ? t('timeseries.annotation-editor2.edit-annotation', 'Edit annotation')
               : t('timeseries.annotation-editor2.add-annotation', 'Add annotation')}
-          </div>
-          <div>{time}</div>
+            <div>{time}</div>
+          </Stack>
+
           {isPinned && (
             <IconButton
               name={'times'}

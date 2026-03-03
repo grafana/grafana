@@ -13,6 +13,10 @@ import { getAnnotationTooltip } from './getAnnotationTooltip';
 
 const retFalse = () => false;
 
+export interface AnnotationClusterTooltipProps extends Omit<AnnotationTooltipProps, 'onEdit'> {
+  onEdit: (annotationIndex: number) => void;
+}
+
 export const AnnotationTooltip2Cluster = ({
   annoVals,
   annoIdx,
@@ -22,7 +26,7 @@ export const AnnotationTooltip2Cluster = ({
   onClose,
   links,
   actions,
-}: AnnotationTooltipProps) => {
+}: AnnotationClusterTooltipProps) => {
   const styles = useStyles2(getStyles);
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
 
@@ -49,9 +53,10 @@ export const AnnotationTooltip2Cluster = ({
       } else if (annoVals.title?.[i]) {
         text = annoVals.title[i] + (text ? `<br />${text}` : '');
       }
+      const annotationId = annoVals.id?.[i];
 
       items.push(
-        <div key={i}>
+        <>
           <AnnotationTooltipHeader
             avatarImg={avatarImgSrc}
             alertState={alertState}
@@ -59,7 +64,9 @@ export const AnnotationTooltip2Cluster = ({
             canEdit={canEdit}
             canDelete={canDelete}
             isPinned={false}
-            onEdit={onEdit}
+            onEdit={() => {
+              onEdit(annotationId);
+            }}
             onDelete={onDelete}
             onRemove={(e) => {
               // Don't trigger onClick
@@ -69,7 +76,7 @@ export const AnnotationTooltip2Cluster = ({
           />
           <AnnotationTooltipBody text={text} alertText={alertText} tags={annoVals.tags} annoIdx={annoIdx} />
           <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
-        </div>
+        </>
       );
     }
   }
@@ -98,12 +105,12 @@ export const AnnotationTooltip2Cluster = ({
             onClose();
           }}
         />
-        {items.map((item) => (
-          <>
+        {items.map((item, key) => (
+          <div key={key}>
             {item}
             <Divider spacing={0} />
             <Divider spacing={0} />
-          </>
+          </div>
         ))}
       </ScrollContainer>
     </div>
