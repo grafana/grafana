@@ -48,6 +48,7 @@ func TraceToFrame(resourceSpans []*tracev11.ResourceSpans) (*data.Frame, error) 
 			data.NewField("parentSpanID", nil, []string{}),
 			data.NewField("operationName", nil, []string{}),
 			data.NewField("serviceName", nil, []string{}),
+			data.NewField("serviceNamespace", nil, []string{}),
 			data.NewField("kind", nil, []string{}),
 			data.NewField("statusCode", nil, []int64{}),
 			data.NewField("statusMessage", nil, []string{}),
@@ -128,7 +129,7 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 	parentSpanIDHex := hex.EncodeToString(parentSpanID[:])
 
 	startTime := float64(span.StartTimeUnixNano) / 1_000_000
-	serviceName, serviceTags := resourceToProcess(resource)
+	serviceName, serviceNamespace, serviceTags := resourceToProcess(resource)
 
 	status := span.Status
 	statusCode := int64(status.Code)
@@ -171,6 +172,7 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 		parentSpanIDHex,
 		span.Name,
 		serviceName,
+		serviceNamespace,
 		getSpanKind(span.Kind),
 		statusCode,
 		statusMessage,
@@ -186,17 +188,21 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 	}, nil
 }
 
-func resourceToProcess(resource *v1.Resource) (string, []*KeyValue) {
+func resourceToProcess(resource *v1.Resource) (string, string, []*KeyValue) {
 	attrs := resource.Attributes
 	serviceName := ResourceNoServiceName
+	var serviceNamespace string
 	if len(attrs) == 0 {
-		return serviceName, nil
+		return serviceName, serviceNamespace, nil
 	}
 
 	tags := make([]*KeyValue, 0, len(attrs)-1)
 	for _, attr := range attrs {
 		if attribute.Key(attr.Key) == semconv.ServiceNameKey {
 			serviceName = attr.GetValue().GetStringValue()
+		}
+		if attribute.Key(attr.Key) == semconv.ServiceNamespaceKey {
+			serviceNamespace = attr.GetValue().GetStringValue()
 		}
 		val, err := getAttributeVal(attr.Value)
 		if err != nil {
@@ -205,7 +211,7 @@ func resourceToProcess(resource *v1.Resource) (string, []*KeyValue) {
 		tags = append(tags, &KeyValue{Key: attr.Key, Value: val})
 	}
 
-	return serviceName, tags
+	return serviceName, serviceNamespace, tags
 }
 
 func getAttributeVal(attr *commonv11.AnyValue) (any, error) {

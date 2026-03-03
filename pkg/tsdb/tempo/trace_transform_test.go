@@ -262,6 +262,7 @@ var fields = []string{
 	"parentSpanID",
 	"operationName",
 	"serviceName",
+	"serviceNamespace",
 	"kind",
 	"statusCode",
 	"statusMessage",
