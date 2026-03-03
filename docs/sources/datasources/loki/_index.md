@@ -16,32 +16,6 @@ labels:
 menuTitle: Loki
 title: Configure the Loki data source
 weight: 800
-refs:
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  logs-integration-labels-and-detected-fields:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
 ---
 
 # Loki data source
@@ -51,11 +25,11 @@ Unlike other logging systems, Loki is built around the idea of only indexing met
 
 The following guides will help you get started with Loki:
 
-- [Getting started with Loki](/docs/loki/latest/get-started/)
-- [Install Loki](/docs/loki/latest/installation/)
-- [Loki best practices](/docs/loki/latest/best-practices/#best-practices)
-- [Configure the Loki data source](/docs/grafana/latest/datasources/loki/configure-loki-data-source/)
-- [LogQL](/docs/loki/latest/logql/)
+- [Getting started with Loki](https://grafana.com/docs/loki/latest/get-started/)
+- [Install Loki](https://grafana.com/docs/loki/latest/installation/)
+- [Loki best practices](https://grafana.com/docs/loki/latest/best-practices/#best-practices)
+- [Configure the Loki data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure-loki-data-source/)
+- [LogQL](https://grafana.com/docs/loki/latest/logql/)
 - [Loki query editor](query-editor/)
 
 ## Supported Loki versions
@@ -66,11 +40,11 @@ This data source supports these versions of Loki:
 
 ## Adding a data source
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management)
+For instructions on how to add a data source to Grafana, refer to the [administration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/)
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Loki data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards), use [Explore](ref:explore), and [annotate visualizations](query-editor/#apply-annotations).
+Once you've added the Loki data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/), use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/), and [annotate visualizations](query-editor/#apply-annotations).
 
 {{< admonition type="note" >}}
 To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
@@ -79,7 +53,7 @@ To troubleshoot configuration and other issues, check the log file located at `/
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ### Provisioning examples
 
@@ -147,7 +121,7 @@ datasources:
 
 ## Query the data source
 
-The Loki data source's query editor helps you create log and metric queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
+The Loki data source's query editor helps you create log and metric queries that use Loki's query language, [LogQL](https://grafana.com/docs/loki/latest/logql/).
 
 For details, refer to the [query editor documentation](query-editor/).
 

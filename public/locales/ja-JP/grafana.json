@@ -903,7 +903,7 @@
       "title-failed-to-fetch-contact-points": "連絡先の取得に失敗しました"
     },
     "contact-points": {
-      "create": "コンタクトポイントを作成",
+      "create": "",
       "custom-template-value": "カスタムテンプレート値",
       "delete-reasons": {
         "heading": "次の理由により、コンタクトポイントを削除できません。",
@@ -2120,7 +2120,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "時間間隔を追加"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2164,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,14 +2172,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "連絡先で検索",
@@ -2241,7 +2242,7 @@
       "title-failed-to-fetch-notification-templates": "通知テンプレートの取得に失敗しました"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "通知テンプレートグループを追加",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "通知テンプレートを作成して通知をカスタマイズできます。"
     },
     "notifications-list": {
@@ -2268,6 +2269,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2291,15 +2293,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "ラベルを追加すると、記録ルールをより適切に管理できます。",
@@ -3246,6 +3248,7 @@
     },
     "template-form": {
       "aria-label-template-form": "テンプレートフォーム",
+      "body-legacy": "",
       "label-examples-documentation": "サンプルドキュメント",
       "label-template-group": "テンプレートグループ",
       "label-template-group-name": "テンプレートグループ名",
@@ -3254,6 +3257,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "テンプレートグループに名前を付けてください",
       "title-error-saving-template": "テンプレート保存中のエラー",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "テンプレートチートシート"
     },
     "template-preview": {
@@ -3294,6 +3298,8 @@
       "help": {
         "intro": "通知テンプレートは、Goテンプレート言語を使用して通知メッセージを作成します。\n\nGrafanaでは、テンプレートグループは{{ define \"<NAME>\" }}を使用して複数の通知テンプレートを定義できます。\nこれらのテンプレートは、コンタクトポイントや他の通知テンプレート内で{{ template \"<NAME>\" }}を呼び出すことで使用できます。\n通知テンプレートの詳細については、ドキュメントを参照してください。"
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "誤って構成されています",
       "misconfigured-warning": "このテンプレートは誤って構成されています。",
       "misconfigured-warning-details": "テンプレートは、Alertmanager設定の<2></2>と<5></5>セクションの両方で定義する必要があります。"
@@ -3332,7 +3338,7 @@
       "stop-alerting-when": "次の場合、アラート（または保留状態）を停止する"
     },
     "time-interval": {
-      "add-time-interval": "時間間隔を追加",
+      "add-time-interval": "",
       "save": "時間間隔を保存",
       "saving": "時間間隔を保存中"
     },
@@ -3404,7 +3410,14 @@
         "title": "ルールが見つかりません"
       },
       "rules-with-firing-instances": "発生中のインスタンスがあるアラートルール",
-      "rules-with-pending-instances": "保留中のインスタンスがあるアラートルール"
+      "rules-with-pending-instances": "保留中のインスタンスがあるアラートルール",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "式を追加"
@@ -4159,6 +4172,15 @@
       "clear": "検索とフィルタをクリア",
       "text": "クエリに一致する結果が見つかりませんでした。"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "履歴をクリア",
       "error": "最近表示したダッシュボードを読み込めませんでした。",
@@ -4827,6 +4849,10 @@
       "view-json-diff": "JSON diffを表示してすべての変更を確認する"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "新規追加",
     "alert": {
@@ -5028,7 +5054,7 @@
     "canvas-actions": {
       "add-panel": "パネルを追加",
       "disabled-child-contains-tabs": "行にすでにタブが含まれているため、タブに変更できません",
-      "disabled-nested-grouping": "グループ化は2つのレベルまでに制限されています",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "タブは他のタブ内にネストすることはできません",
       "group-into-row": "行にグループ化",
       "group-into-tab": "タブにグループ化",
@@ -6563,6 +6589,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "ダッシュボードの削除に失敗しました",
       "cancel-action": "キャンセル",
@@ -7768,7 +7800,10 @@
     "pro-tip": "プロのヒント：{{proTip}} "
   },
   "entity-not-found": {
-    "description": "検索していますが、{{lowerCaseEntity}}が見つかりません。<4>ホーム</4>に戻るか、<7>コミュニティサイト</7>でヘルプを求めてみてください。</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -10914,7 +10949,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "オプションが見つかりません"
@@ -11856,8 +11893,6 @@
       "tooltip-delete": "削除"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "一部の提案を読み込めませんでした"
       },
@@ -12314,6 +12349,11 @@
       "text-loading-teams": "チームを読み込み中..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "変更内容を説明するメモを追加（任意）",
@@ -12577,6 +12617,12 @@
       "label-read-only": "読み出しのみ",
       "label-sync-interval": "同期間隔 (秒)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12716,6 +12762,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13222,6 +13270,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13316,7 +13365,8 @@
       "transformations": "変換",
       "view-toggle": "",
       "alerts_other": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -14261,6 +14311,11 @@
           "settings": "設定"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "外部グループ同期"
@@ -14317,6 +14372,19 @@
       "loading-teams": "チームを読み込み中...",
       "new-team": "新しいチーム",
       "placeholder-search-teams": "チームを検索"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "これはオプションで、主にチームプロフィールのアバター設定（Gravatarサービス経由）に使用されます",

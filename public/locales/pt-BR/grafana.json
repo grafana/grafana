@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Falha ao buscar pontos de contato"
     },
     "contact-points": {
-      "create": "Criar ponto de contato",
+      "create": "",
       "custom-template-value": "Valor de modelo personalizado",
       "delete-reasons": {
         "heading": "O ponto de contato não pode ser excluído pelos seguintes motivos:",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Adicionar intervalo de tempo"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Pesquisar por ponto de contato",
@@ -2252,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Falha ao buscar modelos de notificação"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Adicionar grupo de modelos de notificação",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Crie modelos de notificação para personalizar suas notificações."
     },
     "notifications-list": {
@@ -2279,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Adicione rótulos para gerenciar melhor suas regras de registro.",
@@ -3264,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Formulário do modelo",
+      "body-legacy": "",
       "label-examples-documentation": "Documentação de exemplos",
       "label-template-group": "Grupo de modelos",
       "label-template-group-name": "Nome do grupo de modelos",
@@ -3272,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Defina um nome para seu grupo de modelos",
       "title-error-saving-template": "Erro ao salvar o modelo",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Resumo rápido de modelagem"
     },
     "template-preview": {
@@ -3312,6 +3312,8 @@
       "help": {
         "intro": "Os modelos de notificação usam a linguagem Go de criação de modelos para criar mensagens de notificação.\n\nNo Grafana, um grupo de modelos pode definir vários modelos de notificação usando {{ define \"<NAME>\" }}.\nEsses modelos podem ser usados em pontos de contato e em outros modelos de notificação chamando {{ template \"<NAME>\" }}.\nPara obter informações detalhadas sobre modelos de notificação, consulte nossa documentação."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Configuração incorreta",
       "misconfigured-warning": "Este modelo está configurado incorretamente.",
       "misconfigured-warning-details": "Os modelos devem ser definidos nas seções <2></2> e <5></5> da configuração do seu alertmanager."
@@ -3350,7 +3352,7 @@
       "stop-alerting-when": "Parar de alertar (ou passar para o estado pendente) quando"
     },
     "time-interval": {
-      "add-time-interval": "Adicionar intervalo de tempo",
+      "add-time-interval": "",
       "save": "Salvar intervalo de tempo",
       "saving": "Salvando intervalo de tempo"
     },
@@ -3422,7 +3424,14 @@
         "title": "Regra não encontrada"
       },
       "rules-with-firing-instances": "Regras de alerta com instâncias de disparo",
-      "rules-with-pending-instances": "Regras de alerta com instâncias pendentes"
+      "rules-with-pending-instances": "Regras de alerta com instâncias pendentes",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Adicionar expressão"
@@ -4182,6 +4191,15 @@
       "clear": "Limpar busca e filtros",
       "text": "Nenhum resultado encontrado para sua consulta"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Limpar histórico",
       "error": "Não foi possível carregar os painéis visualizados recentemente.",
@@ -4853,6 +4871,10 @@
       "view-json-diff": "Visualizar JSON diff para ver todas as alterações"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Adicionar novo",
     "alert": {
@@ -5054,7 +5076,7 @@
     "canvas-actions": {
       "add-panel": "Adicionar painel",
       "disabled-child-contains-tabs": "Não é possível alterar para abas porque uma linha já contém abas",
-      "disabled-nested-grouping": "O agrupamento é limitado a dois níveis",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "As abas não podem ser inseridas em outras abas",
       "group-into-row": "Agrupar em linha",
       "group-into-tab": "Agrupar em aba",
@@ -6591,6 +6613,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Falha ao excluir o painel",
       "cancel-action": "Cancelar",
@@ -7799,7 +7827,10 @@
     "pro-tip": "Dica de especialistas: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Estamos procurando, mas não conseguimos encontrar {{lowerCaseEntity}}. Tente voltar para a <4>página inicial</4> ou buscar ajuda no <7>site da comunidade.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -10965,7 +10996,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nenhuma opção encontrada"
@@ -11910,8 +11943,6 @@
       "tooltip-delete": "Excluir"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Não foi possível carregar algumas sugestões"
       },
@@ -12368,6 +12399,11 @@
       "text-loading-teams": "Carregando equipes…"
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Adicione uma observação para descrever suas alterações (opcional)",
@@ -12635,6 +12671,12 @@
       "label-read-only": "Apenas leitura",
       "label-sync-interval": "Intervalo (segundos)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12776,6 +12818,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13283,6 +13327,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13379,7 +13424,9 @@
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -14328,6 +14375,11 @@
           "settings": "Configurações"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Sincronização de grupo externo"
@@ -14384,6 +14436,19 @@
       "loading-teams": "Carregando equipes…",
       "new-team": "Nova equipe",
       "placeholder-search-teams": "Pesquisar equipes"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Isso é opcional e é usado principalmente para definir o avatar do perfil da equipe (através do serviço Gravatar)",

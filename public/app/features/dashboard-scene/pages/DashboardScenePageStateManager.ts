@@ -166,7 +166,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     const rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
     if (isRedirectResponse(rsp)) {
-      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+      const newUrl = locationUtil.processRedirectUri(rsp.redirectUri, locationService.getLocation());
       locationService.replace(newUrl);
       return null;
     }
@@ -393,6 +393,7 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
+          id: dashboard.state.id,
           meta: dashboard.state.meta,
           uid: dashboard.state.uid,
           title: dashboard.state.title,

@@ -58,8 +58,8 @@ export const useGetPropertiesFromOptions = (
     const staticValues = new Set(staticOptions?.map((s) => s.value) ?? []);
     const queryOption = options.find((o) => o.value !== ALL_VARIABLE_VALUE && !staticValues.has(o.value));
     const flattened = flattenProperties(queryOption?.properties);
-    const keys = Object.keys(flattened).filter((p) => !['text', 'value'].includes(p));
-    return ['text', 'value', ...keys];
+    const keys = Object.keys(flattened).filter((p) => !['value', 'text'].includes(p));
+    return ['value', 'text', ...keys];
   }, [options, staticOptions]);
 
 export const VariableValuesPreview = ({ options, staticOptions }: VariableValuesPreviewProps) => {

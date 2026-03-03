@@ -41,8 +41,8 @@ func TestIntegrationUserSearch(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -90,8 +90,8 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -189,8 +189,8 @@ func TestIntegrationUserSearch_SortCompareLegacy(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -256,8 +256,8 @@ func TestIntegrationUserSearch_Paging(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -356,8 +356,8 @@ func TestIntegrationUserSearch_AccessControl(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
