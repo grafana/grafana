@@ -194,9 +194,6 @@ export function useVizAndDataPaneLayout(
 
   const isScrollingLayout = useScrollReflowLimit();
 
-  const [isDataPaneCollapsed, setIsDataPaneCollapsed] = useState(false);
-  const onToggleCollapse = useCallback(() => setIsDataPaneCollapsed((v) => !v), []);
-
   const panelToShow = tableView ?? panel;
 
   const sidebarResize = useRatioResize({
@@ -240,7 +237,6 @@ export function useVizAndDataPaneLayout(
       sidebarSize,
       setSidebarSize,
       isScrollingLayout,
-      isDataPaneCollapsed,
       gridStyles,
       sidebarResizeHandle: {
         ref: sidebarResize.handleRef,
@@ -250,9 +246,6 @@ export function useVizAndDataPaneLayout(
         ref: vizResize.handleRef,
         className: vizResize.className,
       },
-    },
-    actions: {
-      onToggleCollapse,
     },
   };
 }
