@@ -38,30 +38,34 @@ jobs:
   build-backend:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    name: Build backend
-    runs-on: ubuntu-x64-xlarge
+    name: Build backend ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-x64, ubuntu-x64-large, ubuntu-x64-xlarge]
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - uses: actions/cache@v4
-        id: cache
-        with:
-          key: "build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'build.go', 'embed.go') }}"
-          path: bin
+      # - uses: actions/cache@v4
+      #   id: cache
+      #   with:
+      #     key: "build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'build.go', 'embed.go') }}"
+      #     path: bin
 
       - uses: actions/setup-go@v6.0.0
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         with:
           go-version-file: 'go.mod'
           cache: true
 
       - name: Build backend
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         run: make build-go
 
       - uses: actions/upload-artifact@v5
@@ -73,41 +77,45 @@ jobs:
   build-frontend:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    name: Build frontend
-    runs-on: ubuntu-x64-xlarge
+    name: Build frontend ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-x64, ubuntu-x64-large, ubuntu-x64-xlarge]
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - uses: actions/cache@v4
-        id: cache
-        with:
-          key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
-          path: |
-            public/build
-            public/app/plugins/*/*/dist
-            e2e-playwright/test-plugins
+      # - uses: actions/cache@v4
+      #   id: cache
+      #   with:
+      #     key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
+      #     path: |
+      #       public/build
+      #       public/app/plugins/*/*/dist
+      #       e2e-playwright/test-plugins
 
       - name: Setup Node.js
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         uses: ./.github/actions/setup-node
         with:
           cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
 
       - name: Install yarn dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         uses: ./.github/actions/yarn-install
 
       - name: Build frontend
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         run: make build-js
 
       - name: Build e2e test plugins
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         run: yarn e2e:plugin:build
 
       - uses: actions/upload-artifact@v5
