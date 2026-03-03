@@ -58,7 +58,6 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
       id="panel-styles"
       title={t('dashboard-scene.panel-styles.title', 'Panel styles')}
       isOpenDefault={true}
-      isNested={true}
       renderTitle={() => (
         <Stack direction="row" alignItems="center" gap={1}>
           <Trans i18nKey="dashboard-scene.panel-styles.title">Panel styles</Trans>

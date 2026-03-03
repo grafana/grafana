@@ -91,19 +91,6 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
       })
     );
 
-  if (config.featureToggles.vizPresets) {
-    descriptor.addCategory(
-      new OptionsPaneCategoryDescriptor({
-        title: t('dashboard-scene.get-panel-frame-options.title.panel-styles', 'Panel styles'),
-        id: 'panel-styles',
-        isOpenDefault: true,
-        customRender: () => (
-          <PanelStylesSection key="panel-styles" panel={panel} onApplyPreset={createPresetApplyHandler(panel)} />
-        ),
-      })
-    );
-  }
-
   descriptor.addCategory(
     new OptionsPaneCategoryDescriptor({
       title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
@@ -124,6 +111,21 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
   }
 
   return descriptor;
+}
+
+export function getPanelStylesOptions(panel: VizPanel): OptionsPaneCategoryDescriptor | undefined {
+  if (!config.featureToggles.vizPresets) {
+    return undefined;
+  }
+
+  return new OptionsPaneCategoryDescriptor({
+    title: t('dashboard-scene.get-panel-frame-options.title.panel-styles', 'Panel styles'),
+    id: 'panel-styles',
+    isOpenDefault: true,
+    customRender: () => (
+      <PanelStylesSection key="panel-styles" panel={panel} onApplyPreset={createPresetApplyHandler(panel)} />
+    ),
+  });
 }
 
 interface ScenePanelLinksEditorProps {
