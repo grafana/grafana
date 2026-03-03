@@ -60,9 +60,6 @@ export const modules = ['node_modules', resolve('node_modules'), resolve('public
 export function getPlugins(env: Record<string, unknown> = {}) {
   const commonPlugins = [
     new rspack.ProgressPlugin(),
-    new rspack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
-      resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
-    }),
     new rspack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
@@ -266,45 +263,45 @@ export function devServer(isDevelopment: boolean): DevServerConfiguration {
   };
 }
 
-export function getOptimizations(env: Record<string, unknown> = {}) {
+export function getOptimizations(env: Record<string, unknown> = {}): Optimization {
   if (env.development) {
     return {
       moduleIds: 'named',
       runtimeChunk: true,
       removeEmptyChunks: false,
       splitChunks: false,
-    } as Optimization;
+    };
   }
 
   return {
     runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all',
-      minChunks: 1,
-      cacheGroups: {
-        moment: {
-          test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 20,
-          enforce: true,
-        },
-        defaultVendors: {
-          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: -10,
-          reuseExistingChunk: true,
-          enforce: true,
-        },
-        default: {
-          priority: -20,
-          chunks: 'all',
-          test: /.*[jt]sx?$/,
-          reuseExistingChunk: true,
-        },
-      },
+      // minChunks: 1,
+      // cacheGroups: {
+      //   moment: {
+      //     test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
+      //     chunks: 'initial',
+      //     priority: 20,
+      //     enforce: true,
+      //   },
+      //   defaultVendors: {
+      //     test: /[\\/]node_modules[\\/].*[jt]sx?$/,
+      //     chunks: 'initial',
+      //     priority: -10,
+      //     reuseExistingChunk: true,
+      //     enforce: true,
+      //   },
+      //   default: {
+      //     priority: -20,
+      //     chunks: 'all',
+      //     test: /.*[jt]sx?$/,
+      //     reuseExistingChunk: true,
+      //   },
+      // },
     },
     nodeEnv: 'production',
-    minimize: Boolean(env.noMinify),
+    minimize: true, //Boolean(env.noMinify),
     minimizer: [new rspack.SwcJsMinimizerRspackPlugin(), new rspack.LightningCssMinimizerRspackPlugin()],
-  } as Optimization;
+  };
 }
