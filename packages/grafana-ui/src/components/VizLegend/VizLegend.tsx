@@ -124,6 +124,7 @@ export function VizLegend<T>({
           itemRenderer={itemRenderer}
           readonly={readonly}
           isSortable={isSortable}
+          limit={limit}
         />
       );
     case LegendDisplayMode.List:
