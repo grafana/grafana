@@ -5,9 +5,11 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 
 import { ScopesService } from '../ScopesService';
 
-import { enterEditMode } from './utils/actions';
+import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
+import { expectDashboardsOpen } from './utils/assertions';
 import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
+import { getDashboardsExpand, getSelectorInput, querySelectorApply } from './utils/selectors';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
@@ -39,9 +41,30 @@ describe('View mode', () => {
     await resetScenes();
   });
 
-  it('Allows scopes in edit mode', async () => {
+  it('Does not set scopes to read only when entering edit mode', async () => {
     await enterEditMode(dashboardScene);
-    // Scopes should now be editable even when in edit mode
     expect(scopesService.state.readOnly).toEqual(false);
+  });
+
+  it('Does not close selector when entering edit mode', async () => {
+    await openSelector();
+    await enterEditMode(dashboardScene);
+    expect(querySelectorApply()).toBeInTheDocument();
+  });
+
+  it('Does not close dashboards list when entering edit mode', async () => {
+    await toggleDashboards();
+    await enterEditMode(dashboardScene);
+    expectDashboardsOpen();
+  });
+
+  it('Does not disable selector when edit mode is active', async () => {
+    await enterEditMode(dashboardScene);
+    expect(getSelectorInput()).not.toBeDisabled();
+  });
+
+  it('Does not disable the expand button when edit mode is active', async () => {
+    await enterEditMode(dashboardScene);
+    expect(getDashboardsExpand()).not.toBeDisabled();
   });
 });
