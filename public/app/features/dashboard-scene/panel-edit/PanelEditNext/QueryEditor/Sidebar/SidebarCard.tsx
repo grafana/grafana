@@ -101,7 +101,7 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
-        <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
+        <div className={styles.cardContent}>{children}</div>
         {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
         {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
         {hasActions && (
@@ -257,10 +257,15 @@ function getStyles(
         },
       },
       cursor: 'pointer',
+      ...(item.isHidden && {
+        opacity: theme.isDark ? 0.6 : 0.7,
+        filter: 'grayscale(0.8)',
+        boxShadow: 'none',
+      }),
 
       // This transitions the background color of the card when it is hovered or selected.
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'box-shadow'], {
+        transition: theme.transitions.create(['background-color', 'box-shadow', 'opacity', 'filter'], {
           duration: theme.transitions.duration.standard,
         }),
       },
@@ -298,14 +303,6 @@ function getStyles(
           duration: theme.transitions.duration.standard,
         }),
       },
-    }),
-
-    hidden: css({
-      opacity: 0.7,
-    }),
-
-    hiddenIcon: css({
-      marginRight: theme.spacing(2),
     }),
 
     ghostCard: css({
