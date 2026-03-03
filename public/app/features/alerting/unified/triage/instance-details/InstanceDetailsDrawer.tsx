@@ -35,7 +35,7 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
-import { NotificationDelivery } from './NotificationDelivery';
+import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
 import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
 import { useInstanceAlertState } from './instanceStateUtils';
@@ -154,38 +154,42 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
           </Box>
         )}
 
-        <Box ref={ref}>
-          <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
-          {stateHistoryFetching && <LoadingBar width={loadingBarWidth} />}
-          {stateHistoryError && (
-            <Alert
-              severity="error"
-              title={t('alerting.instance-details.history-error', 'Failed to load state history')}
-            >
-              {t(
-                'alerting.instance-details.history-error-desc',
-                'Unable to fetch state transition history for this instance.'
-              )}
-            </Alert>
-          )}
-          {!stateHistoryFetching && !stateHistoryError && (
-            <Stack direction="column" gap={1}>
-              {historyRecords.length > 0 ? (
-                <InstanceStateTransitions records={historyRecords} maxItems={10} />
-              ) : (
-                <Text color="secondary">{t('alerting.instance-details.no-history', 'No recent state changes')}</Text>
-              )}
-            </Stack>
-          )}
-        </Box>
-
-        {config.featureToggles.alertingNotificationHistory && historyRecords.length > 0 && (
-          <NotificationDelivery
+        {config.featureToggles.alertingNotificationHistory ? (
+          <InstanceTimelineSection
             ruleUID={ruleUID}
             instanceLabels={instanceLabels}
             timeRange={timeRange}
-            records={historyRecords}
+            historyRecords={historyRecords}
+            stateHistoryFetching={stateHistoryFetching}
+            stateHistoryError={stateHistoryError}
+            loadingBarWidth={loadingBarWidth}
+            loadingBarRef={ref}
           />
+        ) : (
+          <Box ref={ref}>
+            <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
+            {stateHistoryFetching && <LoadingBar width={loadingBarWidth} />}
+            {stateHistoryError && (
+              <Alert
+                severity="error"
+                title={t('alerting.instance-details.history-error', 'Failed to load state history')}
+              >
+                {t(
+                  'alerting.instance-details.history-error-desc',
+                  'Unable to fetch state transition history for this instance.'
+                )}
+              </Alert>
+            )}
+            {!stateHistoryFetching && !stateHistoryError && (
+              <Stack direction="column" gap={1}>
+                {historyRecords.length > 0 ? (
+                  <InstanceStateTransitions records={historyRecords} maxItems={10} />
+                ) : (
+                  <Text color="secondary">{t('alerting.instance-details.no-history', 'No recent state changes')}</Text>
+                )}
+              </Stack>
+            )}
+          </Box>
         )}
       </Stack>
     </Drawer>
