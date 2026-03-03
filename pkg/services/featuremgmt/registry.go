@@ -2144,10 +2144,10 @@ var (
 		{
 			Name:         "newGauge",
 			Description:  "Enable new gauge visualization",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "newVizSuggestions",

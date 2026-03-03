@@ -3034,15 +3034,18 @@
     {
       "metadata": {
         "name": "newGauge",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-10-20T16:33:19Z"
+        "resourceVersion": "1772547614592",
+        "creationTimestamp": "2025-10-20T16:33:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-03 14:20:14.59296 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable new gauge visualization",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
