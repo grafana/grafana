@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"time"
@@ -27,7 +28,7 @@ func ConsolidateSecrets(cmd utils.CommandLine, runner server.Runner) error {
 
 	if cpuProfilePath != "" {
 		runtime.SetCPUProfileRate(cpuProfileRate)
-		f, err := os.Create(cpuProfilePath)
+		f, err := os.Create(filepath.Clean(cpuProfilePath))
 		if err != nil {
 			return fmt.Errorf("create CPU profile file: %w", err)
 		}
@@ -67,7 +68,7 @@ func ConsolidateSecrets(cmd utils.CommandLine, runner server.Runner) error {
 	}
 
 	if memProfilePath != "" {
-		f, err := os.Create(memProfilePath)
+		f, err := os.Create(filepath.Clean(memProfilePath))
 		if err != nil {
 			return fmt.Errorf("create memory profile file: %w", err)
 		}
