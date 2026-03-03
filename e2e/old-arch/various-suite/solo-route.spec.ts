@@ -9,7 +9,7 @@ describe('Solo Route', () => {
     // open Panel Tests - Bar Gauge
     e2e.pages.SoloPanel.visit('ZqZnVvFZz/datasource-tests-shared-queries?orgId=1&panelId=4');
 
-    e2e.components.Panels.Visualization.Gauge.Container.should('have.length', 3);
+    e2e.components.Panels.Visualization.Gauge.Container().should('have.length', 3);
   });
 });
 
