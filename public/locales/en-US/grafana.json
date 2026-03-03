@@ -2105,7 +2105,9 @@
       "select-namespace": "Select namespace"
     },
     "navigation": {
+      "active-notifications": "Active notifications",
       "alert-rules": "Alert rules",
+      "alerts": "Alerts",
       "contact-points": "Contact points",
       "notification-policies": "Notification policies",
       "recently-deleted": "Recently deleted",
@@ -2331,8 +2333,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues.",
-        "title": "Alerts"
+        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues."
       }
     },
     "panel-alert-tab-content": {
@@ -11275,9 +11276,17 @@
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
     },
+    "alerting-activity": {
+      "subtitle": "View alerts and active notifications",
+      "title": "Alert activity"
+    },
     "alerting-admin": {
       "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
+    },
+    "alerting-alerts": {
+      "subtitle": "Visualize active and pending alerts",
+      "title": "Alert activity"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",
@@ -12417,13 +12426,18 @@
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
+      "description-filename": "File name for the dashboard (.json or .yaml)",
+      "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "info-branch-disabled": "Push to configured branch is disabled",
       "label-branch": "Branch",
       "label-comment": "Comment",
+      "label-filename": "Filename",
+      "label-folder": "Folder",
       "label-path": "Path",
       "placeholder-branch": "Select or enter branch name",
+      "placeholder-folder": "Select or enter folder path",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
       "suffix-new-branch": "New branch",
@@ -12534,6 +12548,8 @@
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
     "connect-step": {
+      "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",
+      "text-repository-folders-not-ready": "There was an issue connecting to the repository. You can still manually enter the folder path.",
       "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
     },
     "connection": {
@@ -12675,10 +12691,18 @@
       "label-sync-interval": "Sync Interval (seconds)"
     },
     "fix-folder-metadata": {
-      "button": "Fix folder IDs",
-      "error-fixing": "Error fixing folder metadata",
-      "fixing": "Fixing...",
-      "success": "Folder metadata fix started. This will continue in the background."
+      "button": "Fix folder IDs"
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "Cancel",
+      "error-message": "Failed to start folder metadata fix job. Please try again.",
+      "error-title": "Error fixing folder metadata",
+      "loading": "Loading repository...",
+      "read-only-message": "Folder metadata cannot be fixed automatically.",
+      "submit": "Fix folder IDs",
+      "submitting": "Fixing...",
+      "success-title": "Folder metadata fixed successfully",
+      "title": "Fix folder metadata"
     },
     "folder-permissions": {
       "loading": "Loading..."
