@@ -3,7 +3,6 @@ import 'react-data-grid/lib/styles.css';
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import {
-  AriaAttributes,
   CSSProperties,
   type JSX,
   Key,
@@ -337,11 +336,6 @@ export function TableNG(props: TableNGProps) {
     hasNestedFrames,
   });
 
-  const isExpanded = useCallback(
-    (row: TableRow) => (row.__depth > 0 ? expandedRows.has(row.__index) : false),
-    [expandedRows]
-  );
-
   const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
   useEffect(() => {
     if (scrollToIndex !== undefined && sortedRows && gridRef.current?.scrollToCell) {
@@ -384,7 +378,7 @@ export function TableNG(props: TableNGProps) {
   // normalize the row height into a function which returns a number, so we avoid a bunch of conditionals during rendering.
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
-      return (row: TableRow) => (isExpanded(row) ? TABLE.MAX_CELL_HEIGHT : 0);
+      return (row: TableRow) => (expandedRows.has(row.__index) ? TABLE.MAX_CELL_HEIGHT : 0);
     }
     if (typeof rowHeight === 'function') {
       // this is safe because we only return a (row: TableRow) => string function when defaultNestedRowHeight is a string.
@@ -395,11 +389,11 @@ export function TableNG(props: TableNGProps) {
       return () => TABLE.MAX_CELL_HEIGHT;
     }
     return () => rowHeight;
-  }, [rowHeight, defaultNestedRowHeight, isExpanded]);
+  }, [rowHeight, defaultNestedRowHeight, expandedRows]);
 
   const renderRow = useMemo(
-    () => renderRowFactory(data.fields, panelContext, isExpanded, enableSharedCrosshair),
-    [data.fields, panelContext, isExpanded, enableSharedCrosshair]
+    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
+    [data.fields, panelContext, expandedRows, enableSharedCrosshair]
   );
 
   const commonDataGridProps = useMemo(
@@ -477,7 +471,7 @@ export function TableNG(props: TableNGProps) {
           return (
             <RowExpander
               rowId={rowId}
-              isExpanded={isExpanded(row)}
+              isExpanded={expandedRows.has(row.__index)}
               onCellExpand={() => {
                 setExpandedRows((er) => {
                   if (er.has(rowIdx)) {
@@ -533,7 +527,7 @@ export function TableNG(props: TableNGProps) {
       styles.noDataNested,
       data.fields.length,
       commonDataGridProps,
-      isExpanded,
+      expandedRows,
       nestedRows,
       onCellClick,
       uniqueId,
@@ -869,21 +863,26 @@ export function TableNG(props: TableNGProps) {
     ]
   );
 
-  const nestedColumnsMatrix = useMemo(
-    () =>
-      rows
-        .filter((r) => r.__depth > 0)
-        .map((r) =>
+  const nestedColumnsMatrix = useMemo(() => {
+    const result: FromFieldsResult[] = [];
+    if (!hasNestedFrames) {
+      return result;
+    }
+    for (const row of rows) {
+      if (row.__depth > 0) {
+        result.push(
           fromFields(
             nestedVisibleFields,
             nestedFieldWidths,
-            nestedData![r.__index]!,
-            nestedRows[r.__index].raw,
-            nestedRows[r.__index].final
+            nestedData![row.__index]!,
+            nestedRows[row.__index].raw,
+            nestedRows[row.__index].final
           )
-        ),
-    [rows, nestedData, nestedRows, nestedVisibleFields, nestedFieldWidths, fromFields]
-  );
+        );
+      }
+    }
+    return result;
+  }, [rows, hasNestedFrames, nestedData, nestedRows, nestedVisibleFields, nestedFieldWidths, fromFields]);
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);
@@ -895,7 +894,7 @@ export function TableNG(props: TableNGProps) {
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
     const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
-    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, isExpanded, enableSharedCrosshair);
+    const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
@@ -914,9 +913,9 @@ export function TableNG(props: TableNGProps) {
     buildNestedTableExpanderColumn,
     data,
     enableSharedCrosshair,
+    expandedRows,
     firstRowNestedData,
     fromFields,
-    isExpanded,
     nestedColumnsMatrix,
     panelContext,
     rows,
@@ -1023,55 +1022,42 @@ export function TableNG(props: TableNGProps) {
 /**
  * this is passed to the top-level `renderRow` prop on DataGrid. applies aria attributes and custom event handlers.
  */
-const renderRowFactory = (
-  fields: Field[],
-  panelContext: PanelContext,
-  isExpanded: (row: TableRow) => boolean,
-  enableSharedCrosshair: boolean
-) => {
-  const onMouseLeave = () => {
-    panelContext.eventBus.publish(new DataHoverClearEvent());
-  };
-  const onMouseEnter = (timeField: Field, rowIdx: number) => {
-    panelContext.eventBus.publish(
-      new DataHoverEvent({
-        point: {
-          time: timeField?.values[rowIdx],
-        },
-      })
-    );
-  };
-
-  let timeField: Field | undefined;
-  if (enableSharedCrosshair) {
-    timeField = fields.find((f) => f.type === FieldType.time);
-  }
-
-  const renderRow = (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
+const renderRowFactory =
+  (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
+  // eslint-disable-next-line react/display-name
+  (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
+    const rowIdx = row.__index;
+    const isExpanded = expandedRows.has(rowIdx);
 
     // Don't render non expanded child rows
-    if (row.__depth > 0 && !isExpanded(row)) {
-      return null;
+    if (row.__depth === 1) {
+      if (!isExpanded) {
+        return null;
+      }
+
+      // Add aria-expanded and aria-level to parent rows that have nested data
+      return <Row key={key} aria-level={row.__index + 1} aria-expanded={isExpanded} {...props} />;
     }
 
     const handlers: Partial<typeof props> = {};
-    if (enableSharedCrosshair && timeField) {
-      handlers.onMouseEnter = () => onMouseEnter(timeField, row.__index);
-      handlers.onMouseLeave = onMouseLeave;
+    if (enableSharedCrosshair) {
+      const timeField = fields.find((f) => f.type === FieldType.time);
+      if (timeField) {
+        handlers.onMouseEnter = () => {
+          panelContext.eventBus.publish(
+            new DataHoverEvent({
+              point: {
+                time: timeField?.values[rowIdx],
+              },
+            })
+          );
+        };
+        handlers.onMouseLeave = () => {
+          panelContext.eventBus.publish(new DataHoverClearEvent());
+        };
+      }
     }
 
-    const a11yProps: AriaAttributes = {
-      'aria-level': row.__depth + 1,
-    };
-    if (row.__depth > 0) {
-      a11yProps['aria-expanded'] = isExpanded(row);
-    }
-
-    return <Row key={key} {...props} {...handlers} {...a11yProps} />;
+    return <Row key={key} {...props} {...handlers} />;
   };
-
-  renderRow.displayName = 'RenderRow';
-
-  return renderRow;
-};
