@@ -12,7 +12,7 @@ test.describe(
       await page.goto(soloPanelUrl);
 
       // Check that there are 3 gauges
-      const svgElements = page.locator(selectors.components.Panels.Visualization.Gauge.Container);
+      const svgElements = page.getByTestId(selectors.components.Panels.Visualization.Gauge.Container);
       await expect(svgElements).toHaveCount(3);
     });
 
