@@ -77,8 +77,6 @@ export function QueryEditorContextWrapper({
   );
 
   const queryError = useMemo(() => {
-    console.log('queryRunnerState?.data?.errors', queryRunnerState?.data?.errors);
-    console.log('selectedQueryRefId', selectedQueryRefId);
     return queryRunnerState?.data?.errors?.find(({ refId }) => refId === selectedQueryRefId);
   }, [queryRunnerState?.data?.errors, selectedQueryRefId]);
 

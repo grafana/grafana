@@ -91,7 +91,6 @@ export function getEditorBorderColor({
   if (editorType === QueryEditorType.Alert && alertState) {
     return getAlertStateColor(theme, alertState);
   }
-
   return QUERY_EDITOR_TYPE_CONFIG[editorType].color;
 }
 
