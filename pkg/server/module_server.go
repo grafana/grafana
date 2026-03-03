@@ -236,7 +236,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		s.grpcService.Health.AddHealthListener(svc)
+		s.grpcService.Health.AddHealthListener(modules.SearchServerDistributor, svc)
 		return svc, nil
 	})
 
@@ -270,7 +270,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		s.grpcService.Health.AddHealthListener(svc)
+		s.grpcService.Health.AddHealthListener(modules.StorageServer, svc)
 		return svc, nil
 	})
 
@@ -283,7 +283,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		s.grpcService.Health.AddHealthListener(svc)
+		s.grpcService.Health.AddHealthListener(modules.SearchServer, svc)
 		return svc, nil
 	})
 

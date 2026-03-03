@@ -265,7 +265,7 @@ func TestHealthService_AddHealthListenerInitialStatusAndNoProbeService(t *testin
 	hs := newTestHealthService(t)
 	svc := newFakeNamedService("no-probe-svc")
 
-	hs.AddHealthListener(svc)
+	hs.AddHealthListener("no-probe-svc", svc)
 
 	ctx := context.Background()
 	res, err := hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "no-probe-svc"})
@@ -286,7 +286,7 @@ func TestHealthService_StateChangeUpdatesStatus(t *testing.T) {
 	hs := newTestHealthService(t)
 	svc := newFakeHealthProbeService("test-svc", true)
 
-	hs.AddHealthListener(svc)
+	hs.AddHealthListener("test-svc", svc)
 
 	ctx := context.Background()
 	mgr, err := services.NewManager(svc)
@@ -322,7 +322,7 @@ func TestHealthService_StateChangeUpdatesStatus(t *testing.T) {
 func TestHealthService_PollUpdatesStatus(t *testing.T) {
 	hs := newTestHealthService(t)
 	svc := newFakeHealthProbeService("poll-svc", true)
-	hs.AddHealthListener(svc)
+	hs.AddHealthListener("poll-svc", svc)
 
 	ctx := context.Background()
 	require.NoError(t, svc.StartAsync(ctx))
@@ -352,24 +352,19 @@ func TestHealthService_StoppedCallsShutdown(t *testing.T) {
 	assert.Equal(t, grpc_health_v1.HealthCheckResponse_NOT_SERVING, res.Status)
 }
 
-func TestHealthService_FailureStopsServing(t *testing.T) {
+func TestHealthService_FailureShutdownsAll(t *testing.T) {
 	hs := newTestHealthService(t)
-	registered := newFakeHealthProbeService("registered-svc", true)
-	hs.AddHealthListener(registered)
+	hs.AddHealthListener("svc-a", newFakeHealthProbeService("svc-a", true))
+	hs.AddHealthListener("svc-b", newFakeNamedService("svc-b"))
 
-	ctx := context.Background()
-	require.NoError(t, registered.StartAsync(ctx))
-	require.NoError(t, registered.AwaitRunning(ctx))
-	defer registered.StopAsync()
+	// Failure should call Shutdown, marking all services NOT_SERVING.
+	hs.Failure(nil)
 
-	hs.pollServices(ctx)
-	res, err := hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "registered-svc"})
+	res, err := hs.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{Service: "svc-a"})
 	require.NoError(t, err)
-	assert.Equal(t, grpc_health_v1.HealthCheckResponse_SERVING, res.Status)
+	assert.Equal(t, grpc_health_v1.HealthCheckResponse_NOT_SERVING, res.Status)
 
-	// Failure with registered service should mark it NOT_SERVING.
-	hs.Failure(registered)
-	res, err = hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "registered-svc"})
+	res, err = hs.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{Service: "svc-b"})
 	require.NoError(t, err)
 	assert.Equal(t, grpc_health_v1.HealthCheckResponse_NOT_SERVING, res.Status)
 }

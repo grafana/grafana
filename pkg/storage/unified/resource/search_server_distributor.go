@@ -33,7 +33,6 @@ type UnifiedStorageGrpcService interface {
 
 var (
 	_ UnifiedStorageGrpcService = (*distributorServer)(nil)
-	_ grpcserver.HealthProbe    = (*distributorServer)(nil)
 )
 
 func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring *ring.Ring, ringClientPool *ringclient.Pool, provider grpcserver.Provider) (UnifiedStorageGrpcService, error) {
@@ -49,7 +48,18 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 	resourcepb.RegisterManagedObjectIndexServer(srv, s)
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
 
-	s.BasicService = services.NewIdleService(nil, nil).WithName(modules.SearchServerDistributor)
+	ringWatcher := services.NewFailureWatcher()
+	ringWatcher.WatchService(s.ring)
+	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
+		defer ringWatcher.Close()
+		select {
+		case err := <-ringWatcher.Chan():
+			return fmt.Errorf("ring failure: %w", err)
+		case <-ctx.Done():
+			s.log.Info("Stopping search distributor server")
+			return nil
+		}
+	}, nil).WithName(modules.SearchServerDistributor)
 	return s, nil
 }
 
@@ -290,11 +300,6 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	}
 
 	return userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace), client.(*RingClient).Client, nil
-}
-
-// CheckHealth implements grpcserver.HealthProbe.
-func (ds *distributorServer) CheckHealth(_ context.Context) bool {
-	return ds.ring.State() == services.Running
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {

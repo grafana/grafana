@@ -215,6 +215,7 @@ func TestClientServer(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		grpcService.StopAsync()
+		_ = services.StopAndAwaitTerminated(ctx, grpcService)
 	})
 
 	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, grpcService,

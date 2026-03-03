@@ -23,19 +23,20 @@ type HealthProbe interface {
 // It also demonstrates how to override authentication for a service – in this
 // case we are disabling any auth in AuthFuncOverride.
 type HealthService struct {
-	server   *health.Server
+	server *health.Server
+	logger log.Logger
+	cancel context.CancelFunc
+
+	// probeServices contains services that implement HealthProbe.
+	probeServices []probeService
+
 	mu       sync.Mutex
 	statuses map[string]grpc_health_v1.HealthCheckResponse_ServingStatus
-	logger   log.Logger
-	cancel   context.CancelFunc
-	// serviceNames contains the names of registered services
-	serviceNames map[string]bool
-	// probeServices contains services that implement HealthProbe
-	probeServices []probeService
 }
 
 type probeService struct {
-	service services.NamedService
+	name    string
+	service services.Service
 	probe   HealthProbe
 }
 
@@ -49,10 +50,9 @@ func ProvideHealthService(grpcServerProvider Provider) *HealthService {
 
 func newHealthService() *HealthService {
 	return &HealthService{
-		server:       health.NewServer(),
-		statuses:     make(map[string]grpc_health_v1.HealthCheckResponse_ServingStatus),
-		serviceNames: make(map[string]bool),
-		logger:       log.New("health-service"),
+		server:   health.NewServer(),
+		statuses: make(map[string]grpc_health_v1.HealthCheckResponse_ServingStatus),
+		logger:   log.New("health-service"),
 	}
 }
 
@@ -109,25 +109,13 @@ func (s *HealthService) aggregateStatusLocked() grpc_health_v1.HealthCheckRespon
 // the gRPC health status based on service state transitions.
 // Services can implement HealthProbe for health checks during running state.
 // Services should be registered before the manager is started
-func (s *HealthService) AddHealthListener(svc services.NamedService) {
-	name := svc.ServiceName()
+func (s *HealthService) AddHealthListener(name string, svc services.Service) {
 	healthProbe, hasHealthProbe := svc.(HealthProbe)
-	s.logger.Info("Registering health listener", "service", name, "hasChecker", hasHealthProbe)
+	s.logger.Info("Registering health listener", "service", name, "hasProbe", hasHealthProbe)
 	s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	runningFn := func() {
-		if !hasHealthProbe {
-			s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_SERVING)
-			return
-		}
-
-		s.logger.Debug("Service entered running state, checking health", "service", name)
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if healthProbe.CheckHealth(ctx) {
-			s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_SERVING)
-		} else {
-			s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-		}
+		s.logger.Debug("Service is running, SERVING", "service", name)
+		s.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_SERVING)
 	}
 	notServingFn := func(from services.State) {
 		s.logger.Debug("Service is no longer running, NOT_SERVING", "service", name, "fromState", from)
@@ -144,18 +132,17 @@ func (s *HealthService) AddHealthListener(svc services.NamedService) {
 		},
 	))
 	if healthProbe != nil {
-		s.probeServices = append(s.probeServices, probeService{service: svc, probe: healthProbe})
+		s.probeServices = append(s.probeServices, probeService{name: name, service: svc, probe: healthProbe})
 	}
-	s.serviceNames[name] = true
 }
 
-// Healthy is called when all managed services reach Running state.
-// If there are any HealthProbe services registered, it will start doing health checks in a poll loop.
+// Healthy implements services.ManagerListener. Called when all managed services
+// reach Running state. Starts the poll loop if any HealthProbe services exist.
 func (s *HealthService) Healthy() {
 	if len(s.probeServices) == 0 {
 		return
 	}
-	s.logger.Debug("Service manager healthy, starting health check loop on services", "probeServices", len(s.probeServices))
+	s.logger.Debug("Service manager healthy, starting health check loop", "probeServices", len(s.probeServices))
 	s.pollServices(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
@@ -171,20 +158,14 @@ func (s *HealthService) Stopped() {
 	s.Shutdown()
 }
 
-// Failure implements services.ManagerListener.
-func (s *HealthService) Failure(svc services.Service) {
-	namedSvc, ok := svc.(services.NamedService)
-	if !ok {
-		return
+// Failure implements services.ManagerListener. When any managed service fails
+// the manager will shut down all services, so we mark everything NOT_SERVING.
+func (s *HealthService) Failure(_ services.Service) {
+	s.logger.Info("Service manager failure, shutting down health server")
+	if s.cancel != nil {
+		s.cancel()
 	}
-	svcName := namedSvc.ServiceName()
-	if s.serviceNames[svcName] {
-		s.logger.Info("Service failed, NOT_SERVING and cancelling loop", "service", svcName)
-		if s.cancel != nil {
-			s.cancel()
-		}
-		s.SetServingStatus(svcName, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-	}
+	s.Shutdown()
 }
 
 func (s *HealthService) pollLoop(ctx context.Context) {
@@ -208,9 +189,9 @@ func (s *HealthService) pollServices(ctx context.Context) {
 		}
 		pollCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		if e.probe.CheckHealth(pollCtx) {
-			s.SetServingStatus(e.service.ServiceName(), grpc_health_v1.HealthCheckResponse_SERVING)
+			s.SetServingStatus(e.name, grpc_health_v1.HealthCheckResponse_SERVING)
 		} else {
-			s.SetServingStatus(e.service.ServiceName(), grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+			s.SetServingStatus(e.name, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 		}
 		cancel()
 	}
