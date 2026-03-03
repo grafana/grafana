@@ -255,6 +255,10 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	ctx, span := tracer.Start(ctx, "resource.searchServer.ListManagedObjects")
 	defer span.End()
 
+	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
+		return nil, fmt.Errorf("injected search failure")
+	}
+
 	if req.NextPageToken != "" {
 		return &resourcepb.ListManagedObjectsResponse{
 			Error: NewBadRequestError("multiple pages not yet supported"),
@@ -339,6 +343,10 @@ func (s *searchServer) logStats(ctx context.Context, stats *SearchStats, span tr
 func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.CountManagedObjects")
 	defer span.End()
+
+	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
+		return nil, fmt.Errorf("injected search failure")
+	}
 
 	stats := NewSearchStats("CountManagedObjects")
 	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
@@ -455,6 +463,10 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.GetStats")
 	defer span.End()
+
+	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
+		return nil, fmt.Errorf("injected search failure")
+	}
 
 	if req.Namespace == "" {
 		return &resourcepb.ResourceStatsResponse{
