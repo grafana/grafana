@@ -8,7 +8,7 @@ import {
   getDataSourceRef,
   getNextRefId,
 } from '@grafana/data';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, isExpressionReference, reportInteraction } from '@grafana/runtime';
 import {
   SceneDataTransformer,
   SceneObjectBase,
@@ -65,6 +65,25 @@ function resolveNewQueryDatasource(
   }
 
   return getDataSourceRef(panelDsSettings);
+}
+
+/**
+ * When in Mixed mode, checks if all non-expression queries share the same datasource.
+ * Returns that common datasource ref if they do, or undefined if queries are heterogeneous.
+ */
+function getUniformDatasource(queries: DataQuery[]): DataSourceRef | undefined {
+  const regularQueries = queries.filter((q) => !isExpressionReference(q.datasource));
+  if (regularQueries.length === 0) {
+    return undefined;
+  }
+
+  const firstDs = regularQueries[0].datasource;
+  if (!firstDs?.uid) {
+    return undefined;
+  }
+
+  const allSame = regularQueries.every((q) => q.datasource?.uid === firstDs.uid);
+  return allSame ? { ...firstDs } : undefined;
 }
 
 export interface PanelDataPaneNextState extends SceneObjectState {
@@ -210,6 +229,23 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   }
 
   /**
+   * When in Mixed mode, checks if all non-expression queries now use the same datasource.
+   * If so, switches back from Mixed to that single datasource so that
+   * datasource-specific query options (cache timeout, cache TTL, etc.) are surfaced.
+   */
+  private resolveUniformDatasource() {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner || queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME) {
+      return;
+    }
+
+    const commonDs = getUniformDatasource(queryRunner.state.queries);
+    if (commonDs) {
+      queryRunner.setState({ datasource: commonDs });
+    }
+  }
+
+  /**
    * Helper for operations that find and mutate a single query by refId.
    * Handles cloning, finding index, and updating state.
    */
@@ -234,6 +270,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (queryRunner) {
       queryRunner.setState({ queries });
+      this.resolveUniformDatasource();
     }
   };
 
@@ -292,6 +329,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queries.splice(index, 1);
       return queries;
     });
+    this.resolveUniformDatasource();
     this.runQueries();
   };
 
@@ -502,6 +540,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queryRunner.setState({ queries });
     }
 
+    this.resolveUniformDatasource();
     queryRunner.runQueries();
   };
 

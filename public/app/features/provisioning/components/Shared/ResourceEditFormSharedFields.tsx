@@ -10,8 +10,10 @@ import { validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
+import { useGetRepositoryFolders } from '../../hooks/useGetRepositoryFolders';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
+import { joinPath, splitPath } from '../utils/path';
 
 type SharedFieldName = 'path' | 'comment';
 
@@ -58,6 +60,13 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       branchData,
       canPushToConfiguredBranch,
       canPushToNonConfiguredBranch,
+    });
+
+    const showFolderFilename = isNew && resourceType === 'dashboard';
+
+    const { options: folderOptions, loading: isFoldersLoading } = useGetRepositoryFolders({
+      repositoryName: showFolderFilename ? repository?.name : undefined,
+      ref: selectedBranch || undefined,
     });
 
     const pathText =
@@ -142,8 +151,69 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
           </>
         )}
 
-        {/* Path */}
-        {!hiddenFields?.includes('path') && (
+        {/* Path — split into folder + filename for new dashboards */}
+        {!hiddenFields?.includes('path') && showFolderFilename && (
+          <Controller
+            name="path"
+            control={control}
+            render={({ field: { ref, onChange, value } }) => {
+              const { directory: dir, filename: file } = splitPath(value || '');
+              return (
+                <>
+                  <Field
+                    noMargin
+                    htmlFor="folder-path"
+                    label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-folder', 'Folder')}
+                    description={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
+                      'Folder inside the repository. Leave empty for the repository root.'
+                    )}
+                  >
+                    <Combobox
+                      id="folder-path"
+                      value={dir}
+                      onChange={(option) => {
+                        onChange(joinPath(option?.value ?? '', file));
+                      }}
+                      options={folderOptions}
+                      loading={isFoldersLoading}
+                      createCustomValue
+                      isClearable
+                      placeholder={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-folder',
+                        'Select or enter folder path'
+                      )}
+                    />
+                  </Field>
+                  <Field
+                    noMargin
+                    htmlFor="dashboard-filename"
+                    label={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.label-filename',
+                      'Filename'
+                    )}
+                    description={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-filename',
+                      'File name for the dashboard (.json or .yaml)'
+                    )}
+                  >
+                    <Input
+                      id="dashboard-filename"
+                      type="text"
+                      value={file}
+                      onChange={(e) => {
+                        onChange(joinPath(dir, e.currentTarget.value));
+                      }}
+                    />
+                  </Field>
+                </>
+              );
+            }}
+          />
+        )}
+
+        {/* Path — single read-only field for existing resources */}
+        {!hiddenFields?.includes('path') && !showFolderFilename && (
           <Field
             noMargin
             label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}

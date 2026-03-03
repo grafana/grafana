@@ -2182,6 +2182,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "vizLegendSeriesLimit",
+			Description:  "Limit the number of legend items by default, with an option to show all",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "heatmapRowsAxisOptions",
 			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
 			Stage:        FeatureStageExperimental,
