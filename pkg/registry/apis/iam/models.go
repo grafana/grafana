@@ -97,6 +97,9 @@ type IdentityAccessManagementAPIBuilder struct {
 	// non-k8s api route
 	display *user.LegacyDisplayREST
 
+	// support: POST /access/check
+	accessHandler *AccessCheckHandler
+
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
 

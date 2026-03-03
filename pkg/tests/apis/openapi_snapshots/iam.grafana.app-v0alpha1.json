@@ -31,6 +31,123 @@
         }
       }
     },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/access/check": {
+      "post": {
+        "tags": [
+          "Access"
+        ],
+        "description": "Check access",
+        "operationId": "checkAccess",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {},
+              "examples": {
+                "dashboard permissions": {
+                  "value": {
+                    "check": {
+                      "admin": {
+                        "verb": "admin",
+                        "group": "dashboard.grafana.app",
+                        "resource": "dashboards",
+                        "name": "",
+                        "subresource": "",
+                        "folder": "",
+                        "path": ""
+                      },
+                      "create": {
+                        "verb": "create",
+                        "group": "dashboard.grafana.app",
+                        "resource": "dashboards",
+                        "name": "",
+                        "subresource": "",
+                        "folder": "",
+                        "path": ""
+                      },
+                      "list": {
+                        "verb": "list",
+                        "group": "dashboard.grafana.app",
+                        "resource": "dashboards",
+                        "name": "",
+                        "subresource": "",
+                        "folder": "",
+                        "path": ""
+                      },
+                      "update": {
+                        "verb": "update",
+                        "group": "dashboard.grafana.app",
+                        "resource": "dashboards",
+                        "name": "",
+                        "subresource": "",
+                        "folder": "",
+                        "path": ""
+                      }
+                    },
+                    "debug": false,
+                    "skipCache": false
+                  }
+                },
+                "unknown resource": {
+                  "value": {
+                    "check": {
+                      "list": {
+                        "verb": "list",
+                        "group": "dashboard.grafana.app",
+                        "resource": "not-a-resource",
+                        "name": "",
+                        "subresource": "",
+                        "folder": "",
+                        "path": ""
+                      }
+                    },
+                    "debug": false,
+                    "skipCache": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "allowed"
+                  ],
+                  "properties": {
+                    "allowed": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    },
+                    "debug": {
+                      "description": "Only included when the debug flag is enabled"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/display": {
       "get": {
         "tags": [
@@ -941,6 +1058,7 @@
           "Search"
         ],
         "description": "Team search",
+        "operationId": "searchTeams",
         "parameters": [
           {
             "name": "namespace",
@@ -992,7 +1110,52 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "offset",
+                    "totalHits",
+                    "hits",
+                    "queryCost",
+                    "maxScore"
+                  ],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "hits": {
+                      "type": "array",
+                      "items": {
+                        "default": {}
+                      }
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "maxScore": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0
+                    },
+                    "offset": {
+                      "type": "integer",
+                      "format": "int64",
+                      "default": 0
+                    },
+                    "queryCost": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0
+                    },
+                    "totalHits": {
+                      "type": "integer",
+                      "format": "int64",
+                      "default": 0
+                    }
+                  }
+                }
               }
             }
           }
@@ -1113,7 +1276,44 @@
             "description": "Default OK response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "offset",
+                    "totalHits",
+                    "hits",
+                    "queryCost",
+                    "maxScore"
+                  ],
+                  "properties": {
+                    "hits": {
+                      "type": "array",
+                      "items": {
+                        "default": {}
+                      }
+                    },
+                    "maxScore": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0
+                    },
+                    "offset": {
+                      "type": "integer",
+                      "format": "int64",
+                      "default": 0
+                    },
+                    "queryCost": {
+                      "type": "number",
+                      "format": "double",
+                      "default": 0
+                    },
+                    "totalHits": {
+                      "type": "integer",
+                      "format": "int64",
+                      "default": 0
+                    }
+                  }
+                }
               }
             }
           }
@@ -5064,6 +5264,129 @@
             "description": "Name of the role being referenced",
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateAccessCheckAccessCheckRequest": {
+        "type": "object",
+        "required": [
+          "verb",
+          "group",
+          "resource",
+          "name",
+          "subresource",
+          "folder",
+          "path"
+        ],
+        "properties": {
+          "folder": {
+            "description": "Folder identifier",
+            "type": "string",
+            "default": ""
+          },
+          "group": {
+            "description": "API group (dashboards.grafana.app)",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "description": "The specific resource",
+            "type": "string",
+            "default": ""
+          },
+          "path": {
+            "description": "For non-resource requests, this will be the requested URL path",
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "description": "Kind eg dashboards",
+            "type": "string",
+            "default": ""
+          },
+          "subresource": {
+            "description": "Optional subresource",
+            "type": "string",
+            "default": ""
+          },
+          "verb": {
+            "description": "The requested access verb.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateAccessCheckResponse": {
+        "type": "object",
+        "required": [
+          "allowed"
+        ],
+        "properties": {
+          "allowed": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "debug": {
+            "description": "Only included when the debug flag is enabled"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateAccessCheckV0alpha1ResponseDebug": {
+        "type": "object",
+        "required": [
+          "check",
+          "auth"
+        ],
+        "properties": {
+          "auth": {
+            "default": {}
+          },
+          "check": {
+            "type": "object",
+            "additionalProperties": {
+              "default": {}
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateAccessCheckV0alpha1ResponseDebugAuth": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "uid"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          },
+          "uid": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateAccessCheckV0alpha1ResponseDebugCheck": {
+        "type": "object",
+        "required": [
+          "check",
+          "allowed"
+        ],
+        "properties": {
+          "allowed": {
+            "type": "boolean",
+            "default": false
+          },
+          "check": {
+            "default": {}
           }
         }
       },

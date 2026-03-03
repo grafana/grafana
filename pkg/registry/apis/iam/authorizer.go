@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	authlib "github.com/grafana/authlib/types"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -76,6 +77,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = externalGroupMappingApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = allowAuthorizer
+	resourceAuthorizer["access"] = serviceAuthorizer // check access
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
 	// TODO: Implement fine-grained authorization for external group mapping search on the search level
