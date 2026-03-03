@@ -297,7 +297,8 @@ describe('RuleViewer', () => {
         await user.click(screen.getByLabelText('2'));
         await user.click(screen.getByRole('button', { name: /Compare versions/i }));
         await screen.findByText(/comparing versions/i);
-        expect(await screen.findByText(/pending period/i)).toBeInTheDocument();
+        // "Pending period" appears in both the always-visible sidebar and the version diff
+        expect((await screen.findAllByText(/pending period/i)).length).toBeGreaterThanOrEqual(1);
         expect(screen.getAllByTestId('diffGroup')[0]).toHaveTextContent(/pending period changed 5m2h/i);
         expect(screen.getAllByTestId('diffGroup')[1]).toHaveTextContent(/labels added foo bar/i);
         expect(screen.getAllByTestId('diffGroup')[2]).toHaveTextContent(/contact point routing added/i);
@@ -400,8 +401,10 @@ describe('RuleViewer', () => {
       expect(screen.getByText('cloud test alert')).toBeInTheDocument();
       expect(screen.getByText('Firing')).toBeInTheDocument();
 
-      expect(screen.getByText(mockRule.annotations[Annotation.summary])).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: mockRule.annotations[Annotation.runbookURL] })).toBeInTheDocument();
+      // summary appears in both the page header and the always-visible sidebar
+      expect(screen.getAllByText(mockRule.annotations[Annotation.summary])[0]).toBeInTheDocument();
+      // runbook URL appears in both the page header and the always-visible sidebar
+      expect(screen.getAllByRole('link', { name: mockRule.annotations[Annotation.runbookURL] })[0]).toBeInTheDocument();
       expect(screen.getByText(`Every ${mockRule.group.interval}`)).toBeInTheDocument();
     });
 
