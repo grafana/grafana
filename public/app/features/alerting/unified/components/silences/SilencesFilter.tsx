@@ -79,23 +79,13 @@ export function SilencesFilter({ silences }: SilencesFilterProps) {
           <div>
             <p>
               <Trans i18nKey="alerting.silences.filter.tooltip-description">
-                Search silences by matcher label and value.
+                Find silences by matcher. Matches label name, value, and operator exactly.
               </Trans>
             </p>
             <p>
-              <Trans i18nKey="alerting.silences.filter.tooltip-exact">
-                Exact match: <code>severity=&quot;critical&quot;</code>
-              </Trans>
-            </p>
-            <p>
-              <Trans i18nKey="alerting.silences.filter.tooltip-regex">
-                Regex match: <code>env=~&quot;prod.*&quot;</code>
-              </Trans>
-            </p>
-            <p>
-              <Trans i18nKey="alerting.silences.filter.tooltip-note">
-                Searches by label name and value only. For example, foo=&quot;bar&quot; finds all silences with label
-                foo and value bar — both foo=&quot;bar&quot; and foo!=&quot;bar&quot;.
+              <Trans i18nKey="alerting.silences.filter.tooltip-example">
+                Example: <code>env=~&quot;prod.*&quot;</code> finds silences with an{' '}
+                <code>env=~&quot;prod.*&quot;</code> matcher.
               </Trans>
             </p>
           </div>

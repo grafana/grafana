@@ -37,7 +37,6 @@ import { NoSilencesSplash } from './NoSilencesCTA';
 import { SilenceDetails } from './SilenceDetails';
 import { SilenceStateTag } from './SilenceStateTag';
 import { SilencesFilter } from './SilencesFilter';
-import { matchesSilenceMatcher } from './matchesSilenceMatcher';
 
 export interface SilenceTableItem extends Silence {
   silencedAlerts: AlertmanagerAlert[] | undefined;
@@ -240,7 +239,13 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
       if (queryString) {
         const matchers = parsePromQLStyleMatcherLooseSafe(queryString);
         const matchersMatch = matchers.every((matcher) =>
-          silence.matchers?.some((silenceMatcher) => matchesSilenceMatcher(matcher, silenceMatcher))
+          silence.matchers?.some(
+            ({ name, value, isEqual, isRegex }) =>
+              matcher.name === name &&
+              matcher.value === value &&
+              matcher.isEqual === isEqual &&
+              matcher.isRegex === isRegex
+          )
         );
         if (!matchersMatch) {
           return false;
