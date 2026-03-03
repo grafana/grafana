@@ -36,11 +36,13 @@ export function RowExpander({ onCellExpand, isExpanded, rowId }: RowExpanderNGPr
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2) => ({
+const styles = {
   expanderCell: css({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     cursor: 'pointer',
   }),
-});
+};
+
+const getStyles = () => styles;
