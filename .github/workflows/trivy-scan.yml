@@ -15,6 +15,9 @@ on:
 jobs:
   trivy-scan:
     runs-on: ubuntu-22.04
+    env:
+      # renovate: datasource=github-releases depName=trivy packageName=aquasecurity/trivy
+      TRIVY_VERSION: 'v0.69.2'
     steps:
     - uses: actions/checkout@v5
       with:
@@ -22,7 +25,7 @@ jobs:
     - name: Install Trivy
       uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1
       with:
-        version: v0.56.2
+        version: ${{ env.TRIVY_VERSION }}
         cache: true
     - name: Download Trivy DB
       run: |

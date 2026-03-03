@@ -180,7 +180,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             isNew
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
-            hidePath
+            hiddenFields={['path']}
           />
 
           {prURL && (
