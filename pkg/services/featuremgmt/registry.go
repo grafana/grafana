@@ -641,11 +641,11 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "sceneCsvExport",
-			Description:  "Enables CSV export using scenes dashboard architecture",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Name:        "sceneCsvExport",
+			Description: "Enables CSV export using scenes dashboard architecture",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "drilldownRecommendations",
