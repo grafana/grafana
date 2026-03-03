@@ -1,14 +1,16 @@
-import { useEffect } from 'react';
+import { css } from '@emotion/css';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import { useGetThemeQuery, useUpdateThemeMutation } from '@grafana/api-clients/rtkq/theme/v0alpha1';
-import { NavModelItem } from '@grafana/data';
+import { createTheme, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { Trans, t } from '@grafana/i18n';
-import { Button, CodeEditor, Field, Input, Stack } from '@grafana/ui';
+import { Box, Button, CodeEditor, Field, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../../../core/components/Page/Page';
+import { ThemePreview } from '../../../core/components/Theme/ThemePreview';
 
 interface FormData {
   themeJson: string;
@@ -20,6 +22,7 @@ export default function EditCustomThemePage() {
   const { data: theme, isLoading: isLoadingTheme } = useGetThemeQuery({ name: name! });
   const [updateTheme, { isLoading }] = useUpdateThemeMutation();
   const navigate = useNavigate();
+  const styles = useStyles2(getStyles);
 
   const pageNav: NavModelItem = {
     icon: 'palette',
@@ -51,6 +54,14 @@ export default function EditCustomThemePage() {
     }
   }, [theme, reset]);
 
+  const previewTheme = useMemo(() => {
+    try {
+      return createTheme(JSON.parse(themeJson));
+    } catch {
+      return null;
+    }
+  }, [themeJson]);
+
   const onSubmit = async ({ themeJson }: FormData) => {
     await updateTheme({
       name: name!,
@@ -66,29 +77,47 @@ export default function EditCustomThemePage() {
           <Field noMargin label={t('admin.edit-custom-theme-page.field-theme-name', 'Theme name')}>
             <Input {...register('themeName')} disabled />
           </Field>
-          <Field
-            noMargin
-            label={t('admin.edit-custom-theme-page.field-theme-json', 'Theme JSON')}
-            invalid={!!errors.themeJson}
-            error={
-              errors.themeJson &&
-              t('admin.edit-custom-theme-page.field-theme-json.validation-required', 'Theme JSON is required')
-            }
-          >
-            <CodeEditor
-              value={themeJson ?? ''}
-              language="json"
-              height={400}
-              showLineNumbers={true}
-              onChange={(value) => setValue('themeJson', value, { shouldValidate: true, shouldDirty: true })}
-              onBeforeEditorMount={(monaco) => {
-                monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-                  validate: true,
-                  schemas: [{ uri: 'theme-schema', fileMatch: ['*'], schema: themeJsonSchema }],
-                });
-              }}
-            />
-          </Field>
+          <Stack direction={{ xs: 'column', md: 'row' }} gap={2} alignItems="stretch">
+            <Field
+              className={styles.codeEditor}
+              noMargin
+              label={t('admin.edit-custom-theme-page.field-theme-json', 'Theme JSON')}
+              invalid={!!errors.themeJson}
+              error={
+                errors.themeJson &&
+                t('admin.edit-custom-theme-page.field-theme-json.validation-required', 'Theme JSON is required')
+              }
+            >
+              <CodeEditor
+                value={themeJson ?? ''}
+                language="json"
+                height={400}
+                width="100%"
+                showLineNumbers={true}
+                onChange={(value) => setValue('themeJson', value, { shouldValidate: true, shouldDirty: true })}
+                onBeforeEditorMount={(monaco) => {
+                  monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+                    validate: true,
+                    schemas: [{ uri: 'theme-schema', fileMatch: ['*'], schema: themeJsonSchema }],
+                  });
+                }}
+              />
+            </Field>
+            <Field noMargin label={t('admin.edit-custom-theme-page.field-preview', 'Preview')}>
+              <Box
+                display="flex"
+                overflow="hidden"
+                borderRadius="default"
+                height={30}
+                minWidth={40}
+                width="100%"
+                borderStyle={'solid'}
+                borderColor="weak"
+              >
+                {previewTheme && <ThemePreview theme={previewTheme} />}
+              </Box>
+            </Field>
+          </Stack>
           <Stack justifyContent="flex-end">
             <Button variant="secondary" onClick={() => navigate('/themes')}>
               <Trans i18nKey="admin.edit-custom-theme-page.cancel">Cancel</Trans>
@@ -102,3 +131,10 @@ export default function EditCustomThemePage() {
     </Page>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  codeEditor: css({
+    flex: 1,
+    overflow: 'hidden',
+  }),
+});
