@@ -61,7 +61,7 @@ export const AnnotationTooltip2 = ({
         }}
       />
 
-      <AnnotationTooltipBody title={title} text={text} alertText={alertText} tags={annoVals.tags} annoIdx={annoIdx} />
+      <AnnotationTooltipBody title={title} text={text} alertText={alertText} tags={annoVals.tags?.[annoIdx] ?? []} />
 
       {(links.length > 0 || actions.length > 0) && <VizTooltipFooter dataLinks={links} actions={actions} />}
     </div>

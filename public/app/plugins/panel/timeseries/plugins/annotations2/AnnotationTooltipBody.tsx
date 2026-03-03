@@ -8,13 +8,11 @@ export function AnnotationTooltipBody({
   title,
   alertText,
   tags,
-  annoIdx,
 }: {
   title?: string;
   text: string;
   alertText: string;
-  tags: string[][];
-  annoIdx: number;
+  tags: string[];
 }) {
   const styles = useStyles2(getStyles);
   return (
@@ -24,8 +22,8 @@ export function AnnotationTooltipBody({
       {alertText}
       <div>
         <Stack gap={0.5} wrap={true}>
-          {tags?.[annoIdx]?.length
-            ? tags?.[annoIdx]?.map?.((t, i) => <Tag data-testid={'annotation-tag'} name={t} key={`${t}-${i}`} />)
+          {tags?.length
+            ? tags.map?.((t, i) => <Tag data-testid={'annotation-tag'} name={t} key={`${t}-${i}`} />)
             : null}
         </Stack>
       </div>
