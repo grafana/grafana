@@ -29,4 +29,22 @@ export const TRIAGE_STATE_URL_PARAMS = [
 
 export const DATASOURCE_UID = config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID;
 export const METRIC_NAME = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
-export const DEFAULT_FIELDS = ['alertname', 'grafana_folder', 'grafana_rule_uid', 'alertstate'] as const;
+
+/**
+ * DataFrame field names returned by the alert history metric queries.
+ */
+export const FIELD_NAMES = {
+  alertstate: 'alertstate',
+  alertname: 'alertname',
+  grafanaFolder: 'grafana_folder',
+  grafanaRuleUID: 'grafana_rule_uid',
+  value: 'Value',
+  valuePrefix: 'Value #',
+} as const;
+
+export const DEFAULT_FIELDS = [
+  FIELD_NAMES.alertname,
+  FIELD_NAMES.grafanaFolder,
+  FIELD_NAMES.grafanaRuleUID,
+  FIELD_NAMES.alertstate,
+] as const;

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/receivers/line"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -539,7 +538,7 @@ func TestReceiverService_Create(t *testing.T) {
 				),
 			)),
 			expectedStored: &definitions.PostableApiReceiver{
-				Receiver: config.Receiver{
+				Receiver: definitions.Receiver{
 					Name: lineIntegration.Name,
 				},
 				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{

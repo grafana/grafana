@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -43,6 +44,7 @@ var (
 
 type lokiClient interface {
 	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (lokiclient.QueryRes, error)
+	MetricsQuery(ctx context.Context, logQL string, ts int64, limit int64) (lokiclient.MetricsQueryRes, error)
 }
 
 type LokiReader struct {
@@ -70,7 +72,9 @@ func NewLokiReader(cfg config.LokiConfig, reg prometheus.Registerer, logger logg
 	}
 }
 
-// Query retrieves notification history entries from an external Loki instance.
+// Query retrieves notification history from an external Loki instance.
+// When query.Type is "counts", it returns aggregated counts via a metrics query.
+// Otherwise it returns individual notification entries via a range query.
 func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error) {
 	logql, err := buildQuery(query)
 	if err != nil {
@@ -96,19 +100,36 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 		return QueryResult{}, fmt.Errorf("%w: limit (%d) over maximum allowed (%d)", ErrInvalidQuery, limit, maxLimit)
 	}
 
-	entries, err := h.runQuery(ctx, logql, from, to, limit)
-	if err != nil {
-		return QueryResult{}, err
+	qtype := v0alpha1.CreateNotificationqueryRequestBodyTypeEntries
+	if query.Type != nil {
+		qtype = *query.Type
 	}
 
-	// Prune entries to the requested limit
-	if int64(len(entries)) > limit {
-		entries = entries[:limit]
-	}
+	switch qtype {
+	case v0alpha1.CreateNotificationqueryRequestBodyTypeEntries:
+		entries, err := h.runQuery(ctx, logql, from, to, limit)
+		if err != nil {
+			return QueryResult{}, err
+		}
 
-	return QueryResult{
-		Entries: entries,
-	}, nil
+		return QueryResult{Entries: entries}, nil
+
+	case v0alpha1.CreateNotificationqueryRequestBodyTypeCounts:
+		// Default to no grouping (all false).
+		groupBy := QueryGroupBy{}
+		if query.GroupBy != nil {
+			groupBy = *query.GroupBy
+		}
+		counts, err := h.runMetricsQuery(ctx, logql, from, to, limit, groupBy)
+		if err != nil {
+			return QueryResult{}, err
+		}
+
+		return QueryResult{Counts: counts}, nil
+
+	default:
+		return QueryResult{}, fmt.Errorf("%w: unknown query type (%s)", ErrInvalidQuery, string(qtype))
+	}
 }
 
 // QueryAlerts retrieves individual alert entries from an external Loki instance.
@@ -150,6 +171,115 @@ func (h *LokiReader) QueryAlerts(ctx context.Context, query AlertQuery) (AlertQu
 	return AlertQueryResult{
 		Alerts: alerts,
 	}, nil
+}
+
+// buildMetricsQuery constructs the LogQL metrics query that wraps a log filter in a
+// topk(sum(count_over_time(...))) aggregation.
+func buildMetricsQuery(logqlInner string, from, to time.Time, limit int64, groupBy QueryGroupBy) string {
+	// Additional expressions for the inner query if needed.
+	logqlInnerExtra := ""
+
+	// If grouping by outcome, create a field based on whether error is empty.
+	if groupBy.Outcome {
+		logqlInnerExtra += ` | label_format outcome="{{ if .error }}error{{ else }}success{{ end }}"`
+	}
+
+	// Optionally add the grouping, if any.
+	var labels []string
+	if groupBy.Receiver {
+		labels = append(labels, "receiver")
+	}
+	if groupBy.Integration {
+		labels = append(labels, "integration")
+	}
+	if groupBy.IntegrationIndex {
+		labels = append(labels, "integrationIdx")
+	}
+	if groupBy.Status {
+		labels = append(labels, "status")
+	}
+	if groupBy.Outcome {
+		labels = append(labels, "outcome")
+	}
+	if groupBy.Error {
+		labels = append(labels, "error")
+	}
+	sumBy := ""
+	if len(labels) > 0 {
+		sumBy = fmt.Sprintf(" by (%s) ", strings.Join(labels, ","))
+	}
+
+	rangeSeconds := int64(to.Sub(from).Seconds())
+	return fmt.Sprintf(`topk(%d, sum%s(count_over_time(%s%s[%ds])))`,
+		limit, sumBy, logqlInner, logqlInnerExtra, rangeSeconds)
+}
+
+// runMetricsQuery executes a sum(count_over_time(...)) instant query against Loki and
+// converts the metric samples into Count values.
+func (h *LokiReader) runMetricsQuery(ctx context.Context, logqlInner string, from, to time.Time, limit int64, groupBy QueryGroupBy) ([]Count, error) {
+	logql := buildMetricsQuery(logqlInner, from, to, limit, groupBy)
+
+	res, err := h.client.MetricsQuery(ctx, logql, to.UnixNano(), limit)
+	if err != nil {
+		return nil, fmt.Errorf("loki metrics query: %w", err)
+	}
+
+	counts := make([]Count, 0, len(res.Data.Result))
+	for _, sample := range res.Data.Result {
+		count, err := parseCount(sample)
+		if err != nil {
+			h.logger.Warn("Ignoring metric sample", "err", err)
+			continue
+		}
+		counts = append(counts, count)
+	}
+
+	// Sort counts by count (highest first).
+	sort.Slice(counts, func(i, j int) bool {
+		return counts[i].Count > counts[j].Count
+	})
+
+	return counts, nil
+}
+
+// parseCount converts a single Loki MetricSample into a Count.
+func parseCount(sample lokiclient.MetricSample) (Count, error) {
+	countStr, err := sample.Value.Value()
+	if err != nil {
+		return Count{}, fmt.Errorf("unparseable value: %w", err)
+	}
+	count, err := strconv.ParseInt(countStr, 10, 64)
+	if err != nil {
+		return Count{}, fmt.Errorf("non-integer count %q: %w", countStr, err)
+	}
+
+	entry := Count{Count: count}
+	m := sample.Metric
+	if v, ok := m["receiver"]; ok {
+		entry.Receiver = &v
+	}
+	if v, ok := m["integration"]; ok {
+		entry.Integration = &v
+	}
+	if v, ok := m["integrationIdx"]; ok {
+		i, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return Count{}, fmt.Errorf("non-integer integrationIdx %q: %w", v, err)
+		}
+		entry.IntegrationIndex = &i
+	}
+	if v, ok := m["status"]; ok {
+		s := Status(v)
+		entry.Status = &s
+	}
+	if v, ok := m["outcome"]; ok {
+		o := Outcome(v)
+		entry.Outcome = &o
+	}
+	if v, ok := m["error"]; ok {
+		entry.Error = &v
+	}
+	return entry, nil
 }
 
 // buildAlertQuery creates the LogQL to perform the requested alert query.

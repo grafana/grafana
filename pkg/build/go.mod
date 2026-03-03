@@ -21,7 +21,7 @@ require (
 	go.opentelemetry.io/otel v1.40.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.40.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.50.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.51.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
 	golang.org/x/text v0.34.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/grpc v1.79.1 // indirect; @grafana/plugins-platform-backend
@@ -94,5 +94,3 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240625192351-66ec17e3aa45
-
-exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible

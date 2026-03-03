@@ -903,7 +903,7 @@
       "title-failed-to-fetch-contact-points": "無法擷取聯絡點"
     },
     "contact-points": {
-      "create": "建立聯絡點",
+      "create": "",
       "custom-template-value": "自訂範本值",
       "delete-reasons": {
         "heading": "由於以下原因，無法刪除聯絡點：",
@@ -2120,7 +2120,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "新增時間間隔"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2164,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,14 +2172,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "按聯絡點搜尋",
@@ -2241,7 +2242,7 @@
       "title-failed-to-fetch-notification-templates": "無法擷取通知範本"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "新增通知範本群組",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "建立通知範本以自訂您的通知。"
     },
     "notifications-list": {
@@ -2268,6 +2269,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2291,15 +2293,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "新增標籤，以協助您妥善管理紀錄規則。",
@@ -3332,7 +3334,7 @@
       "stop-alerting-when": "處於以下值時停止警報（或待處理狀態）"
     },
     "time-interval": {
-      "add-time-interval": "新增時間間隔",
+      "add-time-interval": "",
       "save": "儲存時間間隔",
       "saving": "正在儲存時間間隔"
     },
@@ -4159,6 +4161,16 @@
       "clear": "清除搜尋和篩選條件",
       "text": "未找到您的查詢結果"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "dismiss": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "清除歷史紀錄",
       "error": "無法載入最近瀏覽的儀表板。",
@@ -4827,6 +4839,10 @@
       "view-json-diff": "檢視 JSON diff 以查看所有變更"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "新增",
     "alert": {
@@ -5028,7 +5044,7 @@
     "canvas-actions": {
       "add-panel": "新增面板",
       "disabled-child-contains-tabs": "無法變更為分頁，因為列已包含分頁",
-      "disabled-nested-grouping": "分組限制為 2 個層級",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "分頁不能嵌套在其他分頁中",
       "group-into-row": "將群組分成列",
       "group-into-tab": "將群組分成分頁",
@@ -6562,6 +6578,12 @@
           "row-title": "列標題"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "無法刪除儀表板",
@@ -10914,7 +10936,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到選項"
@@ -12314,6 +12338,11 @@
       "text-loading-teams": "正在載入團隊…"
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "新增備註以描述您的變更（選填）",
@@ -12577,6 +12606,12 @@
       "label-read-only": "唯讀",
       "label-sync-interval": "同步間隔（秒）"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12716,6 +12751,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13222,6 +13259,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13316,7 +13354,8 @@
       "transformations": "轉換",
       "view-toggle": "",
       "alerts_other": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
