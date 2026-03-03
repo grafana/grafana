@@ -142,14 +142,13 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	statusSpan.End()
 
 	setupCtx, setupSpan := r.tracer.Start(ctx, "provisioning.sync.setup_clients")
-	repositoryResources, err := r.repositoryResources.Client(setupCtx, rw,
-		resources.WithFolderManagerOptions(resources.WithBeforeCreate(func(ctx context.Context, folder resources.Folder) error {
-			if !quotaTracker.TryAcquire() {
-				return quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded while creating folder %s", folder.Path))
-			}
-			return nil
-		})),
-	)
+	beforeCreateOptions := resources.WithFolderManagerOptions(resources.WithBeforeCreate(func(ctx context.Context, folder resources.Folder) error {
+		if !quotaTracker.TryAcquire() {
+			return quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded while creating folder %s", folder.Path))
+		}
+		return nil
+	}))
+	repositoryResources, err := r.repositoryResources.Client(setupCtx, rw, beforeCreateOptions)
 	if err != nil {
 		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
