@@ -1,6 +1,7 @@
 import { FieldColorModeId, VisualizationPresetsSupplier, VisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  AxisPlacement,
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
@@ -17,6 +18,7 @@ const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) 
   if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
     s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
   }
+  s.fieldConfig!.defaults.custom!.axisPlacement = AxisPlacement.Hidden;
 };
 
 /**
