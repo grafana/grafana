@@ -203,7 +203,6 @@ describe('PanelDataTransformationsTab', () => {
         context: 'transformations_list',
         type: 'calculateField',
         action: 'remove',
-        total_transformations: 0,
       });
     });
 

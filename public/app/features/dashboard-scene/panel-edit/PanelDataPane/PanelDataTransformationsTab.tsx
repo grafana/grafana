@@ -212,7 +212,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           reportInteraction('grafana_panel_transformations_clicked', {
             context: 'transformations_list',
             action: 'delete_all',
-            total_transformations: 0,
           });
           model.onChangeTransformations([]);
           setConfirmModalOpen(false);
@@ -270,7 +269,7 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
                     reportInteraction('grafana_panel_transformations_clicked', {
                       context: 'transformations_list',
                       type: removed.id,
-                      action: 'remove',
+                      action: 'delete',
                       total_transformations: transformations.length - 1,
                     });
                   }
