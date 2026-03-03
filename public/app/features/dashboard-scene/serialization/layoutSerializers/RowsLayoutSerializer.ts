@@ -4,6 +4,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
+import { createSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
 export function serializeRowsLayout(layoutManager: RowsLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
@@ -53,6 +54,11 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
     },
   };
 
+  const sectionVariables = serializeSectionVariables(row.state.$variables);
+  if (sectionVariables) {
+    rowKind.spec.variables = sectionVariables;
+  }
+
   const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
   if (conditionalRenderingRootGroup?.spec.items.length) {
@@ -89,6 +95,7 @@ export function deserializeRow(
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
     repeatByVariable: row.spec.repeat?.value,
+    $variables: createSectionVariables(row.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     conditionalRendering: getConditionalRendering(row),
   });

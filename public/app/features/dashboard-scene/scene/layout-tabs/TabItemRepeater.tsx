@@ -3,11 +3,17 @@ import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
 import { t } from '@grafana/i18n';
-import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  MultiValueVariable,
+  SceneVariableSet,
+  sceneGraph,
+  VariableValueSingle,
+} from '@grafana/scenes';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
+import { getCloneKey, getRepeatVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 
 import { TabItem } from './TabItem';
@@ -144,6 +150,7 @@ export function createTabRepeats({
   const variableValues = values.length ? values : [''];
   const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
   const repeats: TabItem[] = [];
+  const baseSectionVariables = getTabSectionBaseVariables(tab);
 
   // Loop through variable values and create repeats
   for (let tabIndex = 0; tabIndex < variableValues.length; tabIndex++) {
@@ -162,7 +169,13 @@ export function createTabRepeats({
     const layout = isSourceTab ? tab.getLayout() : tab.getLayout().cloneLayout(tabCloneKey, false);
 
     tabClone.setState({
-      $variables: getLocalVariableValueSet(variable, variableValues[tabIndex], variableTexts[tabIndex]),
+      $variables: getRepeatVariableValueSet(
+        variable,
+        variableValues[tabIndex],
+        variableTexts[tabIndex],
+        baseSectionVariables,
+        !isSourceTab
+      ),
       layout,
     });
 
@@ -174,6 +187,20 @@ export function createTabRepeats({
     }
   }
   return repeats;
+}
+
+function getTabSectionBaseVariables(tab: TabItem): SceneVariableSet | undefined {
+  const variableSet = tab.state.$variables;
+  if (!variableSet || !(variableSet instanceof SceneVariableSet)) {
+    return undefined;
+  }
+
+  const baseVariables = variableSet.state.variables.filter((v) => !(v instanceof LocalValueVariable));
+  if (baseVariables.length === 0) {
+    return undefined;
+  }
+
+  return new SceneVariableSet({ variables: baseVariables });
 }
 
 const getStyles = () => ({

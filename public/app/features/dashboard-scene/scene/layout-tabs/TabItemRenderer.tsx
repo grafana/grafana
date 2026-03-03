@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Draggable, DraggableStateSnapshot } from '@hello-pangea/dnd';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useLocation } from 'react-router';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
@@ -12,6 +13,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { SectionVariableControls } from '../VariableControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { TabItem } from './TabItem';
@@ -149,12 +151,15 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     tab.state.conditionalRendering
   );
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  const tabVariablesSet = tab.state.$variables;
 
   return (
     <TabContent
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
+      {sectionVariablesEnabled && tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>
