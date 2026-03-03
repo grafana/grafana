@@ -9,22 +9,13 @@ export const PANEL_STATES = {
 export type PanelState = (typeof PANEL_STATES)[keyof typeof PANEL_STATES];
 
 export const VizSuggestionsInteractions = {
-  suggestionPreviewed: (properties: {
-    pluginId: string;
-    suggestionName: string;
-    panelState: PanelState;
-    isAutoSelected?: boolean;
-  }) => {
-    reportVizSuggestionsInteraction('suggestion_previewed', properties);
-  },
-
-  suggestionAccepted: (properties: {
+  suggestionApplied: (properties: {
     pluginId: string;
     suggestionName: string;
     panelState: PanelState;
     suggestionIndex: number;
   }) => {
-    reportVizSuggestionsInteraction('suggestion_accepted', properties);
+    reportVizSuggestionsInteraction('suggestion_applied', properties);
   },
 
   panelSaved: (properties: {

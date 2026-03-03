@@ -118,7 +118,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
 
   const handleSuggestionClick = useCallback(
     (suggestion: PanelPluginVisualizationSuggestion, suggestionIndex: number) => {
-      VizSuggestionsInteractions.suggestionAccepted({
+      VizSuggestionsInteractions.suggestionApplied({
         pluginId: suggestion.pluginId,
         suggestionName: suggestion.name,
         panelState,
@@ -156,13 +156,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     // the previously selected suggestion is no longer present in the list.
     const newFirstCardHash = suggestions[0]?.hash ?? null;
     if (firstCardHash !== newFirstCardHash) {
-      VizSuggestionsInteractions.suggestionPreviewed({
-        pluginId: suggestions[0].pluginId,
-        suggestionName: suggestions[0].name,
-        panelState,
-        isAutoSelected: true,
-      });
-
       onChange({
         pluginId: suggestions[0].pluginId,
         options: suggestions[0].options,
