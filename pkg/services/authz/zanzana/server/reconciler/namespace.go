@@ -15,11 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-// fetchAndTranslateClusterGVRs fetches cluster-scoped GlobalRole resources, resolves their
-// effective permissions (following RoleRefs + PermissionsOmitted), and returns both the
-// Zanzana tuples and a map of resolved permissions for use by namespace workers.
-func (r *Reconciler) fetchAndTranslateClusterGVRs(ctx context.Context) (
-	[]*openfgav1.TupleKey,
+// fetchGlobalRolePerms fetches cluster-scoped GlobalRole resources and resolves their
+// effective permissions (following RoleRefs + PermissionsOmitted). The returned map is
+// shared across all namespace workers for Role composition and per-namespace injection.
+func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 	map[string][]*authzextv1.RolePermission,
 	error,
 ) {
@@ -27,11 +26,11 @@ func (r *Reconciler) fetchAndTranslateClusterGVRs(ctx context.Context) (
 
 	clients, err := r.clientFactory.Clients(ctx, "")
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get cluster clients: %w", err)
+		return nil, fmt.Errorf("failed to get cluster clients: %w", err)
 	}
 	resourceClient, _, err := clients.ForResource(ctx, gvr)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get client for %s: %w", gvr, err)
+		return nil, fmt.Errorf("failed to get client for %s: %w", gvr, err)
 	}
 
 	// 1. Collect all GlobalRole objects into a map for two-pass resolution.
@@ -45,26 +44,16 @@ func (r *Reconciler) fetchAndTranslateClusterGVRs(ctx context.Context) (
 		return nil
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list GlobalRoles: %w", err)
+		return nil, fmt.Errorf("failed to list GlobalRoles: %w", err)
 	}
 
 	// 2. Resolve effective permissions for each GlobalRole (handles RoleRefs + PermissionsOmitted).
 	resolvedPerms, err := resolveAllGlobalRolePermissions(allGlobalRoles)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to resolve GlobalRole permissions: %w", err)
+		return nil, fmt.Errorf("failed to resolve GlobalRole permissions: %w", err)
 	}
 
-	// 3. Generate Zanzana tuples from resolved permissions.
-	var allTuples []*openfgav1.TupleKey
-	for name, perms := range resolvedPerms {
-		tuples, err := zanzana.RoleToTuples(name, perms)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to generate tuples for GlobalRole %s: %w", name, err)
-		}
-		allTuples = append(allTuples, tuples...)
-	}
-
-	return allTuples, resolvedPerms, nil
+	return resolvedPerms, nil
 }
 
 // resolveAllGlobalRolePermissions resolves effective permissions for all GlobalRoles using
@@ -161,24 +150,35 @@ func resolveAllGlobalRolePermissions(
 
 // fetchAndTranslateTuples fetches CRDs from Unistore and translates them directly to tuples.
 // This streaming approach avoids keeping all CRDs in memory.
+//
+// GlobalRole tuples are injected selectively: only GlobalRoles that are NOT referenced by any
+// namespace Role are added standalone. GlobalRoles that ARE referenced already have their
+// permissions inlined into the namespace Role's tuples via translateRoleToTuples composition.
 func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string) ([]*openfgav1.TupleKey, error) {
-	// Seed with pre-fetched global role tuples (cluster-scoped, shared across all namespaces).
-	// Both fields are read under a single lock so readers always see a consistent snapshot.
-	cachedTuples, globalRolePerms := r.getGlobalRoleData()
-	allTuples := make([]*openfgav1.TupleKey, 0, len(cachedTuples))
-	allTuples = append(allTuples, cachedTuples...)
+	globalRolePerms := r.getGlobalRolePerms()
+	allTuples := make([]*openfgav1.TupleKey, 0, len(globalRolePerms)*2)
+
+	// Track which GlobalRoles are referenced by namespace Roles via RoleRefs.
+	// Those have their permissions inlined and must not be added as standalone tuples.
+	referencedGlobalRoles := make(map[string]bool)
 
 	// Map resource types to their translation functions
 	translators := map[string]func(*unstructured.Unstructured) ([]*openfgav1.TupleKey, error){
 		"folders": TranslateFolderToTuples,
 		"roles": func(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
+			// Collect RoleRefs so we know which GlobalRoles are already inlined.
+			var role iamv0.Role
+			if err := convertUnstructured(obj, &role); err == nil {
+				for _, ref := range role.Spec.RoleRefs {
+					referencedGlobalRoles[ref.Name] = true
+				}
+			}
 			return translateRoleToTuples(obj, globalRolePerms)
 		},
 		"rolebindings":        TranslateRoleBindingToTuples,
 		"resourcepermissions": TranslateResourcePermissionToTuples,
 		"teambindings":        TranslateTeamBindingToTuples,
 		"users":               TranslateUserToTuples,
-		"globalrolebindings":  TranslateGlobalRoleBindingToTuples,
 	}
 
 	// Process each GVR type and translate to tuples immediately
@@ -193,6 +193,19 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 			return nil, fmt.Errorf("failed to process %s: %w", gvr.Resource, err)
 		}
 
+		allTuples = append(allTuples, tuples...)
+	}
+
+	// For GlobalRoles not referenced by any namespace Role, add their tuples directly.
+	// Referenced GlobalRoles are already inlined into namespace Role tuples above.
+	for roleName, perms := range globalRolePerms {
+		if referencedGlobalRoles[roleName] {
+			continue
+		}
+		tuples, err := zanzana.RoleToTuples(roleName, perms)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate tuples for unlinked GlobalRole %s: %w", roleName, err)
+		}
 		allTuples = append(allTuples, tuples...)
 	}
 

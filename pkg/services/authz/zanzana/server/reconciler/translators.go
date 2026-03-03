@@ -73,15 +73,10 @@ func translateRoleToTuples(
 				}
 			}
 		}
-		// Own Permissions are additions on top of the referenced role.
-		for _, p := range role.Spec.Permissions {
-			effective[p.Action+"|"+p.Scope] = &authzextv1.RolePermission{Action: p.Action, Scope: p.Scope}
-		}
-	} else {
-		// Custom role or no perms map available: use Spec.Permissions directly.
-		for _, p := range role.Spec.Permissions {
-			effective[p.Action+"|"+p.Scope] = &authzextv1.RolePermission{Action: p.Action, Scope: p.Scope}
-		}
+	}
+	// Own permissions are always applied: additions for basic roles, full set for custom roles.
+	for _, p := range role.Spec.Permissions {
+		effective[p.Action+"|"+p.Scope] = &authzextv1.RolePermission{Action: p.Action, Scope: p.Scope}
 	}
 
 	perms := make([]*authzextv1.RolePermission, 0, len(effective))

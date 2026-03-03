@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -30,8 +29,7 @@ type Reconciler struct {
 
 	workQueue chan string
 
-	globalRoleMu     sync.RWMutex
-	globalRoleTuples []*openfgav1.TupleKey
+	globalRoleMu sync.RWMutex
 	// resolved effective permissions per GlobalRole name (for Role composition)
 	globalRolePerms map[string][]*authzextv1.RolePermission
 }
@@ -59,7 +57,6 @@ var reconcileGVRs = []schema.GroupVersionResource{
 	iamv0.ResourcePermissionInfo.GroupVersionResource(),
 	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
 	iamv0.UserResourceInfo.GroupVersionResource(),
-	iamv0.GlobalRoleBindingKind().GroupVersionResource(),
 }
 
 // NewReconciler creates a new reconciler instance.
@@ -80,17 +77,16 @@ func NewReconciler(
 	}
 }
 
-func (r *Reconciler) setGlobalRoleData(tuples []*openfgav1.TupleKey, perms map[string][]*authzextv1.RolePermission) {
+func (r *Reconciler) setGlobalRolePerms(perms map[string][]*authzextv1.RolePermission) {
 	r.globalRoleMu.Lock()
 	defer r.globalRoleMu.Unlock()
-	r.globalRoleTuples = tuples
 	r.globalRolePerms = perms
 }
 
-func (r *Reconciler) getGlobalRoleData() ([]*openfgav1.TupleKey, map[string][]*authzextv1.RolePermission) {
+func (r *Reconciler) getGlobalRolePerms() map[string][]*authzextv1.RolePermission {
 	r.globalRoleMu.RLock()
 	defer r.globalRoleMu.RUnlock()
-	return r.globalRoleTuples, r.globalRolePerms
+	return r.globalRolePerms
 }
 
 // Run starts the reconciler's main loop and worker goroutines.
@@ -132,14 +128,14 @@ func (r *Reconciler) Run(ctx context.Context) error {
 
 // queueAllNamespaces lists all OpenFGA stores and queues them for reconciliation.
 func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
-	// Fetch global role tuples once per tick and cache them for all namespaces.
-	globalTuples, globalPerms, err := r.fetchAndTranslateClusterGVRs(ctx)
+	// Fetch global role permissions once per tick and cache them for all namespaces.
+	globalPerms, err := r.fetchGlobalRolePerms(ctx)
 	if err != nil {
 		r.logger.Error("Failed to fetch global roles", "error", err)
-		globalTuples, globalPerms = nil, nil
+		globalPerms = nil
 	}
 
-	r.setGlobalRoleData(globalTuples, globalPerms)
+	r.setGlobalRolePerms(globalPerms)
 
 	stores, err := r.server.ListAllStores(ctx)
 	if err != nil {

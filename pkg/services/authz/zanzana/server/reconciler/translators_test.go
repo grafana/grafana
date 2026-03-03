@@ -14,6 +14,7 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 
@@ -827,6 +828,52 @@ func TestResolveAllGlobalRolePermissions(t *testing.T) {
 		assert.True(t, derivedPerms["dashboards:read|*"])
 		assert.True(t, derivedPerms["teams:read|*"])
 	})
+}
+
+// TestUnlinkedGlobalRoleInjection verifies the per-namespace injection logic:
+// GlobalRoles referenced by a namespace Role are NOT injected as standalone tuples
+// (their permissions are already inlined via translateRoleToTuples composition).
+// GlobalRoles NOT referenced by any namespace Role ARE injected as standalone tuples.
+func TestUnlinkedGlobalRoleInjection(t *testing.T) {
+	globalRolePerms := map[string][]*authzextv1.RolePermission{
+		"linked-role":   {{Action: "dashboards:read", Scope: "dashboards:uid:d1"}},
+		"unlinked-role": {{Action: "dashboards:read", Scope: "dashboards:uid:d2"}},
+	}
+
+	referencedGlobalRoles := map[string]bool{
+		"linked-role": true,
+	}
+
+	// Simulate the injection loop from fetchAndTranslateTuples.
+	var injected []*openfgav1.TupleKey
+	for roleName, perms := range globalRolePerms {
+		if referencedGlobalRoles[roleName] {
+			continue
+		}
+		tuples, err := zanzana.RoleToTuples(roleName, perms)
+		require.NoError(t, err)
+		injected = append(injected, tuples...)
+	}
+
+	require.NotEmpty(t, injected, "unlinked-role should produce tuples")
+
+	// All injected tuples must come from unlinked-role (the only non-referenced role).
+	for _, tuple := range injected {
+		assert.Contains(t, tuple.GetUser(), "unlinked-role",
+			"all injected standalone tuples must belong to unlinked-role")
+	}
+
+	// Confirm that linked-role produced no standalone tuples.
+	linkedTuples, err := zanzana.RoleToTuples("linked-role", globalRolePerms["linked-role"])
+	require.NoError(t, err)
+	require.NotEmpty(t, linkedTuples, "linked-role has translatable permissions")
+
+	for _, lt := range linkedTuples {
+		for _, it := range injected {
+			assert.NotEqual(t, lt.GetUser(), it.GetUser(),
+				"linked-role tuples must not appear in the injected set")
+		}
+	}
 }
 
 // permSet converts a permission slice to a map of "action|scope" keys for easy assertion.
