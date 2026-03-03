@@ -7827,7 +7827,10 @@
     "pro-tip": "ProTip: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Try returning <4>home</4> or seeking help on the <7>community site.</7>"
+    "community-link": "Community Help",
+    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Please check the URL and try again.",
+    "home-link": "Back to Home",
+    "title": "{{entity}} not found"
   },
   "errors": {
     "dashboard-settings": {

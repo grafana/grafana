@@ -150,7 +150,14 @@ export async function getFolderByUidFacade(uid: string) {
     const [legacyFolderResponse, folderResponse, parentsResponse] = responses;
 
     if (!folderResponse?.data || !legacyFolderResponse?.data || !parentsResponse?.data) {
-      throw new Error('One of the folder responses is undefined');
+      // Throw the original error (with HTTP status) so callers can detect e.g. 403 and
+      // gracefully continue — this handles the case when a user has access to a dashboard
+      // but not to the containing folder.
+      const error =
+        ('error' in folderResponse ? folderResponse.error : undefined) ||
+        legacyFolderResponse?.error ||
+        ('error' in parentsResponse ? parentsResponse.error : undefined);
+      throw error || new Error('One of the folder responses is undefined');
     }
 
     const userKeys = getUserKeys(folderResponse.data);
