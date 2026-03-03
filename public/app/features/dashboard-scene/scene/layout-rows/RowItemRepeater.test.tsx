@@ -79,6 +79,15 @@ describe('RowItemRepeater', () => {
       expect(stateUpdates).toBe(1);
     });
 
+    it('Should render source row instead of infinite spinner when $__all is selected and variable returns no options', async () => {
+      const { rowToRepeat } = renderScene({ variableQueryTime: 0 }, []);
+
+      await waitFor(() => {
+        expect(rowToRepeat.state.repeatedRows).toBeDefined();
+        expect(rowToRepeat.state.repeatedRows).toHaveLength(0);
+      });
+    });
+
     it('Should handle removing repeats', async () => {
       const { rowToRepeat } = renderScene({ variableQueryTime: 0 });
 

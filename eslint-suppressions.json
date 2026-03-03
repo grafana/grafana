@@ -1693,11 +1693,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelOptionsPane.test.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1726,7 +1721,7 @@
       "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 8
+      "count": 7
     }
   },
   "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItemEditor.tsx": {
