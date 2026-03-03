@@ -21,10 +21,19 @@ export interface Props {
   onItemClick: (item: PanelPluginVisualizationSuggestion, index: number) => void;
   getItemKey: (item: PanelPluginVisualizationSuggestion) => string;
   selectedKey?: string;
+  minColumnWidth?: number;
 }
 
-export function VisualizationCardGrid({ items, groups, data, onItemClick, getItemKey, selectedKey }: Props) {
-  const styles = useStyles2(getStyles);
+export function VisualizationCardGrid({
+  items,
+  groups,
+  data,
+  onItemClick,
+  getItemKey,
+  selectedKey,
+  minColumnWidth,
+}: Props) {
+  const styles = useStyles2(getStyles, minColumnWidth);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
 
   const itemIndexMap = useMemo(() => {
@@ -97,11 +106,11 @@ export function VisualizationCardGrid({ items, groups, data, onItemClick, getIte
   return <div className={styles.grid}>{items?.map((item, index) => renderCard(item, index === 0))}</div>;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, minColumnWidth = MIN_MULTI_COLUMN_SIZE) => ({
   grid: css({
     display: 'grid',
     gridGap: theme.spacing(1),
-    gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_MULTI_COLUMN_SIZE}px, 1fr))`,
+    gridTemplateColumns: `repeat(auto-fit, minmax(${minColumnWidth}px, 1fr))`,
     marginBottom: theme.spacing(1),
     justifyContent: 'space-evenly',
   }),

@@ -75,6 +75,7 @@ export function PanelStylesSection({ panel }: { panel: VizPanel }) {
         onItemClick={(preset) => handlePresetApply(preset)}
         getItemKey={(preset) => preset.hash}
         selectedKey={selectedPreset}
+        minColumnWidth={120}
       />
     </OptionsPaneCategory>
   );
