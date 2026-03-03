@@ -24,11 +24,13 @@ jest.mock('./VisualizationSuggestionCard', () => ({
   VisualizationSuggestionCard: ({
     onClick,
     suggestion,
+    isSelected,
   }: {
     onClick: () => void;
     suggestion: PanelPluginVisualizationSuggestion;
+    isSelected?: boolean;
   }) => (
-    <div data-testid={`card-${suggestion.hash}`} onClick={onClick}>
+    <div data-testid={`card-${suggestion.hash}`} data-selected={isSelected ? 'true' : 'false'} onClick={onClick}>
       {suggestion.name}
     </div>
   ),
@@ -121,6 +123,35 @@ describe('VisualizationCardGrid', () => {
       fireEvent.keyDown(card, { key: ' ' });
 
       expect(onItemClick).toHaveBeenCalledWith(mockItem[0], 0);
+    });
+
+    it('should mark card as selected when selectedKey is provided', () => {
+      render(
+        <VisualizationCardGrid
+          items={mockItem}
+          data={mockData}
+          onItemClick={onItemClick}
+          getItemKey={(item) => item.hash}
+          selectedKey="ts-hash"
+        />
+      );
+
+      expect(screen.getByTestId('card-ts-hash')).toHaveAttribute('data-selected', 'true');
+      expect(screen.getByTestId('card-table-hash')).toHaveAttribute('data-selected', 'false');
+    });
+
+    it('should not mark any card as selected when selectedKey is undefined', () => {
+      render(
+        <VisualizationCardGrid
+          items={mockItem}
+          data={mockData}
+          onItemClick={onItemClick}
+          getItemKey={(item) => item.hash}
+        />
+      );
+
+      expect(screen.getByTestId('card-ts-hash')).toHaveAttribute('data-selected', 'false');
+      expect(screen.getByTestId('card-table-hash')).toHaveAttribute('data-selected', 'false');
     });
 
     it('should not call onChange when an unrelated key is pressed on a card', async () => {
