@@ -207,7 +207,7 @@ const getStyles = (
 ) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
-    height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
+    height: false ? `${LOG_LINE_DETAILS_HEIGHT}vh` : undefined,
     padding: theme.spacing(1, 2, 1.5, 2),
     marginRight: 1,
   }),
