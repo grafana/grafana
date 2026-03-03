@@ -4,7 +4,7 @@ import { DataSourceLogo } from 'app/features/datasources/components/picker/DataS
 import { useDatasource } from 'app/features/datasources/hooks';
 
 import { ActionItem } from '../../Actions';
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { PENDING_CARD_ID, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { getEditorType } from '../utils';
 
@@ -54,10 +54,10 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
         <CardTitle title={query.refId} isHidden={isHidden} />
       </SidebarCard>
       {pendingExpression?.insertAfter === query.refId && (
-        <GhostSidebarCard id="__pending_expression__" type={QueryEditorType.Expression} />
+        <GhostSidebarCard id={PENDING_CARD_ID.expression} type={QueryEditorType.Expression} />
       )}
       {pendingSavedQuery?.insertAfter === query.refId && (
-        <GhostSidebarCard id="__pending_saved_query__" type={QueryEditorType.Query} />
+        <GhostSidebarCard id={PENDING_CARD_ID.savedQuery} type={QueryEditorType.Query} />
       )}
     </>
   );

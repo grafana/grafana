@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { LoadingBar } from '@grafana/ui';
 
-import { QueryEditorType } from '../../constants';
+import { PENDING_CARD_ID, QueryEditorType } from '../../constants';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { AddCardButton } from './AddCardButton';
@@ -54,10 +54,10 @@ export function QueriesAndTransformationsView() {
           onDragEnd={onQueryDragEnd}
         />
         {pendingExpression && !pendingExpression.insertAfter && (
-          <GhostSidebarCard id="__pending_expression__" type={QueryEditorType.Expression} />
+          <GhostSidebarCard id={PENDING_CARD_ID.expression} type={QueryEditorType.Expression} />
         )}
         {pendingSavedQuery && !pendingSavedQuery.insertAfter && (
-          <GhostSidebarCard id="__pending_saved_query__" type={QueryEditorType.Query} />
+          <GhostSidebarCard id={PENDING_CARD_ID.savedQuery} type={QueryEditorType.Query} />
         )}
       </QuerySidebarCollapsableHeader>
       <QuerySidebarCollapsableHeader
@@ -76,7 +76,7 @@ export function QueriesAndTransformationsView() {
           />
         )}
         {pendingTransformation && !pendingTransformation.insertAfter && (
-          <GhostSidebarCard id="__pending_transformation__" type={QueryEditorType.Transformation} />
+          <GhostSidebarCard id={PENDING_CARD_ID.transformation} type={QueryEditorType.Transformation} />
         )}
       </QuerySidebarCollapsableHeader>
     </>
