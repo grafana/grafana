@@ -404,7 +404,6 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ThemeNumberBetween0And1 = number;
 export type ThemeColor = string;
 export type ThemeColorSection = {
   border?: ThemeColor;
@@ -416,38 +415,74 @@ export type ThemeColorSection = {
   text?: ThemeColor;
   transparent?: ThemeColor;
 };
-export type ThemeHueColorDefinition = {
-  aliases?: string[];
-  color: ThemeColor;
-  primary?: boolean;
+export type ThemeRedHue = {
+  name: string;
+  shades: {
+    aliases?: string[];
+    color: string;
+    name: string;
+    primary?: boolean;
+  }[];
 };
-export type ThemeHueDefinition = {
-  dark?: ThemeHueColorDefinition;
-  light?: ThemeHueColorDefinition;
-  primary?: ThemeHueColorDefinition;
-  semi_dark?: ThemeHueColorDefinition;
-  super_light?: ThemeHueColorDefinition;
+export type ThemeOrangeHue = {
+  name: string;
+  shades: {
+    aliases?: string[];
+    color: string;
+    name: string;
+    primary?: boolean;
+  }[];
 };
+export type ThemeYellowHue = {
+  name: string;
+  shades: {
+    aliases?: string[];
+    color: string;
+    name: string;
+    primary?: boolean;
+  }[];
+};
+export type ThemeGreenHue = {
+  name: string;
+  shades: {
+    aliases?: string[];
+    color: string;
+    name: string;
+    primary?: boolean;
+  }[];
+};
+export type ThemeBlueHue = {
+  name: string;
+  shades: {
+    aliases?: string[];
+    color: string;
+    name: string;
+    primary?: boolean;
+  }[];
+};
+export type ThemePurpleHue = {
+  name: string;
+  shades: {
+    aliases?: string[];
+    color: string;
+    name: string;
+    primary?: boolean;
+  }[];
+};
+export type ThemeHue = ThemeRedHue | ThemeOrangeHue | ThemeYellowHue | ThemeGreenHue | ThemeBlueHue | ThemePurpleHue;
 export type ThemeVisualization = {
-  hues?: {
-    blue?: ThemeHueDefinition;
-    green?: ThemeHueDefinition;
-    orange?: ThemeHueDefinition;
-    purple?: ThemeHueDefinition;
-    red?: ThemeHueDefinition;
-    yellow?: ThemeHueDefinition;
-  };
+  hues?: ThemeHue[];
   palette?: string[];
 };
 export type ThemeSpec = {
-  colors: {
+  colors?: {
     action?: {
       disabledBackground?: string;
-      disabledOpacity?: ThemeNumberBetween0And1;
+      disabledOpacity?: number;
       disabledText?: string;
       focus?: string;
       hover?: string;
-      hoverOpacity?: ThemeNumberBetween0And1;
+      hoverOpacity?: number;
       selected?: string;
       selectedBorder?: string;
     };
@@ -462,16 +497,17 @@ export type ThemeSpec = {
       strong?: string;
       weak?: string;
     };
-    contrastThreshold?: ThemeNumberBetween0And1;
+    contrastThreshold?: number;
     error?: ThemeColorSection;
     gradients?: {
       brandHorizontal?: string;
       brandVertical?: string;
     };
-    hoverFactor?: ThemeNumberBetween0And1;
+    hoverFactor?: number;
     info?: ThemeColorSection;
-    mode: 'light' | 'dark';
+    mode?: 'light' | 'dark';
     primary?: ThemeColorSection;
+    scrollbar?: string;
     secondary?: ThemeColorSection;
     success?: ThemeColorSection;
     text?: {
@@ -481,25 +517,26 @@ export type ThemeSpec = {
       primary?: string;
       secondary?: string;
     };
-    tonalOffset?: ThemeNumberBetween0And1;
+    tonalOffset?: number;
     warning?: ThemeColorSection;
   };
+  id: string;
+  name: string;
   shape?: {
     borderRadius?: number;
   };
   spacing?: {
     gridSize?: number;
   };
-  title: string;
   typography?: {
     fontFamily?: string;
     fontFamilyMonospace?: string;
-    fontSize?: ThemeNumberBetween0And1;
-    fontWeightBold?: ThemeNumberBetween0And1;
-    fontWeightLight?: ThemeNumberBetween0And1;
-    fontWeightMedium?: ThemeNumberBetween0And1;
-    fontWeightRegular?: ThemeNumberBetween0And1;
-    htmlFontSize?: ThemeNumberBetween0And1;
+    fontSize?: number;
+    fontWeightBold?: number;
+    fontWeightLight?: number;
+    fontWeightMedium?: number;
+    fontWeightRegular?: number;
+    htmlFontSize?: number;
   };
   visualization?: ThemeVisualization;
 };
