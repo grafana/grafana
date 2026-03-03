@@ -1,45 +1,27 @@
-import { Component } from 'react';
-import * as React from 'react';
-import { Observable, Unsubscribable } from 'rxjs';
+import { useState, useEffect, ComponentType } from 'react';
+import { Observable } from 'rxjs';
 
 interface Props<T> {
   watch: Observable<T>;
-  child: React.ComponentType<T>;
+  child: ComponentType<T>;
   initialSubProps: T;
 }
 
-interface State<T> {
-  subProps: T;
-}
+export function ObservablePropsWrapper<T extends {}>({ watch, child: Child, initialSubProps }: Props<T>) {
+  const [subProps, setSubProps] = useState<T>(initialSubProps);
 
-export class ObservablePropsWrapper<T extends {}> extends Component<Props<T>, State<T>> {
-  sub?: Unsubscribable;
-
-  constructor(props: Props<T>) {
-    super(props);
-    this.state = {
-      subProps: props.initialSubProps,
-    };
-  }
-
-  componentDidMount() {
-    this.sub = this.props.watch.subscribe({
-      next: (subProps: T) => {
-        this.setState({ subProps });
-      },
+  useEffect(() => {
+    const subscription = watch.subscribe({
+      next: setSubProps,
       complete: () => {},
-      error: (err) => {},
+      error: () => {},
     });
-  }
+    return () => subscription.unsubscribe();
+    // original class component did not handle re-subscribes,
+    // if we need that moving forward just add watch to the dependency array
+    // and remove eslint comment below
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  componentWillUnmount() {
-    if (this.sub) {
-      this.sub.unsubscribe();
-    }
-  }
-
-  render() {
-    const { subProps } = this.state;
-    return <this.props.child {...subProps} />;
-  }
+  return <Child {...subProps} />;
 }
