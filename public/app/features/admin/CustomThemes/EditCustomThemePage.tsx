@@ -34,7 +34,7 @@ export default function EditCustomThemePage() {
     handleSubmit,
     register,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<FormData>();
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function EditCustomThemePage() {
             <Button variant="secondary" onClick={() => navigate('/themes')}>
               <Trans i18nKey="admin.edit-custom-theme-page.cancel">Cancel</Trans>
             </Button>
-            <Button type="submit" disabled={isLoading || isLoadingTheme}>
+            <Button type="submit" disabled={isLoading || isLoadingTheme || !isDirty}>
               <Trans i18nKey="admin.edit-custom-theme-page.submit">Save custom theme</Trans>
             </Button>
           </Stack>

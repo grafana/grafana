@@ -29,8 +29,11 @@ export default function NewCustomThemePage() {
   const {
     handleSubmit,
     register,
+    watch,
     formState: { errors },
   } = useForm<FormData>();
+  const [themeName, themeJson] = watch(['themeName', 'themeJson']);
+  const isBothFieldsPopulated = Boolean(themeName && themeJson);
 
   const onSubmit = async ({ themeJson, themeName }: FormData) => {
     await createTheme({
@@ -73,7 +76,7 @@ export default function NewCustomThemePage() {
             <TextArea {...register('themeJson', { required: true })} rows={20} placeholder="{}" />
           </Field>
           <Stack justifyContent="flex-end">
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !isBothFieldsPopulated}>
               <Trans i18nKey="admin.new-custom-theme-page.submit">Add custom theme</Trans>
             </Button>
           </Stack>
