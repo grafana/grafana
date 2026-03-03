@@ -238,14 +238,15 @@ function getStyles(
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+
       width: '100%',
       background: isSelected ? selectedBg : themeColors.card.bg,
       borderRadius: theme.shape.radius.default,
-      overflow: 'hidden',
+      cursor: 'pointer',
 
+      overflow: 'hidden',
       border: `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`,
       boxShadow: isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none',
-
       '&::before': {
         content: '""',
         position: 'absolute',
@@ -260,7 +261,7 @@ function getStyles(
           }),
         },
       },
-      cursor: 'pointer',
+
       ...(item.isHidden && {
         opacity: theme.isDark ? 0.6 : 0.7,
         filter: 'grayscale(0.8)',

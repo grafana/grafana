@@ -106,9 +106,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.primary.transparent,
       pointerEvents: 'none',
       borderRadius: theme.shape.radius.default,
-
       overflow: 'hidden',
-
       '&::before': {
         content: '""',
         position: 'absolute',
