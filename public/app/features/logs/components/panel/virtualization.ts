@@ -343,8 +343,7 @@ export interface LogFieldDimension {
 export function getLogLineDOMHeight(
   virtualization: LogLineVirtualization,
   element: HTMLDivElement,
-  calculatedHeight?: number,
-  collapsed?: boolean
+  calculatedHeight?: number
 ): number | null {
   /**
    * Extreme edge case: inline log details is open, the element is outside the viewport and will be removed
@@ -359,7 +358,7 @@ export function getLogLineDOMHeight(
   let measuredHeight = element.scrollHeight;
   const height = calculatedHeight ?? element.scrollHeight;
   if (measuredHeight > 0 && measuredHeight !== height) {
-    return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
+    return measuredHeight;
   }
 
   // No overflow or undermeasurement
