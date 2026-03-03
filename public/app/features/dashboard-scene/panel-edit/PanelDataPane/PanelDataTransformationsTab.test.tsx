@@ -187,7 +187,7 @@ describe('PanelDataTransformationsTab', () => {
       jest.mocked(reportInteraction).mockClear();
     });
 
-    it('reports grafana_panel_transformations_clicked with action remove when user deletes a transformation', async () => {
+    it('reports grafana_panel_transformations_clicked with action delete when user deletes a transformation', async () => {
       const onChangeTransformation = jest.fn();
       const modelMock = createModelMock(mockData, [{ id: 'calculateField', options: {} }], onChangeTransformation);
       render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
@@ -202,7 +202,8 @@ describe('PanelDataTransformationsTab', () => {
       expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
         context: 'transformations_list',
         type: 'calculateField',
-        action: 'remove',
+        action: 'delete',
+        total_transformations: 0,
       });
     });
 
@@ -227,7 +228,7 @@ describe('PanelDataTransformationsTab', () => {
       expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
         context: 'transformations_list',
         type: 'calculateField',
-        action: 'remove',
+        action: 'delete',
         total_transformations: 1,
       });
     });
@@ -254,7 +255,6 @@ describe('PanelDataTransformationsTab', () => {
       expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
         context: 'transformations_list',
         action: 'delete_all',
-        total_transformations: 0,
       });
     });
   });
