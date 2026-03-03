@@ -2346,6 +2346,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardSectionVariables",
+			Description:  "Enables support for section level variables (rows and tabs)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "smoothingTransformation",
 			Description:  "Enables the ASAP smoothing transformation for time series data",
 			Stage:        FeatureStageExperimental,
