@@ -245,14 +245,88 @@ datasources:
 
 Replace `<USERNAME>` and `<PASSWORD>` with your Jaeger credentials.
 
-## Query data via gRPC endpoint (public preview)
+## Provision with Terraform
 
-Jaeger offers an alternative method for querying data that uses their gRPC service over HTTP. For detailed information about the API and setup requirements, refer to the [Jaeger API documentation](https://www.jaegertracing.io/docs/2.12/architecture/apis/#query-json-over-http).
+You can provision the Jaeger data source using [Terraform](https://www.terraform.io/) with the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
-The following queries are supported through the gRPC endpoint:
+For more information about provisioning resources with Terraform, refer to the [Grafana as code using Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/) documentation.
 
-- Service search
-- Operation search
-- Trace ID search
+### Terraform example
 
-To enable gRPC querying for Jaeger within Grafana, enable the `jaegerEnableGrpcEndpoint` feature flag. Grafana Cloud customers should contact support to request access and provide feedback on this feature.
+The following example provisions a Jaeger data source:
+
+```hcl
+terraform {
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+      version = ">= 2.0.0"
+    }
+  }
+}
+
+provider "grafana" {
+  url  = "<YOUR_GRAFANA_URL>"
+  auth = "<YOUR_SERVICE_ACCOUNT_TOKEN>"
+}
+
+resource "grafana_data_source" "jaeger" {
+  type = "jaeger"
+  name = "Jaeger"
+  url  = "http://localhost:16686"
+
+  json_data_encoded = jsonencode({
+    nodeGraph = {
+      enabled = true
+    }
+    traceIdTimeParams = {
+      enabled = true
+    }
+    tracesToLogsV2 = {
+      datasourceUid    = "loki"
+      filterByTraceID  = true
+      filterBySpanID   = false
+      tags = [
+        { key = "service.name", value = "service" },
+        { key = "job" }
+      ]
+    }
+  })
+}
+```
+
+### Terraform example with basic authentication
+
+The following example provisions a Jaeger data source with basic authentication:
+
+```hcl
+resource "grafana_data_source" "jaeger_auth" {
+  type                = "jaeger"
+  name                = "Jaeger"
+  url                 = "http://localhost:16686"
+  basic_auth_enabled  = true
+  basic_auth_username = "<USERNAME>"
+
+  json_data_encoded = jsonencode({
+    nodeGraph = {
+      enabled = true
+    }
+    traceIdTimeParams = {
+      enabled = true
+    }
+  })
+
+  secure_json_data_encoded = jsonencode({
+    basicAuthPassword = "<PASSWORD>"
+  })
+}
+```
+
+Replace the following placeholders:
+
+- _`<YOUR_GRAFANA_URL>`_: Your Grafana instance URL (for example, `https://your-org.grafana.net` for Grafana Cloud)
+- _`<YOUR_SERVICE_ACCOUNT_TOKEN>`_: A service account token with data source permissions
+- _`<USERNAME>`_: The username for basic authentication
+- _`<PASSWORD>`_: The password for basic authentication
+
+For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).

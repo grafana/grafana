@@ -164,6 +164,18 @@ You can filter by one or more of the following:
 
 Toggle **Show matches only** to hide spans that don't match your filters.
 
+## Query data via gRPC endpoint (public preview)
+
+Jaeger offers an alternative method for querying data that uses their gRPC service over HTTP. For detailed information about the API and setup requirements, refer to the [Jaeger API documentation](https://www.jaegertracing.io/docs/2.12/architecture/apis/#query-json-over-http).
+
+The following queries are supported through the gRPC endpoint:
+
+- Service search
+- Operation search
+- Trace ID search
+
+To enable gRPC querying for Jaeger within Grafana, enable the `jaegerEnableGrpcEndpoint` feature flag. Grafana Cloud customers should contact support to request access and provide feedback on this feature.
+
 ## Use template variables
 
 The Jaeger query editor supports [Grafana template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) for creating dynamic, reusable dashboards. You can use template variables in the following query fields:
