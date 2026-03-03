@@ -73,9 +73,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
 
   /**
-   * Duplicate, like clone but with new keys
+   * Duplicate, like clone but with new keys.
+   * @param panelIdGenerator Optional sequential ID generator shared across
+   *   sibling layouts to prevent duplicate panel IDs.
    */
-  duplicate(): DashboardLayoutManager;
+  duplicate(panelIdGenerator?: () => number): DashboardLayoutManager;
 
   /**
    * Paste a panel from the clipboard

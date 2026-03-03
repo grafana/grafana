@@ -181,8 +181,10 @@ export class TabItem
     this.getParentLayout().duplicateTab(this);
   }
 
-  public duplicate(): TabItem {
-    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
+  // panelIdGenerator is a shared sequential counter created by the parent layout
+  // we forward id to ensure sibling tabs never produce duplicate panel IDs
+  public duplicate(panelIdGenerator?: () => number): TabItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
   }
 
   public onChangeTitle(title: string) {

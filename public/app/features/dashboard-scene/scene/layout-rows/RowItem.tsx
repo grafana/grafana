@@ -168,8 +168,10 @@ export class RowItem
     this.getParentLayout().duplicateRow(this);
   }
 
-  public duplicate(): RowItem {
-    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
+  // panelIdGenerator is a shared sequential counter created by the parent layout
+  // we forward id to ensure sibling tabs never produce duplicate panel IDs
+  public duplicate(panelIdGenerator?: () => number): RowItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
   }
 
   public serialize(): RowsLayoutRowKind {

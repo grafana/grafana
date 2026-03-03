@@ -186,23 +186,23 @@ export class AutoGridLayoutManager
     });
   }
 
-  public duplicate(): DashboardLayoutManager {
+  // panelIdGenerator is a shared counter to ensure unique panel IDs across siblings.
+  public duplicate(panelIdGenerator?: () => number): DashboardLayoutManager {
     const children = this.state.layout.state.children;
     const clonedChildren: AutoGridItem[] = [];
 
     if (children.length) {
-      let panelId = dashboardSceneGraph.getNextPanelId(children[0].state.body);
+      const nextId = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(children[0].state.body);
 
       children.forEach((child) => {
         const clone = child.clone({
           key: undefined,
           body: child.state.body.clone({
-            key: getVizPanelKeyForPanelId(panelId),
+            key: getVizPanelKeyForPanelId(nextId()),
           }),
         });
 
         clonedChildren.push(clone);
-        panelId++;
       });
     }
 
