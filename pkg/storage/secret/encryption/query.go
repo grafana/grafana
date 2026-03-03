@@ -17,12 +17,13 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlEncryptedValueCreate   = mustTemplate("encrypted_value_create.sql")
-	sqlEncryptedValueRead     = mustTemplate("encrypted_value_read.sql")
-	sqlEncryptedValueUpdate   = mustTemplate("encrypted_value_update.sql")
-	sqlEncryptedValueDelete   = mustTemplate("encrypted_value_delete.sql")
-	sqlEncryptedValueListAll  = mustTemplate("encrypted_value_list_all.sql")
-	sqlEncryptedValueCountAll = mustTemplate("encrypted_value_count_all.sql")
+	sqlEncryptedValueCreate     = mustTemplate("encrypted_value_create.sql")
+	sqlEncryptedValueRead       = mustTemplate("encrypted_value_read.sql")
+	sqlEncryptedValueUpdate     = mustTemplate("encrypted_value_update.sql")
+	sqlEncryptedValueUpdateBulk = mustTemplate("encrypted_value_update_bulk.sql")
+	sqlEncryptedValueDelete     = mustTemplate("encrypted_value_delete.sql")
+	sqlEncryptedValueListAll    = mustTemplate("encrypted_value_list_all.sql")
+	sqlEncryptedValueCountAll   = mustTemplate("encrypted_value_count_all.sql")
 
 	sqlDataKeyCreate      = mustTemplate("data_key_create.sql")
 	sqlDataKeyRead        = mustTemplate("data_key_read.sql")
@@ -80,6 +81,25 @@ type updateEncryptedValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r updateEncryptedValue) Validate() error {
+	return nil // TODO
+}
+
+// Bulk update: one row per slice element (same namespace for all).
+type bulkUpdateRow struct {
+	Name          string
+	Version       int64
+	EncryptedData []byte
+	DataKeyID     string
+	Updated       int64
+}
+
+type updateBulkEncryptedValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Rows      []bulkUpdateRow
+}
+
+func (r updateBulkEncryptedValue) Validate() error {
 	return nil // TODO
 }
 

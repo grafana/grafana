@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -35,7 +36,7 @@ func ProvideConsolidationService(
 	}
 }
 
-func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
+func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.ConsolidateOptions) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ConsolidationService.Consolidate")
 	defer span.End()
 
@@ -45,6 +46,11 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 			span.RecordError(err)
 		}
 	}()
+
+	chunkSize := 100
+	if opts != nil && opts.ChunkSize > 0 {
+		chunkSize = opts.ChunkSize
+	}
 
 	// Disable all active data keys so no new data is encrypted with old keys.
 	if err = s.globalDataKeyStore.DisableAllDataKeys(ctx); err != nil {
@@ -61,8 +67,10 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 
 	var currentNamespace string
 	var batch []*contracts.EncryptedValue
+	lastFinalizedTime := time.Now()
 
 	finalize := func(ns string, values []*contracts.EncryptedValue) error {
+		fmt.Println("ConsolidationService.Consolidate: finalizing namespace", ns, "values", len(values))
 		if len(values) == 0 {
 			return nil
 		}
@@ -71,16 +79,26 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 		if err != nil {
 			return fmt.Errorf("consolidating namespace %s: %w", ns, err)
 		}
+		var bulkRows []contracts.BulkUpdateRow
 		for i, payload := range reEncrypted {
 			if payload == nil {
 				logging.FromContext(ctx).Error("Failed to re-encrypt value", "namespace", values[i].Namespace, "name", values[i].Name, "error", "nil payload")
 				continue
 			}
 			ev := values[i]
-			if err = s.encryptedValueStore.Update(ctx, nsKey, ev.Name, ev.Version, *payload); err != nil {
-				logging.FromContext(ctx).Error("Failed to update encrypted value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
+			bulkRows = append(bulkRows, contracts.BulkUpdateRow{
+				Name:    ev.Name,
+				Version: ev.Version,
+				Payload: *payload,
+			})
+		}
+		if len(bulkRows) > 0 {
+			if err = s.encryptedValueStore.UpdateBulk(ctx, nsKey, bulkRows, chunkSize); err != nil {
+				return fmt.Errorf("bulk updating namespace %s: %w", ns, err)
 			}
 		}
+		fmt.Println("ConsolidationService.Consolidate: finalized namespace", ns, "values", len(values), "time", time.Since(lastFinalizedTime))
+		lastFinalizedTime = time.Now()
 		return nil
 	}
 

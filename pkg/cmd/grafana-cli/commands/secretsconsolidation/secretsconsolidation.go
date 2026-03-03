@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/server"
 )
 
@@ -42,8 +43,15 @@ func ConsolidateSecrets(cmd utils.CommandLine, runner server.Runner) error {
 		runtime.SetCPUProfileRate(cpuProfileRate)
 	}
 
+	chunkSize := cmd.Int("chunk-size")
+	if chunkSize <= 0 {
+		chunkSize = 100
+	}
+
 	start := time.Now()
-	err := runner.SecretsConsolidationService.Consolidate(ctx)
+	err := runner.SecretsConsolidationService.Consolidate(ctx, &contracts.ConsolidateOptions{
+		ChunkSize: chunkSize,
+	})
 	elapsed := time.Since(start)
 
 	if benchmark || err != nil {

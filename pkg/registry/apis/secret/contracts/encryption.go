@@ -16,9 +16,7 @@ type EncryptionManager interface {
 	Encrypt(ctx context.Context, namespace xkube.Namespace, payload []byte, opts EncryptionOption) (EncryptedPayload, error)
 	Decrypt(ctx context.Context, namespace xkube.Namespace, payload EncryptedPayload, opts EncryptionOption) ([]byte, error)
 
-	// MM TODO: Clean up these docs
-	// ConsolidateNamespace re-encrypts all given values for a single namespace using a new DEK.
-	// It primes the DEK cache with a new key, decrypts and re-encrypts each value (using cache), then flushes the namespace cache.
+	// ConsolidateNamespace efficiently re-encrypts all given values for a single namespace using a new DEK, ensuring old DEKs are removed from the cache afterwards.
 	// Returns one payload per value in the same order; nil entries indicate decrypt or re-encrypt failure for that value.
 	ConsolidateNamespace(ctx context.Context, namespace xkube.Namespace, values []*EncryptedValue) ([]*EncryptedPayload, error)
 }
@@ -53,9 +51,17 @@ const (
 	OrderDirectionDesc OrderDirection = "DESC"
 )
 
+// BulkUpdateRow is one row for UpdateBulk: identity (Name, Version) and new payload.
+type BulkUpdateRow struct {
+	Name    string
+	Version int64
+	Payload EncryptedPayload
+}
+
 type EncryptedValueStorage interface {
 	Create(ctx context.Context, namespace xkube.Namespace, name string, version int64, encryptedData EncryptedPayload) (*EncryptedValue, error)
 	Update(ctx context.Context, namespace xkube.Namespace, name string, version int64, encryptedData EncryptedPayload) error
+	UpdateBulk(ctx context.Context, namespace xkube.Namespace, updates []BulkUpdateRow, chunkSize int) error
 	Get(ctx context.Context, namespace xkube.Namespace, name string, version int64) (*EncryptedValue, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 }
@@ -69,6 +75,13 @@ type EncryptedValueMigrationExecutor interface {
 	Execute(ctx context.Context) (int, error)
 }
 
+// ConsolidateOptions configures consolidation. Nil or zero values use defaults.
+type ConsolidateOptions struct {
+	// ChunkSize is the number of encrypted values per bulk update. Default 100 if <= 0.
+	ChunkSize int
+}
+
 type ConsolidationService interface {
-	Consolidate(ctx context.Context) error
+	// Consolidate re-encrypts all values; opts may be nil for defaults.
+	Consolidate(ctx context.Context, opts *ConsolidateOptions) error
 }

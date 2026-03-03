@@ -212,6 +212,11 @@ var adminCommands = []*cli.Command{
 						Usage: "CPU profile sample rate (samples per second). Default 5000; use 10000+ for high sample rate. Only applies when --cpuprofile is set.",
 						Value: 5000,
 					},
+					&cli.IntFlag{
+						Name:  "chunk-size",
+						Usage: "Number of encrypted values per bulk update. Default 100. Increase for fewer round-trips; decrease if hitting query size limits.",
+						Value: 100,
+					},
 				},
 			},
 		},

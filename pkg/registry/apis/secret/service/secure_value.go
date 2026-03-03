@@ -59,9 +59,9 @@ func ProvideSecureValueService(
 		metrics:                    metrics.NewSecureValueServiceMetrics(reg),
 	}
 
-	// SeedSecureValues can be called to populate the database for testing, e.g.:
-	//   SeedSecureValues(ctx, s, 1000, 20)
-	// err := SeedSecureValues(context.Background(), s, 1000, 20)
+	// // SeedSecureValues can be called to populate the database for testing, e.g.:
+	// //   SeedSecureValues(ctx, s, 1000, 20)
+	// err := SeedSecureValues(context.Background(), s, 1000, 100)
 	// if err != nil {
 	// 	panic(err)
 	// }
@@ -84,7 +84,7 @@ func randString(charset string, n int, rng *rand.Rand) string {
 
 // SeedSecureValues creates random namespaces and secrets by calling Create on the service.
 // Useful for testing or load testing. Each namespace gets an active keeper implicitly (system keeper).
-func SeedSecureValues(ctx context.Context, svc contracts.SecureValueService, numberOfNamespaces, secretsPerNamespace int) error {
+func SeedSecureValues(ctx context.Context, svc contracts.SecureValueService, numberOfNamespaces, maxSecretsPerNamespace int) error {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	nsChars := "abcdefghijklmnopqrstuvwxyz0123456789"
 	// Description: 1–25 chars; keep short for readability
@@ -94,7 +94,12 @@ func SeedSecureValues(ctx context.Context, svc contracts.SecureValueService, num
 
 	for i := 0; i < numberOfNamespaces; i++ {
 		namespace := "ns-" + randString(nsChars, 12, rng)
-		for j := 0; j < secretsPerNamespace; j++ {
+		nSecrets := maxSecretsPerNamespace
+		if nSecrets < 1 {
+			nSecrets = 1
+		}
+		nSecrets = rng.Intn(nSecrets) + 1 // [1, maxSecretsPerNamespace] per namespace
+		for j := 0; j < nSecrets; j++ {
 			name := "sv-" + randString(nsChars, 8, rng)
 			description := randString(nsChars, descLen, rng)
 			value := randString(nsChars, valueLen, rng)
