@@ -107,24 +107,10 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 
 	logger := log.New("user.sync")
 
-	var userProxy UserProxy
-
-	ctx := context.Background()
-	ofClient := openfeature.NewDefaultClient()
-	useK8sUserService := ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUserSync, false, openfeature.TransactionContext(ctx)) &&
-		restConfigProvider != nil
-
-	if useK8sUserService {
-		userProxy = NewK8sUserService(logger, cfg, restConfigProvider)
-	} else {
-		userProxy = NewLegacyUserProxy(userService)
-	}
-
-	return &UserSync{
+	userSync := &UserSync{
 		cfg:                       cfg,
 		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
 		rejectNonProvisionedUsers: staticConfig.RejectNonProvisionedUsers,
-		userService:               userProxy,
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
 		quotaService:              quotaService,
@@ -134,7 +120,17 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		lastSeenSF:                &singleflight.Group{},
 		scimUtil:                  scimutil.NewSCIMUtil(nil),
 		staticConfig:              staticConfig,
+		openFeatureClient:         openfeature.NewDefaultClient(),
 	}
+
+	ctx := context.Background()
+	if userSync.isKubernetesUserSyncEnabled(ctx) {
+		userSync.userService = NewK8sUserService(logger, cfg, restConfigProvider)
+	} else {
+		userSync.userService = NewLegacyUserProxy(userService)
+	}
+
+	return userSync
 }
 
 type UserSync struct {
@@ -153,6 +149,7 @@ type UserSync struct {
 	staticConfig              *StaticSCIMConfig
 	scimSuccessfulLogin       atomic.Bool
 	samlCatalogStats          sync.Map
+	openFeatureClient         *openfeature.Client
 }
 
 // GetUsageStats implements registry.ProvidesUsageStats
@@ -359,6 +356,14 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	}
 
 	syncUserToIdentity(usr, id)
+
+	// If Kubernetes user sync is enabled, we disable the sync of org roles and permissions because
+	// those haven't been migrated to Kubernetes yet.
+	if s.isKubernetesUserSyncEnabled(ctx) {
+		id.ClientParams.SyncOrgRoles = false
+		id.ClientParams.SyncPermissions = false
+	}
+
 	return nil
 }
 
@@ -374,10 +379,14 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
-	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
-		return nil
+	var userID int64
+	if !s.isKubernetesUserSyncEnabled(ctx) {
+		var err error
+		userID, err = id.GetInternalID()
+		if err != nil {
+			s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
+			return nil
+		}
 	}
 
 	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{UserID: userID, OrgID: s.getOrgID(r.OrgID), UserUID: id.UID})
@@ -412,10 +421,14 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
-	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
-		return nil
+	var userID int64
+	if !s.isKubernetesUserSyncEnabled(ctx) {
+		var err error
+		userID, err = id.GetInternalID()
+		if err != nil {
+			s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
+			return nil
+		}
 	}
 
 	goCtx := context.WithoutCancel(ctx)
@@ -730,7 +743,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 		}
 	}
 
-	if usr == nil || usr.ID == 0 { // id check as safeguard against returning empty user
+	if usr == nil || (usr.ID == 0 && usr.UID == "") { // id check as safeguard against returning empty user
 		return nil, user.ErrUserNotFound
 	}
 
@@ -773,4 +786,8 @@ func (s *UserSync) getOrgID(orgID int64) int64 {
 	}
 
 	return s.cfg.DefaultOrgID()
+}
+
+func (s *UserSync) isKubernetesUserSyncEnabled(ctx context.Context) bool {
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUserSync, false, openfeature.TransactionContext(ctx))
 }
