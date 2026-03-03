@@ -417,14 +417,14 @@ func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace 
 	results := make([]*contracts.EncryptedPayload, len(values))
 
 	for i, ev := range values {
-		oldKey, err := s.dataKeyById(ctx, ns, ev.EncryptedPayload.DataKeyID, false)
+		oldKey, err := s.dataKeyById(ctx, ns, ev.DataKeyID, false)
 		if err != nil {
 			s.log.FromContext(ctx).Error("Failed to resolve data key during consolidation", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			results[i] = nil
 			continue
 		}
 
-		plaintext, err := s.cipher.Decrypt(ctx, ev.EncryptedPayload.EncryptedData, string(oldKey))
+		plaintext, err := s.cipher.Decrypt(ctx, ev.EncryptedData, string(oldKey))
 		if err != nil {
 			s.log.FromContext(ctx).Error("Failed to decrypt value during consolidation", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			results[i] = nil
