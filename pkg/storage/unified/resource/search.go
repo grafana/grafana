@@ -163,6 +163,15 @@ type searchServer struct {
 	backendDiagnostics resourcepb.DiagnosticsServer
 }
 
+// maybeInjectFailure returns an error for a configured percentage of calls.
+// Returns nil when failure injection is disabled or the call is not selected.
+func (s *searchServer) maybeInjectFailure() error {
+	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
+		return fmt.Errorf("injected search failure")
+	}
+	return nil
+}
+
 var (
 	_ resourcepb.ResourceIndexServer      = (*searchServer)(nil)
 	_ resourcepb.ManagedObjectIndexServer = (*searchServer)(nil)
@@ -255,8 +264,8 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	ctx, span := tracer.Start(ctx, "resource.searchServer.ListManagedObjects")
 	defer span.End()
 
-	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
-		return nil, fmt.Errorf("injected search failure")
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
 	}
 
 	if req.NextPageToken != "" {
@@ -344,8 +353,8 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 	ctx, span := tracer.Start(ctx, "resource.searchServer.CountManagedObjects")
 	defer span.End()
 
-	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
-		return nil, fmt.Errorf("injected search failure")
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
 	}
 
 	stats := NewSearchStats("CountManagedObjects")
@@ -406,8 +415,8 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	ctx, span := tracer.Start(ctx, "resource.searchServer.Search")
 	defer span.End()
 
-	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
-		return nil, fmt.Errorf("injected search failure")
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
 	}
 
 	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
@@ -464,8 +473,8 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	ctx, span := tracer.Start(ctx, "resource.searchServer.GetStats")
 	defer span.End()
 
-	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
-		return nil, fmt.Errorf("injected search failure")
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
 	}
 
 	if req.Namespace == "" {
