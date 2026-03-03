@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"iter"
 	"slices"
 	"strings"
 	"sync"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/hashicorp/golang-lru/v2/expirable"
+	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -141,6 +143,12 @@ type searchServer struct {
 	initWorkers  int
 	initMinSize  int
 
+	// Configure the function to perform the equivalent of the storage backend's
+	// `ListModifiedSince` function. For storage implementations that do not provide
+	// ordered event persistence guarantees (such as `kvStorageBackend`), this
+	// function will use a lookback period to make sure events are not missed.
+	listModifiedSinceFunc func(context.Context, NamespacedResource, int64) (int64, iter.Seq2[*ModifiedResource, error])
+
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
 	buildIndex singleflight.Group
@@ -187,6 +195,14 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		}
 	}
 
+	// TODO: always apply the lookback once `kvStorageBackend` is the only
+	// production implementation of the storage backend interface.
+	listModifiedSinceFunc := storage.ListModifiedSince
+	if _, ok := storage.(*kvStorageBackend); ok {
+		const lookback = 500 * time.Millisecond
+		listModifiedSinceFunc = newListerWithLookback(storage, lookback).ListModifiedSince
+	}
+
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
@@ -197,6 +213,8 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		initMinSize:    opts.InitMinCount,
 		indexMetrics:   indexMetrics,
 		ownsIndexFn:    ownsIndexFn,
+
+		listModifiedSinceFunc: listModifiedSinceFunc,
 
 		dashboardIndexMaxAge: opts.DashboardIndexMaxAge,
 		maxIndexAge:          opts.MaxIndexAge,
@@ -1020,6 +1038,50 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
+type listerWithLookback struct {
+	storage  StorageBackend
+	lookback time.Duration
+	seen     *gocache.Cache
+}
+
+func newListerWithLookback(storage StorageBackend, lookback time.Duration) *listerWithLookback {
+	return &listerWithLookback{
+		storage:  storage,
+		lookback: lookback,
+		seen:     gocache.New(2*lookback, time.Minute),
+	}
+}
+
+func (l *listerWithLookback) ListModifiedSince(ctx context.Context, nsr NamespacedResource, sinceRV int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+	rv := subtractDurationFromSnowflake(sinceRV, l.lookback)
+	newRV, iter := l.storage.ListModifiedSince(ctx, nsr, rv)
+	resourceCacheKey := func(res *ModifiedResource) string {
+		return fmt.Sprintf(
+			"%s~%s~%s~%s~%d",
+			res.Key.Group, res.Key.Resource, res.Key.Namespace, res.Key.Name, res.ResourceVersion,
+		)
+	}
+
+	return newRV, func(yield func(*ModifiedResource, error) bool) {
+		for res, err := range iter {
+			if err != nil {
+				yield(res, err)
+				return
+			}
+
+			cacheKey := resourceCacheKey(res)
+			if _, seen := l.seen.Get(cacheKey); seen {
+				continue
+			}
+
+			l.seen.Set(cacheKey, struct{}{}, gocache.DefaultExpiration)
+			if !yield(res, err) {
+				return
+			}
+		}
+	}
+}
+
 func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
 	defer span.End()
@@ -1113,7 +1175,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", sinceRV)))
 
-		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
+		rv, it := s.listModifiedSinceFunc(ctx, NamespacedResource{
 			Group:     nsr.Group,
 			Resource:  nsr.Resource,
 			Namespace: nsr.Namespace,
@@ -1380,7 +1442,6 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 		Title: title,
 		Tags:  tags,
 		Fields: map[string]interface{}{
-			"title": title,
 			"value": val,
 		},
 	}, nil
