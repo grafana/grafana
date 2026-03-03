@@ -44,4 +44,3 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
     </>
   );
 };
-

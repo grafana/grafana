@@ -62,4 +62,3 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
     </>
   );
 };
-
