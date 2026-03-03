@@ -278,6 +278,9 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv v0.0.0 // @grafana/grafana-search-and-storage
 )
 
+replace github.com/grafana/authlib => ../authlib
+replace github.com/grafana/authlib/types => ../authlib/types
+
 // Replace references to internal workspaces
 replace (
 	github.com/grafana/grafana/apps/advisor => ./apps/advisor

@@ -96,10 +96,10 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
 		}
 
-		return s.authenticateAsUser(*idTokenClaims, *accessTokenClaims)
+		return s.authenticateAsUser(*idTokenClaims, *accessTokenClaims, jwtToken)
 	}
 
-	return s.authenticateAsService(*accessTokenClaims)
+	return s.authenticateAsService(*accessTokenClaims, jwtToken)
 }
 
 func (s *ExtendedJWT) IsEnabled() bool {
@@ -109,6 +109,7 @@ func (s *ExtendedJWT) IsEnabled() bool {
 func (s *ExtendedJWT) authenticateAsUser(
 	idTokenClaims authlib.Claims[authlib.IDTokenClaims],
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
+	accessTokeninPlainText string,
 ) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
 	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(idTokenClaims.Rest.Namespace, allowedNamespace) {
@@ -151,6 +152,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		ID:                id,
 		Type:              t,
 		OrgID:             s.cfg.DefaultOrgID(),
+		AccessToken:       accessTokeninPlainText,
 		AccessTokenClaims: &accessTokenClaims,
 		IDTokenClaims:     &idTokenClaims,
 		AuthenticatedBy:   login.ExtendedJWTModule,
@@ -181,7 +183,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 	return identity, nil
 }
 
-func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
+func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims], accessTokeninPlainText string) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
 	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
@@ -221,6 +223,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		Name:              id,
 		Type:              t,
 		OrgID:             s.cfg.DefaultOrgID(),
+		AccessToken:       accessTokeninPlainText,
 		AccessTokenClaims: &accessTokenClaims,
 		AuthenticatedBy:   login.ExtendedJWTModule,
 		AuthID:            accessTokenClaims.Subject,
