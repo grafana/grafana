@@ -424,7 +424,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           }
           return splits;
         }
-      : undefined,
+      : [],
     values: isOrdinalY
       ? (self: uPlot, splits) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
