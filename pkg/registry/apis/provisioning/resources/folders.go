@@ -46,6 +46,7 @@ type FolderManager struct {
 	tree         FolderTree
 	client       dynamic.ResourceInterface
 	beforeCreate FolderCreationInterceptor
+	folderMetadataEnabled bool
 }
 
 func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
@@ -53,6 +54,7 @@ func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInter
 		repo:   repo,
 		tree:   lookup,
 		client: client,
+		folderMetadataEnabled: folderMetadataEnabled,
 		beforeCreate: func(context.Context, Folder) error {
 			return nil
 		},
@@ -81,10 +83,12 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
-// effectiveFolderID returns the stable UID from _folder.json if present,
-// otherwise returns the hash-based hashID. No feature flag needed —
-// the presence of _folder.json is the signal.
+// effectiveFolderID returns the stable UID from _folder.json if the feature flag
+// is enabled and the file is present, otherwise returns the hash-based hashID.
 func (fm *FolderManager) effectiveFolderID(ctx context.Context, folderPath, hashID string) string {
+	if !fm.folderMetadataEnabled {
+		return hashID
+	}
 	metadataPath := safepath.Join(folderPath, FolderMetadataFileName)
 	info, err := fm.repo.Read(ctx, metadataPath, "")
 	if err != nil {

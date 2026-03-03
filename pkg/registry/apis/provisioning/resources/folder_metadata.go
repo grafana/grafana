@@ -1,10 +1,12 @@
 package resources
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -51,4 +53,17 @@ func FolderManifestUID(data []byte) (string, error) {
 		return "", fmt.Errorf("parse folder manifest: %w", err)
 	}
 	return f.Name, nil
+}
+
+// WriteFolderMetadata writes _folder.json into folderPath and returns the stable UID.
+func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string) (string, error) {
+	stableUID, metadataBytes, err := MarshalFolderManifest(folderPath)
+	if err != nil {
+		return "", fmt.Errorf("marshal folder metadata: %w", err)
+	}
+	metadataPath := safepath.Join(folderPath, FolderMetadataFileName)
+	if err := repo.Create(ctx, metadataPath, ref, metadataBytes, message); err != nil {
+		return "", fmt.Errorf("failed to create folder metadata: %w", err)
+	}
+	return stableUID, nil
 }

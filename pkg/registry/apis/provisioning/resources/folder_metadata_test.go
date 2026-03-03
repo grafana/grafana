@@ -1,12 +1,16 @@
 package resources
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func TestMarshalFolderManifest(t *testing.T) {
@@ -49,4 +53,39 @@ func TestFolderManifestUID_RoundTrip(t *testing.T) {
 func TestFolderManifestUID_InvalidJSON(t *testing.T) {
 	_, err := FolderManifestUID([]byte("not-json"))
 	assert.Error(t, err)
+}
+
+func TestWriteFolderMetadata(t *testing.T) {
+	t.Run("writes _folder.json and returns stable UID", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+
+		var capturedUID string
+		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			capturedUID = f.Name
+			return f.APIVersion == "folder.grafana.app/v1beta1" &&
+				f.Kind == "Folder" &&
+				f.Name != "" &&
+				f.Spec.Title == "myfolder"
+		}), "").Return(nil)
+
+		uid, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", "", "")
+
+		require.NoError(t, err)
+		assert.NotEmpty(t, uid)
+		assert.Equal(t, capturedUID, uid, "returned UID must match the one written to _folder.json")
+	})
+
+	t.Run("returns error when repo.Create fails", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").
+			Return(assert.AnError)
+
+		_, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", "", "")
+
+		require.Error(t, err)
+	})
 }

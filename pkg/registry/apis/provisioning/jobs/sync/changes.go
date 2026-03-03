@@ -98,7 +98,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			// Skip it here; the parent directory change handles folder creation.
 			if path.Base(file.Path) == resources.FolderMetadataFileName {
 				if err := keep.Add(file.Path); err != nil {
-					return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 				}
 				continue
 			}

@@ -156,9 +156,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
-		// When the feature flag is on, _folder.json is a system-created manifest — allow it through.
-		isFolderManifest := r.folderMetadataEnabled && path.Base(info.Path) == FolderMetadataFileName
-		if !isFolderManifest {
+		// _folder.json is a system-managed folder manifest written by the provisioning
+		// layer when the provisioningFolderMetadata flag is on. It is the only folder-typed
+		// file allowed through the files endpoint (e.g. for GET requests).
+		if !r.folderMetadataEnabled || path.Base(info.Path) != FolderMetadataFileName {
 			return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
 		}
 	}
