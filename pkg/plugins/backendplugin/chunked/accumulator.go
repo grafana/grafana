@@ -1,6 +1,7 @@
 package chunked
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -18,13 +19,14 @@ func AccumulateJSONLines(jsonl io.Reader) (*backend.QueryDataResponse, error) {
 		for {
 			err := readToken(decoder, jsontext.ObjectStart.Kind())
 			if err != nil {
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					return
 				}
 				yield(nil, err)
 				return
 			}
 
+			var val jsontext.Value
 			var keyTok jsontext.Token
 			chunk := &pluginv2.QueryChunkedDataResponse{
 				Format: pluginv2.DataFrameFormat_JSON,
@@ -49,7 +51,7 @@ func AccumulateJSONLines(jsonl io.Reader) (*backend.QueryDataResponse, error) {
 					chunk.ErrorSource, err = readStringValue(decoder)
 
 				case "frame":
-					val, err := decoder.ReadValue()
+					val, err = decoder.ReadValue()
 					if err == nil {
 						// This needs to clone because the same buffer is used for PeekKind()
 						chunk.Frame, err = val.Clone().MarshalJSON()
