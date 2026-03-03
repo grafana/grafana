@@ -214,6 +214,36 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 
+    describe('team folders filter', () => {
+      describe('with feature toggles enabled', () => {
+        testWithFeatureToggles({ enable: ['unifiedStorageSearchUI', 'teamFolders', 'foldersAppPlatformAPI'] });
+
+        it('shows the "My team folders" checkbox', async () => {
+          render(<BrowseDashboardsPage queryParams={{}} />);
+          expect(await screen.findByLabelText('My team folders')).toBeInTheDocument();
+        });
+
+        it('filters results when the checkbox is clicked', async () => {
+          const { user } = render(<BrowseDashboardsPage queryParams={{}} />);
+
+          const checkbox = await screen.findByLabelText('My team folders');
+          await user.click(checkbox);
+
+          // folderA is owned by a team the user belongs to, so it should appear
+          expect(await screen.findByText(folderA.item.title)).toBeInTheDocument();
+
+          // Other root-level items should not appear as they are not team-owned
+          expect(screen.queryByText(dashbdD.item.title)).not.toBeInTheDocument();
+        });
+      });
+
+      it('does not show the "My team folders" checkbox when feature toggles are disabled', async () => {
+        render(<BrowseDashboardsPage queryParams={{}} />);
+        await screen.findByPlaceholderText('Search for dashboards and folders');
+        expect(screen.queryByLabelText('My team folders')).not.toBeInTheDocument();
+      });
+    });
+
     describe('folder owner', () => {
       testWithFeatureToggles({ enable: ['foldersAppPlatformAPI', 'teamFolders'] });
       beforeEach(() => {
