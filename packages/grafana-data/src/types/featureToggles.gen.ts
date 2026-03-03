@@ -1378,6 +1378,11 @@ export interface FeatureToggles {
   */
   externalVizSuggestions?: boolean;
   /**
+  * Limit the number of legend items by default, with an option to show all
+  * @default false
+  */
+  vizLegendSeriesLimit?: boolean;
+  /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
   */

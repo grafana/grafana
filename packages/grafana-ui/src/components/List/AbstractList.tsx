@@ -1,10 +1,12 @@
 import { cx, css } from '@emotion/css';
-import { useMemo, useState, type JSX } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
 import { stylesFactory } from '../../themes/stylesFactory';
+
+import { useLimit } from './hooks';
 
 export interface ListProps<T> {
   items: T[];
@@ -44,7 +46,7 @@ export const AbstractList = <T,>({
 }: AbstractListProps<T>) => {
   const styles = getStyles(inline);
 
-  const [curLimit, setLimit] = useState(limit);
+  const [curLimit, setLimit] = useLimit(limit);
 
   const limitedItems = useMemo(() => (curLimit > 0 ? items.slice(0, curLimit) : items), [items, curLimit]);
 

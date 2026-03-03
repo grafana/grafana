@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState, type JSX } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -7,6 +7,7 @@ import { Button } from '@grafana/ui';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
+import { useLimit } from '../List/hooks';
 
 import { LegendTableItem } from './VizLegendTableItem';
 import { VizLegendItem, VizLegendTableProps } from './types';
@@ -73,7 +74,7 @@ export const VizLegendTable = <T extends unknown>({
     }
   }
 
-  const [curLimit, setLimit] = useState(limit);
+  const [curLimit, setLimit] = useLimit(limit);
 
   const limitedItems = useMemo(() => (curLimit > 0 ? items.slice(0, curLimit) : items), [items, curLimit]);
 
