@@ -101,8 +101,10 @@ export function getConfig(opts: TimelineCoreOptions) {
     getValueColor,
     getFieldConfig,
     hoverMulti,
-    namePosition,
+    namePosition: rawNamePosition,
   } = opts;
+
+  const namePosition = rawNamePosition === 'top' ? 'top' : 'left';
 
   let qt: Quadtree;
 
