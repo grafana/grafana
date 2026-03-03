@@ -2,13 +2,14 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { useSceneContext } from '@grafana/scenes-react';
+import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
 import { Icon, ScrollContainer, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { AllLabelsContent } from './AllLabelsDrawer';
-import { useInstanceCounts } from './SummaryStats';
+import { countInstances } from './SummaryStats';
+import { summaryInstanceCountQuery } from './queries';
 import { useLabelsBreakdown } from './useLabelsBreakdown';
-import { addOrReplaceFilter, removeFilter, useFilterValue } from './utils';
+import { addOrReplaceFilter, removeFilter, useFilterValue, useQueryFilter } from './utils';
 
 export const LABELS_COLUMN_WIDTH = 250;
 
@@ -81,6 +82,33 @@ function StateFilter() {
       </button>
     </Stack>
   );
+}
+
+/**
+ * Returns the current firing/pending instance counts based on the active query filter,
+ * or undefined while the data is still loading.
+ */
+export function useInstanceCounts(): { firing: number; pending: number } | undefined {
+  const filter = useQueryFilter();
+
+  // Strip alertstate from filter since the instance count query adds its own alertstate matchers
+  const cleanFilter = filter
+    .replace(/alertstate\s*=~?\s*"(firing|pending)"[,\s]*/, '')
+    .replace(/,\s*$/, '')
+    .replace(/^\s*,/, '');
+
+  const instanceDataProvider = useQueryRunner({
+    queries: [summaryInstanceCountQuery(cleanFilter)],
+  });
+
+  const { data } = instanceDataProvider.useState();
+  const instanceFrame = data?.series?.at(0);
+
+  if (!instanceDataProvider.isDataReadyToDisplay() || !instanceFrame) {
+    return undefined;
+  }
+
+  return countInstances(instanceFrame);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

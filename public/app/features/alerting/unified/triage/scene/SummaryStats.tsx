@@ -4,13 +4,13 @@ import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';
-import { Box, ErrorBoundaryAlert, Grid, Icon, type IconName, useStyles2 } from '@grafana/ui';
+import { Box, ErrorBoundaryAlert, Icon, type IconName, Stack, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { FIELD_NAMES } from '../constants';
 
 import { normalizeFrame } from './dataTransform';
-import { summaryInstanceCountQuery, summaryRuleCountQuery } from './queries';
+import { summaryRuleCountQuery } from './queries';
 import { useQueryFilter } from './utils';
 
 type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
@@ -147,78 +147,46 @@ function SummaryStatsContent() {
     .replace(/,\s*$/, '')
     .replace(/^\s*,/, '');
 
-  const instanceDataProvider = useQueryRunner({
-    queries: [summaryInstanceCountQuery(cleanFilter)],
-  });
-
   const ruleDataProvider = useQueryRunner({
     queries: [summaryRuleCountQuery(cleanFilter)],
   });
 
-  const { data: instanceData } = instanceDataProvider.useState();
   const { data: ruleData } = ruleDataProvider.useState();
-  const instanceFrame = instanceData?.series?.at(0);
   const ruleFrame = ruleData?.series?.at(0);
 
-  if (
-    !instanceDataProvider.isDataReadyToDisplay() ||
-    !ruleDataProvider.isDataReadyToDisplay() ||
-    !instanceFrame ||
-    !ruleFrame
-  ) {
+  if (!ruleDataProvider.isDataReadyToDisplay() || !ruleFrame) {
     return <div />;
   }
 
-  if (instanceFrame.length === 0 && ruleFrame.length === 0) {
+  if (ruleFrame.length === 0) {
     return <div />;
   }
 
-  const instances = countInstances(instanceFrame);
   const rules = countRules(ruleFrame, alertstateFilter);
 
   return (
-    <Grid gap={2}>
+    <Stack direction="row" gap={2} height="100%">
       {alertstateFilter.includes(PromAlertingRuleState.Firing) && (
-        <Grid columns={2} gap={2}>
-          <StatBox
-            i18nKey="alerting.triage.firing-instances-count"
-            value={instances.firing}
-            color="error"
-            icon="exclamation-circle"
-          >
-            <Trans i18nKey="alerting.triage.firing-instances-count">Firing alert instances</Trans>
-          </StatBox>
-          <StatBox
-            i18nKey="alerting.triage.firing-rules-count"
-            value={rules.firing}
-            color="error"
-            icon="exclamation-circle"
-          >
-            <Trans i18nKey="alerting.triage.rules-with-firing-instances">Alert rules with firing instances</Trans>
-          </StatBox>
-        </Grid>
+        <StatBox
+          i18nKey="alerting.triage.firing-rules-count"
+          value={rules.firing}
+          color="error"
+          icon="exclamation-circle"
+        >
+          <Trans i18nKey="alerting.triage.rules-with-firing-instances">Alert rules with firing instances</Trans>
+        </StatBox>
       )}
       {alertstateFilter.includes(PromAlertingRuleState.Pending) && (
-        <Grid columns={2} gap={2}>
-          <StatBox
-            i18nKey="alerting.triage.pending-instances-count"
-            value={instances.pending}
-            color="warning"
-            icon="circle"
-          >
-            <Trans i18nKey="alerting.triage.pending-instances-count">Pending alert instances</Trans>
-          </StatBox>
-          <StatBox
-            i18nKey="alerting.triage.rules-with-pending-instances"
-            value={rules.pending}
-            color="warning"
-            icon="circle"
-          >
-            <Trans i18nKey="alerting.triage.rules-with-pending-instances">Alert rules with pending instances</Trans>
-          </StatBox>
-        </Grid>
+        <StatBox
+          i18nKey="alerting.triage.rules-with-pending-instances"
+          value={rules.pending}
+          color="warning"
+          icon="circle"
+        >
+          <Trans i18nKey="alerting.triage.rules-with-pending-instances">Alert rules with pending instances</Trans>
+        </StatBox>
       )}
-    </Grid>
+    </Stack>
   );
 }
 
