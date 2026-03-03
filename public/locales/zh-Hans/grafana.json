@@ -3248,6 +3248,7 @@
     },
     "template-form": {
       "aria-label-template-form": "模板表单",
+      "body-legacy": "",
       "label-examples-documentation": "示例文档",
       "label-template-group": "模板组",
       "label-template-group-name": "模板组名称",
@@ -3256,6 +3257,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "为模板组命名",
       "title-error-saving-template": "保存模板时出错",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "模板速查表"
     },
     "template-preview": {
@@ -3296,6 +3298,8 @@
       "help": {
         "intro": "通知模板使用 Go 模板语言来创建通知消息。\n\n在 Grafana，模板组可以使用 {{ define \"<NAME>\" }} 定义多个通知模板。\n然后，可以通过调用 {{ template \"<NAME>\" }} 在联络点和其他通知模板中使用这些模板。\n有关通知模板的详细信息，请参阅我们的文档。"
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "配置错误",
       "misconfigured-warning": "此模板配置错误。",
       "misconfigured-warning-details": "模板必须在 Alertmanager 配置的 <2></2> 和 <5></5> 部分中定义。"
@@ -3406,7 +3410,14 @@
         "title": "未找到规则"
       },
       "rules-with-firing-instances": "带触发实例的警报规则",
-      "rules-with-pending-instances": "带待处理实例的警报规则"
+      "rules-with-pending-instances": "带待处理实例的警报规则",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "添加表达式"
@@ -4164,7 +4175,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -7790,7 +7800,10 @@
     "pro-tip": "专业提示：{{proTip}}"
   },
   "entity-not-found": {
-    "description": "我们正在查找，但似乎找不到这个 {{lowerCaseEntity}}。请尝试返回<4>主页</4>或在<7>社区网站</7>上寻求帮助</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -11880,8 +11893,6 @@
       "tooltip-delete": "删除"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "无法加载某些建议"
       },
@@ -14300,6 +14311,11 @@
           "settings": "设置"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "外部组同步"
@@ -14356,6 +14372,19 @@
       "loading-teams": "正在加载团队...",
       "new-team": "新建团队",
       "placeholder-search-teams": "搜索团队"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "这是可选项，主要用于设置团队资料头像（通过 Gravatar 服务）",
