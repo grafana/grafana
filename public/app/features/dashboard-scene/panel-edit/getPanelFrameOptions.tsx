@@ -28,7 +28,21 @@ export function createPresetApplyHandler(panel: VizPanel) {
     dashboardEditActions.edit({
       description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
       source: panel,
-      perform: () => panel.onFieldConfigChange(preset.fieldConfig!, true),
+      perform: () => {
+        const { defaults, overrides } = panel.state.fieldConfig;
+        const presetDefaults = preset.fieldConfig?.defaults;
+        panel.onFieldConfigChange(
+          {
+            defaults: {
+              ...defaults,
+              custom: { ...defaults.custom, ...presetDefaults?.custom },
+              ...(presetDefaults?.color ? { color: presetDefaults.color } : {}),
+            },
+            overrides,
+          },
+          true
+        );
+      },
       undo: () => panel.onFieldConfigChange(prevFieldConfig, true),
     });
   };
