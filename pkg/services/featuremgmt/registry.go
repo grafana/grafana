@@ -91,6 +91,13 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "alertingRuleGroupSortByFolderFullpath",
+			Description: "Sort alert rule groups by folder full path in the Prometheus rules API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
 			Stage:        FeatureStageGeneralAvailability,
@@ -768,7 +775,7 @@ var (
 		{
 			Name:        "secretsManagementAppPlatformUI",
 			Description: "Enable the secrets management app platform UI",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
@@ -2388,6 +2395,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesUsersApi",
+			Description:  "Enables user APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesExternalGroupMappingsApi",
 			Description:  "Enables external group mapping APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2418,6 +2433,14 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:            "appPluginAPIServer",
+			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		{
 			Name:         "alertingIgnorePendingForNoDataAndError",
@@ -2488,6 +2511,14 @@ var (
 			Description:  "Registers the dsabstraction app for querying datasources via unified SQL",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "analyticsFramework",
+			Description:  "Enables new analytics framework",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 		},

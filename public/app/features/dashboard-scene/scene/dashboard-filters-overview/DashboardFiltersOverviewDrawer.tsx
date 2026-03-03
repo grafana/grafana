@@ -78,6 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     overflow: 'hidden',
     minWidth: 0,
+    paddingRight: theme.spacing(2),
   }),
   drawerTitle: css({
     flex: 1,

@@ -16,6 +16,7 @@ import { generatedAPI as playlistAPIv1 } from './playlist/v1';
 import { generatedAPI as preferencesUserAPI } from './preferences/user';
 import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
+import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
 import { generatedAPI as themeAPIv0alpha1 } from './theme/v0alpha1';
@@ -42,6 +43,7 @@ export const allMiddleware = [
   historianAlertingAPIv0alpha1.middleware,
   logsdrilldownAPIv1beta1.middleware,
   logsdrilldownAPIv1alpha1.middleware,
+  quotasAPIv0alpha1.middleware,
   themeAPIv0alpha1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
@@ -66,6 +68,7 @@ export const allReducers = {
   [historianAlertingAPIv0alpha1.reducerPath]: historianAlertingAPIv0alpha1.reducer,
   [logsdrilldownAPIv1alpha1.reducerPath]: logsdrilldownAPIv1alpha1.reducer,
   [logsdrilldownAPIv1beta1.reducerPath]: logsdrilldownAPIv1beta1.reducer,
+  [quotasAPIv0alpha1.reducerPath]: quotasAPIv0alpha1.reducer,
   [themeAPIv0alpha1.reducerPath]: themeAPIv0alpha1.reducer,
   // PLOP_INJECT_REDUCER
 };

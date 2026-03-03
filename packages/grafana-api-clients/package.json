@@ -146,6 +146,12 @@
       "import": "./dist/esm/clients/rtkq/logsdrilldown/v1beta1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/logsdrilldown/v1beta1/index.cjs"
     },
+    "./rtkq/quotas/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/quotas/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/quotas/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/quotas/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/quotas/v0alpha1/index.cjs"
+    },
     "./rtkq/theme/v0alpha1": {
       "@grafana-app/source": "./src/clients/rtkq/theme/v0alpha1/index.ts",
       "types": "./dist/types/clients/rtkq/theme/v0alpha1/index.d.ts",
@@ -169,8 +175,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "process-specs": "NODE_OPTIONS='--disable-warning=ExperimentalWarning' node --experimental-strip-types src/scripts/process-specs.ts",
-    "generate-apis": "yarn process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
+    "generate-apis": "yarn workspace @grafana/openapi process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
     "generate:api-client": "NODE_OPTIONS='--experimental-strip-types --disable-warning=ExperimentalWarning' plop --plopfile src/generator/plopfile.ts"
   },
   "devDependencies": {

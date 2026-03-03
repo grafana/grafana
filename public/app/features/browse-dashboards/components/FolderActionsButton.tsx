@@ -12,6 +12,7 @@ import { BulkMoveProvisionedResource } from 'app/features/provisioning/component
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 
@@ -38,8 +39,6 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const [moveFolder] = useMoveFolderMutationFacade();
   const isProvisionedInstance = useIsProvisionedInstance();
   const deleteFolder = useDeleteFolderMutationFacade();
-
-  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
   const {
     canEditFolders,
@@ -144,8 +143,12 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 
-  // For now, only admins can manage folder owners
-  const showManageOwners = config.featureToggles.teamFolders && isAdmin && !isProvisionedFolder;
+  // If user can set permissions for the folder and read teams, they can manage folder owners
+  const showManageOwners =
+    config.featureToggles.teamFolders &&
+    canSetPermissions &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRead) &&
+    !isProvisionedFolder;
 
   const menu = (
     <Menu>
