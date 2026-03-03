@@ -101,7 +101,7 @@ func RegisterMigrations(
 		return err
 	}
 
-	if err := registerMigrations(ctx, cfg, mg, migrator, tableLocker, tableRenamer, client, sqlStore, registry); err != nil {
+	if err := registerMigrations(cfg, mg, migrator, tableLocker, tableRenamer, client, registry); err != nil {
 		return err
 	}
 

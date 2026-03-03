@@ -608,7 +608,7 @@ type Cfg struct {
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
-	// Larger values reduce lock contention. Default: 50000 (50MB).
+	// Larger values reduce lock contention. Default: 1000000 (~1GB).
 	MigrationCacheSizeKB int
 	// MigrationParquetBuffer enables bulk migration data through a temporary Parquet file.
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
