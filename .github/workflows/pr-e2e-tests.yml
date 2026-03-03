@@ -48,10 +48,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: cache
         with:
-          key: "build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'build.go', 'embed.go') }}"
+          key: "e2e-build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'embed.go') }}"
           path: bin
 
       - uses: actions/setup-go@v6.0.0
@@ -83,10 +83,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: cache
         with:
-          key: "build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
+          key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
           path: |
             public/build
             public/app/plugins/*/*/dist
@@ -125,31 +125,6 @@ jobs:
           path: e2e-playwright/test-plugins/
           retention-days: 1
 
-  build-misc:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
-    name: Prepare misc files
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Prepare misc distribution files
-        run: |
-          mkdir grafana-misc
-          cp -r conf grafana-misc/
-          cp -r tools grafana-misc/
-
-      - uses: actions/upload-artifact@v5
-        with:
-          name: grafana-misc
-          path: grafana-misc/
-          retention-days: 1
-
   run-storybook-test:
     name: Verify Storybook (Playwright)
     runs-on: ubuntu-latest
@@ -180,7 +155,7 @@ jobs:
       - name: Get Playwright version
         id: pw-version
         run: echo "version=$(node -e "console.log(require('@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: storybook-playwright-${{ steps.pw-version.outputs.version }}
           path: ~/.cache/ms-playwright
@@ -194,7 +169,6 @@ jobs:
     needs:
       - build-backend
       - build-frontend
-      - build-misc
     name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
     runs-on: ubuntu-x64-large
     timeout-minutes: 20
@@ -212,9 +186,7 @@ jobs:
         with:
           persist-credentials: false
 
-      ##
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
-      ##
       - name: Download backend artifacts
         uses: actions/download-artifact@v4
         with:
@@ -227,15 +199,15 @@ jobs:
         with:
           name: grafana-frontend
           path: grafana-server/public
-      - name: Download misc artifacts
+      - name: Download test plugins
         uses: actions/download-artifact@v4
-        with:
-          name: grafana-misc
-          path: grafana-server
-      - uses: actions/download-artifact@v4
         with:
           name: grafana-test-plugins
           path: grafana-server/data/plugins
+      - name: Copy misc server files
+        run: |
+          cp -r conf/ grafana-server
+          cp -r tools/ grafana-server
 
       # Apply E2E test configuration on top of the production-mirrored distribution
       - name: Configure for E2E testing
@@ -278,7 +250,7 @@ jobs:
       - name: Get Playwright version
         id: pw-version
         run: echo "version=$(node -e "console.log(require('@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: playwright-${{ steps.pw-version.outputs.version }}
           path: ~/.cache/ms-playwright
@@ -293,16 +265,16 @@ jobs:
       - uses: actions/upload-artifact@v5
         if: always()
         with:
-          name: grafana-server-log-${{ github.run_number }}-${{ matrix.shard }}
+          name: grafana-server-log-${{ matrix.shard }}
           path: grafana-server/grafana.log
           retention-days: 3
 
       - uses: actions/upload-artifact@v5
         if: success() || failure()
         with:
-          name: playwright-blob-${{ github.run_number }}-${{ matrix.shard }}
+          name: playwright-blob-${{ matrix.shard }}
           path: blob-report
-          retention-days: 1
+          retention-days: 3
 
   required-playwright-tests:
     needs:
@@ -369,7 +341,7 @@ jobs:
         id: upload-html
         uses: actions/upload-artifact@v5
         with:
-          name: playwright-html-${{ github.run_number }}
+          name: playwright-html
           path: playwright-report
           retention-days: 7
 
@@ -386,12 +358,18 @@ jobs:
         env:
           FAILED: ${{ steps.check-jobs.outputs.any-failed }}
           REPORT_URL: ${{ steps.upload-html.outputs.artifact-url }}
+          RUN_ID: ${{ github.run_id }}
         # sed removes the leading `../../src/` from the paths
         run: |
           npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
+          echo ""
+          echo "Run the following command to view the results locally:"
+          echo "  ./scripts/view-playwright-ci.sh $RUN_ID"
+          echo ""
+          echo "Alternatively, download the test report from $REPORT_URL"
+          echo "And view it locally with:"
+          echo "  yarn playwright show-report <path-to-unzipped-report>"
           if [ "$FAILED" = "true" ]; then
-            echo ""
-            echo "Download the test report from $REPORT_URL"
             exit 1
           fi
 
