@@ -257,7 +257,7 @@ require (
 	github.com/olekukonko/errors v1.1.0 // indirect
 	github.com/olekukonko/ll v0.1.4-0.20260115111900-9e59c2286df0 // indirect
 	github.com/olekukonko/tablewriter v1.1.3 // indirect
-	github.com/open-feature/go-sdk v1.17.0 // indirect
+	github.com/open-feature/go-sdk v1.17.1 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect

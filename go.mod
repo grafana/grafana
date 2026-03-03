@@ -145,8 +145,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/olekukonko/tablewriter v1.1.3 // @grafana/grafana-backend-group
-	github.com/open-feature/go-sdk v1.17.0 // @grafana/grafana-backend-group
-	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6 // @grafana/grafana-backend-group
+	github.com/open-feature/go-sdk v1.17.1 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-group
 	github.com/openfga/api/proto v0.0.0-20260122164422-25e22cb1875b // @grafana/identity-access-team
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20251027165255-0f8f255e5f6c // @grafana/identity-access-team
@@ -268,6 +267,7 @@ require (
 	github.com/grafana/grafana/pkg/aggregator v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/infra/features v0.0.0 // @grafana/grafana-backend-services-squad
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // @grafana/plugins-platform-backend
 
 	// This needs to be here for other projects that import grafana/grafana
@@ -308,6 +308,7 @@ replace (
 	github.com/grafana/grafana/pkg/aggregator => ./pkg/aggregator
 	github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
+	github.com/grafana/grafana/pkg/infra/features => ./pkg/infra/features
 	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
 	github.com/grafana/grafana/pkg/promlib => ./pkg/promlib
 	github.com/grafana/grafana/pkg/semconv => ./pkg/semconv
@@ -397,7 +398,6 @@ require (
 	github.com/blevesearch/zapx/v14 v14.4.2 // indirect
 	github.com/blevesearch/zapx/v15 v15.4.2 // indirect
 	github.com/blevesearch/zapx/v16 v16.2.8 // indirect
-	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect

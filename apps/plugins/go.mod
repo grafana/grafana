@@ -8,6 +8,8 @@ replace github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 
 replace github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 
+replace github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/features
+
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
 replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
@@ -50,7 +52,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20250403215159-8d39553ac7cf // indirect
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
@@ -113,6 +114,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.290.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
@@ -171,8 +173,7 @@ require (
 	github.com/olekukonko/errors v1.1.0 // indirect
 	github.com/olekukonko/ll v0.1.4-0.20260115111900-9e59c2286df0 // indirect
 	github.com/olekukonko/tablewriter v1.1.3 // indirect
-	github.com/open-feature/go-sdk v1.17.0 // indirect
-	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.6 // indirect
+	github.com/open-feature/go-sdk v1.17.1 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
