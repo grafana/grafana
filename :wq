@@ -1,0 +1,29 @@
+[release-12.2.7] Docs: Replace Show on dashboard with Hide (#119025)
+
+Replaced Show on dashboard option with Hide option
+
+(cherry picked from commit 12e348c1101a34b932fe11ba341eb2ae2775c464)
+
+# Conflicts:
+#	docs/sources/dashboards/variables/add-template-variables/index.md
+#
+# It looks like you may be committing a cherry-pick.
+# If this is not correct, please run
+#	git update-ref -d CHERRY_PICK_HEAD
+# and try again.
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    Isabel Matwawana <76437239+imatwawana@users.noreply.github.com>
+# Date:      Tue Mar 3 09:27:09 2026 -0500
+#
+# On branch backport-119025-to-release-12.0.11
+# Your branch is up to date with 'origin/release-12.0.11'.
+#
+# You are currently cherry-picking commit 12e348c1101.
+#
+# Changes to be committed:
+#	modified:   docs/sources/dashboards/variables/add-template-variables/index.md
+#
