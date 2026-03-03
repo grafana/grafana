@@ -125,7 +125,7 @@ describe('AutoGridLayoutManager', () => {
     });
 
     it('sets isDraggable to true when dashboard is in edit mode', () => {
-      const layout = setupSceneWithDefaultGrid([getDefaultVizPanel], { isEditing: true });
+      const layout = setupSceneWithDefaultGrid([getDefaultVizPanel()], { isEditing: true });
 
       const autoLayout = AutoGridLayoutManager.createFromLayout(layout);
 

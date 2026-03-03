@@ -566,10 +566,10 @@ export class DefaultGridLayoutManager
 
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const panels = currentLayout.getVizPanels();
-    return DefaultGridLayoutManager.fromVizPanels(panels);
+    return DefaultGridLayoutManager.fromVizPanels(panels, getDashboardSceneFor(currentLayout).state.isEditing);
   }
 
-  public static fromVizPanels(panels: VizPanel[] = []): DefaultGridLayoutManager {
+  public static fromVizPanels(panels: VizPanel[] = [], isDraggable?: boolean): DefaultGridLayoutManager {
     const children: DashboardGridItem[] = [];
     const panelHeight = 10;
     const panelWidth = GRID_COLUMN_COUNT / 3;
@@ -605,7 +605,7 @@ export class DefaultGridLayoutManager
     return new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children: children,
-        isDraggable: true,
+        isDraggable: isDraggable,
         isResizable: true,
       }),
     });
