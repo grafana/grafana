@@ -72,7 +72,7 @@ function getUniformDatasource(queries: DataQuery[]): DataSourceRef | undefined {
   }
 
   const allSame = regularQueries.every((q) => q.datasource?.uid === firstDs.uid);
-  return allSame ? firstDs : undefined;
+  return allSame ? { ...firstDs } : undefined;
 }
 
 export interface PanelDataPaneNextState extends SceneObjectState {
