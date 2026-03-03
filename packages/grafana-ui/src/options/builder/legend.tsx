@@ -2,8 +2,6 @@ import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSe
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
 
-const DEFAULT_LEGEND_LIMIT = 30;
-
 /**
  * @alpha
  */
@@ -68,7 +66,6 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       category,
       description: t('grafana-ui.builder.legend.description-limit', 'Limits how many items are shown by default'),
       showIf: (c) => c.legend.showLegend,
-      defaultValue: DEFAULT_LEGEND_LIMIT,
     });
   }
 

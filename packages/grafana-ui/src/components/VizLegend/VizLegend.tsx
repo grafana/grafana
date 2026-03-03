@@ -6,7 +6,6 @@ import { LegendDisplayMode } from '@grafana/schema';
 
 import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
-// import { LimitedDataDisclaimer } from './LimitedDataDisclaimer';
 import { VizLegendList } from './VizLegendList';
 import { VizLegendTable } from './VizLegendTable';
 import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
