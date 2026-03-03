@@ -204,10 +204,13 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			return org.ErrOrgNotFound.Errorf("failed to delete organisation with ID: %d", cmd.ID)
 		}
 
+		// After migration to unified storage, playlist tables may have been
+		// renamed to <table>_legacy or removed entirely.
+		playlistTbl := ss.findTable("playlist")
+		playlistItemTbl := ss.findTable("playlist_item")
+
 		deletes := []string{ //nolint:prealloc
 			"DELETE FROM star WHERE org_id = ?",
-			"DELETE FROM playlist_item WHERE playlist_id IN (SELECT id FROM playlist WHERE org_id = ?)",
-			"DELETE FROM playlist WHERE org_id = ?",
 			"DELETE FROM dashboard_tag WHERE org_id = ?",
 			"DELETE FROM api_key WHERE org_id = ?",
 			"DELETE FROM data_source WHERE org_id = ?",
@@ -232,12 +235,17 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			"DELETE FROM builtin_role WHERE org_id = ?",
 		}
 
-		// Add registered deletes
+		if playlistItemTbl != "" && playlistTbl != "" {
+			deletes = append(deletes, "DELETE FROM "+playlistItemTbl+" WHERE playlist_id IN (SELECT id FROM "+playlistTbl+" WHERE org_id = ?)")
+		}
+		if playlistTbl != "" {
+			deletes = append(deletes, "DELETE FROM "+playlistTbl+" WHERE org_id = ?")
+		}
+
 		deletes = append(deletes, ss.deletes...)
 
 		for _, sql := range deletes {
-			_, err := sess.Exec(sql, cmd.ID)
-			if err != nil {
+			if _, err := sess.Exec(sql, cmd.ID); err != nil {
 				return err
 			}
 		}
@@ -830,6 +838,23 @@ func removeUserOrg(sess *db.Session, userID int64) error {
 
 	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
 	return err
+}
+
+// findTable returns the actual table name for a base name that may have been
+// renamed to <base>_legacy after unified storage migration. Returns "" if
+// neither variant exists.
+func (ss *sqlStore) findTable(base string) string {
+	for _, name := range []string{base, base + "_legacy"} {
+		exists, err := ss.db.GetEngine().IsTableExist(name)
+		if err != nil {
+			ss.log.Warn("Failed to check table existence", "table", name, "error", err)
+			continue
+		}
+		if exists {
+			return name
+		}
+	}
+	return ""
 }
 
 // RegisterDelete registers a delete query to be executed when an org is deleted, used to delete enterprise data.

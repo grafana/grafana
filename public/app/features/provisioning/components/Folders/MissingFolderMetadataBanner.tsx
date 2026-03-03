@@ -1,10 +1,13 @@
+import { useState } from 'react';
+
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, Button, LoadingPlaceholder } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
 
-import { useFixFolderMetadata } from '../../hooks/useFixFolderMetadata';
 import { useFolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
+
+import { FixFolderMetadataDrawer } from './FixFolderMetadataDrawer';
 
 interface MissingFolderMetadataBannerProps {
   repositoryName: string;
@@ -12,7 +15,7 @@ interface MissingFolderMetadataBannerProps {
 }
 
 export function MissingFolderMetadataBanner({ repositoryName, variant = 'folder' }: MissingFolderMetadataBannerProps) {
-  const { onFixFolderMetadata, buttonContent } = useFixFolderMetadata(repositoryName);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const title =
     variant === 'folder'
@@ -23,26 +26,32 @@ export function MissingFolderMetadataBanner({ repositoryName, variant = 'folder'
         );
 
   return (
-    <Alert
-      severity="warning"
-      title={title}
-      // TODO: replace buttonContent/onRemove with a proper action button prop
-      // once https://github.com/grafana/grafana/pull/118673 is merged.
-      onRemove={onFixFolderMetadata}
-      buttonContent={buttonContent}
-    >
-      {variant === 'folder' ? (
-        <Trans i18nKey="provisioning.missing-folder-metadata-banner.message">
-          Since this folder doesn&apos;t contain a metadata file, the folder ID is based on the folder path. If you move
-          or rename the folder, the folder ID will change, and permissions may no longer apply to the folder.
-        </Trans>
-      ) : (
-        <Trans i18nKey="provisioning.missing-folder-metadata-banner.repo-message">
-          Folders without metadata files use path-based IDs. If moved or renamed, their IDs will change and permissions
-          may break.
-        </Trans>
+    <>
+      <Alert
+        severity="warning"
+        title={title}
+        action={
+          <Button variant="secondary" onClick={() => setIsDrawerOpen(true)}>
+            <Trans i18nKey="provisioning.fix-folder-metadata.button">Fix folder IDs</Trans>
+          </Button>
+        }
+      >
+        {variant === 'folder' ? (
+          <Trans i18nKey="provisioning.missing-folder-metadata-banner.message">
+            Since this folder doesn&apos;t contain a metadata file, the folder ID is based on the folder path. If you
+            move or rename the folder, the folder ID will change, and permissions may no longer apply to the folder.
+          </Trans>
+        ) : (
+          <Trans i18nKey="provisioning.missing-folder-metadata-banner.repo-message">
+            Folders without metadata files use path-based IDs. If moved or renamed, their IDs will change and
+            permissions may break.
+          </Trans>
+        )}
+      </Alert>
+      {isDrawerOpen && (
+        <FixFolderMetadataDrawer repositoryName={repositoryName} onDismiss={() => setIsDrawerOpen(false)} />
       )}
-    </Alert>
+    </>
   );
 }
 
