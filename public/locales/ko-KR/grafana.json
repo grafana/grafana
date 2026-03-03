@@ -3248,6 +3248,7 @@
     },
     "template-form": {
       "aria-label-template-form": "템플릿 양식",
+      "body-legacy": "",
       "label-examples-documentation": "예시 문서",
       "label-template-group": "템플릿 그룹",
       "label-template-group-name": "템플릿 그룹 이름",
@@ -3256,6 +3257,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "템플릿 그룹의 이름을 지정하세요",
       "title-error-saving-template": "템플릿 저장 중에 오류 발생",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "템플릿 치트 시트"
     },
     "template-preview": {
@@ -3296,6 +3298,8 @@
       "help": {
         "intro": "알림 템플릿은 Go 템플릿 언어를 사용하여 알림 메시지를 생성합니다.\n\nGrafana에서는 하나의 템플릿이 {{ define \"<NAME>\" }}을(를) 사용하면 여러 개의 알림 템플릿을 정의할 수 있습니다.\n{{ template \"<NAME>\" }}을(를) 호출하면 연락처 및 다른 알림 템플릿에서 이러한 템플릿을 사용할 수 있습니다.\n알림 템플릿에 대한 자세한 내용은 Grafana 문서를 참조하세요."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "잘못 구성됨",
       "misconfigured-warning": "이 템플릿은 잘못 구성되었습니다.",
       "misconfigured-warning-details": "템플릿은 alertmanager 구성의 <2></2> 및 <5></5> 섹션 모두에서 정의되어야 합니다."
@@ -3406,7 +3410,14 @@
         "title": "규칙을 찾을 수 없습니다"
       },
       "rules-with-firing-instances": "발동 중인 인스턴스의 알림 규칙",
-      "rules-with-pending-instances": "대기 중인 인스턴스의 알림 규칙"
+      "rules-with-pending-instances": "대기 중인 인스턴스의 알림 규칙",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "표현식 추가"
@@ -4164,7 +4175,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -7790,7 +7800,10 @@
     "pro-tip": "유용한 팁: {{proTip}} "
   },
   "entity-not-found": {
-    "description": "{{lowerCaseEntity}}을(를) 찾아 보았지만 발견하지 못했습니다. <4>홈</4>으로 돌아가거나 <7>커뮤니티 사이트</7>에서받아 보세요."
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -11880,8 +11893,6 @@
       "tooltip-delete": "삭제"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "일부 제안을 불러올 수 없습니다"
       },
@@ -14300,6 +14311,11 @@
           "settings": "설정"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "외부 그룹 동기화"
@@ -14356,6 +14372,19 @@
       "loading-teams": "팀 로딩 중...",
       "new-team": "새 팀",
       "placeholder-search-teams": "팀 검색"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "이 항목은 선택 사항이며 주로 (Gravatar 서비스를 통해) 팀 프로필 아바타를 설정하는 데 사용됩니다",
