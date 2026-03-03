@@ -22,6 +22,7 @@ export const initialState: SearchState = {
   query: '',
   tag: [],
   starred: false,
+  teamFolders: false,
   layout: SearchLayout.Folders,
   sort: undefined,
   prevSort: undefined,
@@ -33,6 +34,7 @@ export const initialState: SearchState = {
 export const defaultQueryParams: SearchQueryParams = {
   sort: null,
   starred: null,
+  teamFolders: null,
   query: null,
   tag: null,
   layout: null,
@@ -99,6 +101,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       panel_type: this.state.panel_type,
       createdBy: this.state.createdBy ?? null,
       starred: this.state.starred ? this.state.starred : null,
+      teamFolders: this.state.teamFolders ? this.state.teamFolders : null,
       sort: this.state.sort,
     });
 
@@ -125,6 +128,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       panel_type: undefined,
       createdBy: undefined,
       starred: undefined,
+      teamFolders: undefined,
       sort: undefined,
     });
   };
@@ -176,6 +180,17 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     }
   };
 
+  onTeamFoldersFilterChange = (e: FormEvent<HTMLInputElement>) => {
+    const teamFolders = e.currentTarget.checked;
+    this.setStateAndDoSearch({ teamFolders });
+  };
+
+  onSetTeamFolders = (teamFolders: boolean) => {
+    if (teamFolders !== this.state.teamFolders) {
+      this.setStateAndDoSearch({ teamFolders });
+    }
+  };
+
   onSortChange = (sort: string | undefined) => {
     if (sort) {
       localStorage.setItem(SEARCH_SELECTED_SORT, sort);
@@ -212,6 +227,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       this.state.query ||
         this.state.tag.length ||
         this.state.starred ||
+        this.state.teamFolders ||
         this.state.panel_type ||
         this.state.createdBy ||
         this.state.sort ||
@@ -262,6 +278,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const trackingInfo = {
       layout: this.state.layout,
       starred: this.state.starred,
+      teamFolders: this.state.teamFolders,
       sortValue: this.state.sort,
       query: this.state.query,
       tagCount: this.state.tag?.length,
@@ -279,7 +296,14 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const searcher = getGrafanaSearcher();
 
     const searchTimestamp = Date.now();
-    const searchPromise = this.state.starred ? searcher.starred(this.lastQuery) : searcher.search(this.lastQuery);
+    let searchPromise;
+    if (this.state.starred) {
+      searchPromise = searcher.starred(this.lastQuery);
+    } else if (this.state.teamFolders) {
+      searchPromise = searcher.teamFolders(this.lastQuery);
+    } else {
+      searchPromise = searcher.search(this.lastQuery);
+    }
 
     return searchPromise
       .then((result) => {
@@ -315,6 +339,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     reportSearchResultInteraction(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
+      teamFolders: this.state.teamFolders,
       sortValue: this.state.sort,
       query: this.state.query,
       tagCount: this.state.tag?.length,
@@ -331,6 +356,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     reportDashboardListViewed(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
+      teamFolders: this.state.teamFolders,
       sortValue: this.state.sort,
       query: this.state.query,
       tagCount: this.state.tag?.length,
