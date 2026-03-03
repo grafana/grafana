@@ -113,8 +113,8 @@ export default function NewCustomThemePage() {
                 height={30}
                 minWidth={40}
                 width="100%"
-                borderStyle={'solid'}
-                borderColor="weak"
+                borderStyle="solid"
+                borderColor="medium"
               >
                 {previewTheme && <ThemePreview theme={previewTheme} />}
               </Box>
