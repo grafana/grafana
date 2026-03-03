@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"text/template"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -15,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type GetUserInternalIDQuery struct {
@@ -466,10 +469,28 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, toUserConflictError(err, cmd.UID)
 	}
 
 	return &CreateUserResult{User: createdUser}, nil
+}
+
+// toUserConflictError converts a UNIQUE constraint violation on user.email or
+// user.login into a 409 Conflict API error. All other errors are returned as-is.
+func toUserConflictError(err error, uid string) error {
+	if err == nil {
+		return nil
+	}
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, "UNIQUE constraint failed: user.email"):
+		return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+			fmt.Errorf("email is already taken"))
+	case strings.Contains(msg, "UNIQUE constraint failed: user.login"):
+		return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+			fmt.Errorf("login is already taken"))
+	}
+	return err
 }
 
 func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteUserCommand) deleteUserQuery {
@@ -727,7 +748,7 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, toUserConflictError(err, cmd.UID)
 	}
 
 	return &UpdateUserResult{User: updatedUser}, nil

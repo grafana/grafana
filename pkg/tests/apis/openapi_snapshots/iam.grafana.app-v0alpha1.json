@@ -4101,7 +4101,7 @@
         "tags": [
           "User"
         ],
-        "description": "list objects of kind User",
+        "description": "list or watch objects of kind User",
         "operationId": "listUser",
         "parameters": [
           {

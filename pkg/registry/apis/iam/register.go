@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -65,6 +66,7 @@ const MaxConcurrentZanzanaWrites = 20
 
 func RegisterAPIService(
 	cfg *setting.Cfg,
+	cfgProvider configprovider.ConfigProvider,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
@@ -134,8 +136,9 @@ func RegisterAPIService(
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
-		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService, tracing), unified, features),
-		tracing:    tracing,
+		teamSearch:  NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService, tracing), unified, features),
+		tracing:     tracing,
+		cfgProvider: cfgProvider,
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg, accessClient)
 
@@ -486,7 +489,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	if err != nil {
 		return err
 	}
-	storage[userResource.StoragePath()] = userUniStore
 
 	if enableZanzanaSync {
 		b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
@@ -495,14 +497,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		userUniStore.AfterDelete = b.AfterUserDelete
 	}
 
+	var userStore storewrapper.K8sStorage = userUniStore
+
 	if b.userLegacyStore != nil {
 		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), b.userLegacyStore, userUniStore)
 		if err != nil {
 			return err
 		}
 
-		storage[userResource.StoragePath()] = dw
+		var ok bool
+		userStore, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
 	}
+
+	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfgProvider))
 
 	legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
 
