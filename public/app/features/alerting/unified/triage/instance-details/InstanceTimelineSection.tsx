@@ -8,14 +8,7 @@ import { Alert, Box, LoadingBar, LoadingPlaceholder, Stack, Text } from '@grafan
 import { LogRecord } from '../../components/rules/state-history/common';
 
 import { InstanceTimeline } from './InstanceTimeline';
-
-function labelsToMatchers(labels: Labels) {
-  return Object.entries(labels).map(([label, value]) => ({
-    label,
-    type: '=' as const,
-    value,
-  }));
-}
+import { labelsToMatchers } from './timelineUtils';
 
 interface InstanceTimelineSectionProps {
   ruleUID: string;

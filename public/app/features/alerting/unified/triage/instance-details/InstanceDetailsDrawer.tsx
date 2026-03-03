@@ -40,6 +40,7 @@ import { QueryVisualization } from './QueryVisualization';
 import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
 import { useInstanceAlertState } from './instanceStateUtils';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
+import { dateFormatter, noop } from './timelineUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
@@ -251,18 +252,6 @@ function extractQueryDetails(rule: GrafanaRuleDefinition) {
 
 const MAX_STATE_TRANSITIONS = 10;
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
-
-function formatTimestamp(timestamp: number) {
-  return dateFormatter.format(new Date(timestamp));
-}
-
 function InstanceStateTransitions({
   records,
   maxItems = MAX_STATE_TRANSITIONS,
@@ -278,11 +267,11 @@ function InstanceStateTransitions({
       {sortedRecords.map((record, index) => (
         <Fragment key={`${record.timestamp}-${index}`}>
           <Text color="secondary" variant="bodySmall">
-            {formatTimestamp(record.timestamp)}
+            {dateFormatter.format(new Date(record.timestamp))}
           </Text>
-          <EventState state={record.line.previous} showLabel addFilter={() => {}} type="from" />
+          <EventState state={record.line.previous} showLabel addFilter={noop} type="from" />
           <Icon name="arrow-right" size="sm" />
-          <EventState state={record.line.current} showLabel addFilter={() => {}} type="to" />
+          <EventState state={record.line.current} showLabel addFilter={noop} type="to" />
         </Fragment>
       ))}
     </div>

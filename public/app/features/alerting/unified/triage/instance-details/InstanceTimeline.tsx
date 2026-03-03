@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
@@ -11,6 +11,8 @@ import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { LogRecord } from '../../components/rules/state-history/common';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
+
+import { dateFormatter, formatDuration, noop } from './timelineUtils';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;
 
@@ -70,32 +72,6 @@ function buildTimelineGroups(records: LogRecord[], notifications: NotificationEn
   return groups;
 }
 
-function formatDuration(ms: number): string {
-  if (ms < 1000) {
-    return `${ms}ms`;
-  }
-  const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    const remainingSeconds = seconds % 60;
-    return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-}
-
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
-
 interface InstanceTimelineProps {
   records: LogRecord[];
   notifications: NotificationEntry[];
@@ -151,7 +127,7 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
   return (
     <div className={styles.timeline}>
       {entries.map((entry, index) => (
-        <div key={index} className={styles.groupRow}>
+        <div key={`${entry.type}-${entry.timestamp}-${index}`} className={styles.groupRow}>
           <div className={styles.timestampCol}>
             <Text variant="bodySmall" color="secondary">
               {dateFormatter.format(new Date(entry.timestamp))}
@@ -170,9 +146,9 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
 
             {entry.type === 'state-change' && entry.previous && entry.current && (
               <div className={styles.stateChangeContent}>
-                <EventState state={entry.previous} showLabel addFilter={() => {}} type="from" />
+                <EventState state={entry.previous} showLabel addFilter={noop} type="from" />
                 <Icon name="arrow-right" size="sm" />
-                <EventState state={entry.current} showLabel addFilter={() => {}} type="to" />
+                <EventState state={entry.current} showLabel addFilter={noop} type="to" />
               </div>
             )}
           </div>
@@ -212,7 +188,10 @@ function NotificationStatusGroup({ status, notifications }: { status: string; no
   const failedCount = notifications.length - successCount;
 
   const receivers = [...new Set(notifications.map((n) => n.receiver))];
-  const receiverLabel = receivers.length === 1 ? receivers[0] : `${receivers.length} receivers`;
+  const receiverLabel =
+    receivers.length === 1
+      ? receivers[0]
+      : t('alerting.instance-details.timeline-n-receivers', '{{count}} receivers', { count: receivers.length });
   const integrations = [...new Set(notifications.map((n) => n.integration))];
 
   let outcomeLabel: string;
@@ -241,16 +220,16 @@ function NotificationStatusGroup({ status, notifications }: { status: string; no
     ? t('alerting.instance-details.timeline-status-firing', 'Firing')
     : t('alerting.instance-details.timeline-status-resolved', 'Resolved');
 
-  let summaryStyle = styles.summaryRowFiring;
+  let variantStyle = styles.summaryRowFiring;
   if (hasFailures) {
-    summaryStyle = styles.summaryRowError;
+    variantStyle = styles.summaryRowError;
   } else if (!isFiring) {
-    summaryStyle = styles.summaryRowResolved;
+    variantStyle = styles.summaryRowResolved;
   }
 
   return (
     <div className={styles.notificationSummaryWrapper}>
-      <button className={summaryStyle} onClick={() => setExpanded(!expanded)} type="button">
+      <button className={cx(styles.summaryRowBase, variantStyle)} onClick={() => setExpanded(!expanded)} type="button">
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name={isFiring ? 'fire' : 'check-circle'} size="sm" />
           <Text variant="bodySmall" weight="medium">
@@ -284,8 +263,8 @@ function NotificationStatusGroup({ status, notifications }: { status: string; no
 
       {expanded && (
         <div className={styles.notificationDetails}>
-          {notifications.map((notification, idx) => (
-            <NotificationRow key={idx} notification={notification} />
+          {notifications.map((notification) => (
+            <NotificationRow key={notification.uuid} notification={notification} />
           ))}
         </div>
       )}
@@ -420,52 +399,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(1),
   }),
 
-  summaryRowFiring: css({
+  summaryRowBase: css({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
     padding: theme.spacing(0.75, 1.5),
-    border: `1px solid ${theme.colors.error.border}`,
     borderRadius: theme.shape.radius.default,
-    backgroundColor: theme.colors.error.transparent,
     cursor: 'pointer',
     '&:hover': {
       backgroundColor: theme.colors.action.hover,
     },
+  }),
+
+  summaryRowFiring: css({
+    border: `1px solid ${theme.colors.error.border}`,
+    backgroundColor: theme.colors.error.transparent,
   }),
 
   summaryRowResolved: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    padding: theme.spacing(0.75, 1.5),
     border: `1px solid ${theme.colors.success.border}`,
-    borderRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.success.transparent,
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: theme.colors.action.hover,
-    },
   }),
 
   summaryRowError: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    padding: theme.spacing(0.75, 1.5),
     border: `1px solid ${theme.colors.warning.border}`,
-    borderRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.warning.transparent,
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: theme.colors.action.hover,
-    },
   }),
 
   notificationDetails: css({
