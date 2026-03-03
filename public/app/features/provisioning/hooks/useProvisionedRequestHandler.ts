@@ -1,4 +1,4 @@
-import { createElement, type ReactElement, useEffect, useRef } from 'react';
+import { createElement, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -16,6 +16,7 @@ import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { useDispatch } from 'app/types/store';
 
+import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
 type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
@@ -124,16 +125,13 @@ export function useProvisionedRequestHandler<T>({
         const branch = ref || selectedBranch || repository?.branch;
         const repoURL = urls?.repositoryURL || repository?.url;
 
-        const label = getResourceLabel(resourceType);
         if (branch) {
           // Uses dispatch(notifyApp(...)) instead of getAppEvents().publish() because AlertPayload only accepts strings
           // and notifyApp supports a React component for rendering the branch name as a clickable link.
-          const component = buildPushSuccessComponent(branch, repoURL, label);
+          const component = createElement(PushSuccessMessage, { branch, repositoryURL: repoURL });
           dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
         } else {
-          const message =
-            successMessage ||
-            t('provisioned-request.saved-success', '{{resourceLabel}} saved successfully', { resourceLabel: label });
+          const message = successMessage || t('provisioned-request.saved-success', 'Changes saved successfully');
           getAppEvents().publish({
             type: AppEvents.alertSuccess.name,
             payload: [message],
@@ -170,38 +168,6 @@ export function useProvisionedRequestHandler<T>({
     selectedBranch,
     setLastBranch,
   ]);
-}
-
-function getResourceLabel(resourceType?: ResourceType): string {
-  switch (resourceType) {
-    case 'dashboard':
-      return t('provisioned-request.resource-label.dashboard', 'Dashboard');
-    case 'folder':
-      return t('provisioned-request.resource-label.folder', 'Folder');
-    default:
-      return t('provisioned-request.resource-label.resource', 'Resource');
-  }
-}
-
-/**
- * Returns e.g. "Dashboard changes successfully pushed to <branch>" where <branch> is a link when repositoryURL is available.
- * Uses createElement instead of JSX since this is a .ts file.
- */
-function buildPushSuccessComponent(branch: string, repositoryURL?: string, resourceLabel?: string): ReactElement {
-  const prefix = t('provisioned-request.push-success.prefix', '{{resourceLabel}} changes successfully pushed to ', {
-    resourceLabel,
-  });
-
-  if (repositoryURL) {
-    const link = createElement(
-      'a',
-      { href: repositoryURL, target: '_blank', rel: 'noopener noreferrer', style: { textDecoration: 'underline' } },
-      branch
-    );
-    return createElement('span', null, prefix, link);
-  }
-
-  return createElement('span', null, prefix, branch);
 }
 
 export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };

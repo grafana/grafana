@@ -89,7 +89,7 @@ describe('useProvisionedRequestHandler', () => {
 
       expect(mockPublish).toHaveBeenCalledWith({
         type: AppEvents.alertSuccess.name,
-        payload: ['Dashboard saved successfully'],
+        payload: ['Changes saved successfully'],
       });
       expect(handlers.onDismiss).toHaveBeenCalled();
     });

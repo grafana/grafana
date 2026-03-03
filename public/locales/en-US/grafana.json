@@ -12406,14 +12406,9 @@
   },
   "provisioned-request": {
     "push-success": {
-      "prefix": "{{resourceLabel}} changes successfully pushed to "
+      "prefix": "Changes successfully pushed to "
     },
-    "resource-label": {
-      "dashboard": "Dashboard",
-      "folder": "Folder",
-      "resource": "Resource"
-    },
-    "saved-success": "{{resourceLabel}} saved successfully"
+    "saved-success": "Changes saved successfully"
   },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
