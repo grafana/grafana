@@ -91,6 +91,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     draggableItem: css({
       marginBottom: theme.spacing(SIDEBAR_CARD_SPACING),
+      '&:last-child': {
+        marginBottom: 0,
+      },
       '[data-dragging] &': {
         pointerEvents: 'none',
       },

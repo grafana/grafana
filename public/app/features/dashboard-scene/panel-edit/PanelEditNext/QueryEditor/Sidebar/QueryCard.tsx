@@ -9,12 +9,13 @@ import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } fro
 import { getEditorType } from '../utils';
 
 import { CardTitle } from './CardTitle';
+import { GhostSidebarCard } from './GhostSidebarCard';
 import { SidebarCard } from './SidebarCard';
 
 export const QueryCard = ({ query }: { query: DataQuery }) => {
   const editorType = getEditorType(query);
   const queryDsSettings = useDatasource(query.datasource);
-  const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
+  const { selectedQuery, setSelectedQuery, pendingExpression, pendingSavedQuery } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const { data } = useQueryRunnerContext();
 
@@ -31,25 +32,34 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   };
 
   return (
-    <SidebarCard
-      id={query.refId}
-      isSelected={isSelected}
-      item={item}
-      onClick={() => setSelectedQuery(query)}
-      onDelete={() => deleteQuery(query.refId)}
-      onDuplicate={() => duplicateQuery(query.refId)}
-      onToggleHide={() => toggleQueryHide(query.refId)}
-    >
-      {editorType === QueryEditorType.Query ? (
-        <DataSourceLogo dataSource={queryDsSettings} size={14} />
-      ) : (
-        <Icon
-          name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon}
-          color={QUERY_EDITOR_TYPE_CONFIG[editorType].color}
-          size="sm"
-        />
+    <>
+      <SidebarCard
+        id={query.refId}
+        isSelected={isSelected}
+        item={item}
+        onClick={() => setSelectedQuery(query)}
+        onDelete={() => deleteQuery(query.refId)}
+        onDuplicate={() => duplicateQuery(query.refId)}
+        onToggleHide={() => toggleQueryHide(query.refId)}
+      >
+        {editorType === QueryEditorType.Query ? (
+          <DataSourceLogo dataSource={queryDsSettings} size={14} />
+        ) : (
+          <Icon
+            name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon}
+            color={QUERY_EDITOR_TYPE_CONFIG[editorType].color}
+            size="sm"
+          />
+        )}
+        <CardTitle title={query.refId} isHidden={isHidden} />
+      </SidebarCard>
+      {pendingExpression?.insertAfter === query.refId && (
+        <GhostSidebarCard id="__pending_expression__" type={QueryEditorType.Expression} />
       )}
-      <CardTitle title={query.refId} isHidden={isHidden} />
-    </SidebarCard>
+      {pendingSavedQuery?.insertAfter === query.refId && (
+        <GhostSidebarCard id="__pending_saved_query__" type={QueryEditorType.Query} />
+      )}
+    </>
   );
 };
+

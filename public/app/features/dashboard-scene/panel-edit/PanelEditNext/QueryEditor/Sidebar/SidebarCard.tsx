@@ -1,4 +1,4 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +8,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { ActionItem, Actions } from '../../Actions';
 import {
   QUERY_EDITOR_COLORS,
+  QUERY_EDITOR_TYPE_CONFIG,
   QueryEditorType,
   SIDEBAR_CARD_HEIGHT,
   SIDEBAR_CARD_INDENT,
@@ -75,12 +76,15 @@ export const SidebarCard = ({
   };
 
   if (variant === 'ghost') {
+    const typeConfig = QUERY_EDITOR_TYPE_CONFIG[item.type];
     return (
       <div className={styles.wrapper} aria-hidden>
         <div className={cx(styles.card, styles.ghostCard)}>
           <div className={styles.cardContent}>
-            <div className={styles.ghostCardIcon} />
-            <div className={styles.ghostCardTitle} />
+            <Icon name={typeConfig.icon} color={typeConfig.color} size="sm" />
+            <span className={styles.ghostCardLabel}>
+              {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: typeConfig.getLabel() })}
+            </span>
           </div>
         </div>
       </div>
@@ -131,11 +135,6 @@ export const SidebarCard = ({
     </div>
   );
 };
-
-const ghostCardPulse = keyframes`
-  from, to { opacity: 0.1; }
-  50% { opacity: 0.8; }
-`;
 
 function getStyles(
   theme: GrafanaTheme2,
@@ -280,41 +279,20 @@ function getStyles(
     }),
 
     ghostCard: css({
-      border: `1px dashed ${theme.colors.border.medium}`,
-      borderLeft: `3px solid ${theme.colors.border.medium}`,
+      border: `1px dashed ${borderColor}`,
+      borderLeft: `3px solid ${borderColor}`,
       background: 'transparent',
-      '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
-        borderColor: theme.colors.border.strong,
-        borderLeftColor: borderColor,
-      },
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'border-color'], {
-          duration: theme.transitions.duration.standard,
-        }),
-      },
+      cursor: 'default',
+      opacity: 0.7,
     }),
 
-    ghostCardIcon: css({
-      width: theme.spacing(2),
-      height: theme.spacing(2),
-      borderRadius: theme.shape.radius.default,
-      background: theme.colors.border.weak,
-      flexShrink: 0,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${ghostCardPulse} 3s ease-in-out infinite`,
-      },
-    }),
-
-    ghostCardTitle: css({
-      height: theme.spacing(1.5),
-      flex: 1,
-      maxWidth: '70%',
-      borderRadius: theme.shape.radius.default,
-      background: theme.colors.border.weak,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${ghostCardPulse} 3s ease-in-out infinite`,
-      },
+    ghostCardLabel: css({
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontStyle: 'italic',
+      color: theme.colors.text.secondary,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
 
     errorIcon: css({

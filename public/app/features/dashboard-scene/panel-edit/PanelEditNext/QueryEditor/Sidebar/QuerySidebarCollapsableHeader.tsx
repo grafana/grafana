@@ -40,11 +40,7 @@ export const QuerySidebarCollapsableHeader = ({
       className={styles.collapsableSection}
       contentClassName={styles.contentArea}
     >
-      <div className={styles.queryStackCardsContainer}>
-        <Stack direction="column" gap={2.5}>
-          {children}
-        </Stack>
-      </div>
+      <div className={styles.queryStackCardsContainer}>{children}</div>
     </CollapsableSection>
   );
 };
