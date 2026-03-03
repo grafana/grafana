@@ -19,16 +19,22 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
   return (
     <div className={cx(styles.banner, className)}>
       <div className={styles.left}>
-        <div className={styles.iconCircle}>
-          <Icon name={useQueryExperienceNext ? 'rocket' : 'bolt'} size="md" className={styles.accentIcon} />
-        </div>
+        <Icon name={useQueryExperienceNext ? 'rocket' : 'bolt'} size="md" className={styles.accentIcon} />
         <span className={styles.title}>
           {useQueryExperienceNext
             ? t('dashboard-scene.query-editor-banner.downgrade-title', 'New query editor!')
             : t('dashboard-scene.query-editor-banner.upgrade-title', 'New editor available!')}
         </span>
         <span className={styles.description}>
-          {t('dashboard-scene.query-editor-banner.description', 'Try the improved query editing experience.')}
+          {useQueryExperienceNext
+            ? t(
+                'dashboard-scene.query-editor-banner.description-new',
+                'Welcome to the improved query editing experience.'
+              )
+            : t(
+                'dashboard-scene.query-editor-banner.description-classic',
+                'Try the improved query editing experience.'
+              )}
         </span>
       </div>
       <div className={styles.right}>
@@ -46,8 +52,8 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
           </LinkButton>
         )}
         {useQueryExperienceNext ? (
-          <Button variant="secondary" fill="text" size="sm" icon="history" onClick={onToggle}>
-            {t('dashboard-scene.query-editor-banner.go-back', 'Go back to classic')}
+          <Button variant="secondary" fill="text" size="sm" icon="arrow-left" onClick={onToggle}>
+            {t('dashboard-scene.query-editor-banner.go-back', 'Back to classic')}
           </Button>
         ) : (
           <Button variant="primary" fill="text" size="sm" icon="rocket" onClick={onToggle}>
@@ -87,16 +93,6 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(1.5),
       minWidth: 0,
-    }),
-    iconCircle: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: theme.spacing(3.25),
-      height: theme.spacing(3.25),
-      borderRadius: theme.shape.radius.circle,
-      backgroundColor: bannerColors.iconBackground,
-      flexShrink: 0,
     }),
     accentIcon: css({
       color: bannerColors.accent,

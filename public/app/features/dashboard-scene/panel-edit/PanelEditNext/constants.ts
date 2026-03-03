@@ -35,7 +35,6 @@ export function getQueryEditorBannerColors(theme: GrafanaTheme2) {
   return {
     background: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
     border: theme.isDark ? '#314158' : theme.colors.border.medium,
-    iconBackground: theme.isDark ? '#111217' : theme.colors.background.secondary,
     accent: theme.isDark ? '#FF9830' : '#C47B20',
   };
 }

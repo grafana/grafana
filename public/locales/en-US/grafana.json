@@ -6926,11 +6926,12 @@
       "query": "Query"
     },
     "query-editor-banner": {
-      "description": "Try the improved query editing experience.",
+      "description-classic": "Try the improved query editing experience.",
+      "description-new": "Welcome to the improved query editing experience.",
       "dismiss": "Dismiss",
       "downgrade-title": "New query editor!",
       "give-feedback": "Give feedback",
-      "go-back": "Go back to classic",
+      "go-back": "Back to classic",
       "try-it": "Try it out",
       "upgrade-title": "New editor available!"
     },
