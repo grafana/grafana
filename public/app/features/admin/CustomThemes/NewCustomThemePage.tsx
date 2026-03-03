@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { useCreateThemeMutation, API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/theme/v0alpha1';
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Input, TextArea } from '@grafana/ui';
+import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
 
 import { Page } from '../../../core/components/Page/Page';
 
@@ -48,8 +48,8 @@ export default function NewCustomThemePage() {
 
   return (
     <Page navId="custom-themes" pageNav={pageNav}>
-      <Page.Contents>
-        <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Stack direction="column" gap={2}>
           <Field
             noMargin
             label={t('admin.new-custom-theme-page.field-theme-name', 'Theme name')}
@@ -72,11 +72,13 @@ export default function NewCustomThemePage() {
           >
             <TextArea {...register('themeJson', { required: true })} rows={20} placeholder="{}" />
           </Field>
-          <Button type="submit" disabled={isLoading}>
-            <Trans i18nKey="admin.new-custom-theme-page.submit">Add custom theme</Trans>
-          </Button>
-        </form>
-      </Page.Contents>
+          <Stack justifyContent="flex-end">
+            <Button type="submit" disabled={isLoading}>
+              <Trans i18nKey="admin.new-custom-theme-page.submit">Add custom theme</Trans>
+            </Button>
+          </Stack>
+        </Stack>
+      </form>
     </Page>
   );
 }

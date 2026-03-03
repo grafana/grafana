@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { useDeleteThemeMutation, useListThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
 import { createTheme } from '@grafana/data';
@@ -13,6 +14,7 @@ export default function CustomThemesPage() {
   const customThemes = useListThemeQuery({});
   const [deleteTheme] = useDeleteThemeMutation();
   const [themeToDelete, setThemeToDelete] = useState<string>();
+  const navigate = useNavigate();
 
   return (
     <Page
@@ -36,6 +38,7 @@ export default function CustomThemesPage() {
                 build: () => createTheme(themeOption.spec),
               }}
               key={themeOption.metadata.uid}
+              onEdit={() => navigate(`/themes/${themeOption.metadata.name}/edit`)}
               onRemove={() => setThemeToDelete(themeOption.metadata.name)}
             />
           ))}

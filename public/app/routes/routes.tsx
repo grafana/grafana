@@ -358,6 +358,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/themes/:name/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CustomThemes" */ 'app/features/admin/CustomThemes/EditCustomThemePage')
+      ),
+    },
+    {
       path: '/admin/upgrading',
       component: SafeDynamicImport(() => import('app/features/admin/UpgradePage')),
     },
