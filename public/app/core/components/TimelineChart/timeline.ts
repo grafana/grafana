@@ -54,6 +54,7 @@ export interface TimelineCoreOptions {
   formatValue?: (seriesIdx: number, value: unknown) => string;
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
   hoverMulti: boolean;
+  namePosition?: 'left' | 'top';
 }
 
 /**
@@ -100,6 +101,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     getValueColor,
     getFieldConfig,
     hoverMulti,
+    namePosition,
   } = opts;
 
   let qt: Quadtree;
@@ -114,6 +116,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
+  const labelHeightPx = namePosition === 'top' ? Math.round(12 * devicePixelRatio) + Math.round(4 * devicePixelRatio) : 0;
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hoveredAtCursor: Rect | null = null;
 
@@ -229,6 +232,9 @@ export function getConfig(opts: TimelineCoreOptions) {
         u.ctx.clip();
 
         walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, height) => {
+          const barY0 = namePosition === 'top' ? y0 + labelHeightPx : y0;
+          const barHeight = namePosition === 'top' ? height - labelHeightPx : height;
+
           if (mode === TimelineMode.Changes) {
             for (let ix = 0; ix < dataY.length; ix++) {
               let yVal = dataY[ix];
@@ -255,9 +261,9 @@ export function getConfig(opts: TimelineCoreOptions) {
                   xOff,
                   yOff,
                   left,
-                  round(yOff + y0),
+                  round(yOff + barY0),
                   right - left,
-                  round(height),
+                  round(barHeight),
                   strokeWidth,
                   iy,
                   ix,
@@ -289,9 +295,9 @@ export function getConfig(opts: TimelineCoreOptions) {
                   xOff,
                   yOff,
                   round(left - xShift),
-                  round(yOff + y0),
+                  round(yOff + barY0),
                   barWid,
-                  round(height),
+                  round(barHeight),
                   strokeWidth,
                   iy,
                   ix,
@@ -482,6 +488,38 @@ export function getConfig(opts: TimelineCoreOptions) {
   const ySplits: number[] = Array(numSeries).fill(0);
   const yRange: uPlot.Range.MinMax = [0, 1];
 
+  const drawSeriesLabels: ((u: uPlot) => void) | undefined =
+    namePosition === 'top'
+      ? (u: uPlot) => {
+          u.ctx.save();
+          u.ctx.font = font;
+          u.ctx.textBaseline = 'top';
+          u.ctx.textAlign = 'left';
+          u.ctx.fillStyle = theme.colors.text.primary;
+
+          const bbox = u.bbox;
+
+          walk(rowHeight, null, numSeries, bbox.height, (iy, y0, _hgt) => {
+            const text = label(iy + 1);
+            const maxWidth = bbox.width;
+            let displayText = text;
+
+            // Truncate text with ellipsis if wider than available width
+            const measured = u.ctx.measureText(displayText);
+            if (measured.width > maxWidth) {
+              while (displayText.length > 0 && u.ctx.measureText(displayText + '\u2026').width > maxWidth) {
+                displayText = displayText.slice(0, -1);
+              }
+              displayText += '\u2026';
+            }
+
+            u.ctx.fillText(displayText, bbox.left, bbox.top + y0);
+          });
+
+          u.ctx.restore();
+        }
+      : undefined;
+
   return {
     cursor,
 
@@ -533,7 +571,9 @@ export function getConfig(opts: TimelineCoreOptions) {
     ySplits: (u: uPlot) => {
       walk(rowHeight, null, numSeries, u.bbox.height, (iy, y0, hgt) => {
         // vertical midpoints of each series' timeline (stored relative to .u-over)
-        let yMid = round(y0 + hgt / 2);
+        const adjY0 = namePosition === 'top' ? y0 + labelHeightPx : y0;
+        const adjHgt = namePosition === 'top' ? hgt - labelHeightPx : hgt;
+        let yMid = round(adjY0 + adjHgt / 2);
         ySplits[iy] = u.posToVal(yMid / uPlot.pxRatio, FIXED_UNIT);
       });
 
@@ -550,6 +590,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     // hooks
     init,
     drawClear,
+    drawSeriesLabels,
   };
 }
 
