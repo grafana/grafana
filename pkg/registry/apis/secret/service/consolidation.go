@@ -68,9 +68,10 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 	var currentNamespace string
 	var batch []*contracts.EncryptedValue
 	lastFinalizedTime := time.Now()
+	log := logging.FromContext(ctx)
 
 	finalize := func(ns string, values []*contracts.EncryptedValue) error {
-		fmt.Println("ConsolidationService.Consolidate: finalizing namespace", ns, "values", len(values))
+		log.Debug("ConsolidationService.Consolidate: finalizing namespace", "namespace", ns, "values", len(values))
 		if len(values) == 0 {
 			return nil
 		}
@@ -97,7 +98,7 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 				return fmt.Errorf("bulk updating namespace %s: %w", ns, err)
 			}
 		}
-		fmt.Println("ConsolidationService.Consolidate: finalized namespace", ns, "values", len(values), "time", time.Since(lastFinalizedTime))
+		log.Debug("ConsolidationService.Consolidate: finalized namespace", "namespace", ns, "values", len(values), "time", time.Since(lastFinalizedTime))
 		lastFinalizedTime = time.Now()
 		return nil
 	}
