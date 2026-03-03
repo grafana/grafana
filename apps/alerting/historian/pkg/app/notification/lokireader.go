@@ -75,12 +75,11 @@ func NewLokiReader(cfg config.LokiConfig, reg prometheus.Registerer, logger logg
 // Query retrieves notification history from an external Loki instance.
 // When query.Type is "counts", it returns aggregated counts via a metrics query.
 // Otherwise it returns individual notification entries via a range query.
+//
+// When query.Labels is set, a two-phase cross-stream lookup is performed:
+// first the alerts stream is queried for matching labels to collect UUIDs,
+// then the notifications stream is filtered by those UUIDs.
 func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error) {
-	logql, err := buildQuery(query)
-	if err != nil {
-		return QueryResult{}, err
-	}
-
 	now := time.Now().UTC()
 	from := now.Add(-defaultQueryRange)
 	if query.From != nil {
@@ -98,6 +97,29 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 
 	if limit > maxLimit {
 		return QueryResult{}, fmt.Errorf("%w: limit (%d) over maximum allowed (%d)", ErrInvalidQuery, limit, maxLimit)
+	}
+
+	// Phase 1: If labels are specified, query the alerts stream to collect matching UUIDs.
+	var labelUUIDs []string
+	if query.Labels != nil && len(*query.Labels) > 0 {
+		alertLogql, err := buildAlertLabelQuery(*query.Labels)
+		if err != nil {
+			return QueryResult{}, err
+		}
+		labelUUIDs, err = h.runAlertUUIDQuery(ctx, alertLogql, from, to)
+		if err != nil {
+			return QueryResult{}, err
+		}
+		if len(labelUUIDs) == 0 {
+			// No alerts match the label filter — return empty result.
+			return QueryResult{Entries: []Entry{}, Counts: []Count{}}, nil
+		}
+	}
+
+	// Phase 2: Build and run the notifications query, optionally filtered by UUIDs.
+	logql, err := buildQuery(query, labelUUIDs)
+	if err != nil {
+		return QueryResult{}, err
 	}
 
 	qtype := v0alpha1.CreateNotificationqueryRequestBodyTypeEntries
@@ -361,8 +383,54 @@ func parseLokiAlertEntry(s lokiclient.Sample) (AlertEntry, error) {
 	}, nil
 }
 
+// buildAlertLabelQuery builds a LogQL query against the alerts stream with label matchers.
+// After | json, Loki flattens nested label keys so labels.alertname becomes labels_alertname.
+func buildAlertLabelQuery(labels Matchers) (string, error) {
+	logql := fmt.Sprintf(`{%s=%q}`, historian.LabelFrom, historian.LabelFromValueAlerts)
+	logql += ` | json`
+	for _, matcher := range labels {
+		if !validLabelKeyRegex.MatchString(matcher.Label) {
+			return "", fmt.Errorf("%w: label: %q", ErrInvalidQuery, matcher.Label)
+		}
+		switch matcher.Type {
+		case "=", "!=", "=~", "!~":
+		default:
+			return "", fmt.Errorf("%w: matcher type: %s", ErrInvalidQuery, matcher.Type)
+		}
+		logql += fmt.Sprintf(` | labels_%s %s %q`, matcher.Label, matcher.Type, matcher.Value)
+	}
+	return logql, nil
+}
+
+// buildAlertUUIDMetricsQuery wraps an alert label LogQL query in a
+// sum by (uuid) (count_over_time(...)) aggregation so Loki deduplicates UUIDs server-side.
+func buildAlertUUIDMetricsQuery(logqlInner string, from, to time.Time) string {
+	rangeSeconds := int64(to.Sub(from).Seconds())
+	return fmt.Sprintf(`sum by (uuid) (count_over_time(%s[%ds]))`, logqlInner, rangeSeconds)
+}
+
+// runAlertUUIDQuery runs a metrics query against the alerts stream and extracts
+// the unique UUIDs from the resulting metric labels. Loki performs deduplication
+// server-side via sum by (uuid) (count_over_time(...)).
+func (l *LokiReader) runAlertUUIDQuery(ctx context.Context, logql string, from, to time.Time) ([]string, error) {
+	metricsLogql := buildAlertUUIDMetricsQuery(logql, from, to)
+	r, err := l.client.MetricsQuery(ctx, metricsLogql, to.UnixNano(), maxLimit)
+	if err != nil {
+		return nil, fmt.Errorf("loki metrics query (alert labels): %w", err)
+	}
+	var uuids []string
+	for _, sample := range r.Data.Result {
+		if uuid, ok := sample.Metric["uuid"]; ok && uuid != "" {
+			uuids = append(uuids, uuid)
+		}
+	}
+	return uuids, nil
+}
+
 // buildQuery creates the LogQL to perform the requested query.
-func buildQuery(query Query) (string, error) {
+// If uuids is non-empty, an additional filter is added after | json to match
+// only notifications with one of the given UUIDs.
+func buildQuery(query Query, uuids []string) (string, error) {
 	selectors := []string{
 		fmt.Sprintf(`%s=%q`, historian.LabelFrom, historian.LabelFromValue),
 	}
@@ -407,6 +475,16 @@ func buildQuery(query Query) (string, error) {
 			}
 			logql += fmt.Sprintf(` | groupLabels_%s %s %q`, matcher.Label, matcher.Type, matcher.Value)
 		}
+	}
+
+	// Add UUID filter if specified (used by cross-stream label filtering).
+	// uuid is a JSON field on the notifications stream, so this goes after | json.
+	if len(uuids) > 0 {
+		escaped := make([]string, len(uuids))
+		for i, u := range uuids {
+			escaped[i] = regexp.QuoteMeta(u)
+		}
+		logql += fmt.Sprintf(` | uuid =~ %q`, strings.Join(escaped, "|"))
 	}
 
 	// Add outcome filter if specified.
