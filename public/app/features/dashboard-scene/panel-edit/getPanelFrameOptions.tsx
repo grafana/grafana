@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp, FieldConfigSource, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -86,7 +86,20 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         title: t('dashboard-scene.get-panel-frame-options.title.panel-styles', 'Panel styles'),
         id: 'panel-styles',
         isOpenDefault: true,
-        customRender: () => <PanelStylesSection key="panel-styles" panel={panel} />,
+        customRender: () => (
+          <PanelStylesSection
+            key="panel-styles"
+            panel={panel}
+            onApplyPreset={(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) => {
+              dashboardEditActions.edit({
+                description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
+                source: panel,
+                perform: () => panel.onFieldConfigChange(preset.fieldConfig!, true),
+                undo: () => panel.onFieldConfigChange(prevFieldConfig, true),
+              });
+            }}
+          />
+        ),
       })
     );
   }

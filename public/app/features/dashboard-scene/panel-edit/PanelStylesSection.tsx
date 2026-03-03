@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { FeatureState, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { FeatureState, FieldConfigSource, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { FeatureBadge, Stack } from '@grafana/ui';
@@ -8,9 +8,12 @@ import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEdit
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
 import { getPresets } from 'app/features/panel/presets/getPresets';
 
-import { dashboardEditActions } from '../edit-pane/shared';
+export interface PanelStylesSectionProps {
+  panel: VizPanel;
+  onApplyPreset: (preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) => void;
+}
 
-export function PanelStylesSection({ panel }: { panel: VizPanel }) {
+export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionProps) {
   const [presets, setPresets] = useState<PanelPluginVisualizationSuggestion[] | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string | undefined>(undefined);
   const { pluginId } = panel.useState();
@@ -40,16 +43,10 @@ export function PanelStylesSection({ panel }: { panel: VizPanel }) {
     (preset: PanelPluginVisualizationSuggestion) => {
       setSelectedPreset(preset.hash);
       if (preset.fieldConfig) {
-        const prevFieldConfig = panel.state.fieldConfig;
-        dashboardEditActions.edit({
-          description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
-          source: panel,
-          perform: () => panel.onFieldConfigChange(preset.fieldConfig!, true),
-          undo: () => panel.onFieldConfigChange(prevFieldConfig, true),
-        });
+        onApplyPreset(preset, panel.state.fieldConfig);
       }
     },
-    [panel]
+    [onApplyPreset, panel]
   );
 
   if (!presets || presets.length === 0 || !data || data.series.length === 0) {

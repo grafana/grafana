@@ -13,16 +13,10 @@ import {
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { getPresets } from 'app/features/panel/presets/getPresets';
 
-import { dashboardEditActions } from '../edit-pane/shared';
-
 import { PanelStylesSection } from './PanelStylesSection';
 
 jest.mock('app/features/panel/presets/getPresets', () => ({
   getPresets: jest.fn(),
-}));
-
-jest.mock('../edit-pane/shared', () => ({
-  dashboardEditActions: { edit: jest.fn() },
 }));
 
 jest.mock('@grafana/scenes', () => ({
@@ -65,7 +59,6 @@ jest.mock('app/features/panel/components/VizTypePicker/VisualizationCardGrid', (
 }));
 
 const mockGetPresets = jest.mocked(getPresets);
-const mockDashboardEditActions = jest.mocked(dashboardEditActions);
 const mockSceneGraph = jest.mocked(sceneGraph);
 
 const mockPresets: PanelPluginVisualizationSuggestion[] = [
@@ -114,6 +107,8 @@ function setupDataMock(data: PanelData | null = mockData) {
 }
 
 describe('PanelStylesSection', () => {
+  const onApplyPreset = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetPresets.mockResolvedValue(mockPresets);
@@ -122,33 +117,33 @@ describe('PanelStylesSection', () => {
 
   it('renders null while presets are loading', () => {
     mockGetPresets.mockReturnValue(new Promise(() => {})); // never resolves
-    const { container } = render(<PanelStylesSection panel={buildPanel()} />);
+    const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders null when presets are empty', async () => {
     mockGetPresets.mockResolvedValue([]);
-    const { container } = render(<PanelStylesSection panel={buildPanel()} />);
+    const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(mockGetPresets).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders null when panel data has no series', async () => {
     setupDataMock({ ...mockData, series: [] });
-    const { container } = render(<PanelStylesSection panel={buildPanel()} />);
+    const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(mockGetPresets).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders null when no data', async () => {
+  it('renders null when data is null', async () => {
     setupDataMock(null);
-    const { container } = render(<PanelStylesSection panel={buildPanel()} />);
+    const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(mockGetPresets).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders preset cards when presets and data are available', async () => {
-    render(<PanelStylesSection panel={buildPanel()} />);
+    render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => {
       expect(screen.getByTestId('preset-default-hash')).toBeInTheDocument();
       expect(screen.getByTestId('preset-smooth-hash')).toBeInTheDocument();
@@ -156,53 +151,45 @@ describe('PanelStylesSection', () => {
   });
 
   it('renders the presets section title', async () => {
-    render(<PanelStylesSection panel={buildPanel()} />);
+    render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => {
       expect(screen.getByTestId('category-title')).toHaveTextContent('Panel styles');
     });
   });
 
   it('calls getPresets with the panel pluginId', async () => {
-    render(<PanelStylesSection panel={buildPanel()} />);
+    render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(mockGetPresets).toHaveBeenCalledWith('timeseries', mockFieldConfig));
   });
 
-  it('applies a preset when a card is clicked', async () => {
+  it('calls onApplyPreset when a card is clicked', async () => {
     const user = userEvent.setup();
-    const panel = buildPanel();
-    mockDashboardEditActions.edit.mockImplementation((props) => props.perform());
-
-    render(<PanelStylesSection panel={panel} />);
+    render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(screen.getByTestId('preset-smooth-hash')).toBeInTheDocument());
 
     await user.click(screen.getByTestId('preset-smooth-hash'));
 
-    expect(mockDashboardEditActions.edit).toHaveBeenCalledWith(
-      expect.objectContaining({ description: expect.any(String) })
-    );
-    expect(panel.onFieldConfigChange).toHaveBeenCalledWith(mockPresets[1].fieldConfig, true);
+    expect(onApplyPreset).toHaveBeenCalledWith(mockPresets[1], mockFieldConfig);
   });
 
-  it('does not call onFieldConfigChange when preset has no fieldConfig', async () => {
+  it('does not call onApplyPreset when preset has no fieldConfig', async () => {
     const user = userEvent.setup();
-    const panel = buildPanel();
     const presetsWithoutFieldConfig: PanelPluginVisualizationSuggestion[] = [
       { pluginId: 'timeseries', name: 'No Config', hash: 'no-config-hash', options: {} },
     ];
     mockGetPresets.mockResolvedValue(presetsWithoutFieldConfig);
-    mockDashboardEditActions.edit.mockImplementation((props) => props.perform());
 
-    render(<PanelStylesSection panel={panel} />);
+    render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(screen.getByTestId('preset-no-config-hash')).toBeInTheDocument());
 
     await user.click(screen.getByTestId('preset-no-config-hash'));
 
-    expect(panel.onFieldConfigChange).not.toHaveBeenCalled();
+    expect(onApplyPreset).not.toHaveBeenCalled();
   });
 
   it('marks the clicked card as selected', async () => {
     const user = userEvent.setup();
-    render(<PanelStylesSection panel={buildPanel()} />);
+    render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(screen.getByTestId('preset-smooth-hash')).toBeInTheDocument());
 
     expect(screen.getByTestId('preset-smooth-hash')).toHaveAttribute('data-selected', 'false');
@@ -222,7 +209,7 @@ describe('PanelStylesSection', () => {
       onFieldConfigChange: jest.fn(),
     } as unknown as VizPanel;
 
-    const { rerender } = render(<PanelStylesSection panel={panel} />);
+    const { rerender } = render(<PanelStylesSection panel={panel} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(screen.getByTestId('preset-smooth-hash')).toBeInTheDocument());
 
     await user.click(screen.getByTestId('preset-smooth-hash'));
@@ -239,7 +226,7 @@ describe('PanelStylesSection', () => {
       },
     ]);
 
-    rerender(<PanelStylesSection panel={panel} />);
+    rerender(<PanelStylesSection panel={panel} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(screen.getByTestId('preset-table-preset-hash')).toBeInTheDocument());
 
     expect(screen.queryByTestId('preset-smooth-hash')).not.toBeInTheDocument();
