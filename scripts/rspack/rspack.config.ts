@@ -51,6 +51,7 @@ export default function (env: Record<string, unknown> = {}): Configuration {
       alias: resolveAlias,
       modules: modules,
       fallback: nodePolyfills,
+      conditionNames: ['@grafana-app/source', '...'],
     },
     target: 'web',
     plugins,
