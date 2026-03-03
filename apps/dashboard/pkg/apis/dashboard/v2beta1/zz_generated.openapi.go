@@ -531,6 +531,21 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableKind(ref common.Ref
 							Format:  "",
 						},
 					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardV2beta1AdhocVariableKindDatasource{}.OpenAPIModelName()),
@@ -1757,6 +1772,21 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDataQueryKind(ref common.Referen
 							Format:  "",
 						},
 					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
 							Description: "New type for datasource reference Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.",
@@ -2618,6 +2648,21 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableKind(ref common.R
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 					"datasource": {
