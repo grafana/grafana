@@ -137,7 +137,7 @@ Saved queries are available in:
 
 You can see a list of these queries in the **Saved queries** drawer:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.4.png" max-width="550px" alt="List of saved queries and the edit query form" caption="The **Saved queries** drawer accessed from Dashboards" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.4.png" max-width="600px" alt="List of saved queries and the edit query form" caption="The **Saved queries** drawer accessed from Dashboards" >}}
 
 When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
 However, you can clear that filter to display all saved queries.
@@ -162,6 +162,13 @@ To access your saved queries, click **+ Add from saved queries** or open the **S
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
 
+Learn more about saved queries:
+
+- [Roles, permission, and RBAC](#roles-permissions-and-rbac)
+- [How to save a query](#save-a-query)
+- [Variables in saved queries](#variables-in-saved-queries)
+- [Known limitations](#known-limitations)
+
 #### Roles, permissions, and RBAC
 
 Saved queries support role-based access controls.
@@ -184,9 +191,28 @@ To save a query you've created:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-v12.2.png" max-width="750px" alt="Save a query" >}}
 
-1. In the **Saved queries** drawer, enter a title for the query that will make it easy to find later.
+1. In the **Saved queries** drawer, enter a title for the query that makes it easier to find later.
 1. (Optional) Enter a description and relevant tags.
 1. Click **Save**.
+
+#### Variables in saved queries
+
+If a saved query includes variables, you can substitute the variables in the query without modifying it.
+This is useful in environments where variable names or available values differ between dashboards.
+
+You can map the original variables to either:
+
+- A variable in your dashboard
+- A custom value that you enter
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-variables-v13.0.png" max-width="600px" alt="A saved query with substituted variables" >}}
+
+Grafana applies your selections to the query before inserting it into the dashboard.
+However, the substitutions only apply to the query when it's reused, and the original saved query remains unchanged.
+
+{{< admonition type="note">}}
+In Explore, you can map variables to custom values.
+{{< /admonition >}}
 
 #### Known limitations
 

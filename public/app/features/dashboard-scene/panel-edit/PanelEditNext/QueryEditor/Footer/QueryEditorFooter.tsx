@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
 
-import { FOOTER_HEIGHT, TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { FOOTER_HEIGHT, getQueryEditorColors, TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
@@ -117,6 +117,7 @@ export function QueryEditorFooter() {
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const themeColors = getQueryEditorColors(theme);
   return {
     container: css({
       position: 'sticky',
@@ -124,7 +125,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: themeColors.footerBackground,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
@@ -188,6 +189,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
 
+      // TODO: Add this back once all the new colors are finalized
       // '&::before': {
       //   content: '""',
       //   position: 'absolute',
@@ -195,7 +197,7 @@ function getStyles(theme: GrafanaTheme2) {
       //   top: 0,
       //   bottom: 0,
       //   width: theme.spacing(4),
-      //   background: `linear-gradient(to right, transparent, ${QUERY_EDITOR_COLORS.footerBackground})`,
+      //   background: `linear-gradient(to right, transparent, ${getQueryEditorColors(theme).footerBackground})`,
       //   pointerEvents: 'none',
       // },
     }),

@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
-import { SidebarSize } from '../../constants';
+import { getQueryEditorColors, SidebarSize } from '../../constants';
 
 interface SidebarHeaderActionsProps {
   sidebarSize: SidebarSize;
@@ -34,9 +34,10 @@ export function SidebarHeaderActions({ sidebarSize, setSidebarSize, children }: 
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const themeColors = getQueryEditorColors(theme);
   return {
     header: css({
-      background: theme.colors.background.secondary,
+      background: themeColors.sidebarHeaderBackground,
       padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(5),
       display: 'flex',

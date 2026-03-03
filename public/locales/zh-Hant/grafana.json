@@ -903,7 +903,7 @@
       "title-failed-to-fetch-contact-points": "無法擷取聯絡點"
     },
     "contact-points": {
-      "create": "建立聯絡點",
+      "create": "",
       "custom-template-value": "自訂範本值",
       "delete-reasons": {
         "heading": "由於以下原因，無法刪除聯絡點：",
@@ -2120,7 +2120,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "新增時間間隔"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2164,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,14 +2172,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "按聯絡點搜尋",
@@ -2241,7 +2242,7 @@
       "title-failed-to-fetch-notification-templates": "無法擷取通知範本"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "新增通知範本群組",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "建立通知範本以自訂您的通知。"
     },
     "notifications-list": {
@@ -2268,6 +2269,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2291,15 +2293,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "新增標籤，以協助您妥善管理紀錄規則。",
@@ -3246,6 +3248,7 @@
     },
     "template-form": {
       "aria-label-template-form": "範本表單",
+      "body-legacy": "",
       "label-examples-documentation": "範例文件",
       "label-template-group": "範本群組",
       "label-template-group-name": "範本群組名稱",
@@ -3254,6 +3257,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "為您的範本群組命名",
       "title-error-saving-template": "儲存範本時發生錯誤",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "範本備忘錄"
     },
     "template-preview": {
@@ -3294,6 +3298,8 @@
       "help": {
         "intro": "通知範本使用 Go 範本語言來建立通知訊息。\n\n在 Grafana 中，範本群組可以使用 {{ define \"<NAME>\" }} 定義多個通知範本。\n然後，可以透過呼叫 {{ template \"<NAME>\" }} 在聯絡點和其他通知範本中使用這些範本。\n有關通知範本的詳細資訊，請參閱我們的文件。"
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "設定錯誤",
       "misconfigured-warning": "此範本設定錯誤。",
       "misconfigured-warning-details": "必須在警報管理設定的<2></2>和<5></5>兩個區段中定義範本。"
@@ -3332,7 +3338,7 @@
       "stop-alerting-when": "處於以下值時停止警報（或待處理狀態）"
     },
     "time-interval": {
-      "add-time-interval": "新增時間間隔",
+      "add-time-interval": "",
       "save": "儲存時間間隔",
       "saving": "正在儲存時間間隔"
     },
@@ -3404,7 +3410,14 @@
         "title": "找不到規則"
       },
       "rules-with-firing-instances": "帶有觸發執行個體的警報規則",
-      "rules-with-pending-instances": "帶有待處理執行個體的警報規則"
+      "rules-with-pending-instances": "帶有待處理執行個體的警報規則",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "新增表達式"
@@ -4162,7 +4175,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -6577,6 +6589,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "無法刪除儀表板",
       "cancel-action": "取消",
@@ -7782,7 +7800,10 @@
     "pro-tip": "專業提示：{{proTip}}"
   },
   "entity-not-found": {
-    "description": "我們正在尋找，但似乎沒有找到{{lowerCaseEntity}}。請嘗試返回<4>首頁</4>或在<7>社群網站</7>上尋求協助。</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -11872,8 +11893,6 @@
       "tooltip-delete": "刪除"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "無法載入部分建議"
       },
@@ -12598,6 +12617,12 @@
       "label-read-only": "唯讀",
       "label-sync-interval": "同步間隔（秒）"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12737,6 +12762,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13243,6 +13270,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -14283,6 +14311,11 @@
           "settings": "設定"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "外部群組同步"
@@ -14339,6 +14372,19 @@
       "loading-teams": "正在載入團隊…",
       "new-team": "新團隊",
       "placeholder-search-teams": "搜尋團隊"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "這是可選項目，主要用於設定團隊個人資料頭像（透過 Gravatar 服務）",

@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Kan contactpunten niet ophalen"
     },
     "contact-points": {
-      "create": "Contactpunt aanmaken",
+      "create": "",
       "custom-template-value": "Aangepaste sjabloonwaarde",
       "delete-reasons": {
         "heading": "Contactpunt kan niet worden verwijderd om de volgende redenen:",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Tijdsinterval toevoegen"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Zoeken op contactpunt",
@@ -2252,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Kan meldingssjablonen niet ophalen"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Meldingssjablonengroep toevoegen",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Maak meldingsjablonen om je meldingen aan te passen."
     },
     "notifications-list": {
@@ -2279,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Voeg labels toe om je opnameregels beter te beheren.",
@@ -3264,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Sjabloonformulier",
+      "body-legacy": "",
       "label-examples-documentation": "Voorbeelden documentatie",
       "label-template-group": "Sjabloongroep",
       "label-template-group-name": "Sjabloongroepnaam",
@@ -3272,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Geef je sjabloongroep een naam",
       "title-error-saving-template": "Er is een fout opgetreden bij het opslaan van het sjabloon",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Cheatsheet maken met sjabloon"
     },
     "template-preview": {
@@ -3312,6 +3312,8 @@
       "help": {
         "intro": "Meldingsjablonen gebruiken Go-templatetaal om meldingsberichten te maken.\n\nIn Grafana kan een sjabloongroep meerdere meldingssjablonen definiëren met behulp van {{ define \"<NAME>\" }}.\nDeze sjablonen kunnen vervolgens worden gebruikt in contactpunten en binnen andere meldingssjablonen door {{ template \"<NAME>\" }} te gebruiken.\nRaadpleeg onze documentatie voor gedetailleerde informatie over meldingssjablonen."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Verkeerd geconfigureerd",
       "misconfigured-warning": "Dit sjabloon is verkeerd geconfigureerd.",
       "misconfigured-warning-details": "Sjablonen moeten worden gedefinieerd in zowel de sectie <2></2> als <5></5> van je waarschuwingsmanager-configuratie."
@@ -3350,7 +3352,7 @@
       "stop-alerting-when": "Waarschuwingen (of status 'in afwachting') stoppen wanneer "
     },
     "time-interval": {
-      "add-time-interval": "Tijdsinterval toevoegen",
+      "add-time-interval": "",
       "save": "Tijdsinterval opslaan",
       "saving": "Tijdsinterval opslaan"
     },
@@ -3422,7 +3424,14 @@
         "title": "Regel niet gevonden"
       },
       "rules-with-firing-instances": "Waarschuwingsregels met actieve instanties",
-      "rules-with-pending-instances": "Waarschuwingsregels met wachtende instanties"
+      "rules-with-pending-instances": "Waarschuwingsregels met wachtende instanties",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Expressie toevoegen"
@@ -4185,7 +4194,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -6605,6 +6613,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Kan dashboard niet verwijderen",
       "cancel-action": "Annuleren",
@@ -7813,7 +7827,10 @@
     "pro-tip": "ProTip: {{proTip}} "
   },
   "entity-not-found": {
-    "description": "We zijn op zoek, maar kunnen deze {{lowerCaseEntity}} niet vinden. Ga terug naar <4>huis</4> of zoek hulp op de <7>communitysite.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -11926,8 +11943,6 @@
       "tooltip-delete": "Verwijderen"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Sommige suggesties konden niet worden geladen"
       },
@@ -12656,6 +12671,12 @@
       "label-read-only": "Alleen lezen",
       "label-sync-interval": "Synchronisatie-interval (seconden)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12797,6 +12818,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13304,6 +13327,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -14351,6 +14375,11 @@
           "settings": "Instellingen"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Externe groepssynchronisatie"
@@ -14407,6 +14436,19 @@
       "loading-teams": "Teams laden ...",
       "new-team": "Nieuw team",
       "placeholder-search-teams": "Teams zoeken"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Dit is optioneel en wordt voornamelijk gebruikt voor het instellen van de teamprofielavatar (via de Gravatar-service)",

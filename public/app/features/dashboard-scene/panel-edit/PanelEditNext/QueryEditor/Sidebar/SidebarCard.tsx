@@ -6,7 +6,13 @@ import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { ActionItem, Actions } from '../../Actions';
-import { QUERY_EDITOR_COLORS, QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT } from '../../constants';
+import {
+  QUERY_EDITOR_COLORS,
+  QueryEditorType,
+  SIDEBAR_CARD_HEIGHT,
+  SIDEBAR_CARD_INDENT,
+  getQueryEditorColors,
+} from '../../constants';
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
@@ -147,9 +153,10 @@ function getStyles(
     alertState: item.alertState,
     isError: !!item.error,
   });
-
+  const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
-  const backgroundColor = isSelected ? selectedBg : theme.isDark ? QUERY_EDITOR_COLORS.card.hoverBg : '#F5F5F5';
+  const backgroundColor = isSelected ? selectedBg : theme.isDark ? themeColors.card.hoverBg : '#F5F5F5';
+
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -266,6 +273,9 @@ function getStyles(
         opacity: 1,
         transform: 'translateX(0)',
         pointerEvents: 'auto',
+      },
+      '[data-is-dragging] &': {
+        background: backgroundColor,
       },
     }),
     hoverActions,
