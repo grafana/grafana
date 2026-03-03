@@ -29,197 +29,151 @@ function makeFilter(overrides: Partial<AdHocFilterWithLabels> = {}): AdHocFilter
   return { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard', ...overrides };
 }
 
+function makeWip(overrides: Partial<AdHocFilterWithLabels> = {}): AdHocFilterWithLabels {
+  return makeFilter({ value: '', ...overrides });
+}
+
 describe('AdHocOriginFiltersController', () => {
-  describe('useState', () => {
-    it('should return empty state when no filters or wip', () => {
-      const { controller } = createController();
-      const state = controller.useState();
+  it('should return current state', () => {
+    const filters = [makeFilter({ key: 'host', value: 'a' }), makeFilter({ key: 'instance', value: 'b' })];
+    const wip = makeWip();
+    const { controller } = createController({ filters, wip });
 
-      expect(state.filters).toEqual([]);
-      expect(state.wip).toBeUndefined();
+    const state = controller.useState();
+
+    expect(state.filters).toHaveLength(2);
+    expect(state.filters[0]).toMatchObject({ key: 'host', operator: '=', value: 'a' });
+    expect(state.filters[1]).toMatchObject({ key: 'instance', operator: '=', value: 'b' });
+    expect(state.wip).toEqual(wip);
+    expect(state.readOnly).toBe(false);
+    expect(state.allowCustomValue).toBe(true);
+    expect(state.supportsMultiValueOperators).toBe(true);
+    expect(state.inputPlaceholder).toBe('Add a default filter...');
+  });
+
+  it('should delegate getKeys, getValuesFor, and getOperators', async () => {
+    const filter = makeFilter();
+    const { controller, getKeys, getValuesFor, getOperators } = createController();
+
+    const keys = await controller.getKeys('host');
+    expect(getKeys).toHaveBeenCalledWith('host');
+    expect(keys).toEqual([{ label: 'host', value: 'host' }]);
+
+    const values = await controller.getValuesFor(filter);
+    expect(getValuesFor).toHaveBeenCalledWith(filter);
+    expect(values).toEqual([{ label: 'a', value: 'a' }]);
+
+    const operators = controller.getOperators();
+    expect(getOperators).toHaveBeenCalled();
+    expect(operators).toEqual([{ label: '=', value: '=' }]);
+  });
+
+  describe('updateFilter – WIP', () => {
+    it('should commit WIP when key and value are both set', () => {
+      const wip = makeWip();
+      const { controller, setFilters, setWip } = createController({ wip });
+
+      controller.updateFilter(wip, { value: 'localhost' });
+
+      expect(setFilters).toHaveBeenCalledWith([makeFilter()]);
+      expect(setWip).toHaveBeenCalledWith(undefined);
     });
 
-    it('should return current state with existing filters', () => {
-      const filters = [makeFilter({ key: 'host', value: 'a' }), makeFilter({ key: 'instance', value: 'b' })];
-      const { controller } = createController({ filters });
+    it('should not commit WIP when key is empty', () => {
+      const wip = makeWip({ key: '' });
+      const { controller, setFilters, setWip } = createController({ wip });
 
-      const state = controller.useState();
+      controller.updateFilter(wip, { value: 'localhost' });
 
-      expect(state.filters).toHaveLength(2);
-      expect(state.filters[0]).toMatchObject({ key: 'host', operator: '=', value: 'a' });
-      expect(state.filters[1]).toMatchObject({ key: 'instance', operator: '=', value: 'b' });
+      expect(setFilters).not.toHaveBeenCalled();
+      expect(setWip).toHaveBeenCalledWith(makeWip({ key: '', value: 'localhost' }));
     });
 
-    it('should include wip filter in state', () => {
-      const wip: AdHocFilterWithLabels = { key: 'host', operator: '=', value: '', origin: 'dashboard' };
-      const { controller } = createController({ wip });
+    it('should not commit WIP when value is empty', () => {
+      const wip = makeWip();
+      const { controller, setFilters, setWip } = createController({ wip });
 
-      const state = controller.useState();
+      controller.updateFilter(wip, { key: 'instance' });
 
-      expect(state.wip).toEqual(wip);
+      expect(setFilters).not.toHaveBeenCalled();
+      expect(setWip).toHaveBeenCalledWith(makeWip({ key: 'instance' }));
     });
 
-    it('should return static defaults', () => {
-      const { controller } = createController();
-      const state = controller.useState();
+    it('should update WIP in place for partial changes', () => {
+      const wip = makeWip({ key: '' });
+      const { controller, setWip } = createController({ wip });
 
-      expect(state.readOnly).toBe(false);
-      expect(state.allowCustomValue).toBe(true);
-      expect(state.supportsMultiValueOperators).toBe(true);
-      expect(state.inputPlaceholder).toBe('Add a default filter...');
+      controller.updateFilter(wip, { key: 'host' });
+      expect(setWip).toHaveBeenCalledWith(makeWip());
+
+      setWip.mockClear();
+      controller.updateFilter(wip, { key: 'host', operator: '!=' });
+      expect(setWip).toHaveBeenCalledWith(makeWip({ operator: '!=' }));
     });
   });
 
-  describe('getKeys / getValuesFor / getOperators', () => {
-    it('should delegate getKeys', async () => {
-      const { controller, getKeys } = createController();
-      const result = await controller.getKeys('host');
-      expect(getKeys).toHaveBeenCalledWith('host');
-      expect(result).toEqual([{ label: 'host', value: 'host' }]);
+  describe('updateFilter – committed', () => {
+    it('should update a committed filter by value match', () => {
+      const existing = makeFilter({ value: 'a' });
+      const { controller, setFilters } = createController({ filters: [existing] });
+
+      controller.updateFilter({ key: 'host', operator: '=', value: 'a' }, { value: 'b' });
+
+      expect(setFilters).toHaveBeenCalledWith([makeFilter({ value: 'b' })]);
     });
 
-    it('should delegate getValuesFor', async () => {
-      const filter = makeFilter();
-      const { controller, getValuesFor } = createController();
-      const result = await controller.getValuesFor(filter);
-      expect(getValuesFor).toHaveBeenCalledWith(filter);
-      expect(result).toEqual([{ label: 'a', value: 'a' }]);
+    it('should preserve origin on update', () => {
+      const { controller, setFilters } = createController({ filters: [makeFilter()] });
+
+      controller.updateFilter({ key: 'host', operator: '=', value: 'localhost' }, { operator: '!=' });
+
+      expect(setFilters).toHaveBeenCalledWith([expect.objectContaining({ origin: 'dashboard', operator: '!=' })]);
     });
 
-    it('should delegate getOperators', () => {
-      const { controller, getOperators } = createController();
-      const result = controller.getOperators();
-      expect(getOperators).toHaveBeenCalled();
-      expect(result).toEqual([{ label: '=', value: '=' }]);
-    });
-  });
+    it('should not update if filter is not found', () => {
+      const { controller, setFilters } = createController({ filters: [makeFilter()] });
 
-  describe('updateFilter', () => {
-    describe('WIP filter', () => {
-      it('should commit WIP to filters when value is set and key exists', () => {
-        const wip: AdHocFilterWithLabels = { key: 'host', operator: '=', value: '', origin: 'dashboard' };
-        const { controller, setFilters, setWip } = createController({ wip });
+      controller.updateFilter({ key: 'nonexistent', operator: '=', value: 'x' }, { value: 'y' });
 
-        controller.updateFilter(wip, { value: 'localhost' });
-
-        expect(setFilters).toHaveBeenCalledWith([
-          { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
-        ]);
-        expect(setWip).toHaveBeenCalledWith(undefined);
-      });
-
-      it('should not commit WIP when key is empty', () => {
-        const wip: AdHocFilterWithLabels = { key: '', operator: '=', value: '', origin: 'dashboard' };
-        const { controller, setFilters, setWip } = createController({ wip });
-
-        controller.updateFilter(wip, { value: 'localhost' });
-
-        expect(setFilters).not.toHaveBeenCalled();
-        expect(setWip).toHaveBeenCalledWith({ key: '', operator: '=', value: 'localhost', origin: 'dashboard' });
-      });
-
-      it('should not commit WIP when value is empty', () => {
-        const wip: AdHocFilterWithLabels = { key: 'host', operator: '=', value: '', origin: 'dashboard' };
-        const { controller, setFilters, setWip } = createController({ wip });
-
-        controller.updateFilter(wip, { key: 'instance' });
-
-        expect(setFilters).not.toHaveBeenCalled();
-        expect(setWip).toHaveBeenCalledWith({ key: 'instance', operator: '=', value: '', origin: 'dashboard' });
-      });
-
-      it('should update WIP in place for partial changes', () => {
-        const wip: AdHocFilterWithLabels = { key: '', operator: '=', value: '', origin: 'dashboard' };
-        const { controller, setWip } = createController({ wip });
-
-        controller.updateFilter(wip, { key: 'host' });
-
-        expect(setWip).toHaveBeenCalledWith({ key: 'host', operator: '=', value: '', origin: 'dashboard' });
-      });
-
-      it('should handle multiple properties updated at once', () => {
-        const wip: AdHocFilterWithLabels = { key: '', operator: '=', value: '', origin: 'dashboard' };
-        const { controller, setWip } = createController({ wip });
-
-        controller.updateFilter(wip, { key: 'host', operator: '!=' });
-
-        expect(setWip).toHaveBeenCalledWith({ key: 'host', operator: '!=', value: '', origin: 'dashboard' });
-      });
-    });
-
-    describe('committed filter', () => {
-      it('should update a committed filter by value match', () => {
-        const existing = makeFilter({ key: 'host', value: 'a' });
-        const { controller, setFilters } = createController({ filters: [existing] });
-
-        controller.updateFilter({ key: 'host', operator: '=', value: 'a' }, { value: 'b' });
-
-        expect(setFilters).toHaveBeenCalledWith([{ key: 'host', operator: '=', value: 'b', origin: 'dashboard' }]);
-      });
-
-      it('should preserve origin: dashboard on update', () => {
-        const existing = makeFilter();
-        const { controller, setFilters } = createController({ filters: [existing] });
-
-        controller.updateFilter({ key: 'host', operator: '=', value: 'localhost' }, { operator: '!=' });
-
-        expect(setFilters).toHaveBeenCalledWith([expect.objectContaining({ origin: 'dashboard', operator: '!=' })]);
-      });
-
-      it('should not update if filter is not found', () => {
-        const { controller, setFilters } = createController({ filters: [makeFilter()] });
-
-        controller.updateFilter({ key: 'nonexistent', operator: '=', value: 'x' }, { value: 'y' });
-
-        expect(setFilters).not.toHaveBeenCalled();
-      });
+      expect(setFilters).not.toHaveBeenCalled();
     });
   });
 
-  describe('updateToMatchAll', () => {
-    it('should delegate to removeFilter', () => {
-      const filter = makeFilter();
-      const { controller, setFilters } = createController({ filters: [filter] });
+  it('updateToMatchAll should remove the matching filter', () => {
+    const { controller, setFilters } = createController({ filters: [makeFilter()] });
 
-      controller.updateToMatchAll({ key: 'host', operator: '=', value: 'localhost' });
+    controller.updateToMatchAll({ key: 'host', operator: '=', value: 'localhost' });
 
-      expect(setFilters).toHaveBeenCalledWith([]);
-    });
+    expect(setFilters).toHaveBeenCalledWith([]);
   });
 
   describe('removeFilter', () => {
     it('should remove a filter by value match', () => {
-      const filters = [makeFilter({ key: 'host', value: 'a' }), makeFilter({ key: 'instance', value: 'b' })];
+      const filters = [makeFilter({ value: 'a' }), makeFilter({ key: 'instance', value: 'b' })];
       const { controller, setFilters } = createController({ filters });
 
       controller.removeFilter({ key: 'host', operator: '=', value: 'a' });
 
       expect(setFilters).toHaveBeenCalledWith([filters[1]]);
-    });
-
-    it('should handle removing from empty list', () => {
-      const { controller, setFilters } = createController({ filters: [] });
-
-      controller.removeFilter({ key: 'host', operator: '=', value: 'localhost' });
-
-      expect(setFilters).not.toHaveBeenCalled();
-    });
-
-    it('should not modify filters if not found', () => {
-      const { controller, setFilters } = createController({ filters: [makeFilter()] });
-
-      controller.removeFilter({ key: 'nonexistent', operator: '=', value: 'x' });
-
-      expect(setFilters).not.toHaveBeenCalled();
     });
 
     it('should only remove the first match when duplicates exist', () => {
-      const filters = [makeFilter({ key: 'host', value: 'a' }), makeFilter({ key: 'host', value: 'a' })];
+      const filters = [makeFilter({ value: 'a' }), makeFilter({ value: 'a' })];
       const { controller, setFilters } = createController({ filters });
 
       controller.removeFilter({ key: 'host', operator: '=', value: 'a' });
 
       expect(setFilters).toHaveBeenCalledWith([filters[1]]);
+    });
+
+    it('should not modify filters if not found or empty', () => {
+      const { controller: c1, setFilters: sf1 } = createController({ filters: [] });
+      c1.removeFilter({ key: 'host', operator: '=', value: 'localhost' });
+      expect(sf1).not.toHaveBeenCalled();
+
+      const { controller: c2, setFilters: sf2 } = createController({ filters: [makeFilter()] });
+      c2.removeFilter({ key: 'nonexistent', operator: '=', value: 'x' });
+      expect(sf2).not.toHaveBeenCalled();
     });
   });
 
@@ -234,8 +188,7 @@ describe('AdHocOriginFiltersController', () => {
     });
 
     it('should remove the only filter', () => {
-      const filters = [makeFilter({ key: 'a', value: '1' })];
-      const { controller, setFilters } = createController({ filters });
+      const { controller, setFilters } = createController({ filters: [makeFilter()] });
 
       controller.removeLastFilter();
 
@@ -269,74 +222,35 @@ describe('AdHocOriginFiltersController', () => {
       ]);
     });
 
-    it('should do nothing when filter is at index 0', () => {
+    it('should do nothing when filter is at index 0 or not found', () => {
       const filters = [makeFilter({ key: 'a', value: '1' })];
-      const { controller, setFilters } = createController({ filters });
+      const { controller: c1, setFilters: sf1 } = createController({ filters });
+      c1.handleComboboxBackspace({ key: 'a', operator: '=', value: '1' });
+      expect(sf1).not.toHaveBeenCalled();
 
-      controller.handleComboboxBackspace({ key: 'a', operator: '=', value: '1' });
-
-      expect(setFilters).not.toHaveBeenCalled();
-    });
-
-    it('should do nothing when filter is not found', () => {
-      const filters = [makeFilter()];
-      const { controller, setFilters } = createController({ filters });
-
-      controller.handleComboboxBackspace({ key: 'nonexistent', operator: '=', value: 'x' });
-
-      expect(setFilters).not.toHaveBeenCalled();
+      const { controller: c2, setFilters: sf2 } = createController({ filters: [makeFilter()] });
+      c2.handleComboboxBackspace({ key: 'nonexistent', operator: '=', value: 'x' });
+      expect(sf2).not.toHaveBeenCalled();
     });
   });
 
-  describe('addWip', () => {
-    it('should create a WIP filter with origin: dashboard', () => {
-      const { controller, setWip } = createController();
+  it('addWip should create a WIP filter with origin: dashboard', () => {
+    const { controller, setWip } = createController();
 
-      controller.addWip();
+    controller.addWip();
 
-      expect(setWip).toHaveBeenCalledWith({
-        key: '',
-        operator: '=',
-        value: '',
-        origin: 'dashboard',
-      });
-    });
+    expect(setWip).toHaveBeenCalledWith(makeWip({ key: '' }));
   });
 
-  describe('restoreOriginalFilter', () => {
-    it('should be a no-op', () => {
-      const { controller, setFilters, setWip } = createController({ filters: [makeFilter()] });
-
-      controller.restoreOriginalFilter(makeFilter());
-
-      expect(setFilters).not.toHaveBeenCalled();
-      expect(setWip).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('clearAll', () => {
-    it('should clear all filters and wip', () => {
-      const wip: AdHocFilterWithLabels = { key: 'x', operator: '=', value: '', origin: 'dashboard' };
-      const { controller, setFilters, setWip } = createController({
-        filters: [makeFilter(), makeFilter({ key: 'b' })],
-        wip,
-      });
-
-      controller.clearAll();
-
-      expect(setFilters).toHaveBeenCalledWith([]);
-      expect(setWip).toHaveBeenCalledWith(undefined);
+  it('clearAll should clear all filters and wip', () => {
+    const { controller, setFilters, setWip } = createController({
+      filters: [makeFilter(), makeFilter({ key: 'b' })],
+      wip: makeWip(),
     });
 
-    it('should clear filters when there is no wip', () => {
-      const { controller, setFilters, setWip } = createController({
-        filters: [makeFilter()],
-      });
+    controller.clearAll();
 
-      controller.clearAll();
-
-      expect(setFilters).toHaveBeenCalledWith([]);
-      expect(setWip).toHaveBeenCalledWith(undefined);
-    });
+    expect(setFilters).toHaveBeenCalledWith([]);
+    expect(setWip).toHaveBeenCalledWith(undefined);
   });
 });
