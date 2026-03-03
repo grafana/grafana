@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -125,6 +126,7 @@ func TestBuildQuery(t *testing.T) {
 	tests := []struct {
 		name     string
 		query    Query
+		uuids    []string
 		expected string
 		experr   error
 	}{
@@ -247,11 +249,36 @@ func TestBuildQuery(t *testing.T) {
 			},
 			experr: ErrInvalidQuery,
 		},
+		{
+			name:  "query with UUID filter",
+			query: Query{},
+			uuids: []string{"uuid-1", "uuid-2"},
+			expected: fmt.Sprintf(`{%s=%q} | json | uuid =~ "uuid-1|uuid-2"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name:  "query with single UUID filter",
+			query: Query{},
+			uuids: []string{"uuid-1"},
+			expected: fmt.Sprintf(`{%s=%q} | json | uuid =~ "uuid-1"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with UUID filter and other filters",
+			query: Query{
+				RuleUID:  stringPtr("test-rule-uid"),
+				Receiver: stringPtr("email-receiver"),
+				Status:   createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusFiring),
+			},
+			uuids: []string{"uuid-1"},
+			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | receiver = "email-receiver" | json | status = "firing" | uuid =~ "uuid-1"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := buildQuery(tt.query)
+			result, err := buildQuery(tt.query, tt.uuids)
 			if tt.experr != nil {
 				require.ErrorIs(t, err, tt.experr)
 			} else {
@@ -626,6 +653,150 @@ func TestBuildAlertQuery(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestBuildAlertLabelQuery(t *testing.T) {
+	tests := []struct {
+		name     string
+		labels   Matchers
+		expected string
+		experr   error
+	}{
+		{
+			name:   "single label matcher",
+			labels: Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name: "multiple label matchers",
+			labels: Matchers{
+				{Type: "=", Label: "alertname", Value: "HighCPU"},
+				{Type: "!=", Label: "severity", Value: "info"},
+				{Type: "=~", Label: "env", Value: "prod|staging"},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU" | labels_severity != "info" | labels_env =~ "prod|staging"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:   "invalid label key",
+			labels: Matchers{{Type: "=", Label: "bad key", Value: "bar"}},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name:   "invalid matcher type",
+			labels: Matchers{{Type: "|=", Label: "foo", Value: "bar"}},
+			experr: ErrInvalidQuery,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := buildAlertLabelQuery(tt.labels)
+			if tt.experr != nil {
+				require.ErrorIs(t, err, tt.experr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestBuildAlertUUIDMetricsQuery(t *testing.T) {
+	now := time.Now().UTC()
+	from := now.Add(-6 * time.Hour)
+	rangeSeconds := int64(now.Sub(from).Seconds())
+
+	inner := fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+		historian.LabelFrom, historian.LabelFromValueAlerts)
+	result := buildAlertUUIDMetricsQuery(inner, from, now)
+	expected := fmt.Sprintf(`sum by (uuid) (count_over_time(%s[%ds]))`, inner, rangeSeconds)
+	assert.Equal(t, expected, result)
+}
+
+func TestLokiReader_QueryWithLabels(t *testing.T) {
+	now := time.Now().UTC()
+	testTimestamp := now.Add(-1 * time.Hour)
+
+	makeMetricSample := func(uuid string) lokiclient.MetricSample {
+		ts, _ := json.Marshal(now.Unix())
+		val, _ := json.Marshal("1")
+		return lokiclient.MetricSample{
+			Metric: map[string]string{"uuid": uuid},
+			Value:  lokiclient.MetricSampleValue{ts, val},
+		}
+	}
+
+	// Metrics response with deduplicated UUIDs from the alerts stream.
+	alertMetricsResponse := lokiclient.MetricsQueryRes{
+		Data: lokiclient.MetricsQueryData{
+			Result: []lokiclient.MetricSample{
+				makeMetricSample("uuid-abc"),
+				makeMetricSample("uuid-def"),
+			},
+		},
+	}
+
+	// Create notification entries matching those UUIDs.
+	notificationResponse := createMockLokiResponse(testTimestamp)
+
+	t.Run("labels filter performs two-phase lookup", func(t *testing.T) {
+		mockClient := &mockLokiClient{}
+		// First call: metrics query against alerts stream for UUIDs.
+		mockClient.On("MetricsQuery", mock.Anything, mock.MatchedBy(func(logql string) bool {
+			return strings.Contains(logql, historian.LabelFromValueAlerts) && strings.Contains(logql, "sum by (uuid)")
+		}), mock.Anything, mock.Anything).
+			Return(alertMetricsResponse, nil).Once()
+		// Second call: range query for notifications with UUID filter.
+		mockClient.On("RangeQuery", mock.Anything, mock.MatchedBy(func(logql string) bool {
+			return strings.Contains(logql, historian.LabelFromValue) && strings.Contains(logql, "uuid =~")
+		}), mock.Anything, mock.Anything, mock.Anything).
+			Return(notificationResponse, nil).Once()
+
+		reader := &LokiReader{
+			client: mockClient,
+			logger: &logging.NoOpLogger{},
+		}
+
+		labels := Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}}
+		result, err := reader.Query(context.Background(), Query{
+			Labels: &labels,
+		})
+
+		require.NoError(t, err)
+		assert.Len(t, result.Entries, 1)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("labels filter returns empty when no alerts match", func(t *testing.T) {
+		emptyMetricsResponse := lokiclient.MetricsQueryRes{
+			Data: lokiclient.MetricsQueryData{
+				Result: []lokiclient.MetricSample{},
+			},
+		}
+
+		mockClient := &mockLokiClient{}
+		mockClient.On("MetricsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(emptyMetricsResponse, nil).Once()
+
+		reader := &LokiReader{
+			client: mockClient,
+			logger: &logging.NoOpLogger{},
+		}
+
+		labels := Matchers{{Type: "=", Label: "alertname", Value: "NonExistent"}}
+		result, err := reader.Query(context.Background(), Query{
+			Labels: &labels,
+		})
+
+		require.NoError(t, err)
+		assert.Empty(t, result.Entries)
+		assert.Empty(t, result.Counts)
+		// Only MetricsQuery should be called (for alert UUIDs), not RangeQuery.
+		mockClient.AssertNumberOfCalls(t, "MetricsQuery", 1)
+		mockClient.AssertNumberOfCalls(t, "RangeQuery", 0)
+	})
 }
 
 func TestParseLokiAlertEntry(t *testing.T) {

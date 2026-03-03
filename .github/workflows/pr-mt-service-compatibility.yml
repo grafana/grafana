@@ -49,7 +49,6 @@ jobs:
               - 'Makefile'
               - 'conf/**'
               - '.golangci*'
-              - 'build.go'
               - 'apiserver/**'
               - 'pkg-gen/**'
               - 'scripts/drone/**'

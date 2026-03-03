@@ -317,6 +317,7 @@ export type PluginExtensionResourceAttributesContext = {
   };
   traceID?: string;
   spanID?: string;
+  spanStartTime?: number;
 };
 
 export type DataSourceConfigErrorStatusContext = {

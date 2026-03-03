@@ -20,37 +20,11 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Google Cloud Monitoring data source issues
 weight: 500
-refs:
-  configure-gcm:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/
-  google-authentication:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
-  template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
 ---
 
 # Troubleshoot Google Cloud Monitoring data source issues
 
-This document provides solutions to common issues you may encounter when configuring or using the Google Cloud Monitoring data source. For configuration instructions, refer to [Configure Google Cloud Monitoring](ref:configure-gcm).
+This document provides solutions to common issues you may encounter when configuring or using the Google Cloud Monitoring data source. For configuration instructions, refer to [Configure Google Cloud Monitoring](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/).
 
 ## Authentication errors
 
@@ -66,13 +40,13 @@ These errors occur when GCP credentials are invalid, missing, or don't have the 
 
 **Possible causes and solutions:**
 
-| Cause                                        | Solution                                                                                                                                                                                      |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Service account missing required permissions | Assign the **Monitoring Viewer** role to the service account in the GCP Console under **IAM & Admin** > **IAM**. Refer to [Configure Google Cloud Monitoring](ref:configure-gcm) for details. |
-| Incorrect service account key file           | Verify the JSON key file was downloaded correctly and contains valid credentials. Generate a new key if necessary.                                                                            |
-| Service account key has been deleted         | Check the service account in GCP Console under **IAM & Admin** > **Service Accounts**. If the key was deleted, create a new one.                                                              |
-| Wrong project selected                       | Verify the default project in the data source configuration matches a project the service account has access to.                                                                              |
-| APIs not enabled                             | Enable the Monitoring API and Cloud Resource Manager API in the GCP Console. Refer to [Configure Google Cloud Monitoring](ref:configure-gcm) for links.                                       |
+| Cause                                        | Solution                                                                                                                                                                                                                                                                      |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Service account missing required permissions | Assign the **Monitoring Viewer** role to the service account in the GCP Console under **IAM & Admin** > **IAM**. Refer to [Configure Google Cloud Monitoring](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/) for details. |
+| Incorrect service account key file           | Verify the JSON key file was downloaded correctly and contains valid credentials. Generate a new key if necessary.                                                                                                                                                            |
+| Service account key has been deleted         | Check the service account in GCP Console under **IAM & Admin** > **Service Accounts**. If the key was deleted, create a new one.                                                                                                                                              |
+| Wrong project selected                       | Verify the default project in the data source configuration matches a project the service account has access to.                                                                                                                                                              |
+| APIs not enabled                             | Enable the Monitoring API and Cloud Resource Manager API in the GCP Console. Refer to [Configure Google Cloud Monitoring](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/) for links.                                       |
 
 ### "Invalid JWT" or "JWT token error"
 
@@ -132,7 +106,7 @@ These errors occur when Grafana cannot reach Google Cloud Monitoring endpoints.
 
 1. Verify network connectivity from the Grafana server to Google Cloud endpoints (`monitoring.googleapis.com`).
 1. Check firewall rules allow outbound HTTPS (port 443) to Google Cloud services.
-1. For Grafana Cloud connecting to private resources, configure [Private data source connect](ref:private-data-source-connect).
+1. For Grafana Cloud connecting to private resources, configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 1. Check if a corporate proxy is blocking connections to Google Cloud.
 
 ### "SSL certificate problem"
@@ -287,7 +261,7 @@ These errors occur when using template variables with the Google Cloud Monitorin
 1. Reduce the scope of variable queries (filter by specific project or service).
 1. Limit the number of dependent variables in a chain.
 
-For more information on template variables, refer to the [template variables documentation](ref:template-variables).
+For more information on template variables, refer to the [template variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/).
 
 ## Pre-configured dashboard issues
 

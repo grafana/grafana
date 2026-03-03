@@ -167,6 +167,20 @@ describe('ThresholdsEditor', () => {
     expect(screen.getByRole('spinbutton', { name: 'Threshold 2' })).toHaveValue(75);
   });
 
+  it('should not steal focus on mount', () => {
+    setup({
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 50, color: '#EAB839' },
+        ],
+      },
+    });
+
+    expect(document.body).toHaveFocus();
+  });
+
   it('should exclude invalid steps and render a proper list', () => {
     setup({
       thresholds: {
