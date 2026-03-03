@@ -118,6 +118,8 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
  */
 export const TIME_OPTION_PLACEHOLDER = '1h';
 
+export const TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME = 5000;
+
 export const SIDEBAR_CARD_HEIGHT = 30;
 export const SIDEBAR_CARD_SPACING = 1;
 export const SIDEBAR_CARD_INDENT = 2;
