@@ -737,4 +737,50 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 		err = helper.Repositories.Resource.Delete(ctx, "test-git-unhealthy", metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
+
+	t.Run("git repository without workflows shows healthy after creation", func(t *testing.T) {
+		// Create a git repo WITHOUT workflows (read-only) - it should be created and become healthy
+		// No write permission check is needed for read-only repositories
+		repoConfig := &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "test-git-healthy-readonly",
+					"namespace": "default",
+					"finalizers": []string{
+						"remove-orphan-resources",
+						"cleanup",
+					},
+				},
+				"spec": map[string]any{
+					"title": "Test Git Healthy Read-Only",
+					"type":  "git",
+					"git": map[string]any{
+						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+						"branch": "integration-test",
+					},
+					// No workflows = read-only, no write permission needed
+					"sync": map[string]any{
+						"enabled":         false,
+						"target":          "folder",
+						"intervalSeconds": 10,
+					},
+				},
+				// No secure token needed for public read-only repository
+			},
+		}
+
+		// Create the repository
+		repo, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{})
+		require.NoError(t, err, "repository creation should succeed")
+		require.NotNil(t, repo)
+
+		// Wait for health check to complete and verify repository is healthy
+		helper.WaitForHealthyRepository(t, "test-git-healthy-readonly")
+
+		// Cleanup
+		err = helper.Repositories.Resource.Delete(ctx, "test-git-healthy-readonly", metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
 }
