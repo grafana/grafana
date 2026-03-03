@@ -9,10 +9,10 @@ import type {
   OwnerReference,
 } from '@grafana/api-clients/rtkq/folder/v1beta1';
 
+import { FOLDER_TEAM_OWNERS } from '../../../../fixtures/folder-owner-references';
 import { wellFormedTree } from '../../../../fixtures/folders';
-import { MOCK_TEAMS } from '../../../../fixtures/teams';
 import { getErrorResponse } from '../../../helpers';
-const [mockTree, { folderA, folderB }] = wellFormedTree();
+const [mockTree, { folderB }] = wellFormedTree();
 // folderD is included in mockTree and will be returned by the handlers with managedBy: 'repo'
 
 const baseResponse = {
@@ -20,18 +20,24 @@ const baseResponse = {
   apiVersion: 'folder.grafana.app/v1beta1',
 };
 
-const specialCaseOwnerRef: OwnerReference[] = [
-  {
+function buildOwnerReferences(folderUid: string) {
+  const teamUids = FOLDER_TEAM_OWNERS[folderUid];
+  if (!teamUids?.length) {
+    return undefined;
+  }
+
+  return teamUids.map((teamUid) => ({
     apiVersion: 'iam.grafana.app/v0alpha1',
     kind: 'Team',
-    name: MOCK_TEAMS[0].metadata.name,
-    uid: MOCK_TEAMS[0].metadata.name,
+    name: teamUid,
+    uid: teamUid,
     controller: true,
     blockOwnerDeletion: false,
-  },
-];
+  }));
+}
 
-const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string): Folder => {
+const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string) => {
+  const ownerReferences = buildOwnerReferences(folder.uid);
   return {
     ...baseResponse,
 
@@ -51,7 +57,7 @@ const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: num
       labels: {
         'grafana.app/deprecatedInternalID': String(id ?? '123'),
       },
-      ...(folder.uid === folderA.item.uid ? { ownerReferences: specialCaseOwnerRef } : {}),
+      ...(ownerReferences ? { ownerReferences } : {}),
     },
     spec: { title: folder.title!, description: '' },
   };
