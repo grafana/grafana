@@ -953,7 +953,6 @@ func TestMaybeInjectFailure(t *testing.T) {
 			require.Equal(t, "injected search failure", err.Error())
 		}
 	})
-
 }
 
 func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
