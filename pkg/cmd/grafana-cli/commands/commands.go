@@ -178,8 +178,6 @@ var adminCommands = []*cli.Command{
 				Usage:  "Re-encrypts all encrypted values with new data keys and deletes the old deactivated data keys. Returns ok unless there is an error. Safe to execute multiple times.",
 				Action: runRunnerCommand(secretsconsolidation.ConsolidateSecrets),
 				Flags: []cli.Flag{
-					// MM TODO: Should be able to inherit these flags from the runner
-					// Inherited by runner; also define here so they can be passed after the subcommand
 					&cli.StringFlag{
 						Name:  "config",
 						Usage: "Path to config file",
@@ -191,6 +189,16 @@ var adminCommands = []*cli.Command{
 					&cli.StringFlag{
 						Name:  "configOverrides",
 						Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+					},
+					&cli.IntFlag{
+						Name:  "chunk-size",
+						Usage: "Number of encrypted values per bulk update. Defaults to 100. Increase for fewer round-trips, decrease if hitting query size limits.",
+						Value: 100,
+					},
+					&cli.IntFlag{
+						Name:  "threads",
+						Usage: "Number of parallel namespaces to consolidate. For even better performance, increase your database connections alongside this. Defaults to 1.",
+						Value: 1,
 					},
 					&cli.BoolFlag{
 						Name:  "benchmark",
@@ -211,16 +219,6 @@ var adminCommands = []*cli.Command{
 						Name:  "cpu-profile-rate",
 						Usage: "CPU profile sample rate (samples per second). Default 5000; use 10000+ for high sample rate. Only applies when --cpuprofile is set.",
 						Value: 5000,
-					},
-					&cli.IntFlag{
-						Name:  "chunk-size",
-						Usage: "Number of encrypted values per bulk update. Default 100. Increase for fewer round-trips; decrease if hitting query size limits.",
-						Value: 100,
-					},
-					&cli.IntFlag{
-						Name:  "threads",
-						Usage: "Number of concurrent namespace finalize workers. Default 1.",
-						Value: 1,
 					},
 				},
 			},
