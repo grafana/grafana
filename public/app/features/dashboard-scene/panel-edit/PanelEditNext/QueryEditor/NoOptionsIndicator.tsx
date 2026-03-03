@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
@@ -36,9 +36,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1.5),
     padding: theme.spacing(2),
-    marginTop: theme.spacing(1),
-    borderLeft: `3px solid ${theme.colors.success.main}`,
-    background: colorManipulator.alpha(theme.colors.success.main, 0.07),
+    borderRadius: theme.shape.radius.default,
+    overflow: 'hidden',
+    position: 'relative',
+    background: `color-mix(in srgb, ${theme.colors.success.main} 10%, ${theme.colors.background.secondary} 100%)`,
+
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 3,
+      background: theme.colors.success.main,
+    },
   }),
   icon: css({
     color: theme.colors.success.text,
