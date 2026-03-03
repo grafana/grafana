@@ -714,6 +714,27 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     if (target.downsampleInterval) {
       query.downsampleInterval = this.templateSrv.replace(target.downsampleInterval, scopedVars);
     }
+
+    if (target.alias) {
+      query.alias = this.templateSrv.replace(target.alias, scopedVars);
+    }
+
+    if (target.downsampleAggregator) {
+      query.downsampleAggregator = this.templateSrv.replace(target.downsampleAggregator, scopedVars);
+    }
+
+    if (target.downsampleFillPolicy) {
+      query.downsampleFillPolicy = this.templateSrv.replace(target.downsampleFillPolicy, scopedVars);
+    }
+
+    if (target.counterMax) {
+      query.counterMax = this.templateSrv.replace(target.counterMax, scopedVars);
+    }
+
+    if (target.counterResetValue) {
+      query.counterResetValue = this.templateSrv.replace(target.counterResetValue, scopedVars);
+    }
+
     return query;
   }
 
