@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"math/rand"
 	"slices"
 	"strings"
 	"sync"
@@ -157,6 +158,8 @@ type searchServer struct {
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
 
+	injectFailuresPercent int
+
 	backendDiagnostics resourcepb.DiagnosticsServer
 }
 
@@ -198,9 +201,10 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		indexMetrics:   indexMetrics,
 		ownsIndexFn:    ownsIndexFn,
 
-		dashboardIndexMaxAge: opts.DashboardIndexMaxAge,
-		maxIndexAge:          opts.MaxIndexAge,
-		minBuildVersion:      opts.MinBuildVersion,
+		dashboardIndexMaxAge:  opts.DashboardIndexMaxAge,
+		maxIndexAge:           opts.MaxIndexAge,
+		minBuildVersion:       opts.MinBuildVersion,
+		injectFailuresPercent: opts.InjectFailuresPercent,
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -393,6 +397,10 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.Search")
 	defer span.End()
+
+	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
+		return nil, fmt.Errorf("injected search failure")
+	}
 
 	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return &resourcepb.ResourceSearchResponse{
