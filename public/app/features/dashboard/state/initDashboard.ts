@@ -38,7 +38,13 @@ import { trackDashboardLoaded } from '../utils/tracking';
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 import { emitDashboardViewEvent } from './analyticsProcessor';
-import { cleanUpDashboard, dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
+import {
+  cleanUpDashboard,
+  dashboardInitCompleted,
+  dashboardInitFailed,
+  dashboardInitFetching,
+  dashboardInitServices,
+} from './reducers';
 
 const INIT_DASHBOARD_MEASUREMENT = 'initDashboard';
 
