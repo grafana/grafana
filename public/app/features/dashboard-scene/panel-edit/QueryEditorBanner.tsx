@@ -1,33 +1,23 @@
-import { css } from '@emotion/css';
-import { useSessionStorage } from 'react-use';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Icon, IconButton, InlineSwitch, TextLink, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, TextLink, useStyles2 } from '@grafana/ui';
 
-import {
-  QUERY_EDITOR_BANNER_COLORS,
-  QUERY_EDITOR_BANNER_DISMISSED_KEY,
-  QUERY_EDITOR_BANNER_FEEDBACK_URL,
-} from './PanelEditNext/constants';
+import { QUERY_EDITOR_BANNER_FEEDBACK_URL, getQueryEditorBannerColors } from './PanelEditNext/constants';
 
 interface Props {
   useQueryExperienceNext: boolean;
   onToggle: () => void;
+  onDismiss: () => void;
+  className?: string;
 }
 
-export function QueryEditorBanner({ useQueryExperienceNext, onToggle }: Props) {
+export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss, className }: Props) {
   const styles = useStyles2(getStyles);
 
-  const [dismissed, setDismissed] = useSessionStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
-
-  if (!config.featureToggles.queryEditorNext || dismissed) {
-    return null;
-  }
-
   return (
-    <div className={styles.banner}>
+    <div className={cx(styles.banner, className)}>
       <div className={styles.left}>
         <div className={styles.iconCircle}>
           <Icon name={useQueryExperienceNext ? 'rocket' : 'bolt'} size="md" className={styles.accentIcon} />
@@ -39,55 +29,30 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle }: Props) {
         </span>
         <span className={styles.description}>
           {t('dashboard-scene.query-editor-banner.description', 'Try the improved query editing experience.')}
-          {useQueryExperienceNext && (
-            <>
-              {' '}
-              <TextLink href={QUERY_EDITOR_BANNER_FEEDBACK_URL} external inline variant="body">
-                {t('dashboard-scene.query-editor-banner.learn-more', 'Learn more')}
-              </TextLink>
-            </>
-          )}
         </span>
       </div>
       <div className={styles.right}>
-        <a
-          href={QUERY_EDITOR_BANNER_FEEDBACK_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.actionLink}
-        >
-          {useQueryExperienceNext ? (
-            <>
-              <Icon name="comment-alt" size="sm" />
-              {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
-            </>
-          ) : (
-            <>
-              {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
-              <Icon name="external-link-alt" size="sm" style={{ opacity: 0.8 }} />
-            </>
-          )}
-        </a>
+        {useQueryExperienceNext && (
+          <TextLink href={QUERY_EDITOR_BANNER_FEEDBACK_URL} external inline icon="comment-alt" variant="bodySmall">
+            {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
+          </TextLink>
+        )}
         {useQueryExperienceNext ? (
           <button className={styles.actionLink} onClick={onToggle}>
             <Icon name="history" size="sm" />
             {t('dashboard-scene.query-editor-banner.go-back', 'Go back to classic')}
           </button>
         ) : (
-          <InlineSwitch
-            label={t('dashboard-scene.query-editor-banner.new-editor', 'New editor')}
-            showLabel={true}
-            id="query-editor-version-banner"
-            value={useQueryExperienceNext}
-            onClick={onToggle}
-            aria-label={t('dashboard-scene.query-editor-banner.toggle-aria', 'Toggle between query editor v1 and v2')}
-          />
+          <button className={styles.tryItButton} onClick={onToggle}>
+            <Icon name="rocket" size="sm" />
+            {t('dashboard-scene.query-editor-banner.try-it', 'Try it out')}
+          </button>
         )}
         <IconButton
           name="times"
           size="md"
           tooltip={t('dashboard-scene.query-editor-banner.dismiss', 'Dismiss')}
-          onClick={() => setDismissed(true)}
+          onClick={onDismiss}
           className={styles.closeButton}
           aria-label={t('dashboard-scene.query-editor-banner.dismiss', 'Dismiss')}
         />
@@ -97,6 +62,8 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle }: Props) {
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const bannerColors = getQueryEditorBannerColors(theme);
+
   return {
     banner: css({
       display: 'flex',
@@ -104,8 +71,8 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'space-between',
       padding: theme.spacing(0, 2),
       height: theme.spacing(5),
-      backgroundColor: QUERY_EDITOR_BANNER_COLORS.background,
-      border: `1px solid ${QUERY_EDITOR_BANNER_COLORS.border}`,
+      backgroundColor: bannerColors.background,
+      border: `1px solid ${bannerColors.border}`,
       borderRadius: theme.shape.radius.default,
       flexShrink: 0,
     }),
@@ -122,14 +89,14 @@ function getStyles(theme: GrafanaTheme2) {
       width: theme.spacing(3.25),
       height: theme.spacing(3.25),
       borderRadius: theme.shape.radius.circle,
-      backgroundColor: QUERY_EDITOR_BANNER_COLORS.iconBackground,
+      backgroundColor: bannerColors.iconBackground,
       flexShrink: 0,
     }),
     accentIcon: css({
-      color: QUERY_EDITOR_BANNER_COLORS.accent,
+      color: bannerColors.accent,
     }),
     title: css({
-      color: QUERY_EDITOR_BANNER_COLORS.accent,
+      color: bannerColors.accent,
       fontWeight: theme.typography.fontWeightMedium,
       fontSize: theme.typography.body.fontSize,
       whiteSpace: 'nowrap',
@@ -154,6 +121,24 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(0.5),
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
+      whiteSpace: 'nowrap',
+      textDecoration: 'none',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: 0,
+      '&:hover': {
+        color: theme.colors.text.primary,
+        textDecoration: 'underline',
+      },
+    }),
+    tryItButton: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      color: bannerColors.accent,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
       textDecoration: 'none',
       background: 'none',

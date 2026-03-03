@@ -3,7 +3,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { InlineSwitch, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Button, InlineSwitch, useStyles2 } from '@grafana/ui';
 
 import { PanelEditor } from './PanelEditor';
 
@@ -12,7 +13,7 @@ export interface Props {
 }
 
 export function PanelEditControls({ panelEditor }: Props) {
-  const { tableView, dataPane } = panelEditor.useState();
+  const { tableView, dataPane, useQueryExperienceNext } = panelEditor.useState();
   const styles = useStyles2(getStyles);
 
   if (!dataPane) {
@@ -21,6 +22,11 @@ export function PanelEditControls({ panelEditor }: Props) {
 
   return (
     <div className={styles.container}>
+      {config.featureToggles.queryEditorNext && useQueryExperienceNext && (
+        <Button onClick={panelEditor.onToggleQueryEditorVersion} tooltip="" variant="secondary" icon="history">
+          {t('dashboard-scene.panel-edit-controls.back-to-classic', 'Back to classic editor')}
+        </Button>
+      )}
       <InlineSwitch
         label={t('dashboard-scene.panel-edit-controls.table-view-label-table-view', 'Table view')}
         showLabel={true}

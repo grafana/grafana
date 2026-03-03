@@ -32,12 +32,14 @@ export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor
 export const QUERY_EDITOR_BANNER_FEEDBACK_URL =
   'https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/';
 
-export const QUERY_EDITOR_BANNER_COLORS = {
-  background: '#1D293D',
-  border: '#314158',
-  iconBackground: '#111217',
-  accent: '#FF9830',
-};
+export function getQueryEditorBannerColors(theme: GrafanaTheme2) {
+  return {
+    background: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+    border: theme.isDark ? '#314158' : theme.colors.border.medium,
+    iconBackground: theme.isDark ? '#111217' : theme.colors.background.secondary,
+    accent: theme.isDark ? '#FF9830' : '#C47B20',
+  };
+}
 
 export const QUERY_EDITOR_COLORS = {
   query: '#FF8904',

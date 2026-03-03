@@ -6864,6 +6864,7 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
+      "back-to-classic": "Back to classic editor",
       "table-view-aria-label-toggletableview": "Toggle table view",
       "table-view-label-table-view": "Table view"
     },
@@ -6917,9 +6918,7 @@
       "downgrade-title": "New query editor!",
       "give-feedback": "Give feedback",
       "go-back": "Go back to classic",
-      "learn-more": "Learn more",
-      "new-editor": "New editor",
-      "toggle-aria": "Toggle between query editor v1 and v2",
+      "try-it": "Try it out",
       "upgrade-title": "New editor available!"
     },
     "query-variable-editor-form": {

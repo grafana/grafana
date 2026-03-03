@@ -13,11 +13,12 @@ import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
 import { QueryEditorSidebar } from './QueryEditor/Sidebar/QueryEditorSidebar';
 import { SidebarSize } from './constants';
-import { useVizAndDataPaneLayout } from './hooks';
+import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scene, layout, actions } = useVizAndDataPaneLayout(model, containerRef);
+  const { showBanner, dismissBanner } = useQueryEditorBanner();
+  const { scene, layout, actions } = useVizAndDataPaneLayout(model, containerRef, showBanner);
   const styles = useStyles2(getStyles, layout.sidebarSize);
 
   const nextDataPane = scene.dataPane instanceof PanelDataPaneNext ? scene.dataPane : null;
@@ -42,12 +43,14 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
             </div>
           </div>
           <QueryEditorContextWrapper dataPane={nextDataPane}>
-            <div className={styles.versionToggle}>
+            {showBanner && (
               <QueryEditorBanner
                 useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
                 onToggle={model.onToggleQueryEditorVersion}
+                onDismiss={dismissBanner}
+                className={styles.versionToggle}
               />
-            </div>
+            )}
             <div className={styles.sidebar}>
               <div className={styles.sidebarContent}>
                 <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
@@ -97,7 +100,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       minWidth: 0,
       overflow: 'hidden',
       ...(sidebarSize === SidebarSize.Mini && {
-        paddingLeft: theme.spacing(2),
+        marginLeft: theme.spacing(2),
       }),
     }),
     sidebar: css({

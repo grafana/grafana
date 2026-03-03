@@ -8,10 +8,13 @@ jest.mock('@grafana/ui', () => ({
   getDragStyles: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({ config: { featureToggles: {} } }));
+
 // Prevent heavy transitive imports (@grafana/scenes, @grafana/runtime) from loading.
 jest.mock('./constants', () => ({
   SidebarSize: { Mini: 'mini', Full: 'full' },
   QUERY_EDITOR_SIDEBAR_SIZE_KEY: 'grafana.dashboard.query-editor-next.sidebar-size',
+  QUERY_EDITOR_BANNER_DISMISSED_KEY: 'grafana.dashboard.query-editor-next.banner-dismissed',
 }));
 jest.mock('../../edit-pane/shared', () => ({ useEditPaneCollapsed: jest.fn() }));
 jest.mock('../../utils/utils', () => ({ getDashboardSceneFor: jest.fn() }));
@@ -22,6 +25,7 @@ describe('buildVizAndDataPaneGrid', () => {
     controlsEnabled: false,
     hasDataPane: true,
     isSidebarFullWidth: false,
+    showBanner: true,
     vizRatio: 0.5,
     sidebarRatio: 0.25,
   };
@@ -45,6 +49,13 @@ describe('buildVizAndDataPaneGrid', () => {
     const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true, isSidebarFullWidth: true });
 
     expect(gridTemplateAreas).toBe('"sidebar controls"\n"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
+  });
+
+  it('omits version-toggle row when showBanner is false', () => {
+    const { gridTemplateAreas, gridTemplateRows } = buildVizAndDataPaneGrid({ ...base, showBanner: false });
+
+    expect(gridTemplateAreas).toBe('"viz viz"\n"sidebar data-pane"');
+    expect(gridTemplateRows).toBe('1fr 1fr');
   });
 
   it('converts vizRatio to fractional row height — ratio / (1 - ratio)', () => {
