@@ -13,6 +13,7 @@ import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { CustomThemeRegistrar } from './core/components/CustomThemeRegistrar/CustomThemeRegistrar';
 import { GrafanaContext, GrafanaContextType } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
@@ -135,6 +136,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                           <ExtensionSidebarContextProvider>
                             <UNSAFE_PortalProvider getContainer={getPortalContainer}>
                               <GlobalStyles />
+                              <CustomThemeRegistrar />
                               <div className="grafana-app">
                                 <RouterWrapper {...routerWrapperProps} />
                                 <LiveConnectionWarning />

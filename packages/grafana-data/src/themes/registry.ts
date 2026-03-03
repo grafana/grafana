@@ -48,13 +48,8 @@ export function getThemeById(id: string): GrafanaTheme2 {
  * @internal
  * For internal use only
  */
-export function getBuiltInThemes(allowedExtras: string[]) {
-  const themes = themeRegistry.list().filter((item) => {
-    if (item.isExtra) {
-      return allowedExtras.includes(item.id);
-    }
-    return true;
-  });
+export function getBuiltInThemes() {
+  const themes = themeRegistry.list();
   // sort themes alphabetically, but put built-in themes (default, dark, light, system) first
   const sortedThemes = themes.sort((a, b) => {
     if (a.isExtra && !b.isExtra) {
@@ -88,6 +83,18 @@ for (const [name, json] of Object.entries(extraThemes)) {
       build: () => createTheme(theme),
       isExtra: true,
     });
+  }
+}
+
+/**
+ * @internal
+ * Register a custom theme into the theme registry. No-op if a theme with the
+ * same id is already registered, guarding against the Registry's
+ * throw-on-duplicate behaviour.
+ */
+export function registerCustomTheme(item: ThemeRegistryItem): void {
+  if (!themeRegistry.getIfExists(item.id)) {
+    themeRegistry.register(item);
   }
 }
 
