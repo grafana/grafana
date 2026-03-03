@@ -145,7 +145,7 @@ The **Page size** option lets you paginate the state timeline visualization to l
 
 ### Annotation options
 
-{{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+3" >}}
+{{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Axis options
 
