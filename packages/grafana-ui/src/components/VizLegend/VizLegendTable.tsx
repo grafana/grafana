@@ -120,13 +120,15 @@ export const VizLegendTable = <T extends unknown>({
       </thead>
       <tbody>{limitedItems.map(itemRenderer!)}</tbody>
       {curLimit > 0 && items.length > curLimit && (
-        <tr>
-          <td colSpan={100} style={{ textAlign: 'right' }}>
-            <Button fill="text" variant="primary" size="sm" onClick={() => setLimit(0)}>
-              <Trans i18nKey={'legend.container.show-all-series'}>...show all {{ total: items.length }} items</Trans>
-            </Button>
-          </td>
-        </tr>
+        <tfoot>
+          <tr>
+            <td colSpan={100} style={{ textAlign: 'right' }}>
+              <Button fill="text" variant="primary" size="sm" onClick={() => setLimit(0)}>
+                <Trans i18nKey={'legend.container.show-all-series'}>...show all {{ total: items.length }} items</Trans>
+              </Button>
+            </td>
+          </tr>
+        </tfoot>
       )}
     </table>
   );
