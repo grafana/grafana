@@ -77,9 +77,19 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
               } else if (field.name === 'color') {
                 // Use the color of the first annotation in the region
                 vals.push(colorVals[idxs[0]]);
+              } else if (field.name === 'title') {
+                // Indicate the cluster index as the annotation title
+                vals.push(`Cluster ${ci}`);
+              } else if (field.name === 'text') {
+                // Merge the indices as the text?
+                // @todo debugging
+                vals.push('indices:  ' + idxs.join(', '));
+                // vals.push(ci);
               } else if (field.name === 'clusterIdx') {
                 // Update the cluster index?
                 vals.push(ci);
+              } else {
+                vals.push(null);
               }
             });
           });
