@@ -9,7 +9,7 @@ import { ElasticDatasource } from './datasource';
 jest.mock('./datasource');
 
 describe('ElasticsearchVariableSupport', () => {
-  let variableSupport: ElasticsearchVariableSupport;
+  let variableSupport: ElasticsearchVariableSupport<jest.Mocked<ElasticDatasource>>;
   let mockDatasource: jest.Mocked<ElasticDatasource>;
 
   beforeEach(() => {
@@ -17,7 +17,7 @@ describe('ElasticsearchVariableSupport', () => {
       query: jest.fn(),
     } as unknown as jest.Mocked<ElasticDatasource>;
 
-    variableSupport = new ElasticsearchVariableSupport(mockDatasource);
+    variableSupport = new ElasticsearchVariableSupport(mockDatasource, jest.fn());
   });
 
   describe('getDefaultQuery', () => {

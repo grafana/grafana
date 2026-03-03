@@ -1,26 +1,36 @@
-import { Observable } from 'rxjs';
+import { ComponentType } from 'react';
+import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { CustomVariableSupport, DataQueryRequest, DataQueryResponse, DataFrame } from '@grafana/data';
+import {
+  CustomVariableSupport,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataFrame,
+  DataSourceApi,
+  QueryEditorProps,
+} from '@grafana/data';
 
-import { ElasticsearchVariableEditor } from './ElasticsearchVariableEditor';
 import { migrateVariableQuery, updateFrame, refId } from './ElasticsearchVariableUtils';
 import { ElasticsearchDataQuery } from './dataquery.gen';
-import { ElasticDatasource } from './datasource';
+import { ElasticsearchOptions } from './types';
 
-export class ElasticsearchVariableSupport extends CustomVariableSupport<ElasticDatasource, ElasticsearchDataQuery> {
-  constructor(readonly datasource: ElasticDatasource) {
+export class ElasticsearchVariableSupport<
+  DS extends DataSourceApi<ElasticsearchDataQuery, ElasticsearchOptions>,
+> extends CustomVariableSupport<DS, ElasticsearchDataQuery, ElasticsearchDataQuery, ElasticsearchOptions> {
+  constructor(
+    readonly datasource: DS,
+    public editor: ComponentType<QueryEditorProps<DS, ElasticsearchDataQuery, ElasticsearchOptions>>
+  ) {
     super();
   }
-
-  editor = ElasticsearchVariableEditor;
 
   query(request: DataQueryRequest<ElasticsearchDataQuery>): Observable<DataQueryResponse> {
     if (request.targets.length < 1) {
       throw new Error('no variable query found');
     }
     const updatedQuery = migrateVariableQuery(request.targets[0]);
-    return this.datasource.query({ ...request, targets: [updatedQuery] }).pipe(
+    return from(this.datasource.query({ ...request, targets: [updatedQuery] })).pipe(
       map((d: DataQueryResponse) => {
         return {
           ...d,
