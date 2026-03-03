@@ -75,15 +75,13 @@ type EncryptedValueMigrationExecutor interface {
 	Execute(ctx context.Context) (int, error)
 }
 
-// ConsolidateOptions configures consolidation. Nil or zero values use defaults.
+// ConsolidateOptions configures consolidation when called from the CLI.
 type ConsolidateOptions struct {
-	// ChunkSize is the number of encrypted values per bulk update. Default 100 if <= 0.
-	ChunkSize int
-	// Workers is the number of concurrent namespace finalize goroutines. Default 1 if <= 0.
-	Workers int
+	ChunkSize int // max number of encrypted values per bulk update; default 100
+	Workers   int // number of parallel namespaces to consolidate; default 1
 }
 
 type ConsolidationService interface {
-	// Consolidate re-encrypts all values; opts may be nil for defaults.
+	// Consolidate deactivates all old data keys, then re-encrypts all secure values with a new one
 	Consolidate(ctx context.Context, opts *ConsolidateOptions) error
 }

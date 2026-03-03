@@ -59,12 +59,7 @@ func ProvideSecureValueService(
 		metrics:                    metrics.NewSecureValueServiceMetrics(reg),
 	}
 
-	// // SeedSecureValues can be called to populate the database for testing, e.g.:
-	// //   SeedSecureValues(ctx, s, 1000, 20)
-	// err := SeedSecureValues(context.Background(), s, 1000, 100)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	// seedSecureValues can be called here to populate the database for testing
 
 	return s
 }
@@ -82,9 +77,9 @@ func randString(charset string, n int, rng *rand.Rand) string {
 	return string(b)
 }
 
-// SeedSecureValues creates random namespaces and secrets by calling Create on the service.
+// seedSecureValues creates random namespaces and secrets by calling Create on the service.
 // Useful for testing or load testing. Each namespace gets an active keeper implicitly (system keeper).
-func SeedSecureValues(ctx context.Context, svc contracts.SecureValueService, numberOfNamespaces, maxSecretsPerNamespace int) error {
+func seedSecureValues(ctx context.Context, svc contracts.SecureValueService, numberOfNamespaces, maxSecretsPerNamespace int) error {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	nsChars := "abcdefghijklmnopqrstuvwxyz0123456789"
 	// Description: 1–25 chars; keep short for readability

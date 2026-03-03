@@ -103,8 +103,8 @@ func TestConsolidation(t *testing.T) {
 			originalEncryptedData = append(originalEncryptedData, encryptedValue.EncryptedData)
 		}
 
-		// Run consolidation (nil opts => default 1 worker)
-		err := sut.ConsolidationService.Consolidate(ctx, nil)
+		// Run consolidation
+		err := sut.ConsolidationService.Consolidate(ctx, &contracts.ConsolidateOptions{Workers: 1})
 		require.NoError(t, err)
 
 		for i, tc := range testCases {
@@ -266,7 +266,7 @@ func TestConsolidation(t *testing.T) {
 		)
 
 		// Run consolidation
-		err := customConsolidationService.Consolidate(ctx, nil)
+		err := customConsolidationService.Consolidate(ctx, &contracts.ConsolidateOptions{Workers: 1})
 		require.NoError(t, err)
 
 		for i, tc := range initialSecrets {

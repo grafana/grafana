@@ -392,9 +392,8 @@ func (s *EncryptionManager) GetProviders() encryption.ProviderConfig {
 	return s.providerConfig
 }
 
-// ConsolidateNamespace re-encrypts all values for a single namespace using one new DEK held in memory.
-// It creates the new DEK once, then for each value resolves the old DEK by id, decrypts with the cipher,
-// and re-encrypts with the cipher using the new key—skipping the high-level Encrypt/Decrypt and cache lookups.
+// ConsolidateNamespace re-encrypts all values for a single namespace using one new DEK held in memory. It avoids unnecessary cache lookups by leveraging the cipher directly.
+// For each value, it resolves the old DEK by id, decrypts with it, and re-encrypts using the new in-memory key.
 func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace xkube.Namespace, values []*contracts.EncryptedValue) ([]*contracts.EncryptedPayload, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.ConsolidateNamespace", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -443,6 +442,7 @@ func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace 
 	}
 
 	s.dataKeyCache.Flush(namespace.String())
+	// TODO: Decide later if the cache should be primed with the new DEK here
 
 	return results, nil
 }
