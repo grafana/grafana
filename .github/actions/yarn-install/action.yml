@@ -38,7 +38,7 @@ inputs:
   cache-node-modules:
     description: 'Cache node_modules, might speed up link step (invalidated lock/os/node-version/branch)'
     required: false
-    default: 'true'
+    default: 'false'
   cache-install-state:
     description: 'Cache yarn install state, might speed up resolution step when node-modules cache is activated (invalidated lock/os/node-version/branch)'
     required: false
