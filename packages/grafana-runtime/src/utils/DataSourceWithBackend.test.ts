@@ -490,6 +490,24 @@ describe('DataSourceWithBackend', () => {
     });
   });
 
+  test('check that callHealthCheck uses the new URL based on the feature toggle', () => {
+    config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+    const { mock, ds } = createMockDatasource();
+    ds.callHealthCheck();
+
+    expect(mock.calls.length).toBe(1);
+    expect(mock.calls[0][0].url).toEqual('/apis/dummy.grafana.app/v0alpha1/namespaces/default/datasources/abc/health');
+  });
+
+  test('check that callHealthCheck uses the legacy URL based on the feature toggle', () => {
+    config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
+    const { mock, ds } = createMockDatasource();
+    ds.callHealthCheck();
+
+    expect(mock.calls.length).toBe(1);
+    expect(mock.calls[0][0].url).toEqual('/api/datasources/uid/abc/health');
+  });
+
   test('check that queries can skip the query cache', () => {
     const { mock, ds } = createMockDatasource();
     ds.query({
