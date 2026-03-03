@@ -107,6 +107,11 @@ func TestValidate(t *testing.T) {
 			expErrorContains:     "policy must be specified",
 		},
 		{
+			name:                 "default policy is invalid",
+			notificationSettings: NotificationSettingsFromPolicy(DefaultRoutingTreeName),
+			expErrorContains:     "default",
+		},
+		{
 			name:                 "contact point and policy routing both unspecific is invalid",
 			notificationSettings: NotificationSettings{},
 			expErrorContains:     "at least one of policy routing or contact point routing must be specified",

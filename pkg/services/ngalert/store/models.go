@@ -97,10 +97,15 @@ func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 		a.IsPaused == b.IsPaused &&
 		a.NotificationSettings == b.NotificationSettings &&
 		a.Metadata == b.Metadata &&
-		compareInt64Pointer(a.MissingSeriesEvalsToResolve, b.MissingSeriesEvalsToResolve)
+		compareInt64Pointer(a.MissingSeriesEvalsToResolve, b.MissingSeriesEvalsToResolve) &&
+		compareStringPointer(a.AlertRoutingPolicy, b.AlertRoutingPolicy)
 }
 
 func compareInt64Pointer(a, b *int64) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
+}
+
+func compareStringPointer(a, b *string) bool {
 	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
 }
 

@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"hash/fnv"
 	"slices"
 	"unsafe"
@@ -296,6 +297,9 @@ type PolicyRouting struct {
 func (s *PolicyRouting) Validate() error {
 	if s.Policy == "" {
 		return errors.New("policy must be specified")
+	}
+	if s.Policy == DefaultRoutingTreeName {
+		return fmt.Errorf("policy routing should not explicitly point to the default tree: %q", DefaultRoutingTreeName)
 	}
 	return nil
 }
