@@ -9,20 +9,22 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DeletionService struct {
-	store   store
-	cfg     *setting.Cfg
-	log     log.Logger
-	dashSvc dashboards.DashboardService
-	ac      accesscontrol.AccessControl
+	store      store
+	cfg        *setting.Cfg
+	log        log.Logger
+	dashSvc    dashboards.DashboardService
+	ac         accesscontrol.AccessControl
+	k8sDeleter resourceDeleter
 }
 
-func ProvideDeletionService(db db.DB, cfg *setting.Cfg, dashboardService dashboards.DashboardService, ac accesscontrol.AccessControl) (org.DeletionService, error) {
+func ProvideDeletionService(db db.DB, cfg *setting.Cfg, dashboardService dashboards.DashboardService, ac accesscontrol.AccessControl, restCfg apiserver.RestConfigProvider) (org.DeletionService, error) {
 	log := log.New("org deletion service")
 	s := &DeletionService{
 		store: &sqlStore{
@@ -30,10 +32,11 @@ func ProvideDeletionService(db db.DB, cfg *setting.Cfg, dashboardService dashboa
 			dialect: db.GetDialect(),
 			log:     log,
 		},
-		cfg:     cfg,
-		dashSvc: dashboardService,
-		log:     log,
-		ac:      ac,
+		cfg:        cfg,
+		dashSvc:    dashboardService,
+		log:        log,
+		ac:         ac,
+		k8sDeleter: newK8sResourceDeleter(cfg, restCfg, log),
 	}
 
 	return s, nil
@@ -61,6 +64,11 @@ func (s *DeletionService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand)
 	err = s.dashSvc.DeleteAllDashboards(ctx, cmd.ID)
 	if err != nil {
 		return fmt.Errorf("failed to delete dashboards for org %d: %w", cmd.ID, err)
+	}
+
+	// Delete migrated resources through the k8s API
+	if err := s.k8sDeleter.deleteCollections(ctx, cmd.ID); err != nil {
+		return fmt.Errorf("failed to delete migrated resources for org %d: %w", cmd.ID, err)
 	}
 
 	return s.store.Delete(ctx, cmd)
