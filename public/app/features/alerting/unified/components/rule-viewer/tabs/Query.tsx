@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -42,7 +42,7 @@ const QueryResults = ({ rule }: Props) => {
         const model = { ...query.model };
 
         // Prometheus: uses boolean instant/range fields
-        if ('instant' in model) {
+        if ('instant' in model && model.instant === true) {
           model.instant = false;
           model.range = true;
         }
@@ -58,12 +58,18 @@ const QueryResults = ({ rule }: Props) => {
 
   const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
 
+  // Tracks whether a run has been initiated but both runners have not yet emitted their first
+  // LoadingState.Loading value. Without this, isPreviewLoading is transiently false between the
+  // moment onRunQueries fires and the moment the runners populate queryPreviewData.
+  const [isRunning, setIsRunning] = useState(false);
+
   const onRunQueries = useCallback(() => {
     if (queries.length > 0 && allDataSourcesAvailable) {
       let condition;
       if (rule && rulerRuleType.grafana.rule(rule.rulerRule)) {
         condition = rule.rulerRule.grafana_alert.condition;
       }
+      setIsRunning(true);
       // Run original queries for expression evaluation
       runExpressionQueries(queries, condition ?? 'A');
       // Run range-converted data source queries for visualization
@@ -77,13 +83,23 @@ const QueryResults = ({ rule }: Props) => {
     }
   }, [allDataSourcesAvailable, onRunQueries]);
 
-  // Merge: visualization (range) data for data source queries, expression data for expressions
+  // Clear isRunning once both runners have settled (neither is in a loading state anymore).
+  // isExpressionLoading and isVisualizationLoading stay false until the runners emit their first
+  // LoadingState.Loading, so we only clear isRunning after at least one run has been kicked off.
+  useEffect(() => {
+    if (isRunning && !isExpressionLoading && !isVisualizationLoading) {
+      setIsRunning(false);
+    }
+  }, [isRunning, isExpressionLoading, isVisualizationLoading]);
+
+  // Merge: expression data is authoritative for shared refIds (expressions are never in visualizationData,
+  // but spreading expressionData last ensures it wins in the unlikely event of a collision).
   const mergedPreviewData = useMemo(() => {
-    return { ...expressionData, ...visualizationData };
+    return { ...visualizationData, ...expressionData };
   }, [expressionData, visualizationData]);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
-  const isPreviewLoading = isExpressionLoading || isVisualizationLoading;
+  const isPreviewLoading = isRunning || isExpressionLoading || isVisualizationLoading;
 
   if (isPreviewLoading) {
     return <Trans i18nKey="alerting.common.loading">Loading...</Trans>;
