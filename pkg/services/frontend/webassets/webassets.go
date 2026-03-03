@@ -55,7 +55,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	} else {
 		assetsFilename = "assets-manifest.json"
 	}
-	assetsManifest, err := webassets.ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", assetsFilename))
+	assetsManifest, err := webassets.ReadWebAssetsFromFile(cfg, filepath.Join(cfg.StaticRootPath, "build", assetsFilename))
 	if err != nil {
 		return dtos.EntryPointAssets{}, err
 	}
