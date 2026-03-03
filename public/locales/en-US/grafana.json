@@ -1841,11 +1841,15 @@
       },
       "history-error": "Failed to load state history",
       "history-error-desc": "Unable to fetch state transition history for this instance.",
+      "instance-timeline": "Instance Timeline",
       "no-history": "No recent state changes",
       "notifications-error": "Could not load notification history",
       "notifications-error-desc": "Notification history may not be enabled. Enable the alertingNotificationHistory feature toggle.",
-      "instance-timeline": "Instance Timeline",
-      "segment-tooltip": "{{state}}: {{duration}}",
+      "state-error-description": "This instance is in <strong>Error</strong> state. An evaluation error occurred, so a graph may not be available.",
+      "state-history": "Recent State Changes",
+      "state-nodata": {
+        "description": "This instance is in <strong>No data</strong> state. The alert fired because the query returned no data in the evaluation window, so a graph may not be available."
+      },
       "timeline-all-delivered": "delivered",
       "timeline-all-delivered-plural": "all delivered",
       "timeline-all-failed": "failed",
@@ -1855,18 +1859,14 @@
       "timeline-failed": "Failed",
       "timeline-loading": "Loading timeline...",
       "timeline-mixed-outcome": "{{successCount}} delivered, {{failedCount}} failed",
-      "timeline-n-notifications": "{{count}} notifications",
-      "timeline-n-receivers": "{{count}} receivers",
+      "timeline-n-notifications_one": "{{count}} notifications",
+      "timeline-n-notifications_other": "{{count}} notifications",
+      "timeline-n-receivers_one": "{{count}} receivers",
+      "timeline-n-receivers_other": "{{count}} receivers",
       "timeline-one-notification": "1 notification",
       "timeline-status-firing": "Firing",
       "timeline-status-resolved": "Resolved",
-      "timeline-unknown-error": "Unknown error",
-      "state-error-description": "This instance is in <strong>Error</strong> state. An evaluation error occurred, so a graph may not be available.",
-      "state-history": "Recent State Changes",
-      "state-nodata": {
-        "description": "This instance is in <strong>No data</strong> state. The alert fired because the query returned no data in the evaluation window, so a graph may not be available."
-      },
-      "unknown-error": "Unknown error"
+      "timeline-unknown-error": "Unknown error"
     },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
