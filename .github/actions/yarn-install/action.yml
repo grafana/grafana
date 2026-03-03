@@ -115,6 +115,7 @@ runs:
         YARN_ENABLE_MIRROR: 'false' # Prevent populating global cache for caches misses (local cache only)
         YARN_NM_MODE: 'hardlinks-local' # Reduce node_modules size
         YARN_INSTALL_STATE_PATH: '.yarn/ci-cache/install-state.gz' # Might speed up resolution step when node_modules present
+        YARN_ENABLE_HARDENED_MODE: 0
         # Skip big post-install dependencies
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0

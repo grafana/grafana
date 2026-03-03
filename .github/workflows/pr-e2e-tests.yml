@@ -95,8 +95,10 @@ jobs:
       - name: Setup Node.js
         if: steps.cache.outputs.cache-hit != 'true'
         uses: ./.github/actions/setup-node
+        with:
+          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
 
-      - name: Install dependencies
+      - name: Install yarn dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         uses: ./.github/actions/yarn-install
 
@@ -266,6 +268,8 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
+        with:
+          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
 
       - name: Install yarn dependencies
         uses: ./.github/actions/yarn-install
@@ -365,6 +369,8 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
+        with:
+          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
       - name: Install yarn dependencies
         uses: ./.github/actions/yarn-install
 
@@ -555,6 +561,8 @@ jobs:
           persist-credentials: false
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
+        with:
+          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
       - name: Install yarn dependencies
         uses: ./.github/actions/yarn-install
       - name: Get pa11y results
