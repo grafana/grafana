@@ -51,7 +51,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           value={toggleValue}
           onChange={handleViewChange}
           aria-label={t('query-editor-next.sidebar.view-toggle', 'View')}
-          showBackground={true}
+          showBackground={false}
         />
       </SidebarHeaderActions>
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
@@ -78,7 +78,6 @@ function getStyles(theme: GrafanaTheme2) {
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
-      overflow: 'hidden',
     }),
     content: css({
       background: theme.colors.background.primary,

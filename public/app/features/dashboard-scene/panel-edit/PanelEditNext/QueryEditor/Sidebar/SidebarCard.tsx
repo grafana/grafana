@@ -154,10 +154,10 @@ function getStyles(
     alertState: item.alertState,
     isError: !!item.error,
   });
+
   const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
-  const backgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
-
+  const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -169,7 +169,7 @@ function getStyles(
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
     borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
-    background: `linear-gradient(270deg, ${backgroundColor} 70%, transparent 100%)`,
+    background: `linear-gradient(270deg, ${hoverBackgroundColor} 70%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
@@ -274,7 +274,7 @@ function getStyles(
         }),
       },
       '&:hover': {
-        background: backgroundColor,
+        background: hoverBackgroundColor,
       },
       [`&:hover .${hoverActions}`]: {
         opacity: 1,
@@ -282,7 +282,7 @@ function getStyles(
         pointerEvents: 'auto',
       },
       '[data-is-dragging] &': {
-        background: backgroundColor,
+        background: hoverBackgroundColor,
       },
     }),
     hoverActions,

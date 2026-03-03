@@ -104,7 +104,6 @@ function getStyles(theme: GrafanaTheme2) {
       left: theme.spacing(SIDEBAR_CARD_INDENT),
       right: theme.spacing(SIDEBAR_CARD_INDENT),
       background: theme.colors.primary.transparent,
-      //borderLeft: `1px solid ${theme.colors.primary.border}`,
       pointerEvents: 'none',
       borderRadius: theme.shape.radius.default,
 
