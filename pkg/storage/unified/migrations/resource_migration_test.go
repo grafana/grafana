@@ -419,31 +419,31 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 
 	type renamerSetup struct {
 		name string
-		make func(t *testing.T) MigrationTableRenamer
+		make func(t *testing.T) (MigrationTableRenamer, *xorm.Session)
 	}
 
 	setups := []renamerSetup{
 		{
 			name: "transactional",
-			make: func(t *testing.T) MigrationTableRenamer {
+			make: func(t *testing.T) (MigrationTableRenamer, *xorm.Session) {
 				t.Helper()
 				r := &transactionalTableRenamer{log: logger}
 				sess := env.engine.NewSession()
 				t.Cleanup(func() { _ = sess.Rollback(); sess.Close() })
 				require.NoError(t, sess.Begin())
 				r.Init(sess, mg)
-				return r
+				return r, sess
 			},
 		},
 	}
 	if db.IsTestDbMySQL() {
 		setups = append(setups, renamerSetup{
 			name: "mysql",
-			make: func(t *testing.T) MigrationTableRenamer {
+			make: func(t *testing.T) (MigrationTableRenamer, *xorm.Session) {
 				t.Helper()
 				r := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
-				r.Init(nil, mg) // mysql renamer uses mg.DBEngine, not sess
-				return r
+				r.Init(nil, mg)
+				return r, nil // MySQL DDL auto-commits, no session needed
 			},
 		})
 	}
@@ -451,7 +451,8 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 	for _, setup := range setups {
 		t.Run(setup.name+"/normal state", func(t *testing.T) {
 			table := uniqueTable(t, env.engine)
-			require.NoError(t, setup.make(t).RecoverRenamedTables([]string{table}))
+			renamer, _ := setup.make(t)
+			require.NoError(t, renamer.RecoverRenamedTables([]string{table}))
 		})
 
 		t.Run(setup.name+"/recovery — legacy exists, original missing", func(t *testing.T) {
@@ -459,11 +460,23 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 			_, err := env.engine.Exec(fmt.Sprintf("ALTER TABLE %s RENAME TO %s", env.engine.Quote(table), env.engine.Quote(table+legacySuffix)))
 			require.NoError(t, err)
 
-			require.NoError(t, setup.make(t).RecoverRenamedTables([]string{table}))
+			renamer, sess := setup.make(t)
+			require.NoError(t, renamer.RecoverRenamedTables([]string{table}))
 
-			exists, err := env.engine.IsTableExist(table)
-			require.NoError(t, err)
-			require.True(t, exists, "original table should be restored")
+			// Check within the same session (transactional rename not yet committed)
+			if sess != nil {
+				exists, err := sess.IsTableExist(table)
+				require.NoError(t, err)
+				require.True(t, exists, "original table should be restored in session")
+				exists, err = env.engine.IsTableExist(table)
+				require.NoError(t, err)
+				require.False(t, exists)
+			} else {
+				// MySQL DDL auto-commits, check via engine
+				exists, err := env.engine.IsTableExist(table)
+				require.NoError(t, err)
+				require.True(t, exists, "original table should be restored")
+			}
 		})
 
 		t.Run(setup.name+"/error — both exist", func(t *testing.T) {
@@ -474,7 +487,8 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 				_, _ = env.engine.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", env.engine.Quote(table+legacySuffix)))
 			})
 
-			err = setup.make(t).RecoverRenamedTables([]string{table})
+			renamer, _ := setup.make(t)
+			err = renamer.RecoverRenamedTables([]string{table})
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "both")
 			require.Contains(t, err.Error(), "manual intervention")
@@ -482,7 +496,8 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 
 		t.Run(setup.name+"/error — neither exists", func(t *testing.T) {
 			missing := "nonexistent_" + uuid.New().String()[:8]
-			err := setup.make(t).RecoverRenamedTables([]string{missing})
+			renamer, _ := setup.make(t)
+			err := renamer.RecoverRenamedTables([]string{missing})
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "neither")
 			require.Contains(t, err.Error(), "manual intervention")
