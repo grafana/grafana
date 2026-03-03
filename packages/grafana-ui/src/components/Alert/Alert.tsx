@@ -24,6 +24,8 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
+  /** Custom action element rendered in the alert's button area, independently from the dismiss button. */
+  action?: ReactNode;
 }
 
 /**
@@ -43,6 +45,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       topSpacing,
       className,
       severity = 'error',
+      action,
       ...restProps
     },
     ref
@@ -87,6 +90,11 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             </Text>
             {children && <div className={styles.content}>{children}</div>}
           </Box>
+          {action && (
+            <Box marginLeft={1} display="flex" alignItems="center">
+              {action}
+            </Box>
+          )}
           {/* If onRemove is specified, giving preference to onRemove */}
           {onRemove && !buttonContent && (
             <div className={styles.close}>

@@ -90,7 +90,7 @@ const ContactPointsTab = () => {
               icon="plus"
               size="lg"
             >
-              <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
+              <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>
           )
         }
@@ -114,7 +114,7 @@ const ContactPointsTab = () => {
               href="/alerting/notifications/receivers/new"
               disabled={!addContactPointAllowed}
             >
-              <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
+              <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>
           )}
           {exportContactPointsSupported && (
@@ -171,7 +171,7 @@ const NotificationTemplatesTab = () => {
             disabled={!createTemplateAllowed}
           >
             <Trans i18nKey="alerting.notification-templates-tab.add-notification-template-group">
-              Add notification template group
+              New notification template
             </Trans>
           </LinkButton>
         )}

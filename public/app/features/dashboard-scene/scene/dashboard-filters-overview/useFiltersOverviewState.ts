@@ -183,13 +183,6 @@ export function useFiltersOverviewState({
       }
 
       const existingKeyValues = new Set(keys.map((k) => k.value ?? k.label).filter(Boolean));
-      for (const key of await adhocFilters._getKeys(null)) {
-        const keyValue = key.value ?? key.label;
-        if (keyValue && !existingKeyValues.has(keyValue)) {
-          keys.push(key);
-          existingKeyValues.add(keyValue);
-        }
-      }
 
       const isGrouped: Record<string, boolean> = {};
       if (groupByVariable) {
@@ -199,6 +192,14 @@ export function useFiltersOverviewState({
             keys.push({ label: v, value: v });
             existingKeyValues.add(v);
           }
+        }
+      }
+
+      for (const key of await adhocFilters._getKeys(null)) {
+        const keyValue = key.value ?? key.label;
+        if (keyValue && !existingKeyValues.has(keyValue)) {
+          keys.push(key);
+          existingKeyValues.add(keyValue);
         }
       }
 

@@ -3,6 +3,7 @@ import { Icon } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
+import { ActionItem } from '../../Actions';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { getEditorType } from '../utils';
@@ -17,15 +18,16 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const { data } = useQueryRunnerContext();
 
-  const isError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
+  // Note: when a query is hidden, it is removed from the error list :(
+  const error = data?.errors?.find((e) => e.refId === query.refId)?.message;
   const isSelected = selectedQuery?.refId === query.refId;
   const isHidden = !!query.hide;
 
-  const item = {
+  const item: ActionItem = {
     name: query.refId,
     type: editorType,
     isHidden,
-    isError,
+    error,
   };
 
   return (
@@ -38,15 +40,16 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
       onDuplicate={() => duplicateQuery(query.refId)}
       onToggleHide={() => toggleQueryHide(query.refId)}
     >
-      {editorType === QueryEditorType.Query && <DataSourceLogo dataSource={queryDsSettings} size={14} />}
-      {editorType === QueryEditorType.Expression && (
+      {editorType === QueryEditorType.Query ? (
+        <DataSourceLogo dataSource={queryDsSettings} size={14} />
+      ) : (
         <Icon
           name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon}
           color={QUERY_EDITOR_TYPE_CONFIG[editorType].color}
           size="sm"
         />
       )}
-      <CardTitle title={query.refId} isHidden={isHidden} isError={isError} />
+      <CardTitle title={query.refId} isHidden={isHidden} />
     </SidebarCard>
   );
 };
