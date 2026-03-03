@@ -1,3 +1,5 @@
+import { throttle } from 'lodash';
+
 import {
   CoreApp,
   DataSourceApi,
@@ -28,6 +30,15 @@ import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 import { filterDataTransformerConfigs } from './QueryEditor/utils';
+import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from './constants';
+
+const reportTransformationEditInteraction = throttle((context: string, type: string) => {
+  reportInteraction('grafana_panel_transformations_clicked', {
+    context,
+    type,
+    action: 'edit',
+  });
+}, TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME);
 
 /**
  * Resolve the datasource ref to assign to a new query.
@@ -514,11 +525,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    reportInteraction('grafana_panel_transformations_clicked', {
-      context: 'query_editor_next',
-      type: newConfig.id,
-      action: 'edit',
-    });
+    reportTransformationEditInteraction('query_editor_next', newConfig.id);
 
     transformations[index] = newConfig;
     dataTransformer.setState({ transformations });

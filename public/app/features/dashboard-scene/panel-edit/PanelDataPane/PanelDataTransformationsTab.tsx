@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
+import { throttle } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
@@ -20,6 +21,7 @@ import { TransformationOperationRows } from 'app/features/dashboard/components/T
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../utils/utils';
+import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
@@ -29,6 +31,13 @@ import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
 import { scrollToQueryRow } from './utils';
 
 const SET_TIMEOUT = 750;
+const reportTransformationEditInteraction = throttle((context: string, type: string) => {
+  reportInteraction('grafana_panel_transformations_clicked', {
+    context,
+    type,
+    action: 'edit',
+  });
+}, TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME);
 
 interface PanelDataTransformationsTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -249,11 +258,7 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
               <TransformationOperationRows
                 onChange={(index, transformation) => {
                   if (transformation?.id) {
-                    reportInteraction('grafana_panel_transformations_clicked', {
-                      context: 'transformations_list',
-                      type: transformation.id,
-                      action: 'edit',
-                    });
+                    reportTransformationEditInteraction('transformations_list', transformation.id);
                   }
                   const newTransformations = transformations.slice();
                   newTransformations[index] = transformation;
