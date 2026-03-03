@@ -192,7 +192,7 @@ The following screen recording shows this option in a time series visualization:
 
 ### Annotation options
 
-{{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+3" >}}
+{{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Graph styles options
 
