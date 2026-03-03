@@ -38,6 +38,7 @@ function setup(
     newPrURL: undefined,
     repoURL: undefined,
     repoType: options.repoType || 'github',
+    resourcePushedTo: 'abc',
   });
 
   const renderResult = render(<PreviewBannerViewPR {...componentProps} />);

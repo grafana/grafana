@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -338,9 +337,9 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))
-	if obj == nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
+	obj, gvk, _, err := ParseFileResource(ctx, info)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, err
 	}
 
 	objName := obj.GetName()

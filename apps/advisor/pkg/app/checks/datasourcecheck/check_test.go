@@ -382,6 +382,32 @@ func TestCheck_Run(t *testing.T) {
 	})
 }
 
+func TestCanBeInstalled_CacheConsistency(t *testing.T) {
+	t.Run("cached result should match initial result when plugin is available in repo", func(t *testing.T) {
+		mockPluginStore := &MockPluginStore{exists: false}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "my-plugin", Status: "active"},
+		}}
+
+		c := &check{
+			PluginStore:               mockPluginStore,
+			PluginRepo:                mockPluginRepo,
+			GrafanaVersion:            "11.0.0",
+			pluginCanBeInstalledCache: make(map[string]bool),
+		}
+
+		ctx := context.Background()
+
+		first, err := c.canBeInstalled(ctx, "my-plugin")
+		assert.NoError(t, err)
+		assert.True(t, first, "first call: plugin available in repo should return true")
+
+		second, err := c.canBeInstalled(ctx, "my-plugin")
+		assert.NoError(t, err)
+		assert.True(t, second, "second (cached) call should also return true")
+	})
+}
+
 func TestCheck_Item(t *testing.T) {
 	t.Run("should return nil when datasource is not found", func(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: []*datasources.DataSource{}}

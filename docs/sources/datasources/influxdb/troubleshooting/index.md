@@ -16,13 +16,13 @@ labels:
     - enterprise
     - oss
 menuTitle: Troubleshooting
-title: Troubleshoot issues with the InfluxDB data source
+title: Troubleshoot InfluxDB data source issues
 weight: 600
 ---
 
-# Troubleshoot issues with the InfluxDB data source
+# Troubleshoot InfluxDB data source issues
 
-This document provides troubleshooting information for common errors you may encounter when using the InfluxDB data source in Grafana.
+This document provides troubleshooting guidance for common errors you may encounter when using the InfluxDB data source in Grafana.
 
 ## Connection errors
 

@@ -200,6 +200,14 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 - `pd`: Duplicate panel
 - `pr`: Remove panel
 
+## Kiosk mode
+
+In kiosk mode, the main menu and top navigation bar of a dashboard are hidden.
+This can be useful if you want to display as much information as possible on the screen or use the dashboard to present information to a wider audience.
+
+- **Turn on kiosk mode**: Click your user icon and select **Enable kiosk mode**.
+- **Turn off kiosk mode**: Press `Esc`.
+
 ## Set dashboard time range
 
 Grafana provides several ways to manage the time ranges of the data being visualized, for dashboard, panels and also for alerting.

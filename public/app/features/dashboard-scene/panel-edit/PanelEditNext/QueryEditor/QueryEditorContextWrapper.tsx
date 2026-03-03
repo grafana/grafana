@@ -13,12 +13,24 @@ import { PendingExpression, PendingTransformation, QueryEditorProvider } from '.
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
 import { usePendingTransformation } from './hooks/usePendingTransformation';
+import { useQueryOptions } from './hooks/useQueryOptions';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
 import { AlertRule, QueryOptionField, Transformation } from './types';
-import { useQueryOptions } from './useQueryOptions';
 import { getEditorType, getTransformId } from './utils';
+
+/**
+ * Keeps query selection stable across refId renames.
+ * When the currently selected query is renamed, selection should follow the new refId.
+ */
+export function getNextSelectedQueryRefId(
+  currentSelectedRefId: string | null,
+  originalRefId: string,
+  updatedRefId: string
+) {
+  return currentSelectedRefId === originalRefId ? updatedRefId : currentSelectedRefId;
+}
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -68,7 +80,7 @@ export function QueryEditorContextWrapper({
     () => ({
       queries: queryRunnerState?.queries ?? [],
       data: queryRunnerState?.data,
-      isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
+      isLoading: queryRunnerState?.data?.state === LoadingState.Loading || queryRunnerState?.data?.state === undefined,
       queryError,
     }),
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]
@@ -264,6 +276,9 @@ export function QueryEditorContextWrapper({
       updateQueries: dataPane.updateQueries,
       updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
         dataPane.updateSelectedQuery(updatedQuery, originalRefId);
+        setSelectedQueryRefId((currentSelectedRefId) =>
+          getNextSelectedQueryRefId(currentSelectedRefId, originalRefId, updatedQuery.refId)
+        );
       },
       addQuery: dataPane.addQuery,
       deleteQuery: dataPane.deleteQuery,

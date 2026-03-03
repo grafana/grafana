@@ -5,6 +5,21 @@
   "items": [
     {
       "metadata": {
+        "name": "adHocFilterDefaultValues",
+        "resourceVersion": "1772476441363",
+        "creationTimestamp": "2026-03-02T18:34:01Z"
+      },
+      "spec": {
+        "description": "Enables configuring default origin filters for ad-hoc filter variables",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-03-05T12:01:31Z"
@@ -553,6 +568,19 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleGroupSortByFolderFullpath",
+        "resourceVersion": "1770763646748",
+        "creationTimestamp": "2026-02-10T22:47:26Z"
+      },
+      "spec": {
+        "description": "Sort alert rule groups by folder full path in the Prometheus rules API",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-03T11:18:25Z"
@@ -681,6 +709,20 @@
     },
     {
       "metadata": {
+        "name": "alertingTriageSavedSearches",
+        "resourceVersion": "1769704033471",
+        "creationTimestamp": "2026-01-29T16:27:13Z"
+      },
+      "spec": {
+        "description": "Enables saved searches for the Alert Activity page",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingUIOptimizeReducer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-11-18T10:59:00Z"
@@ -779,6 +821,20 @@
     },
     {
       "metadata": {
+        "name": "analyticsFramework",
+        "resourceVersion": "1772205128141",
+        "creationTimestamp": "2026-02-27T15:12:08Z"
+      },
+      "spec": {
+        "description": "Enables new analytics framework",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "annotationPermissionUpdate",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-10-31T13:30:13Z"
@@ -801,6 +857,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "appPluginAPIServer",
+        "resourceVersion": "1770813648403",
+        "creationTimestamp": "2026-02-11T12:40:48Z"
+      },
+      "spec": {
+        "description": "Registers an API server for each backend app plugin exposing a settings endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -1114,6 +1184,20 @@
         "description": "Enables browser crash detection reporting to Faro.",
         "stage": "experimental",
         "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "createdByMeSearchFilter",
+        "resourceVersion": "1771965456951",
+        "creationTimestamp": "2026-02-24T20:37:36Z"
+      },
+      "spec": {
+        "description": "Enables the created by me search filter on the browse dashboards page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
@@ -1461,6 +1545,20 @@
     },
     {
       "metadata": {
+        "name": "dsAbstractionApp",
+        "resourceVersion": "1771859936935",
+        "creationTimestamp": "2026-02-23T15:18:56Z"
+      },
+      "spec": {
+        "description": "Registers the dsabstraction app for querying datasources via unified SQL",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-12-12T22:20:04Z"
@@ -1791,6 +1889,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "functionalSharedPreferences",
+        "resourceVersion": "1771763406238",
+        "creationTimestamp": "2026-02-22T12:30:06Z"
+      },
+      "spec": {
+        "description": "Whether to use the new SharedPreferences functional component",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2589,6 +2701,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUsersApi",
+        "resourceVersion": "1772099076728",
+        "creationTimestamp": "2026-02-26T09:44:36Z"
+      },
+      "spec": {
+        "description": "Enables user APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "liveAPIServer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -2782,6 +2908,20 @@
     },
     {
       "metadata": {
+        "name": "managedPluginsV2",
+        "resourceVersion": "1772014398973",
+        "creationTimestamp": "2026-02-25T10:13:18Z"
+      },
+      "spec": {
+        "description": "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "metricsFromProfiles",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-09T10:55:28Z"
@@ -2867,7 +3007,8 @@
       "metadata": {
         "name": "newFiltersUI",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-08-30T12:48:13Z"
+        "creationTimestamp": "2024-08-30T12:48:13Z",
+        "deletionTimestamp": "2026-02-20T15:12:03Z"
       },
       "spec": {
         "description": "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
@@ -3389,6 +3530,37 @@
     },
     {
       "metadata": {
+        "name": "provisioningExport",
+        "resourceVersion": "1771845933585",
+        "creationTimestamp": "2026-02-23T11:25:33Z"
+      },
+      "spec": {
+        "description": "Enable export functionality for provisioned resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioningFolderMetadata",
+        "resourceVersion": "1771843876800",
+        "creationTimestamp": "2026-02-23T10:49:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-23 10:51:16.80095 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Allow setting folder metadata for provisioned folders",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboardsEmailSharing",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-01-03T19:45:15Z"
@@ -3598,6 +3770,20 @@
     },
     {
       "metadata": {
+        "name": "rememberUserOrgForSso",
+        "resourceVersion": "1772028086169",
+        "creationTimestamp": "2026-02-25T14:01:26Z"
+      },
+      "spec": {
+        "description": "Remember the last viewed organization for users using SSO",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "renderAuthJWT",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-04-03T16:53:38Z"
@@ -3667,17 +3853,20 @@
     {
       "metadata": {
         "name": "restrictedPluginApis",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1771593178037",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-20 13:12:58.037168 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables sharing a list of APIs with a list of plugins",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3805,13 +3994,16 @@
     {
       "metadata": {
         "name": "secretsManagementAppPlatformUI",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1772221660381",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-27 19:47:40.381931167 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable the secrets management app platform UI",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
       }
@@ -3944,7 +4136,8 @@
       "metadata": {
         "name": "tabularNumbers",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-06-24T11:52:03Z"
+        "creationTimestamp": "2025-06-24T11:52:03Z",
+        "deletionTimestamp": "2026-02-24T18:16:36Z"
       },
       "spec": {
         "description": "Use fixed-width numbers globally in the UI",

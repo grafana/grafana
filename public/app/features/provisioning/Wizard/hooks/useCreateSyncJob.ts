@@ -32,9 +32,11 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
 
       const jobSpec = requiresMigration
         ? {
+            action: 'migrate' as const,
             migrate: {},
           }
         : {
+            action: 'pull' as const,
             pull: {
               incremental: false,
             },

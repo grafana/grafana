@@ -199,6 +199,51 @@ describe('ResourceEditFormSharedFields', () => {
       expect(configuredOption.infoOption).toBe(true);
       expect(configuredOption.label).toBe('main (read-only)');
     });
+
+    it('should add selected custom branch as a new option', () => {
+      const customBranch = 'feature/new-branch';
+
+      const { result } = renderHook(() =>
+        useBranchDropdownOptions({
+          repository: { ...mockRepo.github, branch: 'main' },
+          selectedBranch: customBranch,
+          branchData: { items: [{ name: 'develop' }] },
+          canPushToConfiguredBranch: true,
+          canPushToNonConfiguredBranch: true,
+        })
+      );
+
+      const customOption = result.current.find((option) => option.value === customBranch);
+      expect(customOption).toEqual(
+        expect.objectContaining({
+          label: 'feature/new-branch',
+          description: 'New branch',
+          value: 'feature/new-branch',
+        })
+      );
+    });
+
+    it('should not mark selected branch as new when it already exists in repository refs', () => {
+      const existingBranch = 'feature/existing-branch';
+
+      const { result } = renderHook(() =>
+        useBranchDropdownOptions({
+          repository: { ...mockRepo.github, branch: 'main' },
+          selectedBranch: existingBranch,
+          branchData: { items: [{ name: existingBranch }] },
+          canPushToConfiguredBranch: true,
+          canPushToNonConfiguredBranch: true,
+        })
+      );
+
+      const existingOption = result.current.find((option) => option.value === existingBranch);
+      expect(existingOption).toEqual(
+        expect.objectContaining({
+          label: existingBranch,
+          value: existingBranch,
+        })
+      );
+    });
   });
 
   describe('User Interactions', () => {

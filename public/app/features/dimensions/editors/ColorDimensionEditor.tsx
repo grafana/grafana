@@ -14,7 +14,7 @@ interface ColorDimensionSettings {
 }
 
 export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionConfig, ColorDimensionSettings>) => {
-  const fixedColorOption: SelectableValue<string> = useMemo(
+  const fixedColorOption = useMemo(
     () => ({
       label: t('dimensions.color-dimension-editor.label-fixed-color', 'Fixed color'),
       value: '_____fixed_____',
