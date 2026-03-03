@@ -646,13 +646,7 @@ export class PrometheusDatasource
         try {
           let values: string[];
           if (hasScopes) {
-            values = await this.languageProvider.fetchSuggestions(
-              timeRange,
-              queries,
-              options?.scopes,
-              undefined,
-              key
-            );
+            values = await this.languageProvider.fetchSuggestions(timeRange, queries, options?.scopes, undefined, key);
           } else {
             values = await this.languageProvider.queryLabelValues(timeRange, key, metricMatch);
           }
