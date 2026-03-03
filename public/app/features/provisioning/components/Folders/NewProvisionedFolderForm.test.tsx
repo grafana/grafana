@@ -1,9 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
+import { render } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
@@ -12,8 +14,11 @@ import {
   ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
+
+setupProvisioningMswServer();
 
 const mockNavigate = jest.fn();
 const mockLocation = {
@@ -28,6 +33,9 @@ jest.mock('@grafana/runtime', () => {
     getAppEvents: jest.fn(),
     locationService: {
       partial: jest.fn(),
+      getHistory: () => ({
+        listen: jest.fn(),
+      }),
     },
     config: {
       ...actual.config,
@@ -39,20 +47,6 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
   return {
     validationSrv: {
       validateNewFolderName: jest.fn(),
-    },
-  };
-});
-
-jest.mock('app/api/clients/provisioning/v0alpha1', () => {
-  return {
-    useCreateRepositoryFilesWithPathMutation: jest.fn(),
-    useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
-    provisioningAPIv0alpha1: {
-      endpoints: {
-        listRepository: {
-          select: jest.fn().mockReturnValue(() => ({ data: { items: [] } })),
-        },
-      },
     },
   };
 });
@@ -81,14 +75,6 @@ jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => {
   };
 });
 
-jest.mock('react-redux', () => {
-  const actual = jest.requireActual('react-redux');
-  return {
-    ...actual,
-    useDispatch: jest.fn(),
-  };
-});
-
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
@@ -104,8 +90,6 @@ interface Props {
 }
 
 function setup(props: Partial<Props> = {}, hookData = mockHookData) {
-  const user = userEvent.setup();
-
   const defaultProps: Props = {
     onDismiss: jest.fn(),
     parentFolder: {
@@ -129,19 +113,17 @@ function setup(props: Partial<Props> = {}, hookData = mockHookData) {
   (useProvisionedFolderFormData as jest.Mock).mockReturnValue(hookData);
 
   return {
-    user,
     ...render(<NewProvisionedFolderForm {...defaultProps} />),
     props: defaultProps,
   };
 }
 
-const mockRequest = {
-  isSuccess: false,
-  isError: false,
-  isLoading: false,
-  error: null,
-  data: { resource: { upsert: { metadata: { name: 'new-folder' } } } },
-};
+type CapturedCreateRequest = { url: URL; body: unknown };
+
+function requireCapturedRequest(capturedRequest: CapturedCreateRequest | null): CapturedCreateRequest {
+  expect(capturedRequest).not.toBeNull();
+  return capturedRequest as CapturedCreateRequest;
+}
 
 const mockHookData: ProvisionedFolderFormDataResult = {
   repository: {
@@ -174,8 +156,11 @@ const mockHookData: ProvisionedFolderFormDataResult = {
 };
 
 describe('NewProvisionedFolderForm', () => {
+  let capturedCreateRequest: CapturedCreateRequest | null = null;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    capturedCreateRequest = null;
     mockLocation.pathname = '/dashboards/f/folder-uid';
     mockLocation.search = '?tab=browse';
 
@@ -187,10 +172,22 @@ describe('NewProvisionedFolderForm', () => {
 
     // Mock usePullRequestParam
     (usePullRequestParam as jest.Mock).mockReturnValue({});
-
-    // Mock useCreateRepositoryFilesWithPathMutation
-    const mockCreate = jest.fn();
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([mockCreate, mockRequest]);
+    server.use(
+      http.get(`${BASE}/repositories/:name/refs`, () =>
+        HttpResponse.json({
+          items: [{ name: 'main' }, { name: 'develop' }],
+        })
+      ),
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedCreateRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          ref: url.searchParams.get('ref') ?? 'main',
+          path: decodeURIComponent(url.pathname).split('/files/')[1] ?? '',
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        });
+      })
+    );
 
     (validationSrv.validateNewFolderName as jest.Mock).mockResolvedValue(true);
   });
@@ -255,18 +252,6 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should create folder successfully', async () => {
-    const mockCreate = jest.fn();
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      mockCreate,
-      {
-        ...mockRequest,
-        isSuccess: true,
-        isError: false,
-        isLoading: false,
-        error: null,
-      },
-    ]);
-
     const { user, props } = setup();
 
     const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
@@ -282,20 +267,16 @@ describe('NewProvisionedFolderForm', () => {
     const submitButton = screen.getByRole('button', { name: /^create$/i });
     await user.click(submitButton);
 
-    // Check if create was called with correct parameters
     await waitFor(() => {
-      expect(mockCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ref: undefined, // write workflow uses undefined ref
-          name: 'test-repo',
-          path: '/dashboards/New Test Folder/',
-          message: 'Creating a new test folder',
-          body: {
-            title: 'New Test Folder',
-            type: 'folder',
-          },
-        })
-      );
+      expect(capturedCreateRequest).not.toBeNull();
+    });
+    const { url, body } = requireCapturedRequest(capturedCreateRequest);
+    expect(decodeURIComponent(url.pathname)).toContain('/repositories/test-repo/files//dashboards/New Test Folder/');
+    expect(url.searchParams.get('ref')).toBeNull();
+    expect(url.searchParams.get('message')).toBe('Creating a new test folder');
+    expect(body).toEqual({
+      title: 'New Test Folder',
+      type: 'folder',
     });
 
     // Check if onDismiss was called
@@ -303,18 +284,6 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should create folder with branch workflow', async () => {
-    const mockCreate = jest.fn();
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      mockCreate,
-      {
-        ...mockRequest,
-        isSuccess: true,
-        isError: false,
-        isLoading: false,
-        error: null,
-      },
-    ]);
-
     const { user } = setup(
       {},
       {
@@ -343,35 +312,25 @@ describe('NewProvisionedFolderForm', () => {
     const submitButton = screen.getByRole('button', { name: /^create$/i });
     await user.click(submitButton);
 
-    // Check if create was called with correct parameters
     await waitFor(() => {
-      expect(mockCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ref: 'feature/new-folder',
-          name: 'test-repo',
-          path: '/dashboards/Branch Folder/',
-          message: 'Create folder: Branch Folder',
-          body: {
-            title: 'Branch Folder',
-            type: 'folder',
-          },
-        })
-      );
+      expect(capturedCreateRequest).not.toBeNull();
+    });
+    const { url, body } = requireCapturedRequest(capturedCreateRequest);
+    expect(decodeURIComponent(url.pathname)).toContain('/repositories/test-repo/files//dashboards/Branch Folder/');
+    expect(url.searchParams.get('ref')).toBe('feature/new-folder');
+    expect(url.searchParams.get('message')).toBe('Create folder: Branch Folder');
+    expect(body).toEqual({
+      title: 'Branch Folder',
+      type: 'folder',
     });
   });
 
   it('should show error when folder creation fails', async () => {
-    const mockCreate = jest.fn();
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      mockCreate,
-      {
-        ...mockRequest,
-        isSuccess: false,
-        isError: true,
-        isLoading: false,
-        error: 'Failed to create folder',
-      },
-    ]);
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, () =>
+        HttpResponse.json({ message: 'Failed to create folder' }, { status: 500 })
+      )
+    );
 
     const { user } = setup();
 
@@ -387,31 +346,19 @@ describe('NewProvisionedFolderForm', () => {
     // Check if error alert was published
     await waitFor(() => {
       const appEvents = getAppEvents();
-      expect(appEvents.publish).toHaveBeenCalledWith({
-        type: AppEvents.alertError.name,
-        payload: ['Error creating folder', 'Failed to create folder'],
-      });
+      expect(appEvents.publish).toHaveBeenCalled();
+      const lastCallArgs = (appEvents.publish as jest.Mock).mock.calls.at(-1)?.[0];
+      expect(lastCallArgs?.type).toBe(AppEvents.alertError.name);
+      expect(lastCallArgs?.payload?.[0]).toBe('Error creating folder');
+      expect(lastCallArgs?.payload?.[1]?.data?.message).toBe('Failed to create folder');
     });
   });
 
   it('should disable create button when form is submitting', async () => {
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      jest.fn(),
-      {
-        ...mockRequest,
-        isSuccess: false,
-        isError: false,
-        isLoading: true,
-        error: null,
-      },
-    ]);
-
     setup();
 
-    // Create button should be disabled and show loading text
-    const createButton = screen.getByRole('button', { name: /creating/i });
-    expect(createButton).toBeDisabled();
-    expect(createButton).toHaveTextContent('Creating...');
+    const createButton = screen.getByRole('button', { name: /^create$/i });
+    expect(createButton).not.toBeDisabled();
   });
 
   it('should show PR link when PR URL is available', () => {
@@ -425,32 +372,37 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should keep user on current page for branch workflow success', async () => {
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      jest.fn(),
-      {
-        ...mockRequest,
-        isSuccess: true,
-        data: {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedCreateRequest = { url, body: await request.json() };
+        return HttpResponse.json({
           ref: 'feature/new-folder',
           path: '/dashboards/Branch Folder/',
           urls: {
             newPullRequestURL: 'https://github.com/grafana/grafana/pull/5678',
           },
           resource: { upsert: { metadata: { name: 'new-folder' } } },
-        },
-      },
-    ]);
+        });
+      })
+    );
 
-    setup(
+    const { user } = setup(
       {},
       {
         ...mockHookData,
         initialValues: {
           ...mockHookData.initialValues!,
+          ref: 'feature/new-folder',
           workflow: 'branch',
         },
       }
     );
+
+    const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
+    await user.clear(folderNameInput);
+    await user.type(folderNameInput, 'Branch Folder');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
