@@ -1087,6 +1087,12 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
+// ListModifiedSince returns instances of `ModifiedResource` representing changes in the given
+// `key` around the `sinceRv` passed.
+//
+// NOTE: due to the nature of how events are persisted in the storage backend, this function
+// may return events with RVs *lower* than the requested `sinceRv`. It is up to the caller
+// to filter out these events if needed.
 func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
 	if !key.Valid() {
 		return 0, func(yield func(*ModifiedResource, error) bool) {
