@@ -420,7 +420,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
-		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
+		sc.cfg, acdb.ProvideService(sc.db, 0), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
 	)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
