@@ -80,6 +80,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
 		hs.preferenceService = prefService
+		hs.themeValidator = preftest.NewFakeThemeValidator()
 		hs.DashboardService = dashSvc
 	})
 
@@ -123,6 +124,7 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
 		hs.preferenceService = preftest.NewPreferenceServiceFake()
+		hs.themeValidator = preftest.NewFakeThemeValidator()
 		hs.DashboardService = dashSvc
 	})
 
