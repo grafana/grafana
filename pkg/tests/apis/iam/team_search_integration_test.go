@@ -70,7 +70,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("should search teams without query parameter", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams", namespace)
-		var result iamv0alpha1.TeamSearchResults
+		var result iamv0alpha1.GetSearchTeamsResponse
 
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -98,7 +98,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("should search teams with query parameter", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=another", namespace)
-		var result iamv0alpha1.TeamSearchResults
+		var result iamv0alpha1.GetSearchTeamsResponse
 
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -118,7 +118,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("should return no results when query does not match any teams", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=nonexistent", namespace)
-		var result iamv0alpha1.TeamSearchResults
+		var result iamv0alpha1.GetSearchTeamsResponse
 
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -135,7 +135,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("should search teams with limit parameter", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?limit=1", namespace)
-		var result iamv0alpha1.TeamSearchResults
+		var result iamv0alpha1.GetSearchTeamsResponse
 
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -152,7 +152,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("should search teams with pagination", func(t *testing.T) {
 		// First page
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?limit=1&page=1", namespace)
-		var result1 iamv0alpha1.TeamSearchResults
+		var result1 iamv0alpha1.GetSearchTeamsResponse
 
 		response1 := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -167,7 +167,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Second page
 		path2 := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?limit=1&page=2", namespace)
-		var result2 iamv0alpha1.TeamSearchResults
+		var result2 iamv0alpha1.GetSearchTeamsResponse
 
 		response2 := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -183,7 +183,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("should search teams with offset parameter", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?offset=1&limit=1", namespace)
-		var result iamv0alpha1.TeamSearchResults
+		var result iamv0alpha1.GetSearchTeamsResponse
 
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
