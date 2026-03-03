@@ -47,6 +47,7 @@ function ThemeCardComponent({ themeOption, onEdit, onRemove }: ThemeCardProps) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css({
+      boxShadow: theme.shadows.z1,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       display: 'flex',

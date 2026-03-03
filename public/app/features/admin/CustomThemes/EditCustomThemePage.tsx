@@ -105,6 +105,7 @@ export default function EditCustomThemePage() {
             </Field>
             <Field noMargin label={t('admin.edit-custom-theme-page.field-preview', 'Preview')}>
               <Box
+                boxShadow="z1"
                 display="flex"
                 overflow="hidden"
                 borderRadius="default"
