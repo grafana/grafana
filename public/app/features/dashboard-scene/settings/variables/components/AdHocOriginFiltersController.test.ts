@@ -256,3 +256,57 @@ describe('AdHocOriginFiltersController', () => {
     expect(setWip).toHaveBeenCalledWith(undefined);
   });
 });
+
+describe('origin filtering (editor integration)', () => {
+  const scopeFilter = makeFilter({ key: 'product', value: 'shoes', origin: 'scope' });
+  const dashFilter = makeFilter({ key: 'host', value: 'a' });
+
+  function createControllerWithOriginSplit(originFilters: AdHocFilterWithLabels[]) {
+    const dashboardFilters = originFilters.filter((f) => f.origin === 'dashboard');
+    const nonDashboardFilters = originFilters.filter((f) => f.origin !== 'dashboard');
+    const setState = jest.fn();
+    const setWip = jest.fn();
+
+    const controller = new AdHocOriginFiltersController(
+      dashboardFilters,
+      (filters) => setState({ originFilters: [...nonDashboardFilters, ...filters] }),
+      undefined,
+      setWip,
+      true,
+      jest.fn().mockResolvedValue([]),
+      jest.fn().mockResolvedValue([]),
+      jest.fn().mockReturnValue([])
+    );
+
+    return { controller, setState, setWip };
+  }
+
+  it('should only expose dashboard-origin filters', () => {
+    const { controller } = createControllerWithOriginSplit([scopeFilter, dashFilter]);
+    const state = controller.useState();
+    expect(state.filters).toEqual([dashFilter]);
+  });
+
+  it('should preserve scope filters when adding a dashboard filter', () => {
+    const wip = makeWip();
+    const setState = jest.fn();
+    const nonDashboardFilters = [scopeFilter];
+
+    const controller = new AdHocOriginFiltersController(
+      [],
+      (filters) => setState({ originFilters: [...nonDashboardFilters, ...filters] }),
+      wip,
+      jest.fn(),
+      true,
+      jest.fn().mockResolvedValue([]),
+      jest.fn().mockResolvedValue([]),
+      jest.fn().mockReturnValue([])
+    );
+
+    controller.updateFilter(wip, { value: 'localhost' });
+
+    expect(setState).toHaveBeenCalledWith({
+      originFilters: [scopeFilter, makeFilter()],
+    });
+  });
+});

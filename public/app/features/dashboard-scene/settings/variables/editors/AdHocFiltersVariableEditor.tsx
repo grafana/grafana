@@ -26,10 +26,20 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     if (!config.featureToggles.adHocFilterDefaultValues) {
       return undefined;
     }
+
+    const dashboardFilters: AdHocFilterWithLabels[] = [];
+    const nonDashboardFilters: AdHocFilterWithLabels[] = [];
+    for (const filter of originFilters ?? []) {
+      if (filter.origin === 'dashboard') {
+        dashboardFilters.push(filter);
+      } else {
+        nonDashboardFilters.push(filter);
+      }
+    }
+
     return new AdHocOriginFiltersController(
-      originFilters ?? [],
-      // TODO: do I need to filter out dashboard origin only? Or other origins wont live here?
-      (filters) => variable.setState({ originFilters: filters }),
+      dashboardFilters,
+      (filters) => variable.setState({ originFilters: [...nonDashboardFilters, ...filters] }),
       wip,
       setWip,
       allowCustomValue,
