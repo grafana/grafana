@@ -195,7 +195,7 @@ Complete the following steps to add a contact point.
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points**.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, **Grafana Alertmanager** is selected.
-1. On the **Contact Points** tab, click **+ Add contact point**.
+1. On the **Contact Points** tab, click **+ New contact point**.
 1. Enter a descriptive name for the contact point.
 1. From **Integration**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose Slack, enter the Slack channel and users who should be contacted.
 1. Some [contact point integrations](#supported-contact-point-integrations), like email or Webhook, have optional settings. In **Optional settings**, specify additional settings for the selected contact point integration.

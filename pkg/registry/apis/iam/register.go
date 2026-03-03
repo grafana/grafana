@@ -157,10 +157,14 @@ func NewAPIService(
 	reg prometheus.Registerer,
 	tokenExchanger authn.TokenExchanger,
 	authorizerDialConfigs map[schema.GroupResource]iamauthorizer.DialConfig,
+	tracingService tracing.Tracer,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
 	registerMetrics(reg)
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	enableAuthnMutation := features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation)
 
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
@@ -175,7 +179,10 @@ func NewAPIService(
 
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
+		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracingService),
+		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracingService),
 		display:                    user.NewLegacyDisplayREST(store),
+		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		coreRolesStorage:           coreRoleStorage,
 		roleBindingsStorage:        roleBindingsStorage,
@@ -228,6 +235,20 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == "rolebindings" {
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+					}
+					return resourceAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == "teambindings" {
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+					}
+					return authorizer.DecisionAllow, "", nil
+				}
+
+				if a.GetResource() == "users" {
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
@@ -325,7 +346,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		MaximumNameLength: 80,
 	})
 
-	if err := b.UpdateTeamsAPIGroup(opts, storage); err != nil {
+	if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi); err != nil {
 		return err
 	}
 
@@ -399,7 +420,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool) error {
 	teamResource := iamv0.TeamResourceInfo
 	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
 	if err != nil {
@@ -416,20 +437,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		storage[teamResource.StoragePath()] = dw
 	}
 
-	legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
+	if b.dual != nil && b.unified != nil {
+		legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
 
-	teamBindingSearchClient := resource.NewSearchClient(
-		dualwrite.NewSearchAdapter(b.dual),
-		iamv0.TeamBindingResourceInfo.GroupResource(),
-		b.unified,
-		legacyTeamBindingSearchClient,
-		b.features,
-	)
+		teamBindingSearchClient := resource.NewSearchClient(
+			dualwrite.NewSearchAdapter(b.dual),
+			iamv0.TeamBindingResourceInfo.GroupResource(),
+			b.unified,
+			legacyTeamBindingSearchClient,
+			b.features,
+		)
 
-	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing,
-		b.features, b.accessClient)
+		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing,
+			b.features, b.accessClient)
+	}
 
-	if b.teamGroupsHandler != nil {
+	if enableExternalGroupMappingsApi && b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
 	}
 
@@ -504,17 +527,19 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		storage[userResource.StoragePath()] = dw
 	}
 
-	legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
+	if b.dual != nil && b.unified != nil {
+		legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
 
-	teamBindingSearchClient := resource.NewSearchClient(
-		dualwrite.NewSearchAdapter(b.dual),
-		iamv0.TeamBindingResourceInfo.GroupResource(),
-		b.unified,
-		legacyTeamBindingSearchClient,
-		b.features,
-	)
+		teamBindingSearchClient := resource.NewSearchClient(
+			dualwrite.NewSearchAdapter(b.dual),
+			iamv0.TeamBindingResourceInfo.GroupResource(),
+			b.unified,
+			legacyTeamBindingSearchClient,
+			b.features,
+		)
 
-	storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamBindingSearchClient, b.tracing, b.features)
+		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamBindingSearchClient, b.tracing, b.features)
+	}
 
 	return nil
 }
@@ -789,6 +814,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	defer cancelFn()
 
 	enableUserApi := client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
+	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 
 	searchRoutes := make([]*builder.APIRoutes, 0, 3)
 	if enableUserApi && b.userSearchHandler != nil {
@@ -799,7 +825,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.teamSearch.GetAPIRoutes(defs))
 	}
 
-	if b.externalGroupMappingSearchHandler != nil {
+	if enableExternalGroupMappingsApi && b.externalGroupMappingSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 

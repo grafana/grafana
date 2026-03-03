@@ -8,6 +8,8 @@ import {
   LibraryPanelKind,
   PanelKind,
   QueryVariableKind,
+  GroupByVariableKind,
+  AdhocVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import config from 'app/core/config';
@@ -21,7 +23,7 @@ import { createConstantVariableAdapter } from '../../../variables/constant/adapt
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
-import { makeExportableV1, makeExportableV2, LibraryElementExport } from './exporters';
+import { makeExportableV1, makeExportableV2, LibraryElementExport, ExportLabel } from './exporters';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -720,6 +722,35 @@ describe('dashboard exporter v2', () => {
     const annotationQuery = dashboard.annotations[0];
 
     expect(annotationQuery.spec.query?.datasource?.name).toBeUndefined();
+  });
+
+  it('should assign export labels to data queries during export', async () => {
+    const { dashboard } = await setup();
+
+    const panel = dashboard.elements['panel-1'];
+    if (panel.kind !== 'Panel') {
+      throw new Error('Panel should be a Panel');
+    }
+    const panelQuery = panel.spec.data.spec.queries[0];
+    expect(panelQuery.spec.query.labels?.[ExportLabel]).toBe('prometheus-1');
+
+    const queryVariable = dashboard.variables.find(
+      (variable) => variable.kind === 'QueryVariable'
+    ) as QueryVariableKind;
+    expect(queryVariable.spec.query.labels?.[ExportLabel]).toBe('prometheus-1');
+
+    const groupByVariable = dashboard.variables.find(
+      (variable) => variable.kind === 'GroupByVariable'
+    ) as GroupByVariableKind;
+    expect(groupByVariable.labels?.[ExportLabel]).toBe('prometheus-2');
+
+    const adhocVariable = dashboard.variables.find(
+      (variable) => variable.kind === 'AdhocVariable'
+    ) as AdhocVariableKind;
+    expect(adhocVariable.labels?.[ExportLabel]).toBe('prometheus-3');
+
+    const annotationQuery = dashboard.annotations[0];
+    expect(annotationQuery.spec.query.labels?.[ExportLabel]).toBe('prometheus-4');
   });
 
   it('should not remove datasource ref from panel that uses a datasource variable', async () => {

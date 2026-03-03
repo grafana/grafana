@@ -1,0 +1,328 @@
+package git
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"testing"
+	"time"
+
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/nanogit/gittest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
+)
+
+const (
+	waitTimeoutDefault  = 60 * time.Second
+	waitIntervalDefault = 100 * time.Millisecond
+)
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+// dashboardJSON generates a valid dashboard JSON for testing
+func dashboardJSON(uid, title string, version int) []byte {
+	dashboard := map[string]interface{}{
+		"uid":           uid,
+		"title":         title,
+		"tags":          []string{},
+		"timezone":      "browser",
+		"schemaVersion": 39,
+		"version":       version,
+		"refresh":       "",
+		"panels":        []interface{}{},
+	}
+	data, _ := json.MarshalIndent(dashboard, "", "\t")
+	return data
+}
+
+// gitTestHelper wraps the standard test helper with git-specific functionality
+type gitTestHelper struct {
+	*apis.K8sTestHelper
+	gitServer    *gittest.Server
+	Repositories *apis.K8sResourceClient
+	AdminREST    *rest.RESTClient
+	EditorREST   *rest.RESTClient
+	ViewerREST   *rest.RESTClient
+	DashboardsV1 *apis.K8sResourceClient
+}
+
+func runGrafanaWithGitServer(t *testing.T) *gitTestHelper {
+	t.Helper()
+
+	ctx := context.Background()
+
+	// Start git server using gittest
+	gitServer, err := gittest.NewServer(ctx, gittest.WithLogger(gittest.NewTestLogger(t)))
+	require.NoError(t, err, "failed to start git server")
+	t.Cleanup(func() {
+		if err := gitServer.Cleanup(); err != nil {
+			t.Logf("failed to cleanup git server: %v", err)
+		}
+	})
+
+	// Start Grafana with provisioning enabled
+	opts := testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagProvisioningExport,
+		},
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
+			},
+			"folders.folder.grafana.app": {
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
+			},
+		},
+		ProvisioningAllowedTargets: []string{"folder", "instance"},
+	}
+
+	k8s := apis.NewK8sTestHelper(t, opts)
+
+	// Set up K8s resource clients
+	repositories := k8s.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8s.Org1.Admin,
+		Namespace: "default",
+		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+	})
+
+	dashboardsV1 := k8s.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8s.Org1.Admin,
+		Namespace: "default",
+		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	// Get REST clients for different roles
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
+	adminClient := k8s.Org1.Admin.RESTClient(t, gv)
+	editorClient := k8s.Org1.Editor.RESTClient(t, gv)
+	viewerClient := k8s.Org1.Viewer.RESTClient(t, gv)
+
+	helper := &gitTestHelper{
+		K8sTestHelper: k8s,
+		gitServer:     gitServer,
+		Repositories:  repositories,
+		DashboardsV1:  dashboardsV1,
+		AdminREST:     adminClient,
+		EditorREST:    editorClient,
+		ViewerREST:    viewerClient,
+	}
+
+	return helper
+}
+
+// createGitRepo creates a git repository using gittest and registers it with Grafana provisioning
+// workflows parameter is optional - if not provided, defaults to ["write"]
+func (h *gitTestHelper) createGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	// Create user and remote repository
+	user, err := h.gitServer.CreateUser(ctx)
+	require.NoError(t, err, "failed to create user")
+
+	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
+	require.NoError(t, err, "failed to create remote repository")
+
+	local, err := gittest.NewLocalRepo(ctx)
+	require.NoError(t, err, "failed to create local repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+
+	// Initialize local repo with remote and initial commit
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	// Add initial files if provided
+	for path, content := range initialFiles {
+		err = local.CreateFile(path, string(content))
+		require.NoError(t, err, "failed to create file %s", path)
+	}
+
+	if len(initialFiles) > 0 {
+		_, err = local.Git("add", ".")
+		require.NoError(t, err, "failed to add files")
+		_, err = local.Git("commit", "-m", "Add initial files")
+		require.NoError(t, err, "failed to commit files")
+		_, err = local.Git("push")
+		require.NoError(t, err, "failed to push files")
+	}
+
+	// Default to ["write"] if no workflows specified
+	if len(workflows) == 0 {
+		workflows = []string{"write"}
+	}
+
+	// Register repository with Grafana
+	repoSpec := map[string]interface{}{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]interface{}{
+			"name":      repoName,
+			"namespace": "default",
+		},
+		"spec": map[string]interface{}{
+			"title":       fmt.Sprintf("Test Repository %s", repoName),
+			"description": fmt.Sprintf("Integration test repository for %s", repoName),
+			"type":        "git",
+			"git": map[string]interface{}{
+				"url":       remote.URL,
+				"branch":    "main",
+				"path":      "",
+				"tokenUser": user.Username,
+			},
+			"sync": map[string]interface{}{
+				"enabled":         true,
+				"target":          "instance",
+				"intervalSeconds": 60,
+			},
+			"workflows": workflows,
+		},
+		"secure": map[string]interface{}{
+			"token": map[string]interface{}{
+				"create": user.Password,
+			},
+		},
+	}
+
+	repoJSON, err := json.Marshal(repoSpec)
+	require.NoError(t, err)
+
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Body(repoJSON).
+		SetHeader("Content-Type", "application/json").
+		Do(context.Background())
+
+	require.NoError(t, result.Error(), "failed to create repository")
+
+	// Wait for repository to be ready
+	h.waitForReadyRepository(t, repoName)
+
+	return remote, local
+}
+
+// waitForReadyRepository waits for a repository to have Ready=True condition
+func (h *gitTestHelper) waitForReadyRepository(t *testing.T, repoName string) {
+	t.Helper()
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repo, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		// Check for Ready condition
+		conditions, found, err := unstructured.NestedSlice(repo.Object, "status", "conditions")
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		if !found || len(conditions) == 0 {
+			collect.Errorf("no conditions found for repository %s", repoName)
+			return
+		}
+
+		// Look for Ready=True condition
+		ready := false
+		for _, cond := range conditions {
+			condMap := cond.(map[string]interface{})
+			condType, _ := condMap["type"].(string)
+			condStatus, _ := condMap["status"].(string)
+			condReason, _ := condMap["reason"].(string)
+			condMessage, _ := condMap["message"].(string)
+
+			t.Logf("Repository %s condition: type=%s status=%s reason=%s message=%s",
+				repoName, condType, condStatus, condReason, condMessage)
+
+			if condType == "Ready" && condStatus == "True" {
+				ready = true
+				break
+			}
+		}
+
+		assert.True(collect, ready, "repository not ready")
+	}, waitTimeoutDefault, waitIntervalDefault, "repository %s should become ready", repoName)
+}
+
+// syncAndWait triggers a sync job and waits for it to complete
+func (h *gitTestHelper) syncAndWait(t *testing.T, repoName string) {
+	t.Helper()
+
+	jobSpec := map[string]interface{}{
+		"action": "pull",
+		"pull":   map[string]interface{}{},
+	}
+
+	jobJSON, err := json.Marshal(jobSpec)
+	require.NoError(t, err)
+
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("jobs").
+		Body(jobJSON).
+		SetHeader("Content-Type", "application/json").
+		Do(context.Background())
+
+	if apierrors.IsAlreadyExists(result.Error()) {
+		// Job already running, just wait
+		h.waitForJobsComplete(t, repoName)
+		return
+	}
+
+	require.NoError(t, result.Error(), "failed to trigger sync")
+	h.waitForJobsComplete(t, repoName)
+}
+
+// waitForJobsComplete waits for all jobs for a repository to complete
+func (h *gitTestHelper) waitForJobsComplete(t *testing.T, repoName string) {
+	t.Helper()
+
+	jobsClient := h.GetResourceClient(apis.ResourceClientArgs{
+		User:      h.Org1.Admin,
+		Namespace: "default",
+		GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
+	})
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		jobs, err := jobsClient.Resource.List(context.Background(), metav1.ListOptions{})
+		if !assert.NoError(collect, err, "failed to list jobs") {
+			return
+		}
+
+		hasActiveJobs := false
+		for _, job := range jobs.Items {
+			labels := job.GetLabels()
+			if labels["provisioning.grafana.app/repository"] == repoName {
+				hasActiveJobs = true
+				break
+			}
+		}
+
+		assert.False(collect, hasActiveJobs, "jobs still active for repository %s", repoName)
+	}, waitTimeoutDefault, waitIntervalDefault, "jobs should complete for repository %s", repoName)
+}

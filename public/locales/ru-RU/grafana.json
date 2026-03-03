@@ -912,7 +912,7 @@
       "title-failed-to-fetch-contact-points": "Не удалось получить точки контакта"
     },
     "contact-points": {
-      "create": "Создать точку контакта",
+      "create": "",
       "custom-template-value": "Значение пользовательского шаблона",
       "delete-reasons": {
         "heading": "Точку контакта нельзя удалить по следующим причинам.",
@@ -2147,7 +2147,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Добавить временной интервал"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2191,6 +2191,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2198,20 +2199,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Поиск по точке контакта",
@@ -2274,7 +2269,7 @@
       "title-failed-to-fetch-notification-templates": "Не удалось получить шаблоны уведомлений"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Добавить группу шаблонов уведомлений",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Создавайте собственные шаблоны уведомлений."
     },
     "notifications-list": {
@@ -2301,6 +2296,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2324,21 +2320,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Добавьте метки, чтобы улучшить управление правилами записи.",
@@ -3300,6 +3290,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Форма шаблона",
+      "body-legacy": "",
       "label-examples-documentation": "Документация по примерам",
       "label-template-group": "Группа шаблонов",
       "label-template-group-name": "Название группы шаблонов",
@@ -3308,6 +3299,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Наименуйте свою группу шаблонов",
       "title-error-saving-template": "Ошибка при сохранении шаблона",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Памятка по созданию шаблонов"
     },
     "template-preview": {
@@ -3348,6 +3340,8 @@
       "help": {
         "intro": "Шаблоны уведомления используют язык шаблонов Go для создания сообщений уведомления.\n\nВ Grafana группа шаблонов может задать несколько шаблонов уведомления с помощью {{ define \"<NAME>\" }}.\nЭти шаблоны можно использовать в точках контакта и других шаблонах уведомления путем вызова {{ template \"<NAME>\" }}.\nПодробную информацию о шаблонах уведомлений см. в нашей документации."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Неправильно настроенный",
       "misconfigured-warning": "Неправильно настроенный шаблон.",
       "misconfigured-warning-details": "Шаблоны должны задаваться в разделах <2></2> и <5></5> конфигурации вашего обработчика оповещений."
@@ -3386,7 +3380,7 @@
       "stop-alerting-when": "Прекратить оповещение (или состояние ожидания), если"
     },
     "time-interval": {
-      "add-time-interval": "Добавить временной интервал",
+      "add-time-interval": "",
       "save": "Сохранить временной интервал",
       "saving": "Сохранение временного интервала"
     },
@@ -3458,7 +3452,14 @@
         "title": "Правило не найдено"
       },
       "rules-with-firing-instances": "Правила оповещения с активными экземплярами",
-      "rules-with-pending-instances": "Правила оповещения с экземплярами в состоянии ожидания"
+      "rules-with-pending-instances": "Правила оповещения с экземплярами в состоянии ожидания",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Добавить выражение"
@@ -4231,7 +4232,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -6661,6 +6661,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Не удалось удалить дашборд",
       "cancel-action": "Отмена",
@@ -7875,7 +7881,10 @@
     "pro-tip": "Совет: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Мы ищем, но не можем найти {{lowerCaseEntity}}. Попробуйте вернуться на <4>главную страницу</4> или обратиться за помощью на <7>сайте сообщества.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -12034,8 +12043,6 @@
       "tooltip-delete": "Удалить"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Не удалось загрузить некоторые рекомендации"
       },
@@ -12772,6 +12779,12 @@
       "label-read-only": "Только для чтения",
       "label-sync-interval": "Интервал синхронизации (в секундах)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12917,6 +12930,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13426,6 +13441,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -14487,6 +14503,11 @@
           "settings": "Параметры"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Синхронизация внешней группы"
@@ -14543,6 +14564,19 @@
       "loading-teams": "Загрузка команд...",
       "new-team": "Новая команда",
       "placeholder-search-teams": "Поиск команд"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Это необязательное действие, которое используется в основном для установки аватара профиля команды (с помощью сервиса Gravatar).",
