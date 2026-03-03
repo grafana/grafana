@@ -1,12 +1,16 @@
 package setting
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type RBACSettings struct {
 	// Enable permission cache
 	PermissionCache bool
+	// PermissionCacheTTL is the TTL for the accesscontrol store GetUserPermissions in-memory cache (0 = disabled).
+	PermissionCacheTTL time.Duration
 	// Enable Permission validation during role creation and provisioning
 	PermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
@@ -25,6 +29,7 @@ func (cfg *Cfg) readRBACSettings() {
 
 	rbac := cfg.Raw.Section("rbac")
 	s.PermissionCache = rbac.Key("permission_cache").MustBool(true)
+	s.PermissionCacheTTL = time.Duration(rbac.Key("permission_cache_ttl_seconds").MustInt(60)) * time.Second
 	s.PermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	s.ResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)

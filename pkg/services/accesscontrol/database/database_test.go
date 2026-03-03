@@ -619,7 +619,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
-	acstore := database.ProvideService(sql)
+	acstore := database.ProvideService(sql, 0)
 	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
 	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)

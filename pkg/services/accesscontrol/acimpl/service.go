@@ -59,9 +59,13 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService,
 ) (*Service, error) {
+	storeCacheTTL := time.Duration(0)
+	if cfg.RBAC.PermissionCache {
+		storeCacheTTL = cfg.RBAC.PermissionCacheTTL
+	}
 	service := ProvideOSSService(
 		cfg,
-		database.ProvideService(db),
+		database.ProvideService(db, storeCacheTTL),
 		actionResolver,
 		cache,
 		features,
