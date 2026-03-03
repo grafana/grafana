@@ -20,14 +20,20 @@ export default function CustomThemesPage() {
     <Page
       navId="custom-themes"
       actions={
-        customThemes.data?.items.length ? (
+        customThemes.isLoading || customThemes.data?.items.length ? (
           <LinkButton icon="plus" href="/themes/new">
             <Trans i18nKey="admin.custom-themes.add-button">Add custom theme</Trans>
           </LinkButton>
         ) : undefined
       }
     >
-      {customThemes.data?.items.length ? (
+      {customThemes.isLoading ? (
+        <Grid minColumnWidth={34} gap={2}>
+          {Array.from({ length: 3 }, (_, i) => (
+            <ThemeCard.Skeleton key={i} />
+          ))}
+        </Grid>
+      ) : customThemes.data?.items.length ? (
         <Grid minColumnWidth={34} gap={2}>
           {customThemes.data.items.map((themeOption) => (
             <ThemeCard

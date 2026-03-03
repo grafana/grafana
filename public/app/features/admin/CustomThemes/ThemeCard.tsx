@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 
 import { ThemePreview } from '../../../core/components/Theme/ThemePreview';
 
@@ -12,7 +14,7 @@ interface ThemeCardProps {
   onRemove?: () => void;
 }
 
-export function ThemeCard({ themeOption, onEdit, onRemove }: ThemeCardProps) {
+function ThemeCardComponent({ themeOption, onEdit, onRemove }: ThemeCardProps) {
   const theme = themeOption.build();
   const styles = useStyles2(getStyles);
 
@@ -61,3 +63,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+const ThemeCardSkeleton: SkeletonComponent = ({ rootProps }) => {
+  const styles = useStyles2(getSkeletonStyles);
+  return <Skeleton height={200} containerClassName={styles.container} {...rootProps} />;
+};
+
+const getSkeletonStyles = () => ({
+  container: css({
+    lineHeight: 1,
+    display: 'block',
+  }),
+});
+
+export const ThemeCard = attachSkeleton(ThemeCardComponent, ThemeCardSkeleton);
