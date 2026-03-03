@@ -1,5 +1,9 @@
 package kinds
 
+import (
+	v2beta1 "github.com/grafana/grafana/sdkkinds/dashboard/v2beta1"
+)
+
 // Status is the shared status of all dashboard versions.
 DashboardStatus: {
 	// Optional conversion status.
@@ -28,5 +32,5 @@ ConversionStatus: {
 // Preferences is the editing preferences for the dashboard
 Preferences: {
 	// Default layout that would be used when adding new elements
-	defaultLayout?: string
+	defaultLayout?: v2beta1.GridLayoutKind | v2beta1.AutoGridLayoutKind
 }
