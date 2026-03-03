@@ -6878,7 +6878,8 @@
     "panel-edit-controls": {
       "back-to-classic": "Back to classic editor",
       "table-view-aria-label-toggletableview": "Toggle table view",
-      "table-view-label-table-view": "Table view"
+      "table-view-label-table-view": "Table view",
+      "try-new-editor": "Try new editor"
     },
     "panel-editor": {
       "text": {

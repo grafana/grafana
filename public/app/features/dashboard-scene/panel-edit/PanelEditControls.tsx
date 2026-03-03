@@ -22,9 +22,11 @@ export function PanelEditControls({ panelEditor }: Props) {
 
   return (
     <div className={styles.container}>
-      {config.featureToggles.queryEditorNext && useQueryExperienceNext && (
+      {config.featureToggles.queryEditorNext && (
         <Button onClick={panelEditor.onToggleQueryEditorVersion} tooltip="" variant="secondary" icon="history">
-          {t('dashboard-scene.panel-edit-controls.back-to-classic', 'Back to classic editor')}
+          {useQueryExperienceNext
+            ? t('dashboard-scene.panel-edit-controls.back-to-classic', 'Back to classic editor')
+            : t('dashboard-scene.panel-edit-controls.try-new-editor', 'Try new editor')}
         </Button>
       )}
       <InlineSwitch
