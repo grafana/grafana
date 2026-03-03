@@ -91,6 +91,7 @@ export const StateTimelinePanel = ({
         legendItems={legendItems}
         annotations={options.annotations}
         {...options}
+        namePosition={options.namePosition === 'top' ? 'top' : 'left'}
         mode={TimelineMode.Changes}
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
