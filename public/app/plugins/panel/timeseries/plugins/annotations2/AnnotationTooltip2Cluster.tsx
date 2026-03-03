@@ -74,7 +74,7 @@ export const AnnotationTooltip2Cluster = ({
               onClose();
             }}
           />
-          <AnnotationTooltipBody text={text} alertText={alertText} tags={annoVals.tags[i] ?? []} />
+          <AnnotationTooltipBody text={text} alertText={alertText} tags={annoVals?.tags?.[i] ?? []} />
           <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
         </>
       );
