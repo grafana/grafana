@@ -5,6 +5,21 @@
   "items": [
     {
       "metadata": {
+        "name": "adHocFilterDefaultValues",
+        "resourceVersion": "1772476441363",
+        "creationTimestamp": "2026-03-02T18:34:01Z"
+      },
+      "spec": {
+        "description": "Enables configuring default origin filters for ad-hoc filter variables",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-03-05T12:01:31Z"
