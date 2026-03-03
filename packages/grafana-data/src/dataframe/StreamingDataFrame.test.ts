@@ -1070,7 +1070,7 @@ describe('Streaming JSON', () => {
         },
         data: { values: [[100], [1]] },
       });
-      frame.fields[1].state = { calcs: { sum: 10 }, range: { min: 0, max: 10 } };
+      frame.fields[1].state = { calcs: { sum: 10 }, range: { min: 0, max: 10, delta: 10 } };
       frame.resetStateCalculations();
       expect(frame.fields[1].state?.calcs).toBeUndefined();
       expect(frame.fields[1].state?.range).toBeUndefined();
