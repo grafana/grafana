@@ -118,6 +118,7 @@ jobs:
             !public/**/*.ts
             !public/**/*.tsx
             !public/**/node_modules/
+            !public/locales/
           retention-days: 1
 
       - uses: actions/upload-artifact@v5
@@ -150,100 +151,6 @@ jobs:
           name: grafana-misc
           path: grafana-misc/
           retention-days: 1
-
-  build-grafana:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
-    name: Build Grafana artifacts
-    runs-on: ubuntu-x64-xlarge
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Build all artifacts via Dagger
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        env:
-          CACHE_BUILDERS: ${{ github.event.pull_request.head.repo.fork == false }}
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/cmd artifacts -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
-
-      - name: Upload grafana tarball
-        uses: actions/upload-artifact@v5
-        with:
-          retention-days: 1
-          name: grafana-tar-gz
-          path: dist/*tar.gz
-
-      - name: Upload grafana docker tarball
-        uses: actions/upload-artifact@v5
-        with:
-          retention-days: 1
-          name: grafana-docker-tar-gz
-          path: dist/*.docker.tar.gz
-
-  push-docker-image:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
-    permissions:
-      contents: read
-      id-token: write
-    runs-on: ubuntu-latest
-    needs:
-      - build-grafana
-    steps:
-      - id: get-github-token
-        name: "create github app token"
-        uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
-        with:
-          github_app: "delivery-bot-app"
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        id: login-to-gar
-        with:
-          registry: 'us-docker.pkg.dev'
-          environment: 'dev'
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
-        with:
-          name: grafana-docker-tar-gz
-          path: .
-      - name: Load & Push Docker image
-        env:
-          BUILD_ID: ${{ github.run_id }}
-        run: |
-          set -euo pipefail
-          LOADED_IMAGE_NAME=$(docker load -i *.docker.tar.gz | sed 's/Loaded image: //g')
-          VERSION=$(echo "${LOADED_IMAGE_NAME}" | cut -d ':' -f 2 | cut -d '-' -f 1)
-          DOCKER_IMAGE="us-docker.pkg.dev/grafanalabs-dev/docker-grafana-dev/grafana:${VERSION}-${BUILD_ID}"
-          docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
-          docker push "${DOCKER_IMAGE}"
-          echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
-      - name: Add PR status check
-        env:
-          GH_TOKEN: ${{ steps.get-github-token.outputs.token }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/grafana/grafana/check-runs \
-           -f "name=${IMAGE}" \
-           -f "head_sha=${SHA}" \
-           -f 'status=completed' \
-           -f 'conclusion=neutral' \
-           -f 'output[title]=Docker image' \
-           -f "output[summary]=${IMAGE}" \
-           -f "output[text]=${IMAGE}"
 
   run-storybook-test:
     name: Verify Storybook (Playwright)
@@ -493,51 +400,6 @@ jobs:
             echo "Download the test report from $REPORT_URL"
             exit 1
           fi
-
-  run-a11y-test:
-    needs:
-      - build-grafana
-    name: A11y test
-    runs-on: ubuntu-x64-large
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - uses: actions/download-artifact@v6
-        with:
-          name: grafana-tar-gz
-      - name: Run PR a11y test
-        if: github.event_name == 'pull_request'
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz
-      - name: Run non-PR a11y test
-        if: github.event_name != 'pull_request'
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail --results=./pa11y-ci-results.json
-      - name: Upload pa11y results
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v5
-        with:
-          retention-days: 1
-          name: pa11y-ci-results
-          path: pa11y-ci-results.json
 
   publish-metrics:
     needs:

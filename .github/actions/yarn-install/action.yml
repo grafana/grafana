@@ -42,7 +42,7 @@ inputs:
   cache-install-state:
     description: 'Cache yarn install state, might speed up resolution step when node-modules cache is activated (invalidated lock/os/node-version/branch)'
     required: false
-    default: 'true'
+    default: 'false'
   enable-corepack:
     description: 'Enable corepack'
     required: false
