@@ -1,12 +1,13 @@
 import { noop } from 'lodash';
-import { FormEvent } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, SceneVariable } from '@grafana/scenes';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { AdHocFiltersVariable, AdHocFilterWithLabels, SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
 
 interface AdHocFiltersVariableEditorProps {
@@ -17,7 +18,25 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { datasource: datasourceRef, defaultKeys, allowCustomValue } = variable.useState();
+  const { datasource: datasourceRef, defaultKeys, allowCustomValue, originFilters } = variable.useState();
+
+  const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
+
+  const originFiltersController = useMemo(() => {
+    if (!config.featureToggles.adHocFilterDefaultValues) {
+      return undefined;
+    }
+    return new AdHocOriginFiltersController(
+      originFilters ?? [],
+      // TODO: do I need to filter out dashboard origin only? Or other origins wont live here?
+      (filters) => variable.setState({ originFilters: filters }),
+      wip,
+      setWip,
+      (currentKey) => variable._getKeys(currentKey),
+      (filter) => variable._getValuesFor(filter),
+      () => variable._getOperators()
+    );
+  }, [variable, originFilters, wip]);
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -55,6 +74,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}
       onAllowCustomValueChange={onAllowCustomValueChange}
+      originFiltersController={originFiltersController}
       inline={props.inline}
       datasourceSupported={datasourceSettings?.getTagKeys ? true : false}
     />

@@ -1,12 +1,9 @@
-// @ts-ignore
-
 import type { AdHocVariableModel, TextBoxVariableModel, TypedVariableModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Dashboard, Panel, VariableOption } from '@grafana/schema';
 import {
   AdHocFilterWithLabels,
-  AdhocVariableSpec,
   Spec as DashboardV2Spec,
-  TextVariableSpec,
   VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
@@ -15,18 +12,6 @@ import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
 import { jsonDiff } from '../settings/version-history/utils';
-
-export function get(obj: any, keys: string[]) {
-  try {
-    let val = obj;
-    for (const key of keys) {
-      val = val[key];
-    }
-    return val;
-  } catch (err) {
-    return undefined;
-  }
-}
 
 export function deepEqual(a: string | string[], b: string | string[]) {
   return (
@@ -88,6 +73,7 @@ function convertToV2SpecIfNeeded(initial: DashboardV2Spec | Dashboard): Dashboar
   }
 
   const dto: DashboardDTO = {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     dashboard: initial as DashboardDataDTO,
     meta: {},
   };
@@ -210,16 +196,29 @@ export function applyVariableChangesV2(
     } else if (
       variable.kind === 'AdhocVariable' &&
       original.kind === 'AdhocVariable' &&
-      !adHocVariableFiltersEqual(variable.spec.filters, original.spec.filters)
+      !adHocVariableFiltersEqual(
+        config.featureToggles.adHocFilterDefaultValues
+          ? variable.spec.filters.filter((f) => !f.origin)
+          : variable.spec.filters,
+        config.featureToggles.adHocFilterDefaultValues
+          ? original.spec.filters.filter((f) => !f.origin)
+          : original.spec.filters
+      )
     ) {
       hasVariableValueChanges = true;
     }
 
     if (!saveVariables) {
-      if (variable.kind === 'AdhocVariable') {
-        variable.spec.filters = (original.spec as AdhocVariableSpec).filters;
-      } else if (variable.kind === 'TextVariable') {
-        variable.spec.query = (original.spec as TextVariableSpec).query;
+      if (variable.kind === 'AdhocVariable' && original.kind === 'AdhocVariable') {
+        if (config.featureToggles.adHocFilterDefaultValues) {
+          const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
+          const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
+          variable.spec.filters = [...originFilters, ...originalRuntimeFilters];
+        } else {
+          variable.spec.filters = original.spec.filters;
+        }
+      } else if (variable.kind === 'TextVariable' && original.kind === 'TextVariable') {
+        variable.spec.query = original.spec.query;
       }
 
       if (variable.kind !== 'AdhocVariable') {
@@ -255,22 +254,38 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
 
     if (!isEqual(variable.current, original.current)) {
       hasVariableValueChanges = true;
-    } else if (
-      variable.type === 'adhoc' &&
-      !adHocVariableFiltersEqual(
-        validateFiltersOrigin((variable as AdHocVariableModel | undefined)?.filters),
-        validateFiltersOrigin((original as AdHocVariableModel | undefined)?.filters)
-      )
-    ) {
-      hasVariableValueChanges = true;
+    } else if (variable.type === 'adhoc') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const variableFilters = validateFiltersOrigin((variable as AdHocVariableModel).filters);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const originalFilters = validateFiltersOrigin((original as AdHocVariableModel).filters);
+
+      if (
+        !adHocVariableFiltersEqual(
+          config.featureToggles.adHocFilterDefaultValues ? variableFilters?.filter((f) => !f.origin) : variableFilters,
+          config.featureToggles.adHocFilterDefaultValues ? originalFilters?.filter((f) => !f.origin) : originalFilters
+        )
+      ) {
+        hasVariableValueChanges = true;
+      }
     }
 
     if (!saveVariables) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const typed = variable as TypedVariableModel;
 
       if (typed.type === 'adhoc') {
-        typed.filters = (original as AdHocVariableModel).filters;
+        if (config.featureToggles.adHocFilterDefaultValues) {
+          const originFilters = (typed.filters ?? []).filter((f) => f.origin);
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const originalRuntimeFilters = ((original as AdHocVariableModel).filters ?? []).filter((f) => !f.origin);
+          typed.filters = [...originFilters, ...originalRuntimeFilters];
+        } else {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          typed.filters = (original as AdHocVariableModel).filters;
+        }
       } else if (typed.type === 'textbox') {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         typed.query = (original as TextBoxVariableModel).query;
       }
 

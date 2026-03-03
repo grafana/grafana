@@ -6473,6 +6473,13 @@
     "add-variable": {
       "label-variable": "Variable"
     },
+    "adhoc-origin-filters-controller": {
+      "input-placeholder": "Add a default filter..."
+    },
+    "adhoc-origin-filters-editor": {
+      "description": "Filters that are pre-selected by default.",
+      "label": "Default filters"
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "Add event data to graphs",
       "label-annotation-query": "Annotation query"
