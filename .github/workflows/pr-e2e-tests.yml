@@ -402,8 +402,6 @@ jobs:
           fi
 
   publish-metrics:
-    needs:
-      - run-a11y-test
     name: Publish metrics
     # Run on `grafana/grafana` main branch only
     if: github.event_name == 'push' && github.repository == 'grafana/grafana' && github.ref_name == 'main'
