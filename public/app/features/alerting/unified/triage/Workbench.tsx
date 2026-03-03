@@ -17,6 +17,7 @@ import { FolderGroupRow } from './rows/FolderGroupRow';
 import { GroupRow } from './rows/GroupRow';
 import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
+import { LabelsColumn } from './scene/LabelsColumn';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
 import { Domain, Filter, WorkbenchRow } from './types';
@@ -156,68 +157,80 @@ export function Workbench({
   const hasMore = data.length > itemsToRender;
 
   return (
-    <div style={{ position: 'relative', display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
-      {/* dummy splitter to handle flex width of group items */}
-      <div {...splitter.containerProps}>
-        <div {...splitter.primaryProps}>
-          <div ref={leftColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
+    <div style={{ display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
+      {/* always-visible labels column */}
+      <LabelsColumn />
+      {/* main workbench: splitter + overlaid content */}
+      <div style={{ position: 'relative', display: 'flex', flex: 1, minWidth: 0, height: '100%' }}>
+        {/* dummy splitter to handle flex width of group items */}
+        <div {...splitter.containerProps}>
+          <div {...splitter.primaryProps}>
+            <div ref={leftColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
+          </div>
+          {!showEmptyState && <div {...splitter.splitterProps} />}
+          <div {...splitter.secondaryProps}>
+            <div ref={rightColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
+          </div>
         </div>
-        {!showEmptyState && <div {...splitter.splitterProps} />}
-        <div {...splitter.secondaryProps}>
-          <div ref={rightColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
-        </div>
-      </div>
-      {/* content goes here */}
-      <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
-        {showEmptyState ? (
-          <Box display="flex" alignItems="center" justifyContent="center" width="100%" height="100%" minHeight="400px">
-            <EmptyState
-              variant="not-found"
-              message={hasActiveFilters ? 'No matching instances found' : 'No firing or pending instances'}
+        {/* content goes here */}
+        <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
+          {showEmptyState ? (
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              width="100%"
+              height="100%"
+              minHeight="400px"
             >
-              {hasActiveFilters ? (
-                <Trans i18nKey="alerting.triage.no-matching-instances-with-filters">
-                  No alert instances match your current set of filters for the selected time range.
-                </Trans>
-              ) : (
-                <Trans i18nKey="alerting.triage.no-firing-or-pending-instances">
-                  You have no alert instances in a firing or pending state for the selected time range.
-                </Trans>
-              )}
-            </EmptyState>
-          </Box>
-        ) : (
-          <>
-            <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-              <SummaryStatsReact />
-              <SummaryChartReact />
-            </div>
-            <div className={styles.virtualizedContainer}>
-              <WorkbenchProvider
-                leftColumnWidth={leftColumnWidth}
-                rightColumnWidth={rightColumnWidth}
-                domain={domain}
-                queryRunner={queryRunner}
+              <EmptyState
+                variant="not-found"
+                message={hasActiveFilters ? 'No matching instances found' : 'No firing or pending instances'}
               >
-                <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
-                  {isLoading && (
-                    <>
-                      <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
-                      <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
-                      <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
-                    </>
-                  )}
-                  {showData &&
-                    dataSlice.map((row, index) => {
-                      const rowKey = generateRowKey(row, index);
-                      return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
-                    })}
-                  {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
-                </ScrollContainer>
-              </WorkbenchProvider>
-            </div>
-          </>
-        )}
+                {hasActiveFilters ? (
+                  <Trans i18nKey="alerting.triage.no-matching-instances-with-filters">
+                    No alert instances match your current set of filters for the selected time range.
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="alerting.triage.no-firing-or-pending-instances">
+                    You have no alert instances in a firing or pending state for the selected time range.
+                  </Trans>
+                )}
+              </EmptyState>
+            </Box>
+          ) : (
+            <>
+              <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
+                <SummaryStatsReact />
+                <SummaryChartReact />
+              </div>
+              <div className={styles.virtualizedContainer}>
+                <WorkbenchProvider
+                  leftColumnWidth={leftColumnWidth}
+                  rightColumnWidth={rightColumnWidth}
+                  domain={domain}
+                  queryRunner={queryRunner}
+                >
+                  <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
+                    {isLoading && (
+                      <>
+                        <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
+                        <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
+                        <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
+                      </>
+                    )}
+                    {showData &&
+                      dataSlice.map((row, index) => {
+                        const rowKey = generateRowKey(row, index);
+                        return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
+                      })}
+                    {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
+                  </ScrollContainer>
+                </WorkbenchProvider>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

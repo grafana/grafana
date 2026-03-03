@@ -108,7 +108,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       position: 'relative',
       flexBasis: 0,
-      border: `1px solid ${theme.colors.border.medium}`,
     }),
     leftColumn: css({
       overflow: 'hidden',
