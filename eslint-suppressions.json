@@ -667,6 +667,11 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/RadialGauge/RadialGauge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/SecretFormField/SecretFormField.tsx": {
     "no-restricted-syntax": {
       "count": 2
