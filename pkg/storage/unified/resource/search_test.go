@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/authlib/types"
+	gocache "github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -935,6 +936,218 @@ func TestRebuildIndexesForResource(t *testing.T) {
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
+}
+
+func TestListerWithLookback(t *testing.T) {
+	nsr := NamespacedResource{Namespace: "ns", Group: "g", Resource: "r"}
+	nsr2 := NamespacedResource{Namespace: "ns", Group: "g", Resource: "r2"}
+	baseRV := snowflakeFromTime(time.Now())
+
+	// Helper to create a listerWithLookback with a recording func.
+	// The func records every sinceRV it receives and returns the given resources.
+	newTestLister := func(lookback time.Duration, maxUnchanged int, resources []*ModifiedResource) (*listerWithLookback, *[]int64) {
+		var receivedRVs []int64
+		l := &listerWithLookback{
+			listModifiedSinceFunc: func(_ context.Context, _ NamespacedResource, sinceRV int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+				receivedRVs = append(receivedRVs, sinceRV)
+				return baseRV, func(yield func(*ModifiedResource, error) bool) {
+					for _, r := range resources {
+						if !yield(r, nil) {
+							return
+						}
+					}
+				}
+			},
+			lookback:       lookback,
+			processed:      gocache.New(2*lookback, time.Minute),
+			unchangedCount: make(map[NamespacedResource]int),
+			lastRV:         make(map[NamespacedResource]int64),
+			maxUnchanged:   maxUnchanged,
+		}
+		return l, &receivedRVs
+	}
+
+	// Helper to collect all resources from an iterator.
+	collect := func(it iter.Seq2[*ModifiedResource, error]) []*ModifiedResource {
+		var result []*ModifiedResource
+		for r, err := range it {
+			require.NoError(t, err)
+			result = append(result, r)
+		}
+		return result
+	}
+
+	t.Run("applies lookback on first call", func(t *testing.T) {
+		lookback := 5 * time.Minute
+		l, receivedRVs := newTestLister(lookback, 10, nil)
+
+		l.ListModifiedSince(t.Context(), nsr, baseRV)
+
+		expected := subtractDurationFromSnowflake(baseRV, lookback)
+		require.Len(t, *receivedRVs, 1)
+		require.Equal(t, expected, (*receivedRVs)[0], "first call should apply lookback")
+	})
+
+	t.Run("applies lookback for up to maxUnchanged calls with same sinceRV", func(t *testing.T) {
+		lookback := 5 * time.Minute
+		maxUnchanged := 3
+		l, receivedRVs := newTestLister(lookback, maxUnchanged, nil)
+		expected := subtractDurationFromSnowflake(baseRV, lookback)
+
+		for range maxUnchanged {
+			l.ListModifiedSince(t.Context(), nsr, baseRV)
+		}
+
+		require.Len(t, *receivedRVs, maxUnchanged)
+		for j := range maxUnchanged {
+			require.Equal(t, expected, (*receivedRVs)[j], "call %d should apply lookback", j)
+		}
+	})
+
+	t.Run("stops applying lookback after maxUnchanged calls with same sinceRV", func(t *testing.T) {
+		lookback := 5 * time.Minute
+		maxUnchanged := 3
+		l, receivedRVs := newTestLister(lookback, maxUnchanged, nil)
+
+		// Make maxUnchanged calls to exhaust the counter.
+		for range maxUnchanged {
+			l.ListModifiedSince(t.Context(), nsr, baseRV)
+		}
+
+		// The next call should pass sinceRV through without lookback.
+		l.ListModifiedSince(t.Context(), nsr, baseRV)
+
+		require.Len(t, *receivedRVs, maxUnchanged+1)
+		require.Equal(t, baseRV, (*receivedRVs)[maxUnchanged], "after maxUnchanged calls, lookback should not apply")
+	})
+
+	t.Run("lookback stays disabled for continued unchanged calls", func(t *testing.T) {
+		lookback := 5 * time.Minute
+		maxUnchanged := 2
+		l, receivedRVs := newTestLister(lookback, maxUnchanged, nil)
+
+		// Exhaust the counter.
+		for range maxUnchanged {
+			l.ListModifiedSince(t.Context(), nsr, baseRV)
+		}
+
+		// Several more calls should all pass sinceRV through unchanged.
+		for range 5 {
+			l.ListModifiedSince(t.Context(), nsr, baseRV)
+		}
+
+		total := maxUnchanged + 5
+		require.Len(t, *receivedRVs, total)
+		for i := maxUnchanged; i < total; i++ {
+			require.Equal(t, baseRV, (*receivedRVs)[i], "call %d should not apply lookback", i)
+		}
+	})
+
+	t.Run("counter resets when sinceRV changes", func(t *testing.T) {
+		lookback := 5 * time.Minute
+		maxUnchanged := 2
+		l, receivedRVs := newTestLister(lookback, maxUnchanged, nil)
+
+		// Exhaust the counter.
+		for range maxUnchanged {
+			l.ListModifiedSince(t.Context(), nsr, baseRV)
+		}
+
+		// Verify lookback is now disabled.
+		l.ListModifiedSince(t.Context(), nsr, baseRV)
+		require.Equal(t, baseRV, (*receivedRVs)[maxUnchanged])
+
+		// Change sinceRV — counter should reset and lookback should apply again.
+		newRV := baseRV + 1000
+		l.ListModifiedSince(t.Context(), nsr, newRV)
+
+		last := (*receivedRVs)[len(*receivedRVs)-1]
+		expected := subtractDurationFromSnowflake(newRV, lookback)
+		require.Equal(t, expected, last, "after RV change, lookback should apply again")
+	})
+
+	t.Run("different NamespacedResources are tracked independently", func(t *testing.T) {
+		lookback := 5 * time.Minute
+		maxUnchanged := 2
+		l, receivedRVs := newTestLister(lookback, maxUnchanged, nil)
+
+		// Exhaust counter for nsr.
+		for range maxUnchanged {
+			l.ListModifiedSince(t.Context(), nsr, baseRV)
+		}
+		// nsr lookback should now be disabled.
+		l.ListModifiedSince(t.Context(), nsr, baseRV)
+		nsr1AfterExhaust := (*receivedRVs)[maxUnchanged]
+		require.Equal(t, baseRV, nsr1AfterExhaust, "nsr lookback should be disabled")
+
+		// First call for nsr2 should still have lookback applied.
+		l.ListModifiedSince(t.Context(), nsr2, baseRV)
+		nsr2First := (*receivedRVs)[len(*receivedRVs)-1]
+		expected := subtractDurationFromSnowflake(baseRV, lookback)
+		require.Equal(t, expected, nsr2First, "nsr2 should still have lookback applied")
+	})
+
+	t.Run("deduplicates resources via ProcessedBatch", func(t *testing.T) {
+		res1 := &ModifiedResource{Key: resourcepb.ResourceKey{Group: "g", Resource: "r", Namespace: "ns", Name: "a"}, ResourceVersion: 1}
+		res2 := &ModifiedResource{Key: resourcepb.ResourceKey{Group: "g", Resource: "r", Namespace: "ns", Name: "b"}, ResourceVersion: 2}
+		res3 := &ModifiedResource{Key: resourcepb.ResourceKey{Group: "g", Resource: "r", Namespace: "ns", Name: "c"}, ResourceVersion: 3}
+
+		l, _ := newTestLister(5*time.Minute, 10, []*ModifiedResource{res1, res2, res3})
+
+		// First call — all resources should be yielded.
+		_, it := l.ListModifiedSince(t.Context(), nsr, baseRV)
+		got := collect(it)
+		require.Len(t, got, 3)
+
+		// Mark res1 and res2 as processed.
+		l.ProcessedBatch([]*ModifiedResource{res1, res2})
+
+		// Second call — only res3 should be yielded (res1 and res2 are deduplicated).
+		_, it = l.ListModifiedSince(t.Context(), nsr, baseRV)
+		got = collect(it)
+		require.Len(t, got, 1)
+		require.Equal(t, "c", got[0].Key.Name)
+	})
+
+	t.Run("propagates errors from underlying storage implementation", func(t *testing.T) {
+		expectedErr := errors.New("storage failure")
+		l := &listerWithLookback{
+			listModifiedSinceFunc: func(_ context.Context, _ NamespacedResource, _ int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+				return 0, func(yield func(*ModifiedResource, error) bool) {
+					yield(nil, expectedErr)
+				}
+			},
+			lookback:       5 * time.Minute,
+			processed:      gocache.New(10*time.Minute, time.Minute),
+			unchangedCount: make(map[NamespacedResource]int),
+			lastRV:         make(map[NamespacedResource]int64),
+			maxUnchanged:   10,
+		}
+
+		_, it := l.ListModifiedSince(t.Context(), nsr, baseRV)
+		for _, err := range it {
+			require.ErrorIs(t, err, expectedErr)
+			return
+		}
+		t.Fatal("expected error from iterator")
+	})
+
+	t.Run("returns newRV from underlying storage implementation", func(t *testing.T) {
+		expectedRV := int64(999999)
+		l := &listerWithLookback{
+			listModifiedSinceFunc: func(_ context.Context, _ NamespacedResource, _ int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+				return expectedRV, func(yield func(*ModifiedResource, error) bool) {}
+			},
+			lookback:       5 * time.Minute,
+			processed:      gocache.New(10*time.Minute, time.Minute),
+			unchangedCount: make(map[NamespacedResource]int),
+			lastRV:         make(map[NamespacedResource]int64),
+			maxUnchanged:   10,
+		}
+
+		rv, _ := l.ListModifiedSince(t.Context(), nsr, baseRV)
+		require.Equal(t, expectedRV, rv)
+	})
 }
 
 func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {

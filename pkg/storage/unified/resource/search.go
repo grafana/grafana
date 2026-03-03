@@ -152,16 +152,36 @@ func (l *noLookbackLister) ProcessedBatch(_ []*ModifiedResource) {}
 // listerWithLookback implements the modifiedSinceLister interface adding a `lookback` to
 // ListModifiedSince calls, and caching results to avoid processing duplicated events.
 type listerWithLookback struct {
-	storage   StorageBackend
-	lookback  time.Duration
-	processed *gocache.Cache
+	listModifiedSinceFunc func(context.Context, NamespacedResource, int64) (int64, iter.Seq2[*ModifiedResource, error])
+	lookback              time.Duration
+	processed             *gocache.Cache
+
+	// As an optimization, the lister keeps track of the number of times the same
+	// `sinceRV` has been requested for a given NamespacedResource. If it is requested
+	// more than `maxUnchanged` times, the lookback does not apply. In this case,
+	// the common optimization in the storage backend's ListModifiedSince of not
+	// checking for modified keys if there are no recent events will apply, avoiding
+	// queries when there is a very high search:write ratio.
+	mu             sync.Mutex
+	unchangedCount map[NamespacedResource]int
+	lastRV         map[NamespacedResource]int64
+	maxUnchanged   int
 }
 
 func newListerWithLookback(storage StorageBackend, lookback time.Duration) *listerWithLookback {
+	// Requesting the same `sinceRV` 10 times should provide enough signal that
+	// we no longer need to apply a lookback and any missed events would have
+	// been returned by this point.
+	const maxUnchanged = 10
+
 	return &listerWithLookback{
-		storage:   storage,
-		lookback:  lookback,
-		processed: gocache.New(2*lookback, time.Minute),
+		listModifiedSinceFunc: storage.ListModifiedSince,
+		lookback:              lookback,
+		processed:             gocache.New(2*lookback, time.Minute),
+
+		unchangedCount: make(map[NamespacedResource]int),
+		lastRV:         make(map[NamespacedResource]int64),
+		maxUnchanged:   maxUnchanged,
 	}
 }
 
@@ -173,9 +193,20 @@ func resourceCacheKey(res *ModifiedResource) string {
 }
 
 func (l *listerWithLookback) ListModifiedSince(ctx context.Context, nsr NamespacedResource, sinceRV int64) (int64, iter.Seq2[*ModifiedResource, error]) {
-	rv := subtractDurationFromSnowflake(sinceRV, l.lookback)
-	newRV, iter := l.storage.ListModifiedSince(ctx, nsr, rv)
+	l.mu.Lock()
+	if l.lastRV[nsr] == sinceRV {
+		l.unchangedCount[nsr] += 1
+	} else {
+		l.unchangedCount[nsr] = 0
+	}
+	l.lastRV[nsr] = sinceRV
 
+	if l.unchangedCount[nsr] < l.maxUnchanged {
+		sinceRV = subtractDurationFromSnowflake(sinceRV, l.lookback)
+	}
+	l.mu.Unlock()
+
+	newRV, iter := l.listModifiedSinceFunc(ctx, nsr, sinceRV)
 	return newRV, func(yield func(*ModifiedResource, error) bool) {
 		for res, err := range iter {
 			if err != nil {
