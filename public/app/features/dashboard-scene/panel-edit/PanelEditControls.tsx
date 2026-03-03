@@ -23,7 +23,12 @@ export function PanelEditControls({ panelEditor }: Props) {
   return (
     <div className={styles.container}>
       {config.featureToggles.queryEditorNext && (
-        <Button onClick={panelEditor.onToggleQueryEditorVersion} tooltip="" variant="secondary" icon="history">
+        <Button
+          onClick={panelEditor.onToggleQueryEditorVersion}
+          tooltip=""
+          variant="secondary"
+          icon={useQueryExperienceNext ? 'history' : 'rocket'}
+        >
           {useQueryExperienceNext
             ? t('dashboard-scene.panel-edit-controls.back-to-classic', 'Back to classic editor')
             : t('dashboard-scene.panel-edit-controls.try-new-editor', 'Try new editor')}
