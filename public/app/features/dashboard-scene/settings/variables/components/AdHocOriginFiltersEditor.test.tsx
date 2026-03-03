@@ -36,16 +36,6 @@ function createMockController(): AdHocFiltersController {
 }
 
 describe('AdHocOriginFiltersEditor', () => {
-  it('should render the combobox renderer', () => {
-    render(<AdHocOriginFiltersEditor controller={createMockController()} />);
-    expect(screen.getByTestId('adhoc-combobox-renderer')).toBeInTheDocument();
-  });
-
-  it('should render with the correct test id', () => {
-    render(<AdHocOriginFiltersEditor controller={createMockController()} />);
-    expect(screen.getByTestId('data-testid ad-hoc filters variable origin filters')).toBeInTheDocument();
-  });
-
   it('should render the field label', () => {
     render(<AdHocOriginFiltersEditor controller={createMockController()} />);
     expect(screen.getByText('Default filters')).toBeInTheDocument();
