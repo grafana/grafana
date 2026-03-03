@@ -1,0 +1,83 @@
+name: Override CLA check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: cla-override-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  override-cla:
+    # This will fail on forks due to lack of vault access
+    # but also we need to make sure forks have the CLA signed
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: "[\"grafana\"]"
+          permissions: "{\"contents\": \"write\"}"
+
+      - name: Wait for CLA check and override
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = context.payload.pull_request.head.sha;
+            const targetContext = 'license/cla';
+            const maxAttempts = 60;
+            const intervalMs = 10_000;
+
+            // Wait for the `license/cla` status to show up
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              const { data: statuses } = await github.rest.repos.listCommitStatusesForRef({
+                owner,
+                repo,
+                ref: sha,
+              });
+
+              const claStatus = statuses.find(s => s.context === targetContext);
+              if (claStatus) {
+                core.info(`Found '${targetContext}' with state: ${claStatus.state}`);
+                break;
+              }
+
+              if (attempt === maxAttempts) {
+                core.warning(`'${targetContext}' did not appear after ${maxAttempts} attempts — overriding anyway`);
+                break;
+              }
+
+              core.info(`Waiting for '${targetContext}' (attempt ${attempt}/${maxAttempts})...`);
+              await new Promise(resolve => setTimeout(resolve, intervalMs));
+            }
+
+            // Create a new status with the same name and set it to success
+            await github.rest.repos.createCommitStatus({
+              owner,
+              repo,
+              sha,
+              state: 'success',
+              context: targetContext,
+              description: 'CLA check overridden — author is a Grafana org member',
+            });
+
+            core.info(`Set '${targetContext}' to success on ${sha}`);
