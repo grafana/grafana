@@ -98,7 +98,7 @@ export function AllLabelsContent({ allLabels, onFilterAdded }: AllLabelsContentP
           <Fragment key={label.key}>
             {index > 0 && <div className={styles.sectionSeparator} />}
             {/* col 1: collapse toggle + label key */}
-            <Stack alignItems="center">
+            <Stack alignItems="center" gap={0}>
               <IconButton
                 className={styles.collapseToggle}
                 name={isOpen ? 'angle-down' : 'angle-right'}
@@ -219,8 +219,8 @@ const getContentStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gridTemplateColumns: `minmax(0, 1fr) max-content`,
     alignItems: 'center',
-    rowGap: theme.spacing(0.25),
     columnGap: theme.spacing(1),
+    paddingLeft: theme.spacing(1),
   }),
   sectionSeparator: css({
     gridColumn: '1 / -1',

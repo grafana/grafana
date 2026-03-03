@@ -267,7 +267,6 @@ export function Workbench({
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
-  const summaryHeight = 200;
   return {
     groupsContainer: css({
       position: 'absolute',
@@ -290,13 +289,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden', // Let AutoSizer handle the overflow
     }),
     summaryContainer: css({
-      minHeight: summaryHeight,
       marginBottom: theme.spacing(2),
       alignItems: 'stretch',
     }),
-    headerContainer: css({
-      top: summaryHeight,
-    }),
+    headerContainer: css({}),
     expandCollapseToolbar: css({
       display: 'flex',
       gap: theme.spacing(0.5),
