@@ -54,9 +54,11 @@ export function transformV2(
   request: DataQueryRequest<PromQuery>,
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
-  response = JSON.parse(
-    '{"data":[{"refId":"A","meta":{"type":"heatmap-cells","typeVersion":[0,0],"custom":{"calculatedMinStep":120000},"executedQueryString":"Expr: sum by(phase) (rate(redacted_seconds{namespace=~\\"ns\\"}[4m0s]))\\nStep: 2m0s"},"fields":[{"name":"xMax","type":"time","typeInfo":{"frame":"time.Time"},"labels":{},"config":{"interval":120000},"values":[],"entities":{}},{"name":"yMin","type":"number","typeInfo":{"frame":"float64"},"labels":{},"config":{"displayNameFromDS":"success"},"values":[],"entities":{}},{"name":"yMax","type":"number","typeInfo":{"frame":"float64"},"labels":{},"config":{},"values":[],"entities":{}},{"name":"count","type":"number","typeInfo":{"frame":"float64"},"labels":{},"config":{},"values":[],"entities":{}},{"name":"yLayout","type":"number","typeInfo":{"frame":"int8"},"labels":{},"config":{},"values":[],"entities":{}}],"length":0}],"state":"Done","traceIds":["abc123"]}'
-  );
+  // @todo remove before merge
+  // response = JSON.parse(
+  //   '{"data":[{"refId":"A","meta":{"type":"heatmap-cells","typeVersion":[0,0],"custom":{"calculatedMinStep":120000},"executedQueryString":"Expr: sum by(phase) (rate(redacted_seconds{namespace=~\\"ns\\"}[4m0s]))\\nStep: 2m0s"},"fields":[{"name":"xMax","type":"time","typeInfo":{"frame":"time.Time"},"labels":{},"config":{"interval":120000},"values":[],"entities":{}},{"name":"yMin","type":"number","typeInfo":{"frame":"float64"},"labels":{},"config":{"displayNameFromDS":"success"},"values":[],"entities":{}},{"name":"yMax","type":"number","typeInfo":{"frame":"float64"},"labels":{},"config":{},"values":[],"entities":{}},{"name":"count","type":"number","typeInfo":{"frame":"float64"},"labels":{},"config":{},"values":[],"entities":{}},{"name":"yLayout","type":"number","typeInfo":{"frame":"int8"},"labels":{},"config":{},"values":[],"entities":{}}],"length":0}],"state":"Done","traceIds":["abc123"]}'
+  // );
+
   // migration for dataplane field name issue
   // update displayNameFromDS in the field config
   response.data.forEach((f: DataFrame) => {
