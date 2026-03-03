@@ -592,10 +592,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Determine the main triggering condition
 	switch {
-	// First, we check if the repository is blocked and return early in such a case.
-	case isCurrentlyBlocked && isOverQuota:
-		logger.Info("repository blocked and over quota, skipping reconciliation")
-		return nil
 	case hasSpecChanged:
 		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
 	case shouldResync:
