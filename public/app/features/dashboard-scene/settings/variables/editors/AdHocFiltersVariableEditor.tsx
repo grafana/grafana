@@ -32,11 +32,12 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       (filters) => variable.setState({ originFilters: filters }),
       wip,
       setWip,
+      allowCustomValue,
       (currentKey) => variable._getKeys(currentKey),
       (filter) => variable._getValuesFor(filter),
       () => variable._getOperators()
     );
-  }, [variable, originFilters, wip]);
+  }, [variable, originFilters, wip, allowCustomValue]);
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);

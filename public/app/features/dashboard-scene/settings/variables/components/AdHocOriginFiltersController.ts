@@ -8,6 +8,7 @@ export class AdHocOriginFiltersController implements AdHocFiltersController {
     private setFilters: (filters: AdHocFilterWithLabels[]) => void,
     private wip: AdHocFilterWithLabels | undefined,
     private setWip: (wip: AdHocFilterWithLabels | undefined) => void,
+    private _allowCustomValue = true,
     private _getKeys: (currentKey: string | null) => Promise<Array<SelectableValue<string>>>,
     private _getValuesFor: (filter: AdHocFilterWithLabels) => Promise<Array<SelectableValue<string>>>,
     private _getOperators: () => Array<SelectableValue<string>>
@@ -18,7 +19,7 @@ export class AdHocOriginFiltersController implements AdHocFiltersController {
       filters: this.filters,
       wip: this.wip,
       readOnly: false,
-      allowCustomValue: true,
+      allowCustomValue: this._allowCustomValue,
       supportsMultiValueOperators: true,
       inputPlaceholder: t(
         'dashboard-scene.adhoc-origin-filters-controller.input-placeholder',

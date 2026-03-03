@@ -5,6 +5,7 @@ import { AdHocOriginFiltersController } from './AdHocOriginFiltersController';
 function createController({
   filters = [] as AdHocFilterWithLabels[],
   wip = undefined as AdHocFilterWithLabels | undefined,
+  allowCustomValue = true,
 } = {}) {
   const setFilters = jest.fn();
   const setWip = jest.fn();
@@ -17,6 +18,7 @@ function createController({
     setFilters,
     wip,
     setWip,
+    allowCustomValue,
     getKeys,
     getValuesFor,
     getOperators
@@ -37,7 +39,7 @@ describe('AdHocOriginFiltersController', () => {
   it('should return current state', () => {
     const filters = [makeFilter({ key: 'host', value: 'a' }), makeFilter({ key: 'instance', value: 'b' })];
     const wip = makeWip();
-    const { controller } = createController({ filters, wip });
+    const { controller } = createController({ filters, wip, allowCustomValue: false });
 
     const state = controller.useState();
 
@@ -46,7 +48,7 @@ describe('AdHocOriginFiltersController', () => {
     expect(state.filters[1]).toMatchObject({ key: 'instance', operator: '=', value: 'b' });
     expect(state.wip).toEqual(wip);
     expect(state.readOnly).toBe(false);
-    expect(state.allowCustomValue).toBe(true);
+    expect(state.allowCustomValue).toBe(false);
     expect(state.supportsMultiValueOperators).toBe(true);
     expect(state.inputPlaceholder).toBe('Add a default filter...');
   });
