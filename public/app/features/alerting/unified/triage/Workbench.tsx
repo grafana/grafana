@@ -262,6 +262,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     summaryContainer: css({
       minHeight: summaryHeight,
       marginBottom: theme.spacing(2),
+      alignItems: 'stretch',
     }),
     headerContainer: css({
       top: summaryHeight,

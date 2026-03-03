@@ -20,6 +20,7 @@ interface GenericRowProps {
   leftColumnClassName?: string;
   rightColumnClassName?: string;
   depth?: number; // for indentation of nested rows
+  showIndentBorder?: boolean; // draw a left border when depth > 0 (leaf rows only)
 }
 
 export const GenericRow = ({
@@ -33,6 +34,7 @@ export const GenericRow = ({
   leftColumnClassName,
   rightColumnClassName,
   depth = 0,
+  showIndentBorder = false,
 }: GenericRowProps) => {
   const styles = useStyles2(getStyles);
   const [isOpen, handleToggle] = useToggle(isOpenByDefault);
@@ -42,9 +44,15 @@ export const GenericRow = ({
 
   return (
     <>
-      <div className={styles.groupItemWrapper(width)}>
+      <div
+        className={cx(
+          styles.groupItemWrapper(width, depth, showIndentBorder),
+          depth > 0 && styles.indented(depth),
+          depth > 0 && showIndentBorder && styles.indentBorder
+        )}
+      >
         <div className={cx(styles.leftColumn, styles.column, leftColumnClassName)}>
-          <div className={styles.columnContent(depth)}>
+          <div className={styles.columnContent}>
             <LeftCell
               title={title}
               metadata={metadata}
@@ -55,7 +63,7 @@ export const GenericRow = ({
           </div>
         </div>
         <div className={cx(styles.rightColumnWrapper, styles.column, rightColumnClassName)}>
-          {content && <div className={styles.columnContent()}>{content}</div>}
+          {content && <div className={styles.columnContent}>{content}</div>}
         </div>
       </div>
       {showChildContent ? children : null}
@@ -116,17 +124,26 @@ export const getStyles = (theme: GrafanaTheme2) => {
       minWidth: 'min-content',
       flexGrow: 1,
     }),
-    columnContent: (depth?: number) =>
-      css({
-        padding: 5,
-        width: '100%',
-        paddingLeft: depth ? `calc(${theme.spacing(depth)} + 5px)` : 5,
-      }),
-    groupItemWrapper: (width: number) =>
-      css({
+    columnContent: css({
+      padding: 5,
+      width: '100%',
+    }),
+    groupItemWrapper: (width: number, depth: number, showIndentBorder: boolean) => {
+      const offsetPx =
+        depth > 0 ? depth * 2 * theme.spacing.gridSize + (showIndentBorder ? theme.spacing.gridSize : 0) : 0;
+      return css({
         display: 'grid',
-        gridTemplateColumns: `${width}px auto`,
+        gridTemplateColumns: `${Math.max(0, width - offsetPx)}px auto`,
         gap: theme.spacing(2),
+      });
+    },
+    indented: (depth: number) =>
+      css({
+        marginLeft: theme.spacing(depth * 2),
       }),
+    indentBorder: css({
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      paddingLeft: theme.spacing(1),
+    }),
   };
 };

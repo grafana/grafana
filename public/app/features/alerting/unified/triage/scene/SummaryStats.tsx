@@ -153,7 +153,14 @@ function SummaryStatsContent() {
   const hasPending = instances.pending > 0 || rules.pending > 0;
 
   return (
-    <Box backgroundColor="secondary" borderRadius="default" padding={1.5}>
+    <Box
+      backgroundColor="secondary"
+      borderRadius="default"
+      padding={1.5}
+      height="100%"
+      display="flex"
+      alignItems="center"
+    >
       <div className={styles.statsGrid}>
         {hasFiring && (
           <CompactStatRow
