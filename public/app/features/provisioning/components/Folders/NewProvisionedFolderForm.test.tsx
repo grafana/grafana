@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, locationService } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -405,8 +405,12 @@ describe('NewProvisionedFolderForm', () => {
     await user.click(screen.getByRole('button', { name: /^create$/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        '/dashboards/f/folder-uid?tab=browse&new_pull_request_url=https%3A%2F%2Fgithub.com%2Fgrafana%2Fgrafana%2Fpull%2F5678&repo_type=github'
+      expect(locationService.partial).toHaveBeenCalledWith(
+        {
+          new_pull_request_url: 'https://github.com/grafana/grafana/pull/5678',
+          repo_type: 'github',
+        },
+        undefined
       );
     });
   });
