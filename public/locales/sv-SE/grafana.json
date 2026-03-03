@@ -3262,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Mallformulär",
+      "body-legacy": "",
       "label-examples-documentation": "Exempeldokumentation",
       "label-template-group": "Mallgrupp",
       "label-template-group-name": "Namn för mallgrupp",
@@ -3270,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Ge din mallgrupp ett namn",
       "title-error-saving-template": "Fel vid sparande av mall",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Mall för fusklapp"
     },
     "template-preview": {
@@ -3310,6 +3312,8 @@
       "help": {
         "intro": "Aviseringsmallar använder Go-mallspråk för att skapa aviseringsmeddelanden.\n\nI Grafana kan en mallgrupp definiera flera aviseringsmallar med {{ define \"<NAME>\" }}.\nDessa mallar kan sedan användas i kontaktpunkter och i andra aviseringsmallar genom att anropa {{ template \"<NAME>\" }}.\nFör detaljerad information om aviseringsmallar, se vår dokumentation."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Felkonfigurerad",
       "misconfigured-warning": "Den här mallen är felkonfigurerad.",
       "misconfigured-warning-details": "Mallar måste definieras i både avsnitten <2></2> och <5></5> i Alertmanager-konfigurationen."
@@ -3420,7 +3424,14 @@
         "title": "Regeln hittades inte"
       },
       "rules-with-firing-instances": "Larmregler med utlösningsinstanser",
-      "rules-with-pending-instances": "Larmregler med väntande instanser"
+      "rules-with-pending-instances": "Larmregler med väntande instanser",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Lägg till uttryck"
@@ -4183,7 +4194,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -7817,7 +7827,10 @@
     "pro-tip": "ProTip: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Vi letar men kan inte hitta det här {{lowerCaseEntity}}. Försök att återvända <4>hem</4> eller sök hjälp på <7>communitywebbplatsen.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -11930,8 +11943,6 @@
       "tooltip-delete": "Ta bort"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Vissa förslag kunde inte laddas"
       },
@@ -14364,6 +14375,11 @@
           "settings": "Inställningar"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Extern gruppsynkronisering"
@@ -14420,6 +14436,19 @@
       "loading-teams": "Laddar team …",
       "new-team": "Nytt team",
       "placeholder-search-teams": "Sök team"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Detta är valfritt och används främst för att ställa in teamprofilens avatar (via Gravatartjänsten)",

@@ -749,7 +749,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	middleware := api2.ProvideMiddleware()
 	apiApi := api2.ProvideApi(publicDashboardServiceImpl, routeRegisterImpl, accessControl, featureToggles, middleware, cfg, ossLicensingService)
 	loginattemptimplService := loginattemptimpl.ProvideService(sqlStore, cfg, serverLockService)
-	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl)
+	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1447,7 +1447,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	middleware := api2.ProvideMiddleware()
 	apiApi := api2.ProvideApi(publicDashboardServiceImpl, routeRegisterImpl, accessControl, featureToggles, middleware, cfg, ossLicensingService)
 	loginattemptimplService := loginattemptimpl.ProvideService(sqlStore, cfg, serverLockService)
-	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl)
+	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
