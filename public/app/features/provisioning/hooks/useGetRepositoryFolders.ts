@@ -5,6 +5,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
+import { isObject } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useGetRepositoryFilesQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -16,16 +17,19 @@ export interface UseGetRepositoryFoldersProps {
   ref?: string;
 }
 
+// The generated API client types `items` loosely (path is optional/unknown),
+// so a runtime guard is needed to safely access `file.path`.
 function isFileItem(obj: unknown): obj is { path: string } {
-  if (typeof obj !== 'object' || obj === null || !('path' in obj)) {
-    return false;
-  }
-  const candidate: { path: unknown } = obj;
-  return typeof candidate.path === 'string';
+  return isObject(obj) && 'path' in obj && typeof obj.path === 'string';
 }
 
 export function useGetRepositoryFolders({ repositoryName, ref }: UseGetRepositoryFoldersProps) {
-  const { isReconciled, isLoading: isRepoLoading, healthStatusNotReady } = useRepositoryStatus(repositoryName);
+  const {
+    isReconciled,
+    isLoading: isRepoLoading,
+    hasError: isRepoError,
+    healthStatusNotReady,
+  } = useRepositoryStatus(repositoryName);
 
   const shouldSkipQuery = !repositoryName || !isReconciled;
   const {
@@ -38,7 +42,7 @@ export function useGetRepositoryFolders({ repositoryName, ref }: UseGetRepositor
     const folders = new Set<string>();
 
     for (const file of filesData?.items ?? []) {
-      if (!isFileItem(file)) {
+      if (!isFileItem(file) || file.path.startsWith('.')) {
         continue;
       }
 
@@ -57,7 +61,14 @@ export function useGetRepositoryFolders({ repositoryName, ref }: UseGetRepositor
   return {
     options,
     loading: isFilesLoading || isRepoLoading || healthStatusNotReady,
-    error: filesError ? getErrorMessage(filesError) : null,
+    error: isRepoError
+      ? t(
+          'provisioning.connect-step.text-repository-folders-not-ready',
+          'There was an issue connecting to the repository. You can still manually enter the folder path.'
+        )
+      : filesError
+        ? getErrorMessage(filesError)
+        : null,
     hint: repositoryName
       ? null
       : t(
