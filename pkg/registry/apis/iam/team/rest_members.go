@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,23 +31,20 @@ var (
 	_ rest.Connecter       = (*TeamMembersREST)(nil)
 )
 
-func NewTeamMembersREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles,
-	accessClient types.AccessClient) *TeamMembersREST {
+func NewTeamMembersREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles) *TeamMembersREST {
 	return &TeamMembersREST{
-		log:          log.New("grafana-apiserver.team.members"),
-		client:       client,
-		tracer:       tracer,
-		features:     features,
-		accessClient: accessClient,
+		log:      log.New("grafana-apiserver.team.members"),
+		client:   client,
+		tracer:   tracer,
+		features: features,
 	}
 }
 
 type TeamMembersREST struct {
-	accessClient types.AccessClient
-	log          log.Logger
-	client       resourcepb.ResourceIndexClient
-	tracer       trace.Tracer
-	features     featuremgmt.FeatureToggles
+	log      log.Logger
+	client   resourcepb.ResourceIndexClient
+	tracer   trace.Tracer
+	features featuremgmt.FeatureToggles
 }
 
 // New implements rest.Storage.
@@ -90,20 +86,6 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 		authInfo, ok := types.AuthInfoFrom(ctx)
 		if !ok {
 			responder.Error(apierrors.NewUnauthorized("no identity found"))
-			return
-		}
-
-		// https://github.com/grafana/grafana/blob/8649534e37b4c3520af538e311fb3a84c7b9f29f/public/app/features/teams/TeamPages.tsx#L74
-		checkTeamAccess, err := s.accessClient.Check(ctx, authInfo, types.CheckRequest{
-			Namespace: authInfo.GetNamespace(),
-			Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
-			Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
-			Verb:      utils.VerbGetPermissions,
-			Name:      name,
-		}, "")
-		if err != nil || !checkTeamAccess.Allowed {
-			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
-				name, errors.New("you'll need additional permissions to perform this action. Permissions needed: \"GetPermissions\" on the \"Team\" resource")))
 			return
 		}
 

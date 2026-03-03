@@ -116,6 +116,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		"namespace", req.GetNamespace(),
 		"group", req.GetGroup(),
 		"resource", req.GetResource(),
+		"subresource", req.GetSubresource(),
 		"verb", req.GetVerb(),
 	)
 	defer func(start time.Time) {
@@ -295,7 +296,7 @@ func (s *Service) groupBatchCheckItems(
 	groups := make(map[string]*batchCheckGroup)
 
 	for _, item := range checks {
-		action, actionSets, err := s.validateAction(ctx, item.GetGroup(), item.GetResource(), item.GetVerb())
+		action, actionSets, err := s.validateAction(ctx, item.GetGroup(), item.GetResource(), item.GetSubresource(), item.GetVerb())
 		if err != nil {
 			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
 			continue
@@ -481,7 +482,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		return nil, err
 	}
 
-	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetSubresource(), req.GetVerb())
 	if err != nil {
 		return nil, err
 	}
@@ -494,6 +495,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		ActionSets:   actionSets,
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
+		Subresource:  req.GetSubresource(),
 		Verb:         req.GetVerb(),
 		Name:         req.GetName(),
 		ParentFolder: req.GetFolder(),
@@ -515,7 +517,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
-	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetSubresource(), req.GetVerb())
 	if err != nil {
 		return nil, err
 	}
@@ -582,18 +584,24 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 }
 
 // Find the action for a selected verb
-func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, []string, error) {
+func (s *Service) validateAction(ctx context.Context, group, resource, subresource, verb string) (string, []string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.Get(group, resource)
+	// If subresource is provided, append it to resource for mapper lookup
+	lookupResource := resource
+	if subresource != "" {
+		lookupResource = resource + "/" + subresource
+	}
+
+	t, ok := s.mapper.Get(group, lookupResource)
 	if !ok {
-		ctxLogger.Error("unsupported resource", "group", group, "resource", resource)
+		ctxLogger.Error("unsupported resource", "group", group, "resource", lookupResource)
 		return "", nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	action, ok := t.Action(verb)
 	if !ok {
-		ctxLogger.Error("unsupported verb", "group", group, "resource", resource, "verb", verb)
+		ctxLogger.Error("unsupported verb", "group", group, "resource", lookupResource, "verb", verb)
 		return "", nil, status.Error(codes.NotFound, "unsupported verb")
 	}
 
