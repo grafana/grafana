@@ -122,6 +122,7 @@ To create a variable, follow these steps:
    If you don't enter a display name, then the drop-down list label is the variable name.
 
 1. Choose a **Hide** option for the variable:
+
    - **Nothing** - The variable selector displays the variable **Name**, or the **Label** if one is configured. This is the default.
    - **Variable** - The dashboard doesn't display the variable selector.
    - **Label** - The variable selector only displays the values.
