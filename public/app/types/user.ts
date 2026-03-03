@@ -1,6 +1,7 @@
 import { OrgRole, SelectableValue, WithAccessControlMetadata } from '@grafana/data';
 
 import { Role } from './accessControl';
+import { TeamWithRoles } from './teams';
 
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
@@ -114,6 +115,8 @@ export interface UserAdminState {
   user?: UserDTO;
   sessions: UserSession[];
   orgs: UserOrg[];
+  roles: Role[];
+  teams: TeamWithRoles[];
   isLoading: boolean;
   error?: UserAdminError;
 }

@@ -26,6 +26,8 @@ const makeInitialLdapState = (): LdapState => ({
 const makeInitialUserAdminState = (): UserAdminState => ({
   sessions: [],
   orgs: [],
+  roles: [],
+  teams: [],
   isLoading: true,
 });
 

@@ -8,15 +8,17 @@ import { featureEnabled } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction, Role } from 'app/types/accessControl';
 import { SyncInfo } from 'app/types/ldap';
 import { StoreState } from 'app/types/store';
+import { TeamWithRoles } from 'app/types/teams';
 import { UserDTO, UserOrg, UserSession, UserAdminError } from 'app/types/user';
 
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
 import { UserOrgs } from './UserOrgs';
 import { UserPermissions } from './UserPermissions';
 import { UserProfile } from './UserProfile';
+import { UserRoles } from './UserRoles';
 import { UserSessions } from './UserSessions';
 import {
   loadAdminUserPage,
@@ -38,6 +40,8 @@ interface OwnProps {
   user?: UserDTO;
   orgs: UserOrg[];
   sessions: UserSession[];
+  roles: Role[];
+  teams: TeamWithRoles[];
   ldapSyncInfo?: SyncInfo;
   isLoading: boolean;
   error?: UserAdminError;
@@ -48,6 +52,8 @@ export const UserAdminPage = ({
   user,
   orgs,
   sessions,
+  roles,
+  teams,
   ldapSyncInfo,
   isLoading,
   updateUser,
@@ -172,6 +178,7 @@ export const UserAdminPage = ({
               onOrgAdd={onOrgAdd}
             />
           )}
+          {roles && teams && orgs && <UserRoles roles={roles} teams={teams} orgs={orgs} />}
           {sessions && canReadSessions && (
             <UserSessions
               sessions={sessions}
@@ -189,6 +196,8 @@ const mapStateToProps = (state: StoreState) => ({
   user: state.userAdmin.user,
   sessions: state.userAdmin.sessions,
   orgs: state.userAdmin.orgs,
+  roles: state.userAdmin.roles,
+  teams: state.userAdmin.teams,
   ldapSyncInfo: state.ldap.syncInfo,
   isLoading: state.userAdmin.isLoading,
   error: state.userAdmin.error,

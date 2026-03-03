@@ -17,6 +17,8 @@ import {
   userOrgsLoadedAction,
   userSessionsLoadedAction,
   userAdminPageFailedAction,
+  userRolesLoadedAction,
+  userTeamsLoadedAction,
   ldapConnectionInfoLoadedAction,
   ldapSyncStatusLoadedAction,
   userMappingInfoLoadedAction,
@@ -39,12 +41,20 @@ import {
 // UserAdminPage
 
 export function loadAdminUserPage(userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     try {
       dispatch(userAdminPageLoadedAction(false));
       await dispatch(loadUserProfile(userUid));
       await dispatch(loadUserOrgs(userUid));
       await dispatch(loadUserSessions(userUid));
+
+      // Load roles and teams after user is loaded
+      const user = getState().userAdmin.user;
+      if (user) {
+        await dispatch(loadUserRoles(user.id, user.orgId || 0));
+        await dispatch(loadUserTeams(user.id));
+      }
+
       if (config.ldapEnabled && featureEnabled('ldapsync')) {
         await dispatch(loadLdapSyncStatus());
       }
@@ -189,6 +199,24 @@ export function revokeAllSessions(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().post(`/api/admin/users/${userUid}/logout`);
     dispatch(loadUserSessions(userUid));
+  };
+}
+
+export function loadUserRoles(userId: number, orgId: number): ThunkResult<void> {
+  return async (dispatch) => {
+    const response = await getBackendSrv().post(
+      `/api/access-control/users/roles/search?includeMapped=true`,
+      { userIds: [userId], orgId }
+    );
+    const roles = response[userId] || [];
+    dispatch(userRolesLoadedAction(roles));
+  };
+}
+
+export function loadUserTeams(userId: number): ThunkResult<void> {
+  return async (dispatch) => {
+    const teams = await getBackendSrv().get(`/api/users/${userId}/teams`);
+    dispatch(userTeamsLoadedAction(teams));
   };
 }
 

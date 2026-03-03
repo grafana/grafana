@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import { Role } from 'app/types/accessControl';
 import { LdapState, LdapConnectionInfo, LdapError, SyncInfo, LdapUser } from 'app/types/ldap';
+import { TeamWithRoles } from 'app/types/teams';
 import {
   UserAdminState,
   UserDTO,
@@ -78,6 +80,8 @@ const initialUserAdminState: UserAdminState = {
   user: undefined,
   sessions: [],
   orgs: [],
+  roles: [],
+  teams: [],
   isLoading: true,
   error: undefined,
 };
@@ -107,6 +111,14 @@ export const userAdminSlice = createSlice({
       error: action.payload,
       isLoading: false,
     }),
+    userRolesLoadedAction: (state, action: PayloadAction<Role[]>): UserAdminState => ({
+      ...state,
+      roles: action.payload,
+    }),
+    userTeamsLoadedAction: (state, action: PayloadAction<TeamWithRoles[]>): UserAdminState => ({
+      ...state,
+      teams: action.payload,
+    }),
   },
 });
 
@@ -116,6 +128,8 @@ export const {
   userSessionsLoadedAction,
   userAdminPageLoadedAction,
   userAdminPageFailedAction,
+  userRolesLoadedAction,
+  userTeamsLoadedAction,
 } = userAdminSlice.actions;
 
 export const userAdminReducer = userAdminSlice.reducer;
