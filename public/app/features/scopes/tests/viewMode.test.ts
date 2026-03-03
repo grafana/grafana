@@ -1,3 +1,5 @@
+import { act } from '@testing-library/react';
+
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -22,7 +24,7 @@ jest.mock('@grafana/runtime', () => ({
 setBackendSrv(backendSrv);
 setupMockServer();
 
-describe('View mode', () => {
+describe('Scope selector in edit mode', () => {
   let dashboardScene: DashboardScene;
   let scopesService: ScopesService;
 
@@ -66,5 +68,47 @@ describe('View mode', () => {
   it('Does not disable the expand button when edit mode is active', async () => {
     await enterEditMode(dashboardScene);
     expect(getDashboardsExpand()).not.toBeDisabled();
+  });
+});
+
+describe('setReadOnly', () => {
+  let scopesService: ScopesService;
+
+  beforeAll(() => {
+    config.featureToggles.scopeFilters = true;
+    config.featureToggles.groupByVariable = true;
+  });
+
+  beforeEach(async () => {
+    const renderResult = await renderDashboard();
+    scopesService = renderResult.scopesService;
+  });
+
+  afterEach(async () => {
+    await resetScenes();
+  });
+
+  it('Sets readOnly state and closes selector when called with true', async () => {
+    await openSelector();
+    expect(querySelectorApply()).toBeInTheDocument();
+
+    act(() => {
+      scopesService.setReadOnly(true);
+    });
+
+    expect(scopesService.state.readOnly).toEqual(true);
+    expect(querySelectorApply()).not.toBeInTheDocument();
+  });
+
+  it('Sets readOnly state without closing selector when called with false', async () => {
+    await openSelector();
+    expect(querySelectorApply()).toBeInTheDocument();
+
+    act(() => {
+      scopesService.setReadOnly(false);
+    });
+
+    expect(scopesService.state.readOnly).toEqual(false);
+    expect(querySelectorApply()).toBeInTheDocument();
   });
 });
