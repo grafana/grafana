@@ -12681,10 +12681,18 @@
       "label-sync-interval": "Sync Interval (seconds)"
     },
     "fix-folder-metadata": {
-      "button": "Fix folder IDs",
-      "error-fixing": "Error fixing folder metadata",
-      "fixing": "Fixing...",
-      "success": "Folder metadata fix started. This will continue in the background."
+      "button": "Fix folder IDs"
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "Cancel",
+      "error-message": "Failed to start folder metadata fix job. Please try again.",
+      "error-title": "Error fixing folder metadata",
+      "loading": "Loading repository...",
+      "read-only-message": "Folder metadata cannot be fixed automatically.",
+      "submit": "Fix folder IDs",
+      "submitting": "Fixing...",
+      "success-title": "Folder metadata fixed successfully",
+      "title": "Fix folder metadata"
     },
     "folder-permissions": {
       "loading": "Loading..."
