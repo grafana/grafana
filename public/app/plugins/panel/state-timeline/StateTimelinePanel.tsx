@@ -65,8 +65,8 @@ export const StateTimelinePanel = ({
   );
 
   const legendItems = useMemo(
-    () => prepareTimelineLegendItems(paginatedFrames, options.legend, theme),
-    [paginatedFrames, options.legend, theme]
+    () => prepareTimelineLegendItems(paginatedFrames, options.legend, theme, timeRange),
+    [paginatedFrames, options.legend, theme, timeRange]
   );
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
