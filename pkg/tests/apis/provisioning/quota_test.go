@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -17,11 +18,11 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("quota condition is QuotaUnlimited when no limit is configured", func(t *testing.T) {
-		helper := runGrafana(t)
+		helper := common.RunGrafana(t)
 		ctx := context.Background()
 
 		const repo = "quota-unlimited-repo"
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
@@ -68,20 +69,20 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 			assert.Equal(collect, string(metav1.ConditionTrue), quotaCondition["status"], "Quota condition should be True")
 			assert.Equal(collect, provisioning.ReasonQuotaUnlimited, quotaCondition["reason"], "Quota reason should be QuotaUnlimited")
-		}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should be set to QuotaUnlimited")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "Quota condition should be set to QuotaUnlimited")
 	})
 
 	// Is only possible to set the first sync to exceed quota when the repo is created.
 	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
 	t.Run("quota condition is ResourceQuotaExceeded when limit is exceeded", func(t *testing.T) {
 		// Set a low resource limit
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 2 resources
 		})
 		ctx := context.Background()
 
 		const repo = "quota-exceeded-repo"
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
@@ -131,18 +132,18 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			assert.Equal(collect, string(metav1.ConditionFalse), quotaCondition["status"], "Quota condition should be False when exceeded")
 			assert.Equal(collect, provisioning.ReasonQuotaExceeded, quotaCondition["reason"], "Quota reason should be ResourceQuotaExceeded")
 			assert.Contains(collect, quotaCondition["message"], "exceeded", "Message should mention exceeded")
-		}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should be set to ResourceQuotaExceeded")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "Quota condition should be set to ResourceQuotaExceeded")
 	})
 
 	t.Run("quota condition is WithinQuota when resources are below limit", func(t *testing.T) {
 		// Set a limit higher than resources
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 10 // Allow 10 resources
 		})
 		ctx := context.Background()
 
 		const repo = "quota-within-repo"
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
@@ -190,7 +191,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 			assert.Equal(collect, string(metav1.ConditionTrue), quotaCondition["status"], "Quota condition should be True when within quota")
 			assert.Equal(collect, provisioning.ReasonWithinQuota, quotaCondition["reason"], "Quota reason should be WithinQuota")
-		}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should be set to WithinQuota")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "Quota condition should be set to WithinQuota")
 	})
 }
 
@@ -228,14 +229,14 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 
 	t.Run("quota status shows configured limits", func(t *testing.T) {
 		// Set specific quota limits
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 50
 			opts.ProvisioningMaxRepositories = 5
 		})
 		ctx := context.Background()
 
 		const repo = "quota-status-configured-repo"
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
@@ -283,19 +284,19 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 				return
 			}
 			assert.EqualValues(collect, 5, maxRepos, "maxRepositories should be 5")
-		}, waitTimeoutDefault, waitIntervalDefault, "QuotaStatus should show configured limits")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "QuotaStatus should show configured limits")
 	})
 
 	t.Run("quota status shows unlimited when no limits configured", func(t *testing.T) {
 		// Don't set any quota limits (defaults to 0 = unlimited)
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 0
 			opts.ProvisioningMaxRepositories = 0
 		})
 		ctx := context.Background()
 
 		const repo = "quota-status-unlimited-repo"
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
@@ -343,6 +344,6 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			if maxRepos, ok := quotaMap["maxRepositories"]; ok {
 				assert.EqualValues(collect, 0, maxRepos, "maxRepositories should be 0 (unlimited)")
 			}
-		}, waitTimeoutDefault, waitIntervalDefault, "QuotaStatus should show unlimited (0) values")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "QuotaStatus should show unlimited (0) values")
 	})
 }

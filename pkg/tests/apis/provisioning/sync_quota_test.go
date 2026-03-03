@@ -14,6 +14,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -23,13 +24,13 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 	t.Run("out of limit repo works fine with deletions", func(t *testing.T) {
 		// Set a limit and create repo that exceeds it
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 2 resources, 1 folder and 1 dashboard
 		})
 
 		const repo = "quota-deletion-test-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",
@@ -62,13 +63,13 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("within limit repo syncs successfully and allows adding more resources", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 5
 		})
 
 		const repo = "quota-within-limit-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",
@@ -111,13 +112,13 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	// Is only possible to set the first sync to exceed quota when the repo is created.
 	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
 	t.Run("on the limit repo blocks new resource creation on subsequent sync", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 1 resource
 		})
 
 		const repo = "quota-blocks-creation-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",
@@ -138,7 +139,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// Verify the repo is over quota using the quotas package
 		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		typedRepo := unstructuredToRepository(t, repoObj)
+		typedRepo := common.UnstructuredToRepository(t, repoObj)
 		require.True(t, quotas.IsQuotaExceeded(typedRepo.Status.Conditions), "quota should be exceeded")
 
 		// Verify 2 dashboards were created by the initial sync (first sync always succeeds)
@@ -170,7 +171,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonQuotaExceeded)
 	})
 	t.Run("full sync that exceeds quota creates some resources and skips others with warnings", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			// Allow 3 total resources: 1 folder + 2 dashboards
 			opts.ProvisioningMaxResourcesPerRepository = 3
 		})
@@ -179,7 +180,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 
 		// Step 1: Create a repo with 1 dashboard (2 resources total: 1 root folder + 1 dashboard)
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",
@@ -249,14 +250,14 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			}
 			assert.Len(collect, dashboards.Items, 2,
 				"should have 2 dashboards: the original + 1 new (the other was skipped)")
-		}, waitTimeoutDefault, waitIntervalDefault)
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 		// Step 6: Verify the repo is now at quota (1 folder + 2 dashboards = 3/3)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
 	t.Run("full sync with nested folders counts folders toward quota and skips resources", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			// Allow 6 total resources: 1 root folder + 2 nested folders + 2 dashboards + 1 new folder = 6
 			opts.ProvisioningMaxResourcesPerRepository = 6
 		})
@@ -265,7 +266,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 
 		// Total: 5 resources → 5/6, within quota.
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",
@@ -357,7 +358,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			}
 			assert.Equal(collect, 2, repoDashboardCount,
 				"should still have only 2 dashboards: both new dashboards were skipped due to quota")
-		}, waitTimeoutDefault, waitIntervalDefault)
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 		// Verify 1 new folder was created and 1 was skipped (4 total managed folders)
 		folders, err = helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
@@ -379,13 +380,13 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	// Is it not possible to set the repo out of limit in this test.
 	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
 	t.Run("out of limit repo allows delete-only sync", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 3 // Only allow 3 resource
 		})
 
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",

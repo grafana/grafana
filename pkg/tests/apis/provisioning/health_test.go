@@ -20,16 +20,17 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationHealth(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	repo := "test-repo-health"
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:            repo,
 		Target:          "folder",
 		ExpectedFolders: 1,
@@ -38,7 +39,7 @@ func TestIntegrationHealth(t *testing.T) {
 	// Verify the health status before calling the endpoint
 	repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 	require.NoError(t, err)
-	originalRepo := unstructuredToRepository(t, repoObj)
+	originalRepo := common.UnstructuredToRepository(t, repoObj)
 	require.True(t, originalRepo.Status.Health.Healthy, "repository should be marked healthy")
 	require.Empty(t, originalRepo.Status.Health.Error, "should be empty")
 	require.Empty(t, originalRepo.Status.Health.Message, "should not have messages")
@@ -46,7 +47,7 @@ func TestIntegrationHealth(t *testing.T) {
 	require.Empty(t, originalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
 	// Verify Ready condition is set
 	require.NotEmpty(t, originalRepo.Status.Conditions, "conditions should be set")
-	readyCondition := findCondition(originalRepo.Status.Conditions, provisioning.ConditionTypeReady)
+	readyCondition := common.FindCondition(originalRepo.Status.Conditions, provisioning.ConditionTypeReady)
 	require.NotNil(t, readyCondition, "Ready condition should exist")
 	require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 	require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -172,7 +173,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Verify repository health status after update
 		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		afterTest := unstructuredToRepository(t, repoObj)
+		afterTest := common.UnstructuredToRepository(t, repoObj)
 		require.True(t, afterTest.Status.Health.Healthy, "repository should be marked healthy")
 		require.Empty(t, afterTest.Status.Health.Error, "should be empty")
 		require.Empty(t, afterTest.Status.Health.Message, "should not have messages")
@@ -180,7 +181,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.Empty(t, afterTest.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
 		// Verify Ready condition is set
 		require.NotEmpty(t, afterTest.Status.Conditions, "conditions should be set")
-		readyCondition := findCondition(afterTest.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := common.FindCondition(afterTest.Status.Conditions, provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 		require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -199,7 +200,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Get the repository status before the test
 		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		beforeTest := unstructuredToRepository(t, repoObj)
+		beforeTest := common.UnstructuredToRepository(t, repoObj)
 		t.Logf("Before test - Healthy: %v, Checked: %d", beforeTest.Status.Health.Healthy, beforeTest.Status.Health.Checked)
 
 		// Call the test endpoint
@@ -225,7 +226,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Verify repository health status after test - timestamp should change
 		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		afterTest := unstructuredToRepository(t, repoObj)
+		afterTest := common.UnstructuredToRepository(t, repoObj)
 		t.Logf("After test - Healthy: %v, Checked: %d", afterTest.Status.Health.Healthy, afterTest.Status.Health.Checked)
 
 		// For unhealthy repositories, the timestamp should change as the health check will be triggered
@@ -257,7 +258,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Verify repository health status is now healthy again
 		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		finalRepo := unstructuredToRepository(t, repoObj)
+		finalRepo := common.UnstructuredToRepository(t, repoObj)
 		t.Logf("After recreating directory - Healthy: %v, Checked: %d", finalRepo.Status.Health.Healthy, finalRepo.Status.Health.Checked)
 		require.True(t, finalRepo.Status.Health.Healthy, "repository should be healthy again after recreating directory")
 		require.Empty(t, finalRepo.Status.Health.Error, "should have no error after recreating directory")
@@ -265,7 +266,7 @@ func TestIntegrationHealth(t *testing.T) {
 		require.Empty(t, finalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy again")
 		// Verify Ready condition is set
 		require.NotEmpty(t, finalRepo.Status.Conditions, "conditions should be set")
-		readyCondition := findCondition(finalRepo.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := common.FindCondition(finalRepo.Status.Conditions, provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "Ready condition should exist")
 		require.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
 		require.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
@@ -295,7 +296,7 @@ func parseTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResult
 func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
