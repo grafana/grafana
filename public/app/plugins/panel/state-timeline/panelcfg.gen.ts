@@ -24,7 +24,7 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
   /**
    * Controls where the series name is displayed
    */
-  namePosition?: 'left' | 'top';
+  namePosition?: string;
   /**
    * Enables pagination when > 0
    */
