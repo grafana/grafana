@@ -3,7 +3,7 @@ import ansicolor from 'ansicolor';
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
 import { LogLineTimestampResolution } from './LogLine';
-import { LOG_LINE_DETAILS_HEIGHT, LogLineDetailsMode } from './LogLineDetails';
+import { LogLineDetailsMode } from './LogLineDetails';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 
@@ -158,7 +158,7 @@ export class LogLineVirtualization {
           testLogLine = textLine.substring(start, start + logLineCharsLength - delta);
           let measuredLine = testLogLine;
           if (logLines > 0) {
-            measuredLine.trimStart();
+            measuredLine = measuredLine.trimStart();
           }
           width = this.measureTextWidth(measuredLine);
           delta += 1;
@@ -278,19 +278,17 @@ export function getLogLineSize(
   if (!container) {
     return 0;
   }
-  const gap = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
-  const detailsHeight =
-    detailsMode === 'inline' && logs[index] && showDetails.findIndex((log) => log.uid === logs[index].uid) >= 0
-      ? window.innerHeight * (LOG_LINE_DETAILS_HEIGHT / 100) + gap / 2
-      : 0;
   // !logs[index] means the line is not yet loaded by infinite scrolling
   if (!wrap || !logs[index]) {
-    return virtualization.getLineHeight() + virtualization.getPaddingBottom() + detailsHeight;
+    return virtualization.getLineHeight() + virtualization.getPaddingBottom();
   }
+
+  const gap = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
+
   // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
   logs[index].updateCollapsedState(displayedFields, container);
   if (logs[index].collapsed) {
-    return (virtualization.getTruncationLineCount() + 1) * virtualization.getLineHeight() + detailsHeight;
+    return (virtualization.getTruncationLineCount() + 1) * virtualization.getLineHeight();
   }
 
   const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container);
@@ -328,9 +326,7 @@ export function getLogLineSize(
 
   const { height } = virtualization.measureTextHeight(textToMeasure, getLogContainerWidth(container), optionsWidth);
   // When the log is collapsed, add an extra line for the expand/collapse control
-  return logs[index].collapsed === false
-    ? height + virtualization.getLineHeight() + detailsHeight
-    : height + detailsHeight;
+  return logs[index].collapsed === false ? height + virtualization.getLineHeight() : height;
 }
 
 export interface LogFieldDimension {
@@ -345,27 +341,10 @@ export function getLogLineDOMHeight(
   calculatedHeight?: number,
   collapsed?: boolean
 ): number | null {
-  if (collapsed !== undefined && calculatedHeight) {
-    calculatedHeight -= virtualization.getLineHeight();
-  }
-  const inlineDetails = element.parentElement
-    ? Array.from(element.parentElement.children).filter((element) =>
-        element.classList.contains('log-line-inline-details')
-      )
-    : undefined;
-  const detailsHeight = inlineDetails?.length ? inlineDetails[0].clientHeight : 0;
-
-  // Line overflows container
-  let measuredHeight = element.scrollHeight + detailsHeight;
+  // Line overflows or is smaller than container
+  let measuredHeight = element.scrollHeight;
   const height = calculatedHeight ?? element.clientHeight;
-  if (measuredHeight > height) {
-    return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
-  }
-
-  // Line is smaller than container
-  const child = element.children[1];
-  measuredHeight = child.clientHeight + detailsHeight;
-  if (child instanceof HTMLDivElement && measuredHeight < height) {
+  if (measuredHeight !== height) {
     return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
   }
 

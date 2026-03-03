@@ -199,12 +199,11 @@ const LogLineComponent = memo(
     const detailsShown = detailsDisplayed(log);
 
     return (
-      <>
+      <div ref={onOverflow ? logLineRef : undefined}>
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
           className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : styles.fontSizeDefault} ${enableLogDetails ? styles.clickable : ''}`}
-          ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
           onClick={handleClick}
@@ -305,7 +304,7 @@ const LogLineComponent = memo(
             timeZone={timeZone}
           />
         )}
-      </>
+      </div>
     );
   }
 );
