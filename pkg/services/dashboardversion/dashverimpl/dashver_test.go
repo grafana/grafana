@@ -334,7 +334,7 @@ func TestListDashboardVersions(t *testing.T) {
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, 3, len(res.Versions))
-		require.Equal(t, "t1", res.ContinueToken) // Implementation returns continue token from first page
+		require.Equal(t, "", res.ContinueToken) // Should return token from last fetch (empty = no more pages)
 		mockCli.AssertNumberOfCalls(t, "List", 2)
 	})
 
