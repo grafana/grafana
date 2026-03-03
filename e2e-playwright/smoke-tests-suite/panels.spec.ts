@@ -32,11 +32,11 @@ test.describe(
       });
 
       const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
-      await expect(
-        vizPicker.filter({ hasText: 'Back' }),
-        'we should be viewing the viz picker already since this is a new panel'
-      ).toBeVisible();
-      await vizPicker.click({ force: true });
+
+      // when newVizSuggestions=true the viz picker may be auto-opened
+      if (await vizPicker.filter({ hasText: 'Back' }).isVisible()) {
+        await vizPicker.click({ force: true });
+      }
 
       // Loop through every panel type and ensure no crash
       for (const [_, panel] of Object.entries(panelTypes)) {
