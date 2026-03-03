@@ -9,7 +9,9 @@ import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
+import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
@@ -113,7 +115,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       )}
       <div {...containerProps}>
         <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
-          <VizWrapper panel={panel} tableView={tableView} />
+          <VizWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal
@@ -163,15 +165,26 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 interface VizWrapperProps {
   panel: VizPanel;
   tableView?: VizPanel;
+  dashboard: DashboardScene;
 }
 
-function VizWrapper({ panel, tableView }: VizWrapperProps) {
+function VizWrapper({ panel, tableView, dashboard }: VizWrapperProps) {
   const styles = useStyles2(getStyles);
-  const panelToShow = tableView ?? panel;
+  const soloPanelContext = useDefineSoloPanelContext(panel.getPathId());
+
+  if (tableView) {
+    return (
+      <div className={styles.vizWrapper}>
+        <tableView.Component model={tableView} />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.vizWrapper}>
-      <panelToShow.Component model={panelToShow} />
+      <SoloPanelContextProvider value={soloPanelContext!} singleMatch={true} dashboard={dashboard}>
+        <dashboard.state.body.Component model={dashboard.state.body} />
+      </SoloPanelContextProvider>
     </div>
   );
 }

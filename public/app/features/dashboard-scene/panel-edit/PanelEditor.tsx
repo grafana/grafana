@@ -29,12 +29,7 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import {
-  activateSceneObjectAndParentTree,
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-} from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -109,16 +104,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       })
     );
 
-    const deactivateParents = activateSceneObjectAndParentTree(panel);
-
     this.waitForPlugin();
 
     return () => {
       this.commitChanges();
-
-      if (deactivateParents) {
-        deactivateParents();
-      }
     };
   }
 
