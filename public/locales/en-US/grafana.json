@@ -13637,7 +13637,7 @@
     },
     "menu": {
       "clear-button": "Clear all",
-      "tooltip": "You can now select the \"No basic role\" option and add permissions to your custom needs. You can find more information in <1>our documentation</1>."
+      "tooltip": "Viewer, Editor, and Admin are cumulative — Editor includes everything in Viewer plus more, Admin includes everything in Editor plus more. Select \"No basic role\" to start from zero and build up with custom roles. <1>View role definitions</1>"
     },
     "menu-aria-label": "Role picker menu",
     "menu-group-option-aria-label": "Role picker option",

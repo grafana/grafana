@@ -125,4 +125,73 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   loadingSpinner: css({
     marginLeft: theme.spacing(1),
   }),
+  menuOptionInherited: css({
+    opacity: 0.7,
+    cursor: 'default',
+  }),
+  menuOptionExpandBtn: css({
+    marginLeft: 'auto',
+    padding: theme.spacing(0, 0.5),
+    cursor: 'pointer',
+    color: theme.colors.text.secondary,
+    background: 'none',
+    border: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
+  permissionsAccordion: css({
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(1, 1.5),
+    maxHeight: '200px',
+    overflowY: 'auto' as const,
+  }),
+  permissionsHeader: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing(0.5),
+  }),
+  permissionsCount: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    fontWeight: theme.typography.fontWeightMedium,
+  }),
+  permissionRow: css({
+    padding: theme.spacing(0, 0, 0, 0.5),
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    lineHeight: 1.5,
+  }),
+  permissionsLoading: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.disabled,
+    fontStyle: 'italic',
+    padding: theme.spacing(0.5),
+  }),
+  permissionsEmpty: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.disabled,
+    padding: theme.spacing(0.5),
+  }),
+  inheritedBadge: css({
+    fontSize: '10px',
+    color: theme.colors.text.disabled,
+    fontStyle: 'italic',
+    marginLeft: theme.spacing(0.5),
+  }),
+  orphanSection: css({
+    marginBottom: theme.spacing(2),
+  }),
+  orphanHeader: css({
+    padding: theme.spacing(0, 4.5),
+    display: 'flex',
+    alignItems: 'center',
+    color: theme.colors.text.secondary,
+    fontWeight: theme.typography.fontWeightBold,
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });

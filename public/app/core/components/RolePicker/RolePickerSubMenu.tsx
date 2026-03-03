@@ -7,6 +7,7 @@ import { getSelectStyles } from '@grafana/ui/internal';
 import { isNotDelegatable } from 'app/core/utils/roles';
 import { Role } from 'app/types/accessControl';
 
+import { InheritedRoleInfo } from './hooks';
 import { RoleMenuOption } from './RoleMenuOption';
 import { MENU_MAX_HEIGHT } from './constants';
 import { getStyles } from './styles';
@@ -18,6 +19,8 @@ interface RolePickerSubMenuProps {
   onSelect: (option: Role) => void;
   onClear?: () => void;
   showOnLeft?: boolean;
+  /** Map of role UID → inherited role info (greyed out, not interactive) */
+  inheritedRoles?: Map<string, InheritedRoleInfo>;
 }
 
 export const RolePickerSubMenu = ({
@@ -27,6 +30,7 @@ export const RolePickerSubMenu = ({
   onSelect,
   onClear,
   showOnLeft,
+  inheritedRoles,
 }: RolePickerSubMenuProps): JSX.Element => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -45,26 +49,31 @@ export const RolePickerSubMenu = ({
     >
       <ScrollContainer maxHeight={`${MENU_MAX_HEIGHT}px`}>
         <div className={styles.optionBody}>
-          {options.map((option, i) => (
-            <RoleMenuOption
-              data={option}
-              useFilteredDisplayName={false}
-              key={i}
-              isSelected={
-                !!(
-                  option.uid &&
-                  (!!selectedOptions.find((opt) => opt.uid === option.uid) ||
-                    disabledOptions?.find((opt) => opt.uid === option.uid))
-                )
-              }
-              disabled={
-                !!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid)) || isNotDelegatable(option)
-              }
-              mapped={!!(option.uid && selectedOptions.find((opt) => opt.uid === option.uid && opt.mapped))}
-              onChange={onSelect}
-              hideDescription
-            />
-          ))}
+          {options.map((option, i) => {
+            const inheritedInfo = inheritedRoles?.get(option.uid);
+            return (
+              <RoleMenuOption
+                data={option}
+                useFilteredDisplayName={false}
+                key={i}
+                isSelected={
+                  !!(
+                    option.uid &&
+                    (!!selectedOptions.find((opt) => opt.uid === option.uid) ||
+                      disabledOptions?.find((opt) => opt.uid === option.uid))
+                  )
+                }
+                disabled={
+                  !!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid)) || isNotDelegatable(option)
+                }
+                mapped={!!(option.uid && selectedOptions.find((opt) => opt.uid === option.uid && opt.mapped))}
+                onChange={onSelect}
+                hideDescription
+                inherited={!!inheritedInfo}
+                inheritedSources={inheritedInfo?.sources}
+              />
+            );
+          })}
         </div>
       </ScrollContainer>
       <div className={customStyles.subMenuButtonRow}>

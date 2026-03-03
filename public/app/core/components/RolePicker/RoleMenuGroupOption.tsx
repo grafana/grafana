@@ -14,15 +14,17 @@ interface RoleMenuGroupsOptionProps {
   // group id
   value: string;
   onChange: (value: string) => void;
-  onClick?: (value: string) => void;
-  onOpenSubMenu?: (value: string) => void;
-  onCloseSubMenu?: () => void;
+  onToggleSubMenu?: (value: string) => void;
   isSelected?: boolean;
   partiallySelected?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
   root?: HTMLElement;
+  /** Label showing inherited role count, e.g. "(2 via Viewer)" */
+  inheritedLabel?: string;
+  /** True when ALL roles in this group are inherited (checkbox is informational only) */
+  allInherited?: boolean;
 }
 
 export const RoleMenuGroupOption = memo(
@@ -36,11 +38,11 @@ export const RoleMenuGroupOption = memo(
         partiallySelected,
         disabled,
         onChange,
-        onClick,
-        onOpenSubMenu,
-        onCloseSubMenu,
+        onToggleSubMenu,
         children,
         root,
+        inheritedLabel,
+        allInherited,
       },
       ref
     ) => {
@@ -51,10 +53,13 @@ export const RoleMenuGroupOption = memo(
       const wrapperClassName = cx(
         styles.option,
         isFocused && styles.optionFocused,
-        disabled && customStyles.menuOptionDisabled
+        disabled && customStyles.menuOptionDisabled,
+        allInherited && customStyles.menuOptionInherited
       );
 
       const onChangeInternal = (event: FormEvent<HTMLElement>) => {
+        // Stop propagation so the row click handler doesn't also fire
+        event.stopPropagation();
         if (disabled) {
           return;
         }
@@ -63,44 +68,38 @@ export const RoleMenuGroupOption = memo(
         }
       };
 
-      const onClickInternal = (event: FormEvent<HTMLElement>) => {
-        if (onClick) {
-          onClick(value!);
-        }
-      };
-
-      const onMouseEnter = () => {
-        if (onOpenSubMenu) {
-          onOpenSubMenu(value!);
-        }
-      };
-
-      const onMouseLeave = () => {
-        if (onCloseSubMenu) {
-          onCloseSubMenu();
+      const onRowClick = () => {
+        if (onToggleSubMenu) {
+          onToggleSubMenu(value);
         }
       };
 
       return (
-        <div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        <div>
           {/* TODO: fix keyboard a11y */}
           {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
             ref={ref}
             className={wrapperClassName}
             aria-label={t('role-picker.menu-group-option-aria-label', 'Role picker option')}
-            onClick={onClickInternal}
+            onClick={onRowClick}
           >
-            <Checkbox
-              value={isSelected}
-              className={cx(customStyles.menuOptionCheckbox, {
-                [customStyles.checkboxPartiallyChecked]: partiallySelected,
-              })}
-              onChange={onChangeInternal}
-              disabled={disabled}
-            />
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                value={isSelected}
+                className={cx(customStyles.menuOptionCheckbox, {
+                  [customStyles.checkboxPartiallyChecked]: partiallySelected,
+                })}
+                onChange={onChangeInternal}
+                disabled={disabled}
+              />
+            </div>
             <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
               <span>{name}</span>
+              {inheritedLabel && (
+                <span className={customStyles.inheritedBadge}>{inheritedLabel}</span>
+              )}
               <span className={customStyles.menuOptionExpand} />
             </div>
             {root && children && (

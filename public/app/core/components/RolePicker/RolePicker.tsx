@@ -5,6 +5,7 @@ import { ClickOutsideWrapper, Portal, useTheme2 } from '@grafana/ui';
 import { pickerStateStore } from 'app/core/utils/roles';
 import type { Role } from 'app/types/accessControl';
 
+import { useInheritedRoles } from './hooks';
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
 import {
@@ -75,6 +76,9 @@ export const RolePicker = ({
   const ref = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
   const widthPx = typeof width === 'number' ? theme.spacing(width) : width;
+
+  // Compute inherited roles from basic role + applied custom/plugin roles
+  const { inheritedRoles, orphanPermissions } = useInheritedRoles(basicRole, appliedRoles, roleOptions);
 
   // Sync internal state only when picker closes (transitions from open to closed)
   useEffect(() => {
@@ -244,6 +248,8 @@ export const RolePicker = ({
                 apply={apply}
                 offset={offset}
                 menuLeft={menuLeft}
+                inheritedRoles={inheritedRoles}
+                orphanPermissions={orphanPermissions}
               />
             </div>
           </Portal>
