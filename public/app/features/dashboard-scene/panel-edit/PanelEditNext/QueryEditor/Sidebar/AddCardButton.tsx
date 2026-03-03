@@ -28,13 +28,15 @@ interface AddCardButtonProps {
   variant: 'query' | 'transformation';
   afterId?: string;
   alwaysVisible?: boolean;
+  onAdd?: () => void;
 }
 
-export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCardButtonProps) => {
+export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }: AddCardButtonProps) => {
   const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
   const { addQuery } = useActionsContext();
-  const { setSelectedQuery, setPendingExpression, setPendingTransformation } = useQueryEditorUIContext();
+  const { setSelectedQuery, setPendingExpression, setPendingTransformation, setPendingSavedQuery } =
+    useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,9 +54,10 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
       if (newRefId) {
         const selectTarget: DataQuery = { refId: newRefId, hide: false };
         setSelectedQuery(selectTarget);
+        onAdd?.();
       }
     },
-    [addQuery, afterId, setSelectedQuery]
+    [addQuery, afterId, setSelectedQuery, onAdd]
   );
 
   const handleMenuVisibleChange = useCallback((visible: boolean) => {
@@ -73,12 +76,13 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
           <Menu.Item
             label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
             icon="book-open"
-            onClick={() =>
+            onClick={() => {
+              setPendingSavedQuery({ insertAfter: afterId ?? '' });
               openDrawer({
                 onSelectQuery: (query) => addAndSelectQuery(query),
                 options: { context: CoreApp.PanelEditor },
-              })
-            }
+              });
+            }}
           />
         )}
         <Menu.Item
@@ -86,16 +90,27 @@ export const AddCardButton = ({ variant, afterId, alwaysVisible = false }: AddCa
           icon="calculator-alt"
           onClick={() => {
             setPendingExpression({ insertAfter: afterId ?? '' });
+            onAdd?.();
           }}
         />
       </Menu>
     ),
-    [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterId]
+    [
+      queryLibraryEnabled,
+      canReadQueries,
+      addAndSelectQuery,
+      setPendingSavedQuery,
+      afterId,
+      openDrawer,
+      setPendingExpression,
+      onAdd,
+    ]
   );
 
   const handleTransformationClick = useCallback(() => {
     setPendingTransformation({ insertAfter: afterId });
-  }, [afterId, setPendingTransformation]);
+    onAdd?.();
+  }, [afterId, setPendingTransformation, onAdd]);
 
   const ariaLabel = getButtonAriaLabel(variant, afterId);
 
@@ -139,34 +154,42 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       display: alwaysVisible ? 'inline-flex' : 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      width: theme.spacing(2),
-      height: theme.spacing(2),
+      width: theme.spacing(2.5),
+      height: theme.spacing(2.5),
       borderRadius: theme.shape.radius.sm,
       border: 'none',
       background: theme.colors.primary.main,
       color: theme.colors.primary.contrastText,
       cursor: 'pointer',
       padding: 0,
+      willChange: 'transform',
+      transform: alwaysVisible ? 'translateZ(0)' : 'translateY(-50%) translateZ(0)',
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: [
+          theme.transitions.create(alwaysVisible ? ['background-color'] : ['opacity', 'background-color'], {
+            duration: 100,
+          }),
+          'transform 250ms cubic-bezier(0.25, 1, 0.5, 1)',
+        ].join(', '),
+      },
 
       // Hover-button positioning & hidden-by-default state (revealed by SidebarCard hover)
       ...(!alwaysVisible && {
         position: 'absolute' as const,
         top: `calc(100% + ${theme.spacing(0.25)})`,
         left: theme.spacing(-2.5),
-        transform: 'translateY(-50%)',
         zIndex: 1,
         opacity: 0,
         pointerEvents: 'none' as const,
-
-        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-          transition: theme.transitions.create(['opacity', 'background-color'], {
-            duration: theme.transitions.duration.short,
-          }),
-        },
       }),
 
       '&:hover': {
         background: theme.colors.primary.shade,
+      },
+
+      '&:active': {
+        transform: alwaysVisible ? 'scale(0.97)' : 'translateY(-50%) scale(0.97)',
       },
 
       '&:focus-visible': {

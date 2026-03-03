@@ -4,15 +4,31 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 // fakeRepo implements annotations.Repository for testing.
 type fakeRepo struct {
@@ -172,5 +188,86 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 		assert.Len(t, result3.Items, 1)
 		assert.Empty(t, result3.Continue, "Expected no continuation token on last page")
 		assert.Equal(t, "a-5", result3.Items[0].Name)
+	})
+}
+
+func TestSQLAdapter_ListWithCreatedByFilter(t *testing.T) {
+	sqlDB := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.AnnotationMaximumTagsLength = 2
+
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("SearchDashboards", mock.Anything, mock.Anything).Return(model.HitList{}, nil)
+
+	repo := annotationsimpl.ProvideService(
+		sqlDB, cfg,
+		featuremgmt.WithFeatures(),
+		tagimpl.ProvideService(sqlDB),
+		tracing.InitializeTracerForTest(),
+		nil,
+		dashSvc,
+		nil,
+	)
+	adapter := NewSQLAdapter(repo, nil, request.GetNamespaceMapper(cfg), cfg)
+
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {accesscontrol.ActionAnnotationsRead: []string{accesscontrol.ScopeAnnotationsAll}},
+		},
+	})
+
+	// Insert a user with a known UID into the DB
+	const targetUID = "test-user-uid-abc"
+	var targetUserID int64
+	err := sqlDB.WithDbSession(context.Background(), func(sess *db.Session) error {
+		now := time.Now()
+		u := &user.User{
+			UID:     targetUID,
+			OrgID:   1,
+			Login:   "test-user-abc",
+			Email:   "test-user-abc@example.com",
+			Created: now,
+			Updated: now,
+		}
+		_, err := sess.Insert(u)
+		targetUserID = u.ID
+		return err
+	})
+	require.NoError(t, err)
+
+	// Annotation created by the target user
+	ann1 := &annotations.Item{OrgID: 1, UserID: targetUserID, Text: "by target user", Epoch: 100}
+	require.NoError(t, repo.Save(context.Background(), ann1))
+
+	// Annotation created by a different user
+	ann2 := &annotations.Item{OrgID: 1, UserID: 99999, Text: "by other user", Epoch: 200}
+	require.NoError(t, repo.Save(context.Background(), ann2))
+
+	t.Run("returns only annotations by the given user UID", func(t *testing.T) {
+		result, err := adapter.List(ctx, "default", ListOptions{
+			Limit:     2,
+			CreatedBy: targetUID,
+		})
+		require.NoError(t, err)
+		require.Len(t, result.Items, 1)
+		assert.Equal(t, "by target user", result.Items[0].Spec.Text)
+	})
+
+	t.Run("returns nothing for a non-existent user UID", func(t *testing.T) {
+		result, err := adapter.List(ctx, "default", ListOptions{
+			Limit:     2,
+			CreatedBy: "nonexistent-uid",
+		})
+		require.NoError(t, err)
+		assert.Empty(t, result.Items)
+	})
+
+	t.Run("returns all annotations when CreatedBy is not set", func(t *testing.T) {
+		result, err := adapter.List(ctx, "default", ListOptions{
+			Limit: 2,
+		})
+		require.NoError(t, err)
+		assert.Len(t, result.Items, 2)
 	})
 }

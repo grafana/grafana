@@ -1,7 +1,47 @@
-import { DataFrameView } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { RuleFrame, countRules, parseAlertstateFilter } from './SummaryStats';
+import { countInstances, countRules, parseAlertstateFilter } from './SummaryStats';
+
+describe('countInstances', () => {
+  it('should return zeros when required fields are missing', () => {
+    const frame = { length: 0, fields: [] } as unknown as DataFrame;
+    expect(countInstances(frame)).toEqual({ firing: 0, pending: 0 });
+  });
+
+  it('should return the Value for each alertstate', () => {
+    const frame = {
+      length: 2,
+      fields: [
+        { name: 'alertstate', type: FieldType.string, config: {}, values: ['firing', 'pending'] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [10, 3] },
+      ],
+    } as unknown as DataFrame;
+    expect(countInstances(frame)).toEqual({ firing: 10, pending: 3 });
+  });
+
+  it('should return 0 for a state not present in the frame', () => {
+    const frame = {
+      length: 1,
+      fields: [
+        { name: 'alertstate', type: FieldType.string, config: {}, values: ['firing'] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [5] },
+      ],
+    } as unknown as DataFrame;
+    expect(countInstances(frame)).toEqual({ firing: 5, pending: 0 });
+  });
+
+  it('should accept a Value #<refId> field name', () => {
+    const frame = {
+      length: 1,
+      fields: [
+        { name: 'alertstate', type: FieldType.string, config: {}, values: ['firing'] },
+        { name: 'Value #B', type: FieldType.number, config: {}, values: [7] },
+      ],
+    } as unknown as DataFrame;
+    expect(countInstances(frame)).toEqual({ firing: 7, pending: 0 });
+  });
+});
 
 describe('parseAlertstateFilter', () => {
   it('should return array with "firing" when filter contains alertstate="firing"', () => {
@@ -39,26 +79,21 @@ describe('parseAlertstateFilter', () => {
 });
 
 describe('countRules', () => {
-  // Helper to create mock DataFrameView
-  function createMockRuleDfv(
+  function createMockRuleFrame(
     data: Array<{ ruleUID: string; alertstate: PromAlertingRuleState.Firing | PromAlertingRuleState.Pending }>
-  ): DataFrameView<RuleFrame> {
+  ): DataFrame {
     return {
       length: data.length,
-      fields: {
-        grafana_rule_uid: {
-          values: data.map((d) => d.ruleUID),
-        },
-        alertstate: {
-          values: data.map((d) => d.alertstate),
-        },
-      },
-    } as unknown as DataFrameView<RuleFrame>;
+      fields: [
+        { name: 'grafana_rule_uid', type: FieldType.string, config: {}, values: data.map((d) => d.ruleUID) },
+        { name: 'alertstate', type: FieldType.string, config: {}, values: data.map((d) => d.alertstate) },
+      ],
+    } as DataFrame;
   }
 
   describe('when no alertstate filter applied', () => {
     it('should count rules with ANY firing instances', () => {
-      const ruleDfv = createMockRuleDfv([
+      const ruleDfv = createMockRuleFrame([
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'rule3', alertstate: PromAlertingRuleState.Pending },
@@ -71,7 +106,7 @@ describe('countRules', () => {
     });
 
     it('should count rules with ONLY pending instances (no firing)', () => {
-      const ruleDfv = createMockRuleDfv([
+      const ruleDfv = createMockRuleFrame([
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Pending },
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Pending },
         { ruleUID: 'rule3', alertstate: PromAlertingRuleState.Firing },
@@ -84,7 +119,7 @@ describe('countRules', () => {
     });
 
     it('should count rules with BOTH firing and pending in both counts', () => {
-      const ruleDfv = createMockRuleDfv([
+      const ruleDfv = createMockRuleFrame([
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Pending }, // Same rule, both states
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Firing }, // Only firing
@@ -101,7 +136,7 @@ describe('countRules', () => {
     });
 
     it('should handle multiple instances of the same rule with same state', () => {
-      const ruleDfv = createMockRuleDfv([
+      const ruleDfv = createMockRuleFrame([
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Firing }, // Same rule, duplicate entry
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Pending },
@@ -116,7 +151,7 @@ describe('countRules', () => {
     });
 
     it('should return 0 for both counts when no rules', () => {
-      const ruleDfv = createMockRuleDfv([]);
+      const ruleDfv = createMockRuleFrame([]);
 
       const result = countRules(ruleDfv, [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending]);
 
@@ -127,7 +162,7 @@ describe('countRules', () => {
 
   describe('when filtering by alertstate=pending', () => {
     it('should count ALL rules with any pending instances', () => {
-      const ruleDfv = createMockRuleDfv([
+      const ruleDfv = createMockRuleFrame([
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Pending }, // Has both
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Pending }, // Only pending
@@ -142,7 +177,7 @@ describe('countRules', () => {
     });
 
     it('should count rules with BOTH states as pending', () => {
-      const ruleDfv = createMockRuleDfv([
+      const ruleDfv = createMockRuleFrame([
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Pending },
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Firing },
@@ -158,7 +193,7 @@ describe('countRules', () => {
     });
 
     it('should be >= pending count from no filter scenario', () => {
-      const ruleDfv = createMockRuleDfv([
+      const ruleDfv = createMockRuleFrame([
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Pending },
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Pending },
@@ -177,7 +212,7 @@ describe('countRules', () => {
 
   describe('when filtering by alertstate=firing', () => {
     it('should count ALL rules with any firing instances', () => {
-      const ruleDfv = createMockRuleDfv([
+      const ruleDfv = createMockRuleFrame([
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Pending }, // Has both
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Firing }, // Only firing
@@ -194,7 +229,7 @@ describe('countRules', () => {
 
   describe('real-world scenarios', () => {
     it('should handle complex scenario with many rules', () => {
-      const ruleDfv = createMockRuleDfv([
+      const ruleDfv = createMockRuleFrame([
         // Rule A: Only firing (3 instances)
         { ruleUID: 'ruleA', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'ruleA', alertstate: PromAlertingRuleState.Firing },

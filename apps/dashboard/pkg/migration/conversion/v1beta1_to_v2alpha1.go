@@ -2262,7 +2262,7 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 	panelHasUID := panelDatasource != nil && panelDatasource.Uid != nil && *panelDatasource.Uid != "" && *panelDatasource.Uid != "-- Mixed --"
 	applyPanelRef := panelHasUID &&
 		(queryDatasourceUID == "" && queryDatasourceType == "" ||
-			(queryDatasourceUID != "__expr__" && queryDatasourceUID != *panelDatasource.Uid))
+			(queryDatasourceUID != "__expr__" && queryDatasourceType != "__expr__" && queryDatasourceUID != *panelDatasource.Uid))
 
 	if applyPanelRef {
 		if panelDatasource.Type != nil {

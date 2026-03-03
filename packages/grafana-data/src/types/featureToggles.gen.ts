@@ -69,6 +69,11 @@ export interface FeatureToggles {
   */
   alertingBacktesting?: boolean;
   /**
+  * Sort alert rule groups by folder full path in the Prometheus rules API
+  * @default false
+  */
+  alertingRuleGroupSortByFolderFullpath?: boolean;
+  /**
   * Allow datasource to provide custom UI for context view
   * @default true
   */
@@ -583,6 +588,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
+  /**
+  * Enables configuring default origin filters for ad-hoc filter variables
+  * @default false
+  */
+  adHocFilterDefaultValues?: boolean;
   /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
@@ -1228,11 +1238,6 @@ export interface FeatureToggles {
   */
   preferLibraryPanelTitle?: boolean;
   /**
-  * Use fixed-width numbers globally in the UI
-  * @default false
-  */
-  tabularNumbers?: boolean;
-  /**
   * Enables new design for the InfluxDB data source configuration page
   * @default false
   */
@@ -1354,7 +1359,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new gauge visualization
-  * @default false
+  * @default true
   */
   newGauge?: boolean;
   /**
@@ -1377,6 +1382,11 @@ export interface FeatureToggles {
   * @default false
   */
   externalVizSuggestions?: boolean;
+  /**
+  * Limit the number of legend items by default, with an option to show all
+  * @default false
+  */
+  vizLegendSeriesLimit?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
@@ -1473,6 +1483,11 @@ export interface FeatureToggles {
   */
   multiPropsVariables?: boolean;
   /**
+  * Enables support for section level variables (rows and tabs)
+  * @default false
+  */
+  dashboardSectionVariables?: boolean;
+  /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
   */
@@ -1513,6 +1528,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamsHandlerRedirect?: boolean;
   /**
+  * Enables user APIs in the app platform
+  * @default false
+  */
+  kubernetesUsersApi?: boolean;
+  /**
   * Enables external group mapping APIs in the app platform
   * @default false
   */
@@ -1532,6 +1552,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Registers an API server for each backend app plugin exposing a settings endpoint
+  * @default false
+  */
+  appPluginAPIServer?: boolean;
   /**
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false
@@ -1567,4 +1592,19 @@ export interface FeatureToggles {
   * @default false
   */
   managedPluginsV2?: boolean;
+  /**
+  * Remember the last viewed organization for users using SSO
+  * @default true
+  */
+  rememberUserOrgForSso?: boolean;
+  /**
+  * Registers the dsabstraction app for querying datasources via unified SQL
+  * @default false
+  */
+  dsAbstractionApp?: boolean;
+  /**
+  * Enables new analytics framework
+  * @default false
+  */
+  analyticsFramework?: boolean;
 }

@@ -49,6 +49,7 @@ type ControllerConfig struct {
 	Settings              *setting.Cfg
 	workerCount           int
 	resyncInterval        time.Duration
+	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
@@ -110,6 +111,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		Settings:       cfg,
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
+		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
 	}
 
 	for _, opt := range registeredConfigOptions {
@@ -296,6 +298,10 @@ func (c *ControllerConfig) ResyncInterval() time.Duration {
 
 func (c *ControllerConfig) NumberOfWorkers() int {
 	return c.workerCount
+}
+
+func (c *ControllerConfig) DrainTimeout() time.Duration {
+	return c.drainTimeout
 }
 
 func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {

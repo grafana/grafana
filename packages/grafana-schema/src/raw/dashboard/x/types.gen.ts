@@ -338,6 +338,16 @@ export interface DashboardLink {
    */
   keepTime: boolean;
   /**
+   * The source that registered the link (if any)
+   */
+  origin?: {
+    type: 'datasource';
+    /**
+     * The plugin type-id
+     */
+    group: string;
+  };
+  /**
    * Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
    */
   placement?: DashboardLinkPlacement;

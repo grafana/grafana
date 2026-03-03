@@ -195,6 +195,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     finalizePendingTransformation: jest.fn(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
+    pendingSavedQuery: null,
+    setPendingSavedQuery: jest.fn(),
     ...uiStateOverrides,
   };
 

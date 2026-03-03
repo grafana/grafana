@@ -123,4 +123,33 @@ describe('CancelButton', () => {
 
     expect(locationService.push).toHaveBeenCalledWith('/custom/path');
   });
+
+  it('should call onCancel when user cancels (non-dirty)', async () => {
+    const onCancel = jest.fn();
+    render(
+      <FormWrapper isDirty={false}>
+        <CancelButton onCancel={onCancel} />
+      </FormWrapper>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(locationService.push).toHaveBeenCalledWith('/alerting/list');
+  });
+
+  it('should call onCancel when user confirms cancellation (dirty)', async () => {
+    const onCancel = jest.fn();
+    render(
+      <FormWrapper isDirty={true}>
+        <CancelButton onCancel={onCancel} />
+      </FormWrapper>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(await screen.findByRole('button', { name: 'Discard changes' }));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(locationService.push).toHaveBeenCalledWith('/alerting/list');
+  });
 });

@@ -11,6 +11,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
+
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -37,6 +41,21 @@ func ptrString(s string) *string {
 
 func ptrBool(b bool) *bool {
 	return &b
+}
+
+var (
+	provider            = oftesting.NewTestProvider()
+	defaultFeatureFlags = map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagRememberUserOrgForSso: setting.NewInMemoryFlag(featuremgmt.FlagRememberUserOrgForSso, true),
+	}
+)
+
+func TestMain(m *testing.M) {
+	if err := openfeature.SetProvider(provider); err != nil {
+		panic(err)
+	}
+
+	m.Run()
 }
 
 func TestUserSync_SyncUserHook(t *testing.T) {
@@ -67,6 +86,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		Login: "test",
 		Name:  "test",
 		Email: "test",
+		OrgID: 42,
 	}}
 
 	userServiceMod := &usertest.FakeUserService{ExpectedUser: &user.User{
@@ -206,11 +226,12 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		id *authn.Identity
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-		wantID  *authn.Identity
+		name                         string
+		fields                       fields
+		args                         args
+		wantErr                      bool
+		wantID                       *authn.Identity
+		disableRememberUserOrgForSso bool
 	}{
 		{
 			name: "no sync",
@@ -271,6 +292,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ID:             "1",
 				UID:            "1",
 				Type:           claims.TypeUser,
+				OrgID:          42,
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
@@ -310,6 +332,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ID:             "1",
 				UID:            "1",
 				Type:           claims.TypeUser,
+				OrgID:          42,
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
@@ -351,6 +374,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ID:              "1",
 				UID:             "1",
 				Type:            claims.TypeUser,
+				OrgID:           42,
 				AuthID:          "2032",
 				AuthenticatedBy: "oauth",
 				Login:           "test",
@@ -880,6 +904,87 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "sync - incoming identity org not superseded by user org",
+			fields: fields{
+				userService:     userService,
+				authInfoService: authFakeNil,
+				quotaService:    &quotatest.FakeQuotaService{},
+			},
+			args: args{
+				id: &authn.Identity{
+					OrgID: 3,
+					Login: "test",
+					Name:  "test",
+					Email: "test",
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
+						LookUpParams: login.UserLookupParams{
+							Email: ptrString("test"),
+							Login: nil,
+						},
+					},
+				},
+			},
+			wantErr: false,
+			wantID: &authn.Identity{
+				ID:             "1",
+				UID:            "1",
+				Type:           claims.TypeUser,
+				OrgID:          3,
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				IsGrafanaAdmin: ptrBool(false),
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+					LookUpParams: login.UserLookupParams{
+						Email: ptrString("test"),
+						Login: nil,
+					},
+				},
+			},
+		},
+		{
+			name: "sync - identity org not populated from user when rememberUserOrgForSso is disabled",
+			fields: fields{
+				userService:     userService,
+				authInfoService: authFakeNil,
+				quotaService:    &quotatest.FakeQuotaService{},
+			},
+			args: args{
+				id: &authn.Identity{
+					Login: "test",
+					Name:  "test",
+					Email: "test",
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
+						LookUpParams: login.UserLookupParams{
+							Email: ptrString("test"),
+							Login: nil,
+						},
+					},
+				},
+			},
+			wantErr: false,
+			wantID: &authn.Identity{
+				ID:             "1",
+				UID:            "1",
+				Type:           claims.TypeUser,
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				IsGrafanaAdmin: ptrBool(false),
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+					LookUpParams: login.UserLookupParams{
+						Email: ptrString("test"),
+						Login: nil,
+					},
+				},
+			},
+			disableRememberUserOrgForSso: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -887,6 +992,12 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			cfg.Raw.Section("auth.scim").Key("user_sync_enabled").SetValue("true")
 			cfg.Raw.Section("auth.scim").Key("reject_non_provisioned_users").SetValue("true")
 
+			provider.UsingFlags(t, defaultFeatureFlags)
+			if tt.disableRememberUserOrgForSso {
+				provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+					featuremgmt.FlagRememberUserOrgForSso: setting.NewInMemoryFlag(featuremgmt.FlagRememberUserOrgForSso, false),
+				})
+			}
 			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), cfg, nil)
 			err := s.SyncUserHook(context.Background(), tt.args.id, nil)
 			if tt.wantErr {
@@ -906,6 +1017,7 @@ func TestUserSync_SyncUserRetryFetch(t *testing.T) {
 	userSrv.On("Create", mock.Anything, mock.Anything).Return(nil, user.ErrUserAlreadyExists).Once()
 	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(&user.User{ID: 1}, nil).Once()
 
+	provider.UsingFlags(t, defaultFeatureFlags)
 	s := ProvideUserSync(
 		userSrv,
 		authinfoimpl.ProvideOSSUserProtectionService(),
@@ -1962,6 +2074,8 @@ func TestUserSync_SyncUserHook_SCIMUserSAMLLoginUpdatesExistingUserAuth(t *testi
 		return cmd.UserId == 333 && cmd.AuthModule == login.SAMLAuthModule && cmd.AuthId == "saml-generated-auth-id"
 	})).Return(nil).Once()
 
+	provider.UsingFlags(t, defaultFeatureFlags)
+
 	s := ProvideUserSync(
 		userSrv,
 		authinfoimpl.ProvideOSSUserProtectionService(),
@@ -2014,6 +2128,8 @@ func TestUserSync_SyncUserHook_NonProvisionedSAMLUserCreatesNewAuthConnection(t 
 		return cmd.UserId == 444 && cmd.AuthModule == login.SAMLAuthModule && cmd.AuthId == "saml-auth-id"
 	})).Return(nil).Once()
 
+	provider.UsingFlags(t, defaultFeatureFlags)
+
 	s := ProvideUserSync(
 		userSrv,
 		authinfoimpl.ProvideOSSUserProtectionService(),
@@ -2061,6 +2177,8 @@ func TestUserSync_SyncUserHook_SCIMAuthModuleMismatch(t *testing.T) {
 	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
 		return q.AuthModule == "oauth_azuread"
 	})).Return(nil, user.ErrUserNotFound).Once()
+
+	provider.UsingFlags(t, defaultFeatureFlags)
 
 	s := ProvideUserSync(
 		userSrv,
@@ -2112,6 +2230,8 @@ func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
 		Email:         "test@test.com",
 		IsProvisioned: true,
 	}, nil).Once()
+
+	provider.UsingFlags(t, defaultFeatureFlags)
 
 	s := ProvideUserSync(
 		userSrv,

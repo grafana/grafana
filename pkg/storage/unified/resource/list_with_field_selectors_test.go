@@ -79,11 +79,21 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Key:    &resourcepb.ResourceKey{Namespace: "ns", Group: "advisor.grafana.app"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
 			expectedAllowed: true,
+		},
+		"false when group has no kinds in manifest": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "ns", Group: "provisioning.grafana.app"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			},
+			expectedAllowed: false,
 		},
 	}
 

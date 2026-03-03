@@ -10,6 +10,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
@@ -343,7 +344,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		}
 	}
 
-	syncUserToIdentity(usr, id)
+	syncUserToIdentity(ctx, usr, id)
 	return nil
 }
 
@@ -722,7 +723,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
-func syncUserToIdentity(usr *user.User, id *authn.Identity) {
+func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity) {
 	id.ID = strconv.FormatInt(usr.ID, 10)
 	id.UID = usr.UID
 	id.Type = claims.TypeUser
@@ -731,6 +732,13 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 	id.Name = usr.Name
 	id.EmailVerified = usr.EmailVerified
 	id.IsGrafanaAdmin = &usr.IsAdmin
+
+	featureClient := openfeature.NewDefaultClient()
+	if featureClient.Boolean(ctx, featuremgmt.FlagRememberUserOrgForSso, true, openfeature.TransactionContext(ctx)) {
+		if id.OrgID == 0 {
+			id.OrgID = usr.OrgID
+		}
+	}
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.

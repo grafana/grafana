@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import { FocusEvent, useCallback, useRef } from 'react';
 
 import { GrafanaTheme2, rangeUtil } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { Button, ClickOutsideWrapper, Stack, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { ClickOutsideWrapper, Stack, Switch, useStyles2 } from '@grafana/ui';
 
-import { CONTENT_SIDE_BAR } from '../../constants';
 import {
   useActionsContext,
   useDatasourceContext,
@@ -40,6 +39,7 @@ export function QueryEditorDetailsSidebar() {
   const minIntervalOnDs = datasource?.interval ?? t('query-editor-next.details-sidebar.no-limit', 'No limit');
   const showCacheTimeout = dsSettings?.meta.queryOptions?.cacheTimeout;
   const showCacheTTL = dsSettings?.cachingConfig?.enabled;
+  const showHideTimeOverride = options.timeRange?.from != null || options.timeRange?.shift != null;
 
   const handleCloseSidebar = useCallback(() => {
     // Blur any focused input to trigger its blur handler before closing
@@ -97,25 +97,22 @@ export function QueryEditorDetailsSidebar() {
     [options, onQueryOptionsChange]
   );
 
+  const handleHideTimeOverrideChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      onQueryOptionsChange({
+        ...options,
+        timeRange: { ...(options.timeRange ?? {}), hide: event.currentTarget.checked },
+      });
+    },
+    [options, onQueryOptionsChange]
+  );
+
   // Shared props for all input-based OptionFields
   const inputProps = { onBlur: handleBlur, focusedField };
 
   return (
     <ClickOutsideWrapper onClick={handleCloseSidebar}>
       <div ref={sidebarRef} className={styles.container}>
-        <Button
-          fill="text"
-          size="lg"
-          icon="angle-right"
-          className={styles.header}
-          onClick={handleCloseSidebar}
-          aria-expanded={true}
-          aria-label={t('query-editor-next.details-sidebar.collapse', 'Collapse query options sidebar')}
-        >
-          <span className={styles.headerText}>
-            <Trans i18nKey="query-editor-next.details-sidebar.title">Query Options</Trans>
-          </span>
-        </Button>
         <div className={styles.content}>
           <Stack direction="column" gap={0.5}>
             <OptionField
@@ -123,6 +120,11 @@ export function QueryEditorDetailsSidebar() {
               {...inputProps}
               defaultValue={options.maxDataPoints ?? ''}
               placeholder={realMaxDataPoints ? String(realMaxDataPoints) : undefined}
+              hint={
+                options.maxDataPoints == null
+                  ? t('query-editor-next.details-sidebar.width-of-panel', 'Width of panel')
+                  : undefined
+              }
             />
 
             <OptionField
@@ -132,9 +134,12 @@ export function QueryEditorDetailsSidebar() {
               placeholder={String(minIntervalOnDs)}
             />
 
-            <OptionField field={QueryOptionField.interval}>
-              <span className={styles.fieldValue}>{realInterval ?? '-'}</span>
-            </OptionField>
+            <OptionField
+              field={QueryOptionField.interval}
+              defaultValue={realInterval ?? '-'}
+              hint={t('query-editor-next.details-sidebar.time-range-max-data-points', 'Time range / max data points')}
+              disabled
+            />
 
             <OptionField
               field={QueryOptionField.relativeTime}
@@ -147,6 +152,16 @@ export function QueryEditorDetailsSidebar() {
               {...inputProps}
               defaultValue={options.timeRange?.shift ?? ''}
             />
+
+            {showHideTimeOverride && (
+              <OptionField field={QueryOptionField.hideTimeOverride}>
+                <Switch
+                  value={options.timeRange?.hide ?? false}
+                  onChange={handleHideTimeOverrideChange}
+                  aria-label={t('query-editor-next.details-sidebar.hide-time-override', 'Hide time info')}
+                />
+              </OptionField>
+            )}
 
             {showCacheTimeout && (
               <OptionField
@@ -176,45 +191,18 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       position: 'absolute',
       top: 0,
+      left: 0,
       right: 0,
       bottom: 0,
       display: 'flex',
       flexDirection: 'column',
-      width: CONTENT_SIDE_BAR.width,
       backgroundColor: theme.colors.background.primary,
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      zIndex: 20,
-    }),
-    header: css({
-      width: '100%',
-      justifyContent: 'flex-start',
-      padding: theme.spacing(1, 1.5),
-      borderRadius: 'unset',
-
-      '& > svg': {
-        color: theme.colors.text.primary,
-      },
-
-      '&:hover': {
-        backgroundColor: theme.colors.action.hover,
-      },
-    }),
-    headerText: css({
-      color: theme.colors.primary.text,
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
     }),
     content: css({
       flex: 1,
       padding: theme.spacing(1.5),
       overflow: 'auto',
-    }),
-    fieldValue: css({
-      width: CONTENT_SIDE_BAR.labelWidth,
-      flexShrink: 0,
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      textAlign: 'right',
     }),
   };
 }
