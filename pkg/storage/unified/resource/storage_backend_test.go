@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,7 +16,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var appsNamespace = NamespacedResource{
@@ -336,6 +339,149 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestKvStorageBackend_WatchWriteEvents_ConcurrentEventsCompleteness verifies that when many
+// concurrent WriteEvent calls happen, the watch stream delivers every event exactly once and
+// in ascending ResourceVersion order. This catches the race where a snowflake RV is assigned
+// early but the event is persisted late, causing the pollingNotifier to skip it.
+func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentEventsCompleteness(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("pollingNotifier", func(t *testing.T) {
+		if db.IsTestDbSQLite() {
+			t.Skip("sqlite uses channel notifier")
+		}
+		sqlKV := setupSqlKV(t)
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.KvStore = sqlKV
+		})
+		testConcurrentWatchWriteEvents(t, backend)
+	})
+
+	t.Run("channelNotifier", func(t *testing.T) {
+		sqlKV := setupSqlKV(t)
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.KvStore = sqlKV
+		}, withChannelNotifier)
+		testConcurrentWatchWriteEvents(t, backend)
+	})
+}
+
+func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
+	t.Helper()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	const numEvents = 1000
+
+	// Pre-create all WriteEvent structs (unique resource names → no optimistic locking conflicts).
+	writeEvents := make([]WriteEvent, numEvents)
+	for i := 0; i < numEvents; i++ {
+		name := fmt.Sprintf("concurrent-resource-%d", i)
+		obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
+		require.NoError(t, err)
+
+		metaAccessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		writeEvents[i] = WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: appsNamespace.Namespace,
+				Group:     appsNamespace.Group,
+				Resource:  appsNamespace.Resource,
+				Name:      name,
+			},
+			Value:      objectToJSONBytes(t, obj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		}
+	}
+
+	// Start watching before any writes.
+	stream, err := backend.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	// Write events in batches of fixed concurrency until all are written.
+	const concurrency = 20
+	writtenRVs := make(map[int64]bool, numEvents)
+	for batch := 0; batch < numEvents; batch += concurrency {
+		end := batch + concurrency
+		if end > numEvents {
+			end = numEvents
+		}
+		batchSize := end - batch
+
+		type writeResult struct {
+			rv  int64
+			err error
+		}
+		results := make(chan writeResult, batchSize)
+		var wg sync.WaitGroup
+		wg.Add(batchSize)
+		for i := batch; i < end; i++ {
+			go func(evt WriteEvent) {
+				defer wg.Done()
+				rv, err := backend.WriteEvent(ctx, evt)
+				results <- writeResult{rv: rv, err: err}
+			}(writeEvents[i])
+		}
+		wg.Wait()
+		close(results)
+
+		for res := range results {
+			require.NoError(t, res.err, "all WriteEvent calls must succeed")
+			require.Greater(t, res.rv, int64(0))
+			writtenRVs[res.rv] = true
+		}
+	}
+	require.Len(t, writtenRVs, numEvents, "each write must produce a unique RV")
+
+	// Collect events from the watch stream.
+	received := make([]*WrittenEvent, 0, numEvents)
+	timeout := time.After(15 * time.Second)
+	for len(received) < numEvents {
+		select {
+		case evt := <-stream:
+			received = append(received, evt)
+		case <-timeout:
+			t.Fatalf("timed out: received %d/%d events", len(received), numEvents)
+		case <-ctx.Done():
+			t.Fatalf("context cancelled: received %d/%d events", len(received), numEvents)
+		}
+	}
+
+	// Assert completeness: every written RV was received.
+	receivedRVs := make(map[int64]bool, len(received))
+	for _, evt := range received {
+		receivedRVs[evt.ResourceVersion] = true
+	}
+	for rv := range writtenRVs {
+		require.True(t, receivedRVs[rv], "event with RV %d was written but never received on the watch stream", rv)
+	}
+
+	// Assert no duplicates.
+	require.Len(t, receivedRVs, numEvents, "no duplicate events should be received")
+
+	// Assert ascending RV order.
+	for i := 1; i < len(received); i++ {
+		require.Greater(t, received[i].ResourceVersion, received[i-1].ResourceVersion,
+			"events must arrive in ascending RV order: event[%d].RV=%d should be > event[%d].RV=%d",
+			i, received[i].ResourceVersion, i-1, received[i-1].ResourceVersion)
+	}
+
+	// Assert correct resource names.
+	receivedNames := make(map[string]bool, len(received))
+	for _, evt := range received {
+		receivedNames[evt.Key.Name] = true
+	}
+	for i := 0; i < numEvents; i++ {
+		name := fmt.Sprintf("concurrent-resource-%d", i)
+		require.True(t, receivedNames[name], "event for resource %q was not received", name)
 	}
 }
 
