@@ -173,8 +173,8 @@ func TestScopeAttributesAddedToTags(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check that both span and scope attributes are in tags
-	// Tags are at index 16 in the row (based on frame field ordering)
-	tagsJson := row[16].(json.RawMessage)
+	// Tags are at index 17 in the row (based on frame field ordering: traceID, spanID, parentSpanID, operationName, serviceName, serviceNamespace, kind, statusCode, statusMessage, instrumentationLibraryName, instrumentationLibraryVersion, traceState, serviceTags, startTime, duration, logs, references, tags)
+	tagsJson := row[17].(json.RawMessage)
 
 	var tags []*KeyValue
 	err = json.Unmarshal(tagsJson, &tags)
