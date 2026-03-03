@@ -6386,6 +6386,15 @@
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
     },
+    "add-new-edit-pane": {
+      "group-layouts": "Group layouts"
+    },
+    "add-row": {
+      "label": "Rows"
+    },
+    "add-tab": {
+      "label": "Tabs"
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Could not navigate to the selected dashboard. Please try again.",

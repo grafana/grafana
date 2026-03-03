@@ -14,6 +14,8 @@ import { getDashboardSceneFor } from '../../utils/utils';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
 import { AddNewSection } from './AddNewSection';
+import { AddRow } from './AddRow';
+import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
 
 interface AddNewEditPaneProps {
@@ -78,6 +80,10 @@ export function AddNewEditPane({ onAddPanel, dashboard, selectedElement }: AddNe
             )}
           </Droppable>
         </DragDropContext>
+      </AddNewSection>
+      <AddNewSection title={t('dashboard-scene.add-new-edit-pane.group-layouts', 'Group layouts')}>
+        <AddRow dashboardScene={dashboardScene} selectedElement={selectedElement} />
+        <AddTab dashboardScene={dashboardScene} selectedElement={selectedElement} />
       </AddNewSection>
       <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
         <AddVariable dashboardScene={dashboardScene} />
