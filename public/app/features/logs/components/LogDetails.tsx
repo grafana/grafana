@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { PureComponent, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import {
   TimeRange,
@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
-import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
+import { PopoverContent, useTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
@@ -24,7 +24,7 @@ import { LogDetailsRow } from './LogDetailsRow';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 import { getAllFields, createLogLineLinks } from './logParser';
 
-export interface Props extends Themeable2 {
+export interface Props {
   row: LogRowModel;
   showDuplicates: boolean;
   getRows: () => LogRowModel[];
@@ -44,7 +44,6 @@ export interface Props extends Themeable2 {
 
   onPinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
-  links?: Record<string, LinkModel[]>;
   timeRange: TimeRange;
 }
 
@@ -94,37 +93,29 @@ export const useAttributesExtensionLinks = (row: LogRowModel, timeRange: TimeRan
   }, [links]);
 };
 
-const withAttributesExtensionLinks = (Component: React.ComponentType<Props>) => {
-  function ComponentWithLinks(props: Props) {
-    const labelLinks = useAttributesExtensionLinks(props.row, props.timeRange);
-    return <Component {...props} links={labelLinks} />;
-  }
-
-  return ComponentWithLinks;
-};
-
-class UnThemedLogDetails extends PureComponent<Props> {
-  render() {
-    const {
-      app,
-      row,
-      theme,
-      hasError,
-      onClickFilterOutLabel,
-      onClickFilterLabel,
-      getRows,
-      showDuplicates,
-      className,
-      onClickShowField,
-      onClickHideField,
-      displayedFields,
-      getFieldLinks,
-      wrapLogMessage,
-      onPinLine,
-      styles,
-      pinLineButtonTooltipTitle,
-      links,
-    } = this.props;
+export const LogDetails = memo(
+  ({
+    app,
+    row,
+    hasError,
+    onClickFilterOutLabel,
+    onClickFilterLabel,
+    getRows,
+    showDuplicates,
+    className,
+    onClickShowField,
+    onClickHideField,
+    displayedFields,
+    getFieldLinks,
+    wrapLogMessage,
+    onPinLine,
+    styles,
+    pinLineButtonTooltipTitle,
+    timeRange,
+    isFilterLabelActive,
+  }: Props) => {
+    const theme = useTheme2();
+    const links = useAttributesExtensionLinks(row, timeRange);
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
@@ -211,7 +202,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         wrapLogMessage={wrapLogMessage}
                         displayedFields={displayedFields}
                         disableActions={false}
-                        isFilterLabelActive={this.props.isFilterLabelActive}
+                        isFilterLabelActive={isFilterLabelActive}
                         links={links?.[key]}
                       />
                     );
@@ -233,7 +224,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       row={row}
                       app={app}
                       disableActions={false}
-                      isFilterLabelActive={this.props.isFilterLabelActive}
+                      isFilterLabelActive={isFilterLabelActive}
                     />
                   );
                 })}
@@ -306,7 +297,5 @@ class UnThemedLogDetails extends PureComponent<Props> {
       </tr>
     );
   }
-}
-
-export const LogDetails = withTheme2(withAttributesExtensionLinks(UnThemedLogDetails));
+);
 LogDetails.displayName = 'LogDetails';

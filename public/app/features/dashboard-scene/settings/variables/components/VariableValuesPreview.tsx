@@ -9,7 +9,7 @@ import { SceneVariable, VariableValueOption, VariableValueOptionProperties } fro
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-interface VariableValuesPreviewProps {
+export interface VariableValuesPreviewProps {
   options: VariableValueOption[];
   staticOptions: VariableValueOption[];
 }
@@ -58,8 +58,8 @@ export const useGetPropertiesFromOptions = (
     const staticValues = new Set(staticOptions?.map((s) => s.value) ?? []);
     const queryOption = options.find((o) => o.value !== ALL_VARIABLE_VALUE && !staticValues.has(o.value));
     const flattened = flattenProperties(queryOption?.properties);
-    const keys = Object.keys(flattened).filter((p) => !['text', 'value'].includes(p));
-    return ['text', 'value', ...keys];
+    const keys = Object.keys(flattened).filter((p) => !['value', 'text'].includes(p));
+    return ['value', 'text', ...keys];
   }, [options, staticOptions]);
 
 export const VariableValuesPreview = ({ options, staticOptions }: VariableValuesPreviewProps) => {
@@ -115,7 +115,7 @@ function VariableValuesWithPropsPreview({
         className={styles.table}
         columns={columns}
         data={data}
-        getRowId={(r) => String(r.value)}
+        getRowId={(r) => JSON.stringify(r)}
         pageSize={8}
       />
     </div>

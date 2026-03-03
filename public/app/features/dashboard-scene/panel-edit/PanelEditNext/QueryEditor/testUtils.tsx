@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactElement } from 'react';
 
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { QueryGroupOptions } from 'app/types/query';
@@ -10,14 +10,14 @@ import { QueryGroupOptions } from 'app/types/query';
 import { QueryEditorType } from '../constants';
 
 import {
+  AlertingState,
   DatasourceState,
   PanelState,
   QueryEditorActions,
+  QueryEditorProvider,
   QueryEditorUIState,
   QueryOptionsState,
   QueryRunnerState,
-  QueryEditorProvider,
-  AlertingState,
 } from './QueryEditorContext';
 import { Transformation } from './types';
 
@@ -64,6 +64,7 @@ export const mockActions: QueryEditorActions = {
   changeDataSource: jest.fn(),
   toggleQueryHide: jest.fn(),
   onQueryOptionsChange: jest.fn(),
+  addTransformation: jest.fn(),
   deleteTransformation: jest.fn(),
   toggleTransformationDisabled: jest.fn(),
   updateTransformation: jest.fn(),
@@ -100,6 +101,9 @@ export const mockUIStateBase = {
   pendingExpression: null,
   setPendingExpression: jest.fn(),
   finalizePendingExpression: jest.fn(),
+  pendingTransformation: null,
+  setPendingTransformation: jest.fn(),
+  finalizePendingTransformation: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -119,6 +123,7 @@ interface CreateQueryEditorProviderOptions {
   dsState?: Partial<DatasourceState>;
   qrState?: Partial<QueryRunnerState>;
   panelState?: Partial<PanelState>;
+  alertingState?: Partial<AlertingState>;
 }
 
 /**
@@ -142,6 +147,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     dsState = {},
     qrState = {},
     panelState = {},
+    alertingState = {},
   } = options;
 
   const defaultDsState: DatasourceState = {
@@ -153,7 +159,11 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
 
   const defaultQrState: QueryRunnerState = {
     queries,
-    data: undefined,
+    data: {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: getDefaultTimeRange(),
+    },
     isLoading: false,
     queryError: undefined,
     ...qrState,
@@ -180,6 +190,9 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingExpression: null,
     setPendingExpression: jest.fn(),
     finalizePendingExpression: jest.fn(),
+    pendingTransformation: null,
+    setPendingTransformation: jest.fn(),
+    finalizePendingTransformation: jest.fn(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
     ...uiStateOverrides,
@@ -193,6 +206,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultAlertingState: AlertingState = {
     alertRules: [],
     loading: false,
+    isDashboardSaved: true,
+    ...alertingState,
   };
 
   return {

@@ -22,7 +22,6 @@ const getTitleInRepeatRow = (rowIndex: number, panelIndex: number) =>
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },

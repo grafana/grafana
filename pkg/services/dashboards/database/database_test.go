@@ -52,7 +52,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		//   test dash 23
 		//   test dash 45
 		// test dash 67
-		folderStore := folderimpl.ProvideStore(sqlStore)
+		folderStore := folderimpl.ProvideStore(sqlStore, cfg)
 		savedFolder = insertTestDashFolder(t, dashboardStore, folderStore, "1 test dash folder", 1, 0, "", "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, savedFolder.UID, false, "prod")
@@ -311,7 +311,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		dashs, err := dashboardStore.GetAllDashboardsByOrgId(context.Background(), 3)
 		require.NoError(t, err)
 		require.Equal(t, len(dashs), 2)
-		uids := []string{}
+		uids := make([]string, 0, len(dashs))
 		for _, d := range dashs {
 			uids = append(uids, d.UID)
 		}
@@ -1292,7 +1292,7 @@ func testSearchDashboards(d dashboards.Store, query *dashboards.FindPersistedDas
 }
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
-	hitList := make([]*model.Hit, 0)
+	hitList := make([]*model.Hit, 0, len(res))
 
 	for _, item := range res {
 		hitType := model.DashHitDB

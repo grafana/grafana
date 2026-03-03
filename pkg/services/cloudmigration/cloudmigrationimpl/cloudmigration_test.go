@@ -416,30 +416,36 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	}
 
 	// make sure GMS is called when snapshot is pending processing or processing
-	for i, status := range []cloudmigration.SnapshotStatus{
+	for _, status := range []cloudmigration.SnapshotStatus{
 		cloudmigration.SnapshotStatusPendingProcessing,
 		cloudmigration.SnapshotStatusProcessing,
 	} {
-		err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
-			UID:       uid,
-			SessionID: sess.UID,
-			Status:    status,
-		})
-		assert.NoError(t, err)
+		// in this case since the background sync will run, we can create a brand new snapshot to avoid race problems.
+		snapshotUID := uuid.NewString()
+		require.NoError(t, s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
+			UID:            snapshotUID,
+			SessionUID:     sess.UID,
+			Status:         status,
+			GMSSnapshotUID: "gms uid 2",
+		}))
+
 		snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
-			SnapshotUID: uid,
+			SnapshotUID: snapshotUID,
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, status, snapshot.Status)
 
+		// then we wait for the sync to complete before the next status.
 		require.Eventually(
 			t,
-			func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 },
+			func() bool {
+				cms, _ := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
+				return cms.Status == cloudmigration.SnapshotStatusFinished
+			},
 			5*time.Second,
 			100*time.Millisecond,
-			"GMS client mock GetSnapshotStatus count: %d on status: %s (want: %d)",
-			gmsClientMock.GetSnapshotStatusCallCount(), string(status), i+1,
+			"Snapshot status should be updated to Finished after sync completes",
 		)
 	}
 
@@ -878,7 +884,7 @@ func TestGetPlugins(t *testing.T) {
 	require.Len(t, plugins, 3)
 
 	expectedPluginIDs := []string{"plugin-external-valid-grafana", "plugin-external-valid-commercial", "plugin-external-valid-community"}
-	pluginsIDs := make([]string, 0)
+	pluginsIDs := make([]string, 0) //nolint:prealloc
 	for _, plugin := range plugins {
 		// Special case of using the settings from the settings store
 		if plugin.ID == "plugin-external-valid-grafana" {
@@ -1039,7 +1045,7 @@ func (m *gmsClientMock) MigrateData(_ context.Context, _ cloudmigration.CloudMig
 	panic("not implemented") // TODO: Implement
 }
 
-func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+func (m *gmsClientMock) StartSnapshot(_ context.Context, _ cloudmigration.CloudMigrationSession, _ cloudmigration.EncryptionAlgo) (*cloudmigration.StartSnapshotResponse, error) {
 	m.startSnapshotCalled++
 	return nil, nil
 }

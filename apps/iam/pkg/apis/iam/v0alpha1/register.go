@@ -399,8 +399,9 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&TeamBindingList{},
 		&ExternalGroupMapping{},
 		&ExternalGroupMappingList{},
-		&GetGroupsResponse{},
-		&GetMembersResponse{},
+		&GetTeamGroupsResponse{},
+		&GetTeamMembersResponse{},
+		&GetUserTeamsResponse{},
 		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
 		// &UserTeamList{},
 		// &ServiceAccountTokenList{},
@@ -414,6 +415,18 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 
 	// Enable field selectors for TeamBinding
 	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, TeamBindingKind())
+	if err != nil {
+		return err
+	}
+
+	// Enable field selectors for ExternalGroupMapping
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, ExternalGroupMappingKind())
+	if err != nil {
+		return err
+	}
+
+	// Enable field selectors for User
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, UserKind())
 	if err != nil {
 		return err
 	}

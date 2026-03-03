@@ -366,7 +366,7 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 			if attribute, ok := traceData.attributes[attributeName]; ok {
 				frame.Fields[attributeIndex].Append(attribute)
 			} else {
-				frame.Fields[attributeIndex].Append("")
+				frame.Fields[attributeIndex].Append(nil)
 			}
 			attributeIndex++
 		}

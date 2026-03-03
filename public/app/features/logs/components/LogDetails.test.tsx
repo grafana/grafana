@@ -43,7 +43,6 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     onClickFilterOutLabel: () => {},
     onClickShowField: () => {},
     onClickHideField: () => {},
-    theme,
     styles,
     app: CoreApp.Explore,
     timeRange: {

@@ -93,6 +93,8 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 type ListUserQuery struct {
 	OrgID int64
 	UID   string
+	Email string
+	Login string
 
 	Pagination common.Pagination
 }

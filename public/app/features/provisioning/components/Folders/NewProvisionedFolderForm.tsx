@@ -8,7 +8,6 @@ import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
-import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
 
@@ -45,14 +44,16 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
-    if (prUrl) {
-      const url = buildResourceBranchRedirectUrl({
-        paramName: 'new_pull_request_url',
-        paramValue: prUrl,
-        repoType: info.repoType,
-      });
-      navigate(url);
-    }
+    // Fall back to the repository URL if no PR URL is returned, so preview banner link button stay visible
+    const paramValue = prUrl ?? repository?.url ?? '';
+
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'new_pull_request_url',
+      paramValue,
+      repoType: info.repoType,
+    });
+
+    navigate(url);
   };
 
   const onWriteSuccess = (resource: Resource<FolderDTO>) => {
@@ -62,14 +63,15 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       return;
     }
 
-    // Fallback to provisioning URL
-    if (repository?.name && request.data?.path) {
-      let url = `${PROVISIONING_URL}/${repository.name}/file/${request.data.path}`;
-      if (request.data.ref?.length) {
-        url += '?ref=' + request.data.ref;
-      }
-      navigate(url);
-    }
+    // When sync is disabled, the BE returns resource.upsert as null (no Grafana resource created).
+    // Redirect to dashboards with a banner linking to the repo status page.
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'resource_pushed_to',
+      paramValue: repository?.name,
+      repoType: repository?.type,
+    });
+
+    navigate(url);
   };
 
   const onError = (error: unknown) => {

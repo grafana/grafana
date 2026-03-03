@@ -35,14 +35,18 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     const filters = filtersState?.filters ?? [];
     const originFilters = filtersState?.originFilters ?? [];
     const filterValues = [...filters, ...originFilters];
-    return JSON.stringify(filterValues.map((f) => `${f.key}${f.operator}${f.value}${f.origin ?? ''}`));
+    return JSON.stringify(
+      filterValues.map((f) => `${f.key}${f.operator}${f.values?.join(',') ?? f.value}${f.origin ?? ''}`)
+    );
   }, [filtersState?.filters, filtersState?.originFilters]);
 
   const groupByKey = useMemo(() => {
     const value = groupByState?.value ?? [];
     const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
-    return JSON.stringify(groupByValues);
-  }, [groupByState?.value]);
+    // Include keysApplicability in the key so we re-fetch when it changes
+    const keysApplicabilityKey = JSON.stringify(groupByState?.keysApplicability?.map((keyApp) => keyApp.key) ?? []);
+    return JSON.stringify(groupByValues) + keysApplicabilityKey;
+  }, [groupByState?.value, groupByState?.keysApplicability]);
 
   useEffect(() => {
     const fetchApplicability = async () => {
@@ -61,14 +65,30 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
           const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
           return result && !result.applicable;
         });
-        labels.push(...nonApplicableFilters.map((filter) => `${filter.key} ${filter.operator} ${filter.value}`));
+        labels.push(
+          ...nonApplicableFilters.map((filter) => {
+            // Use values array for multi-value operators, fall back to value for single-value
+            const displayValue = filter.values?.length ? filter.values.join(', ') : filter.value;
+            return `${filter.key} ${filter.operator} ${displayValue}`;
+          })
+        );
       }
 
       if (groupByValues.length) {
+        // Use keysApplicability from groupByVar state as fallback if API call didn't include groupBy
+        // (this can happen if groupByVar's datasource doesn't match queryRunner's datasource)
+        const groupByApplicability = groupByState?.keysApplicability;
+
         const nonApplicableKeys = groupByValues
           .filter((groupByKey) => {
-            const result = applicability?.find((entry) => entry.key === groupByKey);
-            return result && !result.applicable;
+            // First check API result, then fall back to variable's keysApplicability state
+            const apiResult = applicability?.find((entry) => entry.key === groupByKey);
+            if (apiResult) {
+              return !apiResult.applicable;
+            }
+            // Fallback to keysApplicability from the variable's state
+            const stateResult = groupByApplicability?.find((entry) => entry.key === groupByKey);
+            return stateResult && !stateResult.applicable;
           })
           .map((key) => String(key));
 

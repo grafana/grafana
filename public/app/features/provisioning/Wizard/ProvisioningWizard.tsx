@@ -97,6 +97,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,
+    goToStep,
   } = useWizardNavigation({
     steps,
     canSkipSync,
@@ -214,7 +215,9 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
             {hasStepError && 'error' in stepStatusInfo && (
               <ProvisioningAlert error={stepStatusInfo.error} action={stepStatusInfo.action} />
             )}
-            {hasStepWarning && 'warning' in stepStatusInfo && <ProvisioningAlert warning={stepStatusInfo.warning} />}
+            {'warning' in stepStatusInfo && stepStatusInfo.warning && (
+              <ProvisioningAlert warning={stepStatusInfo.warning} />
+            )}
             {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}
 
             <div className={styles.content}>
@@ -225,6 +228,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
                 onGitHubAppSubmit={handleGitHubAppCreation}
                 onRepositoryDeletion={handleRepositoryDeletion}
                 isCancelling={isCancelling}
+                goToStep={goToStep}
               />
             </div>
 

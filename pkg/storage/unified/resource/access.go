@@ -119,23 +119,8 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		attribute.String("name", req.Name),
 		attribute.String("verb", req.Verb),
 		attribute.String("folder", folder),
-		attribute.Bool("fallback_used", FallbackUsed(ctx)),
 	))
 	defer span.End()
-
-	if FallbackUsed(ctx) {
-		if req.Namespace == "" {
-			// cross namespace queries are not allowed when fallback is used
-			span.SetAttributes(attribute.Bool("allowed", false))
-			span.SetStatus(codes.Error, "Namespace empty")
-			err := fmt.Errorf("namespace empty")
-			span.RecordError(err)
-			return claims.CheckResponse{Allowed: false}, err
-		}
-
-		span.SetAttributes(attribute.Bool("allowed", true))
-		return claims.CheckResponse{Allowed: true}, nil
-	}
 
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
@@ -164,28 +149,14 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 // Compile implements claims.AccessClient.
 func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
 	t := time.Now()
-	fallbackUsed := FallbackUsed(ctx)
 	ctx, span := tracer.Start(ctx, "resource.authzLimitedClient.Compile", trace.WithAttributes(
 		attribute.String("group", req.Group),
 		attribute.String("resource", req.Resource),
 		attribute.String("namespace", req.Namespace),
 		attribute.String("verb", req.Verb),
-		attribute.Bool("fallback_used", fallbackUsed),
 	))
 	defer span.End()
-	if fallbackUsed {
-		if req.Namespace == "" {
-			// cross namespace queries are not allowed when fallback is used
-			span.SetAttributes(attribute.Bool("allowed", false))
-			span.SetStatus(codes.Error, "Namespace empty")
-			err := fmt.Errorf("namespace empty")
-			span.RecordError(err)
-			return nil, claims.NoopZookie{}, err
-		}
-		return func(name, folder string) bool {
-			return true
-		}, claims.NoopZookie{}, nil
-	}
+
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
 		span.SetStatus(codes.Error, "Namespace mismatch")
@@ -280,13 +251,3 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 }
 
 var _ claims.AccessClient = &authzLimitedClient{}
-
-type contextFallbackKey struct{}
-
-func WithFallback(ctx context.Context) context.Context {
-	return context.WithValue(ctx, contextFallbackKey{}, true)
-}
-
-func FallbackUsed(ctx context.Context) bool {
-	return ctx.Value(contextFallbackKey{}) != nil
-}
