@@ -54,18 +54,18 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
 
           if (v === null) {
             if (nullAsZero) {
-              if (min > 0) {
+              if (min! > 0) {
                 min = 0;
               }
-              if (max < 0) {
+              if (max! < 0) {
                 max = 0;
               }
             }
           } else if (!Number.isNaN(v)) {// Number.isFinite()
-            if (min > v) {
+            if (min! > v) {
               min = v;
             }
-            if (max < v) {
+            if (max! < v) {
               max = v;
             }
           }
