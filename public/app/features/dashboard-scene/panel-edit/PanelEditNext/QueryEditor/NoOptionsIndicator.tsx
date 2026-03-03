@@ -4,6 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
+import { QUERY_EDITOR_COLORS } from '../constants';
+
 interface NoOptionsIndicatorProps {
   name: string;
 }
@@ -39,7 +41,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     overflow: 'hidden',
     position: 'relative',
-    background: `color-mix(in srgb, ${theme.colors.success.main} 10%, ${theme.colors.background.secondary} 100%)`,
+    background: `color-mix(in srgb, ${QUERY_EDITOR_COLORS.transformation} 10%, ${theme.colors.background.secondary} 100%)`,
 
     '&::before': {
       content: '""',
@@ -48,11 +50,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       top: 0,
       bottom: 0,
       width: 3,
-      background: theme.colors.success.main,
+      background: QUERY_EDITOR_COLORS.transformation,
     },
   }),
   icon: css({
-    color: theme.colors.success.text,
+    color: QUERY_EDITOR_COLORS.transformation,
     flexShrink: 0,
   }),
   title: css({
