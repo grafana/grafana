@@ -6876,10 +6876,10 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "Query editor v2",
-      "query-editor-version-toggle": "Toggle between query editor v1 and v2",
+      "back-to-classic": "Back to classic editor",
       "table-view-aria-label-toggletableview": "Toggle table view",
-      "table-view-label-table-view": "Table view"
+      "table-view-label-table-view": "Table view",
+      "try-new-editor": "Try new editor"
     },
     "panel-editor": {
       "text": {
@@ -6924,6 +6924,16 @@
     },
     "query-editor": {
       "query": "Query"
+    },
+    "query-editor-banner": {
+      "description-classic": "Try the improved query editing experience.",
+      "description-new": "Welcome to the improved query editing experience.",
+      "dismiss": "Dismiss",
+      "downgrade-title": "New query editor!",
+      "give-feedback": "Give feedback",
+      "go-back": "Back to classic",
+      "try-it": "Try it out",
+      "upgrade-title": "New editor available!"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
