@@ -25,7 +25,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 
 	ctx := context.Background()
 	sql := db.InitTestDB(t)
-	store := database.ProvideService(sql, 0)
+	store := database.ProvideService(sql)
 
 	svc := ProvideOSSService(
 		setting.NewCfg(),

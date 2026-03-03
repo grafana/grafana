@@ -3,14 +3,10 @@ package database
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
-	"sync"
-	"time"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -44,113 +40,22 @@ const (
 	WHERE br.role = ?`
 )
 
-// getUserPermissionsCache is an in-memory cache for GetUserPermissions results with TTL-based expiry.
-type getUserPermissionsCache struct {
-	mu      sync.RWMutex
-	entries map[string]getUserPermissionsCacheEntry
-}
-
-type getUserPermissionsCacheEntry struct {
-	perms []accesscontrol.Permission
-	expiry time.Time
-}
-
-func (c *getUserPermissionsCache) get(key string) ([]accesscontrol.Permission, bool) {
-	c.mu.RLock()
-	ent, ok := c.entries[key]
-	c.mu.RUnlock()
-	if !ok || time.Now().After(ent.expiry) {
-		if ok {
-			c.mu.Lock()
-			delete(c.entries, key)
-			c.mu.Unlock()
-		}
-		return nil, false
-	}
-	return ent.perms, true
-}
-
-func (c *getUserPermissionsCache) set(key string, perms []accesscontrol.Permission, ttl time.Duration) {
-	permsCopy := make([]accesscontrol.Permission, len(perms))
-	copy(permsCopy, perms)
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.entries == nil {
-		c.entries = make(map[string]getUserPermissionsCacheEntry)
-	}
-	c.entries[key] = getUserPermissionsCacheEntry{
-		perms:  permsCopy,
-		expiry: time.Now().Add(ttl),
-	}
-}
-
-// getUserPermissionsCacheKey returns a stable cache key for GetUserPermissionsQuery.
-func getUserPermissionsCacheKey(q accesscontrol.GetUserPermissionsQuery) string {
-	teamIDs := make([]int64, len(q.TeamIDs))
-	copy(teamIDs, q.TeamIDs)
-	sort.Slice(teamIDs, func(i, j int) bool { return teamIDs[i] < teamIDs[j] })
-	roles := make([]string, len(q.Roles))
-	copy(roles, q.Roles)
-	sort.Strings(roles)
-	prefixes := make([]string, len(q.RolePrefixes))
-	copy(prefixes, q.RolePrefixes)
-	sort.Strings(prefixes)
-	return fmt.Sprintf("accesscontrol.store.getuserpermissions:%d:%d:%v:%v:%v:%t",
-		q.OrgID, q.UserID, teamIDs, roles, prefixes, q.ExcludeRedundantManagedPermissions)
-}
-
-// ProvideService returns an AccessControlStore. If cacheTTL > 0, GetUserPermissions results are cached in memory with that TTL.
-func ProvideService(sql db.DB, cacheTTL time.Duration) *AccessControlStore {
-	s := &AccessControlStore{sql: sql}
-	if cacheTTL > 0 {
-		s.userPermsCache = &getUserPermissionsCache{entries: make(map[string]getUserPermissionsCacheEntry)}
-		s.userPermsCacheTTL = cacheTTL
-	}
-	return s
+func ProvideService(sql db.DB) *AccessControlStore {
+	return &AccessControlStore{sql}
 }
 
 type AccessControlStore struct {
-	sql               db.DB
-	userPermsCache    *getUserPermissionsCache
-	userPermsCacheTTL time.Duration
+	sql db.DB
 }
 
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.database.GetUserPermissions")
 	defer span.End()
-	span.SetAttributes(
-		attribute.Int64("org_id", query.OrgID),
-		attribute.Int64("user_id", query.UserID),
-		attribute.Int("team_ids_count", len(query.TeamIDs)),
-		attribute.Int("roles_count", len(query.Roles)),
-		attribute.Int("role_prefixes_count", len(query.RolePrefixes)),
-		attribute.Bool("exclude_redundant_managed", query.ExcludeRedundantManagedPermissions),
-	)
 
-	if s.userPermsCache != nil {
-		key := getUserPermissionsCacheKey(query)
-		if cached, ok := s.userPermsCache.get(key); ok {
-			span.SetAttributes(attribute.Bool("cache_hit", true), attribute.Int("permissions_count", len(cached)))
-			return cached, nil
-		}
-		span.SetAttributes(attribute.Bool("cache_hit", false))
-	}
-
-	result, err := s.getUserPermissionsFromDB(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	if s.userPermsCache != nil {
-		s.userPermsCache.set(getUserPermissionsCacheKey(query), result, s.userPermsCacheTTL)
-	}
-	span.SetAttributes(attribute.Int("permissions_count", len(result)))
-	return result, nil
-}
-
-func (s *AccessControlStore) getUserPermissionsFromDB(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	result := make([]accesscontrol.Permission, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
+			// no permission to fetch
 			return nil
 		}
 
@@ -180,6 +85,7 @@ func (s *AccessControlStore) getUserPermissionsFromDB(ctx context.Context, query
 
 		return nil
 	})
+
 	return result, err
 }
 
