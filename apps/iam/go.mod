@@ -388,7 +388,7 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // indirect
-	github.com/tjhop/slog-gokit v0.1.5 // indirect
+	github.com/tjhop/slog-gokit v0.1.6 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
