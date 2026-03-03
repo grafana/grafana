@@ -132,7 +132,6 @@ export const AnnotationsPlugin2 = ({
     annotations: xAnnos,
     clusteringMode,
     plotBox: plot?.bbox,
-    // @todo should we use time range from uplot?
     timeRange: { from: plot?.scales?.x?.min ?? -1, to: plot?.scales?.x?.max ?? -1 },
   });
   const exitWipEdit = useCallback(() => {
@@ -166,9 +165,9 @@ export const AnnotationsPlugin2 = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      // @todo debug:: do we want lines again if clustering is used? Multi-lane + clustering makes the use-case for making this configurable in the annotation settings.
-      const shouldRenderRegion = !annotationsOptions?.multiLane || annotationsOptions.clustering || true;
-      const shouldRenderLine = true;
+      // @todo Add panel options instead of disabling for multiLane and enabling for clustering
+      const shouldRenderRegion = !annotationsOptions?.multiLane || annotationsOptions.clustering;
+      const shouldRenderLine = !annotationsOptions?.multiLane || annotationsOptions.clustering;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
@@ -248,7 +247,6 @@ export const AnnotationsPlugin2 = ({
     });
   }, [config, canvasRegionRendering, getColorByName, annotationsOptions?.multiLane, annotationsOptions?.clustering]);
 
-  // @todo useEffect on the react ref or the "wrong" variable?
   // ensure xAnnos are re-drawn whenever they change
   useEffect(() => {
     if (plot) {

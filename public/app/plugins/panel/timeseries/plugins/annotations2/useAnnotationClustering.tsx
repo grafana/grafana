@@ -26,7 +26,6 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
       for (let frameIdx = 0; frameIdx < annotations.length; frameIdx++) {
         const frame = annotations[frameIdx];
 
-        // @todo annotation getters
         const timeVals: number[] = frame.fields.find((f) => f.name === 'time')?.values ?? [];
         const colorVals: string[] = frame.fields.find((f) => f.name === 'color')?.values ?? [];
 
@@ -61,12 +60,10 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
             });
           }
 
-          // append cluster regions to frame
+          // append cluster annotation regions to frame
           clusters.forEach((idxs, ci) => {
-            timeEndFrame.fields.forEach((field, fieldIdx) => {
+            timeEndFrame.fields.forEach((field) => {
               const vals = field.values;
-
-              // @todo clean up
               if (field.name === 'time') {
                 // Push the first clustered annotation as the annotation region start time
                 vals.push(timeVals[idxs[0]]);
@@ -75,42 +72,15 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
                 let lastIdx = idxs.length - 1;
                 vals.push(timeVals[idxs[lastIdx]]);
               } else if (field.name === 'isRegion') {
-                // It is a region
-                // @todo can a cluster have just one anno?
+                // Clusters are regions
                 vals.push(true);
               } else if (field.name === 'color') {
                 // Use the color of the first annotation in the region
                 vals.push(colorVals[idxs[0]]);
-              } else if (field.name === 'title') {
-                // Indicate the cluster index as the annotation title
-                vals.push(`Cluster ${ci}`);
-              } else if (field.name === 'text') {
-                // Merge the indices as the text?
-                // @todo debugging
-                vals.push('indices:  ' + idxs.join(', '));
-                // vals.push(ci);
               } else if (field.name === 'clusterIdx') {
                 // Update the cluster index?
                 vals.push(ci);
-              } else if (field.name === 'source') {
-                // Update the source?
-                vals.push(ci);
-              } else if (field.name === 'tags') {
-                // Update the tags?
-                vals.push(ci);
-              } else if (field.name === 'type') {
-                // Update the type?
-                vals.push(ci);
-              } else if (field.name === 'id') {
-                // Update the id?
-                vals.push(ci);
-              } else {
-                console.log('unexpected annotation field name', { field });
-                vals.push(null);
               }
-
-              // Set vals
-              // timeEndFrame.fields[fieldIdx].values = vals;
             });
           });
 
@@ -122,8 +92,7 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
         }
       }
     } else if (clusteringMode === ClusteringMode.Hover) {
-      // @todo Have the tooltip be clustered, but not the annotations
-      // create issue
+      // Have the tooltip be clustered, but not the annotations: https://github.com/grafana/grafana/issues/119436
       console.warn('Hover mode not implemented');
     }
 
@@ -190,8 +159,11 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotBox: 
   return { clusterIdx, clusters };
 };
 
+// Recommended minimum spacing between interactive elements (a11y)
+const MIN_ANNOTATION_SPACING = 24;
+
 const calculateMergeThreshold = (timeRange: TimeRange2, plotBox: BBox) => {
-  const pixelThreshold = 24 * uPlot.pxRatio;
+  const pixelThreshold = MIN_ANNOTATION_SPACING * uPlot.pxRatio;
   const dt = timeRange.to - timeRange.from;
   const plotWidth = plotBox?.width;
   const thresholdRatio = pixelThreshold / plotWidth;

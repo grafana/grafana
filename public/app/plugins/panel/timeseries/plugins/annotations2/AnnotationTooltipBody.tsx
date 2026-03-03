@@ -17,7 +17,6 @@ export function AnnotationTooltipBody({
   annoIdx: number;
 }) {
   const styles = useStyles2(getStyles);
-  // @todo double check alertText functionality, previously if(annoVals.alertId?.[annoIdx] !== undefined && annoVals.newState?.[annoIdx])) we didn't set the text
   return (
     <div className={styles.body}>
       {title && <div dangerouslySetInnerHTML={{ __html: textUtil.sanitize(title) }}></div>}
