@@ -14648,6 +14648,7 @@
     },
     "presets": {
       "area": "Area",
+      "default": "Default",
       "smooth": "Smooth",
       "step": "Step",
       "step-filled": "Step filled",
