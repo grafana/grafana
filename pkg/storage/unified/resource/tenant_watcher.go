@@ -71,12 +71,11 @@ func NewTenantWatcherConfig(cfg *setting.Cfg) *TenantWatcherConfig {
 	}
 
 	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-	authSection := cfg.SectionWithEnvOverrides("authorization")
 	tenantWatcherCfg := &TenantWatcherConfig{
 		TenantAPIServerURL: strings.TrimSpace(cfg.TenantApiServerAddress),
 		Token:              strings.TrimSpace(grpcSection.Key("token").MustString("")),
 		TokenExchangeURL:   strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString("")),
-		CAFile:             strings.TrimSpace(authSection.Key("cert_file").MustString("")),
+		CAFile:             strings.TrimSpace(cfg.TenantWatcherCAFile),
 		AllowInsecure:      cfg.TenantWatcherAllowInsecureTLS,
 		Log:                logger,
 	}
@@ -124,15 +123,9 @@ func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
 		BearerToken: tokenResp.Token,
 	}
 
-	switch {
-	case cfg.CAFile != "":
-		restCfg.TLSClientConfig = rest.TLSClientConfig{
-			CAFile: cfg.CAFile,
-		}
-	case cfg.AllowInsecure:
-		restCfg.TLSClientConfig = rest.TLSClientConfig{
-			Insecure: true,
-		}
+	restCfg.TLSClientConfig = rest.TLSClientConfig{
+		CAFile:   cfg.CAFile,
+		Insecure: cfg.AllowInsecure && cfg.CAFile == "",
 	}
 
 	return restCfg, nil

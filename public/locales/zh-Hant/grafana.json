@@ -903,7 +903,7 @@
       "title-failed-to-fetch-contact-points": "無法擷取聯絡點"
     },
     "contact-points": {
-      "create": "建立聯絡點",
+      "create": "",
       "custom-template-value": "自訂範本值",
       "delete-reasons": {
         "heading": "由於以下原因，無法刪除聯絡點：",
@@ -2120,7 +2120,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "新增時間間隔"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2164,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,14 +2172,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "按聯絡點搜尋",
@@ -2241,7 +2242,7 @@
       "title-failed-to-fetch-notification-templates": "無法擷取通知範本"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "新增通知範本群組",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "建立通知範本以自訂您的通知。"
     },
     "notifications-list": {
@@ -2268,6 +2269,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2291,15 +2293,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "新增標籤，以協助您妥善管理紀錄規則。",
@@ -3332,7 +3334,7 @@
       "stop-alerting-when": "處於以下值時停止警報（或待處理狀態）"
     },
     "time-interval": {
-      "add-time-interval": "新增時間間隔",
+      "add-time-interval": "",
       "save": "儲存時間間隔",
       "saving": "正在儲存時間間隔"
     },
@@ -6576,6 +6578,12 @@
           "row-title": "列標題"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "無法刪除儀表板",
@@ -12598,6 +12606,12 @@
       "label-read-only": "唯讀",
       "label-sync-interval": "同步間隔（秒）"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
     "folder-permissions": {
       "loading": ""
     },
@@ -12737,6 +12751,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13243,6 +13259,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",

@@ -68,6 +68,9 @@ type Settings struct {
 	// CacheTTL is the time to live for the permission cache entries.
 	// Set to 0 to disable caching.
 	CacheTTL time.Duration
+	// LocalFolderCacheTTL, when non-zero, adds an in-memory L1 cache in front
+	// of the remote folder cache to reduce round-trips and deserialization cost.
+	LocalFolderCacheTTL time.Duration
 }
 
 func NewService(
@@ -99,7 +102,7 @@ func NewService(
 		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
 		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL, settings.LocalFolderCacheTTL),
 		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, longCacheTTL),
 		sf:              new(singleflight.Group),
 	}
