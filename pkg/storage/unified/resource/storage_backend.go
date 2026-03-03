@@ -426,7 +426,6 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	prefix := key.Prefix()
 	startKey := prefix
 	endKey := PrefixRangeEnd(prefix)
-	nextEndKey := ""
 
 	for {
 		keysProcessed := int64(0)
@@ -465,7 +464,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 			// update the next end key for pagination. We will use this to continue scanning in the next batch
 			// the next end key is the immediate previous key for the current key
-			nextEndKey = previousKey(dataKey)
+			endKey = previousKey(dataKey)
 
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
@@ -498,10 +497,6 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				}
 			}
 		}
-
-		// update the end key for the next batch to be the last processed key in this batch,
-		// so that we can continue scanning from there
-		endKey = nextEndKey
 
 		// if there are no more entries to process, break the loop
 		if keysProcessed == 0 {

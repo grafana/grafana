@@ -3979,13 +3979,16 @@
     {
       "metadata": {
         "name": "secretsManagementAppPlatformUI",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1772221660381",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-02-27 19:47:40.381931167 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable the secrets management app platform UI",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
       }
