@@ -14674,6 +14674,10 @@
       "area": "Area",
       "default": "Default",
       "smooth": "Smooth",
+      "stacked-area": "Stacked area",
+      "stacked-area-gradient": "Stacked area gradient",
+      "stacked-smooth": "Stacked smooth",
+      "stacked-step": "Stacked step",
       "step": "Step",
       "step-filled": "Step filled",
       "step-hue": "Step hue"

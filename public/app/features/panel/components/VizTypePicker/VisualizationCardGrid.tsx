@@ -22,6 +22,7 @@ export interface Props {
   getItemKey: (item: PanelPluginVisualizationSuggestion) => string;
   selectedKey?: string;
   minColumnWidth?: number;
+  maxCardWidth?: number;
 }
 
 export function VisualizationCardGrid({
@@ -32,8 +33,9 @@ export function VisualizationCardGrid({
   getItemKey,
   selectedKey,
   minColumnWidth,
+  maxCardWidth,
 }: Props) {
-  const styles = useStyles2(getStyles, minColumnWidth);
+  const styles = useStyles2(getStyles, minColumnWidth, maxCardWidth);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
 
   const itemIndexMap = useMemo(() => {
@@ -106,16 +108,18 @@ export function VisualizationCardGrid({
   return <div className={styles.grid}>{items?.map((item, index) => renderCard(item, index === 0))}</div>;
 }
 
-const getStyles = (theme: GrafanaTheme2, minColumnWidth = MIN_MULTI_COLUMN_SIZE) => ({
+const getStyles = (theme: GrafanaTheme2, minColumnWidth = MIN_MULTI_COLUMN_SIZE, maxCardWidth?: number) => ({
   grid: css({
     display: 'grid',
     gridGap: theme.spacing(1),
-    gridTemplateColumns: `repeat(auto-fit, minmax(${minColumnWidth}px, 1fr))`,
+    gridTemplateColumns: `repeat(auto-fill, minmax(${minColumnWidth}px, 1fr))`,
     marginBottom: theme.spacing(1),
-    justifyContent: 'space-evenly',
   }),
   cardContainer: css({
     position: 'relative',
+    width: '100%',
+    maxWidth: maxCardWidth ? `${maxCardWidth}px` : undefined,
+    justifySelf: 'start',
   }),
   vizTypeHeader: css({
     gridColumn: '1 / -1',

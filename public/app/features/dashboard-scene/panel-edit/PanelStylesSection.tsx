@@ -7,6 +7,7 @@ import { FeatureBadge, Stack } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
 import { getPresets } from 'app/features/panel/presets/getPresets';
+import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
 
 export interface PanelStylesSectionProps {
   panel: VizPanel;
@@ -72,6 +73,7 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
         getItemKey={(preset) => preset.hash}
         selectedKey={selectedPreset}
         minColumnWidth={120}
+        maxCardWidth={MIN_MULTI_COLUMN_SIZE}
       />
     </OptionsPaneCategory>
   );
