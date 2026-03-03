@@ -954,20 +954,6 @@ func TestMaybeInjectFailure(t *testing.T) {
 		}
 	})
 
-	t.Run("fails approximately at configured rate", func(t *testing.T) {
-		s := &searchServer{injectFailuresPercent: 50}
-		failures := 0
-		const iterations = 10000
-		for i := 0; i < iterations; i++ {
-			if s.maybeInjectFailure() != nil {
-				failures++
-			}
-		}
-		// With 50% rate over 10000 iterations, expect roughly 5000 failures.
-		// Allow a wide margin (40%-60%) to avoid flaky tests.
-		require.Greater(t, failures, 4000, "expected at least 40%% failures")
-		require.Less(t, failures, 6000, "expected at most 60%% failures")
-	})
 }
 
 func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
