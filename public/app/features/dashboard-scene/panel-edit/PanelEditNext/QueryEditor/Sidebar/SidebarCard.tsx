@@ -12,6 +12,7 @@ import {
   QueryEditorType,
   SIDEBAR_CARD_HEIGHT,
   SIDEBAR_CARD_INDENT,
+  SIDEBAR_CARD_SPACING,
   getQueryEditorColors,
 } from '../../constants';
 import { getEditorBorderColor } from '../utils';
@@ -78,7 +79,7 @@ export const SidebarCard = ({
   if (variant === 'ghost') {
     const typeConfig = QUERY_EDITOR_TYPE_CONFIG[item.type];
     return (
-      <div className={styles.wrapper} aria-hidden>
+      <div className={cx(styles.wrapper, styles.ghostWrapper)} aria-hidden>
         <div className={cx(styles.card, styles.ghostCard)}>
           <div className={styles.cardContent}>
             <Icon name={typeConfig.icon} color={typeConfig.color} size="sm" />
@@ -225,6 +226,9 @@ function getStyles(
         pointerEvents: 'auto',
       },
     }),
+    ghostWrapper: css({
+      marginTop: theme.spacing(SIDEBAR_CARD_SPACING),
+    }),
 
     card: css({
       position: 'relative',
@@ -306,10 +310,12 @@ function getStyles(
 
     ghostCard: css({
       border: `1px dashed ${borderColor}`,
-      borderLeft: `3px solid ${borderColor}`,
       background: 'transparent',
       cursor: 'default',
-      opacity: 0.7,
+      opacity: 1,
+      '&::before': {
+        display: 'none',
+      },
     }),
 
     ghostCardLabel: css({
