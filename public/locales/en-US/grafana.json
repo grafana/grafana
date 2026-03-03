@@ -9466,11 +9466,13 @@
       },
       "legend": {
         "category": "Legend",
+        "description-limit": "Limits how many items are shown by default",
         "description-values": "Select values or calculations to show in legend",
         "mode-options": {
           "label-list": "List",
           "label-table": "Table"
         },
+        "name-limit": "Limit",
         "name-mode": "Mode",
         "name-placement": "Placement",
         "name-values": "Values",
@@ -10403,9 +10405,7 @@
   },
   "legend": {
     "container": {
-      "content": "Showing too many series will impact browser performance",
-      "show-all-series": "Show all series",
-      "show-only-series": "Showing {{shown}} / {{total}} series"
+      "show-all-series": "...show all {{total}} items"
     }
   },
   "library-panel": {

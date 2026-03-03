@@ -55,6 +55,13 @@ export function addLegendOptions<T extends OptionsWithLegend>(
         placeholder: 'Auto',
       },
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
+    })
+    .addNumberInput({
+      path: 'legend.limit',
+      name: t('grafana-ui.builder.legend.name-limit', 'Limit'),
+      category,
+      description: t('grafana-ui.builder.legend.description-limit', 'Limits how many items are shown by default'),
+      showIf: (c) => c.legend.showLegend,
     });
 
   if (includeLegendCalcs) {

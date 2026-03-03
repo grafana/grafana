@@ -41,7 +41,15 @@ export const VizLegendList = <T extends unknown>({
     );
   }
 
-  let limitedItems = useMemo(() => (limit > 0 ? items.slice(0, limit) : items), [items, limit]);
+  // split into left & right items when bottom/default legend, else everything goes in leftItems
+  const leftItems = useMemo(
+    () => (placement === 'right' ? items : items.filter((item) => item.yAxis === 1)),
+    [placement, items]
+  );
+  const rightItems = useMemo(
+    () => (placement === 'right' ? [] : items.filter((item) => item.yAxis !== 1)),
+    [placement, items]
+  );
 
   const getItemKey = (item: VizLegendItem<T>) => `${item.getItemKey ? item.getItemKey() : item.label}`;
 
@@ -53,15 +61,12 @@ export const VizLegendList = <T extends unknown>({
 
       return (
         <div className={cx(styles.rightWrapper, className)}>
-          <List items={limitedItems} renderItem={renderItem} getItemKey={getItemKey} />
+          <List items={leftItems} renderItem={renderItem} getItemKey={getItemKey} limit={limit} />
         </div>
       );
     }
     case 'bottom':
     default: {
-      const leftItems = limitedItems.filter((item) => item.yAxis === 1);
-      const rightItems = limitedItems.filter((item) => item.yAxis !== 1);
-
       const renderItem = (item: VizLegendItem<T>, index: number) => {
         return <span className={styles.itemBottom}>{itemRenderer!(item, index)}</span>;
       };
@@ -70,12 +75,12 @@ export const VizLegendList = <T extends unknown>({
         <div className={cx(styles.bottomWrapper, className)}>
           {leftItems.length > 0 && (
             <div className={styles.section}>
-              <InlineList items={leftItems} renderItem={renderItem} getItemKey={getItemKey} />
+              <InlineList items={leftItems} renderItem={renderItem} getItemKey={getItemKey} limit={limit} />
             </div>
           )}
           {rightItems.length > 0 && (
             <div className={cx(styles.section, styles.sectionRight)}>
-              <InlineList items={rightItems} renderItem={renderItem} getItemKey={getItemKey} />
+              <InlineList items={rightItems} renderItem={renderItem} getItemKey={getItemKey} limit={limit} />
             </div>
           )}
         </div>

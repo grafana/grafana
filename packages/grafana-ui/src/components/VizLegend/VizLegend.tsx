@@ -1,46 +1,16 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import * as React from 'react';
 
 import { DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
 import { LegendDisplayMode } from '@grafana/schema';
 
 import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
-import { LimitedDataDisclaimer } from './LimitedDataDisclaimer';
+// import { LimitedDataDisclaimer } from './LimitedDataDisclaimer';
 import { VizLegendList } from './VizLegendList';
 import { VizLegendTable } from './VizLegendTable';
 import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
 import { mapMouseEventToMode } from './utils';
-
-const DEFAULT_SERIES_COUNT = 30;
-
-function wrapWithLimit(
-  children: React.ReactNode,
-  shown: number,
-  total: number,
-  setItemLimit: React.Dispatch<React.SetStateAction<number>>
-) {
-  if (shown < total) {
-    return (
-      <div style={{ position: 'relative' }}>
-        {children}
-        <LimitedDataDisclaimer
-          toggleShowAllSeries={() => setItemLimit(-1)}
-          info={
-            <Trans i18nKey={'legend.container.show-only-series'}>
-              Showing {{ shown }} / {{ total }} series
-            </Trans>
-          }
-          tooltip={t('legend.container.content', 'Showing too many series will impact browser performance')}
-          buttonLabel={<Trans i18nKey={'legend.container.show-all-series'}>Show all series</Trans>}
-        />
-      </div>
-    );
-  }
-
-  return children;
-}
 
 /**
  * @public
@@ -62,14 +32,9 @@ export function VizLegend<T>({
   itemRenderer,
   readonly,
   isSortable,
+  limit,
 }: LegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
-
-  const [itemLimit, setItemLimit] = useState(DEFAULT_SERIES_COUNT);
-
-  const limitedItems = useMemo(() => {
-    return itemLimit > 0 ? items.slice(0, itemLimit) : items;
-  }, [items, itemLimit]);
 
   const onMouseOver = useCallback(
     (
@@ -136,18 +101,19 @@ export function VizLegend<T>({
           itemRenderer={itemRenderer}
           readonly={readonly}
           items={items}
+          limit={limit}
         />
       );
     },
-    [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly]
+    [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly, limit]
   );
 
   switch (displayMode) {
     case LegendDisplayMode.Table:
-      return wrapWithLimit(
+      return (
         <VizLegendTable<T>
           className={className}
-          items={limitedItems}
+          items={items}
           placement={placement}
           sortBy={sortKey}
           sortDesc={sortDesc}
@@ -158,30 +124,22 @@ export function VizLegend<T>({
           itemRenderer={itemRenderer}
           readonly={readonly}
           isSortable={isSortable}
-        />,
-        limitedItems.length,
-        items.length,
-        setItemLimit
+        />
       );
     case LegendDisplayMode.List:
       const isThresholdsEnabled = thresholdItems && thresholdItems.length > 1;
       const isValueMappingEnabled = mappingItems && mappingItems.length > 0;
-      return wrapWithLimit(
+      return (
         <>
           {/* render items when single series and there is no thresholds and no value mappings
            * render items when multi series and there is no thresholds
            */}
-          {!isThresholdsEnabled &&
-            (!isValueMappingEnabled || limitedItems.length > 1) &&
-            makeVizLegendList(limitedItems)}
+          {!isThresholdsEnabled && (!isValueMappingEnabled || items.length > 1) && makeVizLegendList(items)}
           {/* render threshold colors if From thresholds scheme selected */}
           {isThresholdsEnabled && makeVizLegendList(thresholdItems)}
           {/* render value mapping colors */}
           {isValueMappingEnabled && makeVizLegendList(mappingItems)}
-        </>,
-        limitedItems.length,
-        items.length,
-        setItemLimit
+        </>
       );
     default:
       return null;
