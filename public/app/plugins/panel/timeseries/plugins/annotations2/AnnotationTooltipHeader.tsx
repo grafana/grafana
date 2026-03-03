@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,15 +9,16 @@ import { AnnotationAlertState } from './AnnotationAlertState';
 import { AnnotationAvatar } from './AnnotationAvatar';
 
 export function AnnotationTooltipHeader(props: {
-  avatarImg: string | undefined;
-  alertState: string | undefined;
+  className?: string;
+  avatarImg?: string | undefined;
+  alertState?: string | undefined;
   timeRange: string;
   canEdit: false | boolean;
   canDelete: boolean;
   isPinned: boolean;
-  onEdit: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
-  onRemove: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onRemove?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
   const styles = useStyles2(getStyles);
   const focusRef = useRef<HTMLButtonElement | null>(null);
@@ -28,7 +29,7 @@ export function AnnotationTooltipHeader(props: {
   }, [props.isPinned]);
 
   return (
-    <div className={styles.header}>
+    <div className={props.className ? cx(props.className, styles.header) : styles.header}>
       <Stack gap={2} basis="100%" justifyContent="space-between" alignItems="center">
         <div className={styles.meta}>
           <span>
@@ -57,7 +58,7 @@ export function AnnotationTooltipHeader(props: {
                 tooltip={t('timeseries.annotation-tooltip2.tooltip-delete', 'Delete')}
               />
             )}
-            {props.isPinned && (
+            {props.onRemove && props.isPinned && (
               <IconButton
                 ref={props.canEdit || props.canDelete ? null : focusRef}
                 name={'times'}

@@ -33,7 +33,6 @@ interface AnnoBoxProps {
 }
 const STATE_DEFAULT = 0;
 const STATE_EDITING = 1;
-const STATE_HOVERED = 2;
 
 export const AnnotationMarker2 = ({
   frame,
@@ -53,10 +52,14 @@ export const AnnotationMarker2 = ({
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
 
-  const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
+  const [isEditing, setIsEditing] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
   const [isHovering, setIsHovering] = useState(false);
+  // @todo find what is setting null vs undefined
   const isClustering =
-    annoVals.isRegion[annoIdx] && annoVals.clusterIdx?.[annoIdx] !== undefined && annoVals.clusterIdx?.[annoIdx] > -1;
+    annoVals.isRegion[annoIdx] &&
+    annoVals.clusterIdx?.[annoIdx] !== null &&
+    annoVals.clusterIdx?.[annoIdx] !== undefined &&
+    annoVals.clusterIdx?.[annoIdx] > -1;
 
   const { refs, floatingStyles } = useFloating({
     open: true,
@@ -73,7 +76,7 @@ export const AnnotationMarker2 = ({
   const links: LinkModel[] = [];
   const actions: ActionModel[] = [];
 
-  if (STATE_HOVERED) {
+  if (isHovering) {
     frame.fields.forEach((field) => {
       links.push(...getDataLinks(field, annoIdx));
 
@@ -84,7 +87,7 @@ export const AnnotationMarker2 = ({
   }
 
   const showTooltip =
-    (isPinned && !(state === STATE_EDITING)) || (showOnHover && isHovering && !(state === STATE_EDITING));
+    (isPinned && !(isEditing === STATE_EDITING)) || (showOnHover && isHovering && !(isEditing === STATE_EDITING));
 
   const contents =
     showTooltip && isClustering ? (
@@ -96,7 +99,7 @@ export const AnnotationMarker2 = ({
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
-        onEdit={() => setState(STATE_EDITING)}
+        onEdit={() => setIsEditing(STATE_EDITING)}
       />
     ) : showTooltip ? (
       <AnnotationTooltip2
@@ -105,11 +108,11 @@ export const AnnotationMarker2 = ({
         timeZone={timeZone}
         onClose={onClose}
         isPinned={isPinned}
-        onEdit={() => setState(STATE_EDITING)}
+        onEdit={() => setIsEditing(STATE_EDITING)}
         links={links}
         actions={actions}
       />
-    ) : state === STATE_EDITING ? (
+    ) : isEditing === STATE_EDITING ? (
       <AnnotationEditor2
         isPinned={isPinned}
         annoIdx={annoIdx}
@@ -117,7 +120,7 @@ export const AnnotationMarker2 = ({
         timeZone={timeZone}
         dismiss={() => {
           exitWipEdit?.();
-          setState(STATE_DEFAULT);
+          setIsEditing(STATE_DEFAULT);
           onClose();
         }}
       />

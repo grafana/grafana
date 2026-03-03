@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
 
 import { AnnotationTooltipBody } from './AnnotationTooltipBody';
 import { AnnotationTooltipHeader } from './AnnotationTooltipHeader';
-import { useAnnotationTooltip } from './useAnnotationTooltip';
+import { getAnnotationTooltip } from './getAnnotationTooltip';
 
 export interface AnnotationTooltipProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,6 +20,8 @@ export interface AnnotationTooltipProps {
   actions?: ActionModel[];
 }
 
+const retFalse = () => false;
+
 export const AnnotationTooltip2 = ({
   annoVals,
   annoIdx,
@@ -31,8 +33,15 @@ export const AnnotationTooltip2 = ({
   actions = [],
 }: AnnotationTooltipProps) => {
   const styles = useStyles2(getStyles);
-  let { onAnnotationDelete, canEdit, canDelete, time, text, alertText, alertState, avatarImgSrc, title } =
-    useAnnotationTooltip(annoVals, annoIdx, timeZone);
+  const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
+  let { onDelete, canEdit, canDelete, time, text, alertText, alertState, avatarImgSrc, title } = getAnnotationTooltip(
+    annoVals,
+    annoIdx,
+    timeZone,
+    canEditAnnotations,
+    canDeleteAnnotations,
+    onAnnotationDelete
+  );
 
   return (
     <div className={styles.wrapper}>
@@ -44,7 +53,7 @@ export const AnnotationTooltip2 = ({
         canDelete={canDelete}
         isPinned={isPinned}
         onEdit={onEdit}
-        onDelete={onAnnotationDelete}
+        onDelete={onDelete}
         onRemove={(e) => {
           // Don't trigger onClick
           e.stopPropagation();

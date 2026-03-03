@@ -2,14 +2,16 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { Divider, ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 import { AnnotationTooltipProps } from './AnnotationTooltip2';
 import { AnnotationTooltipBody } from './AnnotationTooltipBody';
 import { AnnotationTooltipHeader } from './AnnotationTooltipHeader';
-import { useAnnotationTooltip } from './useAnnotationTooltip';
+import { getAnnotationTooltip } from './getAnnotationTooltip';
+
+const retFalse = () => false;
 
 export const AnnotationTooltip2Cluster = ({
   annoVals,
@@ -22,11 +24,7 @@ export const AnnotationTooltip2Cluster = ({
   actions,
 }: AnnotationTooltipProps) => {
   const styles = useStyles2(getStyles);
-  let { onAnnotationDelete, canEdit, canDelete, time, alertState, avatarImgSrc } = useAnnotationTooltip(
-    annoVals,
-    annoIdx,
-    timeZone
-  );
+  const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
 
   let items: React.ReactNode[] = [];
 
@@ -34,6 +32,15 @@ export const AnnotationTooltip2Cluster = ({
 
   for (let i = 0; i < annoVals.time.length; i++) {
     if (annoVals.clusterIdx[i] === clusterIdx && i !== annoIdx) {
+      const { onDelete, canEdit, canDelete, time, alertState, avatarImgSrc } = getAnnotationTooltip(
+        annoVals,
+        i,
+        timeZone,
+        canEditAnnotations,
+        canDeleteAnnotations,
+        onAnnotationDelete
+      );
+
       let text = annoVals.text?.[i] ?? '';
       let alertText = '';
 
@@ -44,32 +51,61 @@ export const AnnotationTooltip2Cluster = ({
       }
 
       items.push(
-        <AnnotationTooltipBody key={i} text={text} alertText={alertText} tags={annoVals.tags} annoIdx={annoIdx} />
+        <div key={i}>
+          <AnnotationTooltipHeader
+            avatarImg={avatarImgSrc}
+            alertState={alertState}
+            timeRange={time}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            isPinned={false}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onRemove={(e) => {
+              // Don't trigger onClick
+              e.stopPropagation();
+              onClose();
+            }}
+          />
+          <AnnotationTooltipBody text={text} alertText={alertText} tags={annoVals.tags} annoIdx={annoIdx} />
+          <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
+        </div>
       );
     }
   }
 
+  const { time } = getAnnotationTooltip(
+    annoVals,
+    annoIdx,
+    timeZone,
+    canEditAnnotations,
+    canDeleteAnnotations,
+    onAnnotationDelete
+  );
+
   return (
     <div className={styles.wrapper}>
-      <AnnotationTooltipHeader
-        avatarImg={avatarImgSrc}
-        alertState={alertState}
-        timeRange={time}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        isPinned={isPinned}
-        onEdit={onEdit}
-        onDelete={onAnnotationDelete}
-        onRemove={(e) => {
-          // Don't trigger onClick
-          e.stopPropagation();
-          onClose();
-        }}
-      />
-
-      <ScrollContainer maxHeight="200px">{items}</ScrollContainer>
-
-      <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
+      <ScrollContainer maxHeight="200px">
+        <AnnotationTooltipHeader
+          className={styles.clusterHeader}
+          timeRange={time}
+          canEdit={false}
+          canDelete={false}
+          isPinned={isPinned}
+          onRemove={(e) => {
+            // Don't trigger onClick
+            e.stopPropagation();
+            onClose();
+          }}
+        />
+        {items.map((item) => (
+          <>
+            {item}
+            <Divider spacing={0} />
+            <Divider spacing={0} />
+          </>
+        ))}
+      </ScrollContainer>
     </div>
   );
 };
@@ -84,49 +120,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: theme.shadows.z3,
     userSelect: 'text',
   }),
-  header: css({
-    padding: theme.spacing(0.5, 1),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    fontWeight: theme.typography.fontWeightBold,
-    fontSize: theme.typography.fontSize,
-    color: theme.colors.text.primary,
-    display: 'flex',
-  }),
-  meta: css({
-    display: 'flex',
-    color: theme.colors.text.primary,
-    fontWeight: 400,
-  }),
-  controls: css({
-    display: 'flex',
-    '> :last-child': {
-      marginLeft: 0,
-    },
-  }),
-  body: css({
-    label: 'cluster-annotation-body',
-    padding: theme.spacing(1),
-    fontSize: theme.typography.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
-    fontWeight: 400,
-    a: {
-      color: theme.colors.text.link,
-      '&:hover': {
-        textDecoration: 'underline',
-      },
-    },
-  }),
-  text: css({
-    paddingBottom: theme.spacing(1),
-  }),
-  avatar: css({
-    borderRadius: theme.shape.radius.circle,
-    width: 16,
-    height: 16,
-    marginRight: theme.spacing(1),
-  }),
-  alertState: css({
-    paddingRight: theme.spacing(1),
-    fontWeight: theme.typography.fontWeightMedium,
+  clusterHeader: css({
+    background: theme.colors.background.elevated,
+    position: 'sticky',
+    top: 0,
+    left: 0,
+    zIndex: 1,
+    boxShadow: theme.shadows.z1,
   }),
 });
