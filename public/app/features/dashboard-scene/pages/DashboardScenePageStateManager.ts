@@ -1,8 +1,11 @@
+import { Subscription } from 'rxjs';
+
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
+import { DataSourceRef } from '@grafana/schema';
 import { Spec as DashboardV2Spec, VariableKind, DashboardLink } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
@@ -46,7 +49,7 @@ import {
   SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
-import { loadDefaultControlsFromDatasources } from '../utils/dashboardControls';
+import { loadDefaultControls$, loadDefaultControlsFromDatasources } from '../utils/dashboardControls';
 import { getDsRefsFromV1Dashboard, getDsRefsFromV2Dashboard } from '../utils/dashboardDsRefs';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
@@ -152,8 +155,10 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
   abstract getDefaultControls(rsp: T): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }>;
+  abstract getDatasourceRefs(rsp: T): DataSourceRef[];
 
   protected cache: Record<string, DashboardScene> = {};
+  private defaultControlsSubscription?: Subscription;
 
   // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
   protected dashboardCache?: DashboardCacheEntry<T>;
@@ -443,22 +448,38 @@ abstract class DashboardScenePageStateManagerBase<T>
     const scene = this.transformResponseToScene(rsp, options);
 
     if (scene) {
-      scene.setState({ defaultControlsLoading: true });
+      scene.setState({ defaultVariablesLoading: true, defaultLinksLoading: true });
       this.loadAndApplyDefaultControls(rsp, scene);
     }
 
     return scene;
   }
 
-  private async loadAndApplyDefaultControls(rsp: T, scene: DashboardScene): Promise<void> {
-    try {
-      const { defaultVariables, defaultLinks } = await this.getDefaultControls(rsp);
-      scene.addDefaultControls(defaultVariables, defaultLinks);
-    } catch (e) {
-      console.warn('Failed to load default controls', e);
-    } finally {
-      scene.setState({ defaultControlsLoading: false });
+  private loadAndApplyDefaultControls(rsp: T, scene: DashboardScene): void {
+    const refs = this.getDatasourceRefs(rsp);
+
+    if (refs.length === 0) {
+      scene.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
+      return;
     }
+
+    this.defaultControlsSubscription?.unsubscribe();
+    this.defaultControlsSubscription = loadDefaultControls$(refs).subscribe({
+      next: (event) => {
+        if (event.type === 'variables') {
+          scene.addDefaultVariables(event.data);
+        } else if (event.type === 'links') {
+          scene.addDefaultLinks(event.data);
+        }
+      },
+      error: (err) => {
+        console.warn('Failed to load default controls', err);
+        scene.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
+      },
+      complete: () => {
+        scene.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
+      },
+    });
   }
 
   public getDashboardFromCache(cacheKey: string): T | null {
@@ -476,6 +497,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   }
 
   public clearState() {
+    this.defaultControlsSubscription?.unsubscribe();
     getDashboardSrv().setCurrent(undefined);
 
     this.setState({
@@ -706,6 +728,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const datasourceRefs = getDsRefsFromV1Dashboard(rsp);
 
     return loadDefaultControlsFromDatasources(datasourceRefs);
+  }
+
+  public getDatasourceRefs(rsp: DashboardDTO): DataSourceRef[] {
+    return getDsRefsFromV1Dashboard(rsp);
   }
 
   public async fetchDashboard({
@@ -945,6 +971,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     const datasourceRefs = getDsRefsFromV2Dashboard(rsp);
 
     return loadDefaultControlsFromDatasources(datasourceRefs);
+  }
+
+  public getDatasourceRefs(rsp: DashboardWithAccessInfo<DashboardV2Spec>): DataSourceRef[] {
+    return getDsRefsFromV2Dashboard(rsp);
   }
 
   public async fetchDashboard({
@@ -1251,6 +1281,13 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       return this.v2Manager.getDefaultControls(rsp);
     }
     return this.v1Manager.getDefaultControls(rsp);
+  }
+
+  public getDatasourceRefs(rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>): DataSourceRef[] {
+    if (isDashboardV2Resource(rsp)) {
+      return this.v2Manager.getDatasourceRefs(rsp);
+    }
+    return this.v1Manager.getDatasourceRefs(rsp);
   }
 }
 

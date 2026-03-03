@@ -1721,7 +1721,7 @@ describe('DashboardScene', () => {
     });
   });
 
-  describe('addDefaultControls', () => {
+  describe('addDefaultVariables', () => {
     it('should prepend default variables to existing variables', () => {
       const scene = buildTestScene();
 
@@ -1738,13 +1738,56 @@ describe('DashboardScene', () => {
       ];
 
       const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
-      scene.addDefaultControls(defaultVariables, []);
+      scene.addDefaultVariables(defaultVariables);
 
       const variables = sceneGraph.getVariables(scene).state.variables;
       expect(variables.length).toBe(existingVarCount + 1);
       expect(variables[0].state.name).toBe('defaultVar');
     });
 
+    it('should not modify variables when no default variables are provided', () => {
+      const scene = buildTestScene();
+      const originalVars = sceneGraph.getVariables(scene).state.variables;
+
+      scene.addDefaultVariables([]);
+
+      expect(sceneGraph.getVariables(scene).state.variables).toBe(originalVars);
+    });
+
+    it('should accumulate variables from multiple calls', () => {
+      const scene = buildTestScene();
+      const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
+
+      scene.addDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'varFromDs1',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ]);
+
+      scene.addDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'varFromDs2',
+            current: { text: 'x', value: 'x' },
+            query: 'x,y,z',
+            origin: { type: 'datasource' as const, group: 'loki' },
+          },
+        },
+      ]);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      expect(variables.length).toBe(existingVarCount + 2);
+    });
+  });
+
+  describe('addDefaultLinks', () => {
     it('should prepend default links to existing links', () => {
       const scene = buildTestScene();
       const existingLinkCount = scene.state.links.length;
@@ -1765,7 +1808,7 @@ describe('DashboardScene', () => {
         },
       ];
 
-      scene.addDefaultControls([], defaultLinks);
+      scene.addDefaultLinks(defaultLinks);
 
       expect(scene.state.links.length).toBe(existingLinkCount + 1);
       expect(scene.state.links[0].title).toBe('Default Link');
@@ -1775,9 +1818,48 @@ describe('DashboardScene', () => {
       const scene = buildTestScene();
       const originalLinks = scene.state.links;
 
-      scene.addDefaultControls([], []);
+      scene.addDefaultLinks([]);
 
       expect(scene.state.links).toBe(originalLinks);
+    });
+
+    it('should accumulate links from multiple calls', () => {
+      const scene = buildTestScene();
+      const existingLinkCount = scene.state.links.length;
+
+      scene.addDefaultLinks([
+        {
+          title: 'Link from DS1',
+          url: 'http://ds1.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'prometheus' },
+        },
+      ]);
+
+      scene.addDefaultLinks([
+        {
+          title: 'Link from DS2',
+          url: 'http://ds2.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'loki' },
+        },
+      ]);
+
+      expect(scene.state.links.length).toBe(existingLinkCount + 2);
     });
   });
 });

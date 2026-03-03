@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { Observable, Subscriber } from 'rxjs';
 
 import { DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -116,6 +117,89 @@ async function invokeAndTrack<T>(action: () => Promise<T>, options: InvokeAndTra
   });
 
   return result;
+}
+
+export type DefaultControlEvent =
+  | { type: 'variables'; data: VariableKind[] }
+  | { type: 'links'; data: DashboardLink[] };
+
+export function loadDefaultControls$(refs: DataSourceRef[]): Observable<DefaultControlEvent> {
+  return new Observable((subscriber) => {
+    if (refs.length === 0) {
+      subscriber.complete();
+      return;
+    }
+
+    const traceId = nanoid(8);
+    const promises = refs.map((ref) => loadControlsFromRef(ref, traceId, subscriber));
+
+    Promise.all(promises).then(() => subscriber.complete());
+  });
+}
+
+async function loadControlsFromRef(ref: DataSourceRef, traceId: string, subscriber: Subscriber<DefaultControlEvent>) {
+  let ds: DataSourceApi;
+
+  try {
+    ds = await getDataSourceSrv().get(ref);
+  } catch (e) {
+    console.warn('Failed to load datasource', ref, e);
+    return;
+  }
+
+  await Promise.all([emitDefaultVariables(ds, traceId, subscriber), emitDefaultLinks(ds, traceId, subscriber)]);
+}
+
+async function emitDefaultVariables(ds: DataSourceApi, traceId: string, subscriber: Subscriber<DefaultControlEvent>) {
+  if (typeof ds.getDefaultVariables !== 'function') {
+    return;
+  }
+
+  try {
+    const variables = await invokeAndTrack(ds.getDefaultVariables.bind(ds), {
+      traceId,
+      phase: 'default_variables',
+      datasourceType: ds.type,
+    });
+
+    if (variables?.length) {
+      subscriber.next({
+        type: 'variables',
+        data: variables.map((v) => ({
+          ...v,
+          spec: { ...v.spec, origin: { type: 'datasource' as const, group: ds.type } },
+        })),
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to load default variables from datasource', ds.type, e);
+  }
+}
+
+async function emitDefaultLinks(ds: DataSourceApi, traceId: string, subscriber: Subscriber<DefaultControlEvent>) {
+  if (typeof ds.getDefaultLinks !== 'function') {
+    return;
+  }
+
+  try {
+    const links = await invokeAndTrack(ds.getDefaultLinks.bind(ds), {
+      traceId,
+      phase: 'default_links',
+      datasourceType: ds.type,
+    });
+
+    if (links?.length) {
+      subscriber.next({
+        type: 'links',
+        data: links.map((l) => ({
+          ...l,
+          origin: { type: 'datasource' as const, group: ds.type },
+        })),
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to load default links from datasource', ds.type, e);
+  }
 }
 
 const sortByProp = <T>(items: T[], propGetter: (item: T) => Object | undefined) => {

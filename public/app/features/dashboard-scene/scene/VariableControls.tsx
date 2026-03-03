@@ -20,7 +20,7 @@ import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
-  const { isEditing, defaultControlsLoading } = dashboard.useState();
+  const { isEditing, defaultVariablesLoading } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
   const styles = useStyles2(getStyles);
 
@@ -43,7 +43,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   return (
     <>
       {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
-      {defaultControlsLoading && <Skeleton width={150} height={32} containerClassName={styles.skeletonContainer} />}
+      {defaultVariablesLoading && <Skeleton width={150} height={32} containerClassName={styles.skeletonContainer} />}
 
       {variablesToRender.length > 0 &&
         variablesToRender.map((variable) => (

@@ -168,8 +168,10 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator?: DashboardLayoutOrchestrator;
-  /** True while default variables and links from datasources are being loaded */
-  defaultControlsLoading?: boolean;
+  /** True while default variables from datasources are being loaded */
+  defaultVariablesLoading?: boolean;
+  /** True while default links from datasources are being loaded */
+  defaultLinksLoading?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -297,30 +299,36 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public addDefaultControls(defaultVariables: VariableKind[], defaultLinks: DashboardLink[]) {
-    if (defaultVariables.length > 0) {
-      const variableSet = sceneGraph.getVariables(this);
-      const defaultVarObjects = defaultVariables
-        .map((v) => {
-          try {
-            return createSceneVariableFromVariableModelV2(v);
-          } catch (err) {
-            console.error(err);
-            return null;
-          }
-        })
-        .filter((v): v is SceneVariable => Boolean(v));
-
-      variableSet.setState({
-        variables: [...defaultVarObjects, ...variableSet.state.variables],
-      });
+  public addDefaultVariables(defaultVariables: VariableKind[]) {
+    if (defaultVariables.length === 0) {
+      return;
     }
 
-    if (defaultLinks.length > 0) {
-      this.setState({
-        links: [...defaultLinks, ...this.state.links],
-      });
+    const variableSet = sceneGraph.getVariables(this);
+    const defaultVarObjects = defaultVariables
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModelV2(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      .filter((v): v is SceneVariable => Boolean(v));
+
+    variableSet.setState({
+      variables: [...defaultVarObjects, ...variableSet.state.variables],
+    });
+  }
+
+  public addDefaultLinks(defaultLinks: DashboardLink[]) {
+    if (defaultLinks.length === 0) {
+      return;
     }
+
+    this.setState({
+      links: [...defaultLinks, ...this.state.links],
+    });
   }
 
   public onEnterEditMode = () => {
