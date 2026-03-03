@@ -1,6 +1,6 @@
 import { chain } from 'lodash';
 
-import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, getDataSourceRef, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -20,7 +20,7 @@ import {
   SceneVariableSet,
   SwitchVariable,
 } from '@grafana/scenes';
-import { VariableHide, VariableType } from '@grafana/schema';
+import { DataSourceRef, VariableHide, VariableType } from '@grafana/schema';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
@@ -175,17 +175,28 @@ export function getVariableEditor(type: EditableVariableType) {
   return editableVariables[type].editor;
 }
 
-interface CommonVariableProperties {
+export interface CommonVariableProperties {
   name: string;
   label?: string;
+}
+
+function getDefaultDatasourceRef(): DataSourceRef | undefined {
+  const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+  return defaultDs ? getDataSourceRef(defaultDs) : undefined;
 }
 
 export function getVariableScene(type: EditableVariableType, initialState: CommonVariableProperties) {
   switch (type) {
     case 'custom':
       return new CustomVariable(initialState);
-    case 'query':
-      return new QueryVariable(initialState);
+    case 'query': {
+      // we need to initialize the query variable with the default datasource
+      // this matches the behavior in Settings -> Variables -> Add Variable
+      // otherwise v2 transformer to save model will treat the variable as auto-assigned and
+      // not include it in the save model
+      const datasource = getDefaultDatasourceRef();
+      return new QueryVariable({ ...initialState, ...(datasource && { datasource }) });
+    }
     case 'constant':
       return new ConstantVariable({ ...initialState, hide: VariableHide.hideVariable });
     case 'interval':
@@ -207,11 +218,8 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
 }
 
 export function getVariableDefault(variables: Array<SceneVariable<SceneVariableState>>) {
-  const defaultVariableType = 'query';
-  const nextVariableIdName = getNextAvailableId(defaultVariableType, variables);
-  return new QueryVariable({
-    name: nextVariableIdName,
-  });
+  const nextVariableIdName = getNextAvailableId('query', variables);
+  return getVariableScene('query', { name: nextVariableIdName });
 }
 
 export function getNextAvailableId(type: VariableType, variables: Array<SceneVariable<SceneVariableState>>): string {

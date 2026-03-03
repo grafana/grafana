@@ -355,7 +355,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		}
 	}
 
-	syncUserToIdentity(usr, id)
+	syncUserToIdentity(ctx, usr, id)
 
 	// If Kubernetes user sync is enabled, we disable the sync of org roles and permissions because
 	// those haven't been migrated to Kubernetes yet.
@@ -707,9 +707,9 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	}
 
 	var userAuth *login.UserAuth
-	// Special case for generic oauth: generic oauth does not store authID,
-	// so we need to find the user first then check for the userAuth connection by module and userID
-	if identity.AuthenticatedBy == login.GenericOAuthModule {
+	// For auth modules that may not store an authID in user_auth (Generic OAuth never stores one;
+	// SAML omits it for SCIM-provisioned users), fall back to a UserId+AuthModule lookup.
+	if identity.AuthenticatedBy == login.GenericOAuthModule || (identity.AuthenticatedBy == login.SAMLAuthModule && usr.IsProvisioned) {
 		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthenticatedBy, UserId: usr.ID}
 		userAuth, err = s.authInfoService.GetAuthInfo(ctx, query)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
@@ -752,7 +752,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
-func syncUserToIdentity(usr *user.User, id *authn.Identity) {
+func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity) {
 	id.ID = strconv.FormatInt(usr.ID, 10)
 	id.UID = usr.UID
 	id.Type = claims.TypeUser
@@ -761,6 +761,13 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 	id.Name = usr.Name
 	id.EmailVerified = usr.EmailVerified
 	id.IsGrafanaAdmin = &usr.IsAdmin
+
+	featureClient := openfeature.NewDefaultClient()
+	if featureClient.Boolean(ctx, featuremgmt.FlagRememberUserOrgForSso, true, openfeature.TransactionContext(ctx)) {
+		if id.OrgID == 0 {
+			id.OrgID = usr.OrgID
+		}
+	}
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.

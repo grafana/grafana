@@ -299,6 +299,27 @@ describeInitScenario('Initializing home dashboard', (ctx) => {
   });
 });
 
+describeInitScenario('Initializing home dashboard with query params', (ctx) => {
+  ctx.setup(() => {
+    // Set initial location with query params
+    locationService.push('/?doc=some-query-value');
+
+    ctx.args.routeName = DashboardRoutes.Home;
+    ctx.backendSrv.get.mockResolvedValue({
+      redirectUri: '/a/custom-home-plugin?tab=recent',
+    });
+  });
+
+  it('Should preserve query params when redirecting to custom home dashboard', () => {
+    const location = locationService.getLocation();
+    expect(location.pathname).toBe('/a/custom-home-plugin');
+
+    const search = locationService.getSearch();
+    expect(search.get('doc')).toBe('some-query-value');
+    expect(search.get('tab')).toBe('recent');
+  });
+});
+
 describeInitScenario('Initializing home dashboard cancelled', (ctx) => {
   ctx.setup(() => {
     ctx.args.routeName = DashboardRoutes.Home;

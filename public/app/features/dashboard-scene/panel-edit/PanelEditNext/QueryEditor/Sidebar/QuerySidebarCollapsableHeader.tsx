@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -8,20 +7,23 @@ interface QuerySidebarCollapsableHeaderProps {
   label: string;
   children: React.ReactNode;
   headerAction?: React.ReactNode;
+  isOpen: boolean;
+  onToggle: (isOpen: boolean) => void;
 }
 
 export const QuerySidebarCollapsableHeader = ({
   label,
   children,
   headerAction,
+  isOpen,
+  onToggle,
 }: QuerySidebarCollapsableHeaderProps) => {
-  const [isOpen, setIsOpen] = useState(true);
   const styles = useStyles2(getStyles);
 
   return (
     <CollapsableSection
       label={
-        <Stack direction="row" alignItems="center" gap={0.5}>
+        <Stack direction="row" alignItems="center" gap={1}>
           <Text color="maxContrast" variant="bodySmall" weight="light">
             {label}
           </Text>
@@ -34,7 +36,7 @@ export const QuerySidebarCollapsableHeader = ({
         </Stack>
       }
       isOpen={isOpen}
-      onToggle={setIsOpen}
+      onToggle={onToggle}
       className={styles.collapsableSection}
       contentClassName={styles.contentArea}
     >
@@ -49,13 +51,12 @@ export const QuerySidebarCollapsableHeader = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsableSection: css({
-    marginTop: theme.spacing(1),
+    marginTop: theme.spacing(0.5),
   }),
   contentArea: css({
     padding: 0,
   }),
   queryStackCardsContainer: css({
     paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(2.5), // Prevents clipping of the last card's absolutely-positioned AddCardButton
   }),
 });

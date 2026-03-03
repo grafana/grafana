@@ -1,7 +1,8 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
-import { DataSourceRef } from '@grafana/schema';
+import { DashboardLink, DataSourceRef } from '@grafana/schema';
+import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
@@ -347,6 +348,16 @@ abstract class DataSourceApi<
    * Get tag values for adhoc filters
    */
   getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
+
+  /**
+   * Get default variables that will be added to the dashboard
+   */
+  getDefaultVariables?(): Promise<VariableKind[]>;
+
+  /**
+   * Get default dashboard links that should be added when this datasource is used.
+   */
+  getDefaultLinks?(): Promise<DashboardLink[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around

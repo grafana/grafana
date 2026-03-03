@@ -106,6 +106,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
     repoURL: undefined,
     repoType: 'github',
     ...overrides.pullRequestParam,
+    resourcePushedTo: 'abc',
   });
 
   mockUseGetResourceRepositoryView.mockReturnValue({
