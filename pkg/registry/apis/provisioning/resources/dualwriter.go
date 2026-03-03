@@ -208,39 +208,29 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	wrap.URLs = urls
 
 	if r.shouldUpdateGrafanaDB(opts, nil) {
-		if err := r.syncFolderToGrafana(ctx, opts, stableUID, wrap); err != nil {
+		var folderID string
+		if stableUID != "" {
+			if err := r.folders.CreateFolderWithUID(ctx, opts.Path, stableUID); err != nil {
+				return nil, err
+			}
+			folderID = stableUID
+		} else {
+			var err error
+			folderID, err = r.folders.EnsureFolderPathExist(ctx, opts.Path)
+			if err != nil {
+				return nil, err
+			}
+		}
+		current, err := r.folders.GetFolder(ctx, folderID)
+		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, err
+		}
+		if current != nil {
+			wrap.Resource.Upsert = v0alpha1.Unstructured{Object: current.Object}
 		}
 	}
 
 	return wrap, nil
-}
-
-// syncFolderToGrafana synchronizes the newly created folder into the Grafana database.
-func (r *DualReadWriter) syncFolderToGrafana(ctx context.Context, opts DualWriteOptions, stableUID string, wrap *provisioning.ResourceWrapper) error {
-	var folderID string
-	if stableUID != "" {
-		// Flag was enabled: create the Grafana folder with the stable UID from _folder.json
-		if err := r.folders.CreateFolderWithUID(ctx, opts.Path, stableUID); err != nil {
-			return err
-		}
-		folderID = stableUID
-	} else {
-		// Flag was disabled: use the existing hash-based UID path
-		var err error
-		folderID, err = r.folders.EnsureFolderPathExist(ctx, opts.Path)
-		if err != nil {
-			return err
-		}
-	}
-	current, err := r.folders.GetFolder(ctx, folderID)
-	if err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-	if current != nil {
-		wrap.Resource.Upsert = v0alpha1.Unstructured{Object: current.Object}
-	}
-	return nil
 }
 
 // CreateResource creates a new resource in the repository
