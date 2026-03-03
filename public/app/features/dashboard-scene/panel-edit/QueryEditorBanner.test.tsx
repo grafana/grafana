@@ -40,7 +40,7 @@ describe('QueryEditorBanner', () => {
       render(<QueryEditorBanner useQueryExperienceNext={true} onToggle={onToggle} onDismiss={onDismiss} />);
 
       expect(screen.getByText('New query editor!')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /go back to classic/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /back to classic/i })).toBeInTheDocument();
     });
 
     it('does not show "Try it out" button', () => {
@@ -52,7 +52,7 @@ describe('QueryEditorBanner', () => {
     it('calls onToggle when "Go back to classic" is clicked', async () => {
       render(<QueryEditorBanner useQueryExperienceNext={true} onToggle={onToggle} onDismiss={onDismiss} />);
 
-      await userEvent.click(screen.getByRole('button', { name: /go back to classic/i }));
+      await userEvent.click(screen.getByRole('button', { name: /back to classic/i }));
 
       expect(onToggle).toHaveBeenCalledTimes(1);
     });
