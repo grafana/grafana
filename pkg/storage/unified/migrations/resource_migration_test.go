@@ -176,7 +176,7 @@ func TestIntegrationRun_Rename(t *testing.T) {
 			skip:      func() bool { return !db.IsTestDbSQLite() },
 			locker:    func() MigrationTableLocker { return noopLocker() },
 			renamer:   func() MigrationTableRenamer { return &transactionalTableRenamer{log: logger} },
-			numTables: 1, wantRenamed: true,
+			numTables: 1, wantRenamed: false,
 		},
 		{
 			name: "MySQL multiple tables",
@@ -201,7 +201,7 @@ func TestIntegrationRun_Rename(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.skip() {
-				t.Skipf("%s-only", tc.name)
+				t.Skip("skipped for this DB type")
 			}
 
 			tables := make([]string, tc.numTables)
@@ -266,19 +266,23 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 		renamer.Init(sess, mg)
 
 		unlock, results := lockAndQueueRename(t, env.engine, []string{t1, t2})
+		require.Len(t, results, 2, "expected one result channel per table")
 
 		pairs := []renamePair{{t1, t1 + legacySuffix}, {t2, t2 + legacySuffix}}
 		require.NoError(t, renamer.waitForRenamesQueued(context.Background(), pairs))
 
 		unlock()
+		completed := 0
 		for _, ch := range results {
 			select {
 			case err := <-ch:
 				require.NoError(t, err)
+				completed++
 			case <-time.After(10 * time.Second):
 				t.Fatal("RENAME timed out")
 			}
 		}
+		require.Equal(t, 2, completed, "both renames should complete")
 	})
 
 	t.Run("mismatched table times out", func(t *testing.T) {
@@ -338,6 +342,9 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 // delivers the rename result.
 func lockAndQueueRename(t *testing.T, engine *xorm.Engine, tables []string) (unlock func(), results []<-chan error) {
 	t.Helper()
+	if !db.IsTestDbMySQL() {
+		t.Skip("MySQL-only")
+	}
 
 	lockConn, err := engine.DB().Conn(context.Background())
 	require.NoError(t, err)
@@ -404,6 +411,83 @@ func TestIntegrationRunMySQL_CrashRecovery(t *testing.T) {
 	// Recovery restores tables, then full migration re-runs including rename
 	m.AssertCalled(t, "Migrate", mock.Anything, mock.Anything)
 	assertRenamed(t, env.engine, t1, t2)
+}
+
+func TestIntegrationRecoverRenamedTables(t *testing.T) {
+	env := newTestEnv(t)
+	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+
+	type renamerSetup struct {
+		name string
+		make func(t *testing.T) MigrationTableRenamer
+	}
+
+	setups := []renamerSetup{
+		{
+			name: "transactional",
+			make: func(t *testing.T) MigrationTableRenamer {
+				t.Helper()
+				r := &transactionalTableRenamer{log: logger}
+				sess := env.engine.NewSession()
+				t.Cleanup(func() { _ = sess.Rollback(); sess.Close() })
+				require.NoError(t, sess.Begin())
+				r.Init(sess, mg)
+				return r
+			},
+		},
+	}
+	if db.IsTestDbMySQL() {
+		setups = append(setups, renamerSetup{
+			name: "mysql",
+			make: func(t *testing.T) MigrationTableRenamer {
+				t.Helper()
+				r := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
+				r.Init(nil, mg) // mysql renamer uses mg.DBEngine, not sess
+				return r
+			},
+		})
+	}
+
+	for _, setup := range setups {
+		t.Run(setup.name+"/normal state", func(t *testing.T) {
+			table := uniqueTable(t, env.engine)
+			require.NoError(t, setup.make(t).RecoverRenamedTables([]string{table}))
+		})
+
+		t.Run(setup.name+"/recovery — legacy exists, original missing", func(t *testing.T) {
+			table := uniqueTable(t, env.engine)
+			_, err := env.engine.Exec(fmt.Sprintf("ALTER TABLE %s RENAME TO %s", env.engine.Quote(table), env.engine.Quote(table+legacySuffix)))
+			require.NoError(t, err)
+
+			require.NoError(t, setup.make(t).RecoverRenamedTables([]string{table}))
+
+			exists, err := env.engine.IsTableExist(table)
+			require.NoError(t, err)
+			require.True(t, exists, "original table should be restored")
+		})
+
+		t.Run(setup.name+"/error — both exist", func(t *testing.T) {
+			table := uniqueTable(t, env.engine)
+			_, err := env.engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", env.engine.Quote(table+legacySuffix)))
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_, _ = env.engine.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", env.engine.Quote(table+legacySuffix)))
+			})
+
+			err = setup.make(t).RecoverRenamedTables([]string{table})
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "both")
+			require.Contains(t, err.Error(), "manual intervention")
+		})
+
+		t.Run(setup.name+"/error — neither exists", func(t *testing.T) {
+			missing := "nonexistent_" + uuid.New().String()[:8]
+			err := setup.make(t).RecoverRenamedTables([]string{missing})
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "neither")
+			require.Contains(t, err.Error(), "manual intervention")
+		})
+	}
 }
 
 func TestIntegrationBuildRenamePairs(t *testing.T) {

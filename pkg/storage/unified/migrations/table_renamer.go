@@ -61,20 +61,23 @@ func (r *transactionalTableRenamer) RecoverRenamedTables(tables []string) error 
 		if err != nil {
 			return fmt.Errorf("failed to check if table %q exists: %w", legacyName, err)
 		}
-		if !legacyExists {
-			continue
-		}
 		originalExists, err := r.mg.DBEngine.IsTableExist(table)
 		if err != nil {
 			return fmt.Errorf("failed to check if table %q exists: %w", table, err)
 		}
-		if originalExists {
-			return fmt.Errorf("both %q and %q exist, unexpected state — manual intervention required", table, legacyName)
-		}
-		restoreSQL := r.mg.Dialect.RenameTable(legacyName, table)
-		r.log.Info("Restoring renamed table", "from", legacyName, "to", table)
-		if _, err := r.sess.Exec(restoreSQL); err != nil {
-			return fmt.Errorf("failed to restore table %q to %q: %w", legacyName, table, err)
+		switch {
+		case !legacyExists && !originalExists:
+			return fmt.Errorf("neither %q nor %q exist, tables are missing, manual intervention required", table, legacyName)
+		case legacyExists && originalExists:
+			return fmt.Errorf("both %q and %q exist, unexpected state, manual intervention required", table, legacyName)
+		case originalExists:
+			continue // normal state, nothing to recover
+		default: // legacyExists && !originalExists, needs recovery
+			restoreSQL := r.mg.Dialect.RenameTable(legacyName, table)
+			r.log.Info("Restoring renamed table", "from", legacyName, "to", table)
+			if _, err := r.sess.Exec(restoreSQL); err != nil {
+				return fmt.Errorf("failed to restore table %q to %q: %w", legacyName, table, err)
+			}
 		}
 	}
 	return nil
@@ -122,20 +125,23 @@ func (r *mysqlTableRenamer) RecoverRenamedTables(tables []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to check if table %q exists: %w", legacyName, err)
 		}
-		if !legacyExists {
-			continue
-		}
 		originalExists, err := r.mg.DBEngine.IsTableExist(table)
 		if err != nil {
 			return fmt.Errorf("failed to check if table %q exists: %w", table, err)
 		}
-		if originalExists {
-			return fmt.Errorf("both %q and %q exist, unexpected state — manual intervention required", table, legacyName)
-		}
-		restoreSQL := r.mg.Dialect.RenameTable(legacyName, table)
-		r.log.Info("Restoring renamed table", "from", legacyName, "to", table)
-		if _, err := r.mg.DBEngine.Exec(restoreSQL); err != nil {
-			return fmt.Errorf("failed to restore table %q to %q: %w", legacyName, table, err)
+		switch {
+		case !legacyExists && !originalExists:
+			return fmt.Errorf("neither %q nor %q exist, tables are missing, manual intervention required", table, legacyName)
+		case legacyExists && originalExists:
+			return fmt.Errorf("both %q and %q exist, unexpected state, manual intervention required", table, legacyName)
+		case originalExists:
+			continue // normal state, nothing to recover
+		default: // legacyExists && !originalExists — needs recovery
+			restoreSQL := r.mg.Dialect.RenameTable(legacyName, table)
+			r.log.Info("Restoring renamed table", "from", legacyName, "to", table)
+			if _, err := r.mg.DBEngine.Exec(restoreSQL); err != nil {
+				return fmt.Errorf("failed to restore table %q to %q: %w", legacyName, table, err)
+			}
 		}
 	}
 	return nil
