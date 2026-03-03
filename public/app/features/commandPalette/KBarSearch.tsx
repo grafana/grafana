@@ -26,6 +26,14 @@ export function KBarSearch(
     query.setSearch(inputValue);
   }, [inputValue, query]);
 
+  React.useEffect(() => {
+    if (search !== inputValue) {
+      setInputValue(search);
+    }
+    // Only sync when kbar's search changes externally (e.g. clear button)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
   const { defaultPlaceholder, ...rest } = props;
 
   React.useEffect(() => {

@@ -3,14 +3,14 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptyState, Icon, IconButton, LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
@@ -38,6 +38,7 @@ export function CommandPalette() {
  */
 function CommandPaletteContents() {
   const lateralSpace = getCommandPalettePosition();
+  const [hasDetailPanel, setHasDetailPanel] = useState(false);
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
   const { query, searchQuery, currentRootActionId } = useKBar((state) => ({
@@ -45,7 +46,6 @@ function CommandPaletteContents() {
     searchQuery: state.searchQuery,
     currentRootActionId: state.currentRootActionId,
   }));
-
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
@@ -66,10 +66,12 @@ function CommandPaletteContents() {
     show: !currentRootActionId,
   });
 
-  // Combine all search results (dashboard/folder results + dynamic plugin results)
+  // Combine all search results (dashboard/folder results + flat dynamic plugin results).
+  // When drilled into a parent action, hide flat search results -- hierarchical
+  // children are handled by kbar's store via useRegisterActions.
   const searchResults = useMemo(
-    () => [...dashboardFolderResults, ...dynamicResults],
-    [dashboardFolderResults, dynamicResults]
+    () => (currentRootActionId ? [] : [...dashboardFolderResults, ...dynamicResults]),
+    [dashboardFolderResults, dynamicResults, currentRootActionId]
   );
 
   const ref = useRef<HTMLDivElement>(null);
@@ -87,7 +89,7 @@ function CommandPaletteContents() {
 
   return (
     <KBarPositioner className={styles.positioner}>
-      <KBarAnimator className={styles.animator}>
+      <KBarAnimator className={cx(styles.animator, hasDetailPanel && styles.animatorWide)}>
         <FocusScope contain autoFocus restoreFocus>
           <div {...overlayProps} {...dialogProps}>
             <div className={styles.searchContainer}>
@@ -97,6 +99,20 @@ function CommandPaletteContents() {
                 defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                 className={styles.search}
               />
+              {searchQuery && (
+                <IconButton
+                  name="times"
+                  size="sm"
+                  variant="secondary"
+                  aria-label={t('command-palette.search-box.clear', 'Clear search')}
+                  className={styles.clearButton}
+                  tabIndex={-1}
+                  onClick={() => {
+                    query.setSearch('');
+                    query.getInput().focus();
+                  }}
+                />
+              )}
               <div className={styles.loadingBarContainer}>
                 {(isFetchingSearchResults || isDynamicLoading) && <LoadingBar width={500} delay={0} />}
               </div>
@@ -107,6 +123,7 @@ function CommandPaletteContents() {
                 isFetchingSearchResults={isFetchingSearchResults || isDynamicLoading}
                 searchResults={searchResults}
                 searchQuery={searchQuery}
+                onHasDetailPanelChange={setHasDetailPanel}
               />
             </div>
           </div>
@@ -132,9 +149,8 @@ function AncestorBreadcrumbs() {
   }));
 
   // To show breadcrumbs of actions selected if they are nested
-  const ancestorActions = currentRootActionId
-    ? [...actions[currentRootActionId].ancestors, actions[currentRootActionId]]
-    : [];
+  const currentAction = currentRootActionId ? actions[currentRootActionId] : undefined;
+  const ancestorActions = currentAction ? [...currentAction.ancestors, currentAction] : [];
 
   return (
     ancestorActions.length > 0 && (
@@ -151,11 +167,25 @@ interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
   searchQuery: string;
+  onHasDetailPanelChange?: (hasPanel: boolean) => void;
 }
 
-const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: RenderResultsProps) => {
+interface ActionWithDetailPanel extends ActionImpl {
+  detailPanel?: React.ReactNode;
+}
+
+const RenderResults = ({
+  isFetchingSearchResults,
+  searchResults,
+  searchQuery,
+  onHasDetailPanelChange,
+}: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
-  const { query } = useKBar();
+  const { query, actions, activeIndex, currentRootActionId } = useKBar((state) => ({
+    actions: state.actions,
+    activeIndex: state.activeIndex,
+    currentRootActionId: state.currentRootActionId,
+  }));
   const { isAvailable: isAssistantAvailable } = useAssistant();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
@@ -222,23 +252,51 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
     return results;
   }, [kbarResults, groupedSearchResults, dashboardsSectionTitle, foldersSectionTitle]);
 
+  // Resolve the detail panel for the currently active item.
+  // When drilled into children, use the parent action's panel.
+  const activeDetailPanel = useMemo(() => {
+    if (currentRootActionId) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const parent = actions[currentRootActionId] as ActionWithDetailPanel | undefined;
+      return parent?.detailPanel ?? null;
+    }
+    const activeItem = items[activeIndex];
+    if (activeItem && typeof activeItem !== 'string') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return (activeItem as ActionWithDetailPanel).detailPanel ?? null;
+    }
+    return null;
+  }, [currentRootActionId, actions, items, activeIndex]);
+
+  useEffect(() => {
+    onHasDetailPanelChange?.(activeDetailPanel != null);
+  }, [activeDetailPanel, onHasDetailPanelChange]);
+
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
   useEffect(() => {
     showEmptyState && reportInteraction('grafana_empty_state_shown', { source: 'command_palette' });
   }, [showEmptyState]);
 
-  return showEmptyState ? (
-    <EmptyState variant="not-found" role="alert" message={t('command-palette.empty-state.message', 'No results found')}>
-      {isAssistantAvailable && (
-        <OpenAssistantButton
-          origin="grafana/command-palette-empty-state"
-          prompt={`Search for ${searchQuery}`}
-          title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
-          onClick={query.toggle}
-        />
-      )}
-    </EmptyState>
-  ) : (
+  if (showEmptyState) {
+    return (
+      <EmptyState
+        variant="not-found"
+        role="alert"
+        message={t('command-palette.empty-state.message', 'No results found')}
+      >
+        {isAssistantAvailable && (
+          <OpenAssistantButton
+            origin="grafana/command-palette-empty-state"
+            prompt={`Search for ${searchQuery}`}
+            title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
+            onClick={query.toggle}
+          />
+        )}
+      </EmptyState>
+    );
+  }
+
+  const resultsList = (
     <KBarResults
       items={items}
       maxHeight={650}
@@ -256,6 +314,17 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
       }}
     />
   );
+
+  if (!activeDetailPanel) {
+    return resultsList;
+  }
+
+  return (
+    <div className={styles.splitPane}>
+      <div className={styles.splitPaneLeft}>{resultsList}</div>
+      <div className={styles.splitPaneRight}>{activeDetailPanel}</div>
+    </div>
+  );
 };
 
 const getCommandPalettePosition = () => {
@@ -271,7 +340,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     positioner: css({
       zIndex: theme.zIndex.portal,
       marginTop: '0px',
-      paddingTop: '4px !important',
+      paddingTop: '5vh !important',
       '&::before': {
         content: '""',
         position: 'fixed',
@@ -284,20 +353,19 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     }),
     animator: css({
       width: '100%',
-      maxWidth: theme.breakpoints.values.md,
+      maxWidth: 640,
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
-      [theme.breakpoints.up('lg')]: {
-        position: 'fixed',
-        right: lateralSpace,
-        left: lateralSpace,
-        maxWidth: 'unset',
-        width: 'unset',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('max-width', { duration: theme.transitions.duration.short }),
       },
+    }),
+    animatorWide: css({
+      maxWidth: 960,
     }),
     loadingBarContainer: css({
       position: 'absolute',
@@ -327,6 +395,23 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     }),
     resultsContainer: css({
       paddingBottom: theme.spacing(1),
+    }),
+    splitPane: css({
+      display: 'flex',
+      flexDirection: 'row',
+    }),
+    splitPaneLeft: css({
+      flex: '1 1 55%',
+      minWidth: 0,
+      overflow: 'hidden',
+    }),
+    splitPaneRight: css({
+      flex: '1 1 45%',
+      minWidth: 0,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      maxHeight: 650,
+      overflowY: 'auto',
+      overflowX: 'hidden',
     }),
     sectionHeader: css({
       padding: theme.spacing(1.5, 2, 2, 2),
@@ -360,6 +445,13 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     }),
     searchIcon: css({
       marginRight: theme.spacing(1),
+    }),
+    clearButton: css({
+      color: theme.colors.text.secondary,
+      flexShrink: 0,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
     selectedScope: css({
       background: theme.colors.background.secondary,

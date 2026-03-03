@@ -43,10 +43,54 @@ export const KBarResults = (props: KBarResultsProps) => {
     activeIndex: state.activeIndex,
   }));
 
+  const focusSearchInput = React.useCallback(() => {
+    const input = document.querySelector<HTMLInputElement>('input[role="combobox"]');
+    input?.focus();
+  }, []);
+
+  // Track which secondary-action button is focused so we don't lose
+  // state across React re-renders that may recreate DOM nodes.
+  const secondaryFocusIdx = React.useRef(-1);
+
+  const getSecondaryButtons = React.useCallback(() => {
+    const row = activeRef.current;
+    if (!row) {
+      return [];
+    }
+    const container = row.querySelector<HTMLElement>('[data-secondary-actions]');
+    if (!container) {
+      return [];
+    }
+    return Array.from(container.querySelectorAll<HTMLButtonElement>('button'));
+  }, []);
+
+  const focusSecondaryButton = React.useCallback(
+    (idx: number) => {
+      const focus = () => {
+        const buttons = getSecondaryButtons();
+        if (idx >= 0 && idx < buttons.length) {
+          buttons[idx].focus();
+          secondaryFocusIdx.current = idx;
+        }
+      };
+      focus();
+      // Re-apply after potential React re-renders from FocusScope
+      requestAnimationFrame(focus);
+    },
+    [getSecondaryButtons]
+  );
+
   React.useEffect(() => {
     const handler = (event: KeyboardEvent) => {
+      const onSecondaryAction =
+        secondaryFocusIdx.current >= 0 || !!document.activeElement?.closest('[data-secondary-actions]');
+
       if (event.key === 'ArrowUp' || (event.ctrlKey && event.key === 'p')) {
         event.preventDefault();
+        if (onSecondaryAction) {
+          secondaryFocusIdx.current = -1;
+          focusSearchInput();
+        }
         query.setActiveIndex((index) => {
           let nextIndex = index > START_INDEX ? index - 1 : index;
           // avoid setting active index on a group
@@ -60,6 +104,10 @@ export const KBarResults = (props: KBarResultsProps) => {
         });
       } else if (event.key === 'ArrowDown' || (event.ctrlKey && event.key === 'n')) {
         event.preventDefault();
+        if (onSecondaryAction) {
+          secondaryFocusIdx.current = -1;
+          focusSearchInput();
+        }
         query.setActiveIndex((index) => {
           let nextIndex = index < itemsRef.current.length - 1 ? index + 1 : index;
           // avoid setting active index on a group
@@ -71,7 +119,47 @@ export const KBarResults = (props: KBarResultsProps) => {
           }
           return nextIndex;
         });
+      } else if (event.key === 'Tab') {
+        const buttons = getSecondaryButtons();
+        if (buttons.length === 0) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        const idx = secondaryFocusIdx.current;
+
+        if (event.shiftKey) {
+          if (idx > 0) {
+            focusSecondaryButton(idx - 1);
+          } else {
+            secondaryFocusIdx.current = -1;
+            focusSearchInput();
+          }
+        } else {
+          if (idx < 0) {
+            focusSecondaryButton(0);
+          } else if (idx < buttons.length - 1) {
+            focusSecondaryButton(idx + 1);
+          } else {
+            secondaryFocusIdx.current = -1;
+            focusSearchInput();
+          }
+        }
       } else if (event.key === 'Enter' && !event.metaKey) {
+        if (onSecondaryAction) {
+          // Click the tracked button directly and close the palette.
+          const buttons = getSecondaryButtons();
+          const idx = secondaryFocusIdx.current;
+          if (idx >= 0 && idx < buttons.length) {
+            buttons[idx].click();
+          }
+          secondaryFocusIdx.current = -1;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return;
+        }
         event.preventDefault();
         // storing the active dom element in a ref prevents us from
         // having to calculate the current action to perform based
@@ -82,12 +170,13 @@ export const KBarResults = (props: KBarResultsProps) => {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [query]);
+  }, [query, focusSearchInput, focusSecondaryButton, getSecondaryButtons]);
 
   // destructuring here to prevent linter warning to pass
   // entire rowVirtualizer in the dependencies array.
   const { scrollToIndex } = rowVirtualizer;
   React.useEffect(() => {
+    secondaryFocusIdx.current = -1;
     scrollToIndex(activeIndex, {
       // ensure that if the first item in the list is a group
       // name and we are focused on the second item, to not

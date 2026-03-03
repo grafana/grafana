@@ -600,6 +600,7 @@ export {
   type CentralAlertHistorySceneV1Props,
   type PluginExtensionCommandPaletteDynamicConfig,
   type CommandPaletteDynamicResult,
+  type CommandPaletteDynamicResultChild,
   type CommandPaletteDynamicSearchProvider,
   type CommandPaletteDynamicResultAction,
 } from './types/pluginExtensions';

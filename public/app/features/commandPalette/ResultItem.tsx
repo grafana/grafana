@@ -1,9 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { ActionId, ActionImpl } from 'kbar';
+import { ActionId, ActionImpl, useKBar } from 'kbar';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+
+interface ActionWithSecondaryActions extends ActionImpl {
+  secondaryActions?: React.ReactNode;
+}
 
 export const ResultItem = React.forwardRef(
   (
@@ -31,6 +35,7 @@ export const ResultItem = React.forwardRef(
       return action.ancestors.slice(index + 1);
     }, [action.ancestors, currentRootActionId]);
 
+    const { query } = useKBar();
     const styles = useStyles2(getResultItemStyles);
 
     let name = action.name;
@@ -43,6 +48,9 @@ export const ResultItem = React.forwardRef(
     if (action.children.length && !hasCommandOrLink(action) && !name.endsWith('...')) {
       name += '...';
     }
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const secondaryActions = (action as ActionWithSecondaryActions).secondaryActions;
 
     return (
       <div ref={ref} className={cx(styles.row, active && styles.activeRow)}>
@@ -63,6 +71,17 @@ export const ResultItem = React.forwardRef(
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
         </div>
+        {secondaryActions && (
+          <div
+            data-secondary-actions
+            className={cx(styles.secondaryActionsContainer, active && styles.secondaryActionsVisible)}
+            onClickCapture={() => {
+              setTimeout(() => query.toggle(), 0);
+            }}
+          >
+            {secondaryActions}
+          </div>
+        )}
       </div>
     );
   }
@@ -100,7 +119,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     actionContainer: css({
       display: 'flex',
       gap: theme.spacing(1),
-      alignItems: 'baseline',
+      alignItems: 'center',
       fontSize: theme.typography.fontSize,
       width: '100%',
     }),
@@ -129,6 +148,15 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+    }),
+    secondaryActionsContainer: css({
+      display: 'none',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      flexShrink: 0,
+    }),
+    secondaryActionsVisible: css({
+      display: 'flex',
     }),
   };
 };

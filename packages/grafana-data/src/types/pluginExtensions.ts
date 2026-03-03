@@ -361,6 +361,30 @@ type Dashboard = {
 // --------------------------------------------------------
 
 /**
+ * A child action for multi-level command palette drill-down.
+ * Shown when the user selects a parent result that has children.
+ */
+export type CommandPaletteDynamicResultChild = {
+  /** Unique identifier for this child (scoped to parent) */
+  id: string;
+  /** Display title */
+  title: string;
+  /** Optional subtitle or description */
+  description?: string;
+  /** Optional icon (React element) displayed to the left of the title */
+  icon?: React.ReactNode;
+  /** Optional keywords for search matching within the sub-menu */
+  keywords?: string[];
+  /**
+   * Action handler when this child is selected.
+   * If not provided, will use `path` for navigation.
+   */
+  onSelect?: CommandPaletteDynamicResultAction;
+  /** Optional URL to navigate to (alternative to onSelect) */
+  path?: string;
+};
+
+/**
  * A single dynamic result item returned by a command palette search provider
  */
 export type CommandPaletteDynamicResult = {
@@ -381,8 +405,21 @@ export type CommandPaletteDynamicResult = {
   /**
    * Action handler when this result is selected.
    * If not provided, will use `path` for navigation.
+   * Ignored when `children` is provided.
    */
   onSelect?: CommandPaletteDynamicResultAction;
+  /** Optional icon (React element) displayed to the left of the title */
+  icon?: React.ReactNode;
+  /** Optional React element rendered on the right side for secondary actions (e.g. buttons) */
+  secondaryActions?: React.ReactNode;
+  /**
+   * Optional child actions for multi-level drill-down.
+   * When provided, selecting this result drills into the children
+   * instead of executing `onSelect` or navigating to `path`.
+   */
+  children?: CommandPaletteDynamicResultChild[];
+  /** Optional detail panel rendered beside the results list when this item is active */
+  detailPanel?: React.ReactNode;
 };
 
 /**
