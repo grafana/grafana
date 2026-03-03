@@ -4,8 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import { useGetThemeQuery, useUpdateThemeMutation } from '@grafana/api-clients/rtkq/theme/v0alpha1';
 import { NavModelItem } from '@grafana/data';
+import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { Button, CodeEditor, Field, Input, Stack } from '@grafana/ui';
 
 import { Page } from '../../../core/components/Page/Page';
 
@@ -34,8 +35,12 @@ export default function EditCustomThemePage() {
     handleSubmit,
     register,
     reset,
+    watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<FormData>();
+  const themeJson = watch('themeJson');
+  register('themeJson', { required: true });
 
   useEffect(() => {
     if (theme) {
@@ -70,7 +75,19 @@ export default function EditCustomThemePage() {
               t('admin.edit-custom-theme-page.field-theme-json.validation-required', 'Theme JSON is required')
             }
           >
-            <TextArea {...register('themeJson', { required: true })} rows={20} />
+            <CodeEditor
+              value={themeJson ?? ''}
+              language="json"
+              height={400}
+              showLineNumbers={true}
+              onChange={(value) => setValue('themeJson', value, { shouldValidate: true, shouldDirty: true })}
+              onBeforeEditorMount={(monaco) => {
+                monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+                  validate: true,
+                  schemas: [{ uri: 'theme-schema', fileMatch: ['*'], schema: themeJsonSchema }],
+                });
+              }}
+            />
           </Field>
           <Stack justifyContent="flex-end">
             <Button variant="secondary" onClick={() => navigate('/themes')}>
