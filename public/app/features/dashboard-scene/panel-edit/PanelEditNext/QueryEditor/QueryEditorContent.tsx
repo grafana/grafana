@@ -14,13 +14,11 @@ import { useQueryEditorUIContext } from './QueryEditorContext';
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
-  const { cardType } = useQueryEditorUIContext();
-  const { queryOptions, showingDatasourceHelp, pendingExpression, pendingTransformation } = useQueryEditorUIContext();
-  const { isQueryOptionsOpen } = queryOptions;
+  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation } = useQueryEditorUIContext();
   const hasPendingPicker = !!pendingExpression || !!pendingTransformation;
   const isAlertView = cardType === QueryEditorType.Alert;
 
-  const shouldShowFooter = !hasPendingPicker && !isQueryOptionsOpen && !isAlertView;
+  const shouldShowFooter = !hasPendingPicker && !isAlertView;
   const shouldShowDatasourceHelp = !hasPendingPicker && showingDatasourceHelp;
 
   return (

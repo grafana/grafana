@@ -12,5 +12,9 @@
     "lastSeenAt": 0,
     "login": "user.one",
     "role": "Viewer"
+  },
+  "selectableFields": {
+    "spec.email": "user.one@test.com",
+    "spec.login": "user.one"
   }
 }
