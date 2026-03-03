@@ -2976,11 +2976,6 @@
       "count": 1
     }
   },
-  "public/app/features/variables/adhoc/picker/AdHocPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/adhoc/picker/ConditionSegment.tsx": {
     "no-restricted-syntax": {
       "count": 2
