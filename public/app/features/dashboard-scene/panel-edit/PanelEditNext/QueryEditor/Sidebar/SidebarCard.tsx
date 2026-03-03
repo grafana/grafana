@@ -180,8 +180,6 @@ function getStyles(
     },
   });
 
-  const disabledBg = theme.colors.background.canvas;
-
   return {
     cardContentIcons: css({
       display: 'flex',
