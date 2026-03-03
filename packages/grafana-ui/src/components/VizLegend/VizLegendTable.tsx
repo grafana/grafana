@@ -3,9 +3,9 @@ import { useMemo, type JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Button } from '@grafana/ui';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { useLimit } from '../List/hooks';
 

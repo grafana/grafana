@@ -2,9 +2,9 @@ import { cx, css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { Button } from '@grafana/ui';
 
 import { stylesFactory } from '../../themes/stylesFactory';
+import { Button } from '../Button/Button';
 
 import { useLimit } from './hooks';
 
