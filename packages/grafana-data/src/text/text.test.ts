@@ -1,4 +1,4 @@
-import { findMatchesInText, parseFlags } from './text';
+import { findHighlightChunksInText, findMatchesInText, parseFlags } from './text';
 
 describe('findMatchesInText()', () => {
   it('gets no matches for when search and or line are empty', () => {
@@ -64,5 +64,31 @@ describe('parseFlags()', () => {
     expect(parseFlags('(?i-i)foo')).toEqual({ cleaned: 'foo', flags: 'g' });
     expect(parseFlags('(?is)(?-ims)foo')).toEqual({ cleaned: 'foo', flags: 'g' });
     expect(parseFlags('(?i)(?-i)(?i)foo')).toEqual({ cleaned: 'foo', flags: 'gi' });
+  });
+});
+
+describe('findHighlightChunksInText()', () => {
+  it('finds all occurrences of a string search word', () => {
+    const chunks = findHighlightChunksInText({ searchWords: ['foo'], textToHighlight: 'foo bar foo' });
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0]).toMatchObject({ start: 0, end: 3 });
+    expect(chunks[1]).toMatchObject({ start: 8, end: 11 });
+  });
+
+  it('skips RegExp terms (only strings are matched)', () => {
+    const chunks = findHighlightChunksInText({ searchWords: [/foo/], textToHighlight: 'foo bar foo' });
+    expect(chunks).toEqual([]);
+  });
+
+  it('returns empty array when searchWords is empty', () => {
+    const chunks = findHighlightChunksInText({ searchWords: [], textToHighlight: 'foo bar' });
+    expect(chunks).toEqual([]);
+  });
+
+  it('returns union of matches for multiple string search words', () => {
+    const chunks = findHighlightChunksInText({ searchWords: ['foo', 'bar'], textToHighlight: 'foo bar foo' });
+    const texts = chunks.map((c) => c.text);
+    expect(texts).toContain('foo');
+    expect(texts).toContain('bar');
   });
 });

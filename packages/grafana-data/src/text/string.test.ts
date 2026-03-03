@@ -1,4 +1,15 @@
-import { escapeStringForRegex, stringToJsRegex, stringToMs, unEscapeStringFromRegex } from './string';
+import {
+  escapeRegex,
+  escapeStringForRegex,
+  stringStartsAsRegEx,
+  stringToJsRegex,
+  stringToMs,
+  toFloatOrUndefined,
+  toIntegerOrUndefined,
+  toNumberString,
+  toPascalCase,
+  unEscapeStringFromRegex,
+} from './string';
 
 describe('stringToJsRegex', () => {
   it('should just return string as RegEx if it does not start as a regex', () => {
@@ -106,5 +117,97 @@ describe('unEscapeStringFromRegex', () => {
       const result = unEscapeStringFromRegex('some string 123');
       expect(result).toBe('some string 123');
     });
+  });
+});
+
+describe('stringStartsAsRegEx()', () => {
+  it('returns true for strings starting with /', () => {
+    expect(stringStartsAsRegEx('/foo/')).toBe(true);
+  });
+
+  it('returns false for strings not starting with /', () => {
+    expect(stringStartsAsRegEx('foo')).toBe(false);
+  });
+
+  it('returns false for empty string', () => {
+    expect(stringStartsAsRegEx('')).toBe(false);
+  });
+});
+
+describe('toNumberString()', () => {
+  it('converts a number to string', () => {
+    expect(toNumberString(42)).toBe('42');
+  });
+
+  it('returns empty string for null', () => {
+    expect(toNumberString(null)).toBe('');
+  });
+
+  it('returns empty string for undefined', () => {
+    expect(toNumberString(undefined)).toBe('');
+  });
+
+  it('returns empty string for Infinity', () => {
+    expect(toNumberString(Infinity)).toBe('');
+  });
+});
+
+describe('toIntegerOrUndefined()', () => {
+  it('parses integer string', () => {
+    expect(toIntegerOrUndefined('42')).toBe(42);
+  });
+
+  it('truncates float string to integer', () => {
+    expect(toIntegerOrUndefined('3.7')).toBe(3);
+  });
+
+  it('returns undefined for non-numeric string', () => {
+    expect(toIntegerOrUndefined('abc')).toBeUndefined();
+  });
+
+  it('returns undefined for empty string', () => {
+    expect(toIntegerOrUndefined('')).toBeUndefined();
+  });
+});
+
+describe('toFloatOrUndefined()', () => {
+  it('parses float string', () => {
+    expect(toFloatOrUndefined('3.14')).toBe(3.14);
+  });
+
+  it('returns undefined for non-numeric string', () => {
+    expect(toFloatOrUndefined('abc')).toBeUndefined();
+  });
+
+  it('returns undefined for empty string', () => {
+    expect(toFloatOrUndefined('')).toBeUndefined();
+  });
+});
+
+describe('toPascalCase()', () => {
+  it('converts space-separated words', () => {
+    expect(toPascalCase('hello world')).toBe('HelloWorld');
+  });
+
+  it('converts hyphen-separated words', () => {
+    expect(toPascalCase('foo-bar')).toBe('FooBar');
+  });
+
+  it('capitalizes a single word', () => {
+    expect(toPascalCase('already')).toBe('Already');
+  });
+});
+
+describe('escapeRegex()', () => {
+  it('escapes dots', () => {
+    expect(escapeRegex('hello.world')).toBe('hello\\.world');
+  });
+
+  it('escapes square brackets', () => {
+    expect(escapeRegex('foo[bar]')).toBe('foo\\[bar\\]');
+  });
+
+  it('leaves plain text unchanged', () => {
+    expect(escapeRegex('helloworld')).toBe('helloworld');
   });
 });

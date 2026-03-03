@@ -443,6 +443,46 @@ describe('preparePlotConfigBuilder crash guards', () => {
     expect(mockInit).toHaveBeenCalledWith(expect.anything(), { main: 1 });
   });
 
+  it('reuses the same index map for multiple renderers without re-computing it', () => {
+    const frame = {
+      fields: [
+        {
+          config: {},
+          values: [1000, 2000, 3000],
+          name: 'Time',
+          state: { multipleFrames: false, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
+          type: FieldType.time,
+        },
+        {
+          config: {},
+          values: [1, 2, 3],
+          name: 'Value',
+          state: { multipleFrames: false, displayName: 'Value', origin: { fieldIndex: 1, frameIndex: 0 } },
+          type: FieldType.number,
+        },
+      ],
+      length: 3,
+    } as unknown as DataFrame;
+
+    const mockInit1 = jest.fn();
+    const mockInit2 = jest.fn();
+
+    preparePlotConfigBuilder({
+      frame,
+      theme: createTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      allFrames: [frame],
+      renderers: [
+        { fieldMap: { main: 'Value' }, indicesOnly: [], init: mockInit1 },
+        { fieldMap: { secondary: 'Value' }, indicesOnly: [], init: mockInit2 },
+      ],
+    });
+
+    expect(mockInit1).toHaveBeenCalledWith(expect.anything(), { main: 1 });
+    expect(mockInit2).toHaveBeenCalledWith(expect.anything(), { secondary: 1 });
+  });
+
   it('pointColorFn does not throw when invoked before prepData (panel type change scenario)', () => {
     const frame = createDataFrame({
       fields: [

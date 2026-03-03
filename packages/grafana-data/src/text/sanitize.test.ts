@@ -1,4 +1,15 @@
-import { sanitizeTextPanelContent, sanitizeUrl, sanitize, validatePath, PathValidationError } from './sanitize';
+import {
+  escapeHtml,
+  hasAnsiCodes,
+  sanitize,
+  sanitizeSVGContent,
+  sanitizeTrustedTypes,
+  sanitizeTrustedTypesRSS,
+  sanitizeTextPanelContent,
+  sanitizeUrl,
+  validatePath,
+  PathValidationError,
+} from './sanitize';
 
 describe('sanitizeTextPanelContent', () => {
   it('should allow whitelisted styles in text panel', () => {
@@ -189,5 +200,75 @@ describe('validatePath', () => {
     it('should handle URLs with backslashes and dots in the path', () => {
       expect(() => validatePath('https://api.example.com/\\..\\/admin')).toThrow(PathValidationError);
     });
+  });
+});
+
+describe('escapeHtml()', () => {
+  it('escapes script tags', () => {
+    expect(escapeHtml('<script>')).toBe('&lt;script&gt;');
+  });
+
+  it('escapes double quotes, ampersands, and single quotes', () => {
+    expect(escapeHtml('"double" & \'single\'')).toBe('&quot;double&quot; &amp; &#39;single&#39;');
+  });
+
+  it('leaves plain text unchanged', () => {
+    expect(escapeHtml('hello world')).toBe('hello world');
+  });
+});
+
+describe('hasAnsiCodes()', () => {
+  it('returns true for strings with ANSI escape codes', () => {
+    expect(hasAnsiCodes('\u001b[32mgreen\u001b[0m')).toBe(true);
+  });
+
+  it('returns false for strings without ANSI codes', () => {
+    expect(hasAnsiCodes('plain text')).toBe(false);
+  });
+
+  it('returns false for empty string', () => {
+    expect(hasAnsiCodes('')).toBe(false);
+  });
+});
+
+describe('sanitizeSVGContent()', () => {
+  it('passes through valid SVG content', () => {
+    const svg = '<svg><rect width="10" height="10"/></svg>';
+    const result = sanitizeSVGContent(svg);
+    expect(result).toContain('<rect');
+  });
+
+  it('removes script tags from SVG', () => {
+    const svg = '<svg><script>alert(1)</script><rect width="10" height="10"/></svg>';
+    const result = sanitizeSVGContent(svg);
+    expect(result).not.toContain('<script>');
+    expect(result).toContain('<rect');
+  });
+});
+
+describe('sanitizeTrustedTypes()', () => {
+  it('passes through safe content', () => {
+    const result = sanitizeTrustedTypes('<p>hello</p>') as unknown as string;
+    expect(result).toBeTruthy();
+    expect(String(result)).toContain('hello');
+  });
+
+  it('strips XSS payloads', () => {
+    const result = sanitizeTrustedTypes('<script>alert(1)</script>') as unknown as string;
+    expect(String(result)).not.toContain('<script>');
+  });
+});
+
+describe('sanitizeTrustedTypesRSS()', () => {
+  it('preserves RSS markup', () => {
+    const rss = '<rss><channel><title>My Feed</title></channel></rss>';
+    const result = sanitizeTrustedTypesRSS(rss) as unknown as string;
+    expect(String(result)).toContain('My Feed');
+  });
+
+  it('strips script tags from RSS', () => {
+    const rss = '<rss><channel><title>Feed</title><script>alert(1)</script></channel></rss>';
+    const result = sanitizeTrustedTypesRSS(rss) as unknown as string;
+    expect(String(result)).not.toContain('<script>');
   });
 });

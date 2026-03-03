@@ -1009,5 +1009,84 @@ describe('UPlotConfigBuilder', () => {
       const color = config.cursor!.points!.fill!(mockU, 1);
       expect(color).toBe('#ff0000');
     });
+
+    it('returns the stroke string directly when _stroke is already a string', () => {
+      const builder = new UPlotConfigBuilder();
+      const config = builder.getConfig();
+      const mockU = {
+        series: [null, { points: { _stroke: '#aabbcc' } }],
+        cursor: { idxs: [null, 0] },
+      } as unknown as uPlot;
+
+      // @ts-ignore
+      const result = config.cursor!.points!.stroke!(mockU, 1);
+      expect(result).toMatch(/^#aabbcc/);
+    });
+
+    it('does not throw when the field at seriesIdx is undefined', () => {
+      const builder = new UPlotConfigBuilder();
+      builder['frames'] = [{ fields: [] }] as unknown as DataFrame[];
+
+      const config = builder.getConfig();
+      const mockU = {
+        series: [null, { points: { _stroke: () => 'fn' } }],
+        cursor: { idxs: [null, 1] },
+      } as unknown as uPlot;
+
+      expect(() => {
+        // @ts-ignore
+        config.cursor!.points!.stroke!(mockU, 1);
+      }).not.toThrow();
+    });
+
+    it('does not throw when field.display is undefined', () => {
+      const builder = new UPlotConfigBuilder();
+      builder['frames'] = [{ fields: [null, { display: undefined, values: [1, 2, 3] }] }] as unknown as DataFrame[];
+
+      const config = builder.getConfig();
+      const mockU = {
+        series: [null, { points: { _stroke: () => 'fn' } }],
+        cursor: { idxs: [null, 1] },
+      } as unknown as uPlot;
+
+      expect(() => {
+        // @ts-ignore
+        config.cursor!.points!.stroke!(mockU, 1);
+      }).not.toThrow();
+    });
+
+    it('does not throw when cursor.idxs entry for the series is undefined', () => {
+      const builder = new UPlotConfigBuilder();
+      builder['frames'] = [
+        {
+          fields: [null, { display: jest.fn(() => ({ color: 'red', text: '1', numeric: 1 })), values: [1, 2, 3] }],
+        },
+      ] as unknown as DataFrame[];
+
+      const config = builder.getConfig();
+      const mockU = {
+        series: [null, { points: { _stroke: () => 'fn' } }],
+        cursor: { idxs: [null, undefined] },
+      } as unknown as uPlot;
+
+      expect(() => {
+        // @ts-ignore
+        config.cursor!.points!.stroke!(mockU, 1);
+      }).not.toThrow();
+    });
+
+    it('does not throw when cursor.idxs itself is null', () => {
+      const builder = new UPlotConfigBuilder();
+      const config = builder.getConfig();
+      const mockU = {
+        series: [null, { points: { _stroke: () => 'fn' } }],
+        cursor: { idxs: null },
+      } as unknown as uPlot;
+
+      expect(() => {
+        // @ts-ignore
+        config.cursor!.points!.stroke!(mockU, 1);
+      }).not.toThrow();
+    });
   });
 });
