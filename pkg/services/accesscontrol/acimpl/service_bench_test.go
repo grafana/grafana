@@ -28,7 +28,7 @@ import (
 func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.Service, *user.SignedInUser) {
 	now := time.Now()
 	sqlStore := db.InitTestDB(b)
-	store := database.ProvideService(sqlStore, 0)
+	store := database.ProvideService(sqlStore)
 	acService := &Service{
 		cfg:            setting.NewCfg(),
 		log:            log.New("accesscontrol-test"),
