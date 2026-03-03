@@ -1575,9 +1575,9 @@ export type UpdateTeamApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetTeamGroupsApiResponse = /** status 200 OK */ GetGroupsResponse;
+export type GetTeamGroupsApiResponse = /** status 200 OK */ GetTeamGroupsResponse;
 export type GetTeamGroupsApiArg = {
-  /** name of the GetGroupsResponse */
+  /** name of the GetTeamGroupsResponse */
   name: string;
   /** number of results to return */
   limit?: number;
@@ -2116,14 +2116,14 @@ export type TeamList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GetGroupsExternalGroupMapping = {
+export type GetTeamGroupsExternalGroupMapping = {
   externalGroup: string;
   name: string;
 };
-export type GetGroupsResponse = {
+export type GetTeamGroupsResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GetGroupsExternalGroupMapping[];
+  items: GetTeamGroupsExternalGroupMapping[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };

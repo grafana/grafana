@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import memoize from 'micro-memoize';
+import memoize, { Key, RawKey } from 'micro-memoize';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
@@ -8,7 +8,18 @@ import { COLUMN, TABLE } from './constants';
 import { TableCellStyles } from './types';
 import { getJustifyContent, IS_SAFARI_26, TextAlign } from './utils';
 
-export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
+/**
+ * @internal
+ * a method that can be used with micro-memoize as a cache key equality comparator.
+ */
+export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =>
+  cacheKey[0] === key[0] &&
+  cacheKey[1].shouldOverflow === key[1].shouldOverflow &&
+  cacheKey[1].maxHeight === key[1].maxHeight &&
+  cacheKey[1].textAlign === key[1].textAlign &&
+  cacheKey[1].textWrap === key[1].textWrap;
+
+export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
   const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells
@@ -148,9 +159,9 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
     menuItem: css({ maxWidth: '200px' }),
     safariWrapper: css({ contain: 'strict', height: '100%' }),
   };
-};
+});
 
-export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
+export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
   css({
     display: 'flex',
     gap: theme.spacing(0.5),
@@ -159,46 +170,53 @@ export const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Proper
     paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
     '&:last-child': { borderInlineEnd: 'none' },
-  });
+  })
+);
 
-export const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, shouldOverflow, maxHeight }) =>
-  css({
-    display: 'flex',
-    alignItems: 'center',
-    textAlign,
-    justifyContent: Boolean(maxHeight) ? 'flex-start' : getJustifyContent(textAlign),
-    ...(maxHeight && { overflowY: 'hidden' }),
-    ...(shouldOverflow && { minHeight: '100%' }),
+export const getDefaultCellStyles: TableCellStyles = memoize(
+  (theme, { textAlign, shouldOverflow, maxHeight }) =>
+    css({
+      display: 'flex',
+      alignItems: 'center',
+      textAlign,
+      justifyContent: Boolean(maxHeight) ? 'flex-start' : getJustifyContent(textAlign),
+      ...(maxHeight && { overflowY: 'hidden' }),
+      ...(shouldOverflow && { minHeight: '100%' }),
 
-    [getActiveCellSelector()]: {
-      ...(shouldOverflow && {
-        zIndex: theme.zIndex.tooltip - 2,
-        height: 'fit-content',
-        minWidth: 'fit-content',
-      }),
-    },
+      [getActiveCellSelector()]: {
+        ...(shouldOverflow && {
+          zIndex: theme.zIndex.tooltip - 2,
+          height: 'fit-content',
+          minWidth: 'fit-content',
+        }),
+      },
 
-    [getHoverOnlyCellSelector()]: {
-      '.table-cell-actions': { display: 'flex' },
-    },
-  });
+      [getHoverOnlyCellSelector()]: {
+        '.table-cell-actions': { display: 'flex' },
+      },
+    }),
+  { isMatchingKey: isTableCellStylesKeyEqual }
+);
 
-export const getMaxHeightCellStyles: TableCellStyles = (_theme, { textAlign, maxHeight }) =>
-  css({
-    display: 'flex',
-    alignItems: 'center',
-    textAlign,
-    justifyContent: getJustifyContent(textAlign),
-    maxHeight,
-    width: '100%',
-    overflowY: 'hidden',
-    [getActiveCellSelector(true)]: {
-      maxHeight: 'none',
-      minHeight: '100%',
-    },
-  });
+export const getMaxHeightCellStyles: TableCellStyles = memoize(
+  (_theme, { textAlign, maxHeight }) =>
+    css({
+      display: 'flex',
+      alignItems: 'center',
+      textAlign,
+      justifyContent: getJustifyContent(textAlign),
+      maxHeight,
+      width: '100%',
+      overflowY: 'hidden',
+      [getActiveCellSelector(true)]: {
+        maxHeight: 'none',
+        minHeight: '100%',
+      },
+    }),
+  { isMatchingKey: isTableCellStylesKeyEqual }
+);
 
-export const getCellActionStyles = (theme: GrafanaTheme2, textAlign: TextAlign) =>
+export const getCellActionStyles = memoize((theme: GrafanaTheme2, textAlign: TextAlign) =>
   css({
     display: 'none',
     position: 'absolute',
@@ -210,9 +228,10 @@ export const getCellActionStyles = (theme: GrafanaTheme2, textAlign: TextAlign) 
     padding: theme.spacing.x0_5,
     paddingInlineStart: theme.spacing.x1,
     [textAlign === 'right' ? 'left' : 'right']: 0,
-  });
+  })
+);
 
-export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
+export const getLinkStyles = memoize((theme: GrafanaTheme2, canBeColorized: boolean) =>
   css({
     a: {
       cursor: 'pointer',
@@ -227,12 +246,13 @@ export const getLinkStyles = (theme: GrafanaTheme2, canBeColorized: boolean) =>
             '&:hover': { textDecoration: 'underline' },
           }),
     },
-  });
+  })
+);
 
 const caretTriangle = (direction: 'left' | 'right', bgColor: string) =>
   `linear-gradient(to top ${direction}, transparent 62.5%, ${bgColor} 50%)`;
 
-export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => ({
+export const getTooltipStyles = memoize((theme: GrafanaTheme2, textAlign: TextAlign) => ({
   tooltipContent: css({
     height: '100%',
     width: '100%',
@@ -257,7 +277,7 @@ export const getTooltipStyles = (theme: GrafanaTheme2, textAlign: TextAlign) => 
     height: theme.spacing(1.75),
     background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.strong),
   }),
-});
+}));
 
 const ACTIVE_CELL_SELECTORS = {
   hover: {
