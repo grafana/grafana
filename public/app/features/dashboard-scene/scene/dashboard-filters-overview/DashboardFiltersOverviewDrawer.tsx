@@ -59,6 +59,7 @@ function DashboardFiltersOverviewDrawerRenderer({ model }: SceneComponentProps<D
       }
       onClose={model.onClose}
       size="sm"
+      scrollableContent={false}
     >
       <DashboardFiltersOverview
         adhocFilters={adHocVar}

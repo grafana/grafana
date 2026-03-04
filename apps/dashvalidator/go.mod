@@ -10,6 +10,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/prometheus v0.303.1
 	github.com/stretchr/testify v1.11.1
+	golang.org/x/sync v0.19.0
 	k8s.io/apimachinery v0.35.1
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
 )
@@ -73,7 +74,7 @@ require (
 	github.com/dolthub/go-icu-regex v0.0.0-20250916051405-78a38d478790 // indirect
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
-	github.com/dolthub/vitess v0.0.0-20250930230441-70c2c6a98e33 // indirect
+	github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
@@ -128,7 +129,7 @@ require (
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260227101159-7334f7d59bdd // indirect
+	github.com/grafana/alerting v0.0.0-20260303163118-49df0179cc71 // indirect
 	github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
@@ -268,7 +269,6 @@ require (
 	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260209163413-e7419c687ee4 // indirect
 	golang.org/x/term v0.40.0 // indirect

@@ -92,6 +92,13 @@ export const flows = {
     await expect(inputField).toBeVisible();
     await inputField.fill(variable.value);
     await inputField.blur();
+
+    if (variable.display) {
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
+        .click();
+      await dashboardPage.ctx.page.getByText(variable.display, { exact: true }).click();
+    }
   },
 };
 
@@ -101,6 +108,7 @@ export type Variable = {
   label?: string;
   description?: string;
   value: string;
+  display?: string;
 };
 
 export async function saveDashboard(
