@@ -181,6 +181,10 @@ function getStyles(
     },
   });
 
+  const cardBorder = !!item.error
+    ? `1px solid color-mix(in srgb, ${QUERY_EDITOR_COLORS.error} 50%, transparent)`
+    : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
+
   return {
     cardContentIcons: css({
       display: 'flex',
@@ -245,7 +249,7 @@ function getStyles(
       cursor: 'pointer',
 
       overflow: 'hidden',
-      border: `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`,
+      border: cardBorder,
       boxShadow: isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none',
       '&::before': {
         content: '""',
