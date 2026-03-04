@@ -1,4 +1,5 @@
-import { t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
+import { TextLink } from '@grafana/ui';
 
 export interface PushSuccessMessageProps {
   branch: string;
@@ -6,23 +7,16 @@ export interface PushSuccessMessageProps {
 }
 
 export function PushSuccessMessage({ branch, repositoryURL }: PushSuccessMessageProps) {
-  const prefix = t('provisioned-request.push-success.prefix', 'Changes successfully pushed to ');
-
-  if (repositoryURL) {
-    return (
-      <span>
-        {prefix}
-        <a href={repositoryURL} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>
-          {branch}
-        </a>
-      </span>
-    );
-  }
-
   return (
     <span>
-      {prefix}
-      {branch}
+      <Trans i18nKey="provisioned-request.push-success.prefix">Changes successfully pushed to</Trans>{' '}
+      {repositoryURL ? (
+        <TextLink href={repositoryURL} external>
+          {branch}
+        </TextLink>
+      ) : (
+        branch
+      )}
     </span>
   );
 }

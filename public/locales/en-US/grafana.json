@@ -12415,7 +12415,7 @@
   },
   "provisioned-request": {
     "push-success": {
-      "prefix": "Changes successfully pushed to "
+      "prefix": "Changes successfully pushed to"
     },
     "saved-success": "Changes saved successfully"
   },
