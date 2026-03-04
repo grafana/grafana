@@ -215,14 +215,22 @@ jobs:
           cp -r e2e-playwright/test-plugins/. grafana-server/data/plugins/
 
       # Start Grafana from the standalone directory
-      - name: Start Grafana
+      # The server is immediately backgrounded so it can initialise in parallel while the Playwright browsers are installing 🤓
+      - name: Start Grafana server
         run: |
           grafana-server/bin/grafana server \
             --homepath="$PWD/grafana-server" \
             cfg:server.http_port=3001 \
             > grafana-server/grafana.log 2>&1 &
 
-          # Wait for Grafana to be ready
+          printf "\nThe Grafana server is starting in the background.\n"
+          echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
+
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
+
+      - name: Wait for Grafana server to start
+        run: |
           timeout=180
           elapsed=0
           printf "Waiting for Grafana to start"
@@ -235,10 +243,8 @@ jobs:
             sleep 1
             elapsed=$((elapsed + 1))
           done
-          printf "\nGrafana is ready\n"
-
-      - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+          printf "\nThe Grafana server is ready\n"
+          echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
 
       - name: Run Playwright tests
         run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
