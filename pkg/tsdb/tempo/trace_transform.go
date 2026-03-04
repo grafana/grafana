@@ -204,6 +204,7 @@ func resourceToProcess(resource *v1.Resource) (string, []*KeyValue) {
 		}
 		tags = append(tags, &KeyValue{Key: attr.Key, Value: val})
 	}
+
 	return serviceName, tags
 }
 
