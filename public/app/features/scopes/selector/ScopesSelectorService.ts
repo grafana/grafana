@@ -210,7 +210,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         // Children already available (e.g., prefetched via depth) — skip API call.
         // The tree was already updated with expanded: true above.
       } else {
-        // Prefetch one extra level (grandchildren) so the next expansion is instant
+        // depth=1 fetches one extra level of descendants so the next expansion is instant
         await this.loadNodeChildren(path, nodeToToggle, undefined, 1);
       }
       // Catch and throw error so we can ensure the profiler is stopped
