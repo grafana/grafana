@@ -1,5 +1,6 @@
 import { extractFilterObjects } from './scene/triageSavedSearchUtils';
 import {
+  TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID,
   TRIAGE_PREDEFINED_SEARCH_ID_PREFIX,
   getTriagePredefinedSearches,
   isTriagePredefinedSearchId,
@@ -47,6 +48,16 @@ describe('triagePredefinedSearches', () => {
     it('third search has groupBy folder only', () => {
       const third = getTriagePredefinedSearches()[2];
       const params = new URLSearchParams(third.query);
+      expect(params.getAll('var-groupBy')).toEqual(['grafana_folder']);
+      expect(params.has('var-filters')).toBe(false);
+    });
+
+    it('default predefined search is folder-only (grouped by folder)', () => {
+      expect(TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID).toBe('triage-predefined-folder-only');
+      const searches = getTriagePredefinedSearches();
+      const defaultSearch = searches.find((s) => s.id === TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID);
+      expect(defaultSearch).toBeDefined();
+      const params = new URLSearchParams(defaultSearch!.query);
       expect(params.getAll('var-groupBy')).toEqual(['grafana_folder']);
       expect(params.has('var-filters')).toBe(false);
     });

@@ -132,7 +132,8 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	}
 	defer cc.queue.Done(item)
 
-	logger := logging.FromContext(ctx).With("work_key", item.key)
+	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
+	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "connection", name)
 	logger.Info("ConnectionController processing key")
 
 	err := cc.process(ctx, item)
@@ -183,7 +184,8 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
-	logger = logger.With("connection", conn.Name, "namespace", conn.Namespace)
+	logger = logger.With("namespace", namespace, "connection", name)
+	ctx = logging.Context(ctx, logger)
 
 	// Skip if being deleted
 	if conn.DeletionTimestamp != nil {

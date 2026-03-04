@@ -1,24 +1,24 @@
-import { ReactNode, useId, useMemo, useRef } from 'react';
+import { ReactNode, useId, useMemo } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
-import { Button, Input, TextArea } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { SceneObject, SceneVariableSet, type SceneVariables } from '@grafana/scenes';
+import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { DashboardScene } from '../../scene/DashboardScene';
+import { useLayoutCategory } from '../../scene/layouts-shared/DashboardLayoutSelector';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 
-import { dashboardEditActions } from './shared';
+import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
+import { DashboardVariablesList } from './DashboardVariablesList';
 
 function useEditPaneOptions(
   this: DashboardEditableElement,
   dashboard: DashboardScene
 ): OptionsPaneCategoryDescriptor[] {
-  // When layout changes we need to update options list
-  const { body } = dashboard.useState();
+  const { body, $variables } = dashboard.useState();
   const dashboardTitleInputId = useId();
   const dashboardDescriptionInputId = useId();
 
@@ -43,8 +43,9 @@ function useEditPaneOptions(
   }, [dashboard, dashboardDescriptionInputId, dashboardTitleInputId]);
 
   const layoutCategory = useLayoutCategory(body);
+  const variablesCategory = useVariablesCategory($variables);
 
-  return [dashboardOptions, ...layoutCategory];
+  return [dashboardOptions, ...layoutCategory, ...variablesCategory];
 }
 
 export class DashboardEditableElement implements EditableDashboardElement {
@@ -86,66 +87,28 @@ export class DashboardEditableElement implements EditableDashboardElement {
   }
 }
 
-export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
-  const { title } = dashboard.useState();
+function useVariablesCategory(variableSet: SceneVariables | undefined): OptionsPaneCategoryDescriptor[] {
+  const variableListId = useId();
 
-  // We want to save the unchanged value for the 'undo' action
-  const valueBeforeEdit = useRef('');
+  return useMemo(() => {
+    if (!(variableSet instanceof SceneVariableSet) || !variableSet?.state.variables.length) {
+      return [];
+    }
 
-  return (
-    <Input
-      id={id}
-      value={title}
-      onChange={(e) => {
-        dashboard.setState({ title: e.currentTarget.value });
-      }}
-      onFocus={(e) => {
-        valueBeforeEdit.current = e.currentTarget.value;
-      }}
-      onBlur={(e) => {
-        const titleUnchanged = valueBeforeEdit.current === e.currentTarget.value;
-        const shouldSkip = titleUnchanged;
-        if (shouldSkip) {
-          return;
-        }
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard-scene.use-variables-category.category.title.variables', 'Variables'),
+      id: 'dashboard-variables',
+    });
 
-        dashboardEditActions.changeTitle({
-          source: dashboard,
-          oldValue: valueBeforeEdit.current,
-          newValue: e.currentTarget.value,
-        });
-      }}
-    />
-  );
-}
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: variableListId,
+        skipField: true,
+        render: () => <DashboardVariablesList set={variableSet} />,
+      })
+    );
 
-export function DashboardDescriptionInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
-  const { description } = dashboard.useState();
-
-  // We want to save the unchanged value for the 'undo' action
-  const valueBeforeEdit = useRef('');
-
-  return (
-    <TextArea
-      id={id}
-      value={description}
-      onChange={(e) => dashboard.setState({ description: e.currentTarget.value })}
-      onFocus={(e) => {
-        valueBeforeEdit.current = e.currentTarget.value;
-      }}
-      onBlur={(e) => {
-        const descriptionUnchanged = valueBeforeEdit.current === e.currentTarget.value;
-        const shouldSkip = descriptionUnchanged;
-        if (shouldSkip) {
-          return;
-        }
-
-        dashboardEditActions.changeDescription({
-          source: dashboard,
-          oldValue: valueBeforeEdit.current,
-          newValue: e.currentTarget.value,
-        });
-      }}
-    />
-  );
+    return [category];
+  }, [variableSet, variableListId]);
 }

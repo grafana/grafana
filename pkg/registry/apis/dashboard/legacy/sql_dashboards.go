@@ -455,6 +455,9 @@ func (r *rowsWrapper) Next() bool {
 	var err error
 
 	// breaks after first readable value
+	defer func() {
+		r.err = errors.Join(r.err, r.rows.Err())
+	}()
 	for r.rows.Next() {
 		r.count++
 
