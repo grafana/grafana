@@ -9,6 +9,7 @@ import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { AccessControlAction } from 'app/types/accessControl';
 import { LdapUser } from 'app/types/ldap';
 import { ThunkResult } from 'app/types/store';
+import { Team } from 'app/types/teams';
 import { UserDTO, UserSession, UserFilter, AnonUserFilter } from 'app/types/user';
 
 import {
@@ -215,8 +216,22 @@ export function loadUserRoles(userId: number, orgId: number): ThunkResult<void> 
 
 export function loadUserTeams(userId: number): ThunkResult<void> {
   return async (dispatch) => {
-    const teams = await getBackendSrv().get(`/api/users/${userId}/teams`);
-    dispatch(userTeamsLoadedAction(teams));
+    const teams: Team[] = await getBackendSrv().get(`/api/users/${userId}/teams`);
+
+    // Fetch roles for each team
+    const teamsWithRoles = await Promise.all(
+      teams.map(async (team) => {
+        try {
+          const roles = await getBackendSrv().get(`/api/access-control/teams/${team.id}/roles`);
+          return { ...team, roles };
+        } catch (error) {
+          console.warn(`Failed to fetch roles for team ${team.id}:`, error);
+          return { ...team, roles: [] };
+        }
+      })
+    );
+
+    dispatch(userTeamsLoadedAction(teamsWithRoles));
   };
 }
 

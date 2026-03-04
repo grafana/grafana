@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
 import { Trans } from '@grafana/i18n';
+import { LinkButton, Stack } from '@grafana/ui';
 import { Role } from 'app/types/accessControl';
 import { TeamWithRoles } from 'app/types/teams';
 import { UserOrg } from 'app/types/user';
@@ -9,6 +10,7 @@ interface Props {
   roles: Role[];
   teams: TeamWithRoles[];
   orgs: UserOrg[];
+  userUid?: string;
 }
 
 interface RoleRow {
@@ -18,8 +20,14 @@ interface RoleRow {
   orgName: string;
 }
 
-export const UserRoles = memo(({ roles, teams, orgs }: Props) => {
+export const UserRoles = memo(({ roles, teams, orgs, userUid }: Props) => {
+  // Debug logging
+  console.log('UserRoles - roles:', roles);
+  console.log('UserRoles - teams:', teams);
+  console.log('UserRoles - orgs:', orgs);
+
   const roleRows = transformRolesToRows(roles, teams, orgs);
+  console.log('UserRoles - roleRows:', roleRows);
 
   if (roleRows.length === 0) {
     return null;
@@ -27,9 +35,16 @@ export const UserRoles = memo(({ roles, teams, orgs }: Props) => {
 
   return (
     <div>
-      <h3 className="page-heading">
-        <Trans i18nKey="admin.user-roles.title">Permissions</Trans>
-      </h3>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <h3 className="page-heading">
+          <Trans i18nKey="admin.user-roles.title">Permissions</Trans>
+        </h3>
+        {userUid && (
+          <LinkButton href={`/admin/users/roles/${userUid}`} variant="secondary" size="sm">
+            View Detailed Permissions
+          </LinkButton>
+        )}
+      </Stack>
       <table className="filter-table form-inline">
         <thead>
           <tr>
@@ -62,6 +77,7 @@ UserRoles.displayName = 'UserRoles';
 
 function transformRolesToRows(roles: Role[], teams: TeamWithRoles[], orgs: UserOrg[]): RoleRow[] {
   const rows: RoleRow[] = [];
+  const processedRoles = new Set<string>();
 
   // Build a map of role name -> teams that have this role
   const roleToTeams = new Map<string, Set<number>>();
@@ -74,11 +90,8 @@ function transformRolesToRows(roles: Role[], teams: TeamWithRoles[], orgs: UserO
     });
   });
 
-  // Process each role - for now we get roles for the user's primary org
-  // The org name will be from the user's org list
+  // Process roles returned from the API
   roles.forEach((role) => {
-    // Since we're fetching roles for a specific orgId in the action,
-    // we can use the first org as the context or show "Current Organization"
     const orgName = orgs.length > 0 ? orgs[0].name : 'Unknown';
     const teamsWithRole = roleToTeams.get(role.name);
 
@@ -99,6 +112,27 @@ function transformRolesToRows(roles: Role[], teams: TeamWithRoles[], orgs: UserO
       roleDisplayName: role.displayName || role.name,
       source,
       orgName,
+    });
+    processedRoles.add(role.name);
+  });
+
+  // Add any team roles that weren't in the API response
+  // This handles cases where roles are only granted through team membership
+  teams.forEach((team) => {
+    team.roles?.forEach((role) => {
+      if (!processedRoles.has(role.name)) {
+        const orgName = orgs.length > 0 ? orgs[0].name : 'Unknown';
+        const teamsWithRole = roleToTeams.get(role.name);
+        const teamCount = teamsWithRole?.size || 0;
+
+        rows.push({
+          roleName: role.name,
+          roleDisplayName: role.displayName || role.name,
+          source: teamCount === 1 ? '1 team' : `${teamCount} teams`,
+          orgName,
+        });
+        processedRoles.add(role.name);
+      }
     });
   });
 

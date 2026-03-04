@@ -178,7 +178,7 @@ export const UserAdminPage = ({
               onOrgAdd={onOrgAdd}
             />
           )}
-          {roles && teams && orgs && <UserRoles roles={roles} teams={teams} orgs={orgs} />}
+          {roles && teams && orgs && <UserRoles roles={roles} teams={teams} orgs={orgs} userUid={user?.uid} />}
           {sessions && canReadSessions && (
             <UserSessions
               sessions={sessions}

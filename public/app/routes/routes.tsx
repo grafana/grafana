@@ -368,6 +368,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/users/roles/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "UserPermissionsPage" */ 'app/features/admin/UserPermissionsPage')
+      ),
+    },
+    {
       path: '/admin/orgs',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')
