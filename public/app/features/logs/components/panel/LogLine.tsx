@@ -118,6 +118,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
+      showLevel,
       showUniqueLabels,
       timestampResolution,
       onLogLineHover,
@@ -260,6 +261,7 @@ const LogLineComponent = memo(
               collapsed={collapsed}
               displayedFields={displayedFields}
               log={log}
+              showLevel={showLevel}
               showTime={showTime}
               showUniqueLabels={showUniqueLabels}
               styles={styles}
@@ -315,6 +317,7 @@ interface LogProps {
   collapsed?: boolean;
   displayedFields: string[];
   log: LogListModel;
+  showLevel: boolean;
   showTime: boolean;
   showUniqueLabels?: boolean;
   styles: LogLineStyles;
@@ -323,7 +326,16 @@ interface LogProps {
 }
 
 const Log = memo(
-  ({ displayedFields, log, showTime, showUniqueLabels, styles, timestampResolution, wrapLogMessage }: LogProps) => {
+  ({
+    displayedFields,
+    log,
+    showLevel,
+    showTime,
+    showUniqueLabels,
+    styles,
+    timestampResolution,
+    wrapLogMessage,
+  }: LogProps) => {
     const handleLabelsToggle = useCallback(
       (expanded: boolean) => {
         log.uniqueLabelsExpanded = expanded;
@@ -340,7 +352,7 @@ const Log = memo(
         {
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
-        {(log.displayLevel || !wrapLogMessage) && (
+        {showLevel && (log.displayLevel || !wrapLogMessage) && (
           <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
