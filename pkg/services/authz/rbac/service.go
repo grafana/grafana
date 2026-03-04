@@ -175,12 +175,16 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		return deny, err
 	}
 
+	ctxLogger.Info("(debugging) user permissions resolved", "subject", req.GetSubject(), "action", checkReq.Action, "permissionCount", len(permissions), "permissions", permissions)
+
 	allowed, err := s.checkPermission(ctx, permissions, checkReq, getTree)
 	if err != nil {
 		ctxLogger.Error("could not check permission", "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 		return deny, err
 	}
+
+	ctxLogger.Info("(debugging) authorization decision", "subject", req.GetSubject(), "group", req.GetGroup(), "resource", req.GetResource(), "verb", req.GetVerb(), "namespace", req.GetNamespace(), "allowed", allowed)
 
 	if !allowed {
 		s.permDenialCache.Set(ctx, permDenialKey, true)
@@ -591,6 +595,8 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 		return "", nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
+	ctxLogger.Info("(debugging) resolved resource mapping", "group", group, "resource", resource, "mappedResource", t.Resource(), "folderSupport", t.HasFolderSupport())
+
 	action, ok := t.Action(verb)
 	if !ok {
 		ctxLogger.Error("unsupported verb", "group", group, "resource", resource, "verb", verb)
@@ -598,6 +604,8 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 	}
 
 	actionSets := t.ActionSets(verb)
+
+	ctxLogger.Info("(debugging) resolved action for resource", "group", group, "resource", resource, "verb", verb, "action", action, "actionSets", actionSets)
 
 	return action, actionSets, nil
 }
