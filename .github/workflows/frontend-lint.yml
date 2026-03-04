@@ -18,6 +18,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
       prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
       changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
+      changed-frontend-dependencies: ${{ steps.detect-changes.outputs.frontend-dependencies }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -304,3 +305,22 @@ jobs:
           diff -u /tmp/main-circular-clean.txt /tmp/pr-circular-clean.txt || true
           exit 1
         fi
+
+  yarn-install-validation:
+    needs:
+      - detect-changes
+    if: needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
+    runs-on: ubuntu-x64-small
+    name: Validate yarn install
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+
+    # Deliberately not using the yarn-install action for exact control over the command for extra checks
+    - name: Install yarn dependencies
+      run: yarn install --immutable --check-cache
+      env:
+        YARN_ENABLE_HARDENED_MODE: 1
