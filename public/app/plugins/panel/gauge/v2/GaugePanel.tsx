@@ -1,4 +1,4 @@
-import { useMemo, useCallback, type JSX } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import {
   DisplayValueAlignmentFactors,
@@ -25,8 +25,6 @@ export function GaugePanel({
   fieldConfig,
   timeZone,
 }: PanelProps<Options>) {
-  const renderComponent = useMemo(() => renderComponentFactory(options), [options]);
-
   const values: FieldDisplay[] = useMemo(() => {
     // TODO: this is carried over from v1, but it really ought to live somewhere inside of the data processing pipeline.
     // Without this, gauges which have percentage units and percentage thresholds will not automatically select a 0-100% min max
@@ -55,23 +53,7 @@ export function GaugePanel({
     });
   }, [data, fieldConfig, options.reduceOptions, options.sparkline, replaceVariables, timeZone]);
 
-  const renderValue = useCallback(
-    (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
-      const { value } = valueProps;
-      const { getLinks, hasLinks } = value;
-
-      if (hasLinks && getLinks) {
-        return (
-          <DataLinksContextMenu links={getLinks} style={{ flexGrow: 1 }}>
-            {(api) => renderComponent(valueProps, api)}
-          </DataLinksContextMenu>
-        );
-      }
-
-      return renderComponent(valueProps, {});
-    },
-    [renderComponent]
-  );
+  const renderValue = useMemo(() => renderValueFactory(options), [options]);
 
   if (values[0]?.display?.text === 'No data') {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} needsNumberField />;
@@ -97,7 +79,7 @@ export function GaugePanel({
   );
 }
 
-const renderComponentFactory = (options: Options) => {
+const renderValueFactory = (options: Options) => {
   const renderRadialGauge = (
     {
       width,
@@ -106,7 +88,7 @@ const renderComponentFactory = (options: Options) => {
       alignmentFactors,
       count,
     }: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
-    menuProps: DataLinksContextMenuApi
+    menuProps?: DataLinksContextMenuApi
   ): JSX.Element => (
     <RadialGauge
       alignmentFactors={alignmentFactors}
@@ -118,7 +100,7 @@ const renderComponentFactory = (options: Options) => {
       height={height}
       nameManualFontSize={options.text?.titleSize}
       neutral={options.neutral}
-      onClick={menuProps.openMenu}
+      onClick={menuProps?.openMenu}
       roundedBars={options.barShape === 'rounded'}
       segmentCount={options.segmentCount}
       segmentSpacing={options.segmentSpacing}
@@ -132,5 +114,23 @@ const renderComponentFactory = (options: Options) => {
       width={width}
     />
   );
-  return renderRadialGauge;
+
+  const renderValue = (
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>
+  ): JSX.Element => {
+    const { value } = valueProps;
+    const { getLinks, hasLinks } = value;
+
+    if (hasLinks && getLinks) {
+      return (
+        <DataLinksContextMenu links={getLinks} style={{ flexGrow: 1 }}>
+          {(api) => renderRadialGauge(valueProps, api)}
+        </DataLinksContextMenu>
+      );
+    }
+
+    return renderRadialGauge(valueProps);
+  };
+
+  return renderValue;
 };
