@@ -28,6 +28,16 @@ export enum SidebarSize {
 }
 
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
+export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
+export const QUERY_EDITOR_BANNER_FEEDBACK_URL = 'https://forms.gle/54uCfRjxzjcXVysp8';
+
+export function getQueryEditorBannerColors(theme: GrafanaTheme2) {
+  return {
+    background: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+    border: theme.isDark ? '#314158' : theme.colors.border.medium,
+    accent: theme.isDark ? '#FF9830' : '#C47B20',
+  };
+}
 
 export const QUERY_EDITOR_COLORS = {
   query: '#FF8904',
@@ -117,6 +127,8 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
  * This is a common example value shown when no value is set.
  */
 export const TIME_OPTION_PLACEHOLDER = '1h';
+
+export const TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME = 5000;
 
 export const SIDEBAR_CARD_HEIGHT = 30;
 export const SIDEBAR_CARD_SPACING = 1;
@@ -217,3 +229,9 @@ export const EXPRESSION_IMAGE_MAP: Record<ExpressionQueryType, { dark: string; l
   [ExpressionQueryType.classic]: { dark: classicConditionDarkImage, light: classicConditionLightImage },
   [ExpressionQueryType.threshold]: { dark: thresholdDarkImage, light: thresholdLightImage },
 };
+
+export const PENDING_CARD_ID = {
+  expression: 'pending-expression',
+  savedQuery: 'pending-saved-query',
+  transformation: 'pending-transformation',
+} as const;

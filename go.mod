@@ -55,7 +55,7 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
 	github.com/docker/go-connections v0.6.0 // @grafana/grafana-app-platform-squad
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // @grafana/grafana-datasources-core-services
-	github.com/dolthub/vitess v0.0.0-20250930230441-70c2c6a98e33 // @grafana/grafana-datasources-core-services
+	github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e // @grafana/grafana-datasources-core-services
 	github.com/dustin/go-humanize v1.0.1 // @grafana/observability-traces-and-profiling
 	github.com/emicklei/go-restful/v3 v3.13.0 // @grafana/grafana-app-platform-squad
 	github.com/fatih/color v1.18.0 // @grafana/grafana-backend-group
@@ -88,7 +88,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.15.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20260227101159-7334f7d59bdd // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20260303163118-49df0179cc71 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260226130908-b01d89f85c4d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -111,7 +111,7 @@ require (
 	github.com/grafana/nanogit v0.6.0 // indirect; @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/observability-traces-and-profiling
-	github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f // @grafana/observability-traces-and-profiling
+	github.com/grafana/pyroscope/api v1.2.1-0.20251202111406-6c67b876b686 // @grafana/observability-traces-and-profiling
 	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
@@ -601,7 +601,7 @@ require (
 	github.com/pires/go-proxyproto v0.8.1 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
@@ -715,7 +715,7 @@ replace (
 
 	// Use our fork of dolthub/go-mysql-server which makes non-cgo the default
 	// since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
-	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.1-grafana1
+	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana
 
 	// lock for mysql tsdb compat
 	github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1

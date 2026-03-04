@@ -73,7 +73,7 @@ require (
 	github.com/dolthub/go-icu-regex v0.0.0-20250916051405-78a38d478790 // indirect
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
-	github.com/dolthub/vitess v0.0.0-20250930230441-70c2c6a98e33 // indirect
+	github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
@@ -128,7 +128,7 @@ require (
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260227101159-7334f7d59bdd // indirect
+	github.com/grafana/alerting v0.0.0-20260303163118-49df0179cc71 // indirect
 	github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect

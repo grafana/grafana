@@ -58,12 +58,13 @@ export function DraggableList<T>({
               const key = keyExtractor(item);
               return (
                 <Draggable key={key} draggableId={key} index={index}>
-                  {(dragProvided) => (
+                  {(dragProvided, dragSnapshot) => (
                     <div
                       ref={dragProvided.innerRef}
                       {...dragProvided.draggableProps}
                       {...dragProvided.dragHandleProps}
                       className={styles.draggableItem}
+                      data-is-dragging={dragSnapshot.isDragging || undefined}
                     >
                       {renderItem(item)}
                     </div>
@@ -91,6 +92,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     draggableItem: css({
       marginBottom: theme.spacing(SIDEBAR_CARD_SPACING),
+      '&:last-child': {
+        marginBottom: 0,
+      },
       '[data-dragging] &': {
         pointerEvents: 'none',
       },
