@@ -3,6 +3,7 @@ package auditing_test
 import (
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/stretchr/testify/require"
@@ -85,5 +86,21 @@ func TestDefaultGrafanaPolicyRuleEvaluator(t *testing.T) {
 
 		config := evaluator.EvaluatePolicyRule(attrs)
 		require.Equal(t, auditinternal.LevelMetadata, config.Level)
+	})
+
+	t.Run("returns audit level none for access policies", func(t *testing.T) {
+		t.Parallel()
+
+		attrs := authorizer.AttributesRecord{
+			ResourceRequest: true,
+			Verb:            utils.VerbGet,
+			User: &user.DefaultInfo{
+				UID:    types.TypeAccessPolicy.String() + ":" + "uuid",
+				Groups: []string{"test-group"},
+			},
+		}
+
+		config := evaluator.EvaluatePolicyRule(attrs)
+		require.Equal(t, auditinternal.LevelNone, config.Level)
 	})
 }

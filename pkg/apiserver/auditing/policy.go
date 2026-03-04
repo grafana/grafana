@@ -2,7 +2,9 @@ package auditing
 
 import (
 	"slices"
+	"strings"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	auditinternal "k8s.io/apiserver/pkg/apis/audit"
@@ -41,6 +43,13 @@ func (defaultGrafanaPolicyRuleEvaluator) EvaluatePolicyRule(attrs authorizer.Att
 	// Skip auditing if the user is part of the privileged group.
 	// The loopback client uses this group, so requests initiated in `/api/` would be duplicated.
 	if u := attrs.GetUser(); u != nil && slices.Contains(u.GetGroups(), user.SystemPrivilegedGroup) {
+		return audit.RequestAuditConfig{
+			Level: auditinternal.LevelNone,
+		}
+	}
+
+	// Skip auditing if this is an access policy, which is generally used for service-to-service communication.
+	if u := attrs.GetUser(); u != nil && strings.HasPrefix(u.GetUID(), types.TypeAccessPolicy.String()) {
 		return audit.RequestAuditConfig{
 			Level: auditinternal.LevelNone,
 		}
