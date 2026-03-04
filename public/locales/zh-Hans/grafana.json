@@ -4751,7 +4751,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "关联的链接",
-      "body": "数据源有了新家！您可以在“关联”页面中发现新的数据源或管理现有数据源，该页面可从主菜单访问。",
+      "body": "数据源有了新家！您可以在<0>「关联」页面</0>中发现新的数据源或管理现有数据源，该页面可从主菜单访问。",
       "go-to-connections": "前往关联"
     },
     "data-source-details-page": {

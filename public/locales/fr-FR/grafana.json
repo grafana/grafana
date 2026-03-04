@@ -4773,7 +4773,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Lien vers Connexions",
-      "body": "Les sources de données ont un nouveau foyer ! Vous pouvez découvrir de nouvelles sources de données ou gérer celles qui existent déjà dans la page Connexions, accessible depuis le menu principal.",
+      "body": "Les sources de données ont un nouveau foyer ! Vous pouvez découvrir de nouvelles sources de données ou gérer celles qui existent déjà dans la <0>page Connexions</0>, accessible depuis le menu principal.",
       "go-to-connections": "Accéder aux connexions"
     },
     "data-source-details-page": {

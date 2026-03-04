@@ -4773,7 +4773,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Bağlantılara bağlan",
-      "body": "Veri kaynakları taşındı! Ana menüden erişilebilen Bağlantılar sayfasında yeni veri kaynaklarını keşfedebilir veya mevcutları yönetebilirsiniz.",
+      "body": "Veri kaynakları taşındı! Ana menüden erişilebilen <0>Bağlantılar sayfasında</0> yeni veri kaynaklarını keşfedebilir veya mevcutları yönetebilirsiniz.",
       "go-to-connections": "Bağlantılara git"
     },
     "data-source-details-page": {
