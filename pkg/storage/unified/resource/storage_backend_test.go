@@ -941,7 +941,7 @@ func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 
 	expectations := seedBackend(t, backend, ctx, ns)
 	for _, expectation := range expectations {
-		_, seq := backend.ListModifiedSince(ctx, ns, expectation.rv)
+		_, seq := backend.ListModifiedSince(ctx, ns, expectation.rv, nil)
 
 		for mr, err := range seq {
 			require.NoError(t, err)
@@ -1043,7 +1043,7 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 	}
 
 	// last test will simulate calling ListModifiedSince with a newer RV than all the updates above
-	rv, _ := backend.ListModifiedSince(ctx, ns, 1)
+	rv, _ := backend.ListModifiedSince(ctx, ns, 1, nil)
 	expectations = append(expectations, expectation{
 		rv:      rv,
 		changes: make(map[string]*ModifiedResource),
@@ -1145,7 +1145,7 @@ func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
 			sinceRV := tt.sinceRV()
 
 			// List resources
-			rv, seq := backend.ListModifiedSince(ctx, ns, sinceRV)
+			rv, seq := backend.ListModifiedSince(ctx, ns, sinceRV, nil)
 
 			changes := make(map[string]*ModifiedResource)
 			for mr, err := range seq {
@@ -1170,6 +1170,84 @@ func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
 			require.Equal(t, objectToJSONBytes(t, testObj2), changes["dashboard-2"].Value)
 		})
 	}
+}
+
+func TestKvStorageBackend_ListModifiedSince_TimestampOptimization(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+
+	ns := NamespacedResource{
+		Namespace: "timestamp-opt-ns",
+		Group:     "test.group",
+		Resource:  "test-resources",
+	}
+
+	// Write an initial event to get a base RV.
+	rv1, _ := addTestObject(t, backend, ctx, ns, "item1", "value1")
+	creationTime := time.Now()
+
+	t.Run("nil lastCalledWithSinceRv always applies lookback", func(t *testing.T) {
+		// With nil, lookback is applied so events slightly before sinceRv may appear.
+		latestRv, seq := backend.ListModifiedSince(ctx, ns, rv1, nil)
+		require.GreaterOrEqual(t, latestRv, rv1)
+		var count int
+		for _, err := range seq {
+			count++
+			require.NoError(t, err)
+		}
+		require.Equal(t, 1, count)
+	})
+
+	t.Run("recent lastCalledWithSinceRv still applies lookback", func(t *testing.T) {
+		latestRv, seq := backend.ListModifiedSince(ctx, ns, rv1, &creationTime)
+		require.GreaterOrEqual(t, latestRv, rv1)
+		for _, err := range seq {
+			require.NoError(t, err)
+		}
+	})
+
+	t.Run("old lastCalledWithSinceRv with no new events returns empty", func(t *testing.T) {
+		// Get the current latest RV by listing with nil.
+		latestRv, _ := backend.ListModifiedSince(ctx, ns, rv1, nil)
+
+		// The sinceRv was created approximately now. For lookback to be skipped,
+		// lastCalledWithSinceRv must be > 500ms after sinceRv's embedded timestamp.
+		// Simulate this by using a time 1 second in the future.
+		futureTime := time.Now().Add(1 * time.Second)
+		returnedRv, seq := backend.ListModifiedSince(ctx, ns, latestRv, &futureTime)
+		require.Equal(t, latestRv, returnedRv)
+
+		count := 0
+		for _, err := range seq {
+			require.NoError(t, err)
+			count++
+		}
+		require.Equal(t, 0, count, "expected empty iterator")
+	})
+
+	t.Run("old lastCalledWithSinceRv with new events returns them", func(t *testing.T) {
+		// Get the current latest RV.
+		latestRv, _ := backend.ListModifiedSince(ctx, ns, rv1, nil)
+
+		// Write a new event after latestRv.
+		rv2, _ := addTestObject(t, backend, ctx, ns, "item2", "value2")
+		require.Greater(t, rv2, latestRv)
+
+		// The sinceRv (latestRv) was created approximately now. Use a time 1 second
+		// in the future so lookback is skipped, but new events still get returned.
+		futureTime := time.Now().Add(1 * time.Second)
+		returnedRv, seq := backend.ListModifiedSince(ctx, ns, latestRv, &futureTime)
+		require.GreaterOrEqual(t, returnedRv, rv2)
+
+		found := false
+		for res, err := range seq {
+			require.NoError(t, err)
+			if res.Key.Name == "item2" {
+				found = true
+			}
+		}
+		require.True(t, found, "expected new event to be returned")
+	})
 }
 
 func createAndSaveTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource, uniqueStringGen func() string, updates int, deleted bool) *ModifiedResource {

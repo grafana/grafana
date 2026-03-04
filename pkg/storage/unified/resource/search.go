@@ -1146,15 +1146,29 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 
 	dedupCache := gocache.New(dedupCacheExpiration, dedupCacheCleanup)
 
+	var lastSinceRV int64
+	var lastCalledAt *time.Time
+
 	updaterFn := func(ctx context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", sinceRV)))
+
+		// If we're calling with the same sinceRV as last time, pass the timestamp
+		// of our last call so the backend can skip the lookback window when safe.
+		var calledAt *time.Time
+		if lastSinceRV > 0 && sinceRV == lastSinceRV {
+			calledAt = lastCalledAt
+		}
 
 		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
 			Group:     nsr.Group,
 			Resource:  nsr.Resource,
 			Namespace: nsr.Namespace,
-		}, sinceRV)
+		}, sinceRV, calledAt)
+
+		now := time.Now()
+		lastSinceRV = sinceRV
+		lastCalledAt = &now
 
 		// Process documents in batches to avoid memory issues
 		// When dealing with large collections (e.g., 100k+ documents),

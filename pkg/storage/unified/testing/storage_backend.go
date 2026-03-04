@@ -548,7 +548,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			Group:     "group",
 			Resource:  "resource",
 		}
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated, nil)
 		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
 		counter := 0
@@ -566,7 +566,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			Group:     "group",
 			Resource:  "resource",
 		}
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvDeleted, nil)
 		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
 		// ListModifiedSince is allowed to return some events prior to the requested
@@ -585,7 +585,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			Group:     "group",
 			Resource:  "resource",
 		}
-		latestRv1, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
+		latestRv1, seq := backend.ListModifiedSince(ctx, key, rvDeleted, nil)
 		require.GreaterOrEqual(t, latestRv1, rvDeleted)
 		// ListModifiedSince is allowed to return some events prior to the requested
 		// RV (e.g., lookback window), so we allow 0 or 1 results.
@@ -596,7 +596,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		}
 		require.LessOrEqual(t, counter, 1)
 
-		latestRv2, seq := backend.ListModifiedSince(ctx, key, latestRv1)
+		latestRv2, seq := backend.ListModifiedSince(ctx, key, latestRv1, nil)
 		require.Equal(t, latestRv1, latestRv2)
 		counter = 0
 		for _, err := range seq {
@@ -617,7 +617,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		rvCreatedOtherTenant, err := WriteEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
 		require.NoError(t, err)
 
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated, nil)
 		require.Greater(t, latestRv, rvCreated)
 
 		counter := 0
@@ -661,7 +661,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		rv10, err := WriteEvent(ctx, backend, "bItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
 
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rv1-1)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rv1-1, nil)
 		require.GreaterOrEqual(t, latestRv, rv10)
 
 		expected := map[string]int64{

@@ -136,7 +136,10 @@ type StorageBackend interface {
 	// If a resource has changes, only the latest change will be returned.
 	// Implementations may return events shortly before sinceRv; callers should filter out
 	// events older than `sinceRv` if necessary.
-	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error])
+	//
+	// lastCalledWithSinceRv is an optional timestamp of the last time the caller called
+	// ListModifiedSince with the same sinceRv value.
+	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*ModifiedResource, error])
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
