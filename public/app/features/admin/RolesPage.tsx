@@ -1,9 +1,6 @@
-import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Tab, TabsBar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
@@ -17,7 +14,6 @@ enum TabView {
 }
 
 export default function RolesPage() {
-  const styles = useStyles2(getStyles);
   const hasAccess = contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
   const [view, setView] = useState<TabView>(TabView.LIST);
@@ -49,34 +45,9 @@ export default function RolesPage() {
   };
 
   return (
-    <Page navId="admin-roles" >
-      <TabsBar className={styles.tabsMargin}>
-        <Tab
-          label={t('admin.roles-page.tab-all-roles', 'All roles')}
-          active={view === TabView.LIST}
-          onChangeTab={() => {
-            setEditingRole(undefined);
-            setView(TabView.LIST);
-          }}
-        />
-        <Tab
-          label={
-            editingRole
-              ? t('admin.roles-page.tab-edit-role', 'Edit role')
-              : t('admin.roles-page.tab-create-role', 'Create custom role')
-          }
-          active={view === TabView.EDITOR}
-          onChangeTab={onCreateRole}
-        />
-      </TabsBar>
+    <Page navId="admin-roles">
       {view === TabView.LIST && <RolesListTab onEditRole={onEditRole} onCreateRole={onCreateRole} />}
       {view === TabView.EDITOR && <RoleEditForm role={editingRole} onSaved={onSaved} />}
     </Page>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  tabsMargin: css({
-    marginBottom: theme.spacing(3),
-  }),
-});
