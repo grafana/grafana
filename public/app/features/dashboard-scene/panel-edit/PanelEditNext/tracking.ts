@@ -10,10 +10,6 @@ import { QueryEditorType } from './constants';
  */
 const EVENT_PANEL_EDIT_NEXT = 'grafana_panel_edit_next_interaction';
 
-// ---------------------------------------------------------------------------
-// Transformation picker
-// ---------------------------------------------------------------------------
-
 export const trackTransformationSearch = debounce((query: string, resultCount: number) => {
   if (query) {
     reportInteraction(EVENT_PANEL_EDIT_NEXT, {
@@ -30,10 +26,6 @@ export function trackTransformationFilterChanged(filter: string | null) {
     filter: filter ?? 'view_all',
   });
 }
-
-// ---------------------------------------------------------------------------
-// Add card buttons (sidebar)
-// ---------------------------------------------------------------------------
 
 type AddCardSource = 'section_header' | 'inline';
 
@@ -59,20 +51,12 @@ export function trackAddTransformationInitiated(source: AddCardSource) {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Card management actions (delete / hide / duplicate)
-// ---------------------------------------------------------------------------
-
 export function trackCardAction(action: 'delete' | 'toggle_hide' | 'duplicate', itemType: QueryEditorType) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action,
     item_type: itemType,
   });
 }
-
-// ---------------------------------------------------------------------------
-// Transformation toolbar buttons
-// ---------------------------------------------------------------------------
 
 export function trackTransformationToolAction(action: 'toggle_help' | 'toggle_filter' | 'toggle_debug') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
@@ -81,10 +65,6 @@ export function trackTransformationToolAction(action: 'toggle_help' | 'toggle_fi
   });
 }
 
-// ---------------------------------------------------------------------------
-// Query actions menu
-// ---------------------------------------------------------------------------
-
 export function trackQueryMenuAction(action: 'duplicate' | 'toggle_datasource_help' | 'open_inspector') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action,
@@ -92,20 +72,12 @@ export function trackQueryMenuAction(action: 'duplicate' | 'toggle_datasource_he
   });
 }
 
-// ---------------------------------------------------------------------------
-// Drag-and-drop reorder
-// ---------------------------------------------------------------------------
-
 export function trackReorder(itemType: 'query' | 'transformation') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'reorder',
     item_type: itemType,
   });
 }
-
-// ---------------------------------------------------------------------------
-// Editor version banner
-// ---------------------------------------------------------------------------
 
 export function trackEditorVersionToggle(direction: 'upgrade' | 'downgrade') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
