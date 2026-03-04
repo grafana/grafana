@@ -130,7 +130,7 @@ func TestRegisterMigrations(t *testing.T) {
 		_ = sqlstoremigrator.CheckExpectedMigrations(sqlstoremigrator.SQLite,
 			[]sqlstoremigrator.ExpectedMigration{},
 			func(mg *sqlstoremigrator.Migrator) {
-				capturedErr = registerMigrations(cfg, mg, nil, nil, nil, registry)
+				capturedErr = registerMigrations(cfg, mg, nil, nil, nil, nil, registry)
 				ids = mg.GetMigrationIDs(false)
 			})
 		return ids, capturedErr

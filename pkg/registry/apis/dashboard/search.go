@@ -55,8 +55,8 @@ func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboa
 }
 
 func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SearchResults"].Schema
-	sortableFields := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SortableFields"].Schema
+	searchResults := defs[dashboardv0alpha1.SearchResults{}.OpenAPIModelName()].Schema
+	sortableFields := defs[dashboardv0alpha1.SortableFields{}.OpenAPIModelName()].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{

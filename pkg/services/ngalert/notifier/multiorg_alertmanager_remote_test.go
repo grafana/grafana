@@ -64,7 +64,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		configStore,
 		10*time.Second,
 		notifier.NewCrypto(secretsService, configStore, log.NewNopLogger()),
-		remote.NoopAutogenFn,
+		configStore,
 		m.GetRemoteAlertmanagerMetrics(),
 		tracing.InitializeTracerForTest(),
 		false,
