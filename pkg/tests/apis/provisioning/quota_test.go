@@ -96,6 +96,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.WaitForResourceQuotaLimit(t, repo, 2)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for the repository to be synced and check the Quota condition

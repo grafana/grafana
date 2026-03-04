@@ -55,7 +55,7 @@ describe('VisualizationSuggestionCard', () => {
   it('should render a panel renderer card when no imgSrc is provided', () => {
     render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} />);
 
-    expect(screen.getByRole('button', { name: 'Time series' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Time series')).toBeInTheDocument();
     expect(screen.getByTestId('panel-renderer')).toBeInTheDocument();
   });
 
@@ -88,7 +88,7 @@ describe('VisualizationSuggestionCard', () => {
 
     render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={200} />);
 
-    expect(screen.getByRole('button', { name: 'Time series' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Time series')).toBeInTheDocument();
   });
 
   it('should render successfully when isSelected is true', () => {

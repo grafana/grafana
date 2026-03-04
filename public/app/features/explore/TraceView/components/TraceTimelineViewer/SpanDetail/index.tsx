@@ -42,6 +42,7 @@ import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STAT
 import { SpanLinkFunc } from '../../types/links';
 import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
+import { getServiceDisplayName } from '../../utils/service-name';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
@@ -323,7 +324,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     {
       key: 'svc',
       label: t('explore.span-detail.overview-items.label.service', 'Service:'),
-      value: process.serviceName,
+      value: getServiceDisplayName(process),
     },
     {
       key: 'duration',

@@ -560,6 +560,12 @@ export const versionedComponents = {
         Container: {
           '12.4.0': 'data-testid gauge container',
         },
+        Track: {
+          '13.0.0': 'data-testid gauge track',
+        },
+        Bar: {
+          '13.0.0': 'data-testid gauge bar',
+        },
       },
     },
   },

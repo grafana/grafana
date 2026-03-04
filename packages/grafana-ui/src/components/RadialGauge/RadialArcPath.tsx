@@ -111,7 +111,13 @@ export const RadialArcPath = memo(
     const vizContent = (
       <>
         {isGradient ? (
-          <foreignObject x={boxX} y={Math.max(boxY, 0)} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
+          <foreignObject
+            x={boxX}
+            y={Math.max(boxY, 0)}
+            width={Math.max(vizWidth, boxSize)}
+            height={Math.max(vizHeight, boxSize)}
+            mask={`url(#${id})`}
+          >
             <div style={bgDivStyle} />
           </foreignObject>
         ) : (
