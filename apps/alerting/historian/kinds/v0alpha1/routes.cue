@@ -36,5 +36,16 @@ routes: {
 				responseMetadata: typeMeta: false
 			}
 		}
+
+		// Historian tool call endpoint.
+		"/_tool": {
+			"POST": {
+				request: {
+					body: #ToolInput
+				}
+				response: #ToolOutput
+				responseMetadata: typeMeta: false
+			}
+		}
 	}
 }

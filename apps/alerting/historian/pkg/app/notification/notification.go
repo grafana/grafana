@@ -93,19 +93,6 @@ func (n *Notification) QueryAlertsHandler(ctx context.Context, writer app.Custom
 }
 
 func (n *Notification) QueryHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-	start := time.Now()
-
-	if n.loki == nil {
-		const msg = "Notification history query whilst disabled"
-		n.logger.Debug(msg)
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusUnprocessableEntity,
-				Message: msg,
-			}}
-	}
-
 	var body v0alpha1.CreateNotificationqueryRequestBody
 	err := json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
@@ -119,12 +106,35 @@ func (n *Notification) QueryHandler(ctx context.Context, writer app.CustomRouteR
 			}}
 	}
 
+	response, err := n.Query(ctx, body)
+	if err != nil {
+		return err
+	}
+
+	writer.Header().Add("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	return json.NewEncoder(writer).Encode(response)
+}
+
+func (n *Notification) Query(ctx context.Context, body v0alpha1.CreateNotificationqueryRequestBody) (*v0alpha1.CreateNotificationqueryResponse, error) {
+	if n.loki == nil {
+		const msg = "Notification history query whilst disabled"
+		n.logger.Debug(msg)
+		return nil, &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusUnprocessableEntity,
+				Message: msg,
+			}}
+	}
+
+	start := time.Now()
 	response, err := n.loki.Query(ctx, body)
 	if err != nil {
 		if errors.Is(err, ErrInvalidQuery) {
 			const msg = "Notification history query invalid"
 			n.logger.Debug(msg, "err", err)
-			return &apierrors.StatusError{
+			return nil, &apierrors.StatusError{
 				ErrStatus: metav1.Status{
 					Status:  metav1.StatusFailure,
 					Code:    http.StatusBadRequest,
@@ -133,7 +143,7 @@ func (n *Notification) QueryHandler(ctx context.Context, writer app.CustomRouteR
 		}
 		const msg = "Notification history query failed"
 		n.logger.Error(msg, "err", err, "duration", time.Since(start))
-		return &apierrors.StatusError{
+		return nil, &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusInternalServerError,
@@ -146,7 +156,5 @@ func (n *Notification) QueryHandler(ctx context.Context, writer app.CustomRouteR
 		"counts", len(response.Counts),
 		"duration", time.Since(start))
 
-	writer.Header().Add("Content-Type", "application/json")
-	writer.WriteHeader(http.StatusOK)
-	return json.NewEncoder(writer).Encode(response)
+	return &response, nil
 }
