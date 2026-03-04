@@ -293,49 +293,43 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // Start with preserved children, then add/update with fetched children
       treeNode.children = { ...childrenToPreserve };
 
+      // Recursively builds a TreeNode with pre-populated descendants from the
+      // depth response. Works for any depth level, not just one.
+      const buildTreeWithDescendants = (nodeId: string, existing?: TreeNode): TreeNode => {
+        const base: TreeNode = existing ?? {
+          expanded: false,
+          scopeNodeId: nodeId,
+          query: '',
+          children: undefined,
+        };
+
+        const nodeDescendants = childrenByParent.get(nodeId);
+        if (!nodeDescendants || nodeDescendants.length === 0) {
+          return base;
+        }
+
+        const existingChildren = base.children || {};
+        const children: Record<string, TreeNode> = { ...existingChildren };
+
+        for (const desc of nodeDescendants) {
+          children[desc.metadata.name] = buildTreeWithDescendants(
+            desc.metadata.name,
+            existingChildren[desc.metadata.name]
+          );
+        }
+
+        return { ...base, children, childrenLoaded: true };
+      };
+
       for (const node of directChildren) {
         const nodeId = node.metadata.name;
 
-        if (childrenToPreserve[nodeId]) {
-          treeNode.children[nodeId] = {
-            ...childrenToPreserve[nodeId],
-            // Update query but keep nested children
-            query: query || '',
-          };
-        } else {
-          // New child from API
-          treeNode.children[nodeId] = {
-            expanded: false,
-            scopeNodeId: nodeId,
-            query: query || '',
-            children: undefined,
-          };
-        }
+        const preserved = childrenToPreserve[nodeId];
+        const base: TreeNode = preserved
+          ? { ...preserved, query: query || '' }
+          : { expanded: false, scopeNodeId: nodeId, query: query || '', children: undefined };
 
-        // Pre-populate descendants from depth response so subsequent expansions
-        // can skip the API call entirely.
-        const descendants = childrenByParent.get(nodeId);
-        if (descendants && descendants.length > 0) {
-          const existingGrandchildren = treeNode.children[nodeId].children || {};
-          const grandchildren: Record<string, TreeNode> = { ...existingGrandchildren };
-
-          for (const desc of descendants) {
-            if (!grandchildren[desc.metadata.name]) {
-              grandchildren[desc.metadata.name] = {
-                expanded: false,
-                scopeNodeId: desc.metadata.name,
-                query: '',
-                children: undefined,
-              };
-            }
-          }
-
-          treeNode.children[nodeId] = {
-            ...treeNode.children[nodeId],
-            children: grandchildren,
-            childrenLoaded: true,
-          };
-        }
+        treeNode.children[nodeId] = buildTreeWithDescendants(nodeId, base);
       }
       // Set loaded to true if node is a container
       treeNode.childrenLoaded = true;

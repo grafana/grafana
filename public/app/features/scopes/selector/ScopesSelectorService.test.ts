@@ -2355,25 +2355,25 @@ describe('ScopesSelectorService', () => {
       },
     };
 
-    const grandchild1: ScopeNode = {
-      metadata: { name: 'grandchild-1' },
+    const level2Leaf1: ScopeNode = {
+      metadata: { name: 'level2-leaf-1' },
       spec: {
-        linkId: 'gc-scope-1',
+        linkId: 'l2-scope-1',
         linkType: 'scope',
         parentName: 'child-container',
         nodeType: 'leaf',
-        title: 'Grandchild 1',
+        title: 'Level 2 Leaf 1',
       },
     };
 
-    const grandchild2: ScopeNode = {
-      metadata: { name: 'grandchild-2' },
+    const level2Leaf2: ScopeNode = {
+      metadata: { name: 'level2-leaf-2' },
       spec: {
-        linkId: 'gc-scope-2',
+        linkId: 'l2-scope-2',
         linkType: 'scope',
         parentName: 'child-container',
         nodeType: 'leaf',
-        title: 'Grandchild 2',
+        title: 'Level 2 Leaf 2',
       },
     };
 
@@ -2382,13 +2382,13 @@ describe('ScopesSelectorService', () => {
         if (options.parent === '') {
           return Promise.resolve([containerNode]);
         } else if (options.parent === 'container' && options.depth === 1) {
-          // depth=1: return children + grandchildren (flat)
-          return Promise.resolve([childContainer, grandchild1, grandchild2]);
+          // depth=1: return children + next level (flat)
+          return Promise.resolve([childContainer, level2Leaf1, level2Leaf2]);
         } else if (options.parent === 'container') {
           // depth=0/undefined: return direct children only
           return Promise.resolve([childContainer]);
         } else if (options.parent === 'child-container') {
-          return Promise.resolve([grandchild1, grandchild2]);
+          return Promise.resolve([level2Leaf1, level2Leaf2]);
         }
         return Promise.resolve([]);
       });
@@ -2416,19 +2416,19 @@ describe('ScopesSelectorService', () => {
       const containerTree = service.state.tree?.children?.['container'];
       expect(containerTree?.children?.['child-container']).toBeDefined();
 
-      // Grandchildren should NOT appear at the expanded level
-      expect(containerTree?.children?.['grandchild-1']).toBeUndefined();
-      expect(containerTree?.children?.['grandchild-2']).toBeUndefined();
+      // Deeper descendants should NOT appear at the expanded level
+      expect(containerTree?.children?.['level2-leaf-1']).toBeUndefined();
+      expect(containerTree?.children?.['level2-leaf-2']).toBeUndefined();
     });
 
-    it('should pre-populate grandchildren under their parent in the tree', async () => {
+    it('should pre-populate descendants under their parent in the tree', async () => {
       await service.toggleExpandedNode('container');
 
       const childContainerTree = service.state.tree?.children?.['container']?.children?.['child-container'];
 
-      // Grandchildren should be pre-populated under child-container
-      expect(childContainerTree?.children?.['grandchild-1']).toBeDefined();
-      expect(childContainerTree?.children?.['grandchild-2']).toBeDefined();
+      // Level 2 nodes should be pre-populated under child-container
+      expect(childContainerTree?.children?.['level2-leaf-1']).toBeDefined();
+      expect(childContainerTree?.children?.['level2-leaf-2']).toBeDefined();
       expect(childContainerTree?.childrenLoaded).toBe(true);
     });
 
@@ -2436,8 +2436,8 @@ describe('ScopesSelectorService', () => {
       await service.toggleExpandedNode('container');
 
       expect(service.state.nodes['child-container']).toEqual(childContainer);
-      expect(service.state.nodes['grandchild-1']).toEqual(grandchild1);
-      expect(service.state.nodes['grandchild-2']).toEqual(grandchild2);
+      expect(service.state.nodes['level2-leaf-1']).toEqual(level2Leaf1);
+      expect(service.state.nodes['level2-leaf-2']).toEqual(level2Leaf2);
     });
 
     it('should skip API call when expanding a node with prefetched children', async () => {
@@ -2455,6 +2455,44 @@ describe('ScopesSelectorService', () => {
 
       // But the node should be expanded
       expect(service.state.tree?.children?.['container']?.children?.['child-container']?.expanded).toBe(true);
+    });
+
+    it('should handle multi-level depth recursively (depth=2)', async () => {
+      // Build a 4-level tree: root → L1 container → L2 container → L3 leaf
+      const l1Container: ScopeNode = {
+        metadata: { name: 'l1' },
+        spec: { linkId: '', linkType: undefined, parentName: '', nodeType: 'container', title: 'L1' },
+      };
+      const l2Container: ScopeNode = {
+        metadata: { name: 'l2' },
+        spec: { linkId: '', linkType: undefined, parentName: 'l1', nodeType: 'container', title: 'L2' },
+      };
+      const l3Leaf: ScopeNode = {
+        metadata: { name: 'l3' },
+        spec: { linkId: 'l3-scope', linkType: 'scope', parentName: 'l2', nodeType: 'leaf', title: 'L3' },
+      };
+
+      apiClient.fetchNodes = jest.fn().mockImplementation((options: { parent?: string; depth?: number }) => {
+        if (options.parent === '') {
+          return Promise.resolve([l1Container]);
+        } else if (options.parent === 'l1' && options.depth === 1) {
+          // depth=1 from l1: returns l2 + l3 (flat, 2 extra levels)
+          return Promise.resolve([l2Container, l3Leaf]);
+        }
+        return Promise.resolve([]);
+      });
+
+      await service.filterNode('', '');
+      await service.toggleExpandedNode('l1');
+
+      // L2 should be a direct child of L1
+      const l1Tree = service.state.tree?.children?.['l1'];
+      expect(l1Tree?.children?.['l2']).toBeDefined();
+      expect(l1Tree?.children?.['l2']?.childrenLoaded).toBe(true);
+
+      // L3 should be nested under L2, not under L1
+      expect(l1Tree?.children?.['l3']).toBeUndefined();
+      expect(l1Tree?.children?.['l2']?.children?.['l3']).toBeDefined();
     });
 
     it('should not pass depth when filtering (search)', async () => {
