@@ -92,10 +92,9 @@ const QueryResults = ({ rule }: Props) => {
     }
   }, [isRunning, isExpressionLoading, isVisualizationLoading]);
 
-  // Merge: expression data is authoritative for shared refIds (expressions are never in visualizationData,
-  // but spreading expressionData last ensures it wins in the unlikely event of a collision).
+  // Merge: visualization (range) data for data source queries, expression data for expressions
   const mergedPreviewData = useMemo(() => {
-    return { ...visualizationData, ...expressionData };
+    return { ...expressionData, ...visualizationData };
   }, [expressionData, visualizationData]);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
