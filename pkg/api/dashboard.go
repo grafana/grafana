@@ -12,6 +12,10 @@ import (
 	"strings"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	claims "github.com/grafana/authlib/types"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -19,8 +23,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -415,6 +421,16 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	// Items with metadata, spec, etc
 	if dashboards.LooksLikeK8sResource(spec) {
+		obj := &unstructured.Unstructured{Object: spec}
+		if strings.HasPrefix(obj.GetAPIVersion(), "dashboard.grafana.app/") {
+			uid, ok, _ := unstructured.NestedString(spec, "uid")
+			if ok {
+				delete(obj.Object, "uid")
+				obj.SetName(uid) // overwrite the incoming name -- this can happen from TF providers
+			}
+			hs.log.Warn("DEPRECATION WARNING: Accepting k8s style dashboard in legacy /api/dashboards/db.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", "dashboard", obj.GetName())
+			return hs.saveDashboardViaK8s(c, cmd, obj)
+		}
 		return response.Error(http.StatusBadRequest, "Dashboard appears to be a full k8s style resource.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", nil)
 	}
 
@@ -487,6 +503,102 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		"uid":       dashboard.UID,
 		"url":       dashboard.GetURL(),
 		"folderUid": dashboard.FolderUID,
+	})
+}
+
+func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashboards.SaveDashboardCommand, obj *unstructured.Unstructured) response.Response {
+	gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Dashboard appears to be a full k8s style resource.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", err)
+	}
+
+	title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+	if title == "" {
+		return response.Error(http.StatusBadRequest, "Dashboard is missing required title property", nil)
+	}
+
+	ctx := c.Req.Context()
+	namespace := hs.namespacer(c.GetOrgID())
+	tmp, err := dynamic.NewForConfig(hs.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create k8s client", err)
+	}
+	client := tmp.Resource(gv.WithResource(dashboardsV1.DASHBOARD_RESOURCE)).Namespace(namespace)
+
+	obj.SetNamespace(namespace)
+	obj.SetAnnotations(map[string]string{}) // clear any annotations
+	obj.SetLabels(map[string]string{})      // clear any labels
+	delete(obj.Object, "status")
+	delete(obj.Object, "access") // can exist if you copied a /dto object
+	delete(obj.Object, "kind")   // copy from UI may have DashboardWithAccessInfo
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to read grafana metadata", err)
+	}
+	meta.SetResourceVersionInt64(0) // remove
+	meta.SetFolder(cmd.FolderUID)
+	meta.SetMessage(cmd.Message)
+	meta.SetUID("")
+	meta.SetResourceVersion("") // remove
+	meta.SetFinalizers(nil)
+	meta.SetManagedFields(nil)
+
+	name := obj.GetName()
+	isCreate := name == ""
+	if isCreate {
+		obj.SetGenerateName("a") // prefix
+	} else {
+		// Read the old value first
+		old, err := client.Get(ctx, name, metav1.GetOptions{})
+		if err == nil && old != nil {
+			if !cmd.Overwrite {
+				return response.Error(http.StatusConflict,
+					"Dashboard already exists. Use overwrite flag to update.", nil)
+			}
+		} else if err != nil && k8serrors.IsNotFound(err) {
+			isCreate = true // but name exists
+		} else {
+			return response.Error(http.StatusInternalServerError,
+				"Failed to read existing dashboard", err)
+		}
+	}
+
+	validation := "Strict"
+	if strings.HasPrefix(gv.Version, "v0") {
+		validation = "Ignore" // v0 can be anything
+	}
+	var dash *unstructured.Unstructured
+	if isCreate {
+		dash, err = client.Create(ctx, obj, metav1.CreateOptions{
+			FieldValidation: validation,
+		})
+	} else {
+		dash, err = client.Update(ctx, obj, metav1.UpdateOptions{
+			FieldValidation: validation,
+		})
+	}
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to save dashboard", err)
+	}
+
+	meta, err = utils.MetaAccessor(dash)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to save dashboard", err)
+	}
+
+	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
+	slug := slugify.Slugify(title)
+
+	c.TimeRequest(metrics.MApiDashboardSave)
+	return response.JSON(http.StatusOK, util.DynMap{
+		"status":    "success",
+		"slug":      slug,
+		"version":   meta.GetGeneration(),
+		"id":        meta.GetDeprecatedInternalID(), //nolint:staticcheck
+		"uid":       meta.GetName(),
+		"url":       dashboards.GetDashboardFolderURL(false, meta.GetName(), slug),
+		"folderUid": meta.GetFolder(),
 	})
 }
 

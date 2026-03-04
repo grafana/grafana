@@ -167,6 +167,16 @@ const injectedRtkApi = api
           body: queryArg.createNotificationqueryRequestBody,
         }),
       }),
+      createNotificationsqueryalerts: build.mutation<
+        CreateNotificationsqueryalertsApiResponse,
+        CreateNotificationsqueryalertsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/notifications/queryalerts`,
+          method: 'POST',
+          body: queryArg.createNotificationsqueryalertsRequestBody,
+        }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -380,6 +390,10 @@ export type UpdateDummyStatusApiArg = {
 export type CreateNotificationqueryApiResponse = /** status 200 OK */ CreateNotificationqueryResponse;
 export type CreateNotificationqueryApiArg = {
   createNotificationqueryRequestBody: CreateNotificationqueryRequestBody;
+};
+export type CreateNotificationsqueryalertsApiResponse = /** status 200 OK */ CreateNotificationsqueryalertsResponse;
+export type CreateNotificationsqueryalertsApiArg = {
+  createNotificationsqueryalertsRequestBody: CreateNotificationsqueryalertsRequestBody;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -599,6 +613,18 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
+export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
+export type CreateNotificationqueryNotificationCount = {
+  /** Count is the number of notification attempts in the time period. */
+  count: number;
+  error?: string;
+  integration?: string;
+  integrationIndex?: number;
+  outcome?: CreateNotificationqueryNotificationOutcome;
+  receiver?: string;
+  status?: CreateNotificationqueryNotificationStatus;
+};
 export type CreateNotificationqueryNotificationEntryAlert = {
   annotations: {
     [key: string]: string;
@@ -613,8 +639,6 @@ export type CreateNotificationqueryNotificationEntryAlert = {
   startsAt: string;
   status: string;
 };
-export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
-export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
 export type CreateNotificationqueryNotificationEntry = {
   /** AlertCount is the total number of alerts included in the notification. */
   alertCount: number;
@@ -652,6 +676,7 @@ export type CreateNotificationqueryNotificationEntry = {
   uuid: string;
 };
 export type CreateNotificationqueryResponse = {
+  counts: CreateNotificationqueryNotificationCount[];
   entries: CreateNotificationqueryNotificationEntry[];
 };
 export type CreateNotificationqueryMatcher = {
@@ -663,6 +688,15 @@ export type CreateNotificationqueryMatchers = CreateNotificationqueryMatcher[];
 export type CreateNotificationqueryRequestBody = {
   /** From is the starting timestamp for the query. */
   from?: string;
+  /** GroupBy specifies how to aggregate counts queries. */
+  groupBy?: {
+    error: boolean;
+    integration: boolean;
+    integrationIndex: boolean;
+    outcome: boolean;
+    receiver: boolean;
+    status: boolean;
+  };
   /** GroupLabels optionally filters the entries by matching group labels. */
   groupLabels?: CreateNotificationqueryMatchers;
   /** Labels optionally filters the entries by matching alert labels. */
@@ -679,6 +713,35 @@ export type CreateNotificationqueryRequestBody = {
   status?: CreateNotificationqueryNotificationStatus;
   /** To is the starting timestamp for the query. */
   to?: string;
+  /** Type of query to perform (default: entries) */
+  type?: 'entries' | 'counts';
+};
+export type CreateNotificationsqueryalertsNotificationEntryAlert = {
+  annotations: {
+    [key: string]: string;
+  };
+  endsAt: string;
+  enrichments?: {
+    [key: string]: any;
+  };
+  labels: {
+    [key: string]: string;
+  };
+  startsAt: string;
+  status: string;
+};
+export type CreateNotificationsqueryalertsResponse = {
+  alerts: CreateNotificationsqueryalertsNotificationEntryAlert[];
+};
+export type CreateNotificationsqueryalertsRequestBody = {
+  /** From is the starting timestamp for the query. */
+  from?: string;
+  /** Limit is the maximum number of entries to return. */
+  limit?: number;
+  /** To is the ending timestamp for the query. */
+  to?: string;
+  /** UUID filters the alerts to those belonging to a specific alert rule. */
+  uuid?: string;
 };
 export const {
   useGetApiResourcesQuery,
@@ -699,4 +762,5 @@ export const {
   useReplaceDummyStatusMutation,
   useUpdateDummyStatusMutation,
   useCreateNotificationqueryMutation,
+  useCreateNotificationsqueryalertsMutation,
 } = injectedRtkApi;

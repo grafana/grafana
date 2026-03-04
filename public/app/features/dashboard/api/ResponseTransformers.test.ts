@@ -1113,8 +1113,8 @@ describe('ResponseTransformers', () => {
           refId: q.spec.refId,
           hide: q.spec.hidden,
           datasource: {
-            type: q.spec.query.spec.group,
-            uid: q.spec.query.spec.datasource?.uid,
+            type: q.spec.query.group,
+            uid: q.spec.query.datasource?.name,
           },
           ...q.spec.query.spec,
         };

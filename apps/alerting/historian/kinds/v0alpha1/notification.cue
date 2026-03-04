@@ -9,6 +9,9 @@ import (
 #NotificationOutcome: "success" | "error" @cog(kind="enum",memberNames="Success|Error")
 
 #NotificationQuery: {
+    // Type of query to perform (default: entries)
+    type?: "entries" | "counts" @cog(kind="enum",memberNames="Entries|Counts")
+
     // From is the starting timestamp for the query.
     from?: time.Time
     // To is the starting timestamp for the query.
@@ -27,10 +30,21 @@ import (
     groupLabels?: #Matchers
     // Labels optionally filters the entries by matching alert labels.
     labels?: #Matchers
+
+    // GroupBy specifies how to aggregate counts queries.
+    groupBy?: {
+        receiver: bool
+        integration: bool
+        integrationIndex: bool
+        status: bool
+        outcome: bool
+        error: bool
+    }
 }
 
 #NotificationQueryResult: {
     entries: [...#NotificationEntry]
+    counts: [...#NotificationCount]
 }
 
 #NotificationEntry: {
@@ -66,6 +80,33 @@ import (
     pipelineTime: time.Time
     // GroupKey uniquely idenifies the dispatcher alert group.
     groupKey: string
+}
+
+#NotificationCount: {
+    receiver?: string
+    integration?: string
+    integrationIndex?: int
+    status?: #NotificationStatus
+    outcome?: #NotificationOutcome
+    error?: string
+
+    // Count is the number of notification attempts in the time period.
+    count: int
+}
+
+#AlertQuery: {
+    // From is the starting timestamp for the query.
+    from?: time.Time
+    // To is the ending timestamp for the query.
+    to?: time.Time
+    // UUID filters the alerts to those belonging to a specific alert rule.
+    uuid?: string
+    // Limit is the maximum number of entries to return.
+    limit?: int64
+}
+
+#AlertQueryResult: {
+    alerts: [...#NotificationEntryAlert]
 }
 
 #NotificationEntryAlert: {

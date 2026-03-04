@@ -74,7 +74,7 @@ async function fetchDashboard(
 
         // if user specified a custom home dashboard redirect to that
         if (isRedirectResponse(dashDTO)) {
-          const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
+          const newUrl = locationUtil.processRedirectUri(dashDTO.redirectUri, locationService.getLocation());
           locationService.replace(newUrl);
           return null;
         }

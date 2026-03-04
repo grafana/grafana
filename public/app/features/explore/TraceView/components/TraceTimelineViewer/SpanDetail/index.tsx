@@ -60,6 +60,7 @@ const useResourceAttributesExtensionLinks = ({
   timeRange,
   traceID,
   spanID,
+  spanStartTime,
 }: {
   process: TraceProcess;
   spanTags: TraceKeyValuePair[];
@@ -68,6 +69,7 @@ const useResourceAttributesExtensionLinks = ({
   timeRange: TimeRange;
   traceID: string;
   spanID: string;
+  spanStartTime: number;
 }) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
@@ -99,8 +101,9 @@ const useResourceAttributesExtensionLinks = ({
       },
       traceID,
       spanID,
+      spanStartTime,
     };
-  }, [process.tags, spanTags, datasourceType, datasourceUid, timeRange, traceID, spanID]);
+  }, [process.tags, spanTags, datasourceType, datasourceUid, timeRange, traceID, spanID, spanStartTime]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
@@ -401,6 +404,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     timeRange,
     traceID,
     spanID,
+    spanStartTime: startTime,
   });
 
   const linksComponent = getSpanDetailLinkButtons({
