@@ -50,4 +50,31 @@ describe('Gauge', () => {
     await userEvent.click(gaugeButton);
     expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
+
+  it('should correctly handle percentage thresholds with percentunit', () => {
+    const percentunitField: FieldConfig = {
+      min: 0,
+      max: 1,
+      unit: 'percentunit',
+      thresholds: {
+        mode: ThresholdsMode.Percentage,
+        steps: [
+          { value: 0, color: 'red' },
+          { value: 90, color: 'green' },
+        ],
+      },
+    };
+
+    const percentunitProps: Props = {
+      ...props,
+      field: percentunitField,
+      value: {
+        text: '97.1%',
+        numeric: 0.971,
+        percent: 0.971,
+      },
+    };
+
+    expect(() => render(<Gauge {...percentunitProps} />)).not.toThrow();
+  });
 });

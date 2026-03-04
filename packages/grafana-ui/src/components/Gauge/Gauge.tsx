@@ -86,10 +86,12 @@ export class Gauge extends PureComponent<Props> {
     let numeric = value.numeric;
 
     if (field.thresholds?.mode === ThresholdsMode.Percentage) {
+      const originalMin = min;
+      const originalMax = max;
       min = 0;
       max = 100;
       if (value.percent === undefined) {
-        numeric = ((numeric - min) / (max - min)) * 100;
+        numeric = ((numeric - originalMin) / (originalMax - originalMin)) * 100;
       } else {
         numeric = value.percent! * 100;
       }
