@@ -98,9 +98,9 @@ In order to verify the logged in user is the same user that was provisioned thro
    - Source attribute: `user.objectId`
 1. **Save** the current configuration.
 
-## Adjust you user mapping configuration to utilize the Entra ID URI
+## Adjust your user mapping configuration to use the Entra ID URI
 
-If the default URI claims do not work, you need to adjust your user mapping to the following:
+If the default URI claims don't work, adjust your user mapping to the following:
 
 - Name attribute = http://schemas.microsoft.com/identity/claims/displayname
 - Login attribute = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name

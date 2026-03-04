@@ -34,7 +34,7 @@ Refer to [Using the same email address to login with different identity provider
 
 To enable the Entra ID OAuth, register your application with Entra ID.
 
-1. Log in to the [Azure Portal](https://portal.azure.com), then click **Microsoft Entra ID** in the side menu.
+1. Log in to the [Azure portal](https://portal.azure.com), then click **Microsoft Entra ID** in the side menu.
 
 1. If you have access to more than one tenant, select your account in the upper right. Set your session to the Entra ID tenant you wish to use.
 
@@ -127,9 +127,9 @@ To enable the Entra ID OAuth, register your application with Entra ID.
 When assigning a group to a Grafana role, ensure that users are direct members of the group. Users in nested groups will not have access to Grafana due to limitations within Entra ID side. For more information, see [Microsoft Entra service limits and restrictions](https://learn.microsoft.com/en-us/entra/identity/users/directory-service-limits-restrictions).
 {{< /admonition >}}
 
-### Configure application roles for Grafana in the Microsoft Entra portal
+### Configure application roles for Grafana in the Microsoft Entra ID portal
 
-This section describes setting up basic application roles for Grafana within the Entra Id Portal. For more information, see [Add app roles to your application and receive them in the token](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps).
+This section describes setting up basic application roles for Grafana within the Entra ID Portal. For more information, see [Add app roles to your application and receive them in the token](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps).
 
 1. Go to **App Registrations**, search for your application, and click it.
 
