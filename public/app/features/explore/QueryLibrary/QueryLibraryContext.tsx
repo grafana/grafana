@@ -78,7 +78,7 @@ export type QueryLibraryContextType = {
   onFavorite: (uid: string) => void;
   onUnfavorite: (uid: string) => void;
   userFavorites: { [key: string]: boolean };
-  setUserFavorites: (favorites: { [key: string]: boolean }) => void;
+  setUserFavorites: Dispatch<SetStateAction<{ [key: string]: boolean }>>;
   isEditingQuery: boolean;
   setIsEditingQuery: (isEditingQuery: boolean) => void;
   onAddHistoryQueryToLibrary: (newQuery: SavedQuery) => void;
@@ -118,7 +118,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   onFavorite: () => {},
   onUnfavorite: () => {},
   userFavorites: {},
-  setUserFavorites: () => {},
+  setUserFavorites: (_favorites) => {},
   isEditingQuery: false,
   setIsEditingQuery: () => {},
   onAddHistoryQueryToLibrary: () => {},
