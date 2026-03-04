@@ -24,7 +24,7 @@ func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
 }
 
 func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx)
 
 	// Get options, defaulting to empty if not provided
 	options := job.Spec.FixFolderMetadata

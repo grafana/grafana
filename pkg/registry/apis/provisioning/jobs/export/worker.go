@@ -66,7 +66,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return errors.New("missing export settings")
 	}
 
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx)
 	start := time.Now()
 	outcome := utils.ErrorOutcome
 	resourcesExported := 0

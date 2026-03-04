@@ -174,7 +174,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	defer rollback()
 
 	namespace := claimedJob.GetNamespace()
-	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace)
+	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository)
 	ctx = logging.Context(ctx, logger)
 	d.currentJob = claimedJob
 
@@ -366,6 +366,11 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		}
 
 		r := repo.Config()
+		if connName := r.ConnectionName(); connName != "" {
+			logger = logger.With("connection", connName)
+			ctx = logging.Context(ctx, logger)
+		}
+
 		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
 			logger.Info("repository marked for deletion - skip job",
 				"name", r.Name,

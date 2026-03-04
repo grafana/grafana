@@ -41,7 +41,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		return errors.New("missing delete settings")
 	}
 
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx)
 	opts := *job.Spec.Delete
 	paths := opts.Paths
 	start := time.Now()

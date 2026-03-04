@@ -70,7 +70,7 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 
 func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	cfg := repo.Config()
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx)
 	ctx, span := r.tracer.Start(ctx, "provisioning.sync.process",
 		trace.WithAttributes(
 			attribute.String("job.name", job.GetName()),
