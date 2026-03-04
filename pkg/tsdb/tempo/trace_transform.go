@@ -14,9 +14,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
-// serviceNamespaceAltKey is an alternative to the OTel semconv canonical service.namespace (e.g. used by some SDKs).
-const serviceNamespaceAltKey = "service.namespace.name"
-
 type KeyValue struct {
 	Value any    `json:"value"`
 	Key   string `json:"key"`
@@ -51,7 +48,6 @@ func TraceToFrame(resourceSpans []*tracev11.ResourceSpans) (*data.Frame, error) 
 			data.NewField("parentSpanID", nil, []string{}),
 			data.NewField("operationName", nil, []string{}),
 			data.NewField("serviceName", nil, []string{}),
-			data.NewField("serviceNamespace", nil, []string{}),
 			data.NewField("kind", nil, []string{}),
 			data.NewField("statusCode", nil, []int64{}),
 			data.NewField("statusMessage", nil, []string{}),
@@ -132,7 +128,7 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 	parentSpanIDHex := hex.EncodeToString(parentSpanID[:])
 
 	startTime := float64(span.StartTimeUnixNano) / 1_000_000
-	serviceName, serviceNamespace, serviceTags := resourceToProcess(resource)
+	serviceName, serviceTags := resourceToProcess(resource)
 
 	status := span.Status
 	statusCode := int64(status.Code)
@@ -175,7 +171,6 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 		parentSpanIDHex,
 		span.Name,
 		serviceName,
-		serviceNamespace,
 		getSpanKind(span.Kind),
 		statusCode,
 		statusMessage,
@@ -191,12 +186,11 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 	}, nil
 }
 
-func resourceToProcess(resource *v1.Resource) (string, string, []*KeyValue) {
+func resourceToProcess(resource *v1.Resource) (string, []*KeyValue) {
 	attrs := resource.Attributes
 	serviceName := ResourceNoServiceName
-	var serviceNamespace, serviceNamespaceAlt string
 	if len(attrs) == 0 {
-		return serviceName, serviceNamespace, nil
+		return serviceName, nil
 	}
 
 	tags := make([]*KeyValue, 0, len(attrs)-1)
@@ -204,24 +198,13 @@ func resourceToProcess(resource *v1.Resource) (string, string, []*KeyValue) {
 		if attribute.Key(attr.Key) == semconv.ServiceNameKey {
 			serviceName = attr.GetValue().GetStringValue()
 		}
-		if attribute.Key(attr.Key) == semconv.ServiceNamespaceKey {
-			serviceNamespace = attr.GetValue().GetStringValue()
-		}
-		if attribute.Key(attr.Key) == attribute.Key(serviceNamespaceAltKey) {
-			serviceNamespaceAlt = attr.GetValue().GetStringValue()
-		}
 		val, err := getAttributeVal(attr.Value)
 		if err != nil {
 			logger.Debug("error transforming resource to process", "err", err)
 		}
 		tags = append(tags, &KeyValue{Key: attr.Key, Value: val})
 	}
-
-	// Coalesce: prefer OTel semconv canonical service.namespace, fallback to service.namespace.name
-	if serviceNamespace == "" && serviceNamespaceAlt != "" {
-		serviceNamespace = serviceNamespaceAlt
-	}
-	return serviceName, serviceNamespace, tags
+	return serviceName, tags
 }
 
 func getAttributeVal(attr *commonv11.AnyValue) (any, error) {
