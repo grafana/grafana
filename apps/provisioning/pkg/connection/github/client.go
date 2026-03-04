@@ -14,9 +14,7 @@ import (
 
 // API errors that we need to convey after parsing real GH errors (or faking them).
 var (
-	//lint:ignore ST1005 this is not punctuation
-	ErrAuthentication = apierrors.NewUnauthorized("authentication failed")
-	//lint:ignore ST1005 this is not punctuation
+	ErrAuthentication     = apierrors.NewUnauthorized("authentication failed")
 	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
 
 	ErrNotFound            = errors.New("not found")
