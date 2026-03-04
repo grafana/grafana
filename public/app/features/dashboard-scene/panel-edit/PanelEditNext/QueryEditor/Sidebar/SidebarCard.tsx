@@ -1,4 +1,4 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +8,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { ActionItem, Actions } from '../../Actions';
 import {
   QUERY_EDITOR_COLORS,
+  QUERY_EDITOR_TYPE_CONFIG,
   QueryEditorType,
   SIDEBAR_CARD_HEIGHT,
   SIDEBAR_CARD_INDENT,
@@ -75,12 +76,15 @@ export const SidebarCard = ({
   };
 
   if (variant === 'ghost') {
+    const typeConfig = QUERY_EDITOR_TYPE_CONFIG[item.type];
     return (
       <div className={styles.wrapper} aria-hidden>
         <div className={cx(styles.card, styles.ghostCard)}>
           <div className={styles.cardContent}>
-            <div className={styles.ghostCardIcon} />
-            <div className={styles.ghostCardTitle} />
+            <Icon name={typeConfig.icon} color={typeConfig.color} size="sm" />
+            <span className={styles.ghostCardLabel}>
+              {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: typeConfig.getLabel() })}
+            </span>
           </div>
         </div>
       </div>
@@ -132,11 +136,6 @@ export const SidebarCard = ({
   );
 };
 
-const ghostCardPulse = keyframes`
-  from, to { opacity: 0.1; }
-  50% { opacity: 0.8; }
-`;
-
 function getStyles(
   theme: GrafanaTheme2,
   {
@@ -155,7 +154,7 @@ function getStyles(
   });
 
   const themeColors = getQueryEditorColors(theme);
-  const backgroundColor = isSelected ? themeColors.card.activeBg : themeColors.card.hoverBg;
+  const hoverBackgroundColor = isSelected ? themeColors.card.activeBg : themeColors.card.hoverBg;
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -166,7 +165,7 @@ function getStyles(
     paddingRight: theme.spacing(1),
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
-    background: `linear-gradient(270deg, ${backgroundColor} 80%, transparent 100%)`,
+    background: `linear-gradient(270deg, ${hoverBackgroundColor} 80%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
@@ -243,12 +242,15 @@ function getStyles(
         }),
       },
       '&:hover': {
-        background: backgroundColor,
+        background: hoverBackgroundColor,
       },
       [`&:hover .${hoverActions}`]: {
         opacity: 1,
         transform: 'translateX(0)',
         pointerEvents: 'auto',
+      },
+      '[data-is-dragging] &': {
+        background: hoverBackgroundColor,
       },
     }),
     hoverActions,
@@ -280,41 +282,20 @@ function getStyles(
     }),
 
     ghostCard: css({
-      border: `1px dashed ${theme.colors.border.medium}`,
-      borderLeft: `3px solid ${theme.colors.border.medium}`,
+      border: `1px dashed ${borderColor}`,
+      borderLeft: `3px solid ${borderColor}`,
       background: 'transparent',
-      '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
-        borderColor: theme.colors.border.strong,
-        borderLeftColor: borderColor,
-      },
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'border-color'], {
-          duration: theme.transitions.duration.standard,
-        }),
-      },
+      cursor: 'default',
+      opacity: 0.7,
     }),
 
-    ghostCardIcon: css({
-      width: theme.spacing(2),
-      height: theme.spacing(2),
-      borderRadius: theme.shape.radius.default,
-      background: theme.colors.border.weak,
-      flexShrink: 0,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${ghostCardPulse} 3s ease-in-out infinite`,
-      },
-    }),
-
-    ghostCardTitle: css({
-      height: theme.spacing(1.5),
-      flex: 1,
-      maxWidth: '70%',
-      borderRadius: theme.shape.radius.default,
-      background: theme.colors.border.weak,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${ghostCardPulse} 3s ease-in-out infinite`,
-      },
+    ghostCardLabel: css({
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontStyle: 'italic',
+      color: theme.colors.text.secondary,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
 
     errorIcon: css({
