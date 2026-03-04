@@ -2096,7 +2096,9 @@
       "select-namespace": "選擇命名空間"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "警報規則",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "最近刪除",
@@ -2322,8 +2324,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "查看目前的警報，並探索歷史資料以調查目前或過去的問題。",
-        "title": "警報"
+        "subtitle": "查看目前的警報，並探索歷史資料以調查目前或過去的問題。"
       }
     },
     "panel-alert-tab-content": {
@@ -3248,6 +3249,7 @@
     },
     "template-form": {
       "aria-label-template-form": "範本表單",
+      "body-legacy": "",
       "label-examples-documentation": "範例文件",
       "label-template-group": "範本群組",
       "label-template-group-name": "範本群組名稱",
@@ -3256,6 +3258,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "為您的範本群組命名",
       "title-error-saving-template": "儲存範本時發生錯誤",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "範本備忘錄"
     },
     "template-preview": {
@@ -3296,6 +3299,8 @@
       "help": {
         "intro": "通知範本使用 Go 範本語言來建立通知訊息。\n\n在 Grafana 中，範本群組可以使用 {{ define \"<NAME>\" }} 定義多個通知範本。\n然後，可以透過呼叫 {{ template \"<NAME>\" }} 在聯絡點和其他通知範本中使用這些範本。\n有關通知範本的詳細資訊，請參閱我們的文件。"
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "設定錯誤",
       "misconfigured-warning": "此範本設定錯誤。",
       "misconfigured-warning-details": "必須在警報管理設定的<2></2>和<5></5>兩個區段中定義範本。"
@@ -3406,7 +3411,14 @@
         "title": "找不到規則"
       },
       "rules-with-firing-instances": "帶有觸發執行個體的警報規則",
-      "rules-with-pending-instances": "帶有待處理執行個體的警報規則"
+      "rules-with-pending-instances": "帶有待處理執行個體的警報規則",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "新增表達式"
@@ -4164,7 +4176,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -6840,10 +6851,10 @@
       "title-delete-all-transformations": "是否要刪除所有轉換？"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "切換表格檢視",
-      "table-view-label-table-view": "表格檢視"
+      "table-view-label-table-view": "表格檢視",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6888,6 +6899,16 @@
     },
     "query-editor": {
       "query": "查詢"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "已命名的擷取群組可用於分隔顯示文字與數值（<1>請參閱範例</1>）。",
@@ -7011,6 +7032,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "由於未找到對支援警報資料來源的查詢內容，因此無法從此面板建立警報。",
+      "disabled-tooltip": "",
       "new-alert-rule": "新的警報規則",
       "title-no-alerting-capable-query-found": "找不到警報功能的查詢"
     },
@@ -7790,7 +7812,10 @@
     "pro-tip": "專業提示：{{proTip}}"
   },
   "entity-not-found": {
-    "description": "我們正在尋找，但似乎沒有找到{{lowerCaseEntity}}。請嘗試返回<4>首頁</4>或在<7>社群網站</7>上尋求協助。</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -9414,11 +9439,13 @@
       },
       "legend": {
         "category": "圖例",
+        "description-limit": "",
         "description-values": "選擇要在圖例中顯示的值或計算",
         "mode-options": {
           "label-list": "清單",
           "label-table": "表格"
         },
+        "name-limit": "",
         "name-mode": "模式",
         "name-placement": "放置",
         "name-values": "值",
@@ -10347,6 +10374,11 @@
     "subtitle": "Grafana 中的 LDAP 整合，允許您的 Grafana 使用者使用其 LDAP 憑證登入。請在我們的<2><1>文件</1></2>中閱讀更多資訊。",
     "title": "基本設定"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "具有此名稱的資料庫面板已存在",
@@ -11215,9 +11247,17 @@
       "subtitle": "在系統發生問題後立即了解問題",
       "title": "警報"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "管理警報管理設定並啟用接收 Grafana 管理的警報",
       "title": "設定"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "決定如何將警報傳送至聯絡點",
@@ -11880,8 +11920,6 @@
       "tooltip-delete": "刪除"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "無法載入部分建議"
       },
@@ -12350,13 +12388,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "分支",
       "label-comment": "評論",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "路徑",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "最後一個分支",
       "suffix-new-branch": "",
@@ -12467,6 +12510,8 @@
       "instance-fully-managed-tooltip": "設定已停用，因為此執行個體已完全受管理"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12607,10 +12652,18 @@
       "label-sync-interval": "同步間隔（秒）"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13349,6 +13402,7 @@
       "card-click": "選取卡片 {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
       "transformations": "轉換",
@@ -14300,6 +14354,11 @@
           "settings": "設定"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "外部群組同步"
@@ -14356,6 +14415,19 @@
       "loading-teams": "正在載入團隊…",
       "new-team": "新團隊",
       "placeholder-search-teams": "搜尋團隊"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "這是可選項目，主要用於設定團隊個人資料頭像（透過 Gravatar 服務）",
@@ -14587,6 +14659,12 @@
     "name-show-matches-only": "僅顯示符合項目",
     "traces-panel": {
       "no-data-found-in-response": "回應中找不到資料"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

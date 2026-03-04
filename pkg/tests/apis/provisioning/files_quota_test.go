@@ -216,6 +216,10 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SkipResourceAssertions: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
+
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
+		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.SyncAndWait(t, repo, nil)
 		// Wait for quota condition to show exceeded
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
