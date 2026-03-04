@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useMeasure } from 'react-use';
 
 import { createAssistantContextItem, useProvidePageContext } from '@grafana/assistant';
+
+import { getExploreBlockTools } from './assistant/exploreAssistantIntegration';
 import {
   CoreApp,
   DataFrame,
@@ -167,7 +169,13 @@ export function Blocks(props: Props) {
 
   // Provide current Explore state as context for the Grafana Assistant
   const setPageContext = useProvidePageContext(/\/explore/);
+  const exploreBlockTools = useMemo(() => getExploreBlockTools(), []);
   useEffect(() => {
+    const toolDescriptions = exploreBlockTools.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: tool.inputSchema,
+    }));
     const context = [
       createAssistantContextItem('datasource', {
         datasourceUid: dsSettings.uid,
@@ -180,9 +188,17 @@ export function Blocks(props: Props) {
         title: 'Explore queries',
         data: { queries },
       }),
+      createAssistantContextItem('structured', {
+        hidden: true,
+        title: 'Available Explore tools',
+        data: {
+          description: 'These tools are available for manipulating Explore blocks.',
+          tools: toolDescriptions,
+        },
+      }),
     ];
     setPageContext(context);
-  }, [setPageContext, blocks, queries, dsSettings.uid]);
+  }, [setPageContext, blocks, queries, dsSettings.uid, exploreBlockTools]);
 
   const onChange = useCallback(
     (newQueries: DataQuery[], options?: { skipAutoImport?: boolean }) => {

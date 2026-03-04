@@ -1,5 +1,5 @@
-import { newFunctionNamespace, getExposeAssistantFunctionsConfig } from '@grafana/assistant';
-import { PluginExtensionAddedFunctionConfig } from '@grafana/data';
+import { createTool } from '@grafana/assistant';
+import type { InlineToolRunnable, ToolOutput } from '@grafana/assistant';
 
 import { dispatch, getState } from '../../../store/store';
 import { Block } from '../../../types/explore';
@@ -32,102 +32,305 @@ function getCurrentBlocks(exploreId: string): Block[] {
   return buildQueryBlocksFromQueries(pane.queries);
 }
 
-/**
- * Creates the function namespace that exposes Explore block management
- * functions to the Grafana Assistant.
- */
-function createExploreBlocksFunctionNamespace() {
-  return newFunctionNamespace('explore-blocks', {
-    getBlocks: () => {
-      const exploreId = getFirstExploreId();
-      if (!exploreId) {
-        return { error: 'No active explore pane' };
-      }
-      return { blocks: getCurrentBlocks(exploreId) };
+// --- Tool: get_explore_blocks ---
+const getBlocksTool: InlineToolRunnable = createTool(
+  async (): Promise<ToolOutput> => {
+    const exploreId = getFirstExploreId();
+    if (!exploreId) {
+      return 'Error: No active explore pane';
+    }
+    const blocks = getCurrentBlocks(exploreId);
+    return JSON.stringify({ blocks });
+  },
+  {
+    name: 'get_explore_blocks',
+    description:
+      'Get the current list of blocks in the Explore view. ' +
+      'Blocks can be of type "query" (a data source query), "text" (a markdown note), or "expression" (a math expression). ' +
+      'Returns the full block list with their types, indices, and content.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {},
+      additionalProperties: false,
     },
+    validate: () => ({}),
+  }
+);
 
-    addTextBlock: (text: string) => {
-      const exploreId = getFirstExploreId();
-      if (!exploreId) {
-        return { error: 'No active explore pane' };
-      }
-      dispatch(addBlock(exploreId, { type: 'text', text }));
-      return { success: true };
-    },
-
-    addExpressionBlock: (expression: string) => {
-      const exploreId = getFirstExploreId();
-      if (!exploreId) {
-        return { error: 'No active explore pane' };
-      }
-      dispatch(addBlock(exploreId, { type: 'expression', expression }));
-      return { success: true };
-    },
-
-    addQueryBlock: () => {
-      const exploreId = getFirstExploreId();
-      if (!exploreId) {
-        return { error: 'No active explore pane' };
-      }
-      const state = getState();
-      const pane = state.explore.panes[exploreId];
-      const queryCount = pane?.queries?.length ?? 0;
-      dispatch(addQueryRow(exploreId, queryCount));
-      return { success: true };
-    },
-
-    updateTextBlock: (index: number, text: string) => {
-      const exploreId = getFirstExploreId();
-      if (!exploreId) {
-        return { error: 'No active explore pane' };
-      }
-
-      const blocks = getCurrentBlocks(exploreId);
-      if (index < 0 || index >= blocks.length || blocks[index].type !== 'text') {
-        return { error: `Invalid text block index: ${index}` };
-      }
-
-      dispatch(updateTextBlock(exploreId, index, text));
-      return { success: true };
-    },
-
-    updateExpressionBlock: (index: number, expression: string) => {
-      const exploreId = getFirstExploreId();
-      if (!exploreId) {
-        return { error: 'No active explore pane' };
-      }
-
-      const blocks = getCurrentBlocks(exploreId);
-      if (index < 0 || index >= blocks.length || blocks[index].type !== 'expression') {
-        return { error: `Invalid expression block index: ${index}` };
-      }
-
-      dispatch(updateExpressionBlockAction({ exploreId, index, expression }));
-      return { success: true };
-    },
-
-    removeBlock: (index: number) => {
-      const exploreId = getFirstExploreId();
-      if (!exploreId) {
-        return { error: 'No active explore pane' };
-      }
-
-      const blocks = getCurrentBlocks(exploreId);
-      if (index < 0 || index >= blocks.length) {
-        return { error: `Invalid block index: ${index}` };
-      }
-
-      dispatch(removeBlock(exploreId, index));
-      return { success: true };
-    },
-  });
+// --- Tool: add_text_block ---
+interface AddTextBlockInput {
+  text: string;
 }
 
+const addTextBlockTool: InlineToolRunnable = createTool(
+  async (input: AddTextBlockInput): Promise<ToolOutput> => {
+    const exploreId = getFirstExploreId();
+    if (!exploreId) {
+      return 'Error: No active explore pane';
+    }
+    dispatch(addBlock(exploreId, { type: 'text', text: input.text }));
+    return `Successfully added text block`;
+  },
+  {
+    name: 'add_explore_text_block',
+    description:
+      'Add a new text/note block to the Explore view. ' +
+      'Text blocks contain markdown text that can be used for documentation, annotations, or notes alongside queries.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        text: {
+          type: 'string' as const,
+          description: 'The markdown text content for the new text block',
+        },
+      },
+      required: ['text'],
+      additionalProperties: false,
+    },
+    validate: (input) => {
+      if (typeof input.text !== 'string' || !input.text) {
+        throw new Error('text is required and must be a non-empty string');
+      }
+      return input as AddTextBlockInput;
+    },
+  }
+);
+
+// --- Tool: add_expression_block ---
+interface AddExpressionBlockInput {
+  expression: string;
+}
+
+const addExpressionBlockTool: InlineToolRunnable = createTool(
+  async (input: AddExpressionBlockInput): Promise<ToolOutput> => {
+    const exploreId = getFirstExploreId();
+    if (!exploreId) {
+      return 'Error: No active explore pane';
+    }
+    dispatch(addBlock(exploreId, { type: 'expression', expression: input.expression }));
+    return `Successfully added expression block`;
+  },
+  {
+    name: 'add_explore_expression_block',
+    description:
+      'Add a new math expression block to the Explore view. ' +
+      'Expression blocks contain math expressions that can reference query results (e.g. "$A + $B").',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        expression: {
+          type: 'string' as const,
+          description: 'The math expression, can reference query results using $refId syntax (e.g. "$A + $B")',
+        },
+      },
+      required: ['expression'],
+      additionalProperties: false,
+    },
+    validate: (input) => {
+      if (typeof input.expression !== 'string' || !input.expression) {
+        throw new Error('expression is required and must be a non-empty string');
+      }
+      return input as AddExpressionBlockInput;
+    },
+  }
+);
+
+// --- Tool: add_query_block ---
+const addQueryBlockTool: InlineToolRunnable = createTool(
+  async (): Promise<ToolOutput> => {
+    const exploreId = getFirstExploreId();
+    if (!exploreId) {
+      return 'Error: No active explore pane';
+    }
+    const state = getState();
+    const pane = state.explore.panes[exploreId];
+    const queryCount = pane?.queries?.length ?? 0;
+    dispatch(addQueryRow(exploreId, queryCount));
+    return `Successfully added a new query block`;
+  },
+  {
+    name: 'add_explore_query_block',
+    description:
+      'Add a new empty query block to the Explore view. ' +
+      'Query blocks allow the user to write data source queries. The new query will use the currently selected data source.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {},
+      additionalProperties: false,
+    },
+    validate: () => ({}),
+  }
+);
+
+// --- Tool: update_text_block ---
+interface UpdateTextBlockInput {
+  index: number;
+  text: string;
+}
+
+const updateTextBlockTool: InlineToolRunnable = createTool(
+  async (input: UpdateTextBlockInput): Promise<ToolOutput> => {
+    const exploreId = getFirstExploreId();
+    if (!exploreId) {
+      return 'Error: No active explore pane';
+    }
+
+    const blocks = getCurrentBlocks(exploreId);
+    if (input.index < 0 || input.index >= blocks.length || blocks[input.index].type !== 'text') {
+      return `Error: Invalid text block index: ${input.index}. Must point to an existing text block.`;
+    }
+
+    dispatch(updateTextBlock(exploreId, input.index, input.text));
+    return `Successfully updated text block at index ${input.index}`;
+  },
+  {
+    name: 'update_explore_text_block',
+    description:
+      'Update the content of an existing text block in the Explore view. ' +
+      'Use get_explore_blocks first to find the correct block index. The block at the given index must be a text block.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        index: {
+          type: 'integer' as const,
+          description: 'The zero-based index of the text block to update (use get_explore_blocks to find it)',
+          minimum: 0,
+        },
+        text: {
+          type: 'string' as const,
+          description: 'The new markdown text content for the block',
+        },
+      },
+      required: ['index', 'text'],
+      additionalProperties: false,
+    },
+    validate: (input) => {
+      if (typeof input.index !== 'number' || !Number.isInteger(input.index) || input.index < 0) {
+        throw new Error('index is required and must be a non-negative integer');
+      }
+      if (typeof input.text !== 'string') {
+        throw new Error('text is required and must be a string');
+      }
+      return input as UpdateTextBlockInput;
+    },
+  }
+);
+
+// --- Tool: update_expression_block ---
+interface UpdateExpressionBlockInput {
+  index: number;
+  expression: string;
+}
+
+const updateExpressionBlockTool: InlineToolRunnable = createTool(
+  async (input: UpdateExpressionBlockInput): Promise<ToolOutput> => {
+    const exploreId = getFirstExploreId();
+    if (!exploreId) {
+      return 'Error: No active explore pane';
+    }
+
+    const blocks = getCurrentBlocks(exploreId);
+    if (input.index < 0 || input.index >= blocks.length || blocks[input.index].type !== 'expression') {
+      return `Error: Invalid expression block index: ${input.index}. Must point to an existing expression block.`;
+    }
+
+    dispatch(updateExpressionBlockAction({ exploreId, index: input.index, expression: input.expression }));
+    return `Successfully updated expression block at index ${input.index}`;
+  },
+  {
+    name: 'update_explore_expression_block',
+    description:
+      'Update the expression of an existing expression block in the Explore view. ' +
+      'Use get_explore_blocks first to find the correct block index. The block at the given index must be an expression block.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        index: {
+          type: 'integer' as const,
+          description: 'The zero-based index of the expression block to update (use get_explore_blocks to find it)',
+          minimum: 0,
+        },
+        expression: {
+          type: 'string' as const,
+          description: 'The new math expression, can reference query results using $refId syntax (e.g. "$A + $B")',
+        },
+      },
+      required: ['index', 'expression'],
+      additionalProperties: false,
+    },
+    validate: (input) => {
+      if (typeof input.index !== 'number' || !Number.isInteger(input.index) || input.index < 0) {
+        throw new Error('index is required and must be a non-negative integer');
+      }
+      if (typeof input.expression !== 'string') {
+        throw new Error('expression is required and must be a string');
+      }
+      return input as UpdateExpressionBlockInput;
+    },
+  }
+);
+
+// --- Tool: remove_block ---
+interface RemoveBlockInput {
+  index: number;
+}
+
+const removeBlockTool: InlineToolRunnable = createTool(
+  async (input: RemoveBlockInput): Promise<ToolOutput> => {
+    const exploreId = getFirstExploreId();
+    if (!exploreId) {
+      return 'Error: No active explore pane';
+    }
+
+    const blocks = getCurrentBlocks(exploreId);
+    if (input.index < 0 || input.index >= blocks.length) {
+      return `Error: Invalid block index: ${input.index}. Must be between 0 and ${blocks.length - 1}.`;
+    }
+
+    dispatch(removeBlock(exploreId, input.index));
+    return `Successfully removed block at index ${input.index}`;
+  },
+  {
+    name: 'remove_explore_block',
+    description:
+      'Remove a block from the Explore view by its index. ' +
+      'Can remove any block type (query, text, or expression). ' +
+      'Use get_explore_blocks first to find the correct block index. ' +
+      'If a query block is removed, the associated query is also removed.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        index: {
+          type: 'integer' as const,
+          description: 'The zero-based index of the block to remove (use get_explore_blocks to find it)',
+          minimum: 0,
+        },
+      },
+      required: ['index'],
+      additionalProperties: false,
+    },
+    validate: (input) => {
+      if (typeof input.index !== 'number' || !Number.isInteger(input.index) || input.index < 0) {
+        throw new Error('index is required and must be a non-negative integer');
+      }
+      return input as RemoveBlockInput;
+    },
+  }
+);
+
 /**
- * Returns the PluginExtensionAddedFunctionConfig that registers
- * Explore block management functions with the Grafana Assistant.
+ * Returns all Explore block manipulation tools as InlineToolRunnable[].
+ * These can be passed to useInlineAssistant().generate({ tools }) or
+ * provided through the assistant page context.
  */
-export function getExploreAssistantFunctionConfig(): PluginExtensionAddedFunctionConfig {
-  const namespace = createExploreBlocksFunctionNamespace();
-  return getExposeAssistantFunctionsConfig([namespace]);
+export function getExploreBlockTools(): InlineToolRunnable[] {
+  return [
+    getBlocksTool,
+    addTextBlockTool,
+    addExpressionBlockTool,
+    addQueryBlockTool,
+    updateTextBlockTool,
+    updateExpressionBlockTool,
+    removeBlockTool,
+  ];
 }

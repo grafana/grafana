@@ -1,23 +1,13 @@
+import type { InlineToolRunnable } from '@grafana/assistant';
+
 import { dispatch, getState } from '../../../store/store';
 import { Block, ExploreItemState } from '../../../types/explore';
 
-import { getExploreAssistantFunctionConfig } from './exploreAssistantIntegration';
+import { getExploreBlockTools } from './exploreAssistantIntegration';
 
 jest.mock('../../../store/store', () => ({
   dispatch: jest.fn(),
   getState: jest.fn(),
-}));
-
-jest.mock('@grafana/assistant', () => ({
-  newFunctionNamespace: jest.fn((namespace: string, functions: Record<string, Function>) => ({
-    namespace,
-    functions,
-  })),
-  getExposeAssistantFunctionsConfig: jest.fn((namespaces: Array<{ namespace: string; functions: Record<string, Function> }>) => ({
-    title: 'Explore blocks assistant functions',
-    targets: 'grafana-assistant-app/callback/v0-alpha',
-    fn: () => namespaces,
-  })),
 }));
 
 const mockGetState = getState as jest.MockedFunction<typeof getState>;
@@ -33,171 +23,191 @@ function createMockState(blocks: Block[], queries: Array<{ refId: string }> = []
         } as unknown as ExploreItemState,
       },
     },
-  } as ReturnType<typeof getState>;
+  } as unknown as ReturnType<typeof getState>;
 }
 
-describe('exploreAssistantIntegration', () => {
+/** ToolInvokeOptions stub – tools under test do not use manager/signal/timeout */
+const stubInvokeOptions = { manager: {} } as Parameters<InlineToolRunnable['invoke']>[1];
+
+/** Helper to invoke a tool by name from the tools array */
+async function invokeTool(tools: InlineToolRunnable[], name: string, input: Record<string, unknown> = {}) {
+  const tool = tools.find((t) => t.name === name);
+  if (!tool) {
+    throw new Error(`Tool "${name}" not found`);
+  }
+  return tool.invoke(input, stubInvokeOptions);
+}
+
+describe('exploreAssistantIntegration – createTool based', () => {
+  let tools: InlineToolRunnable[];
+
   beforeEach(() => {
     jest.clearAllMocks();
+    tools = getExploreBlockTools();
   });
 
-  describe('getExploreAssistantFunctionConfig', () => {
-    it('should return a valid PluginExtensionAddedFunctionConfig', () => {
-      const config = getExploreAssistantFunctionConfig();
-      expect(config).toBeDefined();
-      expect(config.title).toBeDefined();
-      expect(config.targets).toBe('grafana-assistant-app/callback/v0-alpha');
-      expect(config.fn).toBeDefined();
+  describe('getExploreBlockTools', () => {
+    it('should return an array of InlineToolRunnable tools', () => {
+      expect(tools.length).toBeGreaterThan(0);
+      for (const tool of tools) {
+        expect(tool.name).toBeDefined();
+        expect(tool.description).toBeDefined();
+        expect(tool.inputSchema).toBeDefined();
+        expect(typeof tool.invoke).toBe('function');
+      }
+    });
+
+    it('should include all expected tool names', () => {
+      const names = tools.map((t) => t.name);
+      expect(names).toContain('get_explore_blocks');
+      expect(names).toContain('add_explore_text_block');
+      expect(names).toContain('add_explore_expression_block');
+      expect(names).toContain('add_explore_query_block');
+      expect(names).toContain('update_explore_text_block');
+      expect(names).toContain('update_explore_expression_block');
+      expect(names).toContain('remove_explore_block');
     });
   });
 
-  describe('function namespace', () => {
-    let functions: Record<string, Function>;
+  describe('get_explore_blocks', () => {
+    it('should return blocks from the current explore pane', async () => {
+      const blocks: Block[] = [
+        { type: 'query', queryRef: 'A' },
+        { type: 'text', text: 'hello' },
+      ];
+      mockGetState.mockReturnValue(createMockState(blocks));
 
-    beforeEach(() => {
-      const config = getExploreAssistantFunctionConfig();
-      const namespaces = (config.fn as Function)();
-      functions = namespaces[0].functions;
+      const result = await invokeTool(tools, 'get_explore_blocks');
+      expect(JSON.parse(result as string)).toEqual({ blocks });
     });
 
-    describe('getBlocks', () => {
-      it('should return blocks from the current explore pane', () => {
-        const blocks: Block[] = [
-          { type: 'query', queryRef: 'A' },
-          { type: 'text', text: 'hello' },
-        ];
-        mockGetState.mockReturnValue(createMockState(blocks));
+    it('should return error when no explore pane exists', async () => {
+      mockGetState.mockReturnValue({
+        explore: { panes: {} },
+      } as unknown as ReturnType<typeof getState>);
 
-        const result = functions.getBlocks();
-        expect(result).toEqual({ blocks });
-      });
+      const result = await invokeTool(tools, 'get_explore_blocks');
+      expect(result).toContain('Error');
+    });
+  });
 
-      it('should return error when no explore pane exists', () => {
-        mockGetState.mockReturnValue({
-          explore: { panes: {} },
-        } as ReturnType<typeof getState>);
-
-        const result = functions.getBlocks();
-        expect(result).toEqual({ error: 'No active explore pane' });
-      });
+  describe('add_explore_text_block', () => {
+    it('should dispatch addBlock action with text block', async () => {
+      mockGetState.mockReturnValue(createMockState([]));
+      const result = await invokeTool(tools, 'add_explore_text_block', { text: 'some text' });
+      expect(result).toContain('Successfully');
+      expect(mockDispatch).toHaveBeenCalled();
     });
 
-    describe('addTextBlock', () => {
-      it('should dispatch addBlock action with text block', () => {
-        mockGetState.mockReturnValue(createMockState([]));
-        const result = functions.addTextBlock('some text');
-        expect(result).toEqual({ success: true });
-        expect(mockDispatch).toHaveBeenCalled();
-      });
+    it('should return error when no explore pane exists', async () => {
+      mockGetState.mockReturnValue({
+        explore: { panes: {} },
+      } as unknown as ReturnType<typeof getState>);
 
-      it('should return error when no explore pane exists', () => {
-        mockGetState.mockReturnValue({
-          explore: { panes: {} },
-        } as ReturnType<typeof getState>);
+      const result = await invokeTool(tools, 'add_explore_text_block', { text: 'text' });
+      expect(result).toContain('Error');
+      expect(mockDispatch).not.toHaveBeenCalled();
+    });
+  });
 
-        const result = functions.addTextBlock('text');
-        expect(result).toEqual({ error: 'No active explore pane' });
-        expect(mockDispatch).not.toHaveBeenCalled();
-      });
+  describe('add_explore_expression_block', () => {
+    it('should dispatch addBlock action with expression block', async () => {
+      mockGetState.mockReturnValue(createMockState([]));
+      const result = await invokeTool(tools, 'add_explore_expression_block', { expression: '$A + $B' });
+      expect(result).toContain('Successfully');
+      expect(mockDispatch).toHaveBeenCalled();
+    });
+  });
+
+  describe('add_explore_query_block', () => {
+    it('should dispatch addQueryRow action', async () => {
+      mockGetState.mockReturnValue(createMockState([{ type: 'query', queryRef: 'A' }], [{ refId: 'A' }]));
+      const result = await invokeTool(tools, 'add_explore_query_block');
+      expect(result).toContain('Successfully');
+      expect(mockDispatch).toHaveBeenCalled();
+    });
+  });
+
+  describe('update_explore_text_block', () => {
+    it('should dispatch updateTextBlock action for valid text block', async () => {
+      const blocks: Block[] = [
+        { type: 'query', queryRef: 'A' },
+        { type: 'text', text: 'old text' },
+      ];
+      mockGetState.mockReturnValue(createMockState(blocks));
+
+      const result = await invokeTool(tools, 'update_explore_text_block', { index: 1, text: 'new text' });
+      expect(result).toContain('Successfully');
+      expect(mockDispatch).toHaveBeenCalled();
     });
 
-    describe('addExpressionBlock', () => {
-      it('should dispatch addBlock action with expression block', () => {
-        mockGetState.mockReturnValue(createMockState([]));
-        const result = functions.addExpressionBlock('SELECT * FROM A');
-        expect(result).toEqual({ success: true });
-        expect(mockDispatch).toHaveBeenCalled();
-      });
+    it('should return error for invalid index', async () => {
+      const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
+      mockGetState.mockReturnValue(createMockState(blocks));
+
+      const result = await invokeTool(tools, 'update_explore_text_block', { index: 5, text: 'text' });
+      expect(result).toContain('Error');
     });
 
-    describe('addQueryBlock', () => {
-      it('should dispatch addQueryRow action', () => {
-        mockGetState.mockReturnValue(
-          createMockState([{ type: 'query', queryRef: 'A' }], [{ refId: 'A' }])
-        );
-        const result = functions.addQueryBlock();
-        expect(result).toEqual({ success: true });
-        expect(mockDispatch).toHaveBeenCalled();
+    it('should return error when targeting non-text block', async () => {
+      const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
+      mockGetState.mockReturnValue(createMockState(blocks));
+
+      const result = await invokeTool(tools, 'update_explore_text_block', { index: 0, text: 'text' });
+      expect(result).toContain('Error');
+    });
+  });
+
+  describe('update_explore_expression_block', () => {
+    it('should dispatch updateExpressionBlock action for valid expression block', async () => {
+      const blocks: Block[] = [{ type: 'expression', expression: '$A + $B' }];
+      mockGetState.mockReturnValue(createMockState(blocks));
+
+      const result = await invokeTool(tools, 'update_explore_expression_block', {
+        index: 0,
+        expression: '$A * $B',
       });
+      expect(result).toContain('Successfully');
+      expect(mockDispatch).toHaveBeenCalled();
     });
 
-    describe('updateTextBlock', () => {
-      it('should dispatch updateTextBlock action for valid text block', () => {
-        const blocks: Block[] = [
-          { type: 'query', queryRef: 'A' },
-          { type: 'text', text: 'old text' },
-        ];
-        mockGetState.mockReturnValue(createMockState(blocks));
+    it('should return error for invalid index', async () => {
+      const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
+      mockGetState.mockReturnValue(createMockState(blocks));
 
-        const result = functions.updateTextBlock(1, 'new text');
-        expect(result).toEqual({ success: true });
-        expect(mockDispatch).toHaveBeenCalled();
-      });
+      const result = await invokeTool(tools, 'update_explore_expression_block', { index: 0, expression: 'expr' });
+      expect(result).toContain('Error');
+    });
+  });
 
-      it('should return error for invalid index', () => {
-        const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
-        mockGetState.mockReturnValue(createMockState(blocks));
+  describe('remove_explore_block', () => {
+    it('should dispatch removeBlock action for valid index', async () => {
+      const blocks: Block[] = [
+        { type: 'query', queryRef: 'A' },
+        { type: 'text', text: 'hello' },
+      ];
+      mockGetState.mockReturnValue(createMockState(blocks));
 
-        const result = functions.updateTextBlock(5, 'text');
-        expect(result).toEqual({ error: 'Invalid text block index: 5' });
-      });
-
-      it('should return error when targeting non-text block', () => {
-        const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
-        mockGetState.mockReturnValue(createMockState(blocks));
-
-        const result = functions.updateTextBlock(0, 'text');
-        expect(result).toEqual({ error: 'Invalid text block index: 0' });
-      });
+      const result = await invokeTool(tools, 'remove_explore_block', { index: 1 });
+      expect(result).toContain('Successfully');
+      expect(mockDispatch).toHaveBeenCalled();
     });
 
-    describe('updateExpressionBlock', () => {
-      it('should dispatch updateExpressionBlock action for valid expression block', () => {
-        const blocks: Block[] = [{ type: 'expression', expression: 'SELECT * FROM A' }];
-        mockGetState.mockReturnValue(createMockState(blocks));
+    it('should return error for out of range index', async () => {
+      const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
+      mockGetState.mockReturnValue(createMockState(blocks));
 
-        const result = functions.updateExpressionBlock(0, 'SELECT count(*) FROM A');
-        expect(result).toEqual({ success: true });
-        expect(mockDispatch).toHaveBeenCalled();
-      });
-
-      it('should return error for invalid index', () => {
-        const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
-        mockGetState.mockReturnValue(createMockState(blocks));
-
-        const result = functions.updateExpressionBlock(0, 'expr');
-        expect(result).toEqual({ error: 'Invalid expression block index: 0' });
-      });
+      const result = await invokeTool(tools, 'remove_explore_block', { index: 5 });
+      expect(result).toContain('Error');
     });
 
-    describe('removeBlock', () => {
-      it('should dispatch removeBlock action for valid index', () => {
-        const blocks: Block[] = [
-          { type: 'query', queryRef: 'A' },
-          { type: 'text', text: 'hello' },
-        ];
-        mockGetState.mockReturnValue(createMockState(blocks));
+    it('should throw validation error for negative index', async () => {
+      const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
+      mockGetState.mockReturnValue(createMockState(blocks));
 
-        const result = functions.removeBlock(1);
-        expect(result).toEqual({ success: true });
-        expect(mockDispatch).toHaveBeenCalled();
-      });
-
-      it('should return error for out of range index', () => {
-        const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
-        mockGetState.mockReturnValue(createMockState(blocks));
-
-        const result = functions.removeBlock(5);
-        expect(result).toEqual({ error: 'Invalid block index: 5' });
-      });
-
-      it('should return error for negative index', () => {
-        const blocks: Block[] = [{ type: 'query', queryRef: 'A' }];
-        mockGetState.mockReturnValue(createMockState(blocks));
-
-        const result = functions.removeBlock(-1);
-        expect(result).toEqual({ error: 'Invalid block index: -1' });
-      });
+      await expect(invokeTool(tools, 'remove_explore_block', { index: -1 })).rejects.toThrow(
+        'index is required and must be a non-negative integer'
+      );
     });
   });
 });
