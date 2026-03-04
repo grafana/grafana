@@ -68,12 +68,9 @@ type ZanzanaReconcilerSettings struct {
 	// LeaderElectionLeaseName is the name of the Kubernetes Lease object used
 	// for leader election. Default: "zanzana-mt-reconciler".
 	LeaderElectionLeaseName string
-	// LeaderElectionNamespace is the namespace in which the Lease object is
-	// created. Defaults to the value of the POD_NAMESPACE env var, then falls
-	// back to reading /var/run/secrets/kubernetes.io/serviceaccount/namespace.
+	// LeaderElectionNamespace is the namespace in which the Lease object is created.
 	LeaderElectionNamespace string
-	// LeaderElectionIdentity is the unique identity of this instance used in
-	// the Lease object. Defaults to the POD_NAME env var, then os.Hostname().
+	// LeaderElectionIdentity is the unique identity of this instance used in the Lease object.
 	LeaderElectionIdentity string
 	// LeaseDuration is how long a lease is held before it can be acquired by
 	// another candidate. Default: 15s.

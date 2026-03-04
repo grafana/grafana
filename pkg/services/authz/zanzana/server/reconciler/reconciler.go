@@ -131,8 +131,7 @@ func (r *Reconciler) runLoop(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			r.logger.Info("Reconciler shutting down")
-			close(r.workQueue) // Signal workers to stop
-			wg.Wait()          // Wait for all workers to finish
+			wg.Wait() // Workers exit via ctx.Done(); do not close the shared channel (it may be reused on re-election)
 			return
 		case <-ticker.C:
 			r.queueAllNamespaces(ctx)
@@ -297,11 +296,6 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 	// no write race with the leader's background loop (the leader cannot be
 	// reconciling a store that doesn't exist yet). In the unlikely event of
 	// overlap the diff is idempotent.
-	if !r.leaderElector.IsLeader() {
-		r.logger.Debug("EnsureNamespace called on non-leader replica, proceeding anyway",
-			"namespace", namespace,
-		)
-	}
 
 	// Create store if it doesn't exist
 	_, err = r.server.GetOrCreateStore(ctx, namespace)
