@@ -3,7 +3,8 @@ import React from 'react';
 
 import { AlertLabel } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Text, useStyles2 } from '@grafana/ui';
 
 import { EmptyLabelValue, GenericGroupedRow } from '../types';
 
@@ -28,12 +29,18 @@ export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: 
       key={rowKey}
       width={leftColumnWidth}
       title={
-        <AlertLabel
-          size="sm"
-          labelKey={row.metadata.label}
-          value={formatLabelValue(row.metadata.value)}
-          colorBy="key"
-        />
+        isEmptyValue ? (
+          <Text color="secondary" italic variant="bodySmall">
+            {t('alerting.triage.group-row.no-label', 'No {{label}}', { label: row.metadata.label })}
+          </Text>
+        ) : (
+          <AlertLabel
+            size="sm"
+            labelKey={row.metadata.label}
+            value={formatLabelValue(row.metadata.value)}
+            colorBy="key"
+          />
+        )
       }
       actions={<RowActions counts={row.instanceCounts} />}
       isOpenByDefault={!isEmptyValue}

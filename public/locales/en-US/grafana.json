@@ -3407,9 +3407,14 @@
       "all-labels-drawer-title": "All labels",
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
+      "collapse-sidebar": "Collapse sidebar",
       "error-loading-rule": "Error loading rule",
       "expand": "Expand",
       "expand-all": "Expand all",
+      "expand-sidebar": "Expand sidebar",
+      "group-row": {
+        "no-label": "No {{label}}"
+      },
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
@@ -3442,6 +3447,8 @@
       "show-all-values_one": "Show all ({{ count }})",
       "show-all-values_other": "Show all ({{ count }})",
       "show-fewer-values": "Show fewer",
+      "showing-groups-count_one": "Showing {{count}} groups",
+      "showing-groups-count_other": "Showing {{count}} groups",
       "state-filter-title": "State",
       "state-firing": "Firing",
       "state-pending": "Pending"
