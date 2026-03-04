@@ -14,6 +14,9 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
+// serviceNamespaceAltKey is an alternative to the OTel semconv canonical service.namespace (e.g. used by some SDKs).
+const serviceNamespaceAltKey = "service.namespace.name"
+
 type KeyValue struct {
 	Value any    `json:"value"`
 	Key   string `json:"key"`
@@ -191,7 +194,7 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 func resourceToProcess(resource *v1.Resource) (string, string, []*KeyValue) {
 	attrs := resource.Attributes
 	serviceName := ResourceNoServiceName
-	var serviceNamespace string
+	var serviceNamespace, serviceNamespaceAlt string
 	if len(attrs) == 0 {
 		return serviceName, serviceNamespace, nil
 	}
@@ -204,6 +207,9 @@ func resourceToProcess(resource *v1.Resource) (string, string, []*KeyValue) {
 		if attribute.Key(attr.Key) == semconv.ServiceNamespaceKey {
 			serviceNamespace = attr.GetValue().GetStringValue()
 		}
+		if attribute.Key(attr.Key) == attribute.Key(serviceNamespaceAltKey) {
+			serviceNamespaceAlt = attr.GetValue().GetStringValue()
+		}
 		val, err := getAttributeVal(attr.Value)
 		if err != nil {
 			logger.Debug("error transforming resource to process", "err", err)
@@ -211,6 +217,10 @@ func resourceToProcess(resource *v1.Resource) (string, string, []*KeyValue) {
 		tags = append(tags, &KeyValue{Key: attr.Key, Value: val})
 	}
 
+	// Coalesce: prefer OTel semconv canonical service.namespace, fallback to service.namespace.name
+	if serviceNamespace == "" && serviceNamespaceAlt != "" {
+		serviceNamespace = serviceNamespaceAlt
+	}
 	return serviceName, serviceNamespace, tags
 }
 
