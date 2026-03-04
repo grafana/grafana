@@ -2123,7 +2123,9 @@
       "select-namespace": "Выбрать пространство имен"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Правила оповещения",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Последние удаленные",
@@ -2349,8 +2351,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Просматривайте текущие оповещения и архивные данные, чтобы анализировать актуальные или прошлые проблемы.",
-        "title": "Оповещения"
+        "subtitle": "Просматривайте текущие оповещения и архивные данные, чтобы анализировать актуальные или прошлые проблемы."
       }
     },
     "panel-alert-tab-content": {
@@ -6925,10 +6926,10 @@
       "title-delete-all-transformations": "Удалить все преобразования?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Переключить табличное представление",
-      "table-view-label-table-view": "Табличное представление"
+      "table-view-label-table-view": "Табличное представление",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6973,6 +6974,16 @@
     },
     "query-editor": {
       "query": "Запрос"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Именованные группы записи можно использовать для разделения отображаемого текста и значения (<1>см. примеры</1>).",
@@ -7099,6 +7110,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Невозможно создать оповещения с этой панели, поскольку не найден запрос к источнику данных, способному генерировать оповещения.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Новое правило оповещения",
       "title-no-alerting-capable-query-found": "Не найдены запросы, способные генерировать оповещения"
     },
@@ -9544,11 +9556,13 @@
       },
       "legend": {
         "category": "Условные обозначения",
+        "description-limit": "",
         "description-values": "Выберите значения или расчеты для отображения в условных обозначениях",
         "mode-options": {
           "label-list": "Список",
           "label-table": "Таблица"
         },
+        "name-limit": "",
         "name-mode": "Режим",
         "name-placement": "Размещение",
         "name-values": "Значения",
@@ -10483,6 +10497,11 @@
     "subtitle": "Интеграция LDAP в Grafana позволяет пользователям выполнять вход с помощью учетных данных LDAP. Подробнее — в <2><1>документации</1></2>.",
     "title": "Основные параметры"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Панель библиотеки с таким именем уже существует",
@@ -11369,9 +11388,17 @@
       "subtitle": "Получение информации о проблемах в системах сразу после их возникновения",
       "title": "Оповещение"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Управление конфигурациями обработчика оповещений Alertmanager и включение функции получения оповещений, управляемых Grafana",
       "title": "Параметры"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Маршрутизация оповещений к точкам контакта",
@@ -12511,13 +12538,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "Путь к файлу внутри репозитория (.json или .yaml)",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "Путь к папке внутри репозитория",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Ветвь",
       "label-comment": "Комментарий",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Путь",
       "placeholder-branch": "Выберите или введите имя ветви",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Последняя ветвь",
       "suffix-new-branch": "",
@@ -12637,6 +12669,8 @@
       "instance-fully-managed-tooltip": "Конфигурация отключена, поскольку это полностью управляемый экземпляр"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12780,10 +12814,18 @@
       "label-sync-interval": "Интервал синхронизации (в секундах)"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13531,6 +13573,7 @@
       "card-click": "Выбрать карту {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Запросы и выражения",
       "toggle-size": "Переключить размер боковой панели",
       "transformations": "Преобразования",
@@ -14808,6 +14851,12 @@
     "name-show-matches-only": "Показать только совпадения",
     "traces-panel": {
       "no-data-found-in-response": "Данные в ответе не найдены"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

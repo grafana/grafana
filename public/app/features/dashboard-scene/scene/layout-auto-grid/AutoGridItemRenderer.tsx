@@ -3,7 +3,7 @@ import { memo, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, sceneGraph, SceneComponentProps, VizPanel } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -40,6 +40,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged,
           showDropTarget,
           isRepeat = false,
+          isSelected = false,
         }: {
           item: VizPanel;
           conditionalRendering?: ConditionalRenderingGroup;
@@ -47,6 +48,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged: boolean;
           showDropTarget: boolean;
           isRepeat?: boolean;
+          isSelected?: boolean;
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
@@ -68,7 +70,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                       conditionalRenderingClass,
                       styles.wrapper,
                       isDragged && !isRepeat && styles.draggedWrapper,
-                      isDragged && isRepeat && styles.draggedRepeatWrapper
+                      isDragged && isRepeat && styles.draggedRepeatWrapper,
+                      isSelected && 'dashboard-selected-element'
                     )}
                   >
                     <item.Component model={item} />
@@ -80,7 +83,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                       conditionalRenderingClass,
                       styles.wrapper,
                       isDragged && !isRepeat && styles.draggedWrapper,
-                      isDragged && isRepeat && styles.draggedRepeatWrapper
+                      isDragged && isRepeat && styles.draggedRepeatWrapper,
+                      isSelected && 'dashboard-selected-element'
                     )}
                   >
                     <item.Component model={item} />
@@ -94,6 +98,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       ),
     [model, isLazy, key, styles, isEditing]
   );
+
+  const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
 
   if (soloPanelContext) {
     // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
@@ -127,6 +133,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged={isDragged}
           showDropTarget={showDropTarget}
           isRepeat={true}
+          isSelected={isSourceSelected}
         />
       ))}
     </>
