@@ -859,14 +859,14 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	repoName := "webhook-unhealthy-test"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 	require.NoError(t, os.MkdirAll(repoPath, 0o750))
 
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:                   repoName,
 		Path:                   repoPath,
 		Target:                 "folder",

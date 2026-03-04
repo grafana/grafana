@@ -9,13 +9,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 
 	const (
 		repo1Name = "ns-quota-repo1"
@@ -27,14 +28,14 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 
 	// --- Step 1: create 2 repos with unlimited quota  ---------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:                   repo1Name,
 		Path:                   repo1Path,
 		Target:                 "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:                   repo2Name,
 		Path:                   repo2Path,
 		Target:                 "folder",
@@ -69,7 +70,7 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 
 // waitForUnhealthyWithNamespaceQuota waits for a repo to become unhealthy and
 // its NamespaceQuota condition to match.
-func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *provisioningTestHelper, repoName, expectedReason string) {
+func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningTestHelper, repoName, expectedReason string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		t.Logf("Waiting for unhealthy with namespace quota for repo %s", repoName)
@@ -77,19 +78,19 @@ func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *provisioningTestHe
 		if !assert.NoError(collect, err) {
 			return
 		}
-		repo := unstructuredToRepository(t, repoObj)
+		repo := common.UnstructuredToRepository(t, repoObj)
 		assert.False(collect, repo.Status.Health.Healthy, "repo %s should be unhealthy", repoName)
-		cond := findCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
+		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
 			return
 		}
 		assert.Equal(collect, expectedReason, cond.Reason)
-	}, waitTimeoutDefault, waitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }
 
 // waitForHealthyWithNamespaceQuota waits for a repo to become healthy and its
 // NamespaceQuota condition to match.
-func waitForHealthyWithNamespaceQuota(t *testing.T, helper *provisioningTestHelper, repoName, expectedReason string) {
+func waitForHealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningTestHelper, repoName, expectedReason string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		t.Logf("Waiting for healthy with namespace quota for repo %s", repoName)
@@ -97,12 +98,12 @@ func waitForHealthyWithNamespaceQuota(t *testing.T, helper *provisioningTestHelp
 		if !assert.NoError(collect, err) {
 			return
 		}
-		repo := unstructuredToRepository(t, repoObj)
+		repo := common.UnstructuredToRepository(t, repoObj)
 		assert.True(collect, repo.Status.Health.Healthy, "repo %s should be healthy", repoName)
-		cond := findCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
+		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
 			return
 		}
 		assert.Equal(collect, expectedReason, cond.Reason)
-	}, waitTimeoutDefault, waitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }

@@ -431,7 +431,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",

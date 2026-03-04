@@ -550,7 +550,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Use public GitHub repository (grafana-git-sync-demo) via git type - no token needed for read access
