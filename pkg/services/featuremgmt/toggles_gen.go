@@ -881,4 +881,8 @@ const (
 	// FlagAnalyticsFramework
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagInlineLogDetailsNoScrolls
+	// Enables an inline version of Log Details that creates no new scrolls
+	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
 )

@@ -3,7 +3,6 @@ import ansicolor from 'ansicolor';
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
 import { LogLineTimestampResolution } from './LogLine';
-import { LogLineDetailsMode } from './LogLineDetails';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 

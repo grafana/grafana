@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Resizable } from 're-resizable';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
@@ -32,7 +33,8 @@ export const LogLineDetails = memo(
   ({ containerElement, focusLogLine, logs, timeRange, timeZone, showControls, showFieldSelector }: Props) => {
     const { noInteractions, fontSize, logOptionsStorageKey } = useLogListContext();
     const { detailsWidth, setDetailsWidth } = useLogDetailsContext();
-    const styles = useStyles2(getStyles, 'sidebar', showControls, fontSize);
+    const inlineLogDetailsNoScrolls = useBooleanFlagValue('inlineLogDetailsNoScrolls', false);
+    const styles = useStyles2(getStyles, 'sidebar', showControls, fontSize, inlineLogDetailsNoScrolls);
     const dragStyles = useStyles2(getDragStyles);
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -79,8 +81,9 @@ const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
     const { app, fontSize, noInteractions, wrapLogMessage } = useLogListContext();
     const { currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
+    const inlineLogDetailsNoScrolls = useBooleanFlagValue('inlineLogDetailsNoScrolls', false);
 
-    const styles = useStyles2(getStyles, 'sidebar', undefined, fontSize);
+    const styles = useStyles2(getStyles, 'sidebar', undefined, fontSize, inlineLogDetailsNoScrolls);
 
     useEffect(() => {
       // When wrapping is enabled and details is in sidebar mode, the logs panel width changes and the
@@ -157,7 +160,8 @@ export interface InlineLogLineDetailsProps {
 export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
   const { app, fontSize, noInteractions } = useLogListContext();
   const { detailsWidth } = useLogDetailsContext();
-  const styles = useStyles2(getStyles, 'inline', undefined, fontSize);
+  const inlineLogDetailsNoScrolls = useBooleanFlagValue('inlineLogDetailsNoScrolls', false);
+  const styles = useStyles2(getStyles, 'inline', undefined, fontSize, inlineLogDetailsNoScrolls);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -203,11 +207,12 @@ const getStyles = (
   theme: GrafanaTheme2,
   mode: LogLineDetailsMode,
   showControls: boolean | undefined,
-  fontSize: LogListFontSize
+  fontSize: LogListFontSize,
+  inlineLogDetailsNoScrolls: boolean
 ) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
-    height: false ? `${LOG_LINE_DETAILS_HEIGHT}vh` : undefined,
+    height: inlineLogDetailsNoScrolls === false ? `${LOG_LINE_DETAILS_HEIGHT}vh` : undefined,
     padding: theme.spacing(1, 2, 1.5, 2),
     marginRight: 1,
   }),
@@ -216,7 +221,7 @@ const getStyles = (
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
     height: '100%',
-    overflow: 'auto',
+    overflow: inlineLogDetailsNoScrolls === false ? 'auto' : undefined,
     fontSize: fontSize === 'small' ? theme.typography.bodySmall.fontSize : undefined,
     lineHeight: fontSize === 'small' ? theme.typography.bodySmall.lineHeight : undefined,
   }),

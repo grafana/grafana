@@ -2586,6 +2586,13 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:        "inlineLogDetailsNoScrolls",
+			Description: "Enables an inline version of Log Details that creates no new scrolls",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		},
 	}
 )
 
