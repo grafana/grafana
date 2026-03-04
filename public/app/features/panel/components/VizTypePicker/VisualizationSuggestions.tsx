@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import {
@@ -36,14 +36,14 @@ export interface Props {
 }
 
 const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
-  const [hasFetched, setHasFetched] = useState(false);
+  const hasFetchedRef = useRef(false);
   const structureRev = useStructureRev(data?.series ?? []);
 
   const { value, loading, error, retry } = useAsyncRetry(async () => {
-    await new Promise((resolve) => setTimeout(resolve, hasFetched ? 75 : 0));
-    setHasFetched(true);
+    await new Promise((resolve) => setTimeout(resolve, hasFetchedRef.current ? 75 : 0));
+    hasFetchedRef.current = true;
     return await getAllSuggestions(data?.series);
-  }, [hasFetched, structureRev]);
+  }, [structureRev]);
 
   const filteredValue = useMemo(() => {
     if (!value || !searchQuery) {
