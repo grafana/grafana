@@ -1003,6 +1003,7 @@ func generateOldSnowflake(t *testing.T) int64 {
 	return snowflakeFromTime(twoHoursAgo)
 }
 
+// seedBackend seeds the kvstore with data and returns the expected result for ListModifiedSince calls
 func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource) []expectation {
 	uniqueStringGen := randomStringGenerator()
 	nsDifferentNamespace := NamespacedResource{

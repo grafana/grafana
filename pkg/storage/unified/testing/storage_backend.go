@@ -570,7 +570,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
 		// ListModifiedSince is allowed to return some events prior to the requested
-		// RV(e.g., lookback window), so we allow 0 or 1 results.
+		// RV (e.g., lookback window), so we allow 0 or 1 results.
 		counter := 0
 		for _, err := range seq {
 			require.NoError(t, err)
@@ -588,7 +588,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		latestRv1, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
 		require.GreaterOrEqual(t, latestRv1, rvDeleted)
 		// ListModifiedSince is allowed to return some events prior to the requested
-		// RV(e.g., lookback window), so we allow 0 or 1 results.
+		// RV (e.g., lookback window), so we allow 0 or 1 results.
 		counter := 0
 		for _, err := range seq {
 			require.NoError(t, err)
