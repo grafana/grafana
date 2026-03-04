@@ -12,6 +12,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/hashicorp/golang-lru/v2/expirable"
+	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -30,6 +31,11 @@ import (
 )
 
 const maxBatchSize = 1000
+
+const (
+	dedupCacheExpiration = 5 * time.Minute
+	dedupCacheCleanup    = 1 * time.Minute
+)
 
 type NamespacedResource struct {
 	Namespace string
@@ -1138,6 +1144,8 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		return listRV, err
 	}
 
+	dedupCache := gocache.New(dedupCacheExpiration, dedupCacheCleanup)
+
 	updaterFn := func(ctx context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", sinceRV)))
@@ -1152,6 +1160,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		// When dealing with large collections (e.g., 100k+ documents),
 		// loading all documents into memory at once can cause OOM errors.
 		items := make([]*BulkIndexItem, 0, maxBatchSize)
+		pendingKeys := make([]string, 0, maxBatchSize)
 
 		docs := 0
 		for res, err := range it {
@@ -1160,12 +1169,20 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				return 0, 0, ctx.Err()
 			}
 
-			docs++
-
 			if err != nil {
 				span.RecordError(err)
 				return 0, 0, err
 			}
+
+			// Skip events we've already processed. The underlying ListModifiedSince
+			// implementation may return events prior to sinceRV, and the cache
+			// lets us skip the extra work.
+			cacheKey := fmt.Sprintf("%s~%d", res.Key.Name, res.ResourceVersion)
+			if _, found := dedupCache.Get(cacheKey); found {
+				continue
+			}
+
+			docs++
 
 			key := &res.Key
 			switch res.Action {
@@ -1194,6 +1211,8 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				continue
 			}
 
+			pendingKeys = append(pendingKeys, cacheKey)
+
 			// When we reach the batch size, perform bulk index and reset the batch.
 			if len(items) >= maxBatchSize {
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
@@ -1201,7 +1220,11 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					return 0, 0, err
 				}
 
+				for _, k := range pendingKeys {
+					dedupCache.SetDefault(k, struct{}{})
+				}
 				items = items[:0]
+				pendingKeys = pendingKeys[:0]
 			}
 		}
 
@@ -1210,6 +1233,10 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
 			if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
 				return 0, 0, err
+			}
+
+			for _, k := range pendingKeys {
+				dedupCache.Set(k, struct{}{}, gocache.DefaultExpiration)
 			}
 		}
 
