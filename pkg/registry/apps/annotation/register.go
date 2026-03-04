@@ -64,27 +64,13 @@ func RegisterAppInstaller(
 
 	// Choose storage backend based on configuration
 	var store Store
+	var err error
 	switch cfg.AnnotationAppPlatform.StoreBackend {
 	case "grpc":
-		var dialOpts []grpc.DialOption
-		if cfg.AnnotationAppPlatform.GRPCUseTLS {
-			tlsConfig, err := loadTLSConfig(cfg)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load TLS config: %w", err)
-			}
-			dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
-		} else {
-			dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		}
-
-		grpcConn, err := grpc.NewClient(
-			cfg.AnnotationAppPlatform.GRPCAddress,
-			dialOpts...,
-		)
+		store, err = newGRPCStore(cfg)
 		if err != nil {
-			return nil, fmt.Errorf("failed to connect to annotation gRPC server at %s: %w", cfg.AnnotationAppPlatform.GRPCAddress, err)
+			return nil, fmt.Errorf("failed to create gRPC store: %w", err)
 		}
-		store = NewStoreGRPC(grpcConn)
 	case "sql":
 		// sql is the default, but we allow explicitly specifying it for clarity
 		fallthrough
@@ -127,6 +113,29 @@ func RegisterAppInstaller(
 	installer.AppInstaller = i
 
 	return installer, nil
+}
+
+func newGRPCStore(cfg *setting.Cfg) (Store, error) {
+	var dialOpts []grpc.DialOption
+	if cfg.AnnotationAppPlatform.GRPCUseTLS {
+		tlsConfig, err := loadTLSConfig(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load TLS config: %w", err)
+		}
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
+	} else {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	grpcConn, err := grpc.NewClient(
+		cfg.AnnotationAppPlatform.GRPCAddress,
+		dialOpts...,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to annotation gRPC server at %s: %w",
+			cfg.AnnotationAppPlatform.GRPCAddress, err)
+	}
+	return NewStoreGRPC(grpcConn), nil
 }
 
 func loadTLSConfig(cfg *setting.Cfg) (*tls.Config, error) {
