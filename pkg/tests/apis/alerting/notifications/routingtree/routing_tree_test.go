@@ -1036,7 +1036,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	require.NoError(t, err)
 
 	// Named route.
-	_, err = adminClient.Create(ctx, k8sRoute(t, "named route", &routeDef), resource.CreateOptions{})
+	_, err = adminClient.Create(ctx, k8sRoute(t, "named-route", &routeDef), resource.CreateOptions{})
 	require.NoError(t, err)
 
 	// Update the receivers, then ensure the references are updated.
