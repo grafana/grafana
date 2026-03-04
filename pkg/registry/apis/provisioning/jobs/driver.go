@@ -208,12 +208,11 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 
 	// Process the job with lease loss detection
 	err = d.processJobWithLeaseCheck(jobctx, recorder, leaseExpired)
-	end := time.Now()
-	logger.Debug("job processed", "duration", end.Sub(recorder.Started()), "error", err)
+	duration := time.Since(recorder.Started())
 
 	// Check if parent context was cancelled (graceful shutdown)
 	if ctx.Err() != nil {
-		logger.Debug("context cancel - job will retry")
+		logger.Warn("context cancelled - job will retry", "duration", duration)
 		// Don't complete the job - let it be retried by another worker
 		d.mu.Lock()
 		d.currentJob = nil
@@ -229,6 +228,9 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Record job processing error on span
 	if err != nil {
 		span.RecordError(err)
+		logger.Error("job failed", "duration", duration, "error", err)
+	} else {
+		logger.Info("job complete", "duration", duration)
 	}
 
 	// Complete the job
@@ -242,7 +244,6 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Save the finished job
 	err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy())
 	if err != nil {
-		// We're not going to return this as it is not critical. Not ideal, but not critical.
 		logger.Warn("failed to write historic job", "error", err)
 	}
 
@@ -251,7 +252,6 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 		span.RecordError(err)
 		return apifmt.Errorf("failed to complete job '%s' in '%s': %w", d.currentJob.GetName(), d.currentJob.GetNamespace(), err)
 	}
-	logger.Info("job complete")
 
 	return nil
 }
