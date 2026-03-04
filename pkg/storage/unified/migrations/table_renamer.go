@@ -73,9 +73,11 @@ func (r *transactionalTableRenamer) RecoverRenamedTables(tables []string) error 
 		case originalExists:
 			continue // normal state, nothing to recover
 		default: // legacyExists && !originalExists, needs recovery
+			// Use mg.DBEngine (not sess) so the table is visible to other connections.
+			// Migrators read legacy tables through separate sessions/gRPC.
 			restoreSQL := r.mg.Dialect.RenameTable(legacyName, table)
 			r.log.Info("Restoring renamed table", "from", legacyName, "to", table)
-			if _, err := r.sess.Exec(restoreSQL); err != nil {
+			if _, err := r.mg.DBEngine.Exec(restoreSQL); err != nil {
 				return fmt.Errorf("failed to restore table %q to %q: %w", legacyName, table, err)
 			}
 		}
