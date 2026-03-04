@@ -279,6 +279,11 @@ export const AnnotationsPlugin2 = ({
         if (isVisible) {
           const isWip = frame.meta?.custom?.isWip;
           const setPinned = (active: boolean) => {
+            console.log('setPinned', {
+              isWip,
+              active,
+              pinnedId: getPinnedId(frameIdx, i),
+            });
             if (active) {
               setAnnotationIndex(getPinnedId(frameIdx, i));
             } else {

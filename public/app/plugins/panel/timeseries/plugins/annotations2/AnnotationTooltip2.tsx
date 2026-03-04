@@ -13,7 +13,7 @@ interface Props {
   timeZone: string;
   isPinned: boolean;
   onClose: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   links?: LinkModel[];
   actions?: ActionModel[];
 }
@@ -94,7 +94,7 @@ export const AnnotationTooltip2 = ({
           </div>
           {(canEdit || canDelete || isPinned) && (
             <div className={styles.controls}>
-              {canEdit && (
+              {onEdit && canEdit && (
                 <IconButton
                   ref={focusRef}
                   name={'pen'}

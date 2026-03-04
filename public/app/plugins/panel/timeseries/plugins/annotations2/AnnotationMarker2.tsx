@@ -41,9 +41,6 @@ interface AnnotationMarkerProps {
   replaceVariables: InterpolateFunction;
 }
 
-const STATE_DEFAULT = 0;
-const STATE_EDITING = 1;
-
 export const AnnotationMarker2 = ({
   frame,
   annoVals,
@@ -64,7 +61,8 @@ export const AnnotationMarker2 = ({
   const thisAnnoPinnedId = getPinnedId(frameIndex, annoIdx);
   const isPinned = thisAnnoPinnedId === pinnedId;
 
-  const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
+  // Set when editing
+  const [editAnnotationId, setEditAnnotationId] = useState(exitWipEdit != null ? annoIdx : null);
   const [isHovering, setIsHovering] = useState(false);
   const { refs, floatingStyles } = useFloating({
     open: true,
@@ -91,27 +89,37 @@ export const AnnotationMarker2 = ({
     });
   }
 
+  const isEditing = editAnnotationId !== null;
+  //showTooltipOnHover &&
+  const showTooltip = (isPinned && !isEditing) || (isHovering && !isEditing);
+
+  // We cannot use the array index for editing annotations since clustered and wip annotations will get sorted by date, so we need to grab them by the 'id' field which is populated by the annotations API
+  const annoId = annoVals?.id?.[annoIdx];
+  const _editIdx = annoVals?.id?.findIndex((annoId) => annoId === editAnnotationId);
+  // wip will not have an id to set, so we need to pass in the raw idx of this annotation, as long as wip is not already clustered, this should continue to work
+  const editIdx = _editIdx !== undefined && _editIdx > -1 ? _editIdx : annoIdx;
+
   const contents =
-    (isPinned && !(state === STATE_EDITING)) || (isHovering && !(state === STATE_EDITING)) ? (
+    !isEditing && showTooltip ? (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
         onClose={onClose}
         isPinned={isPinned}
-        onEdit={() => setState(STATE_EDITING)}
+        onEdit={annoId !== undefined ? () => setEditAnnotationId(annoId) : undefined}
         links={links}
         actions={actions}
       />
-    ) : state === STATE_EDITING ? (
+    ) : isEditing ? (
       <AnnotationEditor2
         isPinned={isPinned}
-        annoIdx={annoIdx}
+        annoIdx={editIdx}
         annoVals={annoVals}
         timeZone={timeZone}
         dismiss={() => {
           exitWipEdit?.();
-          setState(STATE_DEFAULT);
+          setEditAnnotationId(null);
           onClose();
         }}
       />
@@ -126,10 +134,7 @@ export const AnnotationMarker2 = ({
       onBlur={() => setIsHovering(false)}
       onClick={() => setPinned(true)}
       onMouseEnter={() => {
-        if (pinnedId === undefined && state !== STATE_EDITING) {
-          console.log('state', state);
-          console.log('pinnedId', pinnedId);
-          console.log('exitWipEdit', exitWipEdit);
+        if (pinnedId === undefined) {
           setIsHovering(true);
         }
       }}
