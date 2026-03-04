@@ -898,55 +898,6 @@
         }
       ]
     },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/health": {
-      "get": {
-        "tags": [
-          "DataSource"
-        ],
-        "description": "connect GET requests to health of DataSource",
-        "operationId": "getDataSourceHealth",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.HealthCheckResult"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "HealthCheckResult",
-          "version": "v0alpha1"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the HealthCheckResult",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/query": {
       "post": {
         "tags": [
@@ -1281,47 +1232,6 @@
           {
             "group": "grafana-testdata-datasource.datasource.grafana.app",
             "kind": "DataSourceList",
-            "version": "v0alpha1"
-          }
-        ]
-      },
-      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.HealthCheckResult": {
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "code": {
-            "description": "Explicit status code",
-            "type": "integer",
-            "format": "int32"
-          },
-          "details": {
-            "description": "Spec depends on the plugin",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "message": {
-            "description": "Optional description for the data source",
-            "type": "string"
-          },
-          "status": {
-            "description": "The string description",
-            "type": "string"
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "grafana-testdata-datasource.datasource.grafana.app",
-            "kind": "HealthCheckResult",
             "version": "v0alpha1"
           }
         ]
