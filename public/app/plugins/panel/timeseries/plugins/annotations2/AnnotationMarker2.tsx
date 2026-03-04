@@ -57,7 +57,7 @@ export const AnnotationMarker2 = ({
 }: AnnotationMarkerProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
-  const isRegion = annoVals?.isRegion[annoIdx] === true;
+  const isRegion = annoVals?.isRegion?.[annoIdx] === true;
 
   const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
   const [isHovering, setIsHovering] = useState(false);
