@@ -40,8 +40,8 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'yarn'
 
-      - name: Install dependencies
-        run: yarn install --immutable
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Lint docs
         run: yarn run prettier:checkDocs

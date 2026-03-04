@@ -21,6 +21,7 @@ import * as libAPI from 'app/features/library-panels/state/api';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -374,10 +375,26 @@ describe('PanelEditor', () => {
       });
     });
   });
+  describe('isVizPickerOpen', () => {
+    it('should not auto-open viz picker for new panels when newVizSuggestions=false', async () => {
+      config.featureToggles.newVizSuggestions = false;
+      const { panelEditor } = await setup({ isNewPanel: true });
+      const optionsPane = panelEditor.state.optionsPane;
+      expect(optionsPane?.state.isVizPickerOpen).toBe(false);
+    });
+
+    it('should auto-open viz picker for new panels when newVizSuggestions=true', async () => {
+      config.featureToggles.newVizSuggestions = true;
+      const { panelEditor } = await setup({ isNewPanel: true, pluginId: UNCONFIGURED_PANEL_PLUGIN_ID });
+      const optionsPane = panelEditor.state.optionsPane;
+      expect(optionsPane?.state.isVizPickerOpen).toBe(true);
+    });
+  });
 });
 
 interface SetupOptions {
   isNewPanel?: boolean;
+  pluginId?: string;
   pluginSkipDataQuery?: boolean;
   repeatByVariable?: string;
   skipWait?: boolean;
@@ -385,7 +402,8 @@ interface SetupOptions {
 }
 
 async function setup(options: SetupOptions = {}) {
-  const pluginToLoad = getPanelPlugin({ id: 'text', skipDataQuery: options.pluginSkipDataQuery });
+  const panelPluginId = options.pluginId ?? 'text';
+  const pluginToLoad = getPanelPlugin({ id: panelPluginId, skipDataQuery: options.pluginSkipDataQuery });
   let pluginResolve = (plugin: PanelPlugin) => {};
 
   pluginPromise = new Promise<PanelPlugin>((resolve) => {
@@ -394,7 +412,7 @@ async function setup(options: SetupOptions = {}) {
 
   const panel = new VizPanel({
     key: 'panel-1',
-    pluginId: 'text',
+    pluginId: panelPluginId,
     title: 'original title',
     $data: new SceneDataTransformer({
       transformations: [],

@@ -26,12 +26,10 @@ jobs:
         with:
           go-version-file: 'go.mod'
       - run: go version
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'yarn'
-      - name: Install dependencies
-        run: yarn install --immutable
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
       - name: Install Playwright browsers
         run: yarn playwright install --with-deps chromium
       - name: Build grafana
