@@ -28,7 +28,7 @@ interface AnnoBoxProps {
   portalRoot: HTMLElement;
   canExecuteActions: boolean;
   replaceVariables: InterpolateFunction;
-  pinAnnotation: (pin: boolean) => void;
+  setPinned: (pin: boolean) => void;
   isPinned: boolean;
   showOnHover: boolean;
 }
@@ -44,7 +44,7 @@ export const AnnotationMarker2 = ({
   portalRoot,
   replaceVariables,
   canExecuteActions,
-  pinAnnotation,
+  setPinned,
   showOnHover,
   isPinned,
 }: AnnoBoxProps) => {
@@ -70,7 +70,7 @@ export const AnnotationMarker2 = ({
   });
 
   const onClose = () => {
-    pinAnnotation(false);
+    setPinned(false);
     setIsHovering(false);
   };
   const links: LinkModel[] = [];
@@ -139,7 +139,7 @@ export const AnnotationMarker2 = ({
       style={style!}
       onFocus={() => setIsHovering(true)}
       onBlur={() => setIsHovering(false)}
-      onClick={() => pinAnnotation(true)}
+      onClick={() => setPinned(true)}
       onMouseEnter={() => showOnHover && setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       data-testid={selectors.pages.Dashboard.Annotations.marker}
@@ -147,7 +147,7 @@ export const AnnotationMarker2 = ({
       {contents &&
         createPortal(
           <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles} data-testid="annotation-marker">
-            <ClickOutsideWrapper includeButtonPress={false} useCapture={true} onClick={() => pinAnnotation(false)}>
+            <ClickOutsideWrapper includeButtonPress={false} useCapture={true} onClick={() => setPinned(false)}>
               {contents}
             </ClickOutsideWrapper>
           </div>,

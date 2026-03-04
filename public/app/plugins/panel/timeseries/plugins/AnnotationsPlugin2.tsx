@@ -339,7 +339,7 @@ export const AnnotationsPlugin2 = ({
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
           const isWip = frame.meta?.custom?.isWip;
-          const setAnnotation = (active: boolean) => {
+          const setPinned = (active: boolean) => {
             if (active) {
               setAnnotationIndex(`${frameIdx}:${i}`);
             } else {
@@ -349,7 +349,7 @@ export const AnnotationsPlugin2 = ({
 
           markers.push(
             <AnnotationMarker2
-              pinAnnotation={setAnnotation}
+              setPinned={setPinned}
               isPinned={annoIdx === `${frameIdx}:${i}`}
               showOnHover={!annoIdx}
               frame={frame}
