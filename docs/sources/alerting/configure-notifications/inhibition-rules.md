@@ -31,6 +31,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
+  mute-timings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
 ---
 
 # Configure inhibition rules
@@ -45,6 +50,12 @@ For example, if a node is down (the **source**), you can inhibit all alerts for 
 
 {{< admonition type="note" >}}
 Inhibition rules are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
+{{< /admonition >}}
+
+{{< admonition type="caution" >}}
+Inhibition rules are intended for compatibility with configurations imported from Prometheus Alertmanager or Mimir. They have no dedicated management UI in Grafana by design.
+
+If not carefully configured, inhibition rules can silently suppress alerts and make issues harder to detect. Consider [silences](ref:shared-silences) or [mute timings](ref:mute-timings) for most suppression use cases.
 {{< /admonition >}}
 
 ## Inhibition rules vs silences

@@ -1206,6 +1206,204 @@ func TestGithubRepository_Move(t *testing.T) {
 	}
 }
 
+func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
+	tests := []struct {
+		name             string
+		workflows        []provisioning.Workflow
+		branch           string
+		bpResult         *BranchProtection
+		bpError          error
+		expectBPCall     bool
+		expectedSuccess  bool
+		expectedErrField string
+		expectedDetail   string
+	}{
+		{
+			name:      "protected branch with required PR reviews and write workflow",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+			},
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetail:   "required pull request reviews",
+		},
+		{
+			name:      "protected branch with lock and write workflow",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				LockBranch: true,
+			},
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetail:   "branch is locked (read-only)",
+		},
+		{
+			name:      "both protection rules reported together",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+				LockBranch:                 true,
+			},
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetail:   "required pull request reviews",
+		},
+		{
+			name:            "unprotected branch with write workflow succeeds",
+			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:          "main",
+			bpResult:        nil,
+			expectBPCall:    true,
+			expectedSuccess: true,
+		},
+		{
+			name:      "protected branch without write workflow succeeds",
+			workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+			},
+			expectBPCall:    false,
+			expectedSuccess: true,
+		},
+		{
+			name:            "no workflows configured skips check",
+			workflows:       nil,
+			branch:          "main",
+			expectBPCall:    false,
+			expectedSuccess: true,
+		},
+		{
+			name:             "GetBranchProtection error returns test failure",
+			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:           "main",
+			bpError:          errors.New("failed to get branch protection: API error"),
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.github.branch",
+			expectedDetail:   "failed to check branch protection",
+		},
+		{
+			name:             "GetBranchProtection unauthorized (401) returns test failure",
+			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:           "main",
+			bpError:          ErrUnauthorized,
+			expectBPCall:     true,
+			expectedSuccess:  false,
+			expectedErrField: "spec.github.branch",
+			expectedDetail:   "failed to check branch protection",
+		},
+		{
+			name:            "protection with no blocking rules does not block",
+			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:          "main",
+			bpResult:        &BranchProtection{},
+			expectBPCall:    true,
+			expectedSuccess: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockGitRepo := git.NewMockGitRepository(t)
+			mockClient := NewMockClient(t)
+
+			config := &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: tt.workflows,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: tt.branch,
+					},
+				},
+			}
+
+			mockGitRepo.EXPECT().
+				Test(mock.Anything).
+				Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil).
+				Once()
+
+			if tt.expectBPCall {
+				mockClient.EXPECT().
+					GetBranchProtection(mock.Anything, "grafana", "grafana", tt.branch).
+					Return(tt.bpResult, tt.bpError).
+					Once()
+			}
+
+			repo := &githubRepository{
+				config:        config,
+				GitRepository: mockGitRepo,
+				gh:            mockClient,
+				owner:         "grafana",
+				repo:          "grafana",
+			}
+
+			result, err := repo.Test(context.Background())
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Equal(t, tt.expectedSuccess, result.Success)
+
+			if !tt.expectedSuccess {
+				require.NotEmpty(t, result.Errors)
+				assert.Equal(t, tt.expectedErrField, result.Errors[0].Field)
+				assert.Contains(t, result.Errors[0].Detail, tt.expectedDetail)
+				assert.Equal(t, metav1.CauseTypeFieldValueInvalid, result.Errors[0].Type)
+			}
+		})
+	}
+}
+
+func TestBranchProtection_BlocksDirectPush(t *testing.T) {
+	tests := []struct {
+		name     string
+		bp       *BranchProtection
+		expected []string
+	}{
+		{
+			name:     "nil protection returns nil",
+			bp:       nil,
+			expected: nil,
+		},
+		{
+			name:     "no blocking rules",
+			bp:       &BranchProtection{},
+			expected: nil,
+		},
+		{
+			name:     "required PR reviews blocks",
+			bp:       &BranchProtection{RequiredPullRequestReviews: true},
+			expected: []string{"required pull request reviews"},
+		},
+		{
+			name:     "lock branch blocks",
+			bp:       &BranchProtection{LockBranch: true},
+			expected: []string{"branch is locked (read-only)"},
+		},
+		{
+			name: "both blocking rules",
+			bp: &BranchProtection{
+				RequiredPullRequestReviews: true,
+				LockBranch:                 true,
+			},
+			expected: []string{"required pull request reviews", "branch is locked (read-only)"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.bp.BlocksDirectPush()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 	tests := []struct {
 		name           string
