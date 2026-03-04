@@ -36,7 +36,7 @@ export const Filter = memo(({ name, rows, filter, setFilter, field, iconClassNam
   const filterEnabled = Boolean(filterValue);
   const [searchFilter, setSearchFilter] = useState(filter[filterKey]?.searchFilter || '');
   const [operator, setOperator] = useState<SelectableValue<FilterOperator>>(
-    filter[filterKey]?.operator || operatorSelectableValues()[FilterOperator.CONTAINS]
+    filter[filterKey]?.operator ?? operatorSelectableValues()[FilterOperator.CONTAINS]
   );
 
   return (
