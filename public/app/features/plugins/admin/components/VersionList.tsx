@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState, useMemo } from 'react';
-import { major, compare, gt } from "semver";
+import { major, compare, gt } from 'semver';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -19,7 +19,13 @@ interface Props {
   communityManaged?: boolean;
 }
 
-export const VersionList = ({ pluginId, versions = [], installedVersion, disableInstallation, communityManaged = false }: Props) => {
+export const VersionList = ({
+  pluginId,
+  versions = [],
+  installedVersion,
+  disableInstallation,
+  communityManaged = false,
+}: Props) => {
   const styles = useStyles2(getStyles);
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
   const latestMajorVersions = getLatestMajorVersions(versions);
@@ -122,7 +128,12 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
                       version.angularDetected ||
                       !version.isCompatible ||
                       disableInstallation ||
-                      shouldDisableVersionInstallation({ version, latestMajorVersions, installedVersion, communityManaged })
+                      shouldDisableVersionInstallation({
+                        version,
+                        latestMajorVersions,
+                        installedVersion,
+                        communityManaged,
+                      })
                     }
                     tooltip={tooltip}
                   />
@@ -236,10 +247,7 @@ export function getLatestMajorVersions(versions: Version[]) {
   let index = 1;
 
   do {
-    while (
-      index < sortedVersions.length &&
-      major(sortedVersions[index]) === major(currentLatest)
-    ) {
+    while (index < sortedVersions.length && major(sortedVersions[index]) === major(currentLatest)) {
       currentLatest = sortedVersions[index];
       index++;
     }

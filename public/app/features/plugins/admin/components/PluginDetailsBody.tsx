@@ -222,5 +222,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function isCommunityManaged(plugin: CatalogPlugin) {
-  return plugin.isManaged && plugin.signatureType !== PluginSignatureType.grafana && plugin.signatureType !== PluginSignatureType.core;
+  return (
+    plugin.isManaged &&
+    plugin.signatureType !== PluginSignatureType.grafana &&
+    plugin.signatureType !== PluginSignatureType.core
+  );
 }

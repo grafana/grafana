@@ -1,6 +1,13 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode, PluginSignatureType } from '@grafana/data';
+import {
+  PluginSignatureStatus,
+  dateTimeParse,
+  PluginError,
+  PluginType,
+  PluginErrorCode,
+  PluginSignatureType,
+} from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -426,7 +433,8 @@ function isPluginModifiable(plugin: CatalogPlugin) {
     plugin.isCore || //core plugins cannot be modified
     plugin.type === PluginType.renderer || // currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall
     plugin.isPreinstalled.withVersion || // Preinstalled plugins (with specified version) cannot be modified
-    (plugin.isManaged && (plugin.signatureType === PluginSignatureType.grafana || plugin.signatureType === PluginSignatureType.core)) // Managed plugins cannot be modified
+    (plugin.isManaged &&
+      (plugin.signatureType === PluginSignatureType.grafana || plugin.signatureType === PluginSignatureType.core)) // Managed plugins cannot be modified
   ) {
     return false;
   }

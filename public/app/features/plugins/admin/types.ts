@@ -192,7 +192,7 @@ export type RemotePlugin = {
   raiseAnIssueUrl?: string;
   managed: {
     enabled: boolean;
-  }
+  };
 };
 
 // The available status codes on GCOM are available here:
