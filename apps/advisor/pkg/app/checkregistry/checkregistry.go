@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/configchecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/instancechecks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/integrationscheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -26,6 +28,7 @@ type CheckService interface {
 
 type Service struct {
 	datasourceSvc         datasources.DataSourceService
+	pluginSettings        pluginsettings.Service
 	pluginStore           pluginstore.Store
 	pluginContextProvider *plugincontext.Provider
 	pluginClient          plugins.Client
@@ -40,7 +43,7 @@ type Service struct {
 	cfg                   *setting.Cfg
 }
 
-func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
+func ProvideService(datasourceSvc datasources.DataSourceService, pluginSettings pluginsettings.Service, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	updateChecker pluginchecker.PluginUpdateChecker,
 	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall, managedPlugins managedplugins.Manager,
@@ -49,6 +52,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 ) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
+		pluginSettings:        pluginSettings,
 		pluginStore:           pluginStore,
 		pluginContextProvider: pluginContextProvider,
 		pluginClient:          pluginClient,
@@ -83,6 +87,7 @@ func (s *Service) Checks() []checks.Check {
 			s.pluginErrorResolver,
 			s.GrafanaVersion,
 		),
+		integrationscheck.New(s.pluginSettings),
 		authchecks.New(s.ssoSettingsSvc),
 		configchecks.New(s.cfg),
 		instancechecks.New(s.cfg),
