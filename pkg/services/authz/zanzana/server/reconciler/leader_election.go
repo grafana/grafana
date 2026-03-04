@@ -3,7 +3,6 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,8 +20,6 @@ type LeaderElector interface {
 	// fn receives a context cancelled when leadership is lost.
 	// Run returns when ctx is cancelled.
 	Run(ctx context.Context, fn func(ctx context.Context)) error
-	// IsLeader returns true if this instance currently holds the lease.
-	IsLeader() bool
 }
 
 // NoopLeaderElector always acts as the leader (single-instance / backward compat).
@@ -39,11 +36,6 @@ func (n *NoopLeaderElector) Run(ctx context.Context, fn func(ctx context.Context
 	return ctx.Err()
 }
 
-// IsLeader always returns true for the noop implementation.
-func (n *NoopLeaderElector) IsLeader() bool {
-	return true
-}
-
 // KubernetesLeaderElector uses coordination.k8s.io/v1 Lease resources.
 type KubernetesLeaderElector struct {
 	leaseName     string
@@ -53,7 +45,6 @@ type KubernetesLeaderElector struct {
 	renewDeadline time.Duration
 	retryPeriod   time.Duration
 	kubeClient    kubernetes.Interface
-	isLeader      atomic.Bool
 	logger        log.Logger
 }
 
@@ -124,14 +115,12 @@ func (k *KubernetesLeaderElector) Run(ctx context.Context, fn func(ctx context.C
 					"lease", k.leaseName,
 					"namespace", k.namespace,
 				)
-				k.isLeader.Store(true)
 				fn(ctx)
 			},
 			OnStoppedLeading: func() {
 				k.logger.Info("Lost leader lease, stopping reconciler loop",
 					"identity", k.identity,
 				)
-				k.isLeader.Store(false)
 			},
 			OnNewLeader: func(identity string) {
 				if identity != k.identity {
@@ -146,9 +135,4 @@ func (k *KubernetesLeaderElector) Run(ctx context.Context, fn func(ctx context.C
 
 	le.Run(ctx)
 	return ctx.Err()
-}
-
-// IsLeader returns true if this instance currently holds the leader lease.
-func (k *KubernetesLeaderElector) IsLeader() bool {
-	return k.isLeader.Load()
 }
