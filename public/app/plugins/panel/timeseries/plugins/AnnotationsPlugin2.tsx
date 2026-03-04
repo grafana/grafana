@@ -216,7 +216,7 @@ export const AnnotationsPlugin2 = ({
           if (shouldRenderRegion) {
             for (let i = 0; i < vals.time.length; i++) {
               // skip rendering annos that are clustered (have non-null cluster index)
-              if (isClusterRegion(vals, i)) {
+              if (skipClusteredAnno(vals, i)) {
                 continue;
               }
               let color = getColorByName(vals.color?.[i] ?? DEFAULT_ANNOTATION_COLOR_HEX8);
@@ -306,7 +306,7 @@ export const AnnotationsPlugin2 = ({
       const top = annotationsOptions?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
 
       for (let i = 0; i < vals.time.length; i++) {
-        if (isClusterRegion(vals, i)) {
+        if (skipClusteredAnno(vals, i)) {
           continue;
         }
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
@@ -404,7 +404,7 @@ const getStyles = () => ({
   }),
 });
 
-const isClusterRegion = (vals: AnnotationVals, i: number) => {
+const skipClusteredAnno = (vals: AnnotationVals, i: number) => {
   return (
     !vals.isRegion?.[i] &&
     vals.clusterIdx?.[i] !== undefined &&

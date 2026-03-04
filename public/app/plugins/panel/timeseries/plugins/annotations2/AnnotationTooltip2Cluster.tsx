@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Divider, ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
 import alertDef from 'app/features/alerting/state/alertDef';
 
@@ -74,6 +74,7 @@ export const AnnotationTooltip2Cluster = ({
             }}
           />
           <AnnotationTooltipBody text={text} alertText={alertText} tags={annoVals?.tags?.[i] ?? []} />
+          {/* @todo Currently this will only show links in the clustered annotation, which is impossible since they are generated on the fly */}
           <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
         </>
       );
@@ -106,10 +107,10 @@ export const AnnotationTooltip2Cluster = ({
           }}
         />
         {items.map((item, key) => (
+          // @todo this is a bad key, but nothing in the annotation is guaranteed to be unique
           <div key={key}>
             {item}
-            <Divider spacing={0} />
-            <Divider spacing={0} />
+            <div className={styles.hr}></div>
           </div>
         ))}
       </ScrollContainer>
@@ -126,5 +127,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z3,
     userSelect: 'text',
+  }),
+  hr: css({
+    borderTop: `2px solid ${theme.colors.border.medium}`,
+    width: '100%',
   }),
 });

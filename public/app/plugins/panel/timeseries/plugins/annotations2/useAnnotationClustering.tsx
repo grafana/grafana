@@ -62,6 +62,7 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
 
           // append cluster annotation regions to frame
           clusters.forEach((idxs, ci) => {
+            // @todo more succinctly?
             timeEndFrame.fields.forEach((field) => {
               const vals = field.values;
               if (field.name === 'time') {
@@ -78,15 +79,10 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
                 // Use the color of the first annotation in the region
                 vals.push(colorVals[idxs[0]]);
               } else if (field.name === 'title') {
-                // Indicate the cluster index as the annotation title
-                vals.push(`Cluster ${ci}`);
+                vals.push(null);
               } else if (field.name === 'text') {
-                // Merge the indices as the text?
-                // @todo debugging
-                vals.push('indices:  ' + idxs.join(', '));
-                // vals.push(ci);
+                vals.push(null);
               } else if (field.name === 'clusterIdx') {
-                // Update the cluster index?
                 vals.push(ci);
               } else {
                 vals.push(null);
