@@ -10774,7 +10774,8 @@
     },
     "log-line-details": {
       "clear-search": "Clear",
-      "close": "Close log details",
+      "close-inline-details": "Close details for this log",
+      "close-sidebar-details": "Close log details sidebar",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
       "displayed-fields-section": "Organize displayed fields",
