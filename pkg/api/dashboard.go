@@ -416,7 +416,8 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	// Items with v2 schema elements must set v2 properties
 	if dashboards.LooksLikeV2Spec(spec) {
-		return response.Error(http.StatusBadRequest, dashboards.LooksLikeV2SpecMessage, nil)
+		return response.Error(http.StatusBadRequest, dashboards.LooksLikeV2SpecMessage+
+			" OR it should include the metadata wrapper with an explicit apiVersion moving the body to the spec element", nil)
 	}
 
 	// Items with metadata, spec, etc
@@ -545,12 +546,46 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	meta.SetManagedFields(nil)
 
 	name := obj.GetName()
+
+	// Check legacy internal IDs
+	var old *unstructured.Unstructured
+	internalID := cmd.Dashboard.Get("id").MustInt64(0)
+	if internalID > 0 {
+		if name == "" {
+			found, err := client.List(ctx, metav1.ListOptions{
+				LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, internalID),
+				Limit:         2,
+			})
+			if err != nil {
+				return response.Error(http.StatusInternalServerError, "unable to lookup previous version", err)
+			}
+			if len(found.Items) > 0 {
+				old = &found.Items[0]
+				if !cmd.Overwrite {
+					return response.Error(http.StatusConflict,
+						"Dashboard with the same internal ID already exists. Use overwrite flag to update.", nil)
+				}
+				name = old.GetName()
+			} else {
+				return response.Error(http.StatusBadRequest,
+					"The payload includes an internal identifier that is not found", nil)
+			}
+
+			// TODO, search for dashboards by this internal ID and get the name
+			// old = list with label selector?
+			return response.Error(http.StatusBadRequest, "saveDashboardViaK8s can not (yet) identify dashboards by internal id", err)
+		}
+	}
+
+	// Never send internal ID in the body
+	unstructured.RemoveNestedField(obj.Object, "spec", "id")
+
 	isCreate := name == ""
 	if isCreate {
 		obj.SetGenerateName("a") // prefix
-	} else {
+	} else if old == nil {
 		// Read the old value first
-		old, err := client.Get(ctx, name, metav1.GetOptions{})
+		old, err = client.Get(ctx, name, metav1.GetOptions{})
 		if err == nil && old != nil {
 			if !cmd.Overwrite {
 				return response.Error(http.StatusConflict,
