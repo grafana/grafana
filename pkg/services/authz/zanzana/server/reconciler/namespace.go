@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,14 +24,19 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 	map[string][]*authzextv1.RolePermission,
 	error,
 ) {
+	ctx, span := r.tracer.Start(ctx, "reconciler.fetchGlobalRolePerms")
+	defer span.End()
+
 	gvr := iamv0.GlobalRoleInfo.GroupVersionResource()
 
 	clients, err := r.clientFactory.Clients(ctx, "")
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to get cluster clients: %w", err)
 	}
 	resourceClient, _, err := clients.ForResource(ctx, gvr)
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to get client for %s: %w", gvr, err)
 	}
 
@@ -44,12 +51,14 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 		return nil
 	})
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to list GlobalRoles: %w", err)
 	}
 
 	// 2. Resolve effective permissions for each GlobalRole (handles RoleRefs + PermissionsOmitted).
 	resolvedPerms, err := resolveAllGlobalRolePermissions(allGlobalRoles)
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to resolve GlobalRole permissions: %w", err)
 	}
 
@@ -155,6 +164,9 @@ func resolveAllGlobalRolePermissions(
 // namespace Role are added standalone. GlobalRoles that ARE referenced already have their
 // permissions inlined into the namespace Role's tuples via translateRoleToTuples composition.
 func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string) ([]*openfgav1.TupleKey, error) {
+	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateTuples")
+	defer span.End()
+
 	globalRolePerms := r.getGlobalRolePerms()
 	allTuples := make([]*openfgav1.TupleKey, 0, len(globalRolePerms)*2)
 
@@ -185,11 +197,14 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 	for _, gvr := range reconcileGVRs {
 		translator, ok := translators[gvr.Resource]
 		if !ok {
-			return nil, fmt.Errorf("no translator found for resource type: %s", gvr.Resource)
+			err := fmt.Errorf("no translator found for resource type: %s", gvr.Resource)
+			span.RecordError(err)
+			return nil, err
 		}
 
 		tuples, err := r.fetchAndTranslateGVR(ctx, namespace, gvr, translator)
 		if err != nil {
+			span.RecordError(err)
 			return nil, fmt.Errorf("failed to process %s: %w", gvr.Resource, err)
 		}
 
@@ -204,6 +219,7 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 		}
 		tuples, err := zanzana.RoleToTuples(roleName, perms)
 		if err != nil {
+			span.RecordError(err)
 			return nil, fmt.Errorf("failed to generate tuples for unlinked GlobalRole %s: %w", roleName, err)
 		}
 		allTuples = append(allTuples, tuples...)
@@ -219,17 +235,26 @@ func (r *Reconciler) fetchAndTranslateGVR(
 	gvr schema.GroupVersionResource,
 	translator func(*unstructured.Unstructured) ([]*openfgav1.TupleKey, error),
 ) ([]*openfgav1.TupleKey, error) {
+	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateGVR", trace.WithAttributes(
+		attribute.String("gvr.group", gvr.Group),
+		attribute.String("gvr.version", gvr.Version),
+		attribute.String("gvr.resource", gvr.Resource),
+	))
+	defer span.End()
+
 	var allTuples []*openfgav1.TupleKey
 
 	// Get the dynamic client for this namespace
 	clients, err := r.clientFactory.Clients(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to get clients for namespace %s: %w", namespace, err)
 	}
 
 	// Get the resource interface for the specific GVR
 	resourceClient, _, err := clients.ForResource(ctx, gvr)
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to get client for resource %s: %w", gvr.String(), err)
 	}
 
@@ -244,6 +269,7 @@ func (r *Reconciler) fetchAndTranslateGVR(
 	})
 
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -281,12 +307,16 @@ func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, fn fu
 
 // readAllTuplesFromZanzana reads all tuples from Zanzana for a namespace.
 func (r *Reconciler) readAllTuplesFromZanzana(ctx context.Context, namespace string) ([]*openfgav1.TupleKey, error) {
+	ctx, span := r.tracer.Start(ctx, "reconciler.readAllTuplesFromZanzana")
+	defer span.End()
+
 	var allTuples []*openfgav1.TupleKey
 	var continuationToken string
 
 	// Get store info for the namespace
 	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to get store info: %w", err)
 	}
 
@@ -300,6 +330,7 @@ func (r *Reconciler) readAllTuplesFromZanzana(ctx context.Context, namespace str
 
 		resp, err := r.server.GetOpenFGAServer().Read(ctx, req)
 		if err != nil {
+			span.RecordError(err)
 			return nil, fmt.Errorf("failed to read tuples: %w", err)
 		}
 
@@ -321,9 +352,13 @@ func (r *Reconciler) readAllTuplesFromZanzana(ctx context.Context, namespace str
 // If a batch fails, it logs the error and continues with the next batch.
 // Uses the server's WriteTuples method directly to avoid authzextv1 ↔ openfgav1 conversions.
 func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string, toAdd, toDelete []*openfgav1.TupleKey) error {
+	ctx, span := r.tracer.Start(ctx, "reconciler.writeTuplesToZanzana")
+	defer span.End()
+
 	// Get store info for the namespace
 	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
 		return fmt.Errorf("failed to get store info: %w", err)
 	}
 
@@ -346,7 +381,14 @@ func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string,
 	// If total tuples fit in one batch, write directly
 	totalTuples := len(toAdd) + len(deleteTuples)
 	if totalTuples <= batchSize {
-		return r.server.WriteTuples(ctx, storeInfo, toAdd, deleteTuples)
+		err := r.server.WriteTuples(ctx, storeInfo, toAdd, deleteTuples)
+		if err == nil {
+			r.metrics.tuplesWrittenTotal.WithLabelValues("add").Add(float64(len(toAdd)))
+			r.metrics.tuplesWrittenTotal.WithLabelValues("delete").Add(float64(len(deleteTuples)))
+		} else {
+			span.RecordError(err)
+		}
+		return err
 	}
 
 	// Process in batches
@@ -367,6 +409,7 @@ func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string,
 			)
 			failedBatches++
 		} else {
+			r.metrics.tuplesWrittenTotal.WithLabelValues("add").Add(float64(len(batchWrites)))
 			successfulBatches++
 		}
 	}
@@ -385,6 +428,7 @@ func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string,
 			)
 			failedBatches++
 		} else {
+			r.metrics.tuplesWrittenTotal.WithLabelValues("delete").Add(float64(len(batchDeletes)))
 			successfulBatches++
 		}
 	}
@@ -399,7 +443,9 @@ func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string,
 
 	// Return error if any batches failed (for metrics/logging at higher level)
 	if failedBatches > 0 {
-		return fmt.Errorf("failed to write %d out of %d batches", failedBatches, successfulBatches+failedBatches)
+		err := fmt.Errorf("failed to write %d out of %d batches", failedBatches, successfulBatches+failedBatches)
+		span.RecordError(err)
+		return err
 	}
 
 	return nil
