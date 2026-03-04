@@ -57,18 +57,15 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		return b
 	}
 
-	t.Run("write workflow with protected branch returns error on spec.workflows", func(t *testing.T) {
-		bpCalled := false
+	t.Run("write workflow with required pull request reviews returns error", func(t *testing.T) {
 		repoFactory := helper.GetEnv().GithubRepoFactory
 		repoFactory.Client = ghmock.NewMockedHTTPClient(
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					bpCalled = true
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
 						RequiredPullRequestReviews: &github.PullRequestReviewsEnforcement{},
-						RequiredStatusChecks:       &github.RequiredStatusChecks{},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -79,21 +76,91 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		rawBody, _ := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
-			Name("test-bp-protected").
+			Name("test-bp-required-pr").
 			SubResource("test").
-			Body(makeRepoConfig("test-bp-protected", []string{"write"})).
+			Body(makeRepoConfig("test-bp-required-pr", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).
 			Raw()
 
-		t.Logf("Branch protection API called: %v", bpCalled)
-		t.Logf("Raw response: %s", string(rawBody))
+		var testResults provisioning.TestResults
+		require.NoError(t, json.Unmarshal(rawBody, &testResults))
+		require.False(t, testResults.Success, "test should fail when required PR reviews are enabled")
+		require.NotEmpty(t, testResults.Errors, "should have errors")
+		require.Equal(t, "spec.workflows", testResults.Errors[0].Field, "error should target spec.workflows")
+		require.Contains(t, testResults.Errors[0].Detail, "required pull request reviews")
+		require.Contains(t, testResults.Errors[0].Detail, "protection rules that prevent direct pushes")
+	})
+
+	t.Run("write workflow with locked branch returns error", func(t *testing.T) {
+		repoFactory := helper.GetEnv().GithubRepoFactory
+		repoFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					protection := &github.Protection{
+						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
+					}
+					_, _ = w.Write(ghmock.MustMarshal(protection))
+				}),
+			),
+		)
+		helper.SetGithubRepositoryFactory(repoFactory)
+
+		rawBody, _ := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-bp-locked").
+			SubResource("test").
+			Body(makeRepoConfig("test-bp-locked", []string{"write"})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).
+			Raw()
 
 		var testResults provisioning.TestResults
 		require.NoError(t, json.Unmarshal(rawBody, &testResults))
-		require.False(t, testResults.Success, "test should fail when branch is protected and write workflow is configured")
+		require.False(t, testResults.Success, "test should fail when branch is locked")
 		require.NotEmpty(t, testResults.Errors, "should have errors")
 		require.Equal(t, "spec.workflows", testResults.Errors[0].Field, "error should target spec.workflows")
+		require.Contains(t, testResults.Errors[0].Detail, "branch is locked")
+		require.Contains(t, testResults.Errors[0].Detail, "protection rules that prevent direct pushes")
+	})
+
+	t.Run("write workflow with multiple protection rules returns error with all reasons", func(t *testing.T) {
+		repoFactory := helper.GetEnv().GithubRepoFactory
+		repoFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					protection := &github.Protection{
+						RequiredPullRequestReviews: &github.PullRequestReviewsEnforcement{},
+						LockBranch:                 &github.LockBranch{Enabled: github.Ptr(true)},
+					}
+					_, _ = w.Write(ghmock.MustMarshal(protection))
+				}),
+			),
+		)
+		helper.SetGithubRepositoryFactory(repoFactory)
+
+		rawBody, _ := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-bp-multiple").
+			SubResource("test").
+			Body(makeRepoConfig("test-bp-multiple", []string{"write"})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).
+			Raw()
+
+		var testResults provisioning.TestResults
+		require.NoError(t, json.Unmarshal(rawBody, &testResults))
+		require.False(t, testResults.Success, "test should fail when multiple protection rules are enabled")
+		require.NotEmpty(t, testResults.Errors, "should have errors")
+		require.Equal(t, "spec.workflows", testResults.Errors[0].Field, "error should target spec.workflows")
+		require.Contains(t, testResults.Errors[0].Detail, "required pull request reviews")
+		require.Contains(t, testResults.Errors[0].Detail, "branch is locked")
 		require.Contains(t, testResults.Errors[0].Detail, "protection rules that prevent direct pushes")
 	})
 
@@ -170,6 +237,17 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 
 // startTestGitServer creates a minimal HTTP server that responds to git smart HTTP protocol requests.
 // This allows nanogit to successfully connect and validate the repository URL.
+//
+// Why not use Gitea or a full git server?
+// We use this lightweight mock because:
+//  1. Speed: Starts instantly vs. Gitea which takes seconds to initialize
+//  2. Simplicity: ~20 lines vs. managing a full server lifecycle, database, and configuration
+//  3. Scope: We only need to validate git connectivity, not test actual git operations
+//  4. Isolation: No external dependencies or ports to manage
+//  5. Reliability: No risk of Gitea version incompatibilities or setup issues
+//
+// This test focuses on GitHub API branch protection validation, not git protocol correctness.
+// The git server just needs to respond correctly to nanogit's initial connectivity check.
 func startTestGitServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
