@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 interface Props {
@@ -8,7 +8,7 @@ interface Props {
 }
 export function AnnotationAvatar({ src }: Props) {
   const styles = useStyles2(getStyles);
-  return src && <img className={styles.avatar} alt="Annotation avatar" src={src} />;
+  return src && <img className={styles.avatar} alt="Annotation avatar" src={textUtil.sanitizeUrl(src)} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
