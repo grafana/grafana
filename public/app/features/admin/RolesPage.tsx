@@ -1,19 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Tab, TabsBar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
-
-const pageNav: NavModelItem = {
-  icon: 'shield',
-  id: 'admin-roles',
-  text: 'Roles',
-  subTitle: 'View and manage roles and permissions.',
-};
 
 import { RoleEditForm } from './RoleEditForm';
 import { RolesListTab } from './RolesListTab';
@@ -32,7 +25,7 @@ export default function RolesPage() {
 
   if (!hasAccess) {
     return (
-      <Page navId="global-users" pageNav={pageNav}>
+      <Page navId="admin-roles" >
         <Page.Contents>
           <p>{t('admin.roles-page.no-permission', 'You do not have permission to view roles.')}</p>
         </Page.Contents>
@@ -56,7 +49,7 @@ export default function RolesPage() {
   };
 
   return (
-    <Page navId="global-users" pageNav={pageNav}>
+    <Page navId="admin-roles" >
       <TabsBar className={styles.tabsMargin}>
         <Tab
           label={t('admin.roles-page.tab-all-roles', 'All roles')}
