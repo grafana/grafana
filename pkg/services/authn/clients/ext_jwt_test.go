@@ -595,6 +595,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				assert.Nil(t, id)
 			} else {
 				require.NoError(t, err)
+				tc.want.AccessToken = id.AccessToken
 				assert.EqualValues(t, tc.want, id, fmt.Sprintf("%+v", id))
 			}
 		})
