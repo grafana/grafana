@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 var _ SearchHandler = (*NoopSearchREST)(nil)
@@ -23,7 +22,7 @@ func ProvideNoopSearchREST() *NoopSearchREST {
 }
 
 func (n *NoopSearchREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs[iamv0.ExternalGroupMappingList{}.OpenAPIModelName()].Schema
+	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingList"].Schema
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{

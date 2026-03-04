@@ -925,32 +925,7 @@
             "description": "Default OK response",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "metadata",
-                    "items"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "default": {}
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           },
@@ -1017,52 +992,7 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "offset",
-                    "totalHits",
-                    "hits",
-                    "queryCost",
-                    "maxScore"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "hits": {
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "maxScore": {
-                      "type": "number",
-                      "format": "double",
-                      "default": 0
-                    },
-                    "offset": {
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    },
-                    "queryCost": {
-                      "type": "number",
-                      "format": "double",
-                      "default": 0
-                    },
-                    "totalHits": {
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           }
@@ -1183,44 +1113,7 @@
             "description": "Default OK response",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "offset",
-                    "totalHits",
-                    "hits",
-                    "queryCost",
-                    "maxScore"
-                  ],
-                  "properties": {
-                    "hits": {
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      }
-                    },
-                    "maxScore": {
-                      "type": "number",
-                      "format": "double",
-                      "default": 0
-                    },
-                    "offset": {
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    },
-                    "queryCost": {
-                      "type": "number",
-                      "format": "double",
-                      "default": 0
-                    },
-                    "totalHits": {
-                      "type": "integer",
-                      "format": "int64",
-                      "default": 0
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           }

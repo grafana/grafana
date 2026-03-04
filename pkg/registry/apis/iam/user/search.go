@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/authz"
+	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -21,8 +23,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/authz"
-	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -80,7 +80,7 @@ func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndex
 }
 
 func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs[iamv0.GetSearchUsersResponse{}.OpenAPIModelName()].Schema
+	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUsers"].Schema
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
