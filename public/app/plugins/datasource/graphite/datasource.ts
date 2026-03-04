@@ -763,11 +763,19 @@ export class GraphiteDatasource
           expandable: false,
         }));
     } else if (queryType === GraphiteQueryType.MetricName) {
-      result = data.data.map((series) => ({
-        text: series.name,
-        value: series.name,
-        expandable: false,
-      }));
+      if (config.featureToggles.graphiteBackendMode) {
+        result = data.data.map((series: DataFrame) => {
+          const valueField = series.fields.find((f) => f.name === 'value');
+          const name = valueField?.config.displayNameFromDS || '';
+          return { text: name, value: name, expandable: false };
+        });
+      } else {
+        result = data.data.map((series) => ({
+          text: series.name,
+          value: series.name,
+          expandable: false,
+        }));
+      }
     } else {
       result = [];
     }
