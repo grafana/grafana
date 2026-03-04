@@ -44,6 +44,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardConditionalRenderingVariableSpec{}.OpenAPIModelName():                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingVariableSpec(ref),
 		DashboardConstantVariableKind{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableKind(ref),
 		DashboardConstantVariableSpec{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableSpec(ref),
+		DashboardContext{}.OpenAPIModelName():                                                                                               schema_pkg_apis_dashboard_v2beta1_DashboardContext(ref),
 		DashboardConversionStatus{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2beta1_DashboardConversionStatus(ref),
 		DashboardCustomVariableKind{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableKind(ref),
 		DashboardCustomVariableSpec{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableSpec(ref),
@@ -234,12 +235,18 @@ func schema_pkg_apis_dashboard_v2beta1_Dashboard(ref common.ReferenceCallback) c
 							Ref:     ref(DashboardStatus{}.OpenAPIModelName()),
 						},
 					},
+					"context": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardContext{}.OpenAPIModelName()),
+						},
+					},
 				},
-				Required: []string{"metadata", "spec", "status"},
+				Required: []string{"metadata", "spec", "status", "context"},
 			},
 		},
 		Dependencies: []string{
-			DashboardSpec{}.OpenAPIModelName(), DashboardStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			DashboardContext{}.OpenAPIModelName(), DashboardSpec{}.OpenAPIModelName(), DashboardStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1409,6 +1416,25 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableSpec(ref common.
 		},
 		Dependencies: []string{
 			DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardContext(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"defaultLayoutType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Default layout that would be used when adding new containers (rows, tabs)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -5389,6 +5415,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardWithAccessInfo(ref common.Refere
 							Ref:     ref(DashboardStatus{}.OpenAPIModelName()),
 						},
 					},
+					"context": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardContext{}.OpenAPIModelName()),
+						},
+					},
 					"access": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
@@ -5396,10 +5428,10 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardWithAccessInfo(ref common.Refere
 						},
 					},
 				},
-				Required: []string{"metadata", "spec", "status", "access"},
+				Required: []string{"metadata", "spec", "status", "context", "access"},
 			},
 		},
 		Dependencies: []string{
-			DashboardAccess{}.OpenAPIModelName(), DashboardSpec{}.OpenAPIModelName(), DashboardStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			DashboardAccess{}.OpenAPIModelName(), DashboardContext{}.OpenAPIModelName(), DashboardSpec{}.OpenAPIModelName(), DashboardStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
