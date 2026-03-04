@@ -34,7 +34,7 @@ export const AnnotationTooltip2 = ({
 }: AnnotationTooltipProps) => {
   const styles = useStyles2(getStyles);
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
-  let { onDelete, canEdit, canDelete, time, text, alertText, alertState, avatarImgSrc, title } = getAnnotationTooltip(
+  const { onDelete, canEdit, canDelete, time, text, alertText, alertState, avatarImgSrc, title } = getAnnotationTooltip(
     annoVals,
     annoIdx,
     timeZone,

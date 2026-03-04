@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Divider, ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
 import alertDef from 'app/features/alerting/state/alertDef';
@@ -94,7 +95,8 @@ export const AnnotationTooltip2Cluster = ({
     <div className={styles.wrapper}>
       <ScrollContainer maxHeight="200px">
         <AnnotationTooltipHeader
-          className={styles.clusterHeader}
+          text={items.length.toString() + ' ' + t('timeseries.annotation-tooltip2.cluster-header', 'annotations')}
+          isCluster={true}
           timeRange={time}
           canEdit={false}
           canDelete={false}
@@ -126,13 +128,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z3,
     userSelect: 'text',
-  }),
-  clusterHeader: css({
-    background: theme.colors.background.elevated,
-    position: 'sticky',
-    top: 0,
-    left: 0,
-    zIndex: 1,
-    boxShadow: theme.shadows.z1,
   }),
 });

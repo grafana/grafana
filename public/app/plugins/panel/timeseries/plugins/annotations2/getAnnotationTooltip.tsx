@@ -7,6 +7,8 @@ const timeFormatter = (value: number, timeZone: string) =>
     timeZone,
   });
 
+export type AnnotationVals = {};
+
 export function getAnnotationTooltip(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   annoVals: Record<string, any[]>,
