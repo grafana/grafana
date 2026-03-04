@@ -34,6 +34,8 @@ export function InstanceTimelineSection({
     { data: notificationData, isLoading: notificationsLoading, isError: notificationsError },
   ] = useCreateNotificationqueryMutation();
 
+  const labelsKey = useMemo(() => JSON.stringify(instanceLabels), [instanceLabels]);
+
   useEffect(() => {
     if (!timeRange?.from || !timeRange?.to) {
       return;
@@ -49,7 +51,9 @@ export function InstanceTimelineSection({
         ...(labels.length > 0 && { labels }),
       },
     });
-  }, [createNotificationQuery, ruleUID, instanceLabels, timeRange]);
+    // labelsKey is used as a stable proxy for instanceLabels to avoid re-triggering on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createNotificationQuery, ruleUID, labelsKey, timeRange]);
 
   const notifications = useMemo(() => {
     return notificationData?.entries ?? [];
@@ -82,7 +86,7 @@ export function InstanceTimelineSection({
           >
             {t(
               'alerting.instance-details.notifications-error-desc',
-              'Notification history may not be enabled. Enable the alertingNotificationHistory feature toggle.'
+              'The timeline will only show state changes. Check that notification history is enabled and try again.'
             )}
           </Alert>
         )}

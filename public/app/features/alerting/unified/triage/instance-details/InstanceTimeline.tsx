@@ -320,11 +320,9 @@ function NotificationStatusGroup({
             ·
           </Text>
           <Text variant="bodySmall">
-            {notifications.length === 1
-              ? t('alerting.instance-details.timeline-one-notification', '1 notification')
-              : t('alerting.instance-details.timeline-n-notifications', '{{count}} notifications', {
-                  count: notifications.length,
-                })}
+            {t('alerting.instance-details.timeline-n-notifications', '{{count}} notifications', {
+              count: notifications.length,
+            })}
           </Text>
           <Stack direction="row" gap={0.5} alignItems="center">
             <Text variant="bodySmall" color="secondary">
