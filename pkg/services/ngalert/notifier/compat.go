@@ -52,6 +52,18 @@ func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.Integr
 	}, nil
 }
 
+func PostableAPIConfigToNotificationsConfiguration(c *apimodels.PostableUserConfig, limits alertingNotify.DynamicLimits) alertingNotify.NotificationsConfiguration {
+	return alertingNotify.NotificationsConfiguration{
+		RoutingTree:       c.AlertmanagerConfig.Route,
+		InhibitRules:      c.AlertmanagerConfig.InhibitRules,
+		MuteTimeIntervals: c.AlertmanagerConfig.MuteTimeIntervals,
+		TimeIntervals:     c.AlertmanagerConfig.TimeIntervals,
+		Templates:         alertingNotify.PostableAPITemplatesToTemplateDefinitions(c.GetMergedTemplateDefinitions()),
+		Receivers:         alertingNotify.PostableAPIReceiversToAPIReceivers(c.AlertmanagerConfig.Receivers),
+		Limits:            limits,
+	}
+}
+
 func NotificationsConfigurationToPostableAPIConfig(config alertingNotify.NotificationsConfiguration) apimodels.PostableApiAlertingConfig {
 	return apimodels.PostableApiAlertingConfig{
 		Config: apimodels.Config{
