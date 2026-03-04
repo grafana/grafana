@@ -330,11 +330,13 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 
 	// TODO(@macabu/2026-03-04): Remove on G14 as these metrics are the same as the ones above.
-	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
-		ss.log.Warn("Failed to register 'sqlstats' sqlstore stats collector", "error", err)
-	}
-	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
-		ss.log.Warn("Failed to register 'Grafana legacy' sqlstore metrics", "error", err)
+	if ss.cfg.DatabaseRegisterDeprecatedMetrics {
+		if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
+			ss.log.Warn("Failed to register 'sqlstats' sqlstore stats collector", "error", err)
+		}
+		if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
+			ss.log.Warn("Failed to register 'Grafana legacy' sqlstore metrics", "error", err)
+		}
 	}
 
 	ss.engine = engine

@@ -124,9 +124,11 @@ func (p *resourceDBProvider) initDB(ctx context.Context) (db.DB, error) {
 		}
 
 		// TODO(@macabu/2026-03-04): Remove on G14 as these metrics are the same as the ones above.
-		err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", p.engine.DB().DB))
-		if err != nil {
-			p.log.Warn("Failed to register 'sqlstats' unified storage sql stats collector", "error", err)
+		if p.cfg.DatabaseRegisterDeprecatedMetrics {
+			err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", p.engine.DB().DB))
+			if err != nil {
+				p.log.Warn("Failed to register 'sqlstats' unified storage sql stats collector", "error", err)
+			}
 		}
 	}
 	_ = p.logQueries // TODO: configure SQL logging
