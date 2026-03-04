@@ -340,9 +340,15 @@ func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *de
 	return nil
 }
 
-func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
+func DecryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
 	decrypted := make([]*definitions.PostableApiReceiver, len(receivers))
 	for i, r := range receivers {
+		if r.HasMimirIntegrations() {
+			// Short circuit in case this is a Mimir receiver from ExtraConfig. These do not need to be decrypted and
+			// should not be converted to v0 configs.
+			decrypted[i] = r
+			continue
+		}
 		// We don't care about the provenance here, so we pass ProvenanceNone.
 		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
 		if err != nil {
@@ -363,9 +369,15 @@ func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn 
 	return decrypted, nil
 }
 
-func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn models.EncryptFn) ([]*definitions.PostableApiReceiver, error) {
+func EncryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, encryptFn models.EncryptFn) ([]*definitions.PostableApiReceiver, error) {
 	encrypted := make([]*definitions.PostableApiReceiver, len(receivers))
 	for i, r := range receivers {
+		if r.HasMimirIntegrations() {
+			// Short circuit in case this is a Mimir receiver from ExtraConfig. These do not need to be encrypted and
+			// should not be converted to v0 configs.
+			encrypted[i] = r
+			continue
+		}
 		// We don't care about the provenance here, so we pass ProvenanceNone.
 		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
 		if err != nil {

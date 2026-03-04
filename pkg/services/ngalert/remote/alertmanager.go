@@ -356,7 +356,7 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, dbConfig *models
 	amConfig := notifier.NotificationsConfigurationToPostableAPIConfig(c)
 
 	// Decrypt the receivers in the configuration.
-	decryptedReceivers, err := notifier.DecryptedReceivers(amConfig.Receivers, notifier.DecryptIntegrationSettings(ctx, am.crypto))
+	decryptedReceivers, err := notifier.DecryptedGrafanaReceivers(amConfig.Receivers, notifier.DecryptIntegrationSettings(ctx, am.crypto))
 	if err != nil {
 		return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to decrypt receivers: %w", err)
 	}
@@ -662,7 +662,7 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]alertingModels.Rece
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	decryptedReceivers, err := notifier.DecryptedReceivers(c.Receivers, notifier.DecryptIntegrationSettings(ctx, am.crypto))
+	decryptedReceivers, err := notifier.DecryptedGrafanaReceivers(c.Receivers, notifier.DecryptIntegrationSettings(ctx, am.crypto))
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
 	}
