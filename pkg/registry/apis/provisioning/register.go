@@ -262,6 +262,7 @@ func RegisterAPIService(
 	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
+	quotaGetter quotas.QuotaGetter,
 ) (*APIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -276,11 +277,6 @@ func RegisterAPIService(
 	for _, target := range cfg.ProvisioningAllowedTargets {
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
-
-	quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
-		MaxResourcesPerRepository: cfg.ProvisioningMaxResourcesPerRepository,
-		MaxRepositories:           cfg.ProvisioningMaxRepositories,
-	})
 
 	builder := NewAPIBuilder(
 		cfg.DisableControllers,

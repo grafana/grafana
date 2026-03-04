@@ -38,7 +38,6 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
     validateNewFolderName: jest.fn(),
   },
 }));
-
 jest.mock('../../hooks/usePRBranch', () => ({
   usePRBranch: jest.fn().mockReturnValue(undefined),
 }));
@@ -61,7 +60,6 @@ jest.mock('../../hooks/useProvisionedFolderFormData', () => ({
 jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
   usePullRequestParam: jest.fn(),
 }));
-
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
@@ -251,7 +249,6 @@ describe('NewProvisionedFolderForm', () => {
         });
       })
     );
-
     const { user } = setup(
       {},
       {

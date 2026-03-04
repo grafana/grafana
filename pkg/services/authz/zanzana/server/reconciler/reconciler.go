@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
@@ -27,6 +28,10 @@ type Reconciler struct {
 	tracer        tracing.Tracer
 
 	workQueue chan string
+
+	globalRoleMu sync.RWMutex
+	// resolved effective permissions per GlobalRole name (for Role composition)
+	globalRolePerms map[string][]*authzextv1.RolePermission
 }
 
 // Config holds the reconciler configuration.
@@ -44,7 +49,7 @@ func (c Config) queueSize() int {
 	return c.QueueSize
 }
 
-// GVRs that need to be reconciled from Unistore to Zanzana.
+// GVRs that need to be reconciled from Unistore to Zanzana (namespaced).
 var reconcileGVRs = []schema.GroupVersionResource{
 	folderv1.FolderResourceInfo.GroupVersionResource(),
 	iamv0.RoleInfo.GroupVersionResource(),
@@ -70,6 +75,18 @@ func NewReconciler(
 		tracer:        tracer,
 		workQueue:     make(chan string, cfg.queueSize()),
 	}
+}
+
+func (r *Reconciler) setGlobalRolePerms(perms map[string][]*authzextv1.RolePermission) {
+	r.globalRoleMu.Lock()
+	defer r.globalRoleMu.Unlock()
+	r.globalRolePerms = perms
+}
+
+func (r *Reconciler) getGlobalRolePerms() map[string][]*authzextv1.RolePermission {
+	r.globalRoleMu.RLock()
+	defer r.globalRoleMu.RUnlock()
+	return r.globalRolePerms
 }
 
 // Run starts the reconciler's main loop and worker goroutines.
@@ -111,6 +128,15 @@ func (r *Reconciler) Run(ctx context.Context) error {
 
 // queueAllNamespaces lists all OpenFGA stores and queues them for reconciliation.
 func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
+	// Fetch global role permissions once per tick and cache them for all namespaces.
+	globalPerms, err := r.fetchGlobalRolePerms(ctx)
+	if err != nil {
+		r.logger.Error("Failed to fetch global roles", "error", err)
+		globalPerms = nil
+	}
+
+	r.setGlobalRolePerms(globalPerms)
+
 	stores, err := r.server.ListAllStores(ctx)
 	if err != nil {
 		r.logger.Error("Failed to list stores", "error", err)
