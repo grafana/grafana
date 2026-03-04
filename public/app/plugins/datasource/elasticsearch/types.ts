@@ -1,4 +1,14 @@
-import { DataSourceJsonData } from '@grafana/data';
+import { Observable } from 'rxjs';
+import { SemVer } from 'semver';
+
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceJsonData,
+  MetricFindValue,
+  TimeRange,
+} from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema';
 
 import {
@@ -189,6 +199,19 @@ export const isElasticsearchResponseWithHits = (res: unknown): res is Elasticsea
     })
   );
 };
+
+/**
+ * Minimal interface for what the QueryEditor components need from ElasticDatasource.
+ * Using this instead of importing ElasticDatasource directly breaks the circular import
+ * chain from components/QueryEditor back to datasource.ts.
+ */
+export interface ElasticDatasourceLike extends DataSourceApi<ElasticsearchDataQuery, ElasticsearchOptions> {
+  timeField: string;
+  defaultQueryMode?: QueryType;
+  query(request: DataQueryRequest<ElasticsearchDataQuery>): Observable<DataQueryResponse>;
+  getDatabaseVersion(useCachedData?: boolean): Promise<SemVer | null>;
+  getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]>;
+}
 
 export const isElasticsearchResponseWithAggregations = (res: unknown): res is ElasticsearchResponseWithAggregations => {
   return (
