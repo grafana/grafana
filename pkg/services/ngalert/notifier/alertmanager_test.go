@@ -288,6 +288,13 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 		return m
 	}
 
+	toDBConfig := func(t *testing.T, cfg *definitions.PostableUserConfig) *ngmodels.AlertConfiguration {
+		t.Helper()
+		raw, err := json.Marshal(&cfg)
+		require.NoError(t, err)
+		return &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(raw)}
+	}
+
 	type testCase struct {
 		name            string
 		features        featuremgmt.FeatureToggles
@@ -435,14 +442,14 @@ receivers:
 				1: tc.initialSettings,
 			})
 
-			changed, err := am.applyConfig(ctx, tc.initialConfig(), ErrorOnInvalidReceivers)
+			changed, err := am.applyConfig(ctx, toDBConfig(t, tc.initialConfig()), ErrorOnInvalidReceivers)
 			require.NoError(t, err)
 			require.True(t, changed)
 
 			firstHash := am.Base.ConfigHash()
 			firstApplied := am.Base.AppliedConfig()
 			for i := 0; i < 20; i++ {
-				changed, err = am.applyConfig(ctx, tc.initialConfig(), ErrorOnInvalidReceivers)
+				changed, err = am.applyConfig(ctx, toDBConfig(t, tc.initialConfig()), ErrorOnInvalidReceivers)
 				require.NoError(t, err)
 				diff := cmp.Diff(firstApplied, am.Base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))
 				if diff != "" {
@@ -458,7 +465,7 @@ receivers:
 			mutatedCfg := tc.initialConfig()
 			tc.mutate(mutatedCfg, tc.initialSettings)
 
-			changed, err = am.applyConfig(ctx, mutatedCfg, ErrorOnInvalidReceivers)
+			changed, err = am.applyConfig(ctx, toDBConfig(t, mutatedCfg), ErrorOnInvalidReceivers)
 			require.NoError(t, err)
 			require.True(t, changed)
 			require.NotEqual(t, firstHash, am.Base.ConfigHash())
@@ -468,7 +475,7 @@ receivers:
 
 			updatedHash := am.Base.ConfigHash()
 			updatedApplied := am.Base.AppliedConfig()
-			changed, err = am.applyConfig(ctx, mutatedCfg, ErrorOnInvalidReceivers)
+			changed, err = am.applyConfig(ctx, toDBConfig(t, mutatedCfg), ErrorOnInvalidReceivers)
 			require.NoError(t, err)
 			diff := cmp.Diff(updatedApplied, am.Base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))
 			if diff != "" {
