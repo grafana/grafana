@@ -1,8 +1,10 @@
 # Grafana API Clients
 
-> **@grafana/api-clients is currently in BETA**.
+> **@grafana/api-clients is currently in ALPHA**.
 
-This package hosts reusable clients for Grafana APIs. The implementation is currently in BETA and not yet published.
+This package provides reusable clients for Grafana APIs. The implementation is in ALPHA and the package is now published on npm as `@grafana/api-clients`.
+
+# Instructions within `grafana/grafana` repository:
 
 ## Generating RTK Query API Clients
 
