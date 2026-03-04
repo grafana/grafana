@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -18,6 +18,60 @@ import {
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
+
+const ghostBlobFloat = keyframes`
+  0% {
+    transform: translate3d(-10%, -8%, 0) scale(1);
+    background-position: 10% 30%, 85% 20%, 40% 85%;
+  }
+  25% {
+    transform: translate3d(8%, -12%, 0) scale(1.08);
+    background-position: 22% 14%, 75% 44%, 62% 72%;
+  }
+  50% {
+    transform: translate3d(12%, 10%, 0) scale(0.95);
+    background-position: 38% 24%, 64% 72%, 24% 76%;
+  }
+  75% {
+    transform: translate3d(-6%, 14%, 0) scale(1.06);
+    background-position: 18% 62%, 78% 62%, 44% 18%;
+  }
+  100% {
+    transform: translate3d(-10%, -8%, 0) scale(1);
+    background-position: 10% 30%, 85% 20%, 40% 85%;
+  }
+`;
+
+const ghostBlobPulse = keyframes`
+  0%, 100% {
+    filter: blur(8px) saturate(1);
+    opacity: 0.88;
+  }
+  35% {
+    filter: blur(6px) saturate(1.15);
+    opacity: 1;
+  }
+  70% {
+    filter: blur(9px) saturate(0.95);
+    opacity: 0.92;
+  }
+`;
+
+interface GhostAnimationConfig {
+  moveDurationMs: number;
+  moveDelayMs: number;
+  pulseDurationMs: number;
+  pulseDelayMs: number;
+}
+
+function createGhostAnimation(): GhostAnimationConfig {
+  return {
+    moveDurationMs: 3000 + Math.floor(Math.random() * 1800),
+    moveDelayMs: -Math.floor(Math.random() * 7000),
+    pulseDurationMs: 2200 + Math.floor(Math.random() * 1200),
+    pulseDelayMs: -Math.floor(Math.random() * 5000),
+  };
+}
 
 interface SidebarCardProps {
   children: React.ReactNode;
@@ -45,8 +99,9 @@ export const SidebarCard = ({
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
+  const [ghostAnimation] = useState<GhostAnimationConfig>(() => createGhostAnimation());
 
-  const styles = useStyles2(getStyles, { isSelected, item });
+  const styles = useStyles2(getStyles, { isSelected, item, ghostAnimation });
 
   const handleFocus = useCallback(() => {
     setHasFocusWithin(true);
@@ -107,8 +162,7 @@ export const SidebarCard = ({
         aria-pressed={isSelected}
       >
         <div className={styles.cardContent}>{children}</div>
-        {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
-        {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
+        {/** Alerts don't show hide/error icons or hover actions. */}
         {hasActions && (
           <div>
             <div className={styles.cardContentIcons}>
@@ -142,9 +196,11 @@ function getStyles(
   {
     isSelected,
     item,
+    ghostAnimation,
   }: {
     isSelected?: boolean;
     item: ActionItem;
+    ghostAnimation?: GhostAnimationConfig;
   }
 ) {
   // TODO: I think we should refactor this so we aren't relying on this border color for the selected card.
@@ -158,6 +214,8 @@ function getStyles(
   const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
   const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
+  const ghostAnimations = `${ghostBlobFloat} ${ghostAnimation?.moveDurationMs ?? 4200}ms ease-in-out infinite, ${ghostBlobPulse} ${ghostAnimation?.pulseDurationMs ?? 3600}ms ease-in-out infinite`;
+  const ghostAnimationDelays = `${ghostAnimation?.moveDelayMs ?? -1200}ms, ${ghostAnimation?.pulseDelayMs ?? -700}ms`;
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -311,12 +369,34 @@ function getStyles(
     }),
 
     ghostCard: css({
-      border: `1px dashed ${borderColor}`,
-      background: 'transparent',
+      border: `1px solid color-mix(in srgb, ${borderColor} 28%, ${theme.colors.border.medium})`,
+      background: `color-mix(in srgb, ${borderColor} 9%, ${theme.colors.background.primary})`,
       cursor: 'default',
       opacity: 1,
       '&::before': {
         display: 'none',
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: '-15%',
+        pointerEvents: 'none',
+        backgroundImage: [
+          `radial-gradient(ellipse 34% 28% at 10% 30%, color-mix(in srgb, ${borderColor} 55%, transparent), transparent)`,
+          `radial-gradient(ellipse 30% 24% at 85% 20%, color-mix(in srgb, ${borderColor} 38%, transparent), transparent)`,
+          `radial-gradient(ellipse 28% 32% at 40% 85%, color-mix(in srgb, ${borderColor} 28%, transparent), transparent)`,
+        ].join(', '),
+        backgroundRepeat: 'no-repeat',
+        filter: 'blur(9px)',
+        opacity: theme.isDark ? 0.82 : 0.72,
+        [theme.transitions.handleMotion('no-preference')]: {
+          animation: ghostAnimations,
+          animationDelay: ghostAnimationDelays,
+        },
+      },
+      '& > div': {
+        position: 'relative',
+        zIndex: 1,
       },
     }),
 
