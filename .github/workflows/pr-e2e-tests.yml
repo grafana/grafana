@@ -152,15 +152,8 @@ jobs:
       - name: Install yarn dependencies
         uses: ./.github/actions/yarn-install
 
-      - name: Get Playwright version
-        id: pw-version
-        run: echo "version=$(node -e "console.log(require('@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v5
-        with:
-          key: storybook-playwright-${{ steps.pw-version.outputs.version }}
-          path: ~/.cache/ms-playwright
       - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
+        run: yarn playwright install chromium --with-deps
 
       - name: Run Storybook and E2E tests
         run: yarn e2e:playwright:storybook
@@ -247,14 +240,8 @@ jobs:
       - name: Install yarn dependencies
         uses: ./.github/actions/yarn-install
 
-      - name: Get Playwright version
-        id: pw-version
-        run: echo "version=$(node -e "console.log(require('@playwright/test/package.json').version)")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v5
-        with:
-          key: playwright-${{ steps.pw-version.outputs.version }}
-          path: ~/.cache/ms-playwright
-      - run: npx playwright install chromium --with-deps
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
 
       - name: Run Playwright tests
         run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
