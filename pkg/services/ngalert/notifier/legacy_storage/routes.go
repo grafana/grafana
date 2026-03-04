@@ -185,6 +185,7 @@ func validateManagedRouteName(name string) error {
 	if name = strings.TrimSpace(name); name == "" {
 		return fmt.Errorf("route name is required")
 	}
+	// Colon in names confuses RBAC. Make sure we do not allow that.
 	if strings.Contains(name, ":") {
 		return fmt.Errorf("managed route name cannot contain invalid character ':'")
 	}
