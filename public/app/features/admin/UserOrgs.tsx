@@ -1,14 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { memo, ReactElement, useEffect, useRef, useState } from 'react';
+import { memo, ReactElement, useRef, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, ConfirmButton, Field, Icon, Modal, Tooltip, useStyles2, Stack, TextLink } from '@grafana/ui';
-import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types/accessControl';
 import { Organization } from 'app/types/organization';
 import { UserOrg, UserDTO } from 'app/types/user';
 
@@ -99,13 +98,6 @@ const getOrgRowStyles = (theme: GrafanaTheme2) => {
     tooltipItemLink: css({
       color: theme.v1.palette.blue95,
     }),
-    rolePickerWrapper: css({
-      display: 'flex',
-    }),
-    rolePicker: css({
-      flex: 'auto',
-      marginRight: theme.spacing(1),
-    }),
   };
 };
 
@@ -120,18 +112,7 @@ interface OrgRowProps {
 const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }: OrgRowProps) => {
   const [currentRole, setCurrentRole] = useState(org.role);
   const [isChangingRole, setIsChangingRole] = useState(false);
-  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const styles = useStyles2(getOrgRowStyles);
-
-  useEffect(() => {
-    if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-        fetchRoleOptions(org.orgId)
-          .then((roles) => setRoleOptions(roles))
-          .catch((e) => console.error(e));
-      }
-    }
-  }, [org.orgId]);
 
   const handleOrgRemove = async () => {
     onOrgRemove(org.orgId);
@@ -154,8 +135,17 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
     setIsChangingRole(false);
   };
 
-  const handleBasicRoleChange = (newRole: OrgRole) => {
-    onOrgRoleChange(org.orgId, newRole);
+  const handleManageRolesClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user && org.orgId !== contextSrv.user.orgId) {
+      // Switch org first, then navigate
+      await getBackendSrv().post('/api/user/using/' + org.orgId);
+      locationService.push(`/admin/users/roles/${user.uid}`);
+      window.location.reload();
+    } else if (user) {
+      // Already in the right org, just navigate
+      locationService.push(`/admin/users/roles/${user.uid}`);
+    }
   };
 
   const authSource = user?.authLabels?.length && user?.authLabels[0];
@@ -163,7 +153,8 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
   const labelClass = cx('width-16', styles.label);
   const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite);
   const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove) && !isExternalUser;
-  const rolePickerDisabled = isExternalUser || !canChangeRole;
+  const canManageRoles = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
+  const isEnterprise = contextSrv.licensedAccessControlEnabled();
 
   const inputId = `${org.name}-input`;
   return (
@@ -171,24 +162,16 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
       <td className={labelClass}>
         <label htmlFor={inputId}>{org.name}</label>
       </td>
-      {contextSrv.licensedAccessControlEnabled() ? (
-        <td>
-          <div className={styles.rolePickerWrapper}>
-            <div className={styles.rolePicker}>
-              <UserRolePicker
-                userId={user?.id || 0}
-                orgId={org.orgId}
-                basicRole={org.role}
-                roleOptions={roleOptions}
-                onBasicRoleChange={handleBasicRoleChange}
-                basicRoleDisabled={rolePickerDisabled}
-                basicRoleDisabledMessage="This user's role is not editable because it is synchronized from your auth provider.
-                  Refer to the Grafana authentication docs for details."
-              />
-            </div>
-            {isExternalUser && <ExternalUserTooltip lockMessage={lockMessage} />}
-          </div>
-        </td>
+      {isEnterprise ? (
+        <>
+          <td colSpan={2}>
+            {canManageRoles && user && (
+              <Button fill="text" onClick={handleManageRolesClick}>
+                {t('admin.user-orgs.manage-roles-button', 'Manage roles')}
+              </Button>
+            )}
+          </td>
+        </>
       ) : (
         <>
           {isChangingRole ? (
@@ -216,7 +199,6 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
           <ConfirmButton
             confirmText={t('admin.un-themed-org-row.confirmText-confirm-removal', 'Confirm removal')}
             confirmVariant="destructive"
-            onCancel={handleCancelClick}
             onConfirm={handleOrgRemove}
           >
             {t('admin.user-orgs.remove-button', 'Remove from organization')}
@@ -252,61 +234,27 @@ interface AddToOrgModalProps {
 export const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: AddToOrgModalProps) => {
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
-  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [pendingOrgId, setPendingOrgId] = useState<number | null>(null);
-  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
-  const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
   const styles = useStyles2(getAddToOrgModalStyles);
 
   const onOrgSelect = (org: OrgSelectItem) => {
     const userOrg = userOrgs.find((userOrg) => userOrg.orgId === org.value?.id);
     setSelectedOrg(org.value!);
     setRole(userOrg?.role || OrgRole.Viewer);
-    if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-        fetchRoleOptions(org.value?.id)
-          .then((roles) => setRoleOptions(roles))
-          .catch((e) => console.error(e));
-      }
-    }
   };
 
   const onOrgRoleChange = (newRole: OrgRole) => {
     setRole(newRole);
   };
 
-  const onAddUserToOrg = async () => {
+  const onAddUserToOrg = () => {
     onOrgAdd(selectedOrg!.id, role);
-    // add the stored userRoles also
-    if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
-        if (pendingUserId) {
-          await updateUserRoles(pendingRoles, pendingUserId, pendingOrgId!);
-          // clear pending state
-          setPendingOrgId(null);
-          setPendingRoles([]);
-          setPendingUserId(null);
-        }
-      }
-    }
   };
 
   const onCancel = () => {
-    // clear selectedOrg when modal is canceled
     setSelectedOrg(null);
-    setPendingRoles([]);
-    setPendingOrgId(null);
-    setPendingUserId(null);
     if (onDismiss) {
       onDismiss();
     }
-  };
-
-  const onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
-    // keep the new role assignments for user
-    setPendingRoles(roles);
-    setPendingOrgId(orgId!);
-    setPendingUserId(userId);
   };
 
   return (
@@ -317,21 +265,11 @@ export const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss
       isOpen={isOpen}
       onDismiss={onCancel}
     >
-      <Field label={t('admin.add-to-org-modal.label-organization', 'Organization')}>
+      <Field label={t('admin.add-to-org-modal.label-organization', 'Organization')} noMargin>
         <OrgPicker inputId="new-org-input" onSelected={onOrgSelect} excludeOrgs={userOrgs} autoFocus />
       </Field>
-      <Field label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null}>
-        <UserRolePicker
-          userId={user?.id || 0}
-          orgId={selectedOrg?.id}
-          basicRole={role}
-          onBasicRoleChange={onOrgRoleChange}
-          basicRoleDisabled={false}
-          roleOptions={roleOptions}
-          apply={true}
-          onApplyRoles={onRoleUpdate}
-          pendingRoles={pendingRoles}
-        />
+      <Field label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null} noMargin>
+        <OrgRolePicker inputId="new-org-role" value={role} onChange={onOrgRoleChange} />
       </Field>
       <Modal.ButtonRow>
         <Stack gap={2} justifyContent="center">

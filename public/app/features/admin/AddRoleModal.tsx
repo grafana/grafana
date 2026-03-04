@@ -2,11 +2,21 @@
 import { css } from '@emotion/css';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
-
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { Modal, Button, Field, Input, InteractiveTable, LoadingPlaceholder, Column, useStyles2, IconButton, Tooltip } from '@grafana/ui';
+import {
+  Modal,
+  Button,
+  Field,
+  Input,
+  InteractiveTable,
+  LoadingPlaceholder,
+  Column,
+  useStyles2,
+  IconButton,
+  Tooltip,
+} from '@grafana/ui';
 import { useListRolesQuery, useSetUserRolesMutation } from 'app/api/clients/roles';
 import { Role } from 'app/types/accessControl';
 
@@ -17,6 +27,7 @@ interface AddRoleModalProps {
   userId: number;
   userUid: string;
   currentRoleUids: string[];
+  selectedOrgId: number;
   onDismiss: () => void;
   onRoleAdded: () => void;
 }
@@ -26,6 +37,7 @@ export const AddRoleModal = ({
   userId,
   userUid,
   currentRoleUids,
+  selectedOrgId,
   onDismiss,
   onRoleAdded,
 }: AddRoleModalProps) => {
@@ -36,7 +48,7 @@ export const AddRoleModal = ({
   const { data: allRoles, isLoading } = useListRolesQuery({ delegatable: true });
   const [updateUserRoles, { isLoading: isUpdating }] = useSetUserRolesMutation();
 
-  // Filter out roles user already has and non-delegatable roles
+  // Filter out roles user already has in this org and non-delegatable roles
   const availableRoles = useMemo(() => {
     if (!allRoles) {
       return [];
@@ -68,9 +80,15 @@ export const AddRoleModal = ({
 
   const handleAddRole = useCallback(
     async (roleUid: string) => {
+      if (!selectedOrgId) {
+        console.error('No organization selected');
+        return;
+      }
+
       try {
         await updateUserRoles({
           userId,
+          targetOrgId: selectedOrgId,
           setUserRolesCommand: {
             roleUids: [...currentRoleUids, roleUid],
           },
@@ -83,7 +101,7 @@ export const AddRoleModal = ({
         console.error('Error adding role to user:', error);
       }
     },
-    [userId, currentRoleUids, updateUserRoles, onRoleAdded]
+    [userId, selectedOrgId, currentRoleUids, updateUserRoles, onRoleAdded]
   );
 
   const columns = useMemo<Array<Column<Role>>>(

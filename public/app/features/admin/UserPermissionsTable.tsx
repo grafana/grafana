@@ -9,9 +9,10 @@ import { UserOrg } from 'app/types/user';
 
 import { RolePermissionsModal } from './RolePermissionsModal';
 import { UserPermissionsModal } from './UserPermissionsModal';
+import { RoleWithOrg } from './UserPermissionsPage';
 
 interface Props {
-  roles: Role[];
+  roles: RoleWithOrg[];
   teams: TeamWithRoles[];
   orgs: UserOrg[];
   userId: number;
@@ -29,57 +30,62 @@ interface PermissionRow {
   source: string; // Always has a value
   sourceType: 'direct' | 'org' | 'team' | 'external';
   teamUid?: string;
+  orgId: number; // Organization ID this role belongs to
   orgName: string; // Always has a value
 }
 
 const transformRolesToPermissionRows = (
-  roles: Role[],
+  roles: RoleWithOrg[],
   teams: TeamWithRoles[],
   orgs: UserOrg[]
 ): PermissionRow[] => {
   const rows: PermissionRow[] = [];
-  // Use first org name as default, since we're viewing a single user
-  const orgName = orgs.length > 0 ? orgs[0].name : 'Unknown';
 
-  // Create a map of roleUid to teams
+  // Create a map of roleUid+orgId to teams for matching
   const roleTeamMap = new Map<string, TeamWithRoles[]>();
   teams.forEach((team) => {
     if (team.roles) {
-      team.roles.forEach((role: Role) => {
-        const existing = roleTeamMap.get(role.uid) || [];
-        roleTeamMap.set(role.uid, [...existing, team]);
+      team.roles.forEach((role: Role & { orgId?: number }) => {
+        // Use role.orgId if available, otherwise fall back to team.orgId
+        const orgId = role.orgId || team.orgId;
+        const key = `${role.uid}-${orgId}`;
+        const existing = roleTeamMap.get(key) || [];
+        roleTeamMap.set(key, [...existing, team]);
       });
     }
   });
 
   let rowCounter = 0;
-  const processedRoleUids = new Set<string>();
+  const processedRoleKeys = new Set<string>();
 
   // Helper to extract group from role
   const getGroup = (role: Role): string | undefined => {
-    return (role as Role & { group?: string }).group;
+    // Role type doesn't formally include group but it exists at runtime
+    const roleWithGroup: { group?: string } = role;
+    return roleWithGroup.group;
   };
 
-  // Process roles from the user roles API
+  // Process roles from the user roles API (now with orgId and orgName)
   roles.forEach((role) => {
-    processedRoleUids.add(role.uid);
-    const teamsWithRole = roleTeamMap.get(role.uid) || [];
+    const roleKey = `${role.uid}-${role.orgId}`;
+    processedRoleKeys.add(roleKey);
+    const teamsWithRole = roleTeamMap.get(roleKey) || [];
     const isBasic = role.name.startsWith('basic:');
     const isMapped = Boolean(role.mapped);
 
-    // Determine sources
+    // Determine sources - show all assignments including duplicates
     const hasTeams = teamsWithRole.length > 0;
     const hasOrgRole = isBasic;
     const hasExternal = isMapped;
-    // A role can be BOTH directly assigned AND inherited from teams
-    // Show as direct if it's not a basic org role and not external/mapped
+    // Show direct assignment for all non-basic, non-external roles
+    // A role can be shown multiple times if it comes from multiple sources
     const hasDirect = !hasOrgRole && !hasExternal;
 
     // Create row for each team
     if (hasTeams) {
       teamsWithRole.forEach((team) => {
         rows.push({
-          id: `${role.uid}-team-${team.id}`,
+          id: `${role.orgId}-${role.uid}-team-${team.id}`,
           roleUid: role.uid || '',
           roleName: role.name || '',
           roleDisplayName: role.displayName || role.name || 'Unknown',
@@ -88,7 +94,8 @@ const transformRolesToPermissionRows = (
           source: team.name || 'Unknown Team',
           sourceType: 'team',
           teamUid: team.uid,
-          orgName: orgName || 'Unknown Org',
+          orgId: role.orgId,
+          orgName: role.orgName || 'Unknown Org',
         });
       });
     }
@@ -96,45 +103,48 @@ const transformRolesToPermissionRows = (
     // Create row for org role
     if (hasOrgRole) {
       rows.push({
-        id: `${role.uid}-org-${rowCounter++}`,
+        id: `${role.orgId}-${role.uid}-org-${rowCounter++}`,
         roleUid: role.uid || '',
         roleName: role.name || '',
         roleDisplayName: role.displayName || role.name || 'Unknown',
         roleDescription: role.description,
-        roleGroup: (role as any).group || 'Other',
+        roleGroup: getGroup(role) || 'Other',
         source: 'Organization Role',
         sourceType: 'org',
-        orgName: orgName || 'Unknown Org',
+        orgId: role.orgId,
+        orgName: role.orgName || 'Unknown Org',
       });
     }
 
     // Create row for external
     if (hasExternal) {
       rows.push({
-        id: `${role.uid}-external-${rowCounter++}`,
+        id: `${role.orgId}-${role.uid}-external-${rowCounter++}`,
         roleUid: role.uid || '',
         roleName: role.name || '',
         roleDisplayName: role.displayName || role.name || 'Unknown',
         roleDescription: role.description,
-        roleGroup: (role as any).group || 'Other',
+        roleGroup: getGroup(role) || 'Other',
         source: 'External (LDAP/OAuth)',
         sourceType: 'external',
-        orgName: orgName || 'Unknown Org',
+        orgId: role.orgId,
+        orgName: role.orgName || 'Unknown Org',
       });
     }
 
     // Create row for direct assignment
     if (hasDirect) {
       rows.push({
-        id: `${role.uid}-direct-${rowCounter++}`,
+        id: `${role.orgId}-${role.uid}-direct-${rowCounter++}`,
         roleUid: role.uid || '',
         roleName: role.name || '',
         roleDisplayName: role.displayName || role.name || 'Unknown',
         roleDescription: role.description,
-        roleGroup: (role as any).group || 'Other',
+        roleGroup: getGroup(role) || 'Other',
         source: 'Direct',
         sourceType: 'direct',
-        orgName: orgName || 'Unknown Org',
+        orgId: role.orgId,
+        orgName: role.orgName || 'Unknown Org',
       });
     }
   });
@@ -142,15 +152,16 @@ const transformRolesToPermissionRows = (
   // Process team roles that weren't in the user roles API response
   teams.forEach((team) => {
     if (team.roles) {
-      team.roles.forEach((role: Role) => {
-        if (!processedRoleUids.has(role.uid)) {
-          processedRoleUids.add(role.uid);
-          const teamsWithRole = roleTeamMap.get(role.uid) || [];
+      team.roles.forEach((role: Role & { orgId?: number; orgName?: string }) => {
+        const roleKey = `${role.uid}-${team.orgId}`;
+        if (!processedRoleKeys.has(roleKey)) {
+          processedRoleKeys.add(roleKey);
+          const teamsWithRole = roleTeamMap.get(roleKey) || [];
 
           // Create row for each team that has this role
           teamsWithRole.forEach((t) => {
             rows.push({
-              id: `${role.uid}-team-${t.id}`,
+              id: `${team.orgId}-${role.uid}-team-${t.id}`,
               roleUid: role.uid || '',
               roleName: role.name || '',
               roleDisplayName: role.displayName || role.name || 'Unknown',
@@ -159,7 +170,8 @@ const transformRolesToPermissionRows = (
               source: t.name || 'Unknown Team',
               sourceType: 'team',
               teamUid: t.uid,
-              orgName: orgName || 'Unknown Org',
+              orgId: team.orgId || 0,
+              orgName: role.orgName || 'Unknown Org',
             });
           });
         }
@@ -174,7 +186,7 @@ const transformRolesToPermissionRows = (
     // But use colon format for display name: basic:viewer
     const basicRoleName = `basic:${org.role.toLowerCase()}`;
     rows.push({
-      id: `${basicRoleUid}-org-${org.orgId}`,
+      id: `${org.orgId}-${basicRoleUid}-org`,
       roleUid: basicRoleUid,
       roleName: basicRoleName,
       roleDisplayName: org.role,
@@ -182,6 +194,7 @@ const transformRolesToPermissionRows = (
       roleGroup: 'Basic',
       source: 'Organization Role',
       sourceType: 'org',
+      orgId: org.orgId,
       orgName: org.name,
     });
   });
@@ -201,18 +214,20 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
   const rows = useMemo(() => transformRolesToPermissionRows(roles, teams, orgs), [roles, teams, orgs]);
 
   const handleRemoveRole = useCallback(
-    async (roleUidToRemove: string) => {
+    async (roleUidToRemove: string, roleOrgId: number) => {
       try {
         setIsRemoving(true);
 
-        // Filter out the role to remove and any mapped roles
-        const remainingRoleUids = roles
+        // Filter roles for THIS org only
+        const orgRoles = roles.filter((role) => role.orgId === roleOrgId);
+        const remainingRoleUids = orgRoles
           .filter((role) => role.uid !== roleUidToRemove && !role.mapped)
           .map((role) => role.uid);
 
-        // Update user roles with remaining roles
+        // Update user roles with remaining roles for this org
         await updateUserRoles({
           userId,
+          targetOrgId: roleOrgId,
           setUserRolesCommand: {
             roleUids: remainingRoleUids,
           },
@@ -317,7 +332,7 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
                 name="trash-alt"
                 size="sm"
                 variant="destructive"
-                onClick={() => handleRemoveRole(row.original.roleUid)}
+                onClick={() => handleRemoveRole(row.original.roleUid, row.original.orgId)}
                 disabled={isRemoving}
                 // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 aria-label="Remove role"
