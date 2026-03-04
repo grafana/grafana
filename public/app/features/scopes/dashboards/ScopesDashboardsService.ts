@@ -206,7 +206,11 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         ? this.apiClient.fetchScopeNavigations
         : this.apiClient.fetchDashboards;
 
-      const subScopeItems = await fetchNavigations([subScopeName]);
+      // rootScope gives the backend context to optimize (e.g., skip expensive
+      // dashboard computation for deep sub-nodes).
+      const subScopeItems = await fetchNavigations([subScopeName], {
+        rootScope: this.state.navigationScope,
+      });
 
       // Filter out items that have a subScope matching any subScope already in the path
       // This prevents infinite loops when a subScope returns items with the same subScope
@@ -308,8 +312,12 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       ? this.apiClient.fetchScopeNavigations
       : this.apiClient.fetchDashboards;
 
-    // depth=1 prefetches next-level sub-scope items so the first expansion is instant
-    const res = await fetchNavigations(forScopeNames, { depth: 1 });
+    // depth=1 prefetches next-level sub-scope items so the first expansion is instant.
+    // rootScope gives the backend context for optimizing sub-scope responses.
+    const res = await fetchNavigations(forScopeNames, {
+      depth: 1,
+      rootScope: this.state.navigationScope,
+    });
 
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
       const folders = this.groupSuggestedItems(res);

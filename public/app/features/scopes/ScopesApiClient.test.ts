@@ -624,21 +624,21 @@ describe('ScopesApiClient', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should pass depth option to the endpoint', async () => {
+    it('should pass depth and rootScope options to the endpoint', async () => {
       const mockSubscription = createMockSubscription({ data: { items: [] } });
       (scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate as jest.Mock).mockReturnValue(
         mockSubscription
       );
 
-      await apiClient.fetchScopeNavigations(['mimir'], { depth: 1 });
+      await apiClient.fetchScopeNavigations(['mimir'], { depth: 1, rootScope: 'myRoot' });
 
       expect(scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate).toHaveBeenCalledWith(
-        expect.objectContaining({ scope: ['mimir'], depth: 1 }),
+        expect.objectContaining({ scope: ['mimir'], depth: 1, rootScope: 'myRoot' }),
         { subscribe: false }
       );
     });
 
-    it('should omit depth when options not provided', async () => {
+    it('should omit depth and rootScope when options not provided', async () => {
       const mockSubscription = createMockSubscription({ data: { items: [] } });
       (scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate as jest.Mock).mockReturnValue(
         mockSubscription
@@ -649,25 +649,26 @@ describe('ScopesApiClient', () => {
       const callArgs = (scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate as jest.Mock).mock
         .calls[0][0];
       expect(callArgs.depth).toBeUndefined();
+      expect(callArgs.rootScope).toBeUndefined();
     });
   });
 
-  describe('fetchDashboards depth option', () => {
-    it('should pass depth option to the endpoint', async () => {
+  describe('fetchDashboards navigation options', () => {
+    it('should pass depth and rootScope options to the endpoint', async () => {
       const mockSubscription = createMockSubscription({ data: { items: [] } });
       (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mockReturnValue(
         mockSubscription
       );
 
-      await apiClient.fetchDashboards(['grafana'], { depth: 1 });
+      await apiClient.fetchDashboards(['grafana'], { depth: 1, rootScope: 'myRoot' });
 
       expect(scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate).toHaveBeenCalledWith(
-        expect.objectContaining({ scope: ['grafana'], depth: 1 }),
+        expect.objectContaining({ scope: ['grafana'], depth: 1, rootScope: 'myRoot' }),
         { subscribe: false }
       );
     });
 
-    it('should omit depth when options not provided', async () => {
+    it('should omit depth and rootScope when options not provided', async () => {
       const mockSubscription = createMockSubscription({ data: { items: [] } });
       (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mockReturnValue(
         mockSubscription
@@ -678,6 +679,7 @@ describe('ScopesApiClient', () => {
       const callArgs = (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mock
         .calls[0][0];
       expect(callArgs.depth).toBeUndefined();
+      expect(callArgs.rootScope).toBeUndefined();
     });
   });
 

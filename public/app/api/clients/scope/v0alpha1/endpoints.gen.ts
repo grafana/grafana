@@ -30,6 +30,7 @@ const injectedRtkApi = api
             // Added ahead of codegen — will be included in generated output
             // when the backend OpenAPI spec is updated.
             depth: queryArg.depth,
+            rootScope: queryArg.rootScope,
           },
         }),
         providesTags: ['FindScopeDashboardBindingsResults'],
@@ -45,6 +46,7 @@ const injectedRtkApi = api
             // Added ahead of codegen — will be included in generated output
             // when the backend OpenAPI spec is updated.
             depth: queryArg.depth,
+            rootScope: queryArg.rootScope,
           },
         }),
         providesTags: ['FindScopeNavigationsResults'],
@@ -623,6 +625,8 @@ export type GetFindScopeDashboardBindingsResultsApiArg = {
   scope?: string[];
   /** Extra levels of sub-scope items to include. 0 or omitted = direct scope only. */
   depth?: number;
+  /** Root scope for path context. Backend uses this to optimize sub-scope responses. */
+  rootScope?: string;
 };
 export type GetFindScopeNavigationsResultsApiResponse = /** status 200 OK */ FindScopeNavigationsResults;
 export type GetFindScopeNavigationsResultsApiArg = {
@@ -632,6 +636,8 @@ export type GetFindScopeNavigationsResultsApiArg = {
   scope?: string[];
   /** Extra levels of sub-scope items to include. 0 or omitted = direct scope only. */
   depth?: number;
+  /** Root scope for path context. Backend uses this to optimize sub-scope responses. */
+  rootScope?: string;
 };
 export type GetFindScopeNodeChildrenResultsApiResponse = /** status 200 OK */ FindScopeNodeChildrenResults;
 export type GetFindScopeNodeChildrenResultsApiArg = {
