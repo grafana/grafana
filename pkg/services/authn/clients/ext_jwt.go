@@ -265,7 +265,7 @@ func (s *ExtendedJWT) authenticateAsServiceOrUser(
 	}
 
 	// NewAccessTokenAuthInfo traverses the full actor chain to find the innermost
-	// identity actor — correctly handles multi-hop OBO (e.g. MT Query → MT Datasource → HG).
+	// identity actor — correctly handles multi-hop OBO
 	authInfo := authlib.NewAccessTokenAuthInfo(accessTokenClaims)
 	subject := authInfo.GetSubject()
 	if subject == "" {
