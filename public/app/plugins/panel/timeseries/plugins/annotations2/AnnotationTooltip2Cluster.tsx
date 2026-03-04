@@ -90,11 +90,13 @@ export const AnnotationTooltip2Cluster = ({
     onAnnotationDelete
   );
 
+  const text = items.length.toString() + ' ' + t('timeseries.annotation-tooltip2.cluster-header', 'annotations');
+
   return (
     <div className={styles.wrapper}>
       <ScrollContainer maxHeight="200px">
         <AnnotationTooltipHeader
-          text={items.length.toString() + ' ' + t('timeseries.annotation-tooltip2.cluster-header', 'annotations')}
+          text={text}
           isCluster={true}
           timeRange={time}
           canEdit={false}
