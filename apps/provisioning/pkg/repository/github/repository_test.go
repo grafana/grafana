@@ -1291,6 +1291,16 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 			expectedDetail:   "failed to check branch protection",
 		},
 		{
+			name:            "GetBranchProtection unauthorized (401) returns test failure",
+			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:          "main",
+			bpError:         ErrUnauthorized,
+			expectBPCall:    true,
+			expectedSuccess: false,
+			expectedErrField: "spec.github.branch",
+			expectedDetail:   "failed to check branch protection",
+		},
+		{
 			name:            "protection with no blocking rules does not block",
 			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
 			branch:          "main",

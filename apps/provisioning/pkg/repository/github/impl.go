@@ -36,8 +36,12 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) {
 			switch ghErr.Response.StatusCode {
-			case http.StatusUnauthorized, http.StatusForbidden:
+			case http.StatusUnauthorized:
 				return nil, ErrUnauthorized
+			case http.StatusForbidden:
+				// User lacks admin permissions to view branch protection.
+				// Skip check gracefully - if protection rules block pushes, they'll find out at push time.
+				return nil, nil
 			case http.StatusNotFound:
 				return nil, ErrResourceNotFound
 			case http.StatusServiceUnavailable:

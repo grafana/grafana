@@ -238,6 +238,41 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		require.True(t, testResults.Success, "test should succeed with branch workflow even if branch is protected")
 		require.Equal(t, 200, testResults.Code)
 	})
+
+	t.Run("write workflow with forbidden (403) branch protection check succeeds", func(t *testing.T) {
+		// Simulate a 403 Forbidden response when checking branch protection.
+		// This happens when the token lacks admin permissions to view branch protection settings.
+		// The test should succeed (skip the check gracefully) rather than fail.
+		repoFactory := helper.GetEnv().GithubRepoFactory
+		repoFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusForbidden)
+					_, _ = w.Write([]byte(`{"message":"Resource not accessible by integration"}`))
+				}),
+			),
+		)
+		helper.SetGithubRepositoryFactory(repoFactory)
+
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-bp-forbidden").
+			SubResource("test").
+			Body(makeRepoConfig("test-bp-forbidden", []string{"write"})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.NoError(t, result.Error())
+
+		obj, err := result.Get()
+		require.NoError(t, err)
+
+		testResults := parseTestResults(t, obj)
+		require.True(t, testResults.Success, "test should succeed when branch protection check returns 403 (lacks admin permissions)")
+		require.Equal(t, 200, testResults.Code)
+	})
 }
 
 // startTestGitServer creates a minimal HTTP server that responds to git smart HTTP protocol requests.
