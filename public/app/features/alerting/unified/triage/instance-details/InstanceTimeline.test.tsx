@@ -261,7 +261,7 @@ describe('InstanceTimeline component', () => {
 
     render(<InstanceTimeline records={records} notifications={notifications} />);
 
-    const summaryButton = screen.getByRole('button', { name: /firing/i });
+    const summaryButton = screen.getByRole('button', { name: /toggle notification details/i });
     await user.click(summaryButton);
 
     expect(screen.getByText('Delivered')).toBeInTheDocument();
