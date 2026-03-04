@@ -3,13 +3,14 @@ import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { QueryGroupOptions } from 'app/types/query';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import { PendingExpression, PendingTransformation, QueryEditorProvider } from './QueryEditorContext';
+import { PendingExpression, PendingSavedQuery, PendingTransformation, QueryEditorProvider } from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
 import { usePendingTransformation } from './hooks/usePendingTransformation';
@@ -19,6 +20,18 @@ import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
 import { AlertRule, QueryOptionField, Transformation } from './types';
 import { getEditorType, getTransformId } from './utils';
+
+/**
+ * Keeps query selection stable across refId renames.
+ * When the currently selected query is renamed, selection should follow the new refId.
+ */
+export function getNextSelectedQueryRefId(
+  currentSelectedRefId: string | null,
+  originalRefId: string,
+  updatedRefId: string
+) {
+  return currentSelectedRefId === originalRefId ? updatedRefId : currentSelectedRefId;
+}
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -41,10 +54,13 @@ export function QueryEditorContextWrapper({
   const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);
   const [focusedField, setFocusedField] = useState<QueryOptionField | null>(null);
   const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
+  const [pendingSavedQueryState, setPendingSavedQueryState] = useState<PendingSavedQuery | null>(null);
   const [transformTogglesState, setTransformTogglesState] = useState({
     showHelp: false,
     showDebug: false,
   });
+  const { isDrawerOpen } = useQueryLibraryContext();
+  const pendingSavedQuery = isDrawerOpen ? pendingSavedQueryState : null;
 
   const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
   const transformations = useTransformations(dataTransformer);
@@ -171,6 +187,8 @@ export function QueryEditorContextWrapper({
         // Abandon pending flows when selecting a card
         clearPendingExpression();
         clearPendingTransformation();
+        // Clear pending saved query when selecting a query
+        setPendingSavedQueryState(null);
       },
       setSelectedTransformation: (transformation: Transformation | null) => {
         setSelectedTransformationId(transformation?.transformId ?? null);
@@ -179,10 +197,11 @@ export function QueryEditorContextWrapper({
         setSelectedAlertId(null);
         // Reset transformation-specific UI when switching transformations
         setTransformTogglesState({ showHelp: false, showDebug: false });
-
         // Abandon pending flows when selecting a card
         clearPendingExpression();
         clearPendingTransformation();
+        // Clear pending saved query when selecting a transformation
+        setPendingSavedQueryState(null);
       },
       setSelectedAlert: (alert: AlertRule | null) => {
         setSelectedAlertId(alert?.alertId ?? null);
@@ -194,6 +213,8 @@ export function QueryEditorContextWrapper({
         // Abandon pending flows when selecting a card
         clearPendingExpression();
         clearPendingTransformation();
+        // Clear pending saved query when selecting an alert
+        setPendingSavedQueryState(null);
       },
       queryOptions: {
         options: queryOptions,
@@ -220,14 +241,24 @@ export function QueryEditorContextWrapper({
       setPendingExpression: (pending: PendingExpression | null) => {
         if (pending) {
           clearPendingTransformation();
+          setPendingSavedQueryState(null);
         }
         setPendingExpression(pending);
       },
       finalizePendingExpression,
+      pendingSavedQuery,
+      setPendingSavedQuery: (pending: PendingSavedQuery | null) => {
+        if (pending) {
+          clearPendingExpression();
+          clearPendingTransformation();
+        }
+        setPendingSavedQueryState(pending);
+      },
       pendingTransformation,
       setPendingTransformation: (pending: PendingTransformation | null) => {
         if (pending) {
           clearPendingExpression();
+          setPendingSavedQueryState(null);
         }
         setPendingTransformation(pending);
       },
@@ -252,6 +283,7 @@ export function QueryEditorContextWrapper({
       setPendingExpression,
       finalizePendingExpression,
       clearPendingExpression,
+      pendingSavedQuery,
       pendingTransformation,
       setPendingTransformation,
       finalizePendingTransformation,
@@ -264,6 +296,9 @@ export function QueryEditorContextWrapper({
       updateQueries: dataPane.updateQueries,
       updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
         dataPane.updateSelectedQuery(updatedQuery, originalRefId);
+        setSelectedQueryRefId((currentSelectedRefId) =>
+          getNextSelectedQueryRefId(currentSelectedRefId, originalRefId, updatedQuery.refId)
+        );
       },
       addQuery: dataPane.addQuery,
       deleteQuery: dataPane.deleteQuery,

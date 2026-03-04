@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/authz"
+	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -22,6 +25,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,21 +39,43 @@ import (
 
 const maxLimit = 100
 
-type SearchHandler struct {
-	log      log.Logger
-	client   resourcepb.ResourceIndexClient
-	tracer   trace.Tracer
-	features featuremgmt.FeatureToggles
-	cfg      *setting.Cfg
+// accessControlCheck maps a legacy RBAC action name to a K8s-style check.
+// The RBAC authz server translates Group/Resource/Verb through the mapper
+// to resolve the underlying RBAC action.
+type accessControlCheck struct {
+	action   string // legacy RBAC action name returned to callers
+	group    string
+	resource string
+	verb     string
+	name     string // user UID of the resource being checked
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg) *SearchHandler {
+var userAccessControlChecks = []accessControlCheck{
+	{action: "org.users:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbList},
+	{action: "org.users:add", group: iamv0.GROUP, resource: "users", verb: utils.VerbCreate},
+	{action: "org.users:remove", group: iamv0.GROUP, resource: "users", verb: utils.VerbDelete},
+	{action: "org.users:write", group: iamv0.GROUP, resource: "users", verb: utils.VerbUpdate},
+	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions},
+	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
+}
+
+type SearchHandler struct {
+	log          log.Logger
+	client       resourcepb.ResourceIndexClient
+	tracer       trace.Tracer
+	features     featuremgmt.FeatureToggles
+	cfg          *setting.Cfg
+	accessClient authlib.AccessClient
+}
+
+func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg, accessClient authlib.AccessClient) *SearchHandler {
 	return &SearchHandler{
-		client:   searchClient,
-		log:      log.New("grafana-apiserver.users.search"),
-		tracer:   tracer,
-		features: features,
-		cfg:      cfg,
+		client:       searchClient,
+		log:          log.New("grafana-apiserver.users.search"),
+		tracer:       tracer,
+		features:     features,
+		cfg:          cfg,
+		accessClient: accessClient,
 	}
 }
 
@@ -112,6 +138,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Example:     0,
 										Required:    false,
 										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "accesscontrol",
+										In:          "query",
+										Description: "when true, includes access control metadata in the response",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
 									},
 								},
 								{
@@ -317,7 +352,59 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		errhttp.Write(ctx, err, w)
 		return
 	}
+
+	if queryParams.Get("accesscontrol") == "true" && s.accessClient != nil {
+		if err := s.stampAccessControl(ctx, requester, result.Hits); err != nil {
+			span.RecordError(err)
+			s.log.Warn("failed to get access control metadata", "error", err)
+		}
+	}
+
 	s.write(w, result)
+}
+
+func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identity.Requester, hits []iamv0.GetSearchUsersUserHit) error {
+	namespace := requester.GetNamespace()
+
+	items := func(yield func(accessControlCheck) bool) {
+		for _, hit := range hits {
+			for _, c := range userAccessControlChecks {
+				c.name = hit.Name
+				if !yield(c) {
+					return
+				}
+			}
+		}
+	}
+
+	extractFn := func(c accessControlCheck) authz.BatchCheckItem {
+		return authz.BatchCheckItem{
+			Verb:      c.verb,
+			Group:     c.group,
+			Resource:  c.resource,
+			Namespace: namespace,
+			Name:      c.name,
+			// Folder is omitted: users are not folder-scoped resources.
+			// TODO: set FreshnessTimestamp once we decide whether cached AC is acceptable here.
+		}
+	}
+
+	acMap := make(map[string]map[string]bool, len(hits))
+	for c, err := range authz.FilterAuthorized(ctx, s.accessClient, items, extractFn, authz.WithTracer(s.tracer)) {
+		if err != nil {
+			return fmt.Errorf("access control check failed: %w", err)
+		}
+		if acMap[c.name] == nil {
+			acMap[c.name] = make(map[string]bool, len(userAccessControlChecks))
+		}
+		acMap[c.name][c.action] = true
+	}
+
+	for i := range hits {
+		hits[i].AccessControl = acMap[hits[i].Name]
+	}
+
+	return nil
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {

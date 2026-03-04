@@ -51,12 +51,21 @@ async function initPanelPluginMetas(): Promise<void> {
   panelsByAliasIDs = resolveAliasIDs(panels);
 }
 
+function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {
+  return panels.filter((p) => p.hideFromList === false);
+}
+
 export async function getPanelPluginMetas(): Promise<PanelPluginMeta[]> {
   if (!initialized()) {
     await initPanelPluginMetas();
   }
 
   return Object.values(structuredClone(panels));
+}
+
+export async function getListedPanelPluginMetas(): Promise<PanelPluginMeta[]> {
+  const panels = await getPanelPluginMetas();
+  return getListedPanels(panels).sort((a, b) => a.sort - b.sort);
 }
 
 export async function getPanelPluginMetasMap(): Promise<PanelPluginMetas> {
@@ -112,7 +121,7 @@ export async function getPanelPluginVersion(pluginId: string): Promise<string | 
  */
 export async function getListedPanelPluginIds(): Promise<string[]> {
   const panels = await getPanelPluginMetas();
-  return panels.filter((p) => p.hideFromList === false).map((p) => p.id);
+  return getListedPanels(panels).map((p) => p.id);
 }
 
 export function setPanelPluginMetas(override: PanelPluginMetas): void {

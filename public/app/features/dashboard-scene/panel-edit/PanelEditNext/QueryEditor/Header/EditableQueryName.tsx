@@ -65,7 +65,15 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
     setValidationError(error);
   };
 
-  const onEditQueryBlur = (event: React.SyntheticEvent<HTMLInputElement>) => {
+  const onEditQueryBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    // Switching cards should cancel in-progress rename edits.
+    if (isSidebarCardElement(event.relatedTarget)) {
+      setIsEditing(false);
+      setValidationError(null);
+      return;
+    }
+
+    // Any other blur should finish the edit flow (validate + optional rename).
     onEndEditName(event.currentTarget.value);
   };
 
@@ -129,6 +137,10 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
       <Icon name="pen" className={styles.queryEditIcon} data-edit-icon size="sm" />
     </button>
   );
+}
+
+function isSidebarCardElement(target: EventTarget | null) {
+  return target instanceof HTMLElement && target.closest('[data-query-sidebar-card]') !== null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

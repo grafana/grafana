@@ -267,6 +267,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
       deleted: this.state.deleted,
+      createdBy: !!this.state.createdBy,
     };
 
     reportSearchQueryInteraction(this.state.eventTrackingNamespace, trackingInfo);
@@ -319,6 +320,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
       deleted: this.state.deleted,
+      createdBy: !!this.state.createdBy,
     });
   };
 
@@ -334,6 +336,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
       deleted: this.state.deleted,
+      createdBy: !!this.state.createdBy,
     });
   };
 }

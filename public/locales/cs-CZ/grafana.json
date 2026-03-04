@@ -912,7 +912,7 @@
       "title-failed-to-fetch-contact-points": "Nepodařilo se načíst kontaktní body"
     },
     "contact-points": {
-      "create": "Vytvořit kontaktní bod",
+      "create": "",
       "custom-template-value": "Hodnota vlastní šablony",
       "delete-reasons": {
         "heading": "Kontaktní bod nelze odstranit z následujících důvodů:",
@@ -2147,7 +2147,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Přidat časový interval"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2191,6 +2191,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2198,20 +2199,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Hledat podle kontaktního bodu",
@@ -2274,7 +2269,7 @@
       "title-failed-to-fetch-notification-templates": "Nepodařilo se načíst šablony oznámení"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Přidat skupinu šablon oznámení",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Vytvořte šablony oznámení pro přizpůsobení oznámení."
     },
     "notifications-list": {
@@ -2301,6 +2296,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2324,21 +2320,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Přidejte štítky, které vám pomohou lépe spravovat pravidla nahrávání.",
@@ -3300,6 +3290,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Formulář šablony",
+      "body-legacy": "",
       "label-examples-documentation": "Příklady dokumentace",
       "label-template-group": "Skupina šablony",
       "label-template-group-name": "Název skupiny šablon",
@@ -3308,6 +3299,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Pojmenujte skupinu šablony",
       "title-error-saving-template": "Chyba při ukládání šablony",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Předloha pro tvorbu šablon"
     },
     "template-preview": {
@@ -3348,6 +3340,8 @@
       "help": {
         "intro": "Šablony oznámení používají k vytváření oznámení jazyk šablon Go.\n\nV Grafaně může skupina šablon definovat více šablon oznámení pomocí {{ define \"<NAME>\" }}.\nTyto šablony lze poté použít v kontaktních bodech a v rámci jiných šablon oznámení použitím výzvy {{ template \"<NAME>\" }}.\nPodrobné informace o šablonách oznámení najdete v naší dokumentaci."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Nesprávně nakonfigurováno",
       "misconfigured-warning": "Tato šablona je nesprávně nakonfigurována.",
       "misconfigured-warning-details": "Šablony musí být definovány v oddílech <2></2> a <5></5> konfigurace správce výstrah."
@@ -3386,7 +3380,7 @@
       "stop-alerting-when": "Zastavit upozorňování (nebo čekající stav), když"
     },
     "time-interval": {
-      "add-time-interval": "Přidat časový interval",
+      "add-time-interval": "",
       "save": "Uložit časový interval",
       "saving": "Ukládání časového intervalu"
     },
@@ -3458,7 +3452,14 @@
         "title": "Pravidlo nebylo nalezeno"
       },
       "rules-with-firing-instances": "Pravidla výstrah s aktivními instancemi",
-      "rules-with-pending-instances": "Pravidla výstrah s čekajícími instancemi"
+      "rules-with-pending-instances": "Pravidla výstrah s čekajícími instancemi",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Přidat výraz"
@@ -4228,6 +4229,15 @@
       "clear": "Vymazat vyhledávání a filtry",
       "text": "Nebyly nalezeny žádné výsledky pro váš dotaz"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Vymazat historii",
       "error": "Nedávno zobrazené nástěnky se nepodařilo načíst.",
@@ -4905,6 +4915,10 @@
       "view-json-diff": "Zobrazit JSON diff pro zobrazení všech změn"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Přidat nový",
     "alert": {
@@ -5106,7 +5120,7 @@
     "canvas-actions": {
       "add-panel": "Přidat panel",
       "disabled-child-contains-tabs": "Nelze změnit na karty, protože řádek již karty obsahuje",
-      "disabled-nested-grouping": "Seskupení je omezeno na 2 úrovně",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Karty nelze vnořit do jiných karet",
       "group-into-row": "Seskupit do řádku",
       "group-into-tab": "Seskupit do záložky",
@@ -5734,10 +5748,7 @@
       "empty-state-message": "Spusťte dotaz a vizualizujte jej zde nebo přejděte na všechny vizualizace a přidejte další typy panelů",
       "menu-open-panel-editor": "Konfigurovat",
       "menu-use-library-panel": "Použít panel knihovny",
-      "missing-config": "Chybějící konfigurace panelu",
-      "suggestions": {
-        "empty-state-message": "Spusťte dotaz a začněte zobrazovat navrhované vizualizace"
-      }
+      "missing-config": "Chybějící konfigurace panelu"
     },
     "new-panel-title": "Nový panel",
     "on-create-new-row": {
@@ -6650,6 +6661,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Nástěnku se nepodařilo odstranit",
       "cancel-action": "Zrušit",
@@ -6978,11 +6995,11 @@
       "static-options-legend": "Statické možnosti"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Pokročilé možnosti",
         "classic": "Klasický",
         "json": "JSON",
-        "v1-resource": "Zdroj V1",
         "v2-resource": "Zdroj V2",
         "yaml": "YAML"
       },
@@ -7864,7 +7881,10 @@
     "pro-tip": "Pro tip: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Nedaří se nám najít {{lowerCaseEntity}}. Zkuste se vrátit <4>domů</4> nebo vyhledejte pomoc na <7>komunitním webu.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -11070,7 +11090,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nebyly nalezeny žádné možnosti"
@@ -12021,8 +12043,6 @@
       "tooltip-delete": "Odstranit"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Některé návrhy se nepodařilo načíst"
       },
@@ -12032,6 +12052,10 @@
         "title": "Chyba",
         "try-again-button": "Zkusit znovu"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Neznámý typ vizualizace"
     },
     "viz-type-picker": {
@@ -12475,6 +12499,11 @@
       "text-loading-teams": "Načítání týmů…"
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné)",
@@ -12750,6 +12779,15 @@
       "label-read-only": "Jen pro čtení",
       "label-sync-interval": "Interval synchronizace (sekundy)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
       "partial-managed": "{{managedCount}}/{{resourceCount}} zdrojů je spravováno synchronizací Git.",
@@ -12887,6 +12925,14 @@
       "show-less": "zobrazit méně",
       "show-more": "zobrazit více",
       "truncated": "Zpráva byla zkrácena"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "repo-message": "",
+      "repo-title": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13395,6 +13441,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13422,7 +13469,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13432,9 +13480,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13478,17 +13527,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Vybrat kartu {{id}}",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
       "transformations": "Transformace",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_few": "",
       "alerts_many": "",
@@ -13496,7 +13542,11 @@
       "footer-items_one": "",
       "footer-items_few": "",
       "footer-items_many": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_few": "",
+      "footer-items-alert_many": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13697,6 +13747,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Zahrnout panely",
       "remove-datasource-filter": "Zdroj dat: {{datasource}}",
       "sort-placeholder": "Třídit",
@@ -14452,6 +14503,11 @@
           "settings": "Nastavení"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Synchronizace externí skupiny"
@@ -14508,6 +14564,19 @@
       "loading-teams": "Načítání týmů…",
       "new-team": "Nový tým",
       "placeholder-search-teams": "Hledat týmy"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Toto je volitelné a používá se především k nastavení avatara profilu týmu (prostřednictvím služby Gravatar)",

@@ -16,7 +16,7 @@ export const DOCS_URL_ANNOTATIONS = `${DOCS_BASE_URL}/alerting/fundamentals/aler
 export const DOCS_URL_NOTIFICATIONS = `${DOCS_BASE_URL}/alerting/fundamentals/notifications/`;
 export const DOCS_URL_NOTIFICATION_POLICIES = `${DOCS_BASE_URL}/alerting/fundamentals/notifications/notification-policies/`;
 export const DOCS_URL_GROUP_ALERT_NOTIFICATIONS = `${DOCS_BASE_URL}/alerting/fundamentals/notifications/group-alert-notifications/`;
-export const DOCS_URL_INHIBITION_RULES = `${DOCS_BASE_URL}/alerting/configure-notifications/create-silence/#inhibition-rules`;
+export const DOCS_URL_INHIBITION_RULES = `${DOCS_BASE_URL}/alerting/configure-notifications/inhibition-rules/`;
 
 // Templates
 export const DOCS_URL_TEMPLATE_NOTIFICATIONS = `${DOCS_BASE_URL}/alerting/manage-notifications/template-notifications/`;
