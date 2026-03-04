@@ -232,12 +232,10 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			t.Run(state.tc.Name(), func(t *testing.T) {
 				for _, gvr := range state.tc.Resources() {
 					resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
-					// Only verify resources that are expected to be migrated, either:
-					// 1. In MigratedUnifiedResources (enabled by default), OR
-					// 2. In AutoMigratedUnifiedResources (auto-migrated because count is below threshold)
-					// Resources not in either map won't have mode 5 enforced, so the K8s API
+					// Only verify resources that are expected to be migrated by default.
+					// Resources outside this map won't have mode 5 enforced, so the K8s API
 					// may still serve them from legacy storage, making verification unreliable.
-					if !setting.MigratedUnifiedResources[resourceKey] && !setting.AutoMigratedUnifiedResources[resourceKey] {
+					if !setting.MigratedUnifiedResources[resourceKey] {
 						t.Skipf("Resource %s is not migrated by default, skipping verification", resourceKey)
 						return
 					}

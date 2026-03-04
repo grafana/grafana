@@ -40,8 +40,9 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
 }
 
 export const PlotLegend = memo(
-  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
+  ({ data, config, placement, calcs, displayMode, limit, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
+
     const legendItems = config
       .getSeries()
       .map<VizLegendItem | undefined>((s) => {
@@ -85,6 +86,7 @@ export const PlotLegend = memo(
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
           isSortable={true}
+          limit={limit}
         />
       </VizLayout.Legend>
     );
