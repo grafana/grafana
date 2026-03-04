@@ -1,21 +1,58 @@
-import { TypedVariableModel } from '@grafana/data';
+import { TypedVariableModel, VariableModel } from '@grafana/data';
 import { SceneObject, SceneVariableSet, sceneGraph } from '@grafana/scenes';
 
+import { DashboardScene } from '../scene/DashboardScene';
 import { sceneVariablesSetToVariables } from '../serialization/sceneVariablesSetToVariables';
 
 export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariableModel[] {
+  // When a panel is being edited, scope variables to that panel's ancestry.
+  // This ensures the query editor autocomplete only shows the panel's own
+  // section variables + dashboard globals, not variables from other sections.
+  if (sceneObject instanceof DashboardScene && sceneObject.state.editPanel) {
+    const panel = sceneObject.state.editPanel.state.panelRef.resolve();
+    // @ts-expect-error
+    return collectAncestorVariables(panel);
+  }
+
+  // If called with a non-root scene object, walk up its ancestry
+  if (!(sceneObject instanceof DashboardScene)) {
+    // @ts-expect-error
+    return collectAncestorVariables(sceneObject);
+  }
+
+  // Default: dashboard vars + all section vars (for dashboard view mode)
+  return collectAllVariables(sceneObject);
+}
+
+function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
+  const allModels: VariableModel[] = [];
+  const seenNames = new Set<string>();
+  const keepQueryOptions = true;
+
+  let current: SceneObject | undefined = sceneObject;
+  while (current) {
+    if (current.state.$variables instanceof SceneVariableSet) {
+      const models = sceneVariablesSetToVariables(current.state.$variables, keepQueryOptions);
+      for (const model of models) {
+        if (!seenNames.has(model.name)) {
+          allModels.push(model);
+          seenNames.add(model.name);
+        }
+      }
+    }
+    current = current.parent;
+  }
+
+  return allModels;
+}
+
+function collectAllVariables(sceneObject: SceneObject): TypedVariableModel[] {
   const set = sceneGraph.getVariables(sceneObject);
   const keepQueryOptions = true;
 
-  // `sceneVariablesSetToVariables` is also used when transforming the scene to a save model.
-  // In those cases, query options will be stripped out.
-  // However, when `getVariablesCompatibility` is called from `templateSrv`, it is used to get all variables in the scene.
-  // Therefore, options should be kept.
   const legacyModels = sceneVariablesSetToVariables(set, keepQueryOptions);
   const dashboardNames = new Set(legacyModels.map((v) => v.name));
 
-  // Collect section-level variables (from rows/tabs) so they appear in query editor autocomplete.
-  // Walk the scene tree to find all SceneVariableSets beyond the dashboard-level one.
   const sectionSets: SceneVariableSet[] = [];
   collectChildVariableSets(sceneObject, sectionSets);
 
