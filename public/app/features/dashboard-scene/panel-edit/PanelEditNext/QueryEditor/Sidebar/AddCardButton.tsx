@@ -35,7 +35,8 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
   const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
   const { addQuery } = useActionsContext();
-  const { setSelectedQuery, setPendingExpression, setPendingTransformation } = useQueryEditorUIContext();
+  const { setSelectedQuery, setPendingExpression, setPendingTransformation, setPendingSavedQuery } =
+    useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -75,12 +76,13 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
           <Menu.Item
             label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
             icon="book-open"
-            onClick={() =>
+            onClick={() => {
+              setPendingSavedQuery({ insertAfter: afterId ?? '' });
               openDrawer({
                 onSelectQuery: (query) => addAndSelectQuery(query),
                 options: { context: CoreApp.PanelEditor },
-              })
-            }
+              });
+            }}
           />
         )}
         <Menu.Item
@@ -93,7 +95,16 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
         />
       </Menu>
     ),
-    [addAndSelectQuery, canReadQueries, openDrawer, queryLibraryEnabled, setPendingExpression, afterId, onAdd]
+    [
+      queryLibraryEnabled,
+      canReadQueries,
+      addAndSelectQuery,
+      setPendingSavedQuery,
+      afterId,
+      openDrawer,
+      setPendingExpression,
+      onAdd,
+    ]
   );
 
   const handleTransformationClick = useCallback(() => {
