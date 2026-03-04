@@ -185,9 +185,13 @@ export const mockIRMAnnotation: DataFrame = {
       name: 'id',
       config: {},
       type: FieldType.number,
-      // @todo we probably want a better way of defining this, but I've added test coverage and we can come back to this later
-      // id of 0 means the annotation is not editable or deletable
       values: [0, 4665, 4683],
+    },
+    {
+      name: 'dashboardUID',
+      config: {},
+      type: FieldType.string,
+      values: ['abc-123', 'def-456', 'jkl-789'],
     },
     {
       name: 'source',
@@ -318,9 +322,13 @@ export const mockIRMAnnotationRegion: DataFrame = {
       name: 'id',
       config: {},
       type: FieldType.number,
-      // @todo we probably want a better way of defining this, but I've added test coverage and we can come back to this later
-      // id of 0 means the annotation is not editable or deletable
       values: [0, 4665, 4683],
+    },
+    {
+      name: 'dashboardUID',
+      config: {},
+      type: FieldType.number,
+      values: ['abc-123', 'def-456', 'jkl-789'],
     },
     {
       name: 'source',
@@ -455,6 +463,12 @@ export const mockIRMClusteringAnnotation: DataFrame = {
       config: {},
       type: FieldType.number,
       values: [4655, 4656, 4665, 4683],
+    },
+    {
+      name: 'dashboardUID',
+      config: {},
+      type: FieldType.string,
+      values: ['abc-123', 'def-456', 'jkl-789', 'ccc-ddd'],
     },
     {
       name: 'source',

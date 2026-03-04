@@ -4,18 +4,19 @@ import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
 
+import { AnnotationVals } from '../AnnotationsPlugin2';
+
 import { AnnotationTooltipBody } from './AnnotationTooltipBody';
 import { AnnotationTooltipHeader } from './AnnotationTooltipHeader';
 import { getAnnotationTooltip } from './getAnnotationTooltip';
 
 export interface AnnotationTooltipProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  annoVals: Record<string, any[]>;
+  annoVals: AnnotationVals;
   annoIdx: number;
   timeZone: string;
   isPinned: boolean;
   onClose: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   links?: LinkModel[];
   actions?: ActionModel[];
 }

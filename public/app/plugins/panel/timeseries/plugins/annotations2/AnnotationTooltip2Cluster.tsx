@@ -33,10 +33,10 @@ export const AnnotationTooltip2Cluster = ({
 
   let items: React.ReactNode[] = [];
 
-  let clusterIdx = annoVals.clusterIdx[annoIdx];
+  let clusterIdx = annoVals.clusterIdx?.[annoIdx];
 
   for (let i = 0; i < annoVals.time.length; i++) {
-    if (annoVals.clusterIdx[i] === clusterIdx && i !== annoIdx) {
+    if (annoVals.clusterIdx?.[i] === clusterIdx && i !== annoIdx) {
       const { onDelete, canEdit, canDelete, time, alertState, avatarImgSrc } = getAnnotationTooltip(
         annoVals,
         i,
@@ -65,9 +65,7 @@ export const AnnotationTooltip2Cluster = ({
             canEdit={canEdit}
             canDelete={canDelete}
             isPinned={false}
-            onEdit={() => {
-              onEdit(annotationId);
-            }}
+            onEdit={annotationId !== undefined ? () => onEdit(annotationId) : undefined}
             onDelete={onDelete}
             onRemove={(e) => {
               // Don't trigger onClick

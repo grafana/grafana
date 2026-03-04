@@ -11,14 +11,15 @@ import { TimeZone } from '@grafana/schema';
 import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
 import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
 
+import { AnnotationVals } from '../AnnotationsPlugin2';
+
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
 import { AnnotationTooltip2Cluster } from './AnnotationTooltip2Cluster';
 
 interface AnnoBoxProps {
   frame: DataFrame;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  annoVals: Record<string, any[]>;
+  annoVals: AnnotationVals;
   annoIdx: number;
   style: React.CSSProperties | null;
   className: string;
@@ -55,7 +56,7 @@ export const AnnotationMarker2 = ({
   const [isHovering, setIsHovering] = useState(false);
   // @todo find what is setting null vs undefined
   const isClustering =
-    annoVals.isRegion[annoIdx] &&
+    annoVals.isRegion?.[annoIdx] &&
     annoVals.clusterIdx?.[annoIdx] !== null &&
     annoVals.clusterIdx?.[annoIdx] !== undefined &&
     annoVals.clusterIdx?.[annoIdx] > -1;
@@ -89,10 +90,10 @@ export const AnnotationMarker2 = ({
   const showTooltip = (isPinned && !isEditing) || (showOnHover && isHovering && !isEditing);
 
   // We cannot use the array index for editing annotations since clustered and wip annotations will get sorted by date, so we need to grab them by the 'id' field which is populated by the annotations API
-  const annoId: number = annoVals?.id?.[annoIdx];
+  const annoId = annoVals?.id?.[annoIdx];
   const _editIdx = annoVals?.id?.findIndex((annoId) => annoId === editAnnotationId);
   // wip will not have an id to set, so we need to pass in the raw idx of this annotation, as long as wip is not already clustered, this should continue to work
-  const editIdx = _editIdx > -1 ? _editIdx : annoIdx;
+  const editIdx = _editIdx !== undefined && _editIdx > -1 ? _editIdx : annoIdx;
 
   const contents =
     !isEditing && showTooltip && isClustering ? (
@@ -113,7 +114,7 @@ export const AnnotationMarker2 = ({
         timeZone={timeZone}
         onClose={onClose}
         isPinned={isPinned}
-        onEdit={() => setEditAnnotationId(annoId)}
+        onEdit={annoId !== undefined ? () => setEditAnnotationId(annoId) : undefined}
         links={links}
         actions={actions}
       />

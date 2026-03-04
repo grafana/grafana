@@ -49,10 +49,41 @@ enum ClusteringMode {
 
 const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8String();
 
-function getVals(frame: DataFrame) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let vals: Record<string, any[]> = {};
+export type AnnotationVals = {
+  id?: number[];
+  dashboardUID?: string[];
+  time: number[];
+  timeEnd?: number[];
+  text?: string[];
+  title?: string[];
+  isRegion?: boolean[];
+  color?: string[];
+  alertId?: number[];
+  newState?: string[];
+  /** Alert payload per row (e.g. evalMatches, error) for getAlertAnnotationText */
+  data?: unknown[];
+  login?: string[];
+  avatarUrl?: string[];
+  tags?: string[][];
+  clusterIdx?: Array<number | null>;
+};
+
+export type XYAnnoVals = {
+  color: string[];
+  xMin: number[];
+  xMax: number[];
+  yMax: number[];
+  yMin: number[];
+  fillOpacity: number[];
+  lineWidth: number[];
+  lineStyle: string[];
+};
+
+function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  let vals = {} as T;
   frame.fields.forEach((f) => {
+    // @ts-ignore
     vals[f.name] = f.values;
   });
 
@@ -171,7 +202,7 @@ export const AnnotationsPlugin2 = ({
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
-        const vals = getVals(frame);
+        const vals = getVals<AnnotationVals>(frame);
 
         // render line
         if (shouldRenderLine) {
@@ -212,7 +243,7 @@ export const AnnotationsPlugin2 = ({
 
       // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
       xyAnnos.forEach((frame) => {
-        let vals = getVals(frame);
+        let vals = getVals<XYAnnoVals>(frame);
 
         let xKey = config.scales[0].props.scaleKey;
         let yKey = config.scales[1].props.scaleKey;
@@ -220,10 +251,10 @@ export const AnnotationsPlugin2 = ({
         for (let i = 0; i < frame.length; i++) {
           let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-          let x0 = u.valToPos(vals.xMin[i], xKey, true);
-          let x1 = u.valToPos(vals.xMax[i], xKey, true);
-          let y0 = u.valToPos(vals.yMax[i], yKey, true);
-          let y1 = u.valToPos(vals.yMin[i], yKey, true);
+          let x0 = u.valToPos(vals.xMin?.[i]!, xKey, true);
+          let x1 = u.valToPos(vals.xMax?.[i]!, xKey, true);
+          let y0 = u.valToPos(vals.yMax?.[i]!, yKey, true);
+          let y1 = u.valToPos(vals.yMin?.[i]!, yKey, true);
 
           ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
           ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
@@ -268,7 +299,7 @@ export const AnnotationsPlugin2 = ({
 
   if (plot) {
     const markers = xAnnoRef.current.flatMap((frame, frameIdx) => {
-      const vals = getVals(frame);
+      const vals = getVals<AnnotationVals>(frame);
       const markers: React.ReactNode[] = [];
 
       // Top offset for multi-lane annotations
@@ -284,8 +315,8 @@ export const AnnotationsPlugin2 = ({
         let className = '';
         let isVisible = true;
 
-        if (vals.isRegion?.[i]) {
-          let right = Math.round(plot.valToPos(vals.timeEnd?.[i], 'x')) || 0; // handles -0
+        if (vals.isRegion?.[i] && vals.timeEnd?.[i] !== undefined) {
+          let right = Math.round(plot.valToPos(vals.timeEnd[i], 'x')) || 0; // handles -0
 
           isVisible = left < plot.rect.width && right > 0;
 
@@ -373,8 +404,11 @@ const getStyles = () => ({
   }),
 });
 
-const isClusterRegion = (vals: Record<string, Array<number | undefined>>, i: number) => {
+const isClusterRegion = (vals: AnnotationVals, i: number) => {
   return (
-    !vals.isRegion[i] && vals.clusterIdx?.[i] !== undefined && vals.clusterIdx?.[i] !== null && vals.clusterIdx[i] >= 0
+    !vals.isRegion?.[i] &&
+    vals.clusterIdx?.[i] !== undefined &&
+    vals.clusterIdx?.[i] !== null &&
+    vals.clusterIdx?.[i] >= 0
   );
 };
