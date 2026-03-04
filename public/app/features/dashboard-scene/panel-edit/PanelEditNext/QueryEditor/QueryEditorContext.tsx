@@ -20,6 +20,10 @@ export interface PendingExpression {
   insertAfter: string;
 }
 
+export interface PendingSavedQuery {
+  insertAfter: string;
+}
+
 export interface PendingTransformation {
   insertAfter?: string;
   showPicker?: boolean;
@@ -84,6 +88,8 @@ export interface QueryEditorUIState {
   pendingExpression: PendingExpression | null;
   setPendingExpression: (pending: PendingExpression | null) => void;
   finalizePendingExpression: (type: ExpressionQueryType) => void;
+  pendingSavedQuery: PendingSavedQuery | null;
+  setPendingSavedQuery: (pending: PendingSavedQuery | null) => void;
   pendingTransformation: PendingTransformation | null;
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;

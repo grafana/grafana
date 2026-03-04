@@ -2123,7 +2123,9 @@
       "select-namespace": "Vyberte jmenný prostor"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Pravidla výstrah",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Nedávno odstraněné",
@@ -2349,8 +2351,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Podívejte se na aktuální výstrahy a historická data, abyste prozkoumali aktuální nebo minulé problémy.",
-        "title": "Výstrahy"
+        "subtitle": "Podívejte se na aktuální výstrahy a historická data, abyste prozkoumali aktuální nebo minulé problémy."
       }
     },
     "panel-alert-tab-content": {
@@ -3290,6 +3291,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Formulář šablony",
+      "body-legacy": "",
       "label-examples-documentation": "Příklady dokumentace",
       "label-template-group": "Skupina šablony",
       "label-template-group-name": "Název skupiny šablon",
@@ -3298,6 +3300,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Pojmenujte skupinu šablony",
       "title-error-saving-template": "Chyba při ukládání šablony",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Předloha pro tvorbu šablon"
     },
     "template-preview": {
@@ -3338,6 +3341,8 @@
       "help": {
         "intro": "Šablony oznámení používají k vytváření oznámení jazyk šablon Go.\n\nV Grafaně může skupina šablon definovat více šablon oznámení pomocí {{ define \"<NAME>\" }}.\nTyto šablony lze poté použít v kontaktních bodech a v rámci jiných šablon oznámení použitím výzvy {{ template \"<NAME>\" }}.\nPodrobné informace o šablonách oznámení najdete v naší dokumentaci."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Nesprávně nakonfigurováno",
       "misconfigured-warning": "Tato šablona je nesprávně nakonfigurována.",
       "misconfigured-warning-details": "Šablony musí být definovány v oddílech <2></2> a <5></5> konfigurace správce výstrah."
@@ -3448,7 +3453,14 @@
         "title": "Pravidlo nebylo nalezeno"
       },
       "rules-with-firing-instances": "Pravidla výstrah s aktivními instancemi",
-      "rules-with-pending-instances": "Pravidla výstrah s čekajícími instancemi"
+      "rules-with-pending-instances": "Pravidla výstrah s čekajícími instancemi",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Přidat výraz"
@@ -4221,7 +4233,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -6915,10 +6926,10 @@
       "title-delete-all-transformations": "Odstranit všechny transformace?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Přepnout zobrazení tabulky",
-      "table-view-label-table-view": "Zobrazení tabulky"
+      "table-view-label-table-view": "Zobrazení tabulky",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6963,6 +6974,16 @@
     },
     "query-editor": {
       "query": "Dotaz"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Pojmenované skupiny zachycení lze použít k oddělení zobrazovaného textu a hodnoty (<1>viz příklady</1>).",
@@ -7089,6 +7110,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Nelze vytvořit výstrahy z tohoto panelu, protože nebyl nalezen žádný dotaz na zdroj dat, který by spustil upozorňování.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Nové pravidlo výstrahy",
       "title-no-alerting-capable-query-found": "Nebyl nalezen žádný dotaz, který by spustil upozorňování"
     },
@@ -7871,7 +7893,10 @@
     "pro-tip": "Pro tip: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Nedaří se nám najít {{lowerCaseEntity}}. Zkuste se vrátit <4>domů</4> nebo vyhledejte pomoc na <7>komunitním webu.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -9531,11 +9556,13 @@
       },
       "legend": {
         "category": "Legenda",
+        "description-limit": "",
         "description-values": "Vyberte hodnoty nebo výpočty, které chcete zobrazit v legendě",
         "mode-options": {
           "label-list": "Seznam",
           "label-table": "Tabulka"
         },
+        "name-limit": "",
         "name-mode": "Režim",
         "name-placement": "Umístění",
         "name-values": "Hodnoty",
@@ -10470,6 +10497,11 @@
     "subtitle": "Integrace LDAP v Grafaně umožňuje uživatelům Grafany přihlásit se pomocí svých přihlašovacích údajů LDAP. Další informace najdete v naší <2><1>dokumentaci</1></2>.",
     "title": "Základní nastavení"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Panel knihovny s tímto názvem už existuje",
@@ -11356,9 +11388,17 @@
       "subtitle": "Zjistěte víc o problémech v systému, jakmile k nim dojde",
       "title": "Výstrahy"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Spravovat konfigurace správce výstrah a povolit příjem výstrah spravovaných Grafanou",
       "title": "Nastavení"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Určete způsob přesměrování výstrah do kontaktních bodů",
@@ -12030,8 +12070,6 @@
       "tooltip-delete": "Odstranit"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Některé návrhy se nepodařilo načíst"
       },
@@ -12500,13 +12538,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Větev",
       "label-comment": "Komentář",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Cesta",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Poslední větev",
       "suffix-new-branch": "",
@@ -12626,6 +12669,8 @@
       "instance-fully-managed-tooltip": "Konfigurace je zakázána, protože tato instance je plně spravována"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12769,10 +12814,18 @@
       "label-sync-interval": "Interval synchronizace (sekundy)"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13520,6 +13573,7 @@
       "card-click": "Vybrat kartu {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
       "transformations": "Transformace",
@@ -14492,6 +14546,11 @@
           "settings": "Nastavení"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Synchronizace externí skupiny"
@@ -14548,6 +14607,19 @@
       "loading-teams": "Načítání týmů…",
       "new-team": "Nový tým",
       "placeholder-search-teams": "Hledat týmy"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Toto je volitelné a používá se především k nastavení avatara profilu týmu (prostřednictvím služby Gravatar)",
@@ -14779,6 +14851,12 @@
     "name-show-matches-only": "Zobrazit pouze shody",
     "traces-panel": {
       "no-data-found-in-response": "V odpovědi nebyla nalezena žádná data"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

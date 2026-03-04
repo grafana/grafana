@@ -1359,7 +1359,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new gauge visualization
-  * @default false
+  * @default true
   */
   newGauge?: boolean;
   /**
@@ -1482,6 +1482,11 @@ export interface FeatureToggles {
   * @default false
   */
   multiPropsVariables?: boolean;
+  /**
+  * Enables support for section level variables (rows and tabs)
+  * @default false
+  */
+  dashboardSectionVariables?: boolean;
   /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
