@@ -39,7 +39,7 @@ func (w *Worker) IsSupported(ctx context.Context, job provisioning.Job) bool {
 	return job.Spec.Action == provisioning.JobActionMove
 }
 
-func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	if job.Spec.Move == nil {
 		return errors.New("missing move settings")
 	}
@@ -47,7 +47,12 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	logger := logging.FromContext(ctx).With("options", job.Spec.Move)
 	ctx = logging.Context(ctx, logger)
 	ctx, span := tracing.Start(ctx, "provisioning.move.process")
-	defer span.End()
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
 	span.SetAttributes(
 		attribute.String("move.ref", opts.Ref),
 		attribute.String("move.target_path", opts.TargetPath),

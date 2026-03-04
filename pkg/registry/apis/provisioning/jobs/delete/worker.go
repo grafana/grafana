@@ -38,7 +38,7 @@ func (w *Worker) IsSupported(ctx context.Context, job provisioning.Job) bool {
 	return job.Spec.Action == provisioning.JobActionDelete
 }
 
-func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	if job.Spec.Delete == nil {
 		return errors.New("missing delete settings")
 	}
@@ -46,7 +46,12 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	logger := logging.FromContext(ctx).With("options", job.Spec.Delete)
 	ctx = logging.Context(ctx, logger)
 	ctx, span := tracing.Start(ctx, "provisioning.delete.process")
-	defer span.End()
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
 	span.SetAttributes(
 		attribute.String("delete.ref", job.Spec.Delete.Ref),
 		attribute.Int("delete.paths_count", len(job.Spec.Delete.Paths)),

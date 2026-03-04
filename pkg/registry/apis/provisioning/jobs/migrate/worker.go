@@ -39,7 +39,7 @@ func (w *MigrationWorker) IsSupported(ctx context.Context, job provisioning.Job)
 	return job.Spec.Action == provisioning.JobActionMigrate
 }
 
-func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	if !w.enabled {
 		return errors.New("migrate functionality is disabled by configuration")
 	}
@@ -52,7 +52,12 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	logger := logging.FromContext(ctx).With("options", options)
 	ctx = logging.Context(ctx, logger)
 	ctx, span := tracing.Start(ctx, "provisioning.migrate.process")
-	defer span.End()
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
 
 	progress.SetTotal(ctx, 10) // will show a progress bar
 	rw, ok := repo.(repository.ReaderWriter)

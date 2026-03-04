@@ -26,7 +26,7 @@ func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
 	return job.Spec.Action == provisioning.JobActionFixFolderMetadata
 }
 
-func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	options := job.Spec.FixFolderMetadata
 	if options == nil {
 		options = &provisioning.FixFolderMetadataJobOptions{}
@@ -35,7 +35,12 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	logger := logging.FromContext(ctx).With("options", options)
 	ctx = logging.Context(ctx, logger)
 	ctx, span := tracing.Start(ctx, "provisioning.fixfoldermetadata.process")
-	defer span.End()
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
 	span.SetAttributes(attribute.String("fixfoldermetadata.ref", options.Ref))
 
 	ref := options.Ref

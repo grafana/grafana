@@ -86,7 +86,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
 	progress jobs.JobProgressRecorder,
-) error {
+) (processErr error) {
 	cfg := repo.Config().Spec
 	opts := job.Spec.PullRequest
 	startTime := time.Now()
@@ -103,7 +103,12 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	logger := logging.FromContext(ctx).With("options", opts)
 	ctx = logging.Context(ctx, logger)
 	ctx, span := tracing.Start(ctx, "provisioning.pullrequest.process")
-	defer span.End()
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
 	span.SetAttributes(
 		attribute.Int("pr.number", opts.PR),
 		attribute.String("pr.ref", opts.Ref),
