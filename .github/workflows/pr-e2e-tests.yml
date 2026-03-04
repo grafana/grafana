@@ -25,7 +25,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.e2e }}
       cloud_plugins_changed: ${{ steps.detect-changes.outputs.e2e-cloud-plugins }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 2
@@ -44,7 +44,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -54,7 +54,7 @@ jobs:
           key: "e2e-build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'embed.go') }}"
           path: bin
 
-      - uses: actions/setup-go@v6.0.0
+      - uses: actions/setup-go@v6.3.0
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           go-version-file: 'go.mod'
@@ -64,7 +64,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: make build-go
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: grafana-backend
           path: bin/
@@ -79,7 +79,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -108,7 +108,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: yarn e2e:plugin:build
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: grafana-frontend
           path: |
@@ -119,7 +119,7 @@ jobs:
             !public/locales/
           retention-days: 1
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: grafana-test-plugins
           path: e2e-playwright/test-plugins/
@@ -142,7 +142,7 @@ jobs:
         if: github.event.pull_request.head.repo.fork == false
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -182,25 +182,25 @@ jobs:
         shardTotal: [8]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
       - name: Download backend artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: grafana-backend
           path: grafana-server/bin
       - name: Fix binary permissions
         run: chmod +x grafana-server/bin/grafana*
       - name: Download frontend artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: grafana-frontend
           path: grafana-server/public
       - name: Download test plugins
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: grafana-test-plugins
           path: grafana-server/data/plugins
@@ -262,14 +262,14 @@ jobs:
           GRAFANA_URL: http://localhost:3001
           CI: true
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: grafana-server-log-${{ matrix.shard }}
           path: grafana-server/grafana.log
           retention-days: 3
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: success() || failure()
         with:
           name: playwright-blob-${{ matrix.shard }}
@@ -292,7 +292,7 @@ jobs:
       - uses: grafana/shared-workflows/actions/login-to-gar@main
         if: github.event.pull_request.head.repo.fork == false
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -339,7 +339,7 @@ jobs:
 
       - name: Upload HTML report
         id: upload-html
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-html
           path: playwright-report
@@ -367,7 +367,7 @@ jobs:
           echo "  ./scripts/view-playwright-ci.sh $RUN_ID"
           echo ""
           echo "Alternatively, download the test report from $REPORT_URL"
-          echo "And view it locally with:"
+          echo "and view it locally with:"
           echo "  yarn playwright show-report <path-to-unzipped-report>"
           if [ "$FAILED" = "true" ]; then
             exit 1
@@ -388,7 +388,7 @@ jobs:
           repo_secrets: |
             GRAFANA_MISC_STATS_API_KEY=grafana-misc-stats:api_key
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Setup Node.js
