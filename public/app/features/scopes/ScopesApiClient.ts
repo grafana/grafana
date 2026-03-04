@@ -6,6 +6,10 @@ import { dispatch } from 'app/store/store';
 
 import { ScopeNavigation } from './dashboards/types';
 
+export interface NavigationFetchOptions {
+  depth?: number;
+}
+
 export class ScopesApiClient {
   /**
    * Checks if the data is a Kubernetes Status error response.
@@ -194,13 +198,17 @@ export class ScopesApiClient {
     }
   }
 
-  public fetchDashboards = async (scopeNames: string[]): Promise<ScopeDashboardBinding[]> => {
+  public fetchDashboards = async (
+    scopeNames: string[],
+    options?: NavigationFetchOptions
+  ): Promise<ScopeDashboardBinding[]> => {
     const subscription = dispatch(
       // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
       scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate(
         {
           name: '',
           scope: scopeNames,
+          depth: options?.depth,
         },
         { subscribe: false }
       )
@@ -230,13 +238,17 @@ export class ScopesApiClient {
     }
   };
 
-  public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
+  public fetchScopeNavigations = async (
+    scopeNames: string[],
+    options?: NavigationFetchOptions
+  ): Promise<ScopeNavigation[]> => {
     const subscription = dispatch(
       // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
       scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate(
         {
           name: '',
           scope: scopeNames,
+          depth: options?.depth,
         },
         { subscribe: false }
       )

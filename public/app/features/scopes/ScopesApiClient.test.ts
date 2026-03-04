@@ -623,6 +623,62 @@ describe('ScopesApiClient', () => {
       expect(Array.isArray(result)).toBe(true);
       consoleErrorSpy.mockRestore();
     });
+
+    it('should pass depth option to the endpoint', async () => {
+      const mockSubscription = createMockSubscription({ data: { items: [] } });
+      (scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate as jest.Mock).mockReturnValue(
+        mockSubscription
+      );
+
+      await apiClient.fetchScopeNavigations(['mimir'], { depth: 1 });
+
+      expect(scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate).toHaveBeenCalledWith(
+        expect.objectContaining({ scope: ['mimir'], depth: 1 }),
+        { subscribe: false }
+      );
+    });
+
+    it('should omit depth when options not provided', async () => {
+      const mockSubscription = createMockSubscription({ data: { items: [] } });
+      (scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate as jest.Mock).mockReturnValue(
+        mockSubscription
+      );
+
+      await apiClient.fetchScopeNavigations(['mimir']);
+
+      const callArgs = (scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate as jest.Mock).mock
+        .calls[0][0];
+      expect(callArgs.depth).toBeUndefined();
+    });
+  });
+
+  describe('fetchDashboards depth option', () => {
+    it('should pass depth option to the endpoint', async () => {
+      const mockSubscription = createMockSubscription({ data: { items: [] } });
+      (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mockReturnValue(
+        mockSubscription
+      );
+
+      await apiClient.fetchDashboards(['grafana'], { depth: 1 });
+
+      expect(scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate).toHaveBeenCalledWith(
+        expect.objectContaining({ scope: ['grafana'], depth: 1 }),
+        { subscribe: false }
+      );
+    });
+
+    it('should omit depth when options not provided', async () => {
+      const mockSubscription = createMockSubscription({ data: { items: [] } });
+      (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mockReturnValue(
+        mockSubscription
+      );
+
+      await apiClient.fetchDashboards(['grafana']);
+
+      const callArgs = (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mock
+        .calls[0][0];
+      expect(callArgs.depth).toBeUndefined();
+    });
   });
 
   describe('performance considerations', () => {

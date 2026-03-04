@@ -27,6 +27,9 @@ const injectedRtkApi = api
           url: `/find/scope_dashboard_bindings`,
           params: {
             scope: queryArg.scope,
+            // Added ahead of codegen — will be included in generated output
+            // when the backend OpenAPI spec is updated.
+            depth: queryArg.depth,
           },
         }),
         providesTags: ['FindScopeDashboardBindingsResults'],
@@ -39,6 +42,9 @@ const injectedRtkApi = api
           url: `/find/scope_navigations`,
           params: {
             scope: queryArg.scope,
+            // Added ahead of codegen — will be included in generated output
+            // when the backend OpenAPI spec is updated.
+            depth: queryArg.depth,
           },
         }),
         providesTags: ['FindScopeNavigationsResults'],
@@ -615,6 +621,8 @@ export type GetFindScopeDashboardBindingsResultsApiArg = {
   name: string;
   /** A scope name (id) to match against, this parameter may be repeated */
   scope?: string[];
+  /** Extra levels of sub-scope items to include. 0 or omitted = direct scope only. */
+  depth?: number;
 };
 export type GetFindScopeNavigationsResultsApiResponse = /** status 200 OK */ FindScopeNavigationsResults;
 export type GetFindScopeNavigationsResultsApiArg = {
@@ -622,6 +630,8 @@ export type GetFindScopeNavigationsResultsApiArg = {
   name: string;
   /** A scope name (id) to match against, this parameter may be repeated */
   scope?: string[];
+  /** Extra levels of sub-scope items to include. 0 or omitted = direct scope only. */
+  depth?: number;
 };
 export type GetFindScopeNodeChildrenResultsApiResponse = /** status 200 OK */ FindScopeNodeChildrenResults;
 export type GetFindScopeNodeChildrenResultsApiArg = {
