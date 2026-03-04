@@ -3,12 +3,16 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
@@ -247,6 +251,17 @@ func newTestRepoConfig(name string) *provisioning.Repository {
 	}
 }
 
+func newSyncEnabledConfig(name string) *provisioning.Repository {
+	return &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.LocalRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: true},
+		},
+	}
+}
+
 // TestEnsureFolderPathExist_UsesStableUID verifies that EnsureFolderPathExist uses
 // the stable UID from _folder.json instead of the hash-derived UID when the file exists.
 func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
@@ -276,64 +291,300 @@ func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
 	require.Equal(t, stableUID, parentID)
 }
 
-func TestCreateFolder_FolderMetadata_FlagDisabled(t *testing.T) {
-	ctx := context.Background()
+func TestCreateFolder(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T) (*DualReadWriter, DualWriteOptions)
+		wantErr     bool
+		errContains string
+		check       func(t *testing.T, result *provisioning.ResourceWrapper)
+	}{
+		{
+			name: "flag disabled: creates .keep file",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := newTestRepoConfig("test-repo")
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, access: accessMock}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.Equal(t, "newfolder/", result.Path)
+			},
+		},
+		{
+			name: "flag enabled: writes _folder.json",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := newTestRepoConfig("test-repo")
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				var capturedUID string
+				rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+					var res folders.Folder
+					if err := json.Unmarshal(b, &res); err != nil {
+						return false
+					}
+					capturedUID = res.Name
+					return res.APIVersion == "folder.grafana.app/v1beta1" &&
+						res.Kind == "Folder" &&
+						res.Name != "" &&
+						res.Spec.Title == "newfolder"
+				}), "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folderMetadataEnabled: true}
+				t.Cleanup(func() { assert.NotEmpty(t, capturedUID, "_folder.json should have a non-empty metadata.name") })
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.Equal(t, "newfolder/", result.Path)
+			},
+		},
+		{
+			name: "error: non-directory path",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(newTestRepoConfig("test-repo"))
+				dw := &DualReadWriter{repo: rw}
+				return dw, DualWriteOptions{Path: "not-a-folder"}
+			},
+			wantErr:     true,
+			errContains: "not a folder path",
+		},
+		{
+			name: "error: write not allowed",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.LocalRepositoryType,
+						Workflows: []provisioning.Workflow{}, // no WriteWorkflow
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				dw := &DualReadWriter{repo: rw}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr: true,
+		},
+		{
+			name: "error: auth failed",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(newTestRepoConfig("test-repo"))
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("unauthorized"))
+				dw := &DualReadWriter{repo: rw, access: accessMock}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr: true,
+		},
+		{
+			name: "error: flag disabled, repo.Create fails",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(newTestRepoConfig("test-repo"))
+				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(fmt.Errorf("git error"))
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, access: accessMock}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr:     true,
+			errContains: "failed to create folder",
+		},
+		{
+			name: "error: flag enabled, WriteFolderMetadata fails",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(newTestRepoConfig("test-repo"))
+				rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.Anything, "").Return(fmt.Errorf("repo error"))
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folderMetadataEnabled: true}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr: true,
+		},
+		{
+			name: "sync enabled, flag disabled: GetFolder not found → no Upsert",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := newSyncEnabledConfig("test-repo")
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	config := newTestRepoConfig("test-repo")
-	rw := repository.NewMockReaderWriter(t)
-	rw.On("Config").Return(config)
-	// Flag disabled: expect Create called with dir path and nil data (legacy .keep behavior)
-	rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				tree := NewEmptyFolderTree()
+				folder := ParseFolder("newfolder/", "test-repo")
+				tree.Add(folder, "")
 
-	accessMock := auth.NewMockAccessChecker(t)
-	accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				notFound := apierrors.NewNotFound(schema.GroupResource{}, folder.ID)
+				mockClient := &MockDynamicResourceInterface{}
+				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
+					Return(nil, notFound)
+				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
-	dw := &DualReadWriter{
-		repo:   rw,
-		access: accessMock,
+				fm := NewFolderManager(rw, mockClient, tree, false)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folders: fm}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.Nil(t, result.Resource.Upsert.Object)
+			},
+		},
+		{
+			name: "sync enabled, flag disabled: GetFolder returns folder → Upsert populated",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := newSyncEnabledConfig("test-repo")
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+				tree := NewEmptyFolderTree()
+				folder := ParseFolder("newfolder/", "test-repo")
+				tree.Add(folder, "")
+
+				folderObj := &unstructured.Unstructured{Object: map[string]interface{}{"k": "v"}}
+				mockClient := &MockDynamicResourceInterface{}
+				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
+					Return(folderObj, nil)
+				t.Cleanup(func() { mockClient.AssertExpectations(t) })
+
+				fm := NewFolderManager(rw, mockClient, tree, false)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folders: fm}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.NotNil(t, result.Resource.Upsert.Object)
+			},
+		},
+		{
+			name: "sync enabled, flag disabled: EnsureFolderPathExist error",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := newSyncEnabledConfig("test-repo")
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+				// Empty tree so EnsureFolderPathExist has to walk and call EnsureFolderExists
+				mockClient := &MockDynamicResourceInterface{}
+				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
+					Return(nil, fmt.Errorf("server error"))
+				t.Cleanup(func() { mockClient.AssertExpectations(t) })
+
+				fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), false)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folders: fm}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr: true,
+		},
+		{
+			name: "sync enabled, flag enabled: full happy path → Upsert populated",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := newSyncEnabledConfig("test-repo")
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.Anything, "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+				notFound := apierrors.NewNotFound(schema.GroupResource{}, "uid")
+				folderObj := &unstructured.Unstructured{Object: map[string]interface{}{"foo": "bar"}}
+				mockClient := &MockDynamicResourceInterface{}
+				// EnsureFolderExists (CreateFolderWithUID): Get → NotFound, Create succeeds
+				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
+					Return(nil, notFound).Once()
+				mockClient.On("Create", mock.Anything, mock.Anything, metav1.CreateOptions{}, []string(nil)).
+					Return(&unstructured.Unstructured{Object: map[string]interface{}{}}, nil).Once()
+				// GetFolder: Get → folderObj
+				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
+					Return(folderObj, nil).Once()
+				t.Cleanup(func() { mockClient.AssertExpectations(t) })
+
+				fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), true)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folders: fm, folderMetadataEnabled: true}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.NotNil(t, result.Resource.Upsert.Object)
+			},
+		},
+		{
+			name: "sync enabled, flag enabled: CreateFolderWithUID error",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := newSyncEnabledConfig("test-repo")
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.Anything, "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+				mockClient := &MockDynamicResourceInterface{}
+				// EnsureFolderExists (CreateFolderWithUID): Get → non-NotFound error
+				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
+					Return(nil, fmt.Errorf("server error")).Once()
+				t.Cleanup(func() { mockClient.AssertExpectations(t) })
+
+				fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), true)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folders: fm, folderMetadataEnabled: true}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr: true,
+		},
+		{
+			name: "sync enabled, flag disabled: GetFolder non-NotFound error",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := newSyncEnabledConfig("test-repo")
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+				tree := NewEmptyFolderTree()
+				folder := ParseFolder("newfolder/", "test-repo")
+				tree.Add(folder, "")
+
+				mockClient := &MockDynamicResourceInterface{}
+				// GetFolder: non-NotFound error
+				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
+					Return(nil, fmt.Errorf("server error"))
+				t.Cleanup(func() { mockClient.AssertExpectations(t) })
+
+				fm := NewFolderManager(rw, mockClient, tree, false)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folders: fm}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr: true,
+		},
 	}
 
-	result, err := dw.CreateFolder(ctx, DualWriteOptions{Path: "newfolder/"})
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "newfolder/", result.Path)
-}
-
-func TestCreateFolder_FolderMetadata_FlagEnabled(t *testing.T) {
-	ctx := context.Background()
-
-	config := newTestRepoConfig("test-repo")
-	rw := repository.NewMockReaderWriter(t)
-	rw.On("Config").Return(config)
-
-	// Flag enabled: expect Create called with _folder.json path and valid Folder resource JSON
-	var capturedUID string
-	rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
-		var res folders.Folder
-		if err := json.Unmarshal(b, &res); err != nil {
-			return false
-		}
-		capturedUID = res.Name
-		return res.APIVersion == "folder.grafana.app/v1beta1" &&
-			res.Kind == "Folder" &&
-			res.Name != "" &&
-			res.Spec.Title == "newfolder"
-	}), "").Return(nil)
-
-	accessMock := auth.NewMockAccessChecker(t)
-	accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-	dw := &DualReadWriter{
-		repo:                  rw,
-		access:                accessMock,
-		folderMetadataEnabled: true,
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dw, opts := tt.setup(t)
+			result, err := dw.CreateFolder(context.Background(), opts)
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			if tt.check != nil {
+				tt.check(t, result)
+			}
+		})
 	}
-
-	result, err := dw.CreateFolder(ctx, DualWriteOptions{Path: "newfolder/"})
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "newfolder/", result.Path)
-	assert.NotEmpty(t, capturedUID, "_folder.json should have been written with a non-empty metadata.name")
 }
