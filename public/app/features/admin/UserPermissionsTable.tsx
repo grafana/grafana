@@ -3,7 +3,8 @@ import { useMemo, useState, useCallback } from 'react';
 import { Trans } from '@grafana/i18n';
 import { Column, InteractiveTable, TextLink, IconButton, Tooltip } from '@grafana/ui';
 import { useSetUserRolesMutation } from 'app/api/clients/roles';
-import { Role } from 'app/types/accessControl';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction, Role } from 'app/types/accessControl';
 import { TeamWithRoles } from 'app/types/teams';
 import { UserOrg } from 'app/types/user';
 
@@ -211,6 +212,8 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
 
   const [updateUserRoles] = useSetUserRolesMutation();
 
+  const canRemoveRoles = contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
+
   const rows = useMemo(() => transformRolesToPermissionRows(roles, teams, orgs), [roles, teams, orgs]);
 
   const handleRemoveRole = useCallback(
@@ -320,8 +323,8 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
         id: 'remove',
         header: '',
         cell: ({ row }) => {
-          // Only show for direct roles
-          if (row.original.sourceType !== 'direct') {
+          // Only show for direct roles and if user has permission
+          if (row.original.sourceType !== 'direct' || !canRemoveRoles) {
             return null;
           }
 
@@ -344,7 +347,7 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
     ];
 
     return cols;
-  }, [isRemoving, handleRemoveRole]);
+  }, [isRemoving, handleRemoveRole, canRemoveRoles]);
 
   const handleModalDismiss = () => {
     setIsModalOpen(false);
