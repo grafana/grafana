@@ -11305,10 +11305,6 @@
       "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
     },
-    "alerting-insights": {
-      "subtitle": "View system insights, alert state history, and notification history",
-      "title": "Insights"
-    },
     "alerting-alerts": {
       "subtitle": "Visualize active and pending alerts",
       "title": "Alert activity"
@@ -11326,6 +11322,10 @@
     },
     "alerting-home": {
       "title": "Home"
+    },
+    "alerting-insights": {
+      "subtitle": "View system insights, alert state history, and notification history",
+      "title": "Insights"
     },
     "alerting-legacy": {
       "title": "Alerting (legacy)"
