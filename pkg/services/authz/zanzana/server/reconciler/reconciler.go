@@ -183,6 +183,7 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 			start := time.Now()
 
 			err := r.reconcileNamespace(ctx, namespace)
+			elapsed := time.Since(start)
 			status := "success"
 			if err != nil {
 				status = "error"
@@ -190,16 +191,16 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 					"namespace", namespace,
 					"workerID", workerID,
 					"error", err,
-					"duration", time.Since(start),
+					"duration", elapsed,
 				)
 			} else {
 				r.logger.Info("Successfully reconciled namespace",
 					"namespace", namespace,
 					"workerID", workerID,
-					"duration", time.Since(start),
+					"duration", elapsed,
 				)
 			}
-			r.metrics.namespaceDurationSeconds.WithLabelValues(status).Observe(time.Since(start).Seconds())
+			r.metrics.namespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())
 		}
 	}
 }
