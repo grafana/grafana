@@ -14,8 +14,7 @@ jest.mock('../../suggestions/getAllSuggestions');
 jest.mock('./interactions', () => ({
   ...jest.requireActual('./interactions'),
   VizSuggestionsInteractions: {
-    suggestionAccepted: jest.fn(),
-    suggestionPreviewed: jest.fn(),
+    suggestionApplied: jest.fn(),
   },
 }));
 jest.mock('./VisualizationSuggestionCard', () => ({
@@ -510,7 +509,7 @@ describe('VisualizationSuggestions', () => {
 
     await userEvent.click(screen.getByTestId('suggestion-card-test-hash'));
 
-    expect(VizSuggestionsInteractions.suggestionAccepted).toHaveBeenCalledWith(
+    expect(VizSuggestionsInteractions.suggestionApplied).toHaveBeenCalledWith(
       expect.objectContaining({ panelState: PANEL_STATES.NEW_PANEL })
     );
   });
