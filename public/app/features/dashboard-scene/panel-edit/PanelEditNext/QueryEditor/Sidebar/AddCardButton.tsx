@@ -72,7 +72,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
           label={t('query-editor-next.sidebar.add-query', 'Add query')}
           icon="question-circle"
           onClick={() => {
-            trackAddQuery('new_query');
+            trackAddQuery('new_query', afterId ? 'inline' : 'section_header');
             addAndSelectQuery();
           }}
         />
@@ -81,7 +81,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
             label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
             icon="book-open"
             onClick={() => {
-              trackAddQuery('saved_query');
+              trackAddQuery('saved_query', afterId ? 'inline' : 'section_header');
               setPendingSavedQuery({ insertAfter: afterId ?? '' });
               openDrawer({
                 onSelectQuery: (query) => addAndSelectQuery(query),
@@ -94,7 +94,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
           label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
           icon="calculator-alt"
           onClick={() => {
-            trackAddExpressionInitiated();
+            trackAddExpressionInitiated(afterId ? 'inline' : 'section_header');
             setPendingExpression({ insertAfter: afterId ?? '' });
             onAdd?.();
           }}
@@ -114,7 +114,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
   );
 
   const handleTransformationClick = useCallback(() => {
-    trackAddTransformationInitiated();
+    trackAddTransformationInitiated(afterId ? 'inline' : 'section_header');
     setPendingTransformation({ insertAfter: afterId });
     onAdd?.();
   }, [afterId, setPendingTransformation, onAdd]);

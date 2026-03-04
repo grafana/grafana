@@ -41,6 +41,7 @@ import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
+import { trackEditorVersionToggle } from './PanelEditNext/tracking';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
@@ -411,6 +412,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
    */
   public onToggleQueryEditorVersion = () => {
     const newUseQueryExperienceNext = !this.state.useQueryExperienceNext;
+    trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');
     const dataPane = PanelDataPane.createFor(this.getPanel(), newUseQueryExperienceNext);
 
     this.setState({

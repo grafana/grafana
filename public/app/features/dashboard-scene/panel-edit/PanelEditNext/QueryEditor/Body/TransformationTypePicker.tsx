@@ -9,11 +9,7 @@ import config from 'app/core/config';
 import { SqlExpressionsBanner } from 'app/features/dashboard/components/TransformationsEditor/SqlExpressions/SqlExpressionsBanner';
 import { TransformationCard } from 'app/features/dashboard/components/TransformationsEditor/TransformationCard';
 
-import {
-  trackTransformationFilterChanged,
-  trackTransformationSearch,
-  trackTransformationSelected,
-} from '../../tracking';
+import { trackTransformationFilterChanged, trackTransformationSearch } from '../../tracking';
 import { useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { useTransformationSearchAndFilter } from './useTransformationSearchAndFilter';
@@ -121,10 +117,7 @@ export function TransformationTypePicker() {
               key={item.id}
               transform={item}
               data={data?.series ?? []}
-              onClick={(id) => {
-                trackTransformationSelected(id);
-                finalizePendingTransformation(id);
-              }}
+              onClick={(id) => finalizePendingTransformation(id)}
               showIllustrations={showIllustrations}
               fullWidth
             />

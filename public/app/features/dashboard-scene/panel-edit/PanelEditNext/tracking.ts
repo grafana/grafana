@@ -14,13 +14,6 @@ const EVENT_PANEL_EDIT_NEXT = 'grafana_panel_edit_next_interaction';
 // Transformation picker
 // ---------------------------------------------------------------------------
 
-export function trackTransformationSelected(transformationId: string) {
-  reportInteraction('grafana_panel_transformations_clicked', {
-    type: transformationId,
-    context: 'transformation_picker',
-  });
-}
-
 export const trackTransformationSearch = debounce((query: string, resultCount: number) => {
   if (query) {
     reportInteraction(EVENT_PANEL_EDIT_NEXT, {
@@ -42,22 +35,27 @@ export function trackTransformationFilterChanged(filter: string | null) {
 // Add card buttons (sidebar)
 // ---------------------------------------------------------------------------
 
-export function trackAddQuery(source: 'saved_query' | 'new_query') {
+type AddCardSource = 'section_header' | 'inline';
+
+export function trackAddQuery(querySource: 'saved_query' | 'new_query', cardSource: AddCardSource) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'add_query',
+    source: querySource,
+    card_source: cardSource,
+  });
+}
+
+export function trackAddExpressionInitiated(source: AddCardSource) {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'add_expression_initiated',
     source,
   });
 }
 
-export function trackAddExpressionInitiated() {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'add_expression_initiated',
-  });
-}
-
-export function trackAddTransformationInitiated() {
+export function trackAddTransformationInitiated(source: AddCardSource) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'add_transformation_initiated',
+    source,
   });
 }
 
@@ -102,5 +100,28 @@ export function trackReorder(itemType: 'query' | 'transformation') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'reorder',
     item_type: itemType,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Editor version banner
+// ---------------------------------------------------------------------------
+
+export function trackEditorVersionToggle(direction: 'upgrade' | 'downgrade') {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_editor_version',
+    direction,
+  });
+}
+
+export function trackBannerDismiss() {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'dismiss_version_banner',
+  });
+}
+
+export function trackFeedbackClick() {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'click_feedback_link',
   });
 }
