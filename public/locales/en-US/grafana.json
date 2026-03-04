@@ -9921,6 +9921,7 @@
       "csv-placeholder": "Enter CSV here...",
       "filter": {
         "add-all": "Add all displayed values to the filter",
+        "blanks": "(Blanks)",
         "button": "Filter {{name}}",
         "operator": {
           "contains": "Contains",
