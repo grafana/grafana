@@ -42,5 +42,5 @@ export const VizSuggestionsInteractions = {
 };
 
 const reportVizSuggestionsInteraction = (name: string, properties?: Record<string, unknown>) => {
-  reportInteraction(`grafana_viz_suggestions_${name}`, properties);
+  reportInteraction(`grafana_viz_${name}`, properties);
 };
