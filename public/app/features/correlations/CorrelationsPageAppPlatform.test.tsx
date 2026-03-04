@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within, Matcher } from '@testing-library/react';
+import { render, waitFor, screen, within, Matcher, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { openMenu } from 'react-select-event';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -6,6 +6,7 @@ import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceSrv, reportInteraction, setAppEvents, setDataSourceSrv, config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
@@ -20,6 +21,8 @@ import {
   createCorrelationsScenario,
   emptyCorrelationsScenario,
   existingCorrelationsScenario,
+  deleteCorrelationsScenario,
+  editCorrelationsScenario,
 } from './mocks/server/correlations.scenario';
 import { MockDataSourceSrv } from './mocks/useCorrelations.mocks';
 
@@ -95,6 +98,8 @@ const renderWithContext = async (datasources: ConstructorParameters<typeof MockD
             .filter((row) => {
               const rowCells = within(row).getAllByRole('cell');
               const cell = rowCells[headerIndex];
+              //console.log('find cell', cell.textContent);
+
               return within(cell).queryByText(textValue);
             });
         },
@@ -268,14 +273,28 @@ describe('CorrelationsPage - App Platform', () => {
       });
 
       // we don't test that the table exists because it doesn't actually get added
+      //TODO add a check the endpoint was called?
     });
   });
 
   describe('With correlations', () => {
-    beforeEach(async () => {
-      server.use(...existingCorrelationsScenario);
+    afterEach(() => {
+      mocks.reportInteraction.mockClear();
+    });
 
-      await renderWithContext({
+    let queryRowsByCellValue: (columnName: Matcher, textValue: Matcher) => HTMLTableRowElement[];
+    let getHeaderByName: (columnName: Matcher) => HTMLTableCellElement;
+    let queryCellsByColumnName: (columnName: Matcher) => HTMLTableCellElement[];
+
+    beforeEach(async () => {
+      server.use(
+        ...existingCorrelationsScenario,
+        ...createCorrelationsScenario,
+        ...deleteCorrelationsScenario,
+        ...editCorrelationsScenario
+      );
+
+      const renderResult = await renderWithContext({
         loki: mockDataSource(
           {
             uid: 'lokiUID',
@@ -296,11 +315,214 @@ describe('CorrelationsPage - App Platform', () => {
           },
           { metrics: true, module: 'core:plugin/prometheus' }
         ),
+        elastic: mockDataSource(
+          {
+            uid: 'elastic',
+            name: 'elastic',
+            readOnly: false,
+            jsonData: {},
+            type: 'datasource',
+          },
+          {
+            metrics: true,
+            logs: true,
+            module: 'core:plugin/elasticsearch',
+          }
+        ),
       });
+
+      queryRowsByCellValue = renderResult.queryRowsByCellValue;
+      queryCellsByColumnName = renderResult.queryCellsByColumnName;
+      getHeaderByName = renderResult.getHeaderByName;
     });
 
     it('shows a table with correlations', async () => {
       expect(await screen.findByRole('table')).toBeInTheDocument();
+    });
+
+    it('correctly sorts by source', async () => {
+      // wait for table to appear
+      await screen.findByRole('table');
+
+      const sourceHeader = getByRole(getHeaderByName('Source'), 'button');
+      await userEvent.click(sourceHeader);
+      let cells = queryCellsByColumnName('Source');
+      cells.forEach((cell, i, allCells) => {
+        const prevCell = allCells[i - 1];
+        if (prevCell && prevCell.textContent) {
+          expect(cell.textContent?.localeCompare(prevCell.textContent)).toBeGreaterThanOrEqual(0);
+        }
+      });
+
+      await userEvent.click(sourceHeader);
+      cells = queryCellsByColumnName('Source');
+      cells.forEach((cell, i, allCells) => {
+        const prevCell = allCells[i - 1];
+        if (prevCell && prevCell.textContent) {
+          expect(cell.textContent?.localeCompare(prevCell.textContent)).toBeLessThanOrEqual(0);
+        }
+      });
+    });
+
+    it('correctly adds new correlation', async () => {
+      const addNewButton = await screen.findByRole('button', { name: /add new/i });
+      expect(addNewButton).toBeInTheDocument();
+      await userEvent.click(addNewButton);
+
+      // step 1:
+      await userEvent.clear(screen.getByRole('textbox', { name: /label/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'A Label');
+      await userEvent.clear(screen.getByRole('textbox', { name: /description/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /description/i }), 'A Description');
+      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
+
+      // step 2:
+      // set target datasource picker value
+      await userEvent.click(screen.getByLabelText(/^target/i));
+      await userEvent.click(screen.getByText('elastic'));
+      await userEvent.click(await screen.findByRole('button', { name: /next$/i }));
+
+      // step 3:
+      // set source datasource picker value
+      await userEvent.click(screen.getByLabelText(/^source/i));
+      await userEvent.click(
+        within(screen.getByTestId(selectors.components.DataSourcePicker.dataSourceList)).getByText('prometheus')
+      );
+
+      await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
+
+      await userEvent.click(screen.getByRole('button', { name: /add$/i }));
+
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+      });
+
+      // the table showing correlations should have appeared
+      expect(await screen.findByRole('table')).toBeInTheDocument();
+    });
+
+    it('correctly closes the form when clicking on the close icon', async () => {
+      const addNewButton = await screen.findByRole('button', { name: /add new/i });
+      expect(addNewButton).toBeInTheDocument();
+      await userEvent.click(addNewButton);
+
+      await userEvent.click(screen.getByRole('button', { name: /close$/i }));
+
+      expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
+    });
+
+    it('correctly deletes correlations', async () => {
+      // A row with the correlation should exist
+      expect(await screen.findByRole('cell', { name: /loki to loki/i })).toBeInTheDocument();
+
+      const tableRows = queryRowsByCellValue('Source', 'loki-1');
+
+      //console.log(tableRows);
+
+      const deleteButton = within(tableRows[0]).getByRole('button', { name: /delete correlation/i });
+
+      expect(deleteButton).toBeInTheDocument();
+
+      await userEvent.click(deleteButton);
+
+      const confirmButton = within(tableRows[0]).getByRole('button', { name: /delete$/i });
+      expect(confirmButton).toBeInTheDocument();
+
+      await userEvent.click(confirmButton);
+
+      // we removed the check to see if the item was deleted as we do not actually change data with the endpoint calls
+      // TODO check the endpoint was called with the right property
+
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_deleted');
+      });
+    });
+
+    it('correctly edits correlations', async () => {
+      // wait for table to appear
+      await screen.findByRole('table');
+
+      const tableRows = queryRowsByCellValue('Source', 'loki-1');
+
+      const rowExpanderButton = within(tableRows[0]).getByRole('button', { name: /toggle row expanded/i });
+      await userEvent.click(rowExpanderButton);
+
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_details_expanded');
+      });
+
+      await userEvent.clear(screen.getByRole('textbox', { name: /label/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'edited label');
+      await userEvent.clear(screen.getByRole('textbox', { name: /description/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /description/i }), 'edited description');
+
+      expect(screen.queryByRole('cell', { name: /edited label$/i })).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+
+      await userEvent.click(screen.getByRole('button', { name: /save$/i }));
+
+      //removed the check the edit happened, todo check the endpoint was called
+
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+      });
+    });
+
+    it('correctly edits transformations', async () => {
+      // wait for table to appear
+      await screen.findByRole('table');
+
+      const tableRows = queryRowsByCellValue('Source', 'loki-1');
+
+      const rowExpanderButton = within(tableRows[0]).getByRole('button', { name: /toggle row expanded/i });
+      await userEvent.click(rowExpanderButton);
+
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+
+      // select Logfmt, be sure expression field is disabled
+      let typeFilterSelect = screen.getAllByLabelText('Type');
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Logfmt'));
+
+      let expressionInput = screen.queryByLabelText(/expression/i);
+      expect(expressionInput).toBeInTheDocument();
+      expect(expressionInput).toBeDisabled();
+
+      // select Regex, be sure expression field is not disabled and contains the former expression
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Regular expression'));
+      expressionInput = screen.queryByLabelText(/expression/i);
+      expect(expressionInput).toBeInTheDocument();
+      expect(expressionInput).toBeEnabled();
+      expect(expressionInput).toHaveAttribute('value', 'url=http[s]?://(S*)');
+
+      // select Logfmt, delete, then add a new one to be sure the value is blank
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Logfmt'));
+      await userEvent.click(screen.getByRole('button', { name: /remove transformation/i }));
+      expressionInput = screen.queryByLabelText(/expression/i);
+      expect(expressionInput).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
+      typeFilterSelect = screen.getAllByLabelText('Type');
+      openMenu(typeFilterSelect[0]);
+      const menu = await screen.findByLabelText('Select options menu');
+      await userEvent.click(within(menu).getByText('Regular expression'));
+      expressionInput = screen.queryByLabelText(/expression/i);
+      expect(expressionInput).toBeInTheDocument();
+      expect(expressionInput).toBeEnabled();
+      expect(expressionInput).not.toHaveValue('url=http[s]?://(S*)');
+      await userEvent.click(screen.getByRole('button', { name: /save$/i }));
+      expect(screen.getByText('Please define an expression')).toBeInTheDocument();
+      await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
+      await userEvent.click(screen.getByRole('button', { name: /save$/i }));
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+      });
     });
   });
 });

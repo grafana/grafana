@@ -1,6 +1,11 @@
 import { CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 
-import { createCorrelationsHandler, getCorrelationsHandler } from '../handlers/';
+import {
+  createCorrelationsHandler,
+  deleteCorrelationsHandler,
+  editCorrelationsHandler,
+  getCorrelationsHandler,
+} from '../handlers/';
 
 const generateCorrMetadata = (correlation: CorrelationSpec) => {
   let labels: Record<string, string> = {
@@ -81,3 +86,15 @@ export const existingCorrelationsScenario = [
 ];
 
 export const createCorrelationsScenario = [createCorrelationsHandler(generateCorrMetadata(fakeCorrelations[0]))];
+
+export const deleteCorrelationsScenario = [
+  deleteCorrelationsHandler({
+    kind: 'CorrelationList',
+    apiVersion: 'correlations.grafana.app/v0alpha1',
+    metadata: {},
+    status: '200',
+    message: 'success',
+  }),
+];
+
+export const editCorrelationsScenario = [editCorrelationsHandler(generateCorrMetadata(fakeCorrelations[0]))];
