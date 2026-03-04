@@ -275,18 +275,13 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 
 	// Check write permissions if workflows are configured (repository is not read-only)
 	if len(r.config.Spec.Workflows) > 0 {
-		if ok, err := r.client.CanWrite(ctx); err != nil || !ok {
-			// Map nanogit errors to repository errors for proper HTTP status codes
-			if err != nil {
-				err = mapNanogitError(err)
-				if result := checkHTTPError(err, field.NewPath("secure", "token")); result != nil {
-					return result, nil
-				}
-			}
+		ok, err := r.client.CanWrite(ctx)
 
-			detail := "write permission denied"
-			if err != nil {
-				detail = fmt.Sprintf("failed to check write permission: %v", err)
+		// Handle CanWrite errors
+		if err != nil {
+			err = mapNanogitError(err)
+			if result := checkHTTPError(err, field.NewPath("secure", "token")); result != nil {
+				return result, nil
 			}
 
 			return &provisioning.TestResults{
@@ -295,7 +290,20 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("secure", "token").String(),
-					Detail: detail,
+					Detail: fmt.Sprintf("failed to check write permission: %v", err),
+				}},
+			}, nil
+		}
+
+		// Check if write permission was denied
+		if !ok {
+			return &provisioning.TestResults{
+				Code:    http.StatusForbidden,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("secure", "token").String(),
+					Detail: "write permission denied",
 				}},
 			}, nil
 		}
