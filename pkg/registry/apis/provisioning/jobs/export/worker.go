@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
@@ -66,7 +69,16 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return errors.New("missing export settings")
 	}
 
-	logger := logging.FromContext(ctx)
+	logger := logging.FromContext(ctx).With("options", options)
+	ctx = logging.Context(ctx, logger)
+	ctx, span := tracing.Start(ctx, "provisioning.export.process")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("export.branch", options.Branch),
+		attribute.String("export.folder", options.Folder),
+		attribute.String("export.path", options.Path),
+	)
+
 	start := time.Now()
 	outcome := utils.ErrorOutcome
 	resourcesExported := 0

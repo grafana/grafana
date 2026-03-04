@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
@@ -98,7 +100,15 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return apierrors.NewBadRequest("missing spec.pr")
 	}
 
-	logger := logging.FromContext(ctx).With("pr", opts.PR)
+	logger := logging.FromContext(ctx).With("options", opts)
+	ctx = logging.Context(ctx, logger)
+	ctx, span := tracing.Start(ctx, "provisioning.pullrequest.process")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("pr.number", opts.PR),
+		attribute.String("pr.ref", opts.Ref),
+		attribute.String("pr.hash", opts.Hash),
+	)
 
 	if opts.Ref == "" {
 		logger.Debug("missing spec.ref")

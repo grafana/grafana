@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
@@ -46,6 +48,11 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 	if options == nil {
 		return errors.New("missing migrate settings")
 	}
+
+	logger := logging.FromContext(ctx).With("options", options)
+	ctx = logging.Context(ctx, logger)
+	ctx, span := tracing.Start(ctx, "provisioning.migrate.process")
+	defer span.End()
 
 	progress.SetTotal(ctx, 10) // will show a progress bar
 	rw, ok := repo.(repository.ReaderWriter)

@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
@@ -42,7 +44,17 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		return errors.New("missing move settings")
 	}
 	opts := *job.Spec.Move
-	logger := logging.FromContext(ctx)
+	logger := logging.FromContext(ctx).With("options", job.Spec.Move)
+	ctx = logging.Context(ctx, logger)
+	ctx, span := tracing.Start(ctx, "provisioning.move.process")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("move.ref", opts.Ref),
+		attribute.String("move.target_path", opts.TargetPath),
+		attribute.Int("move.paths_count", len(opts.Paths)),
+		attribute.Int("move.resources_count", len(opts.Resources)),
+	)
+
 	outcome := utils.ErrorOutcome
 	start := time.Now()
 	resourcesMoved := 0
