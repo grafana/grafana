@@ -135,10 +135,6 @@ export default function NewCustomThemePage() {
               id={gcomThemeIDInput}
               type="text"
               {...registerGcom('gcomTheme', {
-                required: t(
-                  'admin.new-custom-theme-page.gcom-field.validation-required',
-                  'A Grafana theme URL or ID is required'
-                ),
                 validate: validateGcomTheme,
               })}
               addonAfter={

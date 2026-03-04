@@ -213,12 +213,20 @@
       "field-preview": "Preview",
       "field-theme-id": "Theme ID",
       "field-theme-json": "Theme JSON",
+      "gcom-field": {
+        "description": "Find and import themes at <link />",
+        "label": "Grafana.com theme URL or ID",
+        "load-button": "Load"
+      },
       "page-nav": {
         "text": {
           "add-custom-theme": "Add custom theme"
         }
       },
-      "submit": "Add custom theme"
+      "submit": "Add custom theme",
+      "validation": {
+        "invalid-theme-id": "Could not find a valid Grafana.com theme ID"
+      }
     },
     "org-role-picker": {
       "placeholder-choose-role": "Choose role..."
