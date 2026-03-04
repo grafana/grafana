@@ -643,10 +643,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
-	if opts.UnifiedStorageEnableSearch {
+	if opts.UnifiedStorageDisableSearch {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
-		_, err = section.NewKey("enable_search", "true")
+		_, err = section.NewKey("enable_search", "false")
 		require.NoError(t, err)
 	}
 	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
@@ -659,6 +659,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("disable_data_migrations", "true")
+		require.NoError(t, err)
+	}
+	if opts.MigrationParquetBuffer {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("migration_parquet_buffer", "true")
 		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
@@ -802,7 +808,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
-	UnifiedStorageEnableSearch            bool
+	UnifiedStorageDisableSearch           bool
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	ProvisioningAllowedTargets            []string
@@ -817,6 +823,7 @@ type GrafanaOpts struct {
 	DisableControllers                    bool
 	DisableDBCleanup                      bool
 	DisableDataMigrations                 bool
+	MigrationParquetBuffer                bool
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool

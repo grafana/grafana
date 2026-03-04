@@ -75,7 +75,11 @@ The GitLab and Bitbucket integrations have limited functionality for the moment,
 
 ## Resource support and compatibility
 
-Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet.
+**Git Sync only supports dashboards and folders**. Alerts, data sources, panels and other resources are not supported yet.
+
+If you're a Grafana Cloud user, you can check the [Grafana roadmap portal](https://grafana.ideas.aha.io/ideas) to learn about future improvements.
+
+### Resource compatibility
 
 If you're using Git Sync in Grafana OSS or Grafana Enterprise, some supported resources might be in an incompatible data format. If this happens, syncing will be blocked. Compatibility issues will be fixed with an upcoming migration tool.
 

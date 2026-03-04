@@ -79,6 +79,15 @@ describe('TabItemRepeater', () => {
       expect(stateUpdates).toBe(1);
     });
 
+    it('Should render source tab instead of infinite spinner when $__all is selected and variable returns no options', async () => {
+      const { tabToRepeat } = renderScene({ variableQueryTime: 0 }, []);
+
+      await waitFor(() => {
+        expect(tabToRepeat.state.repeatedTabs).toBeDefined();
+        expect(tabToRepeat.state.repeatedTabs).toHaveLength(0);
+      });
+    });
+
     it('Should handle removing repeats', async () => {
       const { tabToRepeat } = renderScene({ variableQueryTime: 0 });
 

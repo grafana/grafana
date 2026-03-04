@@ -11,6 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useSelector } from 'app/types/store';
 
+import { TeamFolders } from './TeamFolders';
 import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
 import TeamPermissions from './TeamPermissions';
 import TeamSettings from './TeamSettings';
@@ -25,16 +26,30 @@ type TeamPageRouteParams = {
 enum PageTypes {
   Members = 'members',
   Settings = 'settings',
+  Folders = 'folders',
   GroupSync = 'groupsync',
 }
 
-const PAGES = ['members', 'settings', 'groupsync'];
+function getPageType(page: string | undefined): PageTypes | undefined {
+  switch (page) {
+    case PageTypes.Members:
+      return PageTypes.Members;
+    case PageTypes.Settings:
+      return PageTypes.Settings;
+    case PageTypes.Folders:
+      return PageTypes.Folders;
+    case PageTypes.GroupSync:
+      return PageTypes.GroupSync;
+    default:
+      return undefined;
+  }
+}
 
 const pageNavSelector = createSelector(
   [
     (state: StoreState) => state.navIndex,
-    (_state: StoreState, pageName: string) => pageName,
-    (_state: StoreState, _pageName: string, teamUid: string) => teamUid,
+    (_state: StoreState, pageName: PageTypes) => pageName,
+    (_state: StoreState, _pageName: PageTypes, teamUid: string) => teamUid,
   ],
   (navIndex, pageName, teamUid) => {
     const teamLoadingNav = getTeamLoadingNav(pageName);
@@ -48,17 +63,18 @@ const TeamPages = memo(() => {
 
   const { data: team, isLoading } = useGetTeam({ uid: teamUid });
 
-  let defaultPage = 'members';
+  let defaultPage = PageTypes.Members;
   // With RBAC the settings page will always be available
   if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
-    defaultPage = 'settings';
+    defaultPage = PageTypes.Settings;
   }
-  const pageName = page ?? defaultPage;
-  const pageNav = useSelector((state) => pageNavSelector(state, pageName, teamUid));
+  let currentPage = getPageType(page) ?? defaultPage;
+  if (currentPage === PageTypes.Folders && !config.featureToggles.teamFolders) {
+    currentPage = defaultPage;
+  }
+  const pageNav = useSelector((state) => pageNavSelector(state, currentPage, teamUid));
 
   const renderPage = () => {
-    const currentPage = PAGES.includes(pageName) ? pageName : PAGES[0];
-
     const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, team!);
     const canReadTeamPermissions = contextSrv.hasPermissionInMetadata(
       AccessControlAction.ActionTeamsPermissionsRead,
@@ -77,6 +93,8 @@ const TeamPages = memo(() => {
         return null;
       case PageTypes.Settings:
         return canReadTeam && <TeamSettings team={team!} />;
+      case PageTypes.Folders:
+        return canReadTeam && <TeamFolders teamUid={teamUid} />;
       case PageTypes.GroupSync:
         if (isSyncEnabled.current) {
           if (canReadTeamPermissions) {

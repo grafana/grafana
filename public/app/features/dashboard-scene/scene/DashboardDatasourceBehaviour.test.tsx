@@ -201,7 +201,7 @@ describe('DashboardDatasourceBehaviour', () => {
       expect(behaviour['prevRequestIds'].size).toBe(0);
     });
 
-    it('Should not re-run queries in behaviour on scene load', async () => {
+    it('Should re-run queries when source panel data arrives on scene load', async () => {
       const sourcePanel = new VizPanel({
         title: 'Panel A',
         pluginId: 'table',
@@ -240,8 +240,12 @@ describe('DashboardDatasourceBehaviour', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(spy).toHaveBeenCalledTimes(1);
-      // since there is no previous request ID on dashboard load, the behaviour should not re-run queries
+      // Called twice: once for the initial activation query, and once when the
+      // source panel's data arrives via the onSourceDataChange subscription.
+      // The second call ensures the dashboard DS panel picks up the source
+      // panel's completed data (prevents stale data when it activates first).
+      expect(spy).toHaveBeenCalledTimes(2);
+      // prevRequestIds should still be empty — no deactivate/reactivate cycle occurred
       expect(behaviour['prevRequestIds'].size).toBe(0);
     });
 

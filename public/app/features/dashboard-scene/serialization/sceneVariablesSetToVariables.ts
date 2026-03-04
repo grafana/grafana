@@ -55,6 +55,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
   const variables: VariableModel[] = [];
 
   for (const variable of set.state.variables) {
+    // Skipping default variables
+    // (Default variables don't get persisted to the JSON schema.)
+    if (variable.state.origin !== undefined) {
+      continue;
+    }
+
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
@@ -317,6 +323,12 @@ export function sceneVariablesSetToSchemaV2Variables(
   > = [];
 
   for (const variable of set.state.variables) {
+    // Skipping default variables
+    // (Default variables don't get persisted to the JSON schema.)
+    if (variable.state.origin !== undefined) {
+      continue;
+    }
+
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
@@ -595,5 +607,5 @@ export function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): A
 }
 
 export function isVariableEditable(variable: SceneVariable) {
-  return variable.state.type !== 'system';
+  return variable.state.type !== 'system' && variable.state.origin === undefined;
 }
