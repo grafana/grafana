@@ -1458,15 +1458,15 @@ func TestRulesets_BlocksDirectPush(t *testing.T) {
 
 func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 	tests := []struct {
-		name             string
-		workflows        []provisioning.Workflow
-		branch           string
-		rulesetsResult   *Rulesets
-		rulesetsError    error
+		name               string
+		workflows          []provisioning.Workflow
+		branch             string
+		rulesetsResult     *Rulesets
+		rulesetsError      error
 		expectRulesetsCall bool
-		expectedSuccess  bool
-		expectedErrField string
-		expectedDetail   string
+		expectedSuccess    bool
+		expectedErrField   string
+		expectedDetail     string
 	}{
 		{
 			name:      "rulesets require pull request with write workflow",
@@ -1702,11 +1702,11 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 			expectedDetails:  []string{"failed to check branch protection"},
 		},
 		{
-			name:      "rulesets error after clean branch protection",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-			branch:    "main",
-			bpResult:  nil,
-			rulesetsError: errors.New("API error"),
+			name:             "rulesets error after clean branch protection",
+			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:           "main",
+			bpResult:         nil,
+			rulesetsError:    errors.New("API error"),
 			expectedSuccess:  false,
 			expectedErrField: "spec.github.branch",
 			expectedDetails:  []string{"failed to check repository rulesets"},
