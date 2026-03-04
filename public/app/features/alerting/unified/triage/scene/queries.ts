@@ -50,20 +50,34 @@ export function alertRuleInstancesQuery(ruleUID: string, filter: string): SceneD
 }
 
 /**
- * Builds a PromQL expression that counts deduplicated alert instances over the selected time range.
- * Uses last_over_time to capture all instances active during the range, and `unless` to
- * remove pending instances that also had a corresponding firing series.
+ * Returns a PromQL expression that produces one entry per unique alert instance,
+ * deduplicated over the selected time range (`$__range`).
+ *
+ * Uses `last_over_time` to capture all instances active during the range, then
+ * `unless` to remove pending instances that also had a corresponding firing series.
  * Firing takes priority over pending — instances that transitioned between states are
  * counted only once in their firing state.
  */
-function getAlertsSummariesQuery(countBy: string, filter: string): string {
+function uniqueAlertInstancesExpr(filter: string): string {
   const firingFilter = filter ? `alertstate="firing",${filter}` : 'alertstate="firing"';
   const pendingFilter = filter ? `alertstate="pending",${filter}` : 'alertstate="pending"';
   return (
-    `count by (${countBy}) (` +
     `last_over_time(${METRIC_NAME}{${firingFilter}}[$__range]) or ` +
     `(last_over_time(${METRIC_NAME}{${pendingFilter}}[$__range]) ` +
     `unless ignoring(alertstate, grafana_alertstate) ` +
-    `last_over_time(${METRIC_NAME}{${firingFilter}}[$__range])))`
+    `last_over_time(${METRIC_NAME}{${firingFilter}}[$__range]))`
   );
+}
+
+function getAlertsSummariesQuery(countBy: string, filter: string): string {
+  return `count by (${countBy}) (${uniqueAlertInstancesExpr(filter)})`;
+}
+
+/** Instant table query returning one row per unique alert instance (for label breakdown). */
+export function uniqueAlertInstancesQuery(filter: string): SceneDataQuery {
+  return getDataQuery(uniqueAlertInstancesExpr(filter), {
+    instant: true,
+    range: false,
+    format: 'table',
+  });
 }
