@@ -499,6 +499,20 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationHistoryTriage",
+        "resourceVersion": "1772614382283",
+        "creationTimestamp": "2026-03-04T08:53:02Z"
+      },
+      "spec": {
+        "description": "Enables the notification history timeline in the triage instance details drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-11-22T11:07:45Z"

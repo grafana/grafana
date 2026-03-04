@@ -155,7 +155,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
           </Box>
         )}
 
-        {config.featureToggles.alertingNotificationHistory ? (
+        {config.featureToggles.alertingNotificationHistoryTriage ? (
           <InstanceTimelineSection
             ruleUID={ruleUID}
             instanceLabels={instanceLabels}
