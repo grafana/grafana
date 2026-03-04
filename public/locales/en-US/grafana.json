@@ -388,7 +388,6 @@
         "timing-options": "Timings"
       },
       "pending-period": "Pending period",
-      "rule": "Rule",
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
@@ -2105,7 +2104,9 @@
       "select-namespace": "Select namespace"
     },
     "navigation": {
+      "active-notifications": "Active notifications",
       "alert-rules": "Alert rules",
+      "alerts": "Alerts",
       "contact-points": "Contact points",
       "notification-policies": "Notification policies",
       "recently-deleted": "Recently deleted",
@@ -2331,8 +2332,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues.",
-        "title": "Alerts"
+        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues."
       }
     },
     "panel-alert-tab-content": {
@@ -3403,8 +3403,16 @@
     },
     "triage": {
       "alert-instances": "Alert instances",
+      "all-labels": "All labels",
+      "all-labels-drawer-title": "All labels",
+      "compact-firing": "firing",
+      "compact-instances": "instances",
+      "compact-pending": "pending",
+      "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
-      "firing-instances-count": "Firing alert instances",
+      "hidden-label-count_one": "and {{ count }} more",
+      "hidden-label-count_other": "and {{ count }} more",
+      "high-activity-labels": "High Activity Labels",
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
@@ -3414,7 +3422,6 @@
       "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
-      "pending-instances-count": "Pending alert instances",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
@@ -3423,15 +3430,19 @@
         "description": "The requested rule could not be found.",
         "title": "Rule not found"
       },
-      "rules-with-firing-instances": "Alert rules with firing instances",
-      "rules-with-pending-instances": "Alert rules with pending instances",
       "saved-searches": {
         "predefined": {
           "firing-only": "Show only firing",
           "folder-firing": "Show only firing, grouped by folder",
           "folder-only": "Grouped by folder"
         }
-      }
+      },
+      "show-all-labels_one": "Show all ({{ count }})",
+      "show-all-labels_other": "Show all ({{ count }})",
+      "show-all-values_one": "Show all ({{ count }})",
+      "show-all-values_other": "Show all ({{ count }})",
+      "tooltip-more-values_one": "and {{ count }} more",
+      "tooltip-more-values_other": "and {{ count }} more"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -3529,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Details",
           "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
@@ -5451,11 +5461,13 @@
       "groupby": "GroupBy",
       "missing-adhoc": "No ad hoc filters available",
       "operator": "Operator",
+      "restore": "Restore default value",
       "search": {
         "aria-label": "Search filters",
         "placeholder": "Search..."
       },
       "title": "Edit filters",
+      "use-custom-value": "Use custom value",
       "value": "Value"
     },
     "gen-aihistory": {
@@ -6875,10 +6887,10 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "Query editor v2",
-      "query-editor-version-toggle": "Toggle between query editor v1 and v2",
+      "back-to-classic": "Back to classic editor",
       "table-view-aria-label-toggletableview": "Toggle table view",
-      "table-view-label-table-view": "Table view"
+      "table-view-label-table-view": "Table view",
+      "try-new-editor": "Try new editor"
     },
     "panel-editor": {
       "text": {
@@ -6923,6 +6935,16 @@
     },
     "query-editor": {
       "query": "Query"
+    },
+    "query-editor-banner": {
+      "description-classic": "Try the improved query editing experience.",
+      "description-new": "Welcome to the improved query editing experience.",
+      "dismiss": "Dismiss",
+      "downgrade-title": "New query editor!",
+      "give-feedback": "Give feedback",
+      "go-back": "Back to classic",
+      "try-it": "Try it out",
+      "upgrade-title": "New editor available!"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
@@ -7047,6 +7069,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
+      "disabled-tooltip": "Save the dashboard before creating alert rules",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
@@ -7144,6 +7167,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": "Variables"
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard.",
@@ -7237,6 +7267,24 @@
       "preview-of-values_one": "Preview of values ({{count}})",
       "preview-of-values_other": "Preview of values ({{count}})",
       "show-more": "Show more"
+    },
+    "variables-list": {
+      "add-variable": "Add variable",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": "Reorder variables list"
+        }
+      },
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})",
+      "title-hidden_one": "Hidden ({{count}})",
+      "title-hidden_other": "Hidden ({{count}})"
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "Drag to reorder",
+      "select": "Select"
     },
     "version-history": {
       "comparison": {
@@ -9466,11 +9514,13 @@
       },
       "legend": {
         "category": "Legend",
+        "description-limit": "Limits how many items are shown by default",
         "description-values": "Select values or calculations to show in legend",
         "mode-options": {
           "label-list": "List",
           "label-table": "Table"
         },
+        "name-limit": "Limit",
         "name-mode": "Mode",
         "name-placement": "Placement",
         "name-values": "Values",
@@ -10402,6 +10452,11 @@
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><1>documentation</1></2>.",
     "title": "Basic Settings"
   },
+  "legend": {
+    "container": {
+      "show-all-series": "...show all {{total}} items"
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Library panel with this name already exists",
@@ -10883,6 +10938,7 @@
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
     "name-show-controls": "Show controls",
+    "name-show-level": "Display log level",
     "name-time": "Show timestamps",
     "name-unique-labels": "Unique labels",
     "name-unwrapped-columns": "Enable columns for displayed fields",
@@ -11276,9 +11332,17 @@
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
     },
+    "alerting-activity": {
+      "subtitle": "View alerts and active notifications",
+      "title": "Alert activity"
+    },
     "alerting-admin": {
       "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
+    },
+    "alerting-alerts": {
+      "subtitle": "Visualize active and pending alerts",
+      "title": "Alert activity"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",
@@ -12412,13 +12476,18 @@
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
+      "description-filename": "File name for the dashboard (.json or .yaml)",
+      "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "info-branch-disabled": "Push to configured branch is disabled",
       "label-branch": "Branch",
       "label-comment": "Comment",
+      "label-filename": "Filename",
+      "label-folder": "Folder",
       "label-path": "Path",
       "placeholder-branch": "Select or enter branch name",
+      "placeholder-folder": "Select or enter folder path",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
       "suffix-new-branch": "New branch",
@@ -12532,6 +12601,8 @@
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
     "connect-step": {
+      "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",
+      "text-repository-folders-not-ready": "There was an issue connecting to the repository. You can still manually enter the folder path.",
       "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
     },
     "connection": {
@@ -12673,10 +12744,18 @@
       "label-sync-interval": "Sync Interval (seconds)"
     },
     "fix-folder-metadata": {
-      "button": "Fix folder IDs",
-      "error-fixing": "Error fixing folder metadata",
-      "fixing": "Fixing...",
-      "success": "Folder metadata fix started. This will continue in the background."
+      "button": "Fix folder IDs"
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "Cancel",
+      "error-message": "Failed to start folder metadata fix job. Please try again.",
+      "error-title": "Error fixing folder metadata",
+      "loading": "Loading repository...",
+      "read-only-message": "Folder metadata cannot be fixed automatically.",
+      "submit": "Fix folder IDs",
+      "submitting": "Fixing...",
+      "success-title": "Folder metadata fixed successfully",
+      "title": "Fix folder metadata"
     },
     "folder-permissions": {
       "loading": "Loading..."
@@ -13424,6 +13503,7 @@
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
       "loading-queries-transformations": "Loading queries and transformations",
+      "new-type": "New {{type}}",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
@@ -14681,6 +14761,12 @@
     "name-show-matches-only": "Show matches only",
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "{{name}} will be applied automatically to your data unless the transformation is disabled.",
+      "title": "No options to configure"
     }
   },
   "transformation-editor-renderer": {

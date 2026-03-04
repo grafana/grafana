@@ -568,6 +568,9 @@ type Cfg struct {
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
 
+	// DatabaseRegisterDeprecatedMetrics decides whether to register the deprecated `grafana_database_conn_*` and `go_sql_stats_*` metrics.
+	DatabaseRegisterDeprecatedMetrics bool
+
 	// Public dashboards
 	PublicDashboardsEnabled bool
 
@@ -606,7 +609,7 @@ type Cfg struct {
 	// DisableDataMigrations will disable resources data migration to unified storage at startup
 	DisableDataMigrations bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
-	// Larger values reduce lock contention. Default: 50000 (50MB).
+	// Larger values reduce lock contention. Default: 1000000 (~1GB).
 	MigrationCacheSizeKB int
 	// MigrationParquetBuffer enables bulk migration data through a temporary Parquet file.
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
@@ -642,6 +645,7 @@ type Cfg struct {
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
+	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
@@ -1500,6 +1504,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
+	cfg.DatabaseRegisterDeprecatedMetrics = databaseSection.Key("register_deprecated_metrics").MustBool(true)
 
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")

@@ -63,6 +63,7 @@ func NewSearchOptions(
 			MaxIndexAge:            cfg.MaxFileIndexAge,
 			MinBuildVersion:        minVersion,
 			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
+			InjectFailuresPercent:  cfg.SearchInjectFailuresPercent,
 		}, nil
 	}
 	return resource.SearchOptions{

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { clsx } from 'clsx';
+import memoize from 'micro-memoize';
 import { memo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -95,7 +96,7 @@ export const Filter = memo(({ name, rows, filter, setFilter, field, iconClassNam
 
 Filter.displayName = 'Filter';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = memoize((theme: GrafanaTheme2) => ({
   headerFilter: css({
     background: 'transparent',
     border: 'none',
@@ -108,4 +109,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'filterIconEnabled',
     color: theme.colors.primary.text,
   }),
-});
+}));

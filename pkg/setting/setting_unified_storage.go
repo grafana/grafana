@@ -8,10 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-// DefaultAutoMigrationThreshold is the default threshold for auto migration switching.
-// If a resource has entries at or below this count, it will be migrated.
-const DefaultAutoMigrationThreshold = 10
-
 const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
 	FolderResource    = "folders.folder.grafana.app"
@@ -22,16 +18,9 @@ const (
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:  true, // enabled by default
-	FolderResource:    false,
-	DashboardResource: false,
-	ShortURLResource:  false,
-}
-
-// AutoMigratedUnifiedResources maps resources that support auto-migration
-// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
-var AutoMigratedUnifiedResources = map[string]bool{
 	FolderResource:    true,
 	DashboardResource: true,
+	ShortURLResource:  false,
 }
 
 // read storage configs from ini file. They look like:
@@ -60,17 +49,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			enableMigration = section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
 		}
 
-		// parse autoMigrationThreshold from resource section
-		autoMigrationThreshold := 0
-		autoMigrate := AutoMigratedUnifiedResources[resourceName]
-		if autoMigrate {
-			autoMigrationThreshold = section.Key("autoMigrationThreshold").MustInt(DefaultAutoMigrationThreshold)
-		}
-
 		storageConfig[resourceName] = UnifiedStorageConfig{
-			DualWriterMode:         rest.DualWriterMode(dualWriterMode),
-			EnableMigration:        enableMigration,
-			AutoMigrationThreshold: autoMigrationThreshold,
+			DualWriterMode:  rest.DualWriterMode(dualWriterMode),
+			EnableMigration: enableMigration,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -78,7 +59,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
-	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(50000)
+	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
@@ -88,7 +69,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// Helper log to find instances disabling migration
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
 	}
-	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
+	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
+	if cfg.SearchInjectFailuresPercent < 0 {
+		cfg.SearchInjectFailuresPercent = 0
+	} else if cfg.SearchInjectFailuresPercent > 100 {
+		cfg.SearchInjectFailuresPercent = 100
+	}
+	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()

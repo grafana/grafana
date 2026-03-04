@@ -10,7 +10,7 @@ describe('Gauge Panel', () => {
     e2e.flows.openDashboard({ uid: '_5rDmaQiz' });
 
     // check that gauges are rendered
-    cy.get('body').find(`.flot-base`).should('have.length', 16);
+    e2e.components.Panels.Visualization.Gauge.Container().should('have.length', 16);
 
     // check that no panel errors exist
     e2e.components.Panels.Panel.headerCornerInfo('error').should('not.exist');

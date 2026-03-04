@@ -6,7 +6,7 @@ import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, logInfo } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Alert, Button, ButtonVariant, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ButtonVariant, Tooltip, useStyles2 } from '@grafana/ui';
 import { LogMessages } from 'app/features/alerting/unified/Analytics';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
@@ -19,6 +19,7 @@ interface ScenesNewRuleFromPanelButtonProps {
   size?: 'xs' | 'sm' | 'md' | 'lg';
   compactAlert?: boolean;
   fill?: ButtonFill;
+  disabled?: boolean;
 }
 export const ScenesNewRuleFromPanelButton = ({
   panel,
@@ -27,11 +28,29 @@ export const ScenesNewRuleFromPanelButton = ({
   size = 'md',
   fill = 'solid',
   compactAlert = false,
+  disabled = false,
 }: ScenesNewRuleFromPanelButtonProps) => {
   const styles = useStyles2(getStyles);
   const location = useLocation();
 
   const { loading, value: formValues } = useAsync(() => scenesPanelToRuleFormValues(panel), [panel]);
+
+  if (disabled) {
+    return (
+      <Tooltip
+        content={t(
+          'dashboard-scene.scenes-new-rule-from-panel-button.disabled-tooltip',
+          'Save the dashboard before creating alert rules'
+        )}
+      >
+        <span>
+          <Button disabled icon="bell" variant={variant} size={size} fill={fill} className={className}>
+            <Trans i18nKey="dashboard-scene.scenes-new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+          </Button>
+        </span>
+      </Tooltip>
+    );
+  }
 
   if (loading) {
     return (
