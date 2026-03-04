@@ -142,7 +142,7 @@ export const AddRoleModal = ({
         cell: ({ row }) => (
           <Tooltip content="View Permissions">
             <IconButton
-              name="search"
+              name="eye"
               size="sm"
               variant="secondary"
               onClick={() =>
@@ -158,7 +158,7 @@ export const AddRoleModal = ({
       },
       {
         id: 'add',
-        header: 'Add',
+        header: '',
         cell: ({ row }) => {
           const isAssigned = allAssignedRoleUids.includes(row.original.uid);
 

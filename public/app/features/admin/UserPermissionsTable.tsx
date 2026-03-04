@@ -274,7 +274,7 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
             {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
             <Tooltip content="View All User Permissions">
               <IconButton
-                name="search"
+                name="eye"
                 size="sm"
                 variant="secondary"
                 onClick={() => setIsUserPermissionsModalOpen(true)}
@@ -289,7 +289,7 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
             {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
             <Tooltip content="View Role Permissions">
               <IconButton
-                name="search"
+                name="eye"
                 size="sm"
                 variant="secondary"
                 onClick={() => {

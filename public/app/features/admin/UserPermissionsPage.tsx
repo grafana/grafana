@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { OrgRole } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Stack, LinkButton, Alert, Button, Modal, Field } from '@grafana/ui';
+import { Stack, Alert, Button, Modal, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
@@ -237,9 +237,27 @@ export default function UserPermissionsPage() {
   }, [user, currentOrg, currentOrgId, selectedRole, loadData]);
 
   const pageNav = {
-    text: user?.login ? `Roles for ${user.login}` : 'User Roles',
+    text: 'Roles',
     url: `/admin/users/roles/${uid}`,
-    subTitle: user && currentOrg ? `Manage roles for user ${user.login} in organization ${currentOrg.name}.` : undefined,
+    subTitle:
+      user && currentOrg
+        ? orgs.length > 1
+          ? `Manage roles for user ${user.login} in organization ${currentOrg.name}.`
+          : `Manage roles for user ${user.login}.`
+        : undefined,
+    parentItem: user
+      ? {
+          text: user.login,
+          url: `/admin/users/edit/${uid}`,
+          parentItem: {
+            text: 'Users',
+            url: '/admin/users',
+          },
+        }
+      : {
+          text: 'Users',
+          url: '/admin/users',
+        },
   };
 
   return (
@@ -253,12 +271,8 @@ export default function UserPermissionsPage() {
         )}
         {!isLoading && !error && user && (
           <Stack gap={1} direction="column">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-              <LinkButton href={`/admin/users/edit/${user.id}`} variant="secondary" size="sm">
-                ← Back to User
-              </LinkButton>
-              {currentOrg && (
+            {currentOrg && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-48px', marginBottom: '16px', position: 'relative', zIndex: 10 }}>
                 <Stack gap={1}>
                   {canChangeOrgRole && (
                     // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
@@ -273,8 +287,8 @@ export default function UserPermissionsPage() {
                     </Button>
                   )}
                 </Stack>
-              )}
-            </div>
+              </div>
+            )}
 
             {!currentOrg && (
               // eslint-disable-next-line @grafana/i18n/no-untranslated-strings

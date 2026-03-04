@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { Column, InteractiveTable, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
+import { Column, InteractiveTable, LoadingPlaceholder, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -85,15 +85,24 @@ export const UserPermissionsModal = ({ userId, userName, isOpen, onDismiss }: Pr
     >
       {isLoading && <LoadingPlaceholder text="Loading permissions..." />}
       {error && <div>Error: {error}</div>}
-      {!isLoading && !error && permissions.length > 0 && (
-        <InteractiveTable columns={columns} data={permissions} getRowId={(row) => row.id} />
-      )}
-      {!isLoading && !error && permissions.length === 0 && (
-        <div>
-          <Trans i18nKey="admin.user-permissions-modal.no-permissions">
-            No permissions found for this user.
-          </Trans>
-        </div>
+      {!isLoading && !error && (
+        <Stack direction="column" gap={2}>
+          {/* Description */}
+          <div>
+            <p>This shows the aggregate of all permissions assigned through roles.</p>
+          </div>
+
+          {/* Permissions table */}
+          {permissions.length > 0 ? (
+            <InteractiveTable columns={columns} data={permissions} getRowId={(row) => row.id} />
+          ) : (
+            <div>
+              <Trans i18nKey="admin.user-permissions-modal.no-permissions">
+                No permissions found for this user.
+              </Trans>
+            </div>
+          )}
+        </Stack>
       )}
     </Modal>
   );
