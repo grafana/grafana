@@ -9,6 +9,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
 import { getDashboardSceneFor } from '../../../../utils/utils';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { trackQueryMenuAction } from '../../tracking';
 import { useActionsContext, usePanelContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 export function QueryActionsMenu() {
@@ -46,7 +47,10 @@ export function QueryActionsMenu() {
             className={styles.menuItem}
             label={t('query-editor-next.action.duplicate', 'Duplicate {{type}}', { type: typeLabel })}
             icon="copy"
-            onClick={() => duplicateQuery(selectedQuery.refId)}
+            onClick={() => {
+              trackQueryMenuAction('duplicate', cardType);
+              duplicateQuery(selectedQuery.refId);
+            }}
           />
 
           {/* Data source help (queries only, not expressions) */}
@@ -59,7 +63,10 @@ export function QueryActionsMenu() {
                   : t('query-editor-next.action.show-help', 'Show data source help')
               }
               icon="question-circle"
-              onClick={toggleDatasourceHelp}
+              onClick={() => {
+                trackQueryMenuAction('toggle_datasource_help', cardType);
+                toggleDatasourceHelp();
+              }}
               active={showingDatasourceHelp}
             />
           )}
@@ -68,7 +75,10 @@ export function QueryActionsMenu() {
             className={styles.menuItem}
             label={t('query-editor-next.action.inspector', 'Query inspector')}
             icon="brackets-curly"
-            onClick={onOpenInspector}
+            onClick={() => {
+              trackQueryMenuAction('open_inspector', cardType);
+              onOpenInspector();
+            }}
           />
         </Menu>
       }
