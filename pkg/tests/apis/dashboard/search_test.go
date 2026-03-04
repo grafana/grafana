@@ -44,7 +44,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 	defer helper.Shutdown()
 
@@ -235,7 +234,6 @@ func TestIntegrationSearchOwnerReferences(t *testing.T) {
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 	defer helper.Shutdown()
 
@@ -333,7 +331,6 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 	defer helper.Shutdown()
 
@@ -445,7 +442,6 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
-			UnifiedStorageEnableSearch: true,
 		})
 		defer helper.Shutdown()
 
