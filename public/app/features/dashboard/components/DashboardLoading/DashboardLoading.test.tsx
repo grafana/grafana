@@ -1,17 +1,21 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardInitPhase } from 'app/types/dashboard';
 
 import { DashboardLoading } from './DashboardLoading';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: jest.fn(),
   locationService: {
     push: jest.fn(),
   },
+}));
+
+jest.mock('app/core/services/backend_srv', () => ({
+  getBackendSrv: jest.fn(),
 }));
 
 describe('DashboardLoading', () => {

@@ -2,8 +2,9 @@ import { css, keyframes } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardInitPhase } from 'app/types/dashboard';
 
 export interface Props {
