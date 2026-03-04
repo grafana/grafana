@@ -1,7 +1,7 @@
 import { DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
-import { trackReorder } from '../../tracking';
+import { trackReorder } from '../../../tracking';
 import {
   useActionsContext,
   usePanelContext,
