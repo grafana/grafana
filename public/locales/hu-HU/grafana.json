@@ -7432,25 +7432,6 @@
       "message": "Nem található adatforrás"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Oszlop neve"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Oszlop tartalmának törlése",
-        "label-clear-row": "Sor tartalmának törlése",
-        "label-remove-all-data": "Minden adat törlése",
-        "label-search": "Keresés…"
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Oszlop tartalmának törlése",
-        "label-delete-column": "Oszlop törlése",
-        "label-rename-column": "Oszlop átnevezése",
-        "label-set-field-type": "Mezőtípus beállítása"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "Nincs engedélye új adatforrások konfigurálására"

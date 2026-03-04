@@ -29,7 +29,6 @@
     "config-from-query": (import '../dev-dashboards/transforms/config-from-query.json'),
     "dashlist": (import '../dev-dashboards/panel-dashlist/dashlist.json'),
     "datadata-macros": (import '../dev-dashboards/feature-templating/datadata-macros.json'),
-    "datagrid_metric_values": (import '../dev-dashboards/panel-datagrid/datagrid_metric_values.json'),
     "demo1": (import '../dev-dashboards/datasource-testdata/demo1.json'),
     "elasticsearch_complex": (import '../dev-dashboards/datasource-elasticsearch/elasticsearch_complex.json'),
     "elasticsearch_migration": (import '../dev-dashboards/datasource-elasticsearch/elasticsearch_migration.json'),
@@ -147,4 +146,4 @@
     "xychart-migrations": (import '../dev-dashboards/panel-xychart/xychart-migrations.json'),
     "xychart-tooltip-color-test": (import '../dev-dashboards/panel-xychart/xychart-tooltip-color-test.json'),
   },
-} 
+}

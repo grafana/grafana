@@ -7405,25 +7405,6 @@
       "message": "沒有找到資料來源"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "欄位名稱"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "清除欄位",
-        "label-clear-row": "清除列",
-        "label-remove-all-data": "刪除所有資料",
-        "label-search": "搜尋…"
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "清除欄位",
-        "label-delete-column": "刪除欄位",
-        "label-rename-column": "重新命名欄位",
-        "label-set-field-type": "設定欄位類型"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "您沒有設定新資料來源的權限"

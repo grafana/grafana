@@ -7432,25 +7432,6 @@
       "message": "Nessuna origine dati trovata"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Nome colonna"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Cancella colonna",
-        "label-clear-row": "Cancella riga",
-        "label-remove-all-data": "Elimina tutti i dati",
-        "label-search": "Cerca..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Cancella colonna",
-        "label-delete-column": "Elimina colonna",
-        "label-rename-column": "Rinomina colonna",
-        "label-set-field-type": "Imposta tipo di campo"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "Non hai l'autorizzazione per configurare nuove origini di dati"

@@ -7405,25 +7405,6 @@
       "message": "Tidak ada sumber data yang ditemukan"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Nama kolom"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Hapus kolom",
-        "label-clear-row": "Hapus baris",
-        "label-remove-all-data": "Hapus semua data",
-        "label-search": "Cari..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Hapus kolom",
-        "label-delete-column": "Hapus kolom",
-        "label-rename-column": "Ganti nama kolom",
-        "label-set-field-type": "Atur jenis bidang"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "Anda tidak memiliki izin untuk mengonfigurasi sumber data baru"
