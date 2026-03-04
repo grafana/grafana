@@ -8,36 +8,29 @@ export const PANEL_STATES = {
 
 export type PanelState = (typeof PANEL_STATES)[keyof typeof PANEL_STATES];
 
-export const VizSuggestionsInteractions = {
-  suggestionPreviewed: (properties: {
-    pluginId: string;
-    suggestionName: string;
-    panelState: PanelState;
-    isAutoSelected?: boolean;
-  }) => {
-    reportVizSuggestionsInteraction('suggestion_previewed', properties);
-  },
+export interface PanelSuggestionInfo {
+  pluginId: string;
+  isNewPanel: boolean;
+  suggestionName: string;
+  suggestionIndex: number;
+}
 
-  suggestionAccepted: (properties: {
+export const VizSuggestionsInteractions = {
+  suggestionApplied: (properties: {
     pluginId: string;
     suggestionName: string;
     panelState: PanelState;
     suggestionIndex: number;
   }) => {
-    reportVizSuggestionsInteraction('suggestion_accepted', properties);
+    reportVizSuggestionsInteraction('suggestion_applied', properties);
   },
 
   presetApplied: (properties: { pluginId: string; presetName: string; presetIndex: number }) => {
     reportVizSuggestionsInteraction('preset_applied', properties);
   },
 
-  panelSaved: (properties: {
-    pluginId: string;
-    isNewPanel: boolean;
-    suggestionName: string;
-    suggestionIndex: number;
-  }) => {
-    reportVizSuggestionsInteraction('panel_saved', properties);
+  panelSaved: ({ pluginId, isNewPanel, suggestionName, suggestionIndex }: PanelSuggestionInfo) => {
+    reportVizSuggestionsInteraction('panel_saved', { pluginId, isNewPanel, suggestionName, suggestionIndex });
   },
 };
 
