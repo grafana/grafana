@@ -547,33 +547,27 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 
 	name := obj.GetName()
 
-	// Check legacy internal IDs
+	// Check (and remove) any legacy internal IDs
 	var old *unstructured.Unstructured
 	internalID := cmd.Dashboard.Get("id").MustInt64(0)
-	if internalID > 0 {
-		if name == "" {
-			found, err := client.List(ctx, metav1.ListOptions{
-				LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, internalID),
-				Limit:         2,
-			})
-			if err != nil {
-				return response.Error(http.StatusInternalServerError, "unable to lookup previous version", err)
-			}
-			if len(found.Items) > 0 {
-				old = &found.Items[0]
-				if !cmd.Overwrite {
-					return response.Error(http.StatusConflict,
-						"Dashboard with the same internal ID already exists. Use overwrite flag to update.", nil)
-				}
-				name = old.GetName()
-			} else {
-				return response.Error(http.StatusBadRequest,
-					"The payload includes an internal identifier that is not found", nil)
-			}
+	if internalID > 0 && name == "" {
+		found, err := client.List(ctx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, internalID),
+			Limit:         2,
+		})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "unable to lookup previous version", err)
+		}
+		if len(found.Items) == 0 {
+			return response.Error(http.StatusBadRequest,
+				fmt.Sprintf("The payload includes an internal identifier (%d) that is not found", internalID), nil)
+		}
 
-			// TODO, search for dashboards by this internal ID and get the name
-			// old = list with label selector?
-			return response.Error(http.StatusBadRequest, "saveDashboardViaK8s can not (yet) identify dashboards by internal id", err)
+		old = &found.Items[0]
+		name = old.GetName()
+		if !cmd.Overwrite {
+			return response.Error(http.StatusConflict,
+				"Dashboard with the same internal ID already exists. Use overwrite flag to update.", nil)
 		}
 	}
 
