@@ -52,22 +52,16 @@ func (c *check) Name() string {
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
-	log := c.log.WithContext(ctx)
-	log.Info("Items: starting")
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		log.Info("Items: failed to get requester", "error", err)
 		return nil, err
 	}
 	orgID := requester.GetOrgID()
-	log.Info("Items: fetching integrations", "orgID", orgID)
 	items, err := c.fetchIntegrations(ctx, orgID)
 	if err != nil {
-		// No app settings or API error: return empty list so the check runs with 0 items
-		log.Info("Items: fetch failed, returning empty list", "error", err)
+		c.log.WithContext(ctx).Debug("Items: fetch failed, returning empty list", "orgID", orgID, "error", err)
 		return []any{}, nil
 	}
-	log.Info("Items: fetched integrations", "count", len(items))
 	res := make([]any, len(items))
 	for i := range items {
 		res[i] = &items[i]
@@ -76,25 +70,19 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 }
 
 func (c *check) Item(ctx context.Context, id string) (any, error) {
-	log := c.log.WithContext(ctx)
-	log.Info("Item: starting", "id", id)
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		log.Info("Item: failed to get requester", "error", err)
 		return nil, err
 	}
 	items, err := c.fetchIntegrations(ctx, requester.GetOrgID())
 	if err != nil {
-		log.Info("Item: fetch failed", "id", id, "error", err)
 		return nil, nil
 	}
 	for i := range items {
 		if items[i].Slug == id {
-			log.Info("Item: found integration", "id", id, "name", items[i].Name)
 			return &items[i], nil
 		}
 	}
-	log.Info("Item: integration not found", "id", id)
 	return nil, nil
 }
 
@@ -111,7 +99,6 @@ func (c *check) Steps() []checks.Step {
 // fetchIntegrations loads easystart app settings, calls the integrations API, and returns integration items.
 func (c *check) fetchIntegrations(ctx context.Context, orgID int64) ([]IntegrationItem, error) {
 	log := c.log.WithContext(ctx)
-	log.Info("fetchIntegrations: starting", "orgID", orgID)
 
 	ps, err := c.pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
 		PluginID: EasystartType,
@@ -119,20 +106,17 @@ func (c *check) fetchIntegrations(ctx context.Context, orgID int64) ([]Integrati
 	})
 	if err != nil {
 		if errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-			log.Info("fetchIntegrations: plugin setting not found", "pluginID", EasystartType)
+			log.Debug("fetchIntegrations: easystart plugin not configured", "orgID", orgID)
 			return nil, err
 		}
-		log.Info("fetchIntegrations: get plugin setting failed", "error", err)
 		return nil, fmt.Errorf("get plugin setting: %w", err)
 	}
-	log.Info("fetchIntegrations: got plugin setting")
 
 	integrationsEndpoint, stackID, authToken, err := getAPIConfigFromSetting(ps, c.pluginSettings)
 	if err != nil {
-		log.Info("fetchIntegrations: getAPIConfigFromSetting failed", "error", err)
+		log.Debug("fetchIntegrations: invalid config", "error", err)
 		return nil, err
 	}
-	log.Info("fetchIntegrations: config ok", "endpoint", integrationsEndpoint, "stackID", stackID, "hasToken", authToken != "")
 
 	url := fmt.Sprintf("%s/v2/stacks/%s/integrations?installed=true", integrationsEndpoint, stackID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -141,26 +125,23 @@ func (c *check) fetchIntegrations(ctx context.Context, orgID int64) ([]Integrati
 	}
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	log.Info("fetchIntegrations: calling integrations API", "url", url)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Info("fetchIntegrations: API request failed", "error", err)
+		log.Debug("fetchIntegrations: API request failed", "url", url, "error", err)
 		return nil, fmt.Errorf("integrations API request: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	log.Info("fetchIntegrations: API response", "status", resp.StatusCode)
 	if resp.StatusCode != http.StatusOK {
+		log.Debug("fetchIntegrations: unexpected API status", "url", url, "status", resp.StatusCode)
 		return nil, fmt.Errorf("integrations API returned status %d", resp.StatusCode)
 	}
 
 	var body integrationsAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		log.Info("fetchIntegrations: decode failed", "error", err)
 		return nil, fmt.Errorf("decode integrations response: %w", err)
 	}
-	log.Info("fetchIntegrations: decoded response", "dataEntries", len(body.Data))
 
 	items := make([]IntegrationItem, 0, len(body.Data))
 	for _, entry := range body.Data {
@@ -179,7 +160,7 @@ func (c *check) fetchIntegrations(ctx context.Context, orgID int64) ([]Integrati
 			InstalledVersion: installedVer,
 		})
 	}
-	log.Info("fetchIntegrations: done", "itemsCount", len(items))
+	log.Debug("fetchIntegrations: done", "stackID", stackID, "total", len(body.Data), "installed", len(items))
 	return items, nil
 }
 
