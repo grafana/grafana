@@ -256,7 +256,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		Meta:      meta,
 	}
 
-	c.TimeRequest(metrics.MApiDashboardGet)
 	return response.JSON(http.StatusOK, dto)
 }
 
@@ -494,7 +493,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
 	}
 
-	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
 		"status":    "success",
 		"slug":      dashboard.Slug,
@@ -590,7 +588,6 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
 	slug := slugify.Slugify(title)
 
-	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
 		"status":    "success",
 		"slug":      slug,
