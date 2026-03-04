@@ -320,5 +320,21 @@ export function validateVariableName(
     return { isValid: false, errorMessage: 'Variable with the same name already exists' };
   }
 
+  // Check ancestor variable sets to prevent section variables from shadowing global variables
+  let ancestor: SceneObject | undefined = set.parent;
+  while (ancestor) {
+    const ancestorVars = ancestor.state.$variables;
+    if (ancestorVars instanceof SceneVariableSet) {
+      const ancestorVar = ancestorVars.getByName(name);
+      if (ancestorVar) {
+        return {
+          isValid: false,
+          errorMessage: 'A variable with this name already exists at the dashboard level',
+        };
+      }
+    }
+    ancestor = ancestor.parent;
+  }
+
   return { isValid: true };
 }

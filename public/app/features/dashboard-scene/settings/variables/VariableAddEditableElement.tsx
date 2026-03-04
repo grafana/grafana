@@ -167,11 +167,7 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
   );
 }
 
-function SectionVariableTypeSelection({
-  sectionVariableAdd,
-}: {
-  sectionVariableAdd: SectionVariableAdd;
-}) {
+function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableAdd: SectionVariableAdd }) {
   const options = useMemo(() => getVariableTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
 
@@ -180,14 +176,19 @@ function SectionVariableTypeSelection({
       const dashboard = sectionVariableAdd.state.dashboardRef.resolve();
       const sectionOwner = sectionVariableAdd.state.sectionOwnerRef.resolve();
 
-      let variablesSet = sectionOwner.state.$variables;
-      if (!(variablesSet instanceof SceneVariableSet)) {
-        variablesSet = new SceneVariableSet({ variables: [] });
+      const existing = sectionOwner.state.$variables;
+      const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
+
+      if (!(existing instanceof SceneVariableSet)) {
         sectionOwner.setState({ $variables: variablesSet });
       }
 
+      const dashboardVars = sceneGraph.getVariables(dashboard).state.variables ?? [];
+      const sectionVars = variablesSet.state.variables ?? [];
+      const allVars = [...dashboardVars, ...sectionVars];
+
       const newVar = getVariableScene(type, {
-        name: getNextAvailableId(type, variablesSet.state.variables ?? []),
+        name: getNextAvailableId(type, allVars),
       });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
