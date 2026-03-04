@@ -3,6 +3,8 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"path"
 	"slices"
 	"sort"
@@ -13,11 +15,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -998,9 +1002,20 @@ func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	}
 	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
+	// Stand up a mock API server that accepts DeleteCollection calls so that
+	// the k8s resource deleter inside DeletionService can succeed.
+	fakeSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Success"}`))
+	}))
+	t.Cleanup(fakeSrv.Close)
+	restCfgProvider := apiserver.RestConfigProviderFunc(func(context.Context) (*clientrest.Config, error) {
+		return &clientrest.Config{Host: fakeSrv.URL}, nil
+	})
+
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil)
-	deleteOrgService, err := orgimpl.ProvideDeletionService(db, cfg, dashSvc, acimpl.ProvideAccessControlTest())
+	deleteOrgService, err := orgimpl.ProvideDeletionService(db, cfg, dashSvc, acimpl.ProvideAccessControlTest(), restCfgProvider)
 	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)

@@ -5,6 +5,7 @@ import { Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StepStatusInfo } from '../Wizard/types';
+import { JobType } from '../types';
 
 import { JobContent } from './JobContent';
 import { getJobMessages } from './getJobMessage';
@@ -12,7 +13,7 @@ import { getJobMessages } from './getJobMessage';
 export interface FinishedJobProps {
   jobUid: string;
   repositoryName: string;
-  jobType: 'sync' | 'delete' | 'move';
+  jobType: JobType;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
   onRetry?: () => void;
 }

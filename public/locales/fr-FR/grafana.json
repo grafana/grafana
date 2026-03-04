@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Échec de la récupération des points de contact"
     },
     "contact-points": {
-      "create": "Créer un point de contact",
+      "create": "",
       "custom-template-value": "Valeur du modèle personnalisé",
       "delete-reasons": {
         "heading": "Le point de contact ne peut pas être supprimé pour les raisons suivantes :",
@@ -2105,7 +2105,9 @@
       "select-namespace": "Sélectionner le namespace"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Règles d’alerte",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Supprimé récemment",
@@ -2129,7 +2131,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Ajouter un intervalle de temps"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2175,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2183,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Recherche par point de contact",
@@ -2252,7 +2253,7 @@
       "title-failed-to-fetch-notification-templates": "Échec de la récupération des modèles de notification"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Ajouter un groupe de modèles de notification",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Créez des modèles de notification pour personnaliser vos notifications."
     },
     "notifications-list": {
@@ -2279,6 +2280,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2304,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Ajoutez des étiquettes pour vous aider à mieux gérer vos règles d’enregistrement.",
@@ -2333,8 +2333,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Visualisez les alertes en cours et explorez les données historiques pour analyser des incidents actuels ou passés.",
-        "title": "Alertes"
+        "subtitle": "Visualisez les alertes en cours et explorez les données historiques pour analyser des incidents actuels ou passés."
       }
     },
     "panel-alert-tab-content": {
@@ -3264,6 +3263,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Formulaire du modèle",
+      "body-legacy": "",
       "label-examples-documentation": "Documentation des exemples",
       "label-template-group": "Groupe de modèles",
       "label-template-group-name": "Nom du groupe de modèles",
@@ -3272,6 +3272,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Donner un nom au groupe de modèles",
       "title-error-saving-template": "Erreur lors de l’enregistrement du modèle",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Aide-mémoire de modélisation"
     },
     "template-preview": {
@@ -3312,6 +3313,8 @@
       "help": {
         "intro": "Les modèles de notification utilisent le langage de modélisation Go pour créer des messages de notification.\n\nDans Grafana, un groupe de modèles peut définir plusieurs modèles de notification en utilisant {{ définir « <NAME> » }}.\nCes modèles peuvent ensuite être utilisés dans les points de contact et dans d'autres modèles de notification en appelant {{ modèle « <NAME> » }}.\nPour en savoir plus sur les modèles de notification, reportez-vous à notre documentation."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Mal configuré",
       "misconfigured-warning": "Ce modèle est mal configuré.",
       "misconfigured-warning-details": "Les modèles doivent être définis dans les sections <2></2> et <5></5> de la configuration de votre Alertmanager."
@@ -3350,7 +3353,7 @@
       "stop-alerting-when": "Arrêter l’alerte (ou l’état en attente) lorsque"
     },
     "time-interval": {
-      "add-time-interval": "Ajouter un intervalle de temps",
+      "add-time-interval": "",
       "save": "Enregistrer l’intervalle de temps",
       "saving": "Enregistrement de l’intervalle de temps"
     },
@@ -3422,7 +3425,14 @@
         "title": "Règle introuvable"
       },
       "rules-with-firing-instances": "Règles d’alerte avec des instances déclenchées",
-      "rules-with-pending-instances": "Règles d’alerte avec des instances en attente"
+      "rules-with-pending-instances": "Règles d’alerte avec des instances en attente",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Ajouter une expression"
@@ -4182,6 +4192,15 @@
       "clear": "Effacer la recherche et les filtres",
       "text": "Aucun résultat n'a été trouvé pour votre requête"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Effacer l’historique",
       "error": "Impossible de charger les tableaux de bord consultés récemment.",
@@ -4853,6 +4872,10 @@
       "view-json-diff": "Afficher JSON diff pour voir toutes les modifications"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Ajouter un nouveau",
     "alert": {
@@ -5054,7 +5077,7 @@
     "canvas-actions": {
       "add-panel": "Ajouter un panneau",
       "disabled-child-contains-tabs": "Impossible de passer aux onglets car une ligne contient déjà des onglets",
-      "disabled-nested-grouping": "Le regroupement est limité à 2 niveaux",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Les onglets ne peuvent pas être imbriqués dans d’autres onglets",
       "group-into-row": "Grouper en ligne",
       "group-into-tab": "Grouper dans un onglet",
@@ -6591,6 +6614,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Échec de la suppression du tableau de bord",
       "cancel-action": "Annuler",
@@ -6847,10 +6876,10 @@
       "title-delete-all-transformations": "Supprimer toutes les transformations ?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Basculer la vue du tableau",
-      "table-view-label-table-view": "Vue du tableau"
+      "table-view-label-table-view": "Vue du tableau",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6895,6 +6924,16 @@
     },
     "query-editor": {
       "query": "Requête"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Des groupes de capture nommés peuvent être utilisés pour séparer le texte affiché et la valeur (<1>voir des exemples</1>).",
@@ -7019,6 +7058,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Impossible de créer des alertes à partir de ce panneau, car aucune requête à une source de données capable d’alerter n’a été trouvée.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Nouvelle règle d'alerte",
       "title-no-alerting-capable-query-found": "Aucune requête capable d’alerter n’a été trouvée"
     },
@@ -7799,7 +7839,10 @@
     "pro-tip": "Conseil de pro : {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Nous cherchons, mais ne trouvons pas ce {{lowerCaseEntity}}. Essayez de retourner à la <4>page d'accueil</4> ou de chercher de l'aide sur le <7>site communautaire.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -9435,11 +9478,13 @@
       },
       "legend": {
         "category": "Légende",
+        "description-limit": "",
         "description-values": "Sélectionner les valeurs ou les calculs à afficher dans la légende",
         "mode-options": {
           "label-list": "Liste",
           "label-table": "Tableau"
         },
+        "name-limit": "",
         "name-mode": "Mode",
         "name-placement": "Placement",
         "name-values": "Valeurs",
@@ -10370,6 +10415,11 @@
     "subtitle": "L’intégration LDAP sur Grafana permet aux utilisateurs Grafana de se connecter à l’aide de leurs identifiants LDAP. Pour en savoir plus, consultez notre <2><1>documentation</1></2>.",
     "title": "Paramètres de base"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Un panneau de bibliothèque avec ce nom existe déjà",
@@ -10965,7 +11015,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
@@ -11242,9 +11294,17 @@
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
       "title": "Alerte"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Gérez les configurations d'Alertmanager et activez la réception des alertes gérées par Grafana",
       "title": "Paramètres"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Déterminer comment les alertes sont acheminées vers les points de contact",
@@ -11910,8 +11970,6 @@
       "tooltip-delete": "Supprimer"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Certaines suggestions n’ont pas pu être chargées"
       },
@@ -12368,6 +12426,11 @@
       "text-loading-teams": "Chargement des équipes..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Ajouter une note pour décrire vos modifications (facultatif)",
@@ -12375,13 +12438,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Branche",
       "label-comment": "Commentaire",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Chemin d’accès",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Dernière branche",
       "suffix-new-branch": "",
@@ -12495,6 +12563,8 @@
       "instance-fully-managed-tooltip": "La configuration est désactivée car cette instance est entièrement gérée"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12634,6 +12704,20 @@
       "label-generate-dashboard-previews": "Générer des aperçus de tableaux de bord",
       "label-read-only": "Lecture seule",
       "label-sync-interval": "Intervalle de synchronisation (secondes)"
+    },
+    "fix-folder-metadata": {
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -12776,6 +12860,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13283,6 +13369,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13372,6 +13459,7 @@
       "card-click": "Sélectionner la carte {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
       "transformations": "Transformations",
@@ -13379,7 +13467,9 @@
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -14328,6 +14418,11 @@
           "settings": "Paramètres"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Synchronisation de groupe externe"
@@ -14384,6 +14479,19 @@
       "loading-teams": "Chargement des équipes…",
       "new-team": "Nouvelle équipe",
       "placeholder-search-teams": "Rechercher les équipes"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Facultatif : principalement utilisé pour définir l’avatar du profil de l’équipe (via le service Gravatar)",
@@ -14615,6 +14723,12 @@
     "name-show-matches-only": "Afficher uniquement les correspondances",
     "traces-panel": {
       "no-data-found-in-response": "Aucune donnée trouvée dans la réponse"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

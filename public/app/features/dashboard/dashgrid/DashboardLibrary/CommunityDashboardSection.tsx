@@ -13,13 +13,8 @@ import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
 import { checkDashboardCompatibility } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  DashboardLibraryInteractions,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-} from './interactions';
+import { CONTENT_KINDS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { DashboardLibraryInteractions } from './interactions';
 import { GnetDashboard, isGnetDashboard } from './types';
 import {
   getThumbnailUrl,

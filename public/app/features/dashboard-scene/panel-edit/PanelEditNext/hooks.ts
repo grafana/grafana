@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useLocalStorage } from 'react-use';
+import { useLocalStorage, useSessionStorage } from 'react-use';
 
+import { config } from '@grafana/runtime';
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
@@ -11,11 +12,12 @@ import { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
+import { QUERY_EDITOR_BANNER_DISMISSED_KEY, QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
 
 const CONTROLS_ROW_HEIGHT = 'auto';
 const MIN_SIDEBAR_RATIO = 0.1;
 const MAX_SIDEBAR_RATIO = 0.5;
+const MIN_SIDEBAR_PIXELS = 220;
 const vizResizerClassName = css({ height: 2, width: '100%' });
 // Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
 const FALLBACK_SIDEBAR_RATIO = 0.25;
@@ -119,6 +121,14 @@ export function useRatioResize({
   return { handleRef, ratio, setRatio, className: cx(dragClass, className) };
 }
 
+export function useQueryEditorBanner() {
+  const [dismissed, setDismissed] = useSessionStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
+  const showBanner = Boolean(config.featureToggles.queryEditorNext) && !dismissed;
+  const dismissBanner = useCallback(() => setDismissed(true), [setDismissed]);
+
+  return { showBanner, dismissBanner };
+}
+
 export function usePanelEditorShell(model: PanelEditor) {
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
@@ -168,7 +178,11 @@ export function getDefaultSidebarRatio(containerWidth: number): number {
   return 0.25;
 }
 
-export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObject<HTMLDivElement>) {
+export function useVizAndDataPaneLayout(
+  model: PanelEditor,
+  containerRef: RefObject<HTMLDivElement>,
+  showBanner = false
+) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, tableView } = model.useState();
   const panel = model.getPanel();
@@ -179,9 +193,6 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObj
   );
 
   const isScrollingLayout = useScrollReflowLimit();
-
-  const [isDataPaneCollapsed, setIsDataPaneCollapsed] = useState(false);
-  const onToggleCollapse = useCallback(() => setIsDataPaneCollapsed((v) => !v), []);
 
   const panelToShow = tableView ?? panel;
 
@@ -209,10 +220,11 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObj
         controlsEnabled: Boolean(controls),
         hasDataPane: Boolean(dataPane),
         isSidebarFullWidth: sidebarSize === SidebarSize.Full,
+        showBanner,
         vizRatio: vizResize.ratio,
         sidebarRatio: sidebarResize.ratio,
       }),
-    [controls, dataPane, sidebarSize, vizResize.ratio, sidebarResize.ratio]
+    [controls, dataPane, sidebarSize, showBanner, vizResize.ratio, sidebarResize.ratio]
   );
 
   return {
@@ -225,7 +237,6 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObj
       sidebarSize,
       setSidebarSize,
       isScrollingLayout,
-      isDataPaneCollapsed,
       gridStyles,
       sidebarResizeHandle: {
         ref: sidebarResize.handleRef,
@@ -236,9 +247,6 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerRef: RefObj
         className: vizResize.className,
       },
     },
-    actions: {
-      onToggleCollapse,
-    },
   };
 }
 
@@ -246,6 +254,7 @@ type VizAndDataPaneGridInput = {
   controlsEnabled: boolean;
   hasDataPane: boolean;
   isSidebarFullWidth: boolean;
+  showBanner: boolean;
   vizRatio: number;
   sidebarRatio: number;
 };
@@ -254,6 +263,7 @@ export function buildVizAndDataPaneGrid({
   controlsEnabled,
   hasDataPane,
   isSidebarFullWidth,
+  showBanner,
   vizRatio,
   sidebarRatio,
 }: VizAndDataPaneGridInput) {
@@ -272,6 +282,11 @@ export function buildVizAndDataPaneGrid({
   grid.push(['viz', 'viz']);
 
   if (hasDataPane) {
+    if (showBanner) {
+      rows.push('auto');
+      grid.push([isSidebarFullWidth ? 'sidebar' : 'version-toggle', 'version-toggle']);
+    }
+
     rows.push('1fr');
     grid.push(['sidebar', 'data-pane']);
   }
@@ -282,9 +297,11 @@ export function buildVizAndDataPaneGrid({
     }
   }
 
-  // Convert sidebar ratio to fractional units (ratio is clamped to [0.1, 0.5] so 0 and 1 are unreachable)
+  // Convert sidebar ratio to fractional units (ratio is clamped to [0.1, 0.5] so 0 and 1 are unreachable).
+  // minmax() enforces the pixel floor at the CSS level so window resizes can't push the sidebar
+  // below MIN_SIDEBAR_PIXELS — consistent with the same floor applied in the drag handler.
   const sidebarFr = sidebarRatio / (1 - sidebarRatio);
-  const columns = `${sidebarFr}fr 1fr`;
+  const columns = `minmax(${MIN_SIDEBAR_PIXELS}px, ${sidebarFr}fr) 1fr`;
 
   return {
     height: '100%',

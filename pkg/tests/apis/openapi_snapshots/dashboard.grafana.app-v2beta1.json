@@ -1119,6 +1119,13 @@
             "type": "string",
             "default": ""
           },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          },
           "spec": {
             "default": {},
             "allOf": [
@@ -1941,6 +1948,13 @@
             "type": "string",
             "default": ""
           },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          },
           "spec": {
             "type": "object",
             "additionalProperties": {
@@ -2509,6 +2523,13 @@
           "kind": {
             "type": "string",
             "default": ""
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
           },
           "spec": {
             "default": {},
@@ -3435,6 +3456,12 @@
           },
           "title": {
             "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind"
+            }
           }
         }
       },
@@ -3785,6 +3812,12 @@
           },
           "title": {
             "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind"
+            }
           }
         }
       },

@@ -5464,7 +5464,7 @@
             "options": [
               {
                 "dependsOn": "",
-                "description": "The recipient user’s user key.",
+                "description": "The recipient user's user key.",
                 "element": "input",
                 "inputType": "text",
                 "label": "User key",
@@ -5480,7 +5480,7 @@
               },
               {
                 "dependsOn": "",
-                "description": "Your registered application’s API token, see https://pushover.net/app",
+                "description": "Your registered application's API token, see https://pushover.net/app",
                 "element": "input",
                 "inputType": "text",
                 "label": "Token",
@@ -8685,7 +8685,7 @@
                 "element": "input",
                 "inputType": "text",
                 "label": "Text",
-                "placeholder": "{{ template \"msteams.default.text\" . }}",
+                "placeholder": "{{ template \"msteamsv2.default.text\" . }}",
                 "propertyName": "text",
                 "required": false,
                 "secure": false,

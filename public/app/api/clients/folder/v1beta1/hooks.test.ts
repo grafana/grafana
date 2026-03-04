@@ -16,6 +16,7 @@ import {
   useGetFolderQueryFacade,
   useDeleteMultipleFoldersMutationFacade,
   useMoveMultipleFoldersMutationFacade,
+  getFolderByUidFacade,
 } from './hooks';
 import { setupCreateFolder, setupUpdateFolder } from './test-utils';
 
@@ -46,6 +47,7 @@ const dispatchMockFn = jest.fn();
 jest.mock('../../../../types/store', () => {
   return {
     ...jest.requireActual('../../../../types/store'),
+    dispatch: (...args: unknown[]) => dispatchMockFn(...args),
     useDispatch: () => dispatchMockFn,
   };
 });
@@ -287,5 +289,44 @@ describe.each([
 
       expect(await screen.findByText('Folder updated')).toBeInTheDocument();
     });
+  });
+});
+
+describe('getFolderByUidFacade', () => {
+  afterEach(() => {
+    config.featureToggles = originalToggles;
+    dispatchMockFn.mockReset();
+  });
+
+  it('throws the original error with HTTP status when folder API returns 403 and foldersAppPlatformAPI is enabled', async () => {
+    config.featureToggles.foldersAppPlatformAPI = true;
+
+    const fetchError = { status: 403, data: { message: 'Forbidden' } };
+    dispatchMockFn
+      .mockResolvedValueOnce({ error: fetchError, data: undefined })
+      .mockResolvedValueOnce({ error: fetchError, data: undefined })
+      .mockResolvedValueOnce({ error: fetchError, data: undefined });
+
+    await expect(getFolderByUidFacade('some-folder-uid')).rejects.toHaveProperty('status', 403);
+  });
+
+  it('throws the original error with HTTP status when folder API returns 403 and foldersAppPlatformAPI is disabled', async () => {
+    config.featureToggles.foldersAppPlatformAPI = false;
+
+    const fetchError = { status: 403, data: { message: 'Forbidden' } };
+    dispatchMockFn.mockResolvedValueOnce({ error: fetchError, data: undefined });
+
+    await expect(getFolderByUidFacade('some-folder-uid')).rejects.toHaveProperty('status', 403);
+  });
+
+  it('throws a generic error when all responses are undefined and no error is available', async () => {
+    config.featureToggles.foldersAppPlatformAPI = true;
+
+    dispatchMockFn
+      .mockResolvedValueOnce({ data: undefined })
+      .mockResolvedValueOnce({ data: undefined })
+      .mockResolvedValueOnce({ data: undefined });
+
+    await expect(getFolderByUidFacade('some-folder-uid')).rejects.toThrow('One of the folder responses is undefined');
   });
 });

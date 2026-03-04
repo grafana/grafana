@@ -164,7 +164,7 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
                 isNew={false}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
-                hidePath
+                hiddenFields={['path']}
               />
 
               <Stack gap={2}>
