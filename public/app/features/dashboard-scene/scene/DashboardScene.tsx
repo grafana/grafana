@@ -205,7 +205,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   /**
    * Panels with an accepted suggestion
    */
-  private _panelSuggestions = new Map<string, PanelSuggestionInfo>();
+  private _panelSuggestionsReceipts = new Map<string, PanelSuggestionInfo>();
 
   protected _renderBeforeActivation = true;
 
@@ -317,9 +317,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public recordPanelSuggestion(panelKey: string, info: PanelSuggestionInfo | undefined) {
     if (info) {
-      this._panelSuggestions.set(panelKey, info);
+      this._panelSuggestionsReceipts.set(panelKey, info);
     } else {
-      this._panelSuggestions.delete(panelKey);
+      this._panelSuggestionsReceipts.delete(panelKey);
     }
   }
 
@@ -343,10 +343,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: undefined,
     });
 
-    for (const info of this._panelSuggestions.values()) {
+    for (const info of this._panelSuggestionsReceipts.values()) {
       VizSuggestionsInteractions.panelSaved(info);
     }
-    this._panelSuggestions.clear();
+    this._panelSuggestionsReceipts.clear();
 
     this.state.editPanel?.dashboardSaved();
 
