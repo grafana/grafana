@@ -5386,7 +5386,6 @@
         "query-options": {
           "modal-title": "Query Variable: {{name}}",
           "tabs": {
-            "preview": "Preview ({{optionsCount}})",
             "query": "Query"
           }
         },
@@ -6813,6 +6812,7 @@
       "apply": "Apply",
       "discard": "Discard",
       "label-static-options": "Static options ({{staticOptionsCount}})",
+      "no-options-hint": "Provide a query above and click \"Run query\" to see a preview of the variable options.",
       "run-query": "Run query"
     },
     "move-provisioned-dashboard-form": {

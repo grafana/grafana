@@ -6,13 +6,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
-import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
+import { Button, InlineFieldRow, InlineLabel, InteractiveTable, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 export interface VariableValuesPreviewProps {
   options: VariableValueOption[];
   staticOptions: VariableValueOption[];
-  hideTitle?: boolean;
+  noPagination?: boolean;
 }
 
 export const useGetAllVariableOptions = (
@@ -63,7 +63,7 @@ export const useGetPropertiesFromOptions = (
     return ['value', 'text', ...keys];
   }, [options, staticOptions]);
 
-export const VariableValuesPreview = ({ options, staticOptions, hideTitle }: VariableValuesPreviewProps) => {
+export const VariableValuesPreview = ({ options, staticOptions, noPagination }: VariableValuesPreviewProps) => {
   const styles = useStyles2(getStyles);
   const properties = useGetPropertiesFromOptions(options, staticOptions);
   const hasOptions = options.length > 0;
@@ -71,17 +71,18 @@ export const VariableValuesPreview = ({ options, staticOptions, hideTitle }: Var
 
   return (
     <div className={styles.previewContainer}>
-      <Text variant="bodySmall" weight="medium">
-        {!hideTitle && (
-          <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
-            Preview of values ({'{{count}}'})
-          </Trans>
-        )}
-        {hasOptions && displayMultiPropsPreview && (
-          <VariableValuesWithPropsPreview options={options} properties={properties} />
-        )}
-        {hasOptions && !displayMultiPropsPreview && <VariableValuesWithoutPropsPreview options={options} />}
-      </Text>
+      <Trans
+        i18nKey="dashboard-scene.variable-values-preview.preview-of-values"
+        values={{ count: options.length }}
+        className={styles.previewTitle}
+      >
+        Preview of values ({'{{count}}'})
+      </Trans>
+      {hasOptions && displayMultiPropsPreview && (
+        <VariableValuesWithPropsPreview options={options} properties={properties} noPagination />
+      )}
+      {hasOptions && !displayMultiPropsPreview && <VariableValuesWithoutPropsPreview options={options} noPagination />}
+      {/* </Text> */}
     </div>
   );
 };
@@ -89,9 +90,11 @@ export const VariableValuesPreview = ({ options, staticOptions, hideTitle }: Var
 function VariableValuesWithPropsPreview({
   options,
   properties,
+  noPagination,
 }: {
   options: VariableValueOption[];
   properties: string[];
+  noPagination?: boolean;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -119,7 +122,7 @@ function VariableValuesWithPropsPreview({
         columns={columns}
         data={data}
         getRowId={(r) => JSON.stringify(r)}
-        pageSize={8}
+        pageSize={!noPagination ? 8 : undefined}
       />
     </div>
   );
@@ -127,9 +130,15 @@ function VariableValuesWithPropsPreview({
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
 const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
-export function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
+export function VariableValuesWithoutPropsPreview({
+  options,
+  noPagination,
+}: {
+  options: VariableValueOption[];
+  noPagination?: boolean;
+}) {
   const styles = useStyles2(getStyles);
-  const [previewLimit, setPreviewLimit] = useState(20);
+  const [previewLimit, setPreviewLimit] = useState(noPagination ? Number.MAX_VALUE : 20);
   const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);
   const showMoreOptions = useCallback(
     (event: MouseEvent) => {
@@ -151,7 +160,7 @@ export function VariableValuesWithoutPropsPreview({ options }: { options: Variab
           </InlineFieldRow>
         ))}
       </InlineFieldRow>
-      {options.length > previewLimit && (
+      {!noPagination && options.length > previewLimit && (
         <InlineFieldRow className={styles.optionContainer}>
           <Button onClick={showMoreOptions} variant="secondary" size="sm">
             <Trans i18nKey="dashboard-scene.variable-values-preview.show-more">Show more</Trans>
@@ -169,6 +178,9 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
+    }),
+    previewTitle: css({
+      marginBottom: theme.spacing(1),
     }),
     optionContainer: css({
       marginLeft: theme.spacing(0.5),
