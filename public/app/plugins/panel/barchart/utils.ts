@@ -327,7 +327,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     placement: xFieldAxisPlacement,
     label: frame.fields[0]?.config.custom?.axisLabel,
     splits: config.xSplits,
-    filter: vizOrientation.xOri === 0 ? config.hFilter : undefined,
+    filter: config.hFilter,
     values: config.xValues,
     timeZone,
     grid: { show: false },

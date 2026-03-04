@@ -10,7 +10,7 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { measureText } from '@grafana/ui';
-import { timeUnitSize, StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
+import { UPLOT_AXIS_FONT_SIZE, timeUnitSize, StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
 
 const intervals = systemDateFormats.interval;
 
@@ -150,11 +150,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const xSplits: Axis.Splits | undefined = (u) => Array.from(u.data[0].map((v, i) => i));
 
   const hFilter: Axis.Filter | undefined =
-    xSpacing === 0
+    xSpacing === 0 && !opts.xTimeAuto
       ? undefined
       : (u, splits) => {
-          // hSpacing?
-          const dim = u.bbox.width;
+          const dim = isXHorizontal ? u.bbox.width : u.bbox.height;
           const _dir = dir * (isXHorizontal ? 1 : -1);
 
           let dataLen = splits.length;
@@ -163,12 +162,47 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           let skipMod = 0;
 
           let cssDim = dim / uPlot.pxRatio;
-          let maxTicks = Math.abs(Math.floor(cssDim / xSpacing));
+
+          let effectiveSpacing = xSpacing;
+
+          // when xSpacing is 0 (default) and data is time-based, auto-calculate
+          // minimum spacing from actual label width to prevent overlapping labels
+          if (effectiveSpacing === 0 && opts.xTimeAuto) {
+            const data = u.data[0];
+            const timeRange = (data[data.length - 1] ?? 0) - (data[0] ?? 0);
+            const approxIncr = dataLen > 1 ? timeRange / (dataLen - 1) : timeRange;
+
+            let format = intervals.year;
+            if (approxIncr < timeUnitSize.second) {
+              format = intervals.millisecond;
+            } else if (approxIncr < timeUnitSize.minute) {
+              format = intervals.second;
+            } else if (approxIncr < timeUnitSize.hour) {
+              format = intervals.minute;
+            } else if (approxIncr < timeUnitSize.day) {
+              format = intervals.hour;
+            } else if (approxIncr < timeUnitSize.month) {
+              format = intervals.day;
+            } else if (approxIncr < timeUnitSize.year) {
+              format = intervals.month;
+            }
+
+            if (isXHorizontal) {
+              const sampleLabel = dateTimeFormat(data[data.length - 1] ?? Date.now(), { format, timeZone });
+              const labelWidth = measureText(sampleLabel, UPLOT_AXIS_FONT_SIZE).width;
+              effectiveSpacing = labelWidth + 18;
+            } else {
+              // vertical axis: labels stack top-to-bottom, spacing is driven by font height not text width
+              effectiveSpacing = UPLOT_AXIS_FONT_SIZE + 8;
+            }
+          }
+
+          let maxTicks = Math.abs(Math.floor(cssDim / effectiveSpacing));
 
           skipMod = dataLen < maxTicks ? 0 : Math.ceil(dataLen / maxTicks);
 
           let splits2 = splits.map((v, i) => {
-            let shouldSkip = skipMod !== 0 && (xSpacing > 0 ? i : lastIdx - i) % skipMod > 0;
+            let shouldSkip = skipMod !== 0 && (effectiveSpacing > 0 ? i : lastIdx - i) % skipMod > 0;
             return shouldSkip ? null : v;
           });
 
