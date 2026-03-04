@@ -13459,6 +13459,7 @@
     },
     "edit-query-name": "Edit query name",
     "experimental-button": {
+      "aria-label": "Experimental feature options",
       "back-to-classic": "Go back to classic editor",
       "give-feedback": "Give feedback",
       "tooltip": "Experimental feature options"
