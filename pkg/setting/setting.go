@@ -854,15 +854,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-
-	// App Platform annotations API
-	appPlatformSection := cfg.Raw.Section("annotations.app_platform")
-	cfg.AnnotationAppPlatform.Enabled = appPlatformSection.Key("enabled").MustBool(false)
-	cfg.AnnotationAppPlatform.StoreBackend = appPlatformSection.Key("store_backend").MustString("sql")
-	cfg.AnnotationAppPlatform.GRPCAddress = appPlatformSection.Key("grpc_address").MustString("localhost:9090")
-	cfg.AnnotationAppPlatform.GRPCUseTLS = appPlatformSection.Key("grpc_use_tls").MustBool(false)
-	cfg.AnnotationAppPlatform.GRPCTLSCAFile = appPlatformSection.Key("grpc_tls_ca_file").MustString("")
-	cfg.AnnotationAppPlatform.GRPCTLSSkipVerify = appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false)
+	cfg.AnnotationAppPlatform = loadAnnotationAppPlatformSettings(cfg.Raw)
 
 	switch {
 	case cfg.AnnotationMaximumTagsLength > 4096:
@@ -931,6 +923,18 @@ type AnnotationAppPlatformSettings struct {
 	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
 	GRPCTLSCAFile     string // Path to CA certificate file (optional)
 	GRPCTLSSkipVerify bool   // Skip TLS verification (insecure, for testing)
+}
+
+func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
+	appPlatformSection := cfg.Section("annotations.app_platform")
+	return AnnotationAppPlatformSettings{
+		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:      appPlatformSection.Key("store_backend").MustString("sql"),
+		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
+		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
+		GRPCTLSCAFile:     appPlatformSection.Key("grpc_tls_ca_file").MustString(""),
+		GRPCTLSSkipVerify: appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false),
+	}
 }
 
 func EnvKey(sectionName string, keyName string) string {
