@@ -414,10 +414,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return response.Error(http.StatusBadRequest, "Failed to read dashboard", err)
 	}
 
-	// Items with v2 schema elements must set v2 properties
+	// Check for v2 schema elements without a k8s style wrapper
 	if dashboards.LooksLikeV2Spec(spec) {
 		return response.Error(http.StatusBadRequest, dashboards.LooksLikeV2SpecMessage+
-			" OR it should include the metadata wrapper with an explicit apiVersion moving the body to the spec element", nil)
+			" OR it should include a object wrapper with an explicit 'apiVersion' and move the body into a 'spec' element", nil)
 	}
 
 	// Items with metadata, spec, etc
