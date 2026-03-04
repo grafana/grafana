@@ -549,7 +549,10 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 
 	// Check (and remove) any legacy internal IDs
 	var old *unstructured.Unstructured
-	internalID := cmd.Dashboard.Get("id").MustInt64(0)
+	internalID, err := nestedInternalID(obj.Object)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, err.Error(), err)
+	}
 	if internalID > 0 && name == "" {
 		found, err := client.List(ctx, metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, internalID),
@@ -565,6 +568,7 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 
 		old = &found.Items[0]
 		name = old.GetName()
+		meta.SetName(name)
 		if !cmd.Overwrite {
 			return response.Error(http.StatusConflict,
 				"Dashboard with the same internal ID already exists. Use overwrite flag to update.", nil)
@@ -613,7 +617,7 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 
 	meta, err = utils.MetaAccessor(dash)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to save dashboard", err)
+		return response.Error(http.StatusInternalServerError, "Failed get meta accessor", err)
 	}
 
 	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
@@ -629,6 +633,22 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 		"url":       dashboards.GetDashboardFolderURL(false, meta.GetName(), slug),
 		"folderUid": meta.GetFolder(),
 	})
+}
+
+func nestedInternalID(obj map[string]interface{}) (int64, error) {
+	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "id")
+	if !found || err != nil {
+		return 0, nil
+	}
+	i, ok := val.(int64)
+	if ok {
+		return i, nil
+	}
+	n, ok := val.(json.Number)
+	if ok {
+		return n.Int64()
+	}
+	return 0, fmt.Errorf("unsupported ID type: %T", val)
 }
 
 // swagger:route GET /dashboards/home dashboards getHomeDashboard

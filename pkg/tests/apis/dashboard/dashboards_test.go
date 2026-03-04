@@ -300,11 +300,24 @@ func TestIntegrationLegacySupport(t *testing.T) {
 		}
 	})
 
-	t.Run("validate k8s payload in legacy API", func(t *testing.T) {
+	t.Run("use k8s payload in legacy API", func(t *testing.T) {
 		cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
 		cfg.GroupVersion = &dashboardV0.GroupVersion
 		adminClient, err := k8srest.RESTClientFor(cfg)
 		require.NoError(t, err)
+
+		// Construct a legacy api payload from a k8s object
+		getLegacySaveCommand := func(obj *unstructured.Unstructured, title string, overwrite bool) []byte {
+			err := unstructured.SetNestedField(obj.Object, title, "spec", "title") // update the title
+			require.NoError(t, err)
+			cmd := map[string]any{
+				"dashboard": obj.Object,
+				"overwrite": overwrite,
+			}
+			jj, err := json.Marshal(cmd)
+			require.NoError(t, err)
+			return jj
+		}
 
 		names := []string{"test-v0", "test-v1", "test-v2"}
 		clients := []dynamic.ResourceInterface{
@@ -339,14 +352,13 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				foundTitle, _, _ := unstructured.NestedString(found.Object, "spec", "title")
 				require.Equal(t, title, foundTitle, "in object: %s", obj.GetName())
 
+				// ID must not be a saved element
+				internalId, ok, err := unstructured.NestedInt64(obj.Object, "spec", "id")
+				require.False(t, ok, "internal id should not be part of the saved spec")
+
 				// Update the title -- try to save without overwrite=false
 				title = "update:" + name
-				err = unstructured.SetNestedField(obj.Object, title, "spec", "title") // update the title
-				require.NoError(t, err)
-				jj, err = obj.MarshalJSON()
-				require.NoError(t, err)
-
-				body = []byte(`{"dashboard": ` + string(jj) + `, "overwrite": false}`)
+				body = getLegacySaveCommand(obj, title, false)
 				_ = adminClient.Post().AbsPath("api", "dashboards", "db").
 					Body(body).
 					SetHeader("Content-type", "application/json").
@@ -355,7 +367,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				require.Equal(t, int(http.StatusConflict), statusCode) // already exists
 
 				// Overwrite!
-				body = []byte(`{"dashboard": ` + string(jj) + `, "overwrite": true}`)
+				body = getLegacySaveCommand(obj, title, true)
 				_ = adminClient.Post().AbsPath("api", "dashboards", "db").
 					Body(body).
 					SetHeader("Content-type", "application/json").
@@ -378,6 +390,29 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				err = json.Unmarshal(jj, dto)
 				require.NoError(t, err)
 				require.Equal(t, title, dto.Dashboard.Get("title").MustString(""), "in object: %s", obj.GetName())
+
+				// Update by internal id (without name)
+				meta, err := utils.MetaAccessor(found)
+				require.NoError(t, err)
+				internalId = meta.GetDeprecatedInternalID() // nolint:staticcheck
+				require.True(t, internalId > 0)
+
+				title = "updated using internal ID"
+				unstructured.RemoveNestedField(obj.Object, "spec", "uid")
+				unstructured.RemoveNestedField(obj.Object, "metadata", "name")
+				unstructured.SetNestedField(obj.Object, internalId, "spec", "id")
+				body = getLegacySaveCommand(obj, title, true)
+				rsp := adminClient.Post().AbsPath("api", "dashboards", "db").
+					Body(body).
+					SetHeader("Content-type", "application/json").
+					Do(ctx).
+					StatusCode(&statusCode)
+				require.Equal(t, int(http.StatusOK), statusCode) // already exists
+				body, _ = rsp.Raw()
+				err = json.Unmarshal(body, &obj.Object)
+				require.NoError(t, err)
+				require.Equal(t, name+"-legacy", obj.Object["uid"])
+				require.Equal(t, float64(internalId), obj.Object["id"]) // same internal ID
 			})
 		}
 	})
