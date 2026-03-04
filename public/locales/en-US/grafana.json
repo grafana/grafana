@@ -1869,6 +1869,7 @@
       "timeline-n-receivers_other": "{{count}} receivers",
       "timeline-status-firing": "Firing",
       "timeline-status-resolved": "Resolved",
+      "timeline-toggle-notifications": "Toggle notification details",
       "timeline-unknown-error": "Unknown error"
     },
     "instance-match": {
