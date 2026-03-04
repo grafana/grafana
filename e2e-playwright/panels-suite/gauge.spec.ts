@@ -8,6 +8,7 @@ test.use({
 
 const OLD_GAUGES_DASHBOARD_UID = '_5rDmaQiz';
 const NEW_GAUGES_DASHBOARD_UID = 'panel-tests-gauge-new';
+const OLD_TO_NEW_GAUGES_DASHBOARD_UID = 'panel-tests-old-gauge-to-new';
 
 test.describe(
   'Gauge Panel',
@@ -123,6 +124,27 @@ test.describe(
         dashboardPage2.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage),
         'that the empty text appears'
       ).toHaveText('Data is missing a number field');
+    });
+
+    test('handles percentage units', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: OLD_TO_NEW_GAUGES_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: '20' }),
+      });
+
+      const gaugeLocator = dashboardPage.getByGrafanaSelector(
+        selectors.components.Panels.Visualization.Gauge.Container
+      );
+
+      await expect(gaugeLocator).toBeVisible();
+
+      const computedColor = await gaugeLocator.evaluate((el) => {
+        const pathsInSVG = el.querySelectorAll('path');
+        return window.getComputedStyle(pathsInSVG[pathsInSVG.length - 1]).stroke;
+      });
+
+      // Assert that the color matches the expected RGB value
+      expect(computedColor).toBe('rgb(115, 191, 105)');
     });
   }
 );

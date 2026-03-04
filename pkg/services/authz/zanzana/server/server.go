@@ -189,6 +189,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 			},
 			reconcilerLogger,
 			tracer,
+			reg,
 		)
 	} else {
 		mtReconciler = reconciler.NewNoopReconciler()

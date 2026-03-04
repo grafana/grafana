@@ -68,7 +68,6 @@
 /pkg/ruleguard.rules.go @grafana/grafana-backend-group
 /.bra.toml @grafana/grafana-backend-group
 /.golangci.yml @grafana/grafana-backend-group
-/build.go @grafana/grafana-backend-services-squad
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
@@ -132,6 +131,7 @@
 /pkg/extensions/ @grafana/grafana-backend-group
 /pkg/ifaces/ @grafana/grafana-backend-group
 /pkg/infra/db/ @grafana/grafana-backend-group
+/pkg/infra/features/ @grafana/grafana-backend-services-squad
 /pkg/infra/localcache/ @grafana/grafana-backend-group
 /pkg/infra/log/ @grafana/grafana-backend-group
 /pkg/infra/metrics/ @grafana/grafana-backend-group
@@ -973,7 +973,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/notifications/ @grafana/grafana-frontend-navigation
 /public/app/features/org/ @grafana/grafana-frontend-navigation
 /public/app/features/panel/ @grafana/dashboards-squad
-/public/app/features/panel/components/VizTypePicker/VisualizationSuggestions*.tsx @grafana/dataviz-squad
+/public/app/features/panel/components/VizTypePicker/Visualization*.tsx @grafana/dataviz-squad
 /public/app/features/panel/suggestions/ @grafana/dataviz-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/grafana-frontend-platform
@@ -1103,7 +1103,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
-/scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 eslint-suppressions.json @grafanabot
 
 # Design system
@@ -1241,6 +1240,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/build-package @grafana/grafana-developer-enablement-squad
 /.github/actions/change-detection @grafana/grafana-developer-enablement-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
+/.github/actions/yarn-install/action.yml @grafana/grafana-frontend-platform
 /.github/workflows/actionlint-format.txt @grafana/grafana-developer-enablement-squad
 /.github/workflows/actionlint.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
