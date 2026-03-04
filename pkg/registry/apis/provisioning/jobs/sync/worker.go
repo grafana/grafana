@@ -183,7 +183,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		syncStatus.LastRef = currentRef
 	} else {
 		if isQuotaWarning {
-			logger.Info("repository is over quota, preserving lastRef", "repository", cfg.Name)
+			logger.Info("repository is over quota, preserving lastRef")
 		}
 		syncStatus.LastRef = lastRef
 	}
