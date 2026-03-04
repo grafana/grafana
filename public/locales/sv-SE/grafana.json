@@ -2105,7 +2105,9 @@
       "select-namespace": "Välj namnutrymme"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Varningsregler",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Nyligen raderat",
@@ -2331,8 +2333,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Se vilka larm som är aktiva just nu och utforska historiska data för att undersöka nuvarande eller tidigare problem.",
-        "title": "Varningar"
+        "subtitle": "Se vilka larm som är aktiva just nu och utforska historiska data för att undersöka nuvarande eller tidigare problem."
       }
     },
     "panel-alert-tab-content": {
@@ -6875,10 +6876,10 @@
       "title-delete-all-transformations": "Radera alla transformeringar?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Växla tabellvy",
-      "table-view-label-table-view": "Tabellvy"
+      "table-view-label-table-view": "Tabellvy",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6923,6 +6924,16 @@
     },
     "query-editor": {
       "query": "Fråga"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Namngivna fångstgrupper kan användas för att separera visningstext och värde (<1>se exempel</1>).",
@@ -7047,6 +7058,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Kan inte skapa larm från denna panel eftersom ingen fråga till en larmkapabel datakälla hittades.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Ny varningsregel",
       "title-no-alerting-capable-query-found": "Ingen larmkapabel fråga hittades"
     },
@@ -9466,11 +9478,13 @@
       },
       "legend": {
         "category": "Förklaringar",
+        "description-limit": "",
         "description-values": "Välj värden eller beräkningar som ska visas i förklaringen",
         "mode-options": {
           "label-list": "Lista",
           "label-table": "Tabell"
         },
+        "name-limit": "",
         "name-mode": "Läge",
         "name-placement": "Placering",
         "name-values": "Värden",
@@ -10401,6 +10415,11 @@
     "subtitle": "LDAP-integrationen i Grafana gör det möjligt för dina Grafana-användare att logga in med sina LDAP-inloggningsuppgifter. Läs mer i vår <2><1>dokumentation</1></2>.",
     "title": "Grundinställningar"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Bibliotekspanel med detta namn finns redan",
@@ -11275,9 +11294,17 @@
       "subtitle": "Få reda på problem i dina system omedelbart efter att de uppstått",
       "title": "Varnar"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Hantera Alertmanager-konfigurationer och aktivera mottagning av Grafana-hanterade varningar",
       "title": "Inställningar"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Bestäm hur aviseringar dirigeras till kontaktpunkter",
@@ -12411,13 +12438,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Gren",
       "label-comment": "Kommentar",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Sökväg",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Sista grenen",
       "suffix-new-branch": "",
@@ -12531,6 +12563,8 @@
       "instance-fully-managed-tooltip": "Konfigurationen är inaktiverad eftersom den här instansen är fullt hanterad"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12672,10 +12706,18 @@
       "label-sync-interval": "Synkroniseringsintervall (sekunder)"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13417,6 +13459,7 @@
       "card-click": "Välj kort {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
       "transformations": "Omvandlingar",
@@ -14680,6 +14723,12 @@
     "name-show-matches-only": "Visa endast matchningar",
     "traces-panel": {
       "no-data-found-in-response": "Inga data hittades i svaret"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

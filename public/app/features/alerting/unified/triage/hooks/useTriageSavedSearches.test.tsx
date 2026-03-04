@@ -38,6 +38,8 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+import { TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID } from '../triagePredefinedSearches';
+
 import { TRIAGE_DEFAULT_SEARCH_ID_STORAGE_KEY } from './useTriagePredefinedOverrides';
 import {
   TRIAGE_SAVED_SEARCHES_STORAGE_KEY,
@@ -386,21 +388,24 @@ describe('loadDefaultTriageSavedSearch', () => {
     expect(result?.id).toBe('triage-predefined-firing-only');
   });
 
-  it('should return null when no default search exists', async () => {
+  it('should return default predefined (grouped by folder) when no default search exists in user list', async () => {
     const noDefaultSearches = mockSavedSearches.map((s) => ({ ...s, isDefault: false }));
     mockStorage(null, noDefaultSearches);
 
     const result = await loadDefaultTriageSavedSearch();
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe(TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID);
+    expect(result?.id).toBe('triage-predefined-folder-only');
   });
 
-  it('should return null when storage is empty', async () => {
+  it('should return default predefined (grouped by folder) when storage is empty', async () => {
     mockStorage(null, null);
 
     const result = await loadDefaultTriageSavedSearch();
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe(TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID);
   });
 });
 

@@ -2096,7 +2096,9 @@
       "select-namespace": "选择命名空间"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "警报规则",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "最近删除",
@@ -2322,8 +2324,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "查看当前的警报并浏览历史数据，以调查当前或过去的问题。",
-        "title": "警报"
+        "subtitle": "查看当前的警报并浏览历史数据，以调查当前或过去的问题。"
       }
     },
     "panel-alert-tab-content": {
@@ -6850,10 +6851,10 @@
       "title-delete-all-transformations": "删除所有转换？"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "切换表格视图",
-      "table-view-label-table-view": "表视图"
+      "table-view-label-table-view": "表视图",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6898,6 +6899,16 @@
     },
     "query-editor": {
       "query": "查询"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "命名捕获组可用于分隔显示文本和值（<1>查看示例</1>）。",
@@ -7021,6 +7032,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "无法从此面板创建警报，因为未找到对支持警报的数据源的查询。",
+      "disabled-tooltip": "",
       "new-alert-rule": "新建警报规则",
       "title-no-alerting-capable-query-found": "未找到支持警报的查询"
     },
@@ -9427,11 +9439,13 @@
       },
       "legend": {
         "category": "图例",
+        "description-limit": "",
         "description-values": "选择要在图例中显示的值或计算",
         "mode-options": {
           "label-list": "列表",
           "label-table": "表格"
         },
+        "name-limit": "",
         "name-mode": "模式",
         "name-placement": "放置",
         "name-values": "值",
@@ -10360,6 +10374,11 @@
     "subtitle": "Grafana 中的 LDAP 集成允许您的 Grafana 用户使用其 LDAP 凭证登录。在我们的<2><1>文档</1></2>中了解更多信息。",
     "title": "基本设置"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "库面板名称已存在",
@@ -11228,9 +11247,17 @@
       "subtitle": "在系统发生问题后立即获悉",
       "title": "警报"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "管理 Alertmanager 配置并启用接收 Grafana 管理的提醒",
       "title": "设置"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "确定警报如何路由到联络点",
@@ -12361,13 +12388,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "分支",
       "label-comment": "评论",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "路径",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "最后一个分支",
       "suffix-new-branch": "",
@@ -12478,6 +12510,8 @@
       "instance-fully-managed-tooltip": "配置已禁用，因为此实例已完全托管"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12618,10 +12652,18 @@
       "label-sync-interval": "间隔（秒）"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13360,6 +13402,7 @@
       "card-click": "选择卡片 {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "查询和表达式",
       "toggle-size": "切换侧边栏大小",
       "transformations": "转换",
@@ -14616,6 +14659,12 @@
     "name-show-matches-only": "仅显示匹配项",
     "traces-panel": {
       "no-data-found-in-response": "回复中未找到数据"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

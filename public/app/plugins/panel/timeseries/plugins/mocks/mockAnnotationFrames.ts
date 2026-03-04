@@ -1,4 +1,4 @@
-import { DataFrame, DataTopic, FieldType } from '@grafana/data';
+import { ActionType, DataFrame, DataTopic, FieldType, HttpRequestMethod } from '@grafana/data';
 
 /**
  * Due to the integration with mocked uplot, it's important that we test with times that are between 1759388895560 and 1759390250000
@@ -688,7 +688,42 @@ export const mockAlertingFrame: DataFrame = {
     },
     {
       name: 'text',
-      config: {},
+      //@ts-ignore
+      getLinks: jest.fn(() => [
+        {
+          title: 'Link 1',
+          href: 'http://example.com/1',
+          target: '_blank',
+          origin: {},
+        },
+        {
+          title: 'Link 2',
+          href: 'http://example.com/2',
+          target: '_blank',
+          origin: {},
+        },
+      ]),
+      state: {
+        scopedVars: {},
+      },
+      config: {
+        links: [
+          { title: 'Link 1', url: 'http://example.com/1' },
+          { title: 'Link 2', url: 'http://example.com/2' },
+        ],
+        actions: [
+          {
+            type: ActionType.Fetch,
+            title: 'Action 1',
+            [ActionType.Fetch]: { method: HttpRequestMethod.GET, url: 'http://example.com/1' },
+          },
+          {
+            type: ActionType.Fetch,
+            title: 'Action 2',
+            [ActionType.Fetch]: { method: HttpRequestMethod.POST, url: 'http://example.com/2' },
+          },
+        ],
+      },
       type: FieldType.string,
       values: [
         'Launching HG Instance ops with hgrun version 1',

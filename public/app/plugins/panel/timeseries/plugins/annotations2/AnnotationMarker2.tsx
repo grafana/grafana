@@ -76,7 +76,7 @@ export const AnnotationMarker2 = ({
   const links: LinkModel[] = [];
   const actions: ActionModel[] = [];
 
-  if (isHovering) {
+  if (isHovering || isPinned) {
     frame.fields.forEach((field) => {
       links.push(...getDataLinks(field, annoIdx));
 
