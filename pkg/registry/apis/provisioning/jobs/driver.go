@@ -242,9 +242,10 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	}()
 
 	// Save the finished job
-	err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy())
-	if err != nil {
+	if err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy()); err != nil {
 		logger.Warn("failed to write historic job", "error", err)
+	} else {
+		logger.Debug("historic job saved")
 	}
 
 	// Mark the job as completed.
