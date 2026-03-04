@@ -253,7 +253,7 @@ function getStyles(
         left: 0,
         top: 0,
         bottom: 0,
-        width: isSelected ? 3 : 1,
+        width: isSelected ? 3 : 2,
         background: borderColor,
         [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transition: theme.transitions.create(['width'], {
