@@ -356,8 +356,8 @@ describe('StateTimeline uPlot integration', () => {
         expect(rect).toHaveBeenCalledTimes(2);
 
         // The box call (second) should have a top offset > 0 due to label height
-        const boxCall = rect.mock.calls[1];
-        const boxTop = boxCall[2]; // top parameter
+        const boxCall = rect.mock.calls[1] as unknown[];
+        const boxTop = boxCall[2] as number; // top parameter
         expect(boxTop).toBeGreaterThan(0);
       });
 
@@ -377,8 +377,8 @@ describe('StateTimeline uPlot integration', () => {
         expect(rect).toHaveBeenCalledTimes(2);
 
         // The box call (second) should have top at 0 (yOff + y0 with no label offset)
-        const boxCall = rect.mock.calls[1];
-        const boxTop = boxCall[2];
+        const boxCall = rect.mock.calls[1] as unknown[];
+        const boxTop = boxCall[2] as number;
         expect(boxTop).toBe(0);
       });
     });
