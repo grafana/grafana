@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
+import { useEffect } from 'react';
 
 import { VariableHide, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   sceneGraph,
   useSceneObjectState,
@@ -11,6 +12,7 @@ import {
   ControlsLabel,
   ControlsLayout,
   sceneUtils,
+  SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
@@ -21,6 +23,18 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+
+  // Subscribe to variable value changes to track interactions
+  useEffect(() => {
+    const subscription = dashboard.subscribeToEvent(SceneVariableValueChangedEvent, () => {
+      reportInteraction('grafana_dashboards_variable_changed');
+      console.log('Variable changed:');
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [dashboard]);
 
   // Get visible variables for drilldown layout
   const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);

@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import {
   ButtonGroup,
   ModalsController,
@@ -141,6 +141,9 @@ export const DashNav = memo<Props>((props) => {
           text: dashboard.title,
           url: dashboard.meta.url ?? '',
           parentItem: starredNavItem,
+        });
+        reportInteraction('grafana_dashboards_star_dashboard', {
+          origin: 'dashnav',
         });
       } else {
         removeNavIndex(ID_PREFIX + dashboard.uid);
