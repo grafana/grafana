@@ -99,6 +99,13 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return s.authenticateAsUser(*idTokenClaims, *accessTokenClaims, jwtToken)
 	}
 
+	// Access token without ID token: may be service-only or OBO (on-behalf-of).
+	// IsOnBehalfOfUser traverses the full actor chain and returns true only when
+	// the innermost actor is a User or ServiceAccount — correctly handles multi-hop chains.
+	if accessTokenClaims.Rest.IsOnBehalfOfUser() {
+		return s.authenticateAsServiceOrUser(*accessTokenClaims, jwtToken)
+	}
+
 	return s.authenticateAsService(*accessTokenClaims, jwtToken)
 }
 
@@ -234,6 +241,85 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 			FetchSyncedUser:        false,
 		},
 	}, nil
+}
+
+// authenticateAsServiceOrUser handles access tokens that carry an Actor (on-behalf-of).
+// The effective identity is the actor (user/service account/etc.); the token's
+// DelegatedPermissions are already short-listed by the issuer and are used to restrict
+// permissions the same way as when an ID token is present.
+func (s *ExtendedJWT) authenticateAsServiceOrUser(
+	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
+	accessTokenInPlainText string,
+) (*authn.Identity, error) {
+	// Allow access tokens with wildcard namespace or namespace matching this instance.
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
+		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
+	}
+
+	accessType, _, err := claims.ParseTypeID(accessTokenClaims.Subject)
+	if err != nil {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
+	}
+	if !claims.IsIdentityType(accessType, claims.TypeAccessPolicy) {
+		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
+	}
+
+	// NewAccessTokenAuthInfo traverses the full actor chain to find the innermost
+	// identity actor — correctly handles multi-hop OBO (e.g. MT Query → MT Datasource → HG).
+	authInfo := authlib.NewAccessTokenAuthInfo(accessTokenClaims)
+	subject := authInfo.GetSubject()
+	if subject == "" {
+		return nil, errExtJWTInvalid.Errorf("access token has no actor subject")
+	}
+
+	t, id, err := claims.ParseTypeID(subject)
+	if err != nil {
+		return nil, errExtJWTInvalid.Errorf("failed to parse actor subject: %w", err)
+	}
+	if !claims.IsIdentityType(t, claims.TypeUser, claims.TypeServiceAccount, claims.TypeRenderService, claims.TypeAnonymous) {
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected actor identity: %s", subject)
+	}
+
+	fetchPermissionsParams := authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}}
+	for _, perm := range accessTokenClaims.Rest.DelegatedPermissions {
+		if strings.Contains(perm, grafanaAppPrefix) {
+			fetchPermissionsParams.K8sRestrictedActions = append(fetchPermissionsParams.K8sRestrictedActions, perm)
+		} else {
+			fetchPermissionsParams.RestrictedActions = append(fetchPermissionsParams.RestrictedActions, perm)
+		}
+	}
+
+	identity := &authn.Identity{
+		ID:                id,
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessToken:       accessTokenInPlainText,
+		AccessTokenClaims: &accessTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         accessTokenClaims.Rest.Namespace,
+		ClientParams: authn.ClientParams{
+			SyncPermissions:        true,
+			FetchPermissionsParams: fetchPermissionsParams,
+			FetchSyncedUser:        true,
+		},
+	}
+
+	if t == claims.TypeAnonymous {
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleType(s.cfg.Anonymous.OrgRole),
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	if t == claims.TypeRenderService {
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleAdmin,
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	return identity, nil
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {

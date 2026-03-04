@@ -110,6 +110,49 @@ var (
 			Namespace:       "stack-1234",
 		},
 	}
+	validAccessTokenClaimsWithActor = accessTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "access-policy:this-uid",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace:            "default",
+			DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+			Actor: &authnlib.ActorClaims{
+				Subject: "user:2",
+				IDTokenClaims: authnlib.IDTokenClaims{
+					Type: claims.TypeUser,
+				},
+			},
+		},
+	}
+	// validAccessTokenClaimsWithActorChain simulates a multi-hop OBO chain:
+	// MT Query → MT Datasource (intermediate service) → HG Instance (this instance).
+	// The user is the innermost actor; the intermediate service is the first-level actor.
+	validAccessTokenClaimsWithActorChain = accessTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "access-policy:this-uid",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace:            "default",
+			DelegatedPermissions: []string{"dashboards:create", "folders:read"},
+			Actor: &authnlib.ActorClaims{
+				Subject: "access-policy:intermediate-service",
+				IDTokenClaims: authnlib.IDTokenClaims{
+					Type: claims.TypeAccessPolicy,
+				},
+				Actor: &authnlib.ActorClaims{
+					Subject: "user:2",
+					IDTokenClaims: authnlib.IDTokenClaims{
+						Type: claims.TypeUser,
+					},
+				},
+			},
+		},
+	}
 	validAccessTokenClaimsWildcard = accessTokenClaims{
 		Claims: jwt.Claims{
 			Subject:  "access-policy:this-uid",
@@ -277,6 +320,50 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncPermissions:        true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}, AllowedActions: []string{"folders:read"}, K8s: []string{}}},
+			},
+		},
+		{
+			name:        "should authenticate as user via OBO (access token with Actor, no ID token)",
+			accessToken: &validAccessTokenClaimsWithActor,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "2",
+				Type:              claims.TypeUser,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWithActor,
+				Namespace:         "default",
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions:    []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						K8sRestrictedActions: []string{},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as user via multi-hop OBO (access token with nested Actor chain, no ID token)",
+			accessToken: &validAccessTokenClaimsWithActorChain,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "2",
+				Type:              claims.TypeUser,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWithActorChain,
+				Namespace:         "default",
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions:    []string{"dashboards:create", "folders:read"},
+						K8sRestrictedActions: []string{},
+					},
+				},
 			},
 		},
 		{
