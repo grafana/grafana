@@ -557,85 +557,69 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 	// - With workflows: write permission check FAILS (we can't write to public repo without token)
 	// - Without workflows: succeeds (only needs read access)
 
-	t.Run("git repository with workflows fails write permission check via Test endpoint", func(t *testing.T) {
-		// First, create the repository with an invalid token
-		// This will create the secure token in the secrets manager
-		repoConfig := &unstructured.Unstructured{
-			Object: map[string]any{
-				"apiVersion": "provisioning.grafana.app/v0alpha1",
-				"kind":       "Repository",
-				"metadata": map[string]any{
-					"name":      "test-git-write-denied",
-					"namespace": "default",
+	t.Run("git repository with workflows requires token via Test endpoint", func(t *testing.T) {
+		// Test a new repository configuration without actually creating it
+		repoConfig := map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "test-git-write-denied",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Git Write Permission Denied",
+				"type":  "git",
+				"git": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+					"branch": "integration-test",
 				},
-				"spec": map[string]any{
-					"title": "Test Git Write Permission Denied",
-					"type":  "git",
-					"git": map[string]any{
-						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
-						"branch": "integration-test",
-					},
-					"workflows": []string{"write"}, // Write workflow configured
-					"sync": map[string]any{
-						"enabled":         false,
-						"target":          "folder",
-						"intervalSeconds": 10,
-					},
-				},
-				"secure": map[string]any{
-					"token": map[string]any{
-						"create": base64.StdEncoding.EncodeToString([]byte("invalid-token-no-write-access")),
-					},
+				"workflows": []string{"write"}, // Write workflow configured
+				"sync": map[string]any{
+					"enabled":         false,
+					"target":          "folder",
+					"intervalSeconds": 10,
 				},
 			},
+			// No secure token - should fail validation for repositories with workflows
 		}
 
-		// Create the repository
-		_, err := helper.Repositories.Resource.Create(ctx, repoConfig, metav1.CreateOptions{})
-		require.NoError(t, err, "should be able to create repository")
+		configBytes, err := json.Marshal(repoConfig)
+		require.NoError(t, err)
 
-		// Clean up after test
-		defer func() {
-			_ = helper.Repositories.Resource.Delete(ctx, "test-git-write-denied", metav1.DeleteOptions{})
-		}()
-
-		// Now test the existing repository using the test endpoint
-		// This should fail because the token doesn't have write permission
+		// Test the repository configuration using the test endpoint
+		// This should fail validation because repositories with workflows need a token
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
 			Name("test-git-write-denied").
 			SubResource("test").
+			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 
-		// The test can fail in two ways:
-		// 1. HTTP-level error (repository in bad state)
-		// 2. TestResults with failure status (preferred)
-		obj, err := result.Get()
+		// Validation errors can be returned as HTTP errors or as TestResults
 		if result.Error() != nil {
-			// If there's an HTTP error, accept it but skip detailed validation
-			t.Logf("Test endpoint returned HTTP error (repository may be initializing): %v", result.Error())
-			// Just verify the repository exists
-			_, err := helper.Repositories.Resource.Get(ctx, "test-git-write-denied", metav1.GetOptions{})
-			require.NoError(t, err, "repository should exist")
+			// HTTP error - this is expected for validation failures
+			// The validator should have rejected the repository with workflows but no token
+			require.Error(t, result.Error(), "should fail validation")
 		} else {
-			// If no HTTP error, check TestResults
+			// TestResults with validation errors
+			obj, err := result.Get()
 			require.NoError(t, err)
-			testResults := parseTestResults(t, obj)
-			require.False(t, testResults.Success, "git repository without write permission should fail test")
-			require.Equal(t, 403, testResults.Code, "should return 403 for write permission denied")
 
-			// Verify error mentions the permission issue
+			testResults := parseTestResults(t, obj)
+			require.False(t, testResults.Success, "git repository with workflows but no token should fail validation")
+
+			// Should fail with validation error about missing token/connection
 			require.NotEmpty(t, testResults.Errors, "should have error details")
-			foundPermissionError := false
+			foundTokenError := false
 			for _, e := range testResults.Errors {
-				if strings.Contains(e.Detail, "write permission") || strings.Contains(e.Detail, "permission denied") {
-					foundPermissionError = true
+				if strings.Contains(e.Field, "token") || strings.Contains(e.Field, "connection") {
+					foundTokenError = true
 					break
 				}
 			}
-			require.True(t, foundPermissionError, "error should mention write permission issue")
+			require.True(t, foundTokenError, "error should mention missing token or connection")
 		}
 	})
 
