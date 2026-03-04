@@ -17,27 +17,34 @@ import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
 import { AnnotationTooltip2Cluster } from './AnnotationTooltip2Cluster';
 
-interface AnnoBoxProps {
+interface AnnotationMarkerProps {
+  // Annotation dataframe
   frame: DataFrame;
+  // The values from the annotation fields
   annoVals: AnnotationVals;
+  // The value index, sometimes called rowIndex
   annoIdx: number;
+  // Styles calculated from plot
   style: React.CSSProperties | null;
-  className: string;
-  timeZone: TimeZone;
+  // Method to close user created (wip) annotation
   exitWipEdit?: null | (() => void);
-  portalRoot: HTMLElement;
+  // From PanelContext.canExecuteActions(), controls whether the user has permission to execute field actions
   canExecuteActions: boolean;
-  replaceVariables: InterpolateFunction;
+  // Sets if the user pinned via keyboard or mouse click
   setPinned: (pin: boolean) => void;
+  // Current pin state
   isPinned: boolean;
-  showOnHover: boolean;
+  // Determines if we should display the tooltip when hovering, keeps adjacent annotations from rendering a tooltip that overlays the pinned tooltip
+  showTooltipOnHover: boolean;
+  timeZone: TimeZone;
+  portalRoot: HTMLElement;
+  replaceVariables: InterpolateFunction;
 }
 
 export const AnnotationMarker2 = ({
   frame,
   annoVals,
   annoIdx,
-  className,
   style,
   exitWipEdit,
   timeZone,
@@ -45,11 +52,12 @@ export const AnnotationMarker2 = ({
   replaceVariables,
   canExecuteActions,
   setPinned,
-  showOnHover,
+  showTooltipOnHover,
   isPinned,
-}: AnnoBoxProps) => {
+}: AnnotationMarkerProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
+  const isRegion = annoVals?.isRegion?.[annoIdx] === true;
 
   // Set when editing
   const [editAnnotationId, setEditAnnotationId] = useState(exitWipEdit != null ? annoIdx : null);
@@ -87,7 +95,7 @@ export const AnnotationMarker2 = ({
   }
 
   const isEditing = editAnnotationId !== null;
-  const showTooltip = (isPinned && !isEditing) || (showOnHover && isHovering && !isEditing);
+  const showTooltip = (isPinned && !isEditing) || (showTooltipOnHover && isHovering && !isEditing);
 
   // We cannot use the array index for editing annotations since clustered and wip annotations will get sorted by date, so we need to grab them by the 'id' field which is populated by the annotations API
   const annoId = annoVals?.id?.[annoIdx];
@@ -135,12 +143,12 @@ export const AnnotationMarker2 = ({
   return (
     <button
       ref={refs.setReference}
-      className={className}
+      className={isRegion ? styles.annoRegion : styles.annoMarker}
       style={style!}
       onFocus={() => setIsHovering(true)}
       onBlur={() => setIsHovering(false)}
       onClick={() => setPinned(true)}
-      onMouseEnter={() => showOnHover && setIsHovering(true)}
+      onMouseEnter={() => showTooltipOnHover && setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       data-testid={selectors.pages.Dashboard.Annotations.marker}
     >
@@ -158,6 +166,30 @@ export const AnnotationMarker2 = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  annoMarker: css({
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    border: 'none',
+    borderLeft: '5px solid transparent',
+    borderRight: '5px solid transparent',
+    borderBottomWidth: '5px',
+    borderBottomStyle: 'solid',
+    transform: 'translateX(-50%)',
+    cursor: 'pointer',
+    zIndex: 1,
+    padding: 0,
+    background: 'none',
+  }),
+  annoRegion: css({
+    border: 'none',
+    position: 'absolute',
+    height: '5px',
+    cursor: 'pointer',
+    zIndex: 1,
+    padding: 0,
+    background: 'none',
+  }),
   // NOTE: shares much with TooltipPlugin2
   annoBox: css({
     top: 0,

@@ -258,6 +258,37 @@ describe('AnnotationsPlugin2', () => {
           expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
         });
 
+        it('cannot hover other tooltips while pinned', async () => {
+          mockUsePanelContext.mockReturnValue({
+            canExecuteActions: () => false,
+            canEditAnnotations: () => false,
+            canDeleteAnnotations: () => false,
+          } as PanelContext);
+
+          setUp({ annotations: [frame] });
+          const thirdMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[2];
+          const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
+          expect(thirdMarker).toBeVisible();
+
+          // Pin the annotation tooltip on click
+          await userEvent.click(thirdMarker);
+
+          expect(screen.queryByTestId('mock-annotation-title')).toBeVisible();
+          expect(screen.queryByTestId('mock-annotation-title')).toHaveTextContent(
+            'Vendor BYOC cell Failed to get annotations'
+          );
+
+          // Hover over another marker
+          await userEvent.hover(firstMarker);
+
+          // Should only be one title visible
+          expect(screen.queryAllByTestId('mock-annotation-title')).toHaveLength(1);
+          // The current tooltip should stay visible
+          expect(screen.queryByTestId('mock-annotation-title')).toHaveTextContent(
+            'Vendor BYOC cell Failed to get annotations'
+          );
+        });
+
         it('pins on keyboard', async () => {
           mockUsePanelContext.mockReturnValue({
             canExecuteActions: () => false,
