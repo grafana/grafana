@@ -1,6 +1,11 @@
 import { Labels } from '@grafana/data';
 
-export function formatDuration(ms: number): string {
+/**
+ * Format a duration given in nanoseconds into a human-readable string.
+ * The API returns durations in nanoseconds (see CreateNotificationqueryNotificationEntry.duration).
+ */
+export function formatDuration(nanoseconds: number): string {
+  const ms = Math.floor(nanoseconds / 1_000_000);
   if (ms < 1000) {
     return `${ms}ms`;
   }

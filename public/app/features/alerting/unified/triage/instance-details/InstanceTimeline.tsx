@@ -1,7 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+import {
+  CreateNotificationqueryNotificationEntry,
+  CreateNotificationqueryNotificationStatus,
+} from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -160,15 +163,16 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
 
 function NotificationSummary({ notifications }: { notifications: NotificationEntry[] }) {
   const byStatus = useMemo(() => {
-    const groups: Record<string, NotificationEntry[]> = {};
+    const grouped: Record<CreateNotificationqueryNotificationStatus, NotificationEntry[]> = {
+      firing: [],
+      resolved: [],
+    };
     for (const n of notifications) {
-      const key = n.status;
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(n);
+      grouped[n.status].push(n);
     }
-    return Object.entries(groups);
+    return Object.entries(grouped).filter(
+      (entry): entry is [CreateNotificationqueryNotificationStatus, NotificationEntry[]] => entry[1].length > 0
+    );
   }, [notifications]);
 
   return (
@@ -180,7 +184,13 @@ function NotificationSummary({ notifications }: { notifications: NotificationEnt
   );
 }
 
-function NotificationStatusGroup({ status, notifications }: { status: string; notifications: NotificationEntry[] }) {
+function NotificationStatusGroup({
+  status,
+  notifications,
+}: {
+  status: CreateNotificationqueryNotificationStatus;
+  notifications: NotificationEntry[];
+}) {
   const styles = useStyles2(getStyles);
   const [expanded, setExpanded] = useState(false);
 
