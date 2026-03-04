@@ -190,6 +190,9 @@ export type RemotePlugin = {
   sponsorshipUrl?: string;
   repositoryUrl?: string;
   raiseAnIssueUrl?: string;
+  managed: {
+    enabled: boolean;
+  }
 };
 
 // The available status codes on GCOM are available here:
