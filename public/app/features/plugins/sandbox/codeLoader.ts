@@ -1,4 +1,4 @@
-import { PluginType } from '@grafana/data';
+import { PluginType, patchArrayVectorProrotypeMethods } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getAppPluginMetas, getPanelPluginMetas } from '@grafana/runtime/internal';
 
@@ -112,6 +112,14 @@ async function verifySRI(pluginCode: string, moduleHash?: string): Promise<boole
 
 function patchPluginAPIs(pluginCode: string): string {
   return pluginCode.replace(/window\.location/gi, 'window.locationSandbox');
+}
+
+export function patchSandboxEnvironmentPrototype(sandboxEnvironment: SandboxEnvironment) {
+  // same as https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/vector.ts#L16
+  // Array is a "reflective" type in Near-membrane and doesn't get an identify continuity
+  sandboxEnvironment.evaluate(
+    `${patchArrayVectorProrotypeMethods.toString()};${patchArrayVectorProrotypeMethods.name}()`
+  );
 }
 
 export async function getPluginLoadData(pluginId: string): Promise<SandboxPluginMeta> {
