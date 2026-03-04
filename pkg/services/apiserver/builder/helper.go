@@ -283,6 +283,10 @@ func InstallAPIs(
 
 			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode)
 
+			if dualWriteService != nil {
+				dualWriteService.LogStorageModeComparison(gr, mode)
+			}
+
 			switch mode {
 			case grafanarest.Mode0:
 				return legacy, nil
