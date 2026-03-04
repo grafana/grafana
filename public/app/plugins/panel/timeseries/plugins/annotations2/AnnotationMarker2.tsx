@@ -27,7 +27,6 @@ interface AnnoBoxProps {
   replaceVariables: InterpolateFunction;
   setPinned: (pin: boolean) => void;
   isPinned: boolean;
-  showOnHover: boolean;
 }
 
 const STATE_DEFAULT = 0;
@@ -45,7 +44,6 @@ export const AnnotationMarker2 = ({
   replaceVariables,
   canExecuteActions,
   setPinned,
-  showOnHover,
   isPinned,
 }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
@@ -79,7 +77,7 @@ export const AnnotationMarker2 = ({
   }
 
   const contents =
-    (isPinned && !(state === STATE_EDITING)) || (showOnHover && isHovering && !(state === STATE_EDITING)) ? (
+    (isPinned && !(state === STATE_EDITING)) || (isHovering && !(state === STATE_EDITING)) ? (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
@@ -112,7 +110,7 @@ export const AnnotationMarker2 = ({
       onFocus={() => setIsHovering(true)}
       onBlur={() => setIsHovering(false)}
       onClick={() => setPinned(true)}
-      onMouseEnter={() => showOnHover && setIsHovering(true)}
+      onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       data-testid={selectors.pages.Dashboard.Annotations.marker}
     >

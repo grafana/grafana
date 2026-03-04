@@ -293,7 +293,6 @@ export const AnnotationsPlugin2 = ({
             <AnnotationMarker2
               setPinned={setPinned}
               isPinned={annoIdx === `${frameIdx}:${i}`}
-              showOnHover={!annoIdx}
               frame={frame}
               annoIdx={i}
               annoVals={vals}
