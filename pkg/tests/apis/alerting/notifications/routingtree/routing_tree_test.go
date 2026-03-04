@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -792,6 +793,25 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	}
 
 	t.Run("Create", func(t *testing.T) {
+		t.Run("Create with invalid name fails", func(t *testing.T) {
+			testCases := []struct {
+				desc string
+				name string
+			}{
+				{"empty name", ""},
+				{"whitespaces name", "  "},
+				{"too long", strings.Repeat("1", 41)},
+				{"contains colon", "test:route"},
+				{"unsupported symbols", "My_Route"},
+			}
+			for _, tc := range testCases {
+				t.Run(tc.desc, func(t *testing.T) {
+					_, err := adminClient.Create(ctx, k8sRoute(t, tc.name, policy_exports.Empty()), resource.CreateOptions{})
+					require.Truef(t, errors.IsBadRequest(err), "Should get BadRequest error but got: %s. Name: [%s]", err, tc.name)
+				})
+			}
+		})
+
 		// Create -> Get various pre-defined routes.
 		for name, route := range cfg.ManagedRoutes {
 			t.Run(fmt.Sprintf("Create policy %s", name), func(t *testing.T) {
