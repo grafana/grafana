@@ -66,6 +66,138 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 	return bp, nil
 }
 
+func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branch string) (*Rulesets, error) {
+	// Get all rulesets for the repository
+	rulesets, _, err := r.gh.Repositories.GetAllRulesets(ctx, owner, repository, nil)
+	if err != nil {
+		// Handle common error cases
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) {
+			switch ghErr.Response.StatusCode {
+			case http.StatusUnauthorized:
+				return nil, ErrUnauthorized
+			case http.StatusForbidden:
+				// User lacks permissions to view rulesets (though Metadata read should be enough).
+				// Skip check gracefully.
+				logging.FromContext(ctx).Warn("Skipping ruleset check: insufficient permissions",
+					slog.String("owner", owner),
+					slog.String("repository", repository),
+					slog.String("branch", branch))
+				return nil, nil
+			case http.StatusNotFound:
+				return nil, ErrResourceNotFound
+			case http.StatusServiceUnavailable:
+				return nil, ErrServiceUnavailable
+			}
+		}
+
+		return nil, fmt.Errorf("failed to get rulesets: %w", err)
+	}
+
+	// No rulesets configured
+	if len(rulesets) == 0 {
+		return nil, nil
+	}
+
+	result := &Rulesets{}
+
+	// Check each ruleset to see if it applies to the target branch
+	for _, ruleset := range rulesets {
+		// Skip disabled or evaluate-only rulesets
+		if ruleset.Enforcement == "disabled" || ruleset.Enforcement == "evaluate" {
+			continue
+		}
+
+		// Check if this ruleset targets branches and matches our branch
+		target := ruleset.GetTarget()
+		if target == nil || *target != "branch" {
+			continue
+		}
+
+		// Check if the ruleset applies to this specific branch
+		if !rulesetMatchesBranch(ruleset, branch) {
+			continue
+		}
+
+		// Check the rules in this ruleset
+		rules := ruleset.GetRules()
+		if rules != nil {
+			// Check for pull request requirement
+			if rules.PullRequest != nil {
+				result.RequiresPullRequest = true
+			}
+
+			// Check for other blocking rules
+			if rules.RequiredStatusChecks != nil || rules.RequiredSignatures != nil ||
+				rules.RequiredLinearHistory != nil || rules.RequiredDeployments != nil ||
+				rules.Creation != nil || rules.NonFastForward != nil {
+				result.HasBlockingRules = true
+			}
+		}
+	}
+
+	// Return nil if no blocking rules found
+	if !result.RequiresPullRequest && !result.HasBlockingRules {
+		return nil, nil
+	}
+
+	return result, nil
+}
+
+// rulesetMatchesBranch checks if a ruleset's conditions match the given branch name.
+func rulesetMatchesBranch(ruleset *github.RepositoryRuleset, branch string) bool {
+	if ruleset.Conditions == nil || ruleset.Conditions.RefName == nil {
+		// No conditions means it applies to all branches
+		return true
+	}
+
+	refName := ruleset.Conditions.RefName
+
+	// Check include patterns
+	if refName.Include != nil {
+		matched := false
+		for _, pattern := range refName.Include {
+			if matchesPattern(pattern, branch) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	// Check exclude patterns
+	if refName.Exclude != nil {
+		for _, pattern := range refName.Exclude {
+			if matchesPattern(pattern, branch) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+// matchesPattern checks if a branch name matches a GitHub ref pattern.
+// Patterns can use ~DEFAULT_BRANCH or refs/heads/ prefixes, or be simple names.
+func matchesPattern(pattern, branch string) bool {
+	// Handle special ~DEFAULT_BRANCH pattern (we can't check this without repo metadata)
+	if pattern == "~DEFAULT_BRANCH" {
+		// We'd need to compare against repo.DefaultBranch, but we don't have that here
+		// For now, assume it might match (conservative approach)
+		return true
+	}
+
+	// Remove refs/heads/ prefix if present in pattern
+	if len(pattern) > 11 && pattern[:11] == "refs/heads/" {
+		pattern = pattern[11:]
+	}
+
+	// Simple exact match (we could add fnmatch pattern matching here if needed)
+	return pattern == branch
+}
+
 func (r *githubClient) GetRepository(ctx context.Context, owner, repository string) (Repository, error) {
 	repo, _, err := r.gh.Repositories.Get(ctx, owner, repository)
 	if err != nil {

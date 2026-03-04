@@ -26,6 +26,9 @@ type Client interface {
 	// Branch protection
 	GetBranchProtection(ctx context.Context, owner, repository, branch string) (*BranchProtection, error)
 
+	// Repository rulesets
+	GetRulesets(ctx context.Context, owner, repository, branch string) (*Rulesets, error)
+
 	// Commits
 	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
 
@@ -129,6 +132,43 @@ func (bp *BranchProtection) BlocksDirectPush() []string {
 	}
 	if bp.LockBranch {
 		reasons = append(reasons, "branch is locked (read-only)")
+	}
+	return reasons
+}
+
+// Rulesets holds repository rulesets that apply to a specific branch and may
+// block direct pushes.
+//
+// GitHub Repository Rulesets are documented at:
+// https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets
+//
+// Rulesets are more flexible than branch protection rules and can target
+// multiple branches with patterns. Only rulesets with enforcement="active"
+// or "enabled" are considered blocking.
+type Rulesets struct {
+	// RequiresPullRequest is true when a "pull_request" rule is active.
+	// This forces all changes to go through a PR.
+	RequiresPullRequest bool
+
+	// HasBlockingRules is true when there are other active rules that would
+	// block a direct push (e.g., required_status_checks, required_signatures).
+	HasBlockingRules bool
+}
+
+// BlocksDirectPush returns human-readable reasons why direct pushes would be
+// blocked by repository rulesets. A nil slice means no blocking rules were
+// detected.
+func (r *Rulesets) BlocksDirectPush() []string {
+	if r == nil {
+		return nil
+	}
+
+	var reasons []string
+	if r.RequiresPullRequest {
+		reasons = append(reasons, "ruleset requires pull request")
+	}
+	if r.HasBlockingRules {
+		reasons = append(reasons, "ruleset has blocking rules")
 	}
 	return reasons
 }
