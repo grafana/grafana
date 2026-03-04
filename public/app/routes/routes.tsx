@@ -392,6 +392,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/roles/edit/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "RoleEditPage" */ 'app/features/admin/RoleEditPage')
+      ),
+    },
+    {
       path: '/admin/stats',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')

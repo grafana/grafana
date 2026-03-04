@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import {
   Button,
   CellProps,
@@ -68,12 +69,7 @@ const TYPE_BADGE_COLORS: Record<RoleType, 'blue' | 'green' | 'purple' | 'orange'
   plugin: 'orange',
 };
 
-interface RolesListTabProps {
-  onEditRole: (role: Role) => void;
-  onCreateRole: () => void;
-}
-
-export const RolesListTab = ({ onEditRole, onCreateRole }: RolesListTabProps) => {
+export const RolesListTab = () => {
   const styles = useStyles2(getStyles);
   const { data: roles = [], isLoading } = useListRolesQuery({ includeHidden: true });
   const [deleteRole] = useDeleteRoleMutation();
@@ -123,7 +119,7 @@ export const RolesListTab = ({ onEditRole, onCreateRole }: RolesListTabProps) =>
           return (
             <button
               className={styles.roleNameButton}
-              onClick={() => onEditRole(original)}
+              onClick={() => locationService.push(`/admin/roles/edit/${original.uid}`)}
             >
               {displayName}
             </button>
@@ -162,7 +158,7 @@ export const RolesListTab = ({ onEditRole, onCreateRole }: RolesListTabProps) =>
                 icon="pen"
                 size="sm"
                 variant="secondary"
-                onClick={() => onEditRole(original)}
+                onClick={() => locationService.push(`/admin/roles/edit/${original.uid}`)}
                 tooltip={t('admin.roles-list.edit-button', 'Edit')}
                 aria-label={t('admin.roles-list.edit-aria', 'Edit role {{roleName}}', {
                   roleName: original.displayName || original.name || '',
@@ -186,7 +182,7 @@ export const RolesListTab = ({ onEditRole, onCreateRole }: RolesListTabProps) =>
         },
       },
     ],
-    [onEditRole, deleteRole, styles.roleNameButton]
+    [deleteRole, styles.roleNameButton]
   );
 
   return (
@@ -202,7 +198,7 @@ export const RolesListTab = ({ onEditRole, onCreateRole }: RolesListTabProps) =>
             />
             <RadioButtonGroup options={TYPE_OPTIONS} value={typeFilter} onChange={setTypeFilter} size="sm" />
           </Stack>
-          <Button icon="plus" onClick={onCreateRole}>
+          <Button icon="plus" onClick={() => locationService.push('/admin/roles/edit/new')}>
             {t('admin.roles-list.create-button', 'New custom role')}
           </Button>
         </Stack>
