@@ -10041,6 +10041,8 @@
       "weekStarts-label-sunday": "Sunday"
     }
   },
+  "grafana-ui.builder.annotations.clustering.desc": "Combines high density point annotations into region annotations",
+  "grafana-ui.builder.annotations.clustering.name": "Enable annotation clustering",
   "grafana-ui.builder.annotations.multi-lane-desc": "Breaks each annotation frame into a separate row in the visualization",
   "grafana-ui.builder.annotations.multi-lane-name": "Enable multi-lane annotations",
   "graph": {
