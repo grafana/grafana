@@ -18,6 +18,7 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashv2beta2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta2"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
@@ -72,6 +73,8 @@ func convertAPIVersionToFuncName(apiVersion string) string {
 		return "V2alpha1"
 	case "v2beta1":
 		return "V2beta1"
+	case "v2beta2":
+		return "V2beta2"
 	default:
 		return apiVersion
 	}
@@ -105,6 +108,8 @@ func extractDashboardInfo(a, b interface{}) dashboardInfo {
 	case *dashv2alpha1.Dashboard:
 		info.uid = source.Name
 	case *dashv2beta1.Dashboard:
+		info.uid = source.Name
+	case *dashv2beta2.Dashboard:
 		info.uid = source.Name
 	}
 
