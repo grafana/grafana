@@ -5452,11 +5452,13 @@
       "groupby": "GroupBy",
       "missing-adhoc": "No ad hoc filters available",
       "operator": "Operator",
+      "restore": "Restore default value",
       "search": {
         "aria-label": "Search filters",
         "placeholder": "Search..."
       },
       "title": "Edit filters",
+      "use-custom-value": "Use custom value",
       "value": "Value"
     },
     "gen-aihistory": {
@@ -6876,10 +6878,10 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "Query editor v2",
-      "query-editor-version-toggle": "Toggle between query editor v1 and v2",
+      "back-to-classic": "Back to classic editor",
       "table-view-aria-label-toggletableview": "Toggle table view",
-      "table-view-label-table-view": "Table view"
+      "table-view-label-table-view": "Table view",
+      "try-new-editor": "Try new editor"
     },
     "panel-editor": {
       "text": {
@@ -6924,6 +6926,16 @@
     },
     "query-editor": {
       "query": "Query"
+    },
+    "query-editor-banner": {
+      "description-classic": "Try the improved query editing experience.",
+      "description-new": "Welcome to the improved query editing experience.",
+      "dismiss": "Dismiss",
+      "downgrade-title": "New query editor!",
+      "give-feedback": "Give feedback",
+      "go-back": "Back to classic",
+      "try-it": "Try it out",
+      "upgrade-title": "New editor available!"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
@@ -7048,6 +7060,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
+      "disabled-tooltip": "Save the dashboard before creating alert rules",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
@@ -9467,11 +9480,13 @@
       },
       "legend": {
         "category": "Legend",
+        "description-limit": "Limits how many items are shown by default",
         "description-values": "Select values or calculations to show in legend",
         "mode-options": {
           "label-list": "List",
           "label-table": "Table"
         },
+        "name-limit": "Limit",
         "name-mode": "Mode",
         "name-placement": "Placement",
         "name-values": "Values",
@@ -10402,6 +10417,11 @@
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><1>documentation</1></2>.",
     "title": "Basic Settings"
   },
+  "legend": {
+    "container": {
+      "show-all-series": "...show all {{total}} items"
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Library panel with this name already exists",
@@ -10883,6 +10903,7 @@
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
     "name-show-controls": "Show controls",
+    "name-show-level": "Display log level",
     "name-time": "Show timestamps",
     "name-unique-labels": "Unique labels",
     "name-unwrapped-columns": "Enable columns for displayed fields",
@@ -12420,13 +12441,18 @@
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
+      "description-filename": "File name for the dashboard (.json or .yaml)",
+      "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "info-branch-disabled": "Push to configured branch is disabled",
       "label-branch": "Branch",
       "label-comment": "Comment",
+      "label-filename": "Filename",
+      "label-folder": "Folder",
       "label-path": "Path",
       "placeholder-branch": "Select or enter branch name",
+      "placeholder-folder": "Select or enter folder path",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
       "suffix-new-branch": "New branch",
@@ -12540,6 +12566,8 @@
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
     "connect-step": {
+      "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",
+      "text-repository-folders-not-ready": "There was an issue connecting to the repository. You can still manually enter the folder path.",
       "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
     },
     "connection": {
@@ -12681,10 +12709,18 @@
       "label-sync-interval": "Sync Interval (seconds)"
     },
     "fix-folder-metadata": {
-      "button": "Fix folder IDs",
-      "error-fixing": "Error fixing folder metadata",
-      "fixing": "Fixing...",
-      "success": "Folder metadata fix started. This will continue in the background."
+      "button": "Fix folder IDs"
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "Cancel",
+      "error-message": "Failed to start folder metadata fix job. Please try again.",
+      "error-title": "Error fixing folder metadata",
+      "loading": "Loading repository...",
+      "read-only-message": "Folder metadata cannot be fixed automatically.",
+      "submit": "Fix folder IDs",
+      "submitting": "Fixing...",
+      "success-title": "Folder metadata fixed successfully",
+      "title": "Fix folder metadata"
     },
     "folder-permissions": {
       "loading": "Loading..."
@@ -13432,6 +13468,7 @@
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
       "loading-queries-transformations": "Loading queries and transformations",
+      "new-type": "New {{type}}",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
@@ -14689,6 +14726,12 @@
     "name-show-matches-only": "Show matches only",
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "{{name}} will be applied automatically to your data unless the transformation is disabled.",
+      "title": "No options to configure"
     }
   },
   "transformation-editor-renderer": {
