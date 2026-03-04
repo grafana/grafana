@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/google/go-github/v82/github"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 type githubClient struct {
@@ -23,6 +25,46 @@ const (
 	maxWebhooks = 100  // Maximum number of webhooks allowed per repository
 	maxPRFiles  = 1000 // Maximum number of files allowed in a pull request
 )
+
+func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repository, branch string) (*BranchProtection, error) {
+	protection, _, err := r.gh.Repositories.GetBranchProtection(ctx, owner, repository, branch)
+	if err != nil {
+		// Branch has no protection rules at all - this is fine, skip the check.
+		if errors.Is(err, github.ErrBranchNotProtected) {
+			return nil, nil
+		}
+
+		// Return custom errors for common cases (similar to webhook operations).
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) {
+			switch ghErr.Response.StatusCode {
+			case http.StatusUnauthorized:
+				return nil, ErrUnauthorized
+			case http.StatusForbidden:
+				// User lacks admin permissions to view branch protection.
+				// Skip check gracefully - if protection rules block pushes, they'll find out at push time.
+				logging.FromContext(ctx).Warn("Skipping branch protection check: token lacks Administration read permission",
+					slog.String("owner", owner),
+					slog.String("repository", repository),
+					slog.String("branch", branch))
+				return nil, nil
+			case http.StatusNotFound:
+				return nil, ErrResourceNotFound
+			case http.StatusServiceUnavailable:
+				return nil, ErrServiceUnavailable
+			}
+		}
+
+		return nil, fmt.Errorf("failed to get branch protection: %w", err)
+	}
+
+	bp := &BranchProtection{
+		RequiredPullRequestReviews: protection.RequiredPullRequestReviews != nil,
+		LockBranch:                 protection.LockBranch != nil && protection.LockBranch.GetEnabled(),
+	}
+
+	return bp, nil
+}
 
 func (r *githubClient) GetRepository(ctx context.Context, owner, repository string) (Repository, error) {
 	repo, _, err := r.gh.Repositories.Get(ctx, owner, repository)

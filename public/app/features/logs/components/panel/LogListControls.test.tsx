@@ -71,6 +71,7 @@ const contextProps = {
   fontSize,
   logs: [],
   showControls: true,
+  showLevel: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: false,

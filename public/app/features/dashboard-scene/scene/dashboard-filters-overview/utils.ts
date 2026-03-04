@@ -28,12 +28,7 @@ export function buildOverviewState(filtersState: {
     keys.push({ label: originFilter.keyLabel, value: originFilter.key });
     operatorsByKey[originFilter.key] = '=';
     isOriginByKey[originFilter.key] = true;
-
-    if (originFilter.matchAllFilter) {
-      singleValuesByKey[originFilter.key] = '';
-    } else {
-      singleValuesByKey[originFilter.key] = originFilter.value!;
-    }
+    singleValuesByKey[originFilter.key] = originFilter.matchAllFilter ? '' : originFilter.value!;
   }
 
   for (const selectedFilter of filtersState.filters) {

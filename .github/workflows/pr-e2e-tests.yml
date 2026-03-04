@@ -512,53 +512,7 @@ jobs:
             exit 1
           fi
 
-  run-a11y-test:
-    needs:
-      - build-grafana
-    name: A11y test
-    runs-on: ubuntu-x64-large
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - uses: actions/download-artifact@v6
-        with:
-          name: grafana-tar-gz
-      - name: Run PR a11y test
-        if: github.event_name == 'pull_request'
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz
-      - name: Run non-PR a11y test
-        if: github.event_name != 'pull_request'
-        uses: kminehart/dagger-for-github@590bdefcb7f0c1030fce068a2c041c36582262d6
-        with:
-          cache-binary: "true"
-          version: 0.18.8
-          verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail --results=./pa11y-ci-results.json
-      - name: Upload pa11y results
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v5
-        with:
-          retention-days: 1
-          name: pa11y-ci-results
-          path: pa11y-ci-results.json
-
   publish-metrics:
-    needs:
-      - run-a11y-test
     name: Publish metrics
     # Run on `grafana/grafana` main branch only
     if: github.event_name == 'push' && github.repository == 'grafana/grafana' && github.ref_name == 'main'
@@ -582,10 +536,6 @@ jobs:
           node-version-file: '.nvmrc'
       - name: Install dependencies
         run: yarn install --immutable
-      - name: Get pa11y results
-        uses: actions/download-artifact@v6
-        with:
-          name: pa11y-ci-results
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:

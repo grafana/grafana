@@ -568,6 +568,9 @@ type Cfg struct {
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
 
+	// DatabaseRegisterDeprecatedMetrics decides whether to register the deprecated `grafana_database_conn_*` and `go_sql_stats_*` metrics.
+	DatabaseRegisterDeprecatedMetrics bool
+
 	// Public dashboards
 	PublicDashboardsEnabled bool
 
@@ -605,6 +608,8 @@ type Cfg struct {
 	UnifiedStorage map[string]UnifiedStorageConfig
 	// DisableDataMigrations will disable resources data migration to unified storage at startup
 	DisableDataMigrations bool
+	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
+	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
 	// Larger values reduce lock contention. Default: 1000000 (~1GB).
 	MigrationCacheSizeKB int
@@ -612,7 +617,10 @@ type Cfg struct {
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
 	// Default: false.
 	MigrationParquetBuffer bool
-	MaxPageSizeBytes       int
+	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
+	// statements to appear in the processlist. Default: 1 minute.
+	RenameWaitDeadline time.Duration
+	MaxPageSizeBytes   int
 	// IndexPath the directory where index files are stored.
 	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
@@ -642,6 +650,7 @@ type Cfg struct {
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
+	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
@@ -1500,6 +1509,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
+	cfg.DatabaseRegisterDeprecatedMetrics = databaseSection.Key("register_deprecated_metrics").MustBool(true)
 
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
