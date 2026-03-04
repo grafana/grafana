@@ -603,6 +603,9 @@ export {
   type CommandPaletteDynamicResultChild,
   type CommandPaletteDynamicSearchProvider,
   type CommandPaletteDynamicResultAction,
+  type CommandPaletteDynamicFacet,
+  type CommandPaletteFacetValue,
+  type CommandPaletteFacetContext,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

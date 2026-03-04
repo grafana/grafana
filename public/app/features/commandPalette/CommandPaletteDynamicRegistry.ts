@@ -3,9 +3,10 @@ import { ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rx
 import {
   PluginExtensionCommandPaletteDynamicConfig,
   CommandPaletteDynamicResult,
-  DynamicPluginExtensionCommandPaletteContext,
   PluginExtensionCommandPaletteContext,
 } from '@grafana/data';
+
+import { CommandPaletteDynamicFacet } from './facetTypes';
 
 import { deepFreeze } from '../plugins/extensions/utils';
 
@@ -19,6 +20,12 @@ export interface CommandPaletteDynamicRegistryItem {
 export interface CommandPaletteDynamicSearchResult {
   items: CommandPaletteDynamicResult[];
   config: CommandPaletteDynamicRegistryItem;
+}
+
+export interface DynamicProviderCategory {
+  label: string;
+  hasFacets: boolean;
+  icon?: string;
 }
 
 type PluginExtensionConfigs = {
@@ -117,68 +124,131 @@ export class CommandPaletteDynamicRegistry {
   }
 
   /**
-   * Execute a search across all registered providers
+   * Returns unique category labels from all registered providers.
    */
-  async search(context: PluginExtensionCommandPaletteContext): Promise<Map<string, CommandPaletteDynamicSearchResult>> {
+  async getCategories(): Promise<DynamicProviderCategory[]> {
+    const registry = await this.getState();
+    const seen = new Map<string, DynamicProviderCategory>();
+
+    for (const [, registryItems] of Object.entries(registry)) {
+      if (!Array.isArray(registryItems) || registryItems.length === 0) {
+        continue;
+      }
+      const config = registryItems[0].config;
+      const label = config.category;
+      if (label && !seen.has(label)) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const categoryIcon = (config as Record<string, unknown>).categoryIcon as string | undefined;
+        seen.set(label, {
+          label,
+          hasFacets: Boolean(config.facets && config.facets.length > 0),
+          icon: categoryIcon,
+        });
+      }
+    }
+
+    return [...seen.values()];
+  }
+
+  /**
+   * Returns facet definitions, optionally filtered by category label.
+   */
+  async getFacets(categoryFilter?: string): Promise<Map<string, CommandPaletteDynamicFacet[]>> {
+    const registry = await this.getState();
+    const facetsMap = new Map<string, CommandPaletteDynamicFacet[]>();
+
+    for (const [providerId, registryItems] of Object.entries(registry)) {
+      if (!Array.isArray(registryItems) || registryItems.length === 0) {
+        continue;
+      }
+      const config = registryItems[0].config;
+      if (categoryFilter && config.category !== categoryFilter) {
+        continue;
+      }
+      const facets = config.facets;
+      if (facets && facets.length > 0) {
+        facetsMap.set(providerId, facets);
+      }
+    }
+
+    return facetsMap;
+  }
+
+  /**
+   * Execute a search across registered providers, optionally filtered by category.
+   */
+  async search(
+    context: PluginExtensionCommandPaletteContext & {
+      activeFacets?: Record<string, string>;
+      selectedCategory?: string;
+    }
+  ): Promise<Map<string, CommandPaletteDynamicSearchResult>> {
     const registry = await this.getState();
     const results = new Map<string, CommandPaletteDynamicSearchResult>();
     const searchQuery = context.searchQuery ?? '';
     const signal = context.signal ?? new AbortController().signal;
 
-    // Create the dynamic context with required fields for searchProvider
-    const dynamicContext: DynamicPluginExtensionCommandPaletteContext = {
+    const dynamicContext = {
       searchQuery,
       signal,
+      activeFacets: context.activeFacets,
     };
 
-    const searchPromises = Object.entries(registry).map(async ([providerId, registryItems]) => {
-      if (!Array.isArray(registryItems) || registryItems.length === 0) {
-        return;
-      }
-
-      const item = registryItems[0]; // Take first config per provider
-      const { config } = item;
-
-      // Check minimum query length
-      if (searchQuery.length < (config.minQueryLength ?? 2)) {
-        return;
-      }
-
-      try {
-        const items = await config.searchProvider(dynamicContext);
-
-        // Validate results
-        if (!Array.isArray(items)) {
-          console.warn(`${logPrefix} Provider ${providerId} did not return an array`);
+    const searchPromises = Object.entries(registry)
+      .filter(([, registryItems]) => {
+        if (!context.selectedCategory) {
+          return true;
+        }
+        if (!Array.isArray(registryItems) || registryItems.length === 0) {
+          return false;
+        }
+        return registryItems[0].config.category === context.selectedCategory;
+      })
+      .map(async ([providerId, registryItems]) => {
+        if (!Array.isArray(registryItems) || registryItems.length === 0) {
           return;
         }
 
-        // Validate and filter items
-        const validItems = items
-          .filter((item) => {
-            if (!item.id || typeof item.id !== 'string') {
-              console.warn(`${logPrefix} Provider ${providerId}: result missing id`);
-              return false;
-            }
-            if (!item.title || typeof item.title !== 'string') {
-              console.warn(`${logPrefix} Provider ${providerId}: result missing title`);
-              return false;
-            }
-            return true;
-          })
-          .slice(0, 5); // Limit to 5 items maximum
+        const item = registryItems[0];
+        const { config } = item;
 
-        if (validItems.length > 0) {
-          results.set(providerId, { items: validItems, config: item });
-        }
-      } catch (error) {
-        // Don't log AbortErrors as they are expected
-        if (error instanceof Error && error.name === 'AbortError') {
+        if (!context.selectedCategory && searchQuery.length < (config.minQueryLength ?? 2)) {
           return;
         }
-        console.error(`${logPrefix} Search failed for ${providerId}`, { error: String(error) });
-      }
-    });
+
+        try {
+          const items = await config.searchProvider(dynamicContext);
+
+          if (!Array.isArray(items)) {
+            console.warn(`${logPrefix} Provider ${providerId} did not return an array`);
+            return;
+          }
+
+          const maxItems = context.selectedCategory ? 8 : 5;
+          const validItems = items
+            .filter((item) => {
+              if (!item.id || typeof item.id !== 'string') {
+                console.warn(`${logPrefix} Provider ${providerId}: result missing id`);
+                return false;
+              }
+              if (!item.title || typeof item.title !== 'string') {
+                console.warn(`${logPrefix} Provider ${providerId}: result missing title`);
+                return false;
+              }
+              return true;
+            })
+            .slice(0, maxItems);
+
+          if (validItems.length > 0) {
+            results.set(providerId, { items: validItems, config: item });
+          }
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') {
+            return;
+          }
+          console.error(`${logPrefix} Search failed for ${providerId}`, { error: String(error) });
+        }
+      });
 
     await Promise.all(searchPromises);
     return results;

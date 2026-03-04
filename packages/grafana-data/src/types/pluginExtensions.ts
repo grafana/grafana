@@ -301,6 +301,8 @@ export type DynamicPluginExtensionCommandPaletteContext = {
   searchQuery: string;
   /** Signal for request cancellation */
   signal: AbortSignal;
+  /** Currently active facet filters (facetId → selected valueId). Empty when no facets applied. */
+  activeFacets?: Record<string, string>;
 };
 
 export type PluginExtensionResourceAttributesContext = {
@@ -437,6 +439,55 @@ export type CommandPaletteDynamicSearchProvider = (
   context: DynamicPluginExtensionCommandPaletteContext
 ) => Promise<CommandPaletteDynamicResult[]>;
 
+// Faceted Search Types
+// --------------------------------------------------------
+
+/**
+ * Context passed to facet value providers.
+ */
+export interface CommandPaletteFacetContext {
+  /** The current search query */
+  searchQuery: string;
+  /** Currently active facet selections (facetId → selected valueId) */
+  activeFacets: Record<string, string>;
+  /** Signal for request cancellation */
+  signal: AbortSignal;
+}
+
+/**
+ * A single selectable value within a facet.
+ */
+export interface CommandPaletteFacetValue {
+  /** Unique identifier for this value */
+  id: string;
+  /** Display label */
+  label: string;
+  /** Optional count of matching results */
+  count?: number;
+  /** Optional icon displayed to the left of the label */
+  icon?: React.ReactNode;
+}
+
+/**
+ * A facet definition for progressive narrowing in command palette results.
+ * Facets allow users to filter results by specific dimensions (e.g. type, region).
+ */
+export interface CommandPaletteDynamicFacet {
+  /** Unique identifier for this facet */
+  id: string;
+  /** Display label (e.g. "Type", "Region") */
+  label: string;
+  /** Keyboard shortcut number ('1'-'9'). Displayed as Cmd+1, Cmd+2, etc. */
+  shortcutKey?: string;
+  /** Placeholder text for the search input when this facet is active */
+  placeholder?: string;
+  /**
+   * Provider function that returns available values for this facet.
+   * Receives the current active facets so values can be contextually filtered.
+   */
+  getValues: (context: CommandPaletteFacetContext) => Promise<CommandPaletteFacetValue[]>;
+}
+
 /**
  * Configuration for registering a dynamic command palette provider
  */
@@ -458,4 +509,11 @@ export type PluginExtensionCommandPaletteDynamicConfig = {
    * Return an empty array to skip results for the current search.
    */
   searchProvider: CommandPaletteDynamicSearchProvider;
+
+  /**
+   * Optional facets for progressive narrowing of results.
+   * When provided, the command palette renders facet pills and supports
+   * keyboard-shortcut-driven filtering.
+   */
+  facets?: CommandPaletteDynamicFacet[];
 };

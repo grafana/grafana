@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
 import * as React from 'react';
 
@@ -34,7 +34,7 @@ export function KBarSearch(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  const { defaultPlaceholder, ...rest } = props;
+  const { defaultPlaceholder, className: externalClassName, ...rest } = props;
 
   React.useEffect(() => {
     query.setSearch('');
@@ -50,7 +50,7 @@ export function KBarSearch(
   return (
     <input
       {...rest}
-      className={styles.input}
+      className={cx(styles.input, externalClassName)}
       ref={query.inputRefSetter}
       /* eslint-disable-next-line jsx-a11y/no-autofocus */
       autoFocus
@@ -78,16 +78,14 @@ export function KBarSearch(
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (_theme: GrafanaTheme2) => {
   return {
     input: css({
       label: 'kbar-search-input',
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      lineHeight: theme.typography.body.lineHeight,
-      color: theme.colors.text.secondary,
       width: '100%',
       outline: 'none',
+      border: 'none',
+      background: 'transparent',
       paddingLeft: 0,
     }),
   };

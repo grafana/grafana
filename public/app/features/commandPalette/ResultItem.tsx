@@ -3,7 +3,7 @@ import { ActionId, ActionImpl, useKBar } from 'kbar';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 interface ActionWithSecondaryActions extends ActionImpl {
   secondaryActions?: React.ReactNode;
@@ -82,6 +82,9 @@ export const ResultItem = React.forwardRef(
             {secondaryActions}
           </div>
         )}
+        {active && action.children.length > 0 && (
+          <Icon name="angle-right" className={styles.arrowIcon} />
+        )}
       </div>
     );
   }
@@ -103,18 +106,8 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     }),
     activeRow: css({
       color: theme.colors.text.maxContrast,
-      background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
-      '&:before': {
-        display: 'block',
-        content: '" "',
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: theme.spacing(0.5),
-        borderRadius: theme.shape.radius.default,
-        backgroundImage: theme.colors.gradients.brandVertical,
-      },
+      borderRadius: '6px',
+      background: 'rgba(204, 204, 220, 0.12)',
     }),
     actionContainer: css({
       display: 'flex',
@@ -157,6 +150,11 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     }),
     secondaryActionsVisible: css({
       display: 'flex',
+    }),
+    arrowIcon: css({
+      color: theme.colors.text.secondary,
+      marginLeft: 'auto',
+      flexShrink: 0,
     }),
   };
 };

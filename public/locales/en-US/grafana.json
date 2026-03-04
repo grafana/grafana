@@ -4145,12 +4145,26 @@
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
     },
+    "facet-values": {
+      "empty": "No options found",
+      "loading": "Loading..."
+    },
+    "keyboard-hints": {
+      "back": "Back",
+      "enter": "↵",
+      "esc": "ESC",
+      "focus": "Focus",
+      "focus-shortcut": "⌘{{ range }}",
+      "select": "Select"
+    },
     "scopes": {
       "apply-selected-scopes": "Apply",
       "selected-scopes-label": "Scopes:"
     },
     "search-box": {
-      "placeholder": "Search or jump to..."
+      "clear": "Clear search",
+      "placeholder": "Type a command or search...",
+      "placeholder-filtered": "Search by entity name..."
     },
     "section": {
       "actions": "Actions",

@@ -7,7 +7,12 @@ import { appEvents } from 'app/core/app_events';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { createOpenModalFunction } from '../../plugins/extensions/utils';
-import { commandPaletteDynamicRegistry, CommandPaletteDynamicSearchResult } from '../CommandPaletteDynamicRegistry';
+import {
+  commandPaletteDynamicRegistry,
+  CommandPaletteDynamicSearchResult,
+  DynamicProviderCategory,
+} from '../CommandPaletteDynamicRegistry';
+import { CommandPaletteDynamicFacet } from '../facetTypes';
 import { CommandPaletteAction } from '../types';
 import { EXTENSIONS_PRIORITY } from '../values';
 
@@ -61,19 +66,27 @@ function buildEventHelpers(result: DynamicResultWithPluginId, searchQuery: strin
  * Hierarchical results (with children) are registered with kbar via
  * useRegisterActions so that the parent/child drill-down mechanism works.
  */
-export function useDynamicExtensionResults(searchQuery: string): {
+export function useDynamicExtensionResults(
+  searchQuery: string,
+  activeFacets?: Record<string, string>,
+  selectedCategory?: string | null
+): {
   results: CommandPaletteAction[];
   isLoading: boolean;
+  availableFacets: CommandPaletteDynamicFacet[];
+  availableCategories: DynamicProviderCategory[];
+  resultCount: number;
 } {
   const [dynamicResults, setDynamicResults] = useState<DynamicResultWithPluginId[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [availableFacets, setAvailableFacets] = useState<CommandPaletteDynamicFacet[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<DynamicProviderCategory[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const { currentRootActionId } = useKBar((state) => ({
     currentRootActionId: state.currentRootActionId,
   }));
 
-  // When drilled into a dynamic parent, don't clear results even if search is empty
   const isDrilledIntoDynamic = Boolean(currentRootActionId?.startsWith('dynamic-'));
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
@@ -86,15 +99,39 @@ export function useDynamicExtensionResults(searchQuery: string): {
     [searchQuery]
   );
 
+  // Load categories from registry once
   useEffect(() => {
+    commandPaletteDynamicRegistry.getCategories().then(setAvailableCategories);
+  }, []);
+
+  // Load facets filtered by selected category (empty when no category selected)
+  useEffect(() => {
+    if (!selectedCategory) {
+      setAvailableFacets([]);
+      return;
+    }
+    commandPaletteDynamicRegistry.getFacets(selectedCategory).then((facetsMap) => {
+      const allFacets: CommandPaletteDynamicFacet[] = [];
+      facetsMap.forEach((facets) => allFacets.push(...facets));
+      setAvailableFacets(allFacets);
+    });
+  }, [selectedCategory]);
+
+  const activeFacetsKey = JSON.stringify(activeFacets ?? {});
+
+  useEffect(() => {
+    // When drilled into a dynamic result's children, keep existing results stable
+    if (isDrilledIntoDynamic) {
+      setIsLoading(false);
+      return;
+    }
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    if (debouncedSearchQuery.length < 2) {
-      if (!isDrilledIntoDynamic) {
-        setDynamicResults([]);
-      }
+    if (!selectedCategory && debouncedSearchQuery.length < 2) {
+      setDynamicResults([]);
       setIsLoading(false);
       return;
     }
@@ -104,9 +141,14 @@ export function useDynamicExtensionResults(searchQuery: string): {
 
     setIsLoading(true);
 
-    const context: PluginExtensionCommandPaletteContext = {
+    const context: PluginExtensionCommandPaletteContext & {
+      activeFacets?: Record<string, string>;
+      selectedCategory?: string;
+    } = {
       searchQuery: debouncedSearchQuery,
       signal: abortController.signal,
+      activeFacets,
+      selectedCategory: selectedCategory ?? undefined,
     };
 
     commandPaletteDynamicRegistry
@@ -141,7 +183,8 @@ export function useDynamicExtensionResults(searchQuery: string): {
     return () => {
       abortController.abort();
     };
-  }, [debouncedSearchQuery, isDrilledIntoDynamic]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery, isDrilledIntoDynamic, activeFacetsKey, selectedCategory]);
 
   // Register hierarchical results (with children) in kbar's store
   const hierarchicalActions: Action[] = useMemo(() => {
@@ -218,5 +261,5 @@ export function useDynamicExtensionResults(searchQuery: string): {
       });
   }, [dynamicResults, debouncedSearchQuery]);
 
-  return { results, isLoading };
+  return { results, isLoading, availableFacets, availableCategories, resultCount: dynamicResults.length };
 }
