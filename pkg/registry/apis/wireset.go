@@ -52,6 +52,7 @@ var provisioningExtras = wire.NewSet(
 	extras.ProvideConnectionFactoryFromConfig,
 	extras.ProvideProvisioningExtraAPIs,
 	extras.ProvideExtraWorkers,
+	extras.ProvideQuotaGetter,
 )
 
 var WireSet = wire.NewSet(

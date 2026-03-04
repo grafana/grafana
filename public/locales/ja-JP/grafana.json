@@ -2096,7 +2096,9 @@
       "select-namespace": "名前空間を選択"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "アラートルール",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "最近削除",
@@ -2322,8 +2324,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "現在アラートが発生しているものを確認し、履歴データを調べて現在または過去の問題を調査します。",
-        "title": "アラート"
+        "subtitle": "現在アラートが発生しているものを確認し、履歴データを調べて現在または過去の問題を調査します。"
       }
     },
     "panel-alert-tab-content": {
@@ -6850,10 +6851,10 @@
       "title-delete-all-transformations": "すべての変換を削除しますか？"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "テーブル表示を切り替え",
-      "table-view-label-table-view": "テーブル表示"
+      "table-view-label-table-view": "テーブル表示",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6898,6 +6899,16 @@
     },
     "query-editor": {
       "query": "クエリ"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "名前付きキャプチャグループを使用すると、表示テキストと値を分けることができます（<1>例を参照</1>）。",
@@ -7021,6 +7032,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "アラート対応データソースへのクエリが見つからないため、このパネルからアラートを作成できません。",
+      "disabled-tooltip": "",
       "new-alert-rule": "新しいアラートルール",
       "title-no-alerting-capable-query-found": "アラート対応クエリが見つかりません"
     },
@@ -9427,11 +9439,13 @@
       },
       "legend": {
         "category": "凡例",
+        "description-limit": "",
         "description-values": "凡例に表示する値または計算を選択",
         "mode-options": {
           "label-list": "リスト",
           "label-table": "テーブル"
         },
+        "name-limit": "",
         "name-mode": "モード",
         "name-placement": "配置",
         "name-values": "値",
@@ -10360,6 +10374,11 @@
     "subtitle": "GrafanaのLDAP統合により、GrafanaユーザーはLDAP認証情報を使用してログインできます。詳細については、<2><1>ドキュメント</1></2>をご覧ください。",
     "title": "基本設定"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "この名前のライブラリパネルは既に存在します",
@@ -11228,9 +11247,17 @@
       "subtitle": "システムの問題が発生した直後にその内容を確認",
       "title": "アラート"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Alertmanager構成を管理し、Grafana管理のアラートの受信を有効にします",
       "title": "設定"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "アラートがコンタクトポイントにどのようにルーティングされるかを決定します",
@@ -12361,13 +12388,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "ブランチ",
       "label-comment": "コメント",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "パス",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "最新のブランチ",
       "suffix-new-branch": "",
@@ -12478,6 +12510,8 @@
       "instance-fully-managed-tooltip": "このインスタンスは完全に管理されているため、設定は無効です"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12618,10 +12652,18 @@
       "label-sync-interval": "同期間隔 (秒)"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13360,6 +13402,7 @@
       "card-click": "カード{{id}}を選択",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
       "transformations": "変換",
@@ -14616,6 +14659,12 @@
     "name-show-matches-only": "一致するもののみを表示",
     "traces-panel": {
       "no-data-found-in-response": "応答にデータが見つかりません"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {
