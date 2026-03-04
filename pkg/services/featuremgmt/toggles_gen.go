@@ -869,4 +869,8 @@ const (
 	// FlagAnalyticsFramework
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagScenesNoFlickering
+	// Prevents flickering in scenes
+	FlagScenesNoFlickering = "scenesNoFlickering"
 )

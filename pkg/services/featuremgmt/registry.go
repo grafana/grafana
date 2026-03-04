@@ -2522,6 +2522,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "scenesNoFlickering",
+			Description:  "Prevents flickering in scenes",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 

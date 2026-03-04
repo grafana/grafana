@@ -147,7 +147,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     dashboard.state.editPane.setPanelEditAction(editAction);
   }
 
-  private waitForPlugin(retry = 0) {
+  public waitForPlugin(retry = 0) {
     const panel = this.getPanel();
     const plugin = panel.getPlugin();
 
@@ -204,22 +204,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   private gotPanelPlugin(plugin: PanelPlugin) {
-    const panel = this.getPanel();
-
     // First time initialization
     if (this.state.isInitializing) {
       this.setOriginalState(this.state.panelRef);
       this._setupChangeDetection();
       this._updateDataPane(plugin);
-
-      // Listen for panel plugin changes
-      this._subs.add(
-        panel.subscribeToState((n, p) => {
-          if (n.pluginId !== p.pluginId) {
-            this.waitForPlugin();
-          }
-        })
-      );
 
       // Setup options pane
       const optionsPane = new PanelOptionsPane({

@@ -167,7 +167,9 @@ export interface DashboardSceneState extends SceneObjectState {
   layoutOrchestrator?: DashboardLayoutOrchestrator;
 }
 
+//if (config.featureToggles.scenesNoFlickering) {
 SceneObjectBase.RENDER_BEFORE_ACTIVATION_DEFAULT = true;
+//}
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
   static Component = DashboardSceneRenderer;
