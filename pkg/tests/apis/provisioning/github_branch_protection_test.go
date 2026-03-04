@@ -11,7 +11,9 @@ import (
 
 	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -355,41 +357,37 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 		// Convert to repository (verify structure is valid)
 		_ = unstructuredToRepository(t, obj.(*unstructured.Unstructured))
 
-		// Wait a bit for health check to run
-		time.Sleep(2 * time.Second)
-
-		// Get the updated repository to check health status
-		updatedResult := helper.AdminREST.Get().
-			Namespace("default").
-			Resource("repositories").
-			Name("test-health-pr-reviews").
-			Do(ctx)
-
-		require.NoError(t, updatedResult.Error())
-		updatedObj, err := updatedResult.Get()
-		require.NoError(t, err)
-
-		updatedRepo := unstructuredToRepository(t, updatedObj.(*unstructured.Unstructured))
-
-		// Log the actual health status for debugging
-		t.Logf("Health status: Healthy=%v, Error=%q", updatedRepo.Status.Health.Healthy, updatedRepo.Status.Health.Error)
-		t.Logf("Field errors: %+v", updatedRepo.Status.FieldErrors)
-
-		// Verify health status shows the repository as unhealthy
-		require.False(t, updatedRepo.Status.Health.Healthy, "repository should be marked unhealthy due to branch protection")
-
-		// Verify field errors contain branch protection issue (the actual details are here)
-		require.NotEmpty(t, updatedRepo.Status.FieldErrors, "fieldErrors should contain branch protection issue")
-		foundBranchProtectionError := false
-		for _, fieldErr := range updatedRepo.Status.FieldErrors {
-			if fieldErr.Field == "spec.workflows" &&
-				strings.Contains(fieldErr.Detail, "protection rules that prevent direct pushes") {
-				foundBranchProtectionError = true
-				require.Contains(t, fieldErr.Detail, "required pull request reviews")
-				break
+		// Wait for health check to run and mark repository as unhealthy
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repoStatus, err := helper.Repositories.Resource.Get(ctx, "test-health-pr-reviews", metav1.GetOptions{})
+			if !assert.NoError(collect, err, "failed to get repository status") {
+				return
 			}
-		}
-		require.True(t, foundBranchProtectionError, "should have branch protection error on spec.workflows")
+
+			repo := unstructuredToRepository(t, repoStatus)
+
+			// Log the actual health status for debugging
+			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
+			t.Logf("Field errors: %+v", repo.Status.FieldErrors)
+
+			// Repository should be marked unhealthy
+			assert.False(collect, repo.Status.Health.Healthy, "repository should be marked unhealthy due to branch protection")
+
+			// Field errors should contain branch protection issue
+			assert.NotEmpty(collect, repo.Status.FieldErrors, "fieldErrors should contain branch protection issue")
+
+			// Look for branch protection error on spec.workflows
+			foundBranchProtectionError := false
+			for _, fieldErr := range repo.Status.FieldErrors {
+				if fieldErr.Field == "spec.workflows" &&
+					strings.Contains(fieldErr.Detail, "protection rules that prevent direct pushes") &&
+					strings.Contains(fieldErr.Detail, "required pull request reviews") {
+					foundBranchProtectionError = true
+					break
+				}
+			}
+			assert.True(collect, foundBranchProtectionError, "should have branch protection error on spec.workflows")
+		}, 15*time.Second, 500*time.Millisecond, "repository should be marked unhealthy with branch protection errors")
 	})
 
 	t.Run("repository with locked branch creates but shows unhealthy", func(t *testing.T) {
@@ -453,41 +451,37 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 		// Convert to repository (verify structure is valid)
 		_ = unstructuredToRepository(t, obj.(*unstructured.Unstructured))
 
-		// Wait a bit for health check to run
-		time.Sleep(2 * time.Second)
-
-		// Get the updated repository to check health status
-		updatedResult := helper.AdminREST.Get().
-			Namespace("default").
-			Resource("repositories").
-			Name("test-health-locked").
-			Do(ctx)
-
-		require.NoError(t, updatedResult.Error())
-		updatedObj, err := updatedResult.Get()
-		require.NoError(t, err)
-
-		updatedRepo := unstructuredToRepository(t, updatedObj.(*unstructured.Unstructured))
-
-		// Log the actual health status for debugging
-		t.Logf("Health status: Healthy=%v, Error=%q", updatedRepo.Status.Health.Healthy, updatedRepo.Status.Health.Error)
-		t.Logf("Field errors: %+v", updatedRepo.Status.FieldErrors)
-
-		// Verify health status shows the repository as unhealthy
-		require.False(t, updatedRepo.Status.Health.Healthy, "repository should be marked unhealthy due to locked branch")
-
-		// Verify field errors contain branch lock issue (the actual details are here)
-		require.NotEmpty(t, updatedRepo.Status.FieldErrors, "fieldErrors should contain branch lock issue")
-		foundBranchLockError := false
-		for _, fieldErr := range updatedRepo.Status.FieldErrors {
-			if fieldErr.Field == "spec.workflows" &&
-				strings.Contains(fieldErr.Detail, "protection rules that prevent direct pushes") {
-				foundBranchLockError = true
-				require.Contains(t, fieldErr.Detail, "branch is locked")
-				break
+		// Wait for health check to run and mark repository as unhealthy
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repoStatus, err := helper.Repositories.Resource.Get(ctx, "test-health-locked", metav1.GetOptions{})
+			if !assert.NoError(collect, err, "failed to get repository status") {
+				return
 			}
-		}
-		require.True(t, foundBranchLockError, "should have branch lock error on spec.workflows")
+
+			repo := unstructuredToRepository(t, repoStatus)
+
+			// Log the actual health status for debugging
+			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
+			t.Logf("Field errors: %+v", repo.Status.FieldErrors)
+
+			// Repository should be marked unhealthy
+			assert.False(collect, repo.Status.Health.Healthy, "repository should be marked unhealthy due to locked branch")
+
+			// Field errors should contain branch lock issue
+			assert.NotEmpty(collect, repo.Status.FieldErrors, "fieldErrors should contain branch lock issue")
+
+			// Look for branch lock error on spec.workflows
+			foundBranchLockError := false
+			for _, fieldErr := range repo.Status.FieldErrors {
+				if fieldErr.Field == "spec.workflows" &&
+					strings.Contains(fieldErr.Detail, "protection rules that prevent direct pushes") &&
+					strings.Contains(fieldErr.Detail, "branch is locked") {
+					foundBranchLockError = true
+					break
+				}
+			}
+			assert.True(collect, foundBranchLockError, "should have branch lock error on spec.workflows")
+		}, 15*time.Second, 500*time.Millisecond, "repository should be marked unhealthy with branch lock errors")
 	})
 
 	t.Run("repository with unprotected branch creates successfully", func(t *testing.T) {
@@ -547,22 +541,30 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 		obj, err := result.Get()
 		require.NoError(t, err)
 
-		// Get the repository to verify it was created
-		repo := unstructuredToRepository(t, obj.(*unstructured.Unstructured))
+		// Convert to repository (verify structure is valid)
+		_ = unstructuredToRepository(t, obj.(*unstructured.Unstructured))
 
-		// Log the actual health status for debugging
-		t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
-		t.Logf("Field errors: %+v", repo.Status.FieldErrors)
+		// Wait for health check to run, then verify no branch protection errors
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repoStatus, err := helper.Repositories.Resource.Get(ctx, "test-health-unprotected", metav1.GetOptions{})
+			if !assert.NoError(collect, err, "failed to get repository status") {
+				return
+			}
 
-		// Verify no field errors related to branch protection
-		for _, fieldErr := range repo.Status.FieldErrors {
-			require.NotContains(t, fieldErr.Detail, "protection rules that prevent direct pushes",
-				"unprotected branch should not have branch protection errors")
-		}
+			repo := unstructuredToRepository(t, repoStatus)
 
-		// NOTE: Currently the repository may be marked as unhealthy initially even
-		// without branch protection issues, likely due to sync being disabled or
-		// initial health check timing. This is acceptable - the important thing is
-		// that there are no branch protection field errors.
+			// Log the actual health status for debugging
+			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
+			t.Logf("Field errors: %+v", repo.Status.FieldErrors)
+
+			// Verify health check has run (checked timestamp should be set)
+			assert.Greater(collect, repo.Status.Health.Checked, int64(0), "health check should have run")
+
+			// Verify no field errors related to branch protection
+			for _, fieldErr := range repo.Status.FieldErrors {
+				assert.NotContains(collect, fieldErr.Detail, "protection rules that prevent direct pushes",
+					"unprotected branch should not have branch protection errors")
+			}
+		}, 15*time.Second, 500*time.Millisecond, "health check should run without branch protection errors")
 	})
 }
