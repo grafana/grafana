@@ -2521,4 +2521,155 @@ describe('ScopesSelectorService', () => {
       expect(fetchNodesSpy).toHaveBeenCalledWith({ parent: '', query: '' });
     });
   });
+
+  describe('rootScope path resolution', () => {
+    const rootContainer: ScopeNode = {
+      metadata: { name: 'region' },
+      spec: {
+        nodeType: 'container',
+        title: 'Region',
+        parentName: '',
+        linkType: undefined,
+        linkId: undefined,
+      },
+    };
+
+    const midContainer: ScopeNode = {
+      metadata: { name: 'cluster' },
+      spec: {
+        nodeType: 'container',
+        title: 'Cluster',
+        parentName: 'region',
+        linkType: undefined,
+        linkId: undefined,
+      },
+    };
+
+    const leafNode: ScopeNode = {
+      metadata: { name: 'service-node' },
+      spec: {
+        nodeType: 'leaf',
+        title: 'Service',
+        parentName: 'cluster',
+        linkType: 'scope',
+        linkId: 'service-scope',
+      },
+    };
+
+    const scopeWithoutDefaultPath: Scope = {
+      metadata: { name: 'service-scope' },
+      spec: {
+        title: 'Service Scope',
+        filters: [],
+      },
+    };
+
+    it('should use rootScope to resolve path in a single API call', async () => {
+      apiClient.fetchNodes = jest.fn().mockImplementation((options: { parent?: string; rootScope?: string }) => {
+        if (options.parent === 'service-node' && options.rootScope === '') {
+          return Promise.resolve([rootContainer, midContainer, leafNode]);
+        }
+        if (options.parent === '') {
+          return Promise.resolve([rootContainer]);
+        }
+        return Promise.resolve([]);
+      });
+
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scopeWithoutDefaultPath]);
+      apiClient.fetchScopeNode = jest.fn().mockImplementation((id: string) => {
+        if (id === 'service-node') {
+          return Promise.resolve(leafNode);
+        }
+        if (id === 'cluster') {
+          return Promise.resolve(midContainer);
+        }
+        if (id === 'region') {
+          return Promise.resolve(rootContainer);
+        }
+        return Promise.resolve(undefined);
+      });
+
+      await service.changeScopes(['service-scope'], undefined, 'service-node');
+      await service.open();
+
+      expect(service.state.nodes['region']).toEqual(rootContainer);
+      expect(service.state.nodes['cluster']).toEqual(midContainer);
+      expect(service.state.nodes['service-node']).toEqual(leafNode);
+    });
+
+    it('should prefer defaultPath over rootScope when available', async () => {
+      const scopeWithDefaultPath: Scope = {
+        metadata: { name: 'service-scope' },
+        spec: {
+          title: 'Service Scope',
+          filters: [],
+          defaultPath: ['region', 'cluster', 'service-node'],
+        },
+      };
+
+      apiClient.fetchNodes = jest.fn().mockImplementation((options: { parent?: string }) => {
+        if (options.parent === '') {
+          return Promise.resolve([rootContainer]);
+        }
+        if (options.parent === 'region') {
+          return Promise.resolve([midContainer]);
+        }
+        return Promise.resolve([]);
+      });
+
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scopeWithDefaultPath]);
+      apiClient.fetchMultipleScopeNodes = jest.fn().mockResolvedValue([rootContainer, midContainer, leafNode]);
+      apiClient.fetchScopeNode = jest.fn().mockImplementation((id: string) => {
+        if (id === 'service-node') {
+          return Promise.resolve(leafNode);
+        }
+        return Promise.resolve(undefined);
+      });
+
+      await service.changeScopes(['service-scope'], undefined, 'service-node');
+
+      const fetchNodesSpy = jest.spyOn(apiClient, 'fetchNodes');
+      fetchNodesSpy.mockClear();
+
+      await service.open();
+
+      // Should NOT have called fetchNodes with rootScope — defaultPath was used instead
+      const rootScopeCalls = fetchNodesSpy.mock.calls.filter(
+        (call) => call[0] && 'rootScope' in call[0] && call[0].rootScope !== undefined
+      );
+      expect(rootScopeCalls).toHaveLength(0);
+    });
+
+    it('should fall back to recursive walk when rootScope returns empty', async () => {
+      apiClient.fetchNodes = jest.fn().mockImplementation((options: { parent?: string; rootScope?: string }) => {
+        if (options.rootScope === '') {
+          return Promise.resolve([]);
+        }
+        if (options.parent === '') {
+          return Promise.resolve([rootContainer]);
+        }
+        return Promise.resolve([]);
+      });
+
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scopeWithoutDefaultPath]);
+      apiClient.fetchScopeNode = jest.fn().mockImplementation((id: string) => {
+        if (id === 'service-node') {
+          return Promise.resolve(leafNode);
+        }
+        if (id === 'cluster') {
+          return Promise.resolve(midContainer);
+        }
+        if (id === 'region') {
+          return Promise.resolve(rootContainer);
+        }
+        return Promise.resolve(undefined);
+      });
+
+      await service.changeScopes(['service-scope'], undefined, 'service-node');
+      await service.open();
+
+      // Should still resolve the path via recursive getScopeNode calls
+      expect(apiClient.fetchScopeNode).toHaveBeenCalledWith('service-node');
+    });
+  });
 });

@@ -145,8 +145,27 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       return await this.getScopeNodes(scope.spec.defaultPath);
     }
 
-    // 2. Fall back to calculating path from scopeNodeId
+    // 2. Use rootScope to fetch all ancestors in a single API call.
+    // After populating the nodes cache, getNodePath resolves entirely from cache (zero API calls).
     if (scopeNodeId) {
+      const ancestorNodes = await this.apiClient.fetchNodes({
+        parent: scopeNodeId,
+        rootScope: '',
+        depth: 0,
+      });
+
+      if (ancestorNodes.length > 0) {
+        const newNodes = { ...this.state.nodes };
+        for (const node of ancestorNodes) {
+          newNodes[node.metadata.name] = node;
+        }
+        this.updateState({ nodes: newNodes });
+
+        // All ancestors are now cached — getNodePath will resolve without API calls
+        return await this.getNodePath(scopeNodeId);
+      }
+
+      // 3. Fallback: recursive parent walk (N sequential API calls)
       return await this.getNodePath(scopeNodeId);
     }
 

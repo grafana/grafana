@@ -474,7 +474,31 @@ describe('ScopesApiClient', () => {
       );
     });
 
-    it('should omit depth when not provided', async () => {
+    it('should pass rootScope to the endpoint', async () => {
+      const mockSubscription = createMockSubscription({
+        data: { items: [] },
+      });
+      (scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate as jest.Mock).mockReturnValue(
+        mockSubscription
+      );
+
+      await apiClient.fetchNodes({
+        parent: 'leaf-node',
+        rootScope: '',
+        depth: 0,
+      });
+
+      expect(scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          parent: 'leaf-node',
+          rootScope: '',
+          depth: 0,
+        }),
+        expect.objectContaining({ forceRefetch: true })
+      );
+    });
+
+    it('should omit depth and rootScope when not provided', async () => {
       const mockSubscription = createMockSubscription({
         data: { items: [] },
       });
@@ -487,6 +511,7 @@ describe('ScopesApiClient', () => {
       const callArgs = (scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate as jest.Mock).mock
         .calls[0][0];
       expect(callArgs.depth).toBeUndefined();
+      expect(callArgs.rootScope).toBeUndefined();
     });
   });
 

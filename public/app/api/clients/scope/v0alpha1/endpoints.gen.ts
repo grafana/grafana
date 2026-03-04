@@ -57,6 +57,7 @@ const injectedRtkApi = api
             // Added ahead of codegen — will be included in generated output
             // when the backend OpenAPI spec is updated.
             depth: queryArg.depth,
+            rootScope: queryArg.rootScope,
           },
         }),
         providesTags: ['FindScopeNodeChildrenResults'],
@@ -635,6 +636,8 @@ export type GetFindScopeNodeChildrenResultsApiArg = {
   limit?: number;
   /** Extra levels of descendants beyond direct children. 0 or omitted = direct children only. */
   depth?: number;
+  /** When set, response includes ancestor nodes from rootScope down to parent. */
+  rootScope?: string;
 };
 export type ListScopeDashboardBindingApiResponse = /** status 200 OK */ ScopeDashboardBindingList;
 export type ListScopeDashboardBindingApiArg = {
