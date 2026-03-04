@@ -546,6 +546,9 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	meta.SetManagedFields(nil)
 
 	name := obj.GetName()
+	if name == "" {
+		name, _, _ = unstructured.NestedString(obj.Object, "spec", "uid")
+	}
 
 	// Check (and remove) any legacy internal IDs
 	var old *unstructured.Unstructured
@@ -575,8 +578,9 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 		}
 	}
 
-	// Never send internal ID in the body
+	// Never send internal ID or UID in the body
 	unstructured.RemoveNestedField(obj.Object, "spec", "id")
+	unstructured.RemoveNestedField(obj.Object, "spec", "uid")
 
 	isCreate := name == ""
 	if isCreate {
