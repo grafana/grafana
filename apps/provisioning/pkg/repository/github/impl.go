@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/google/go-github/v82/github"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 type githubClient struct {
@@ -41,6 +43,10 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 			case http.StatusForbidden:
 				// User lacks admin permissions to view branch protection.
 				// Skip check gracefully - if protection rules block pushes, they'll find out at push time.
+				logging.FromContext(ctx).Warn("Skipping branch protection check: token lacks Administration read permission",
+					slog.String("owner", owner),
+					slog.String("repository", repository),
+					slog.String("branch", branch))
 				return nil, nil
 			case http.StatusNotFound:
 				return nil, ErrResourceNotFound
