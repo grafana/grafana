@@ -67,7 +67,7 @@ func TestJaegerClient_Services(t *testing.T) {
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
-			services, err := client.Services()
+			services, err := client.Services(context.Background())
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -159,7 +159,7 @@ func TestJaegerClient_Operations(t *testing.T) {
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
-			operations, err := client.Operations(tt.service)
+			operations, err := client.Operations(context.Background(), tt.service)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -265,7 +265,7 @@ func TestJaegerClient_Search(t *testing.T) {
 
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
-			traces, err := client.Search(tt.query, tt.start, tt.end)
+			traces, err := client.Search(context.Background(), tt.query, tt.start, tt.end)
 
 			if tt.expectError {
 				assert.Error(t, err)
