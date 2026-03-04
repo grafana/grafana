@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -26,6 +27,7 @@ type Reconciler struct {
 	cfg           Config
 	logger        log.Logger
 	tracer        tracing.Tracer
+	metrics       *reconcilerMetrics
 
 	workQueue chan string
 
@@ -66,6 +68,7 @@ func NewReconciler(
 	cfg Config,
 	logger log.Logger,
 	tracer tracing.Tracer,
+	reg prometheus.Registerer,
 ) *Reconciler {
 	return &Reconciler{
 		server:        srv,
@@ -73,6 +76,7 @@ func NewReconciler(
 		cfg:           cfg,
 		logger:        logger,
 		tracer:        tracer,
+		metrics:       newReconcilerMetrics(reg),
 		workQueue:     make(chan string, cfg.queueSize()),
 	}
 }
@@ -128,6 +132,9 @@ func (r *Reconciler) Run(ctx context.Context) error {
 
 // queueAllNamespaces lists all OpenFGA stores and queues them for reconciliation.
 func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
+	ctx, span := r.tracer.Start(ctx, "reconciler.queueAllNamespaces")
+	defer span.End()
+
 	// Fetch global role permissions once per tick and cache them for all namespaces.
 	globalPerms, err := r.fetchGlobalRolePerms(ctx)
 	if err != nil {
@@ -149,6 +156,7 @@ func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
 		namespace := store.Name
 		select {
 		case r.workQueue <- namespace:
+			r.metrics.workQueueDepth.Inc()
 			r.logger.Debug("Queued namespace for reconciliation", "namespace", namespace)
 		case <-ctx.Done():
 			return
@@ -170,23 +178,29 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 				return
 			}
 
+			r.metrics.workQueueDepth.Dec()
 			r.logger.Info("Reconciling namespace", "namespace", namespace, "workerID", workerID)
 			start := time.Now()
 
-			if err := r.reconcileNamespace(ctx, namespace); err != nil {
+			err := r.reconcileNamespace(ctx, namespace)
+			elapsed := time.Since(start)
+			status := "success"
+			if err != nil {
+				status = "error"
 				r.logger.Error("Failed to reconcile namespace",
 					"namespace", namespace,
 					"workerID", workerID,
 					"error", err,
-					"duration", time.Since(start),
+					"duration", elapsed,
 				)
 			} else {
 				r.logger.Info("Successfully reconciled namespace",
 					"namespace", namespace,
 					"workerID", workerID,
-					"duration", time.Since(start),
+					"duration", elapsed,
 				)
 			}
+			r.metrics.namespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())
 		}
 	}
 }

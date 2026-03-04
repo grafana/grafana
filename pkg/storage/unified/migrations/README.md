@@ -72,11 +72,45 @@ Each team also provides a migrator interface in a `migrator/` subpackage (e.g., 
    - Streams resources to unified storage via BulkProcess API
    - Rebuilds search indexes (with exponential backoff retry)
    - Runs validators to verify data integrity
-5. Records migration result in `unifiedstorage_migration_log` table
+5. Renames legacy tables with `_legacy` suffix (if `RenameTables` is configured)
+6. Records migration result in `unifiedstorage_migration_log` table
 
 ### Per-organization execution
 
 Migrations run independently for each organization using namespace format `org-{orgId}`.
+
+## Legacy table rename
+
+After a successful migration, legacy tables can be renamed with a `_legacy` suffix to prevent stale writes from old pods during rolling upgrades. This is configured via the `RenameTables` field on `MigrationDefinition`.
+
+### Configuration
+
+```go
+return migrations.MigrationDefinition{
+    // ...
+    RenameTables: []string{"playlist", "playlist_item"},
+}
+```
+
+Set `RenameTables` to the list of legacy SQL table names that should be renamed after migration. The rename appends `_legacy` to each table name (e.g., `playlist` becomes `playlist_legacy`). To disable renaming globally (e.g., during development), set `disable_legacy_table_rename = true` in the `[unified_storage]` config section.
+
+### Locking and atomicity
+
+The rename is designed to leave no gap where DML from old pods could sneak in between the migration completing and the table disappearing. The strategy varies by database:
+
+| Database | Lock | Rename                                                                                                                                                     |
+|------|------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Postgres** | `LOCK TABLE ... IN SHARE MODE` on the migration session (`sess`) | `ALTER TABLE ... RENAME TO` on same session — Postgres auto-upgrades the lock to `ACCESS EXCLUSIVE`                                                        |
+| **MySQL** | `LOCK TABLES ... READ` on a dedicated connection | Each table gets its own `RENAME TABLE` on a separate connection. When lock is released, MySQL DDL priority ensures renames execute before any pending DML. |
+| **SQLite** | Shared transaction (single writer) | `ALTER TABLE ... RENAME TO` on same session                                                                                                                |
+
+### Crash recovery
+
+**Postgres/SQLite**: The rename happens on `sess` within the framework's transaction.
+
+**MySQL**: DDL (`RENAME TABLE`) is non-transactional and auto-commits immediately on the separate connections.
+If a crash occurs before migration log is inserted, some tables might not have been renamed.
+- `recoverPartialRename()` skips the BulkProcess and renames any missing tables before inserting the migration log entry.
 
 ## Validators
 
@@ -210,6 +244,8 @@ func MyResourceMigration(migrator migrator.MyResourceMigrator) migrations.Migrat
         Validators: []migrations.ValidatorFactory{
             migrations.CountValidation(gr, "my_resource_table", "org_id = ?"),
         },
+        // Rename legacy tables after successful migration to prevent stale writes.
+        RenameTables: []string{"my_resource_table"},
     }
 }
 ```
@@ -263,6 +299,8 @@ dualWriterMode = 0
 - [ ] `provideMigrationRegistry` updated in `pkg/server/wire.go`
 - [ ] `wire_gen.go` regenerated (`make gen-go`)
 - [ ] Validators added (at minimum, `CountValidation`)
+- [ ] `RenameTables` configured (list of legacy tables to rename with `_legacy` suffix)
+  - [ ] Audit code for references to legacy tables that are not behind the dynamic storage reader
 - [ ] Configuration added to `conf/defaults.ini`
 - [ ] Integration test case added to `testcases/` package
 
