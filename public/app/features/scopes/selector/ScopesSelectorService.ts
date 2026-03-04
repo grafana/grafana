@@ -137,7 +137,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    * @param scopeNodeId - Optional scope node ID to fall back to if no defaultPath
    * @returns Promise resolving to array of ScopeNode objects representing the path
    */
-  private async getPathForScope(scopeId: string, scopeNodeId?: string): Promise<ScopeNode[]> {
+  private async getPathForScope(scopeId: string | undefined, scopeNodeId?: string): Promise<ScopeNode[]> {
     // 1. Check if scope has defaultPath (preferred method)
     const scope = this.state.scopes[scopeId];
     if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 0) {
@@ -177,17 +177,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     tree: TreeNode,
     scopeId?: string
   ): Promise<{ path: ScopeNode[]; tree: TreeNode }> => {
-    let nodePath: ScopeNode[];
-
-    // Check if scope has defaultPath for optimized resolution
-    const scope = scopeId ? this.state.scopes[scopeId] : undefined;
-    if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 0) {
-      // Use batch-fetched defaultPath (most efficient)
-      nodePath = await this.getPathForScope(scopeId!, scopeNodeId);
-    } else {
-      // Fall back to node-based path resolution
-      nodePath = await this.getNodePath(scopeNodeId);
-    }
+    // getPathForScope handles the full resolution chain:
+    // defaultPath (if scopeId provided) → rootScope (single call) → recursive walk (fallback)
+    const nodePath = await this.getPathForScope(scopeId, scopeNodeId);
 
     const newTree = insertPathNodesIntoTree(tree, nodePath);
 

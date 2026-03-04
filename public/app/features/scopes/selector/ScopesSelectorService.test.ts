@@ -2592,9 +2592,15 @@ describe('ScopesSelectorService', () => {
       await service.changeScopes(['service-scope'], undefined, 'service-node');
       await service.open();
 
+      // All ancestor nodes should be cached from the single rootScope call
       expect(service.state.nodes['region']).toEqual(rootContainer);
       expect(service.state.nodes['cluster']).toEqual(midContainer);
       expect(service.state.nodes['service-node']).toEqual(leafNode);
+
+      // Verify rootScope was used (fetchNodes called with rootScope param)
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith(
+        expect.objectContaining({ parent: 'service-node', rootScope: '', depth: 0 })
+      );
     });
 
     it('should prefer defaultPath over rootScope when available', async () => {
