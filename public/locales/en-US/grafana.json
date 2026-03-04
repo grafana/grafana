@@ -10022,6 +10022,8 @@
     },
     "viz-legend": {
       "all-series-selected": "All series selected",
+      "color-picker-closed": "Color picker closed",
+      "color-picker-open": "Color picker open",
       "only-this-series-selected": "Only {{label}} selected",
       "right-axis-indicator": "(right y-axis)"
     },
