@@ -3403,13 +3403,11 @@
     },
     "triage": {
       "alert-instances": "Alert instances",
-      "all-labels": "All labels",
       "all-labels-drawer-title": "All labels",
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
       "collapse-sidebar": "Collapse sidebar",
       "compact-firing": "firing",
-      "compact-instances": "instances",
       "compact-pending": "pending",
       "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
@@ -3419,9 +3417,6 @@
       "group-row": {
         "no-label": "No {{label}}"
       },
-      "hidden-label-count_one": "and {{ count }} more",
-      "hidden-label-count_other": "and {{ count }} more",
-      "high-activity-labels": "High Activity Labels",
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
@@ -3456,9 +3451,7 @@
       "showing-groups-count_other": "Showing {{count}} groups",
       "state-filter-title": "State",
       "state-firing": "Firing",
-      "state-pending": "Pending",
-      "tooltip-more-values_one": "and {{ count }} more",
-      "tooltip-more-values_other": "and {{ count }} more"
+      "state-pending": "Pending"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
