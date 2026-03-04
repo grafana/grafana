@@ -7,7 +7,7 @@ import {
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
@@ -123,6 +123,20 @@ function buildTimelineEntries(groups: TimelineGroup[]): TimelineEntry[] {
   return entries;
 }
 
+type Styles = ReturnType<typeof getStyles>;
+
+function getEntryDotStyle(entry: TimelineEntry, styles: Styles): string {
+  if (entry.type !== 'notifications' || !entry.notifications) {
+    return styles.dot;
+  }
+  const hasFailures = entry.notifications.some((n) => n.outcome !== 'success');
+  if (hasFailures) {
+    return styles.dotWarning;
+  }
+  const isFiring = entry.notifications.some((n) => n.status === 'firing');
+  return isFiring ? styles.dotFiring : styles.dotResolved;
+}
+
 export function InstanceTimeline({ records, notifications }: InstanceTimelineProps) {
   const styles = useStyles2(getStyles);
   const groups = useMemo(() => buildTimelineGroups(records, notifications), [records, notifications]);
@@ -147,7 +161,7 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
           </div>
 
           <div className={styles.connectorCol}>
-            <div className={entry.type === 'notifications' ? styles.dotNotification : styles.dot} />
+            <div className={getEntryDotStyle(entry, styles)} />
             {index < entries.length - 1 && <div className={styles.connectorLine} />}
           </div>
 
@@ -247,7 +261,7 @@ function NotificationStatusGroup({
   }
 
   return (
-    <Box marginTop={1}>
+    <div>
       <button className={cx(styles.summaryRowBase, variantStyle)} onClick={() => setExpanded(!expanded)} type="button">
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name={isFiring ? 'fire' : 'check-circle'} size="sm" />
@@ -287,7 +301,7 @@ function NotificationStatusGroup({
           ))}
         </div>
       )}
-    </Box>
+    </div>
   );
 }
 
@@ -375,11 +389,29 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(0.75),
   }),
 
-  dotNotification: css({
+  dotFiring: css({
     width: '10px',
     height: '10px',
     borderRadius: theme.shape.radius.circle,
-    backgroundColor: theme.colors.primary.main,
+    backgroundColor: theme.colors.error.main,
+    flexShrink: 0,
+    marginTop: theme.spacing(0.75),
+  }),
+
+  dotResolved: css({
+    width: '10px',
+    height: '10px',
+    borderRadius: theme.shape.radius.circle,
+    backgroundColor: theme.colors.success.main,
+    flexShrink: 0,
+    marginTop: theme.spacing(0.75),
+  }),
+
+  dotWarning: css({
+    width: '10px',
+    height: '10px',
+    borderRadius: theme.shape.radius.circle,
+    backgroundColor: theme.colors.warning.main,
     flexShrink: 0,
     marginTop: theme.spacing(0.75),
   }),
