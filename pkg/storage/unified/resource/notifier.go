@@ -79,21 +79,101 @@ func newChannelNotifier(log log.Logger) *channelNotifier {
 }
 
 func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
-	cn.log.Info("creating new notifier", "buffer_size", opts.BufferSize)
-	events := make(chan Event, opts.BufferSize)
+	if opts.SettleDelay < 0 {
+		opts.SettleDelay = defaultSettleDelay
+	}
+	if opts.MinBackoff <= 0 {
+		opts.MinBackoff = defaultMinBackoff
+	}
 
+	cn.log.Info("creating new notifier", "buffer_size", opts.BufferSize, "settle_delay", opts.SettleDelay)
+
+	// Raw channel that Publish writes into
+	raw := make(chan Event, opts.BufferSize)
 	cn.mu.Lock()
-	cn.subscribers[events] = struct{}{}
+	cn.subscribers[raw] = struct{}{}
 	cn.mu.Unlock()
+
+	// Output channel with settled, sorted events
+	out := make(chan Event, opts.BufferSize)
 
 	context.AfterFunc(ctx, func() {
 		cn.mu.Lock()
-		delete(cn.subscribers, events)
-		close(events)
+		delete(cn.subscribers, raw)
+		close(raw)
 		cn.mu.Unlock()
 	})
 
-	return events
+	go func() {
+		defer close(out)
+		var buffer []Event
+
+		ticker := time.NewTicker(opts.MinBackoff)
+		defer ticker.Stop()
+
+		for {
+			// Wait for an event or a tick
+			select {
+			case evt, ok := <-raw:
+				if !ok {
+					// Channel closed, flush all remaining sorted events
+					slices.SortFunc(buffer, func(a, b Event) int {
+						return cmp.Compare(a.ResourceVersion, b.ResourceVersion)
+					})
+					for _, e := range buffer {
+						select {
+						case out <- e:
+						case <-ctx.Done():
+							return
+						}
+					}
+					return
+				}
+				buffer = append(buffer, evt)
+			case <-ticker.C:
+			case <-ctx.Done():
+				return
+			}
+
+			// Non-blocking drain of raw channel to collect as many events as possible
+		drain:
+			for {
+				select {
+				case evt, ok := <-raw:
+					if !ok {
+						break drain
+					}
+					buffer = append(buffer, evt)
+				default:
+					break drain
+				}
+			}
+
+			// Sort buffer by RV
+			slices.SortFunc(buffer, func(a, b Event) int {
+				return cmp.Compare(a.ResourceVersion, b.ResourceVersion)
+			})
+
+			// Emit events that have "settled" (old enough that concurrent writes should have appeared).
+			// When SettleDelay is 0, emit all buffered events immediately.
+			var threshold int64
+			if opts.SettleDelay > 0 {
+				threshold = snowflakeFromTime(time.Now().Add(-opts.SettleDelay))
+			}
+			emitted := 0
+			for emitted < len(buffer) && (threshold == 0 || buffer[emitted].ResourceVersion <= threshold) {
+				select {
+				case out <- buffer[emitted]:
+				case <-ctx.Done():
+					return
+				}
+				emitted++
+			}
+			buffer = buffer[emitted:]
+		}
+	}()
+
+	return out
 }
 
 func (cn *channelNotifier) Publish(event Event) {

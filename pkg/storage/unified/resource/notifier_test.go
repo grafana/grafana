@@ -361,7 +361,6 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 
 func TestChannelNotifier(t *testing.T) {
 	log := log.NewNopLogger()
-	opts := watchOptions{BufferSize: 5}
 
 	var eventCount int64
 	newEvent := func() Event {
@@ -376,19 +375,23 @@ func TestChannelNotifier(t *testing.T) {
 		}
 	}
 
+	// Use zero settle delay for unit tests so events are emitted immediately
+	// after the buffering goroutine processes them.
+	unitOpts := watchOptions{BufferSize: 5, SettleDelay: 1 * time.Millisecond, MinBackoff: 1 * time.Millisecond}
+
 	t.Run("events are received", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
-		watcher := notifier.Watch(t.Context(), opts)
+		watcher := notifier.Watch(t.Context(), unitOpts)
 
 		event := newEvent()
 		notifier.Publish(event)
-		mustReceive(t, watcher, event)
+		mustReceiveTimeout(t, watcher, event)
 		mustNotReceive(t, watcher)
 	})
 
 	t.Run("multiple events are received in order", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
-		watcher := notifier.Watch(t.Context(), opts)
+		watcher := notifier.Watch(t.Context(), unitOpts)
 
 		events := []Event{newEvent(), newEvent(), newEvent()}
 		for _, event := range events {
@@ -396,7 +399,7 @@ func TestChannelNotifier(t *testing.T) {
 		}
 
 		for _, event := range events {
-			mustReceive(t, watcher, event)
+			mustReceiveTimeout(t, watcher, event)
 		}
 
 		mustNotReceive(t, watcher)
@@ -405,9 +408,9 @@ func TestChannelNotifier(t *testing.T) {
 	t.Run("multiple watchers and multiple events", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
 
-		watcher1 := notifier.Watch(t.Context(), opts)
-		watcher2 := notifier.Watch(t.Context(), opts)
-		watcher3 := notifier.Watch(t.Context(), opts)
+		watcher1 := notifier.Watch(t.Context(), unitOpts)
+		watcher2 := notifier.Watch(t.Context(), unitOpts)
+		watcher3 := notifier.Watch(t.Context(), unitOpts)
 
 		events := []Event{newEvent(), newEvent(), newEvent()}
 		for _, event := range events {
@@ -415,9 +418,9 @@ func TestChannelNotifier(t *testing.T) {
 		}
 
 		for _, event := range events {
-			mustReceive(t, watcher1, event)
-			mustReceive(t, watcher2, event)
-			mustReceive(t, watcher3, event)
+			mustReceiveTimeout(t, watcher1, event)
+			mustReceiveTimeout(t, watcher2, event)
+			mustReceiveTimeout(t, watcher3, event)
 		}
 
 		mustNotReceive(t, watcher1)
@@ -427,7 +430,7 @@ func TestChannelNotifier(t *testing.T) {
 
 	t.Run("continues to receive events", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
-		watcher := notifier.Watch(t.Context(), opts)
+		watcher := notifier.Watch(t.Context(), unitOpts)
 
 		events := []Event{newEvent(), newEvent(), newEvent()}
 		for _, event := range events {
@@ -435,20 +438,20 @@ func TestChannelNotifier(t *testing.T) {
 		}
 
 		for _, event := range events {
-			mustReceive(t, watcher, event)
+			mustReceiveTimeout(t, watcher, event)
 		}
 
 		mustNotReceive(t, watcher)
 
 		nextEvent := newEvent()
 		notifier.Publish(nextEvent)
-		mustReceive(t, watcher, nextEvent)
+		mustReceiveTimeout(t, watcher, nextEvent)
 		mustNotReceive(t, watcher)
 	})
 
 	t.Run("publishing more than the buffer size", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
-		watcher := notifier.Watch(t.Context(), opts)
+		watcher := notifier.Watch(t.Context(), unitOpts)
 
 		const numEvents = 10
 		events := make([]Event, numEvents)
@@ -462,11 +465,11 @@ func TestChannelNotifier(t *testing.T) {
 		}
 
 		// Only first 5 (bufferSize) events are received.
-		mustReceive(t, watcher, events[0])
-		mustReceive(t, watcher, events[1])
-		mustReceive(t, watcher, events[2])
-		mustReceive(t, watcher, events[3])
-		mustReceive(t, watcher, events[4])
+		mustReceiveTimeout(t, watcher, events[0])
+		mustReceiveTimeout(t, watcher, events[1])
+		mustReceiveTimeout(t, watcher, events[2])
+		mustReceiveTimeout(t, watcher, events[3])
+		mustReceiveTimeout(t, watcher, events[4])
 		mustNotReceive(t, watcher)
 	})
 
@@ -475,11 +478,13 @@ func TestChannelNotifier(t *testing.T) {
 			notifier := newChannelNotifier(log)
 
 			ctx, stop := context.WithCancel(t.Context())
-			watcher := notifier.Watch(ctx, opts)
+			// Use zero settle delay so events flush immediately in synctest's fake time
+			watcher := notifier.Watch(ctx, watchOptions{BufferSize: 5, SettleDelay: 0, MinBackoff: 1 * time.Millisecond})
 
 			// Publishing works
 			event := newEvent()
 			notifier.Publish(event)
+			synctest.Wait()
 			mustReceive(t, watcher, event)
 
 			stop()
@@ -492,6 +497,16 @@ func TestChannelNotifier(t *testing.T) {
 			require.False(t, isOpen, "channel should be closed after context cancelation")
 		})
 	})
+}
+
+func mustReceiveTimeout(t *testing.T, watcher <-chan Event, expected Event) {
+	t.Helper()
+	select {
+	case e := <-watcher:
+		require.Equal(t, expected, e)
+	case <-time.After(2 * time.Second):
+		require.FailNow(t, "timed out waiting for event")
+	}
 }
 
 func mustReceive(t *testing.T, watcher <-chan Event, expected Event) {
