@@ -5,7 +5,7 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Permission } from '@grafana/api-clients/rtkq/legacy';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Button, ClipboardButton, Combobox, ComboboxOption, Field, IconButton, Input, Stack, TextArea, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ClipboardButton, Column, Combobox, ComboboxOption, Field, IconButton, Input, InteractiveTable, Stack, TextArea, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useCreateRoleMutation, useUpdateRoleMutation, useGetRoleQuery, useListRolesQuery } from 'app/api/clients/roles';
 import { fetchRoleDetail } from 'app/core/components/RolePicker/hooks';
@@ -331,10 +331,10 @@ export const RoleEditForm = ({ role, onSaved, forceReadOnly = false }: RoleEditF
 
   return (
     <Page.Contents>
-      <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '700px' }}>
-        <Stack direction="column" gap={2}>
-          {/* Warning banners */}
-          {isReadOnly && (
+      {isReadOnly ? (
+        <div style={{ maxWidth: '700px' }}>
+          <Stack direction="column" gap={2}>
+            {/* Warning banner */}
             <Alert
               title={
                 forceReadOnly && !roleIsReadOnly
@@ -353,116 +353,166 @@ export const RoleEditForm = ({ role, onSaved, forceReadOnly = false }: RoleEditF
                     'This role is managed by Grafana and cannot be edited. You can view its permissions below.'
                   )}
             </Alert>
-          )}
 
-          {isBasicRole && !isReadOnly && (
-            <Alert
-              title={t('admin.role-edit.basic-role-warning-title', 'Editing a basic role')}
-              severity="warning"
-            >
-              {t(
-                'admin.role-edit.basic-role-warning-body',
-                'Changes to basic roles affect every user at this level. Basic roles update automatically — new permissions may be added when Grafana is upgraded.'
-              )}
-            </Alert>
-          )}
+            {/* Metadata display */}
+            <div>
+              <h4 className={styles.sectionTitle}>{t('admin.role-edit.label-group', 'Group')}</h4>
+              <p>{role?.group || '—'}</p>
+            </div>
 
-          {!isBasicRole && !isReadOnly && isEditing && (
-            <Alert
-              title={t('admin.role-edit.custom-role-warning-title', 'Custom role')}
-              severity="info"
-            >
-              {t(
-                'admin.role-edit.custom-role-warning-body',
-                'Custom roles do not automatically update. When Grafana is upgraded, new permissions will not be added to this role. You\'ll need to update it manually.'
-              )}
-            </Alert>
-          )}
-
-          {/* Metadata fields */}
-          <Field
-            label={t('admin.role-edit.label-display-name', 'Display name')}
-            required={!isBasicRole}
-            invalid={!!errors.displayName}
-            error={errors.displayName ? 'Display name is required' : undefined}
-          >
-            <Input
-              id="display-name-input"
-              {...register('displayName', { required: !isBasicRole })}
-              disabled={isBasicRole || isReadOnly}
-              placeholder={isBasicRole ? (role?.displayName || '') : ''}
-            />
-          </Field>
-
-          <Field label={t('admin.role-edit.label-description', 'Description')}>
-            <TextArea
-              id="description-input"
-              {...register('description')}
-              disabled={isBasicRole || isReadOnly}
-              rows={3}
-            />
-          </Field>
-
-          <Field label={t('admin.role-edit.label-group', 'Group')}>
-            <Input
-              id="group-input"
-              {...register('group')}
-              disabled={isBasicRole || isReadOnly}
-              placeholder={isBasicRole ? (role?.group || '') : 'e.g. alerting'}
-            />
-          </Field>
-
-          {/* Permissions section */}
-          <div>
-            <Stack direction="row" gap={2} alignItems="center">
-              <h4 className={styles.sectionTitle}>
-                {t('admin.role-edit.permissions-title', 'Permissions')}
-                <span className={styles.permCount}>({fields.length})</span>
-              </h4>
-              {!isBasicRole && !isReadOnly && (
-                <div style={{ width: '250px' }}>
-                  <Combobox
-                    options={copyFromRoleOptions}
-                    value={null}
-                    onChange={(opt) => {
-                      if (opt?.value) {
-                        handleCopyFromRole(opt.value);
-                      }
-                    }}
-                    placeholder="Copy from role..."
-                    isClearable
-                  />
-                </div>
-              )}
-              <ClipboardButton
-                icon="copy"
-                variant="secondary"
-                size="sm"
-                getText={() =>
-                  formatPermissionsForClipboard(
-                    currentPermissions || [],
-                    role?.displayName || role?.name
-                  )
-                }
-              >
-                {t('admin.role-edit.copy-permissions', 'Copy permissions')}
-              </ClipboardButton>
-            </Stack>
-
-            {isReadOnly ? (
-              <div className={styles.readOnlyPermissions}>
-                {fields.map((field, index) => (
-                  <div key={field.id} className={styles.readOnlyPermRow}>
-                    <span className={styles.readOnlyAction}>{currentPermissions?.[index]?.action || ''}</span>
-                    {currentPermissions?.[index]?.scope && (
-                      <span className={styles.readOnlyScope}>{currentPermissions[index].scope}</span>
-                    )}
-                  </div>
-                ))}
+            {role?.description && (
+              <div>
+                <h4 className={styles.sectionTitle}>{t('admin.role-edit.label-description', 'Description')}</h4>
+                <p>{role.description}</p>
               </div>
-            ) : (
-              <>
-                <div className={styles.permissionsList}>
+            )}
+
+            <div>
+              <h4 className={styles.sectionTitle}>{t('admin.role-edit.label-role', 'Role')}</h4>
+              <p>{role?.name || '—'}</p>
+            </div>
+
+            {/* Permissions section */}
+            <div>
+              <Stack direction="row" gap={2} alignItems="center">
+                <h4 className={styles.sectionTitle}>
+                  {t('admin.role-edit.permissions-title', 'Permissions')}
+                  <span className={styles.permCount}>({currentPermissions?.length || 0})</span>
+                </h4>
+                <ClipboardButton
+                  variant="secondary"
+                  size="sm"
+                  getText={() =>
+                    formatPermissionsForClipboard(
+                      currentPermissions || [],
+                      role?.displayName || role?.name
+                    )
+                  }
+                >
+                  {t('admin.role-edit.copy-permissions', 'Copy permissions')}
+                </ClipboardButton>
+              </Stack>
+
+              <InteractiveTable
+                columns={[
+                  {
+                    id: 'action',
+                    header: t('admin.role-edit.label-action', 'Action'),
+                    cell: ({ row }) => <span>{row.original.action}</span>,
+                    sortType: 'string',
+                  },
+                  {
+                    id: 'scope',
+                    header: t('admin.role-edit.label-scope', 'Scope'),
+                    cell: ({ row }) => <span>{row.original.scope || '—'}</span>,
+                    sortType: 'string',
+                  },
+                ]}
+                data={currentPermissions || []}
+                getRowId={(permission, index) => `${permission.action}-${permission.scope}-${index}`}
+              />
+            </div>
+          </Stack>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '700px' }}>
+          <Stack direction="column" gap={2}>
+            {/* Warning banners */}
+            {isBasicRole && (
+              <Alert
+                title={t('admin.role-edit.basic-role-warning-title', 'Editing a basic role')}
+                severity="warning"
+              >
+                {t(
+                  'admin.role-edit.basic-role-warning-body',
+                  'Changes to basic roles affect every user at this level. Basic roles update automatically — new permissions may be added when Grafana is upgraded.'
+                )}
+              </Alert>
+            )}
+
+            {!isBasicRole && isEditing && (
+              <Alert
+                title={t('admin.role-edit.custom-role-warning-title', 'Custom role')}
+                severity="info"
+              >
+                {t(
+                  'admin.role-edit.custom-role-warning-body',
+                  "Custom roles do not automatically update. When Grafana is upgraded, new permissions will not be added to this role. You'll need to update it manually."
+                )}
+              </Alert>
+            )}
+
+            {/* Metadata fields */}
+            <Field
+              label={t('admin.role-edit.label-display-name', 'Display name')}
+              required={!isBasicRole}
+              invalid={!!errors.displayName}
+              error={errors.displayName ? 'Display name is required' : undefined}
+            >
+              <Input
+                id="display-name-input"
+                {...register('displayName', { required: !isBasicRole })}
+                disabled={isBasicRole}
+                placeholder={isBasicRole ? (role?.displayName || '') : ''}
+              />
+            </Field>
+
+            <Field label={t('admin.role-edit.label-description', 'Description')}>
+              <TextArea
+                id="description-input"
+                {...register('description')}
+                disabled={isBasicRole}
+                rows={3}
+              />
+            </Field>
+
+            <Field label={t('admin.role-edit.label-group', 'Group')}>
+              <Input
+                id="group-input"
+                {...register('group')}
+                disabled={isBasicRole}
+                placeholder={isBasicRole ? (role?.group || '') : 'e.g. alerting'}
+              />
+            </Field>
+
+            {/* Permissions section */}
+            <div>
+              <Stack direction="row" gap={2} alignItems="center">
+                <h4 className={styles.sectionTitle}>
+                  {t('admin.role-edit.permissions-title', 'Permissions')}
+                  <span className={styles.permCount}>({fields.length})</span>
+                </h4>
+                {!isBasicRole && (
+                  <div style={{ width: '250px' }}>
+                    <Combobox
+                      options={copyFromRoleOptions}
+                      value={null}
+                      onChange={(opt) => {
+                        if (opt?.value) {
+                          handleCopyFromRole(opt.value);
+                        }
+                      }}
+                      placeholder="Copy from role..."
+                      isClearable
+                    />
+                  </div>
+                )}
+                <ClipboardButton
+                  icon="copy"
+                  variant="secondary"
+                  size="sm"
+                  getText={() =>
+                    formatPermissionsForClipboard(
+                      currentPermissions || [],
+                      role?.displayName || role?.name
+                    )
+                  }
+                >
+                  {t('admin.role-edit.copy-permissions', 'Copy permissions')}
+                </ClipboardButton>
+              </Stack>
+
+              <div className={styles.permissionsList}>
                   {fields.map((field, index) => (
                     <Stack key={field.id} direction="row" gap={1} alignItems="flex-start">
                       <Field label={index === 0 ? t('admin.role-edit.label-action', 'Action') : undefined} style={{ flex: 2 }}>
@@ -508,29 +558,26 @@ export const RoleEditForm = ({ role, onSaved, forceReadOnly = false }: RoleEditF
                 >
                   {t('admin.role-edit.add-permission-button', 'Add permission')}
                 </Button>
-              </>
-            )}
-          </div>
+              </div>
 
-          {/* Submit buttons */}
-          <Stack direction="row" gap={2}>
-            {!isReadOnly && (
+            {/* Submit buttons */}
+            <Stack direction="row" gap={2}>
               <Button type="submit" disabled={isCreating || isUpdating}>
                 {isEditing
                   ? t('admin.role-edit.save-button', 'Save changes')
                   : t('admin.role-edit.create-button', 'Create role')}
               </Button>
-            )}
-            <Button variant="secondary" onClick={onSaved} type="button">
-              {t('admin.role-edit.cancel-button', 'Back to all roles')}
-            </Button>
-          </Stack>
+              <Button variant="secondary" onClick={onSaved} type="button">
+                {t('admin.role-edit.cancel-button', 'Back to all roles')}
+              </Button>
+            </Stack>
 
-          {copyMessage && <Alert title="Copied" severity="info">{copyMessage}</Alert>}
-          {successMessage && <Alert title="Saved" severity="success">{successMessage}</Alert>}
-          {error && <Alert title="Error" severity="error">{error}</Alert>}
-        </Stack>
-      </form>
+            {copyMessage && <Alert title="Copied" severity="info">{copyMessage}</Alert>}
+            {successMessage && <Alert title="Saved" severity="success">{successMessage}</Alert>}
+            {error && <Alert title="Error" severity="error">{error}</Alert>}
+          </Stack>
+        </form>
+      )}
     </Page.Contents>
   );
 };
@@ -560,31 +607,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   removeButtonWithLabel: css({
     paddingTop: theme.spacing(3),
-  }),
-  readOnlyPermissions: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(0.25),
-    maxHeight: '400px',
-    overflowY: 'auto',
-    padding: theme.spacing(1),
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    marginBottom: theme.spacing(1),
-  }),
-  readOnlyPermRow: css({
-    display: 'flex',
-    gap: theme.spacing(1),
-    fontSize: theme.typography.bodySmall.fontSize,
-    lineHeight: 1.5,
-    padding: theme.spacing(0, 0.5),
-  }),
-  readOnlyAction: css({
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fontFamilyMonospace,
-  }),
-  readOnlyScope: css({
-    color: theme.colors.text.secondary,
   }),
 });
