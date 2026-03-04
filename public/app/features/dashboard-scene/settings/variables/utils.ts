@@ -336,5 +336,38 @@ export function validateVariableName(
     ancestor = ancestor.parent;
   }
 
+  // Check descendant variable sets to prevent global variables from colliding with section variables
+  if (set.parent) {
+    const conflict = findNameInDescendantSets(set.parent, name, set);
+    if (conflict) {
+      return {
+        isValid: false,
+        errorMessage: 'A variable with this name already exists in a section',
+      };
+    }
+  }
+
   return { isValid: true };
+}
+
+function findNameInDescendantSets(
+  sceneObject: SceneObject,
+  name: string,
+  excludeSet: SceneVariableSet
+): boolean {
+  let found = false;
+  sceneObject.forEachChild((child) => {
+    if (found) {
+      return;
+    }
+    const childVars = child.state.$variables;
+    if (childVars instanceof SceneVariableSet && childVars !== excludeSet && childVars.getByName(name)) {
+      found = true;
+      return;
+    }
+    if (findNameInDescendantSets(child, name, excludeSet)) {
+      found = true;
+    }
+  });
+  return found;
 }
