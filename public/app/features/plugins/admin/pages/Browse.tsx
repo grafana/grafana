@@ -18,6 +18,7 @@ import { RoadmapLinks } from '../components/RoadmapLinks';
 import { SearchField } from '../components/SearchField';
 import UpdateAllButton from '../components/UpdateAllButton';
 import { UpdateAllModal } from '../components/UpdateAllModal';
+import { usePluginAssistant } from '../components/usePluginAssistant';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
 import { useGetAll, useGetUpdatable, useIsRemotePluginsAvailable } from '../state/hooks';
@@ -29,6 +30,7 @@ export default function Browse() {
   const styles = useStyles2(getStyles);
   const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
+  const { isAvailable, handleOpenAssistant, handleGetStarted } = usePluginAssistant();
 
   const keyword = locationSearch.q?.toString() || '';
   const filterBy = locationSearch.filterBy?.toString() || 'all';
@@ -100,7 +102,13 @@ export default function Browse() {
         <div className={styles.searchContainer}>
           <HorizontalGroup wrap>
             <Field label={t('plugins.browse.label-search', 'Search')}>
-              <SearchField value={keyword} onSearch={onSearch} />
+              <SearchField
+                value={keyword}
+                onSearch={onSearch}
+                onAssistant={(query) => handleOpenAssistant(query, plugins)}
+                onGetStarted={() => handleGetStarted(plugins)}
+                isAssistantAvailable={isAvailable}
+              />
             </Field>
             <HorizontalGroup wrap className={styles.actionBar}>
               {/* Filter by type */}

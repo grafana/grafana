@@ -2371,6 +2371,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "pluginSearchAssistant",
+			Description:  "Shows a search/assistant toggle on the plugin search field to help users find the right plugin",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+		},
+		{
 			Name:         "queryEditorNext",
 			Description:  "Enables next generation query editor experience",
 			Stage:        FeatureStageExperimental,

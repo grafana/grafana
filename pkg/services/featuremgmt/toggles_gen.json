@@ -3365,6 +3365,50 @@
     },
     {
       "metadata": {
+        "name": "pluginSearchAssistant",
+        "resourceVersion": "1772622002595",
+        "creationTimestamp": "2026-03-04T11:00:02Z"
+      },
+      "spec": {
+        "description": "Shows a search/assistant toggle on the plugin search field to help users find the right plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginSearchAssistantBanner",
+        "resourceVersion": "1772464127695",
+        "creationTimestamp": "2026-03-02T15:08:47Z",
+        "deletionTimestamp": "2026-03-04T11:00:02Z"
+      },
+      "spec": {
+        "description": "Shows a contextual assistant callout below the plugin search field to help users find the right plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginSearchAssistantInField",
+        "resourceVersion": "1772464127695",
+        "creationTimestamp": "2026-03-02T15:08:47Z",
+        "deletionTimestamp": "2026-03-04T11:00:02Z"
+      },
+      "spec": {
+        "description": "Shows an AI assistant icon inside the plugin search field to help users find the right plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginStoreServiceLoading",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-10-17T20:01:43Z"

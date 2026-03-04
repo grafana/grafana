@@ -1498,6 +1498,11 @@ export interface FeatureToggles {
   */
   queryWithAssistant?: boolean;
   /**
+  * Shows a search/assistant toggle on the plugin search field to help users find the right plugin
+  * @default false
+  */
+  pluginSearchAssistant?: boolean;
+  /**
   * Enables next generation query editor experience
   * @default false
   */
