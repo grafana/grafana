@@ -251,14 +251,14 @@ jobs:
         with:
           name: grafana-server-log-${{ matrix.shard }}
           path: grafana-server/grafana.log
-          retention-days: 3
+          retention-days: 7
 
       - uses: actions/upload-artifact@v7
         if: success() || failure()
         with:
           name: playwright-blob-${{ matrix.shard }}
           path: blob-report
-          retention-days: 3
+          retention-days: 1
 
   required-playwright-tests:
     needs:
@@ -271,11 +271,6 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
-        if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
@@ -302,24 +297,6 @@ jobs:
 
       - name: Merge into HTML Report
         run: npx playwright merge-reports --reporter html ./blobs
-
-      - name: Merge into JSON Report
-        env:
-          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
-        run: npx playwright merge-reports --reporter=json ./blobs
-
-      - name: Bench report
-        run: |
-          docker run --rm \
-            --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.5.1 report \
-              --grafana-url "http://localhost:3000" \
-              --grafana-version "CI- ${{ github.sha }}" \
-              --test-suite-name "FrontendCore" \
-              --report-input playwright \
-              --report-output log \
-              --log-level DEBUG \
-              /home/bench/tests/playwright-results.json
 
       - name: Upload HTML report
         id: upload-html
@@ -356,6 +333,93 @@ jobs:
           if [ "$FAILED" = "true" ]; then
             exit 1
           fi
+
+  report-playwright-bench:
+    needs:
+      - run-playwright-tests
+    if: ${{ !cancelled() }}
+    name: Report Playwright benchmarks
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
+
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Download blob reports from GitHub Actions Artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: blobs
+          pattern: playwright-blob-*
+          merge-multiple: true
+
+      - name: Merge into JSON Report
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
+        run: npx playwright merge-reports --reporter=json ./blobs
+
+      - name: Bench report
+        run: |
+          docker run --rm \
+            --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.1 report \
+              --service grafana \
+              --service-url "http://localhost:3000" \
+              --service-version "CI-${{ github.sha }}" \
+              --suite-name "FrontendCore" \
+              --run-stage ci \
+              --report-input playwright \
+              --report-output log \
+              --log-level DEBUG \
+              /home/bench/tests/playwright-results.json
+
+  report-playwright-bench-no-checkout:
+    needs:
+      - run-playwright-tests
+    if: ${{ !cancelled() }}
+    name: Report Playwright benchmarks (no repo checkout)
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: github.event.pull_request.head.repo.fork == false
+
+      - name: Download blob reports from GitHub Actions Artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: blobs
+          pattern: playwright-blob-*
+          merge-multiple: true
+
+      - name: Merge into JSON Report
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
+        run: npx playwright merge-reports --reporter=json ./blobs
+
+      - name: Bench report
+        run: |
+          docker run --rm \
+            --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.1 report \
+              --service grafana \
+              --service-url "http://localhost:3000" \
+              --service-version "CI-${{ github.sha }}" \
+              --suite-name "FrontendCore" \
+              --run-stage ci \
+              --report-input playwright \
+              --report-output log \
+              --log-level DEBUG \
+              /home/bench/tests/playwright-results.json
 
   publish-metrics:
     name: Publish metrics
