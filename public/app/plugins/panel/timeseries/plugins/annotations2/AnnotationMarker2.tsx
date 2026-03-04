@@ -14,20 +14,28 @@ import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
 
-interface AnnoBoxProps {
+interface AnnotationMarkerProps {
+  // Annotation dataframe
   frame: DataFrame;
+  // The values from the annotation fields
   annoVals: Record<string, any[]>;
+  // The value index, sometimes called rowIndex
   annoIdx: number;
+  // Styles calculated from plot
   style: React.CSSProperties | null;
-  timeZone: TimeZone;
+  // Method to close user created (wip) annotation
   exitWipEdit?: null | (() => void);
-  portalRoot: HTMLElement;
+  // From PanelContext.canExecuteActions(), controls whether the user has permission to execute field actions
   canExecuteActions: boolean;
-  replaceVariables: InterpolateFunction;
+  // Sets if the user pinned via keyboard or mouse click
   setPinned: (pin: boolean) => void;
+  // Current pin state
   isPinned: boolean;
   // Determines if we should display the tooltip when hovering, keeps adjacent annotations from rendering a tooltip that overlays the pinned tooltip
   showTooltipOnHover: boolean;
+  timeZone: TimeZone;
+  portalRoot: HTMLElement;
+  replaceVariables: InterpolateFunction;
 }
 
 const STATE_DEFAULT = 0;
@@ -46,7 +54,7 @@ export const AnnotationMarker2 = ({
   setPinned,
   showTooltipOnHover,
   isPinned,
-}: AnnoBoxProps) => {
+}: AnnotationMarkerProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
   const isRegion = annoVals?.isRegion[annoIdx] === true;
