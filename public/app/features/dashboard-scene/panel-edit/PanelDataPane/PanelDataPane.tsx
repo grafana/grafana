@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -11,7 +12,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
@@ -22,10 +23,14 @@ import { PanelDataPaneNext } from '../PanelEditNext/PanelDataPaneNext';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { PanelDataPaneTab, TabId } from './types';
+import { PanelDataPaneTab, PanelEditorInterface, TabId } from './types';
 
 function isTabId(value: string): value is TabId {
   return Object.values<string>(TabId).includes(value);
+}
+
+function isPanelEditor(obj: object): obj is PanelEditorInterface {
+  return 'onToggleQueryEditorVersion' in obj && typeof obj.onToggleQueryEditorVersion === 'function';
 }
 
 export interface PanelDataPaneState extends SceneObjectState {
@@ -72,6 +77,12 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     this.setState({ tab: tab.tabId });
   };
 
+  public onTryNewEditor = () => {
+    if (this.parent && isPanelEditor(this.parent)) {
+      this.parent.onToggleQueryEditorVersion();
+    }
+  };
+
   public getUrlState() {
     return { tab: this.state.tab };
   }
@@ -95,11 +106,26 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   }
 
   const currentTab = tabs.find((t) => t.tabId === tab);
+  const showTryNewEditor = getConfig().featureToggles.queryEditorNext;
 
   return (
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
       <TabsBar hideBorder className={styles.tabsBar}>
         {tabs.map((t) => t.renderTab({ active: t.tabId === tab, onChangeTab: () => model.onChangeTab(t) }))}
+        {showTryNewEditor && (
+          <div className={styles.tryNewEditorWrapper}>
+            <Button
+              size="sm"
+              fill="text"
+              icon="flask"
+              variant="primary"
+              onClick={model.onTryNewEditor}
+              tooltip={t('panel-data-pane.try-new-editor.tooltip', 'Switch to the new query editor experience')}
+            >
+              {t('panel-data-pane.try-new-editor.label', 'Try the new editor')}
+            </Button>
+          </div>
+        )}
       </TabsBar>
       <div className={styles.tabBorder}>
         <ScrollContainer>
@@ -152,6 +178,12 @@ function getStyles(theme: GrafanaTheme2) {
     tabsBar: css({
       flexShrink: 0,
       paddingLeft: theme.spacing(2),
+    }),
+    tryNewEditorWrapper: css({
+      marginLeft: 'auto',
+      display: 'flex',
+      alignItems: 'center',
+      paddingRight: theme.spacing(1),
     }),
   };
 }

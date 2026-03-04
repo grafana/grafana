@@ -19,11 +19,11 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
   return (
     <div className={cx(styles.banner, className)}>
       <div className={styles.left}>
-        <Icon name={useQueryExperienceNext ? 'rocket' : 'bolt'} size="md" className={styles.accentIcon} />
+        <Icon name="flask" size="md" className={styles.accentIcon} />
         <span className={styles.title}>
           {useQueryExperienceNext
-            ? t('dashboard-scene.query-editor-banner.downgrade-title', 'New query editor!')
-            : t('dashboard-scene.query-editor-banner.upgrade-title', 'New editor available!')}
+            ? t('dashboard-scene.query-editor-banner.downgrade-title', 'New query editor')
+            : t('dashboard-scene.query-editor-banner.upgrade-title', 'New editor available')}
         </span>
         <span className={styles.description}>
           {useQueryExperienceNext
@@ -43,7 +43,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
             variant="primary"
             fill="text"
             size="sm"
-            icon="comment-alt"
+            icon="external-link-alt"
             href={QUERY_EDITOR_BANNER_FEEDBACK_URL}
             target="_blank"
             rel="noopener noreferrer"
