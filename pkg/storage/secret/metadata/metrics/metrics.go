@@ -34,7 +34,7 @@ type StorageMetrics struct {
 	SecureValueSetStatusDuration      *prometheus.HistogramVec
 	SecureValueDeleteDuration         *prometheus.HistogramVec
 	SecureValueAddGCAttemptCount      *prometheus.HistogramVec
-	SecureValueMoveToDLQ              *prometheus.HistogramVec
+	SecureValueDeleteByIds            *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
 }
@@ -135,11 +135,11 @@ func newStorageMetrics() *StorageMetrics {
 			Help:      "Duration of secure value gc attempt count modification operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{successLabel}),
-		SecureValueMoveToDLQ: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		SecureValueDeleteByIds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "secure_value_move_to_dlq_duration_seconds",
-			Help:      "Duration of operations to move a secure value to the dead letter queue",
+			Name:      "secure_value_delete_by_ids_duration_seconds",
+			Help:      "Duration of operations to delete a list of secure values by ids",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{successLabel}),
 
@@ -180,7 +180,7 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueDeleteDuration,
 				m.DecryptDuration,
 				m.SecureValueAddGCAttemptCount,
-				m.SecureValueMoveToDLQ,
+				m.SecureValueDeleteByIds,
 			)
 		}
 

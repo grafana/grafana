@@ -712,6 +712,7 @@ func (s *secureValueMetadataStorage) AddGCAttemptCount(ctx context.Context, secu
 			span.RecordError(err)
 		}
 
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.AddGCAttemptCount", "secureValueIDs", secureValueIDs, "err", err)
 		s.metrics.SecureValueAddGCAttemptCount.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
@@ -796,6 +797,7 @@ func (s *secureValueMetadataStorage) fetchByIds(ctx context.Context, secureValue
 }
 
 func (s *secureValueMetadataStorage) DeleteByIds(ctx context.Context, secureValueIDs []string) (err error) {
+	start := s.clock.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.deleteByIds", trace.WithAttributes(
 		attribute.StringSlice("secureValueIDs", secureValueIDs),
 	))
@@ -809,6 +811,9 @@ func (s *secureValueMetadataStorage) DeleteByIds(ctx context.Context, secureValu
 			span.SetStatus(codes.Error, "SecureValueMetadataStorage.deleteByIds failed")
 			span.RecordError(err)
 		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.DeleteByIds", "secureValueIDs", secureValueIDs, "err", err)
+		s.metrics.SecureValueDeleteByIds.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	req := deleteSecureValuesByIds{

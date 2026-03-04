@@ -299,15 +299,6 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlSecureValuesAddToDlq: {
-				{
-					Name: "add secure value to dlq",
-					Data: &addSecureValuesToDlq{
-						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						SecureValueIDs: []string{"1", "2"},
-					},
-				},
-			},
 			sqlSecureValueListByIDs: {
 				{
 					Name: "list secure values by ids",
