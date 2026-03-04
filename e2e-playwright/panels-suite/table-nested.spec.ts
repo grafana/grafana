@@ -64,6 +64,35 @@ const convertKitchenSinkToNestedTable = async (
 };
 
 test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () => {
+  test('a11y', { tag: ['@a11y'] }, async ({ gotoDashboardPage, scanForA11yViolations, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ viewPanel: '4' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Nested tables'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    await expect(page.locator('[role="row"]').filter({ visible: true })).toHaveCount(3); // header + 2 rows
+
+    const firstRowExpander = dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .first();
+
+    await firstRowExpander.click();
+    await expect(page.locator('[role="row"]').filter({ visible: true })).not.toHaveCount(3);
+
+    const report = await scanForA11yViolations({
+      runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'],
+    });
+    expect(report).toHaveNoA11yViolations({
+      ignoredRules: ['page-has-heading-one', 'region'],
+    });
+  });
+
   test('expand and collapse', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
@@ -76,7 +105,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     await waitForTableLoad(page);
 
-    await expect(page.locator('[role="row"]')).toHaveCount(3); // header + 2 rows
+    await expect(page.locator('[role="row"]').filter({ visible: true })).toHaveCount(3); // header + 2 rows
 
     const firstRowExpander = dashboardPage
       .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
