@@ -35,6 +35,10 @@ func (tc *playlistsTestCase) FeatureToggles() []string {
 	return nil
 }
 
+func (tc *playlistsTestCase) RenameTables() []string {
+	return []string{}
+}
+
 func (tc *playlistsTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		{

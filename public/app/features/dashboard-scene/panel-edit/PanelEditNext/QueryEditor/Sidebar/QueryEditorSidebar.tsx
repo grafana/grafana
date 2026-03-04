@@ -32,6 +32,8 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
     setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
   };
 
+  const toggleValue = cardType === QueryEditorType.Alert ? QueryEditorType.Alert : QueryEditorType.Query;
+
   const alertsLabel = loading
     ? t('query-editor-next.sidebar.alerts-loading', 'Alerts')
     : t('query-editor-next.sidebar.alerts', 'Alerts ({{count}})', { count: alertRules.length });
@@ -46,7 +48,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
       <SidebarHeaderActions sidebarSize={sidebarSize} setSidebarSize={setSidebarSize}>
         <SegmentedToggle
           options={viewOptions}
-          value={cardType}
+          value={toggleValue}
           onChange={handleViewChange}
           aria-label={t('query-editor-next.sidebar.view-toggle', 'View')}
           showBackground={false}
@@ -80,6 +82,7 @@ function getStyles(theme: GrafanaTheme2) {
     content: css({
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
     }),
   };
 }

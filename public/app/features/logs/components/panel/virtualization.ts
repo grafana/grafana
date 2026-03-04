@@ -183,7 +183,8 @@ export class LogLineVirtualization {
     logs: LogListModel[],
     displayedFields: string[] = [],
     timestampResolution?: LogLineTimestampResolution,
-    showUniqueLabels?: boolean
+    showUniqueLabels?: boolean,
+    showLevel?: boolean
   ) => {
     if (!logs.length) {
       return [];
@@ -199,9 +200,11 @@ export class LogLineVirtualization {
           timestampWidth = Math.round(width);
         }
       }
-      width = this.measureTextWidth(logs[i].displayLevel);
-      if (width > levelWidth) {
-        levelWidth = Math.round(width);
+      if (showLevel) {
+        width = this.measureTextWidth(logs[i].displayLevel);
+        if (width > levelWidth) {
+          levelWidth = Math.round(width);
+        }
       }
       for (const field of displayedFields) {
         width = this.measureTextWidth(logs[i].getDisplayedFieldValue(field, true));
@@ -216,11 +219,13 @@ export class LogLineVirtualization {
         width: timestampWidth,
       });
     }
-    dimensions.push({
-      field: 'level',
-      internal: true,
-      width: levelWidth,
-    });
+    if (showLevel) {
+      dimensions.push({
+        field: 'level',
+        internal: true,
+        width: levelWidth,
+      });
+    }
     if (showUniqueLabels) {
       dimensions.push({
         field: 'unique-labels',

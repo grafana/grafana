@@ -25,10 +25,14 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     return steps;
   });
   const latestThresholdInputRef = useRef<HTMLInputElement>(null);
+  const isMounted = useRef(false);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    latestThresholdInputRef.current?.focus();
+    if (isMounted.current) {
+      latestThresholdInputRef.current?.focus();
+    }
+    isMounted.current = true;
   }, [steps.length]);
 
   function fireOnChange(newSteps: ThresholdWithKey[]) {
