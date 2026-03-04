@@ -47,6 +47,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// 1 folder + 2 dashboards = 3 resources, new limit 2 → exceeded
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.WaitForResourceQuotaLimit(t, repo, 2)
 		helper.SyncAndWait(t, repo, nil)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
@@ -137,6 +138,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// 1 folder + 2 dashboards = 3 resources, new limit 2 → exceeded
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 		helper.TriggerRepositoryReconciliation(t, testRepo.Name)
+		helper.WaitForResourceQuotaLimit(t, repo, 2)
 		helper.SyncAndWait(t, repo, nil)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
@@ -405,6 +407,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// 1 folder + 3 dashboards = 4 resources, new limit 3 → exceeded
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
 		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.WaitForResourceQuotaLimit(t, repo, 3)
 		helper.SyncAndWait(t, repo, nil)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
@@ -452,6 +455,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		// 1 folder + 3 dashboards = 4 resources, new limit 1 → exceeded
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
 		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.WaitForResourceQuotaLimit(t, repo, 1)
 		helper.SyncAndWait(t, repo, nil)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
