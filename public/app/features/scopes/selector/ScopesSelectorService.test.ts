@@ -2331,4 +2331,156 @@ describe('ScopesSelectorService', () => {
       expect(service.state.nodes['non-existent']).toBeUndefined();
     });
   });
+
+  describe('depth prefetch', () => {
+    const containerNode: ScopeNode = {
+      metadata: { name: 'container' },
+      spec: {
+        linkId: '',
+        linkType: undefined,
+        parentName: '',
+        nodeType: 'container',
+        title: 'Container',
+      },
+    };
+
+    const childContainer: ScopeNode = {
+      metadata: { name: 'child-container' },
+      spec: {
+        linkId: '',
+        linkType: undefined,
+        parentName: 'container',
+        nodeType: 'container',
+        title: 'Child Container',
+      },
+    };
+
+    const grandchild1: ScopeNode = {
+      metadata: { name: 'grandchild-1' },
+      spec: {
+        linkId: 'gc-scope-1',
+        linkType: 'scope',
+        parentName: 'child-container',
+        nodeType: 'leaf',
+        title: 'Grandchild 1',
+      },
+    };
+
+    const grandchild2: ScopeNode = {
+      metadata: { name: 'grandchild-2' },
+      spec: {
+        linkId: 'gc-scope-2',
+        linkType: 'scope',
+        parentName: 'child-container',
+        nodeType: 'leaf',
+        title: 'Grandchild 2',
+      },
+    };
+
+    beforeEach(async () => {
+      apiClient.fetchNodes = jest.fn().mockImplementation((options: { parent?: string; depth?: number }) => {
+        if (options.parent === '') {
+          return Promise.resolve([containerNode]);
+        } else if (options.parent === 'container' && options.depth === 1) {
+          // depth=1: return children + grandchildren (flat)
+          return Promise.resolve([childContainer, grandchild1, grandchild2]);
+        } else if (options.parent === 'container') {
+          // depth=0/undefined: return direct children only
+          return Promise.resolve([childContainer]);
+        } else if (options.parent === 'child-container') {
+          return Promise.resolve([grandchild1, grandchild2]);
+        }
+        return Promise.resolve([]);
+      });
+
+      // Load root nodes
+      await service.filterNode('', '');
+    });
+
+    it('should pass depth=1 to fetchNodes when expanding a node', async () => {
+      const fetchNodesSpy = jest.spyOn(apiClient, 'fetchNodes');
+
+      await service.toggleExpandedNode('container');
+
+      expect(fetchNodesSpy).toHaveBeenCalledWith({
+        parent: 'container',
+        query: undefined,
+        depth: 1,
+      });
+    });
+
+    it('should separate direct children from descendants in tree', async () => {
+      await service.toggleExpandedNode('container');
+
+      // Direct child should appear at the expanded level
+      const containerTree = service.state.tree?.children?.['container'];
+      expect(containerTree?.children?.['child-container']).toBeDefined();
+
+      // Grandchildren should NOT appear at the expanded level
+      expect(containerTree?.children?.['grandchild-1']).toBeUndefined();
+      expect(containerTree?.children?.['grandchild-2']).toBeUndefined();
+    });
+
+    it('should pre-populate grandchildren under their parent in the tree', async () => {
+      await service.toggleExpandedNode('container');
+
+      const childContainerTree = service.state.tree?.children?.['container']?.children?.['child-container'];
+
+      // Grandchildren should be pre-populated under child-container
+      expect(childContainerTree?.children?.['grandchild-1']).toBeDefined();
+      expect(childContainerTree?.children?.['grandchild-2']).toBeDefined();
+      expect(childContainerTree?.childrenLoaded).toBe(true);
+    });
+
+    it('should cache all returned nodes including descendants', async () => {
+      await service.toggleExpandedNode('container');
+
+      expect(service.state.nodes['child-container']).toEqual(childContainer);
+      expect(service.state.nodes['grandchild-1']).toEqual(grandchild1);
+      expect(service.state.nodes['grandchild-2']).toEqual(grandchild2);
+    });
+
+    it('should skip API call when expanding a node with prefetched children', async () => {
+      // Expand container (prefetches child-container's children)
+      await service.toggleExpandedNode('container');
+
+      const fetchNodesSpy = jest.spyOn(apiClient, 'fetchNodes');
+      fetchNodesSpy.mockClear();
+
+      // Expand child-container — its children were already prefetched
+      await service.toggleExpandedNode('child-container');
+
+      // No API call should be made
+      expect(fetchNodesSpy).not.toHaveBeenCalled();
+
+      // But the node should be expanded
+      expect(service.state.tree?.children?.['container']?.children?.['child-container']?.expanded).toBe(true);
+    });
+
+    it('should not pass depth when filtering (search)', async () => {
+      const fetchNodesSpy = jest.spyOn(apiClient, 'fetchNodes');
+      fetchNodesSpy.mockClear();
+
+      await service.filterNode('container', 'search-query');
+
+      // filterNode should NOT pass depth
+      expect(fetchNodesSpy).toHaveBeenCalledWith({
+        parent: 'container',
+        query: 'search-query',
+      });
+    });
+
+    it('should not pass depth when collapsing', async () => {
+      await service.toggleExpandedNode('container');
+
+      const fetchNodesSpy = jest.spyOn(apiClient, 'fetchNodes');
+      fetchNodesSpy.mockClear();
+
+      // Collapse
+      await service.toggleExpandedNode('container');
+
+      // Should reload parent's children without depth
+      expect(fetchNodesSpy).toHaveBeenCalledWith({ parent: '', query: '' });
+    });
+  });
 });

@@ -447,6 +447,47 @@ describe('ScopesApiClient', () => {
         expect(expectedNodes).toContainEqual(node);
       });
     });
+
+    it('should pass depth to the endpoint', async () => {
+      const expectedNodes = MOCK_NODES.slice(0, 3);
+      const mockSubscription = createMockSubscription({
+        data: { items: expectedNodes },
+      });
+      (scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate as jest.Mock).mockReturnValue(
+        mockSubscription
+      );
+
+      const result = await apiClient.fetchNodes({
+        parent: 'applications',
+        depth: 1,
+      });
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(3);
+      expect(scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          parent: 'applications',
+          depth: 1,
+          limit: 1000,
+        }),
+        expect.objectContaining({ forceRefetch: true })
+      );
+    });
+
+    it('should omit depth when not provided', async () => {
+      const mockSubscription = createMockSubscription({
+        data: { items: [] },
+      });
+      (scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate as jest.Mock).mockReturnValue(
+        mockSubscription
+      );
+
+      await apiClient.fetchNodes({ parent: 'test' });
+
+      const callArgs = (scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate as jest.Mock).mock
+        .calls[0][0];
+      expect(callArgs.depth).toBeUndefined();
+    });
   });
 
   describe('fetchDashboards', () => {

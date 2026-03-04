@@ -206,8 +206,12 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         if (parentNode) {
           await this.loadNodeChildren(parentPath, parentNode, parentNode.query);
         }
+      } else if (nodeToToggle.childrenLoaded && nodeToToggle.children) {
+        // Children already available (e.g., prefetched via depth) — skip API call.
+        // The tree was already updated with expanded: true above.
       } else {
-        await this.loadNodeChildren(path, nodeToToggle);
+        // Prefetch one extra level (grandchildren) so the next expansion is instant
+        await this.loadNodeChildren(path, nodeToToggle, undefined, 1);
       }
       // Catch and throw error so we can ensure the profiler is stopped
       // todo: leverage component-level
@@ -248,16 +252,29 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
   };
 
-  private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string) => {
+  private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string, depth?: number) => {
     this.updateState({ loadingNodeName: treeNode.scopeNodeId });
 
-    const childNodes = await this.apiClient.fetchNodes({ parent: treeNode.scopeNodeId, query });
+    const allNodes = await this.apiClient.fetchNodes({ parent: treeNode.scopeNodeId, query, depth });
 
     const newNodes = { ...this.state.nodes };
-
-    for (const node of childNodes) {
+    for (const node of allNodes) {
       newNodes[node.metadata.name] = node;
     }
+
+    // Group nodes by parent to handle multi-level responses (depth > 0).
+    // When depth is 0 or undefined, all nodes share the same parent and this is equivalent
+    // to the previous flat iteration.
+    const childrenByParent = new Map<string, ScopeNode[]>();
+    for (const node of allNodes) {
+      const parent = node.spec.parentName ?? '';
+      if (!childrenByParent.has(parent)) {
+        childrenByParent.set(parent, []);
+      }
+      childrenByParent.get(parent)!.push(node);
+    }
+
+    const directChildren = childrenByParent.get(treeNode.scopeNodeId) ?? [];
 
     const newTree = modifyTreeNodeAtPath(this.state.tree, path, (treeNode) => {
       // Preserve existing children that have nested structure (from insertPathNodesIntoTree)
@@ -276,21 +293,47 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // Start with preserved children, then add/update with fetched children
       treeNode.children = { ...childrenToPreserve };
 
-      for (const node of childNodes) {
-        // If this child was preserved, merge with fetched data
-        if (childrenToPreserve[node.metadata.name]) {
-          treeNode.children[node.metadata.name] = {
-            ...childrenToPreserve[node.metadata.name],
+      for (const node of directChildren) {
+        const nodeId = node.metadata.name;
+
+        if (childrenToPreserve[nodeId]) {
+          treeNode.children[nodeId] = {
+            ...childrenToPreserve[nodeId],
             // Update query but keep nested children
             query: query || '',
           };
         } else {
           // New child from API
-          treeNode.children[node.metadata.name] = {
+          treeNode.children[nodeId] = {
             expanded: false,
-            scopeNodeId: node.metadata.name,
+            scopeNodeId: nodeId,
             query: query || '',
             children: undefined,
+          };
+        }
+
+        // Pre-populate descendants from depth response so subsequent expansions
+        // can skip the API call entirely.
+        const descendants = childrenByParent.get(nodeId);
+        if (descendants && descendants.length > 0) {
+          const existingGrandchildren = treeNode.children[nodeId].children || {};
+          const grandchildren: Record<string, TreeNode> = { ...existingGrandchildren };
+
+          for (const desc of descendants) {
+            if (!grandchildren[desc.metadata.name]) {
+              grandchildren[desc.metadata.name] = {
+                expanded: false,
+                scopeNodeId: desc.metadata.name,
+                query: '',
+                children: undefined,
+              };
+            }
+          }
+
+          treeNode.children[nodeId] = {
+            ...treeNode.children[nodeId],
+            children: grandchildren,
+            childrenLoaded: true,
           };
         }
       }
