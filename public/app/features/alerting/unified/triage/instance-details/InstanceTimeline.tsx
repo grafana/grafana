@@ -27,6 +27,15 @@ interface TimelineGroup {
   notifications: NotificationEntry[];
 }
 
+/**
+ * Groups notifications under the most recent preceding state change.
+ *
+ * Each notification is assigned to the latest state change whose timestamp is <= the notification's timestamp.
+ * Notifications that predate all state changes are collected as "orphan" notifications.
+ *
+ * Note: state changes and notifications come from different sources, so minor clock skew
+ * may cause a notification to be grouped with a slightly earlier or later state change.
+ */
 function buildTimelineGroups(records: LogRecord[], notifications: NotificationEntry[]): TimelineGroup[] {
   const chronological = [...records].sort((a, b) => a.timestamp - b.timestamp);
 
@@ -296,9 +305,11 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
       <div className={styles.detailReceiver}>
         <Stack direction="row" gap={1} alignItems="center">
           <IntegrationIcon integration={notification.integration} />
-          <Text variant="bodySmall" truncate>
-            {notification.receiver}
-          </Text>
+          <Tooltip content={notification.receiver} placement="top">
+            <Text variant="bodySmall" truncate>
+              {notification.receiver}
+            </Text>
+          </Tooltip>
           <Text variant="bodySmall" color="secondary">
             ({receiverTypeNames[notification.integration] ?? notification.integration})
           </Text>

@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { useCreateNotificationqueryMutation } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { Labels, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Box, LoadingBar, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
+import { Alert, Box, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 
 import { LogRecord } from '../../components/rules/state-history/common';
 
@@ -17,7 +17,6 @@ interface InstanceTimelineSectionProps {
   historyRecords: LogRecord[];
   stateHistoryFetching: boolean;
   stateHistoryError: boolean;
-  loadingBarWidth: number;
   loadingBarRef: React.Ref<HTMLDivElement>;
 }
 
@@ -28,7 +27,6 @@ export function InstanceTimelineSection({
   historyRecords,
   stateHistoryFetching,
   stateHistoryError,
-  loadingBarWidth,
   loadingBarRef,
 }: InstanceTimelineSectionProps) {
   const [
@@ -64,7 +62,6 @@ export function InstanceTimelineSection({
       <Stack direction="column" gap={1}>
         <Text variant="h5">{t('alerting.instance-details.instance-timeline', 'Instance Timeline')}</Text>
 
-        {isLoading && <LoadingBar width={loadingBarWidth} />}
         {isLoading && (
           <LoadingPlaceholder text={t('alerting.instance-details.timeline-loading', 'Loading timeline...')} />
         )}

@@ -163,7 +163,6 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
             historyRecords={historyRecords}
             stateHistoryFetching={stateHistoryFetching}
             stateHistoryError={stateHistoryError}
-            loadingBarWidth={loadingBarWidth}
             loadingBarRef={ref}
           />
         ) : (
