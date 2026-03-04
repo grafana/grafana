@@ -85,7 +85,7 @@ func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 		return m.renderer, true
 	}
 
-	srcs, err := sources.DirAsLocalSources(m.cfg, m.cfg.PluginsPath, plugins.ClassExternal)
+	srcs, err := sources.DirAsLocalSources(m.cfg, m.cfg.PluginsPaths, plugins.ClassExternal)
 	if err != nil {
 		m.log.Error("Failed to get renderer plugin sources", "error", err)
 		return nil, false

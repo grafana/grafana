@@ -207,5 +207,5 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for playlists not implemented")
+	return nil, k8serrors.NewMethodNotSupported(schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}, "DeleteCollection")
 }

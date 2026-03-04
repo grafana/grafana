@@ -7,7 +7,7 @@ import {
   VizConfigKind,
   PanelQueryKind,
   TransformationKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

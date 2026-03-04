@@ -534,6 +534,106 @@ describe('buildTree', () => {
     expect(result[0].resourceName).toBe('folder-uid');
     expect(result[0].status).toBe('synced');
   });
+
+  it('should set missingFolderMetadata to true for provisioned folder without _folder.json', () => {
+    const mergedItems = [
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
+      {
+        path: 'dashboards/my-dashboard.json',
+        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'abc123def456' },
+        resource: mockResource,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].missingFolderMetadata).toBe(true);
+  });
+
+  it('should set missingFolderMetadata to false for provisioned folder with _folder.json', () => {
+    const mergedItems = [
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
+      { path: 'dashboards/_folder.json', file: { path: 'dashboards/_folder.json', size: '200', hash: 'meta123' } },
+      {
+        path: 'dashboards/my-dashboard.json',
+        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'abc123def456' },
+        resource: mockResource,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].missingFolderMetadata).toBe(false);
+  });
+
+  it('should not set missingFolderMetadata for inferred folders without a resource', () => {
+    const mergedItems = [
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' } },
+      {
+        path: 'dashboards/my-dashboard.json',
+        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'abc123def456' },
+        resource: mockResource,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].missingFolderMetadata).toBeUndefined();
+  });
+
+  it('should set missingFolderMetadata for root-level provisioned folder', () => {
+    const rootFolderResource: ResourceListItem = {
+      ...mockFolderResource,
+      path: 'root-folder',
+    };
+    const mergedItems = [
+      { path: 'root-folder', resource: rootFolderResource },
+      { path: 'root-folder/file.json', file: { path: 'root-folder/file.json', size: '100', hash: 'h1' } },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    const folder = result.find((n) => n.path === 'root-folder');
+    expect(folder?.type).toBe('Folder');
+    expect(folder?.missingFolderMetadata).toBe(true);
+  });
+
+  it('should handle nested folders with mixed metadata presence', () => {
+    const parentFolderResource: ResourceListItem = {
+      ...mockFolderResource,
+      path: 'parent',
+      name: 'parent-uid',
+      title: 'Parent',
+    };
+    const childFolderResource: ResourceListItem = {
+      ...mockFolderResource,
+      path: 'parent/child',
+      name: 'child-uid',
+      title: 'Child',
+    };
+    const mergedItems = [
+      { path: 'parent', file: { path: 'parent', hash: '' }, resource: parentFolderResource },
+      { path: 'parent/_folder.json', file: { path: 'parent/_folder.json', size: '100', hash: 'meta1' } },
+      { path: 'parent/child', file: { path: 'parent/child', hash: '' }, resource: childFolderResource },
+      // No parent/child/_folder.json — child is missing metadata
+      {
+        path: 'parent/child/dashboard.json',
+        file: { path: 'parent/child/dashboard.json', size: '100', hash: 'h1' },
+        resource: { ...mockResource, path: 'parent/child/dashboard.json', hash: 'h1' },
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].path).toBe('parent');
+    expect(result[0].missingFolderMetadata).toBe(false);
+
+    const child = result[0].children.find((n) => n.path === 'parent/child');
+    expect(child?.missingFolderMetadata).toBe(true);
+  });
 });
 
 describe('flattenTree', () => {

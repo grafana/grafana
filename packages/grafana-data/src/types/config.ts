@@ -271,6 +271,7 @@ export interface GrafanaConfig {
   expressionsEnabled: boolean;
   liveEnabled: boolean;
   liveMessageSizeLimit: number;
+  liveNamespaced: boolean; // use namespace or orgId prefix
   anonymousEnabled: boolean;
   anonymousDeviceLimit: number;
   featureToggles: FeatureToggles;
@@ -336,6 +337,7 @@ export interface GrafanaConfig {
   namespace: string;
   caching: {
     enabled: boolean;
+    defaultTTLMs: number;
   };
   recordedQueries: {
     enabled: boolean;

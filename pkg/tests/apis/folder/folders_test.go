@@ -257,8 +257,10 @@ func TestIntegrationFolderDeletionBlockedByAlertRules(t *testing.T) {
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				folders.RESOURCEGROUP: {DualWriterMode: grafanarest.Mode5},
+				setting.DashboardResource: {
+					DualWriterMode: grafanarest.Mode5,
+				},
 			},
-			UnifiedStorageEnableSearch: true,
 		})
 
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1274,7 +1276,6 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			// Run all test cases within the same server instance
@@ -1390,7 +1391,6 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesLibraryPanels,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1471,7 +1471,6 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesLibraryPanels,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1568,7 +1567,6 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 						DualWriterMode: modeDw,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1644,7 +1642,6 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1838,8 +1835,10 @@ func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
 			folders.RESOURCEGROUP: {
 				DualWriterMode: grafanarest.Mode5,
 			},
+			setting.DashboardResource: {
+				DualWriterMode: grafanarest.Mode5,
+			},
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1926,7 +1925,6 @@ func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: helper.Org1.Admin,
@@ -2056,7 +2054,6 @@ func TestIntegrationDeleteFolderWithProvisionedDashboards(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			}
 
 			setupProvisioningDir(t, &ops)
@@ -2163,7 +2160,6 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 				DualWriterMode: mode3,
 			},
 		},
-		UnifiedStorageEnableSearch: true,
 	}
 
 	setupProvisioningDir(t, &ops)
@@ -2326,4 +2322,115 @@ func callSearch(t *testing.T, user apis.User, params string) *v0alpha1.SearchRes
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(raw, &sr))
 	return &sr
+}
+
+func TestIntegrationFolderDryRun(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	// Test dry-run on dual-writer modes 1-4.
+	// Mode 0 (legacy-only) does not use the dualWriter, so dry-run is not intercepted.
+	for mode := 1; mode <= 4; mode++ {
+		modeDw := grafanarest.DualWriterMode(mode)
+		t.Run(fmt.Sprintf("dry-run mode %v", modeDw), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{},
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create a real folder first
+			folderObj := &unstructured.Unstructured{
+				Object: map[string]any{
+					"spec": map[string]any{
+						"title": "DryRun Test Folder",
+					},
+				},
+			}
+			folderObj.SetGenerateName("dryrun-test-")
+			created, err := client.Resource.Create(context.Background(), folderObj, metav1.CreateOptions{})
+			require.NoError(t, err)
+			createdName := created.GetName()
+			require.NotEmpty(t, createdName)
+
+			t.Run("delete with dry-run should not actually delete", func(t *testing.T) {
+				err := client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{
+					DryRun: []string{metav1.DryRunAll},
+				})
+				require.NoError(t, err)
+
+				// Folder should still exist
+				got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+				require.NoError(t, err, "folder should still exist after dry-run delete")
+				require.Equal(t, createdName, got.GetName())
+			})
+
+			t.Run("create with dry-run should not actually create", func(t *testing.T) {
+				dryRunFolder := &unstructured.Unstructured{
+					Object: map[string]any{
+						"spec": map[string]any{
+							"title": "DryRun Create Folder",
+						},
+					},
+				}
+				dryRunFolder.SetName("dryrun-create-test")
+				_, err := client.Resource.Create(context.Background(), dryRunFolder, metav1.CreateOptions{
+					DryRun: []string{metav1.DryRunAll},
+				})
+				require.NoError(t, err)
+
+				// Folder should NOT exist
+				_, err = client.Resource.Get(context.Background(), "dryrun-create-test", metav1.GetOptions{})
+				require.Error(t, err, "folder should not exist after dry-run create")
+			})
+
+			// Update dry-run only works reliably in modes 3+ where unified storage is
+			// the primary read source, so the client-sent UID matches the unified store.
+			// In modes 1/2, the client reads from legacy (which has a different UID than
+			// unified), causing a UID precondition mismatch on dry-run update.
+			if mode >= 3 {
+				t.Run("update with dry-run should not actually update", func(t *testing.T) {
+					// Get the current folder
+					current, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+					require.NoError(t, err)
+
+					// Modify the title
+					spec := current.Object["spec"].(map[string]any)
+					originalTitle := spec["title"]
+					spec["title"] = "DryRun Updated Title"
+					current.Object["spec"] = spec
+
+					_, err = client.Resource.Update(context.Background(), current, metav1.UpdateOptions{
+						DryRun: []string{metav1.DryRunAll},
+					})
+					require.NoError(t, err)
+
+					// Title should be unchanged
+					got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+					require.NoError(t, err)
+					gotSpec := got.Object["spec"].(map[string]any)
+					require.Equal(t, originalTitle, gotSpec["title"], "title should not change after dry-run update")
+				})
+			}
+
+			// Clean up
+			err = client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+	}
 }

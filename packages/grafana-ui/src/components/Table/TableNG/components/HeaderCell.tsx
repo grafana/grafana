@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import memoize from 'micro-memoize';
 import React, { useEffect, useRef } from 'react';
 import { Column, SortDirection } from 'react-data-grid';
 
@@ -9,6 +10,7 @@ import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
+import { isTableCellStylesKeyEqual } from '../styles';
 import { FilterType, TableRow, TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
 
@@ -26,7 +28,7 @@ interface HeaderCellProps {
   disableKeyboardEvents?: boolean;
 }
 
-const HeaderCell: React.FC<HeaderCellProps> = ({
+export const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
   crossFilterOrder,
   crossFilterRows,
@@ -60,7 +62,6 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   return (
     <Stack
       ref={ref}
-      tabIndex={-1}
       direction="row"
       gap={0.5}
       alignItems="center"
@@ -121,28 +122,29 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
-  headerCellLabel: css({
-    all: 'unset',
-    cursor: 'pointer',
-    fontWeight: theme.typography.fontWeightMedium,
-    color: theme.colors.text.secondary,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
-    borderRadius: theme.spacing(0.25),
-    lineHeight: '20px',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-    '&::selection': {
-      backgroundColor: 'var(--rdg-background-color)',
+const getStyles = memoize(
+  (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
+    headerCellLabel: css({
+      all: 'unset',
+      cursor: 'pointer',
+      fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
-    },
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
+      borderRadius: theme.spacing(0.25),
+      lineHeight: '20px',
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+      '&::selection': {
+        backgroundColor: 'var(--rdg-background-color)',
+        color: theme.colors.text.secondary,
+      },
+    }),
+    headerCellIcon: css({
+      color: theme.colors.text.secondary,
+    }),
   }),
-  headerCellIcon: css({
-    color: theme.colors.text.secondary,
-  }),
-});
-
-export { HeaderCell };
+  { isMatchingKey: isTableCellStylesKeyEqual }
+);

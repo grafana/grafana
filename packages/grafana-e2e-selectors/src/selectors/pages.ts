@@ -579,6 +579,9 @@ export const versionedPages = {
             applyButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-apply-button',
             },
+            previewTable: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-preview-table',
+            },
           },
           IntervalVariable: {
             intervalsValueInput: {
@@ -603,6 +606,9 @@ export const versionedPages = {
             },
             modeToggle: {
               '10.4.0': 'data-testid group by variable mode toggle',
+            },
+            defaultValueSection: {
+              '13.0.0': 'data-testid group by variable default value',
             },
           },
           AdHocFiltersVariable: {

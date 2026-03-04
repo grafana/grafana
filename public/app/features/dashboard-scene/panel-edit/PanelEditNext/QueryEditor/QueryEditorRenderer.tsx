@@ -10,9 +10,10 @@ import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 
 export function QueryEditorRenderer() {
-  const { queries, data, queryError } = useQueryRunnerContext();
+  const { queries, data } = useQueryRunnerContext();
   const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
   const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
+  const error = data?.errors?.find((e) => e.refId === selectedQuery?.refId);
 
   const selectedRefId = selectedQuery?.refId;
 
@@ -85,6 +86,7 @@ export function QueryEditorRenderer() {
     <>
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
         <QueryEditorComponent
+          key={selectedQuery.refId}
           app={CoreApp.Dashboard}
           data={filteredData}
           datasource={datasource}
@@ -96,7 +98,7 @@ export function QueryEditorRenderer() {
           range={filteredData?.timeRange}
         />
       </DataSourcePluginContextProvider>
-      {queryError && <QueryErrorAlert error={queryError} />}
+      {error && <QueryErrorAlert error={error} />}
     </>
   );
 }

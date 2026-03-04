@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { clsx } from 'clsx';
+import memoize from 'micro-memoize';
 import { memo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -59,6 +60,8 @@ export const Filter = memo(
         className={styles.headerFilter}
         ref={ref}
         type="button"
+        aria-haspopup="dialog"
+        aria-pressed={isPopoverVisible}
         aria-label={t('grafana-ui.table.filter.button', `Filter {{name}}`, {
           name: field ? getDisplayName(field) : '',
         })}
@@ -109,7 +112,7 @@ export const Filter = memo(
 
 Filter.displayName = 'Filter';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = memoize((theme: GrafanaTheme2) => ({
   headerFilter: css({
     background: 'transparent',
     border: 'none',
@@ -122,4 +125,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'filterIconEnabled',
     color: theme.colors.primary.text,
   }),
-});
+}));

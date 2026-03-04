@@ -1,4 +1,4 @@
-import { Spec as DashboardV2Spec, TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec, TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
@@ -6,17 +6,19 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';
 
-export function serializeTabsLayout(layoutManager: TabsLayoutManager): DashboardV2Spec['layout'] {
+export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
   return {
     kind: 'TabsLayout',
     spec: {
-      tabs: layoutManager.state.tabs.filter((tab) => !tab.state.repeatSourceKey).map(serializeTab),
+      tabs: layoutManager.state.tabs
+        .filter((tab) => !tab.state.repeatSourceKey)
+        .map((tab) => serializeTab(tab, isSnapshot)),
     },
   };
 }
 
-export function serializeTab(tab: TabItem): TabsLayoutTabKind {
-  const layout = tab.state.layout.serialize();
+export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabKind {
+  const layout = tab.state.layout.serialize(isSnapshot);
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
     spec: {

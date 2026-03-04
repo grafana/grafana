@@ -689,6 +689,9 @@ export const versionedComponents = {
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
       },
+      addAnnotationButton: {
+        '12.6.0': 'data-testid add annotation button',
+      },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',
       },
@@ -1329,6 +1332,9 @@ export const versionedComponents = {
   DashboardRow: {
     title: {
       [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-title-${title}`,
+    },
+    toggle: {
+      [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-toggle-for-${title}`,
     },
     wrapper: {
       '12.1.0': (title: string) => `data-testid dashboard-row-wrapper-for-${title}`,

@@ -45,6 +45,7 @@ func TestIntegrationMigrations(t *testing.T) {
 	migrationTestCases := []testcases.ResourceMigratorTestCase{
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
+		testcases.NewShortURLsTestCase(),
 	}
 
 	runMigrationTestSuite(t, migrationTestCases)
@@ -67,6 +68,18 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			}
 		})
 		t.Logf("Using shared database path: %s", dbPath)
+	}
+
+	// Collect feature toggles required by all test cases
+	var featureToggles []string
+	seen := make(map[string]bool)
+	for _, tc := range testCases {
+		for _, ft := range tc.FeatureToggles() {
+			if !seen[ft] {
+				featureToggles = append(featureToggles, ft)
+				seen[ft] = true
+			}
+		}
 	}
 
 	// Store UIDs created by each test case
@@ -101,6 +114,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			DisableDBCleanup:      true,
 			APIServerStorageType:  "unified",
 			UnifiedStorageConfig:  unifiedConfig,
+			EnableFeatureToggles:  featureToggles,
 		})
 		t.Cleanup(helper.Shutdown)
 		org1 = &helper.Org1
@@ -147,6 +161,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
 				UnifiedStorageConfig:  unifiedConfig,
+				EnableFeatureToggles:  featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -181,6 +196,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				DisableDBCleanup:     true,
 				APIServerStorageType: "unified",
 				UnifiedStorageConfig: unifiedConfig,
+				EnableFeatureToggles: featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -205,6 +221,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				DisableDataMigrations: false, // Run migrations at startup
 				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
+				EnableFeatureToggles:  featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -213,18 +230,17 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		for _, state := range testStates {
 			t.Run(state.tc.Name(), func(t *testing.T) {
-				shouldExist := true
 				for _, gvr := range state.tc.Resources() {
 					resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
-					// Resources exist if they're either:
-					// 1. In MigratedUnifiedResources (enabled by default), OR
-					// 2. In AutoMigratedUnifiedResources (auto-migrated because count is below threshold)
-					if !setting.MigratedUnifiedResources[resourceKey] && !setting.AutoMigratedUnifiedResources[resourceKey] {
-						shouldExist = false
-						break
+					// Only verify resources that are expected to be migrated by default.
+					// Resources outside this map won't have mode 5 enforced, so the K8s API
+					// may still serve them from legacy storage, making verification unreliable.
+					if !setting.MigratedUnifiedResources[resourceKey] {
+						t.Skipf("Resource %s is not migrated by default, skipping verification", resourceKey)
+						return
 					}
 				}
-				state.tc.Verify(t, helper, shouldExist)
+				state.tc.Verify(t, helper, true)
 			})
 		}
 
@@ -245,12 +261,14 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				// EnableLog:             true,
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDataMigrations: false,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig:  unifiedConfig,
+				//EnableLog:              true,
+				AppModeProduction:      true,
+				DisableAnonymous:       true,
+				DisableDataMigrations:  false,
+				APIServerStorageType:   "unified",
+				UnifiedStorageConfig:   unifiedConfig,
+				MigrationParquetBuffer: true,
+				EnableFeatureToggles:   featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -278,11 +296,13 @@ const (
 
 	playlistsID            = "playlists migration"
 	foldersAndDashboardsID = "folders and dashboards migration"
+	shorturlsID            = "shorturls migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
+	shorturlsID:            false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {

@@ -103,11 +103,16 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 		attribute.String("concurrency_token", rev.ConcurrencyToken),
 	))
 
-	provenance, err := nps.provenanceStore.GetProvenance(ctx, route, orgID)
-	if err != nil {
-		return legacy_storage.ManagedRoute{}, err
+	// Imported routes derive their provenance from the external config (ProvenanceConvertedPrometheus).
+	// They are not stored in the provenance store, so we must not overwrite with a store lookup
+	// which would return ProvenanceNone and cause a discrepancy with the list view.
+	if route.Origin != models.ResourceOriginImported {
+		provenance, err := nps.provenanceStore.GetProvenance(ctx, route, orgID)
+		if err != nil {
+			return legacy_storage.ManagedRoute{}, err
+		}
+		route.Provenance = provenance
 	}
-	route.Provenance = provenance
 
 	return *route, nil
 }

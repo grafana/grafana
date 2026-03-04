@@ -90,6 +90,19 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		}
 	}
 
+	// Validating the presence of finalizers in resources not marked for deletion.
+	if cfg.DeletionTimestamp != nil || cfg.DeletionTimestamp.IsZero() {
+		if len(cfg.Finalizers) == 0 {
+			list = append(list,
+				field.Invalid(
+					field.NewPath("medatada", "finalizers"),
+					cfg.Finalizers,
+					"cannot have no finalizers set on resources not marked for deletion",
+				),
+			)
+		}
+	}
+
 	if slices.Contains(cfg.Finalizers, RemoveOrphanResourcesFinalizer) &&
 		slices.Contains(cfg.Finalizers, ReleaseOrphanResourcesFinalizer) {
 		list = append(list,

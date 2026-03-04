@@ -10,6 +10,8 @@ import {
   RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
 
+export type JobType = 'sync' | 'delete' | 'move' | 'fix';
+
 // Repository type definition - extracted from API client
 export type RepositoryType = RepositorySpec['type'];
 export type RepoWorkflows = RepositorySpec['workflows'];
@@ -97,6 +99,7 @@ export interface TreeItem {
   hash?: string;
   status?: SyncStatus;
   hasFile?: boolean;
+  missingFolderMetadata?: boolean;
 }
 
 export interface FlatTreeItem {

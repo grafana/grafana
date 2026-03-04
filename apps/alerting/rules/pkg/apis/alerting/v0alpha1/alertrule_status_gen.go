@@ -20,6 +20,11 @@ func NewAlertRulestatusOperatorState() *AlertRulestatusOperatorState {
 	return &AlertRulestatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for AlertRulestatusOperatorState.
+func (AlertRulestatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulestatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type AlertRuleStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
@@ -34,6 +39,11 @@ func NewAlertRuleStatus() *AlertRuleStatus {
 	return &AlertRuleStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleStatus.
+func (AlertRuleStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleStatus"
+}
+
 // +k8s:openapi-gen=true
 type AlertRuleStatusOperatorStateState string
 
@@ -43,9 +53,7 @@ const (
 	AlertRuleStatusOperatorStateStateFailed     AlertRuleStatusOperatorStateState = "failed"
 )
 
-func (AlertRulestatusOperatorState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulestatusOperatorState"
-}
-func (AlertRuleStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleStatus"
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleStatusOperatorStateState.
+func (AlertRuleStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleStatusOperatorStateState"
 }

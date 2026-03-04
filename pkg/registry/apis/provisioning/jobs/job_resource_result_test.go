@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -60,6 +62,35 @@ func TestNewJobResourceResult_WithError(t *testing.T) {
 	assert.Equal(t, action, result.Action())
 	assert.NotNil(t, result.Error())
 	assert.Equal(t, err, result.Error())
+}
+
+func TestNewJobResourceResult_WithWarning(t *testing.T) {
+	name := "test-resource"
+	group := "test-group"
+	kind := "test-kind"
+	path := "/test/path"
+	action := repository.FileActionCreated
+
+	warningErr := errors.New("some warning error")
+
+	// Test with ParseError directly (a warning error)
+	result := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithWarning(warningErr).
+		Build()
+
+	assert.Equal(t, name, result.Name())
+	assert.Equal(t, group, result.Group())
+	assert.Equal(t, kind, result.Kind())
+	assert.Equal(t, path, result.Path())
+	assert.Equal(t, action, result.Action())
+	assert.Nil(t, result.Error(), "error should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "error should be stored as warning")
+	assert.Equal(t, warningErr, result.Warning())
 }
 
 func TestNewJobResourceResult_WithoutError(t *testing.T) {
@@ -217,4 +248,55 @@ func TestNewJobResourceResult_WithErrorAsRegularError(t *testing.T) {
 	assert.NotNil(t, result.Error(), "Regular error should be stored as error")
 	assert.Equal(t, regularErr, result.Error())
 	assert.Nil(t, result.Warning(), "Regular error should not be stored as warning")
+}
+
+func TestJobResourceResult_WarningReason(t *testing.T) {
+	t.Run("QuotaExceededError returns ReasonQuotaExceeded", func(t *testing.T) {
+		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
+		result := NewResourceResult().WithError(quotaErr).Build()
+
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+	})
+
+	t.Run("wrapped QuotaExceededError returns ReasonQuotaExceeded", func(t *testing.T) {
+		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
+		wrapped := fmt.Errorf("sync failed: %w", quotaErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+	})
+
+	t.Run("ResourceValidationError returns ReasonResourceInvalid", func(t *testing.T) {
+		validationErr := resources.NewResourceValidationError(errors.New("bad field"))
+		result := NewResourceResult().WithError(validationErr).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+	})
+
+	t.Run("ResourceOwnershipConflictError returns ReasonResourceInvalid", func(t *testing.T) {
+		ownershipErr := resources.NewResourceOwnershipConflictError("res",
+			utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "a"},
+			utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "b"},
+		)
+		result := NewResourceResult().WithError(ownershipErr).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+	})
+
+	t.Run("nil warning returns empty reason", func(t *testing.T) {
+		result := NewResourceResult().Build()
+		assert.Empty(t, result.WarningReason())
+	})
+
+	t.Run("regular error returns empty reason", func(t *testing.T) {
+		result := NewResourceResult().WithError(errors.New("not a warning")).Build()
+		assert.Empty(t, result.WarningReason())
+	})
+
+	t.Run("explicit WithWarning with QuotaExceededError returns reason", func(t *testing.T) {
+		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
+		result := NewResourceResult().WithWarning(quotaErr).Build()
+
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+	})
 }

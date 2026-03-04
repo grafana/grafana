@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import memoize from 'micro-memoize';
 import { Dispatch, memo, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -160,6 +161,7 @@ export const FilterPopup = memo(
               tooltip={t('grafana-ui.table.filter-popup-aria-label-match-case', 'Match case')}
               variant={matchCase ? 'primary' : 'secondary'}
               onClick={() => setMatchCase((s) => !s)}
+              aria-pressed={matchCase}
               icon={'text-fields'}
             />
           </Stack>
@@ -194,7 +196,7 @@ export const FilterPopup = memo(
 
 FilterPopup.displayName = 'FilterPopup';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = memoize((theme: GrafanaTheme2) => ({
   filterContainer: css({
     label: 'filterContainer',
     width: '100%',
@@ -219,4 +221,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: 'transparent',
     },
   }),
-});
+}));

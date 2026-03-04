@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { SuggestedDashboardsModal } from './SuggestedDashboardsModal';
-import { CONTENT_KINDS, EVENT_LOCATIONS } from './interactions';
+import { CONTENT_KINDS, EVENT_LOCATIONS } from './constants';
 
 jest.mock('./DashboardLibrarySection', () => ({
   DashboardLibrarySection: () => <div data-testid="dashboard-library-section">Dashboard Library Section</div>,

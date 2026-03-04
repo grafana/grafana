@@ -12,7 +12,7 @@ import {
   SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import kbn from 'app/core/utils/kbn';

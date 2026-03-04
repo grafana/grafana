@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';

@@ -39,11 +39,8 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Yarn install
-        run: yarn install --immutable
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Install Playwright browsers
         run: yarn playwright install chromium --with-deps

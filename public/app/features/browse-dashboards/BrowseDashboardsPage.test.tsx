@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { of } from 'rxjs';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
 
@@ -57,6 +58,15 @@ jest.mock('@grafana/runtime', () => {
     }),
   };
 });
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(() => ({
+    isAvailable: true,
+    openAssistant: jest.fn(),
+  })),
+  createAssistantContextItem: jest.fn((type: string, data: object) => ({ type, ...data })),
+  isAssistantAvailable: jest.fn(() => of(true)),
+}));
 
 function render(ui: Parameters<typeof testRender>[0], options: Parameters<typeof testRender>[1] = {}) {
   return testRender(ui, {
@@ -223,7 +233,9 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         await user.click(await screen.findByText(/test team/i));
 
         await user.click(screen.getByRole('button', { name: 'Save owner' }));
-        expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        await waitFor(() => {
+          expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        });
       });
 
       it('allows removing the team that owns the folder', async () => {
@@ -240,7 +252,9 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         await user.click(await screen.findByTitle(/clear value/i));
 
         await user.click(screen.getByRole('button', { name: 'Save owner' }));
-        expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        await waitFor(() => {
+          expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+        });
       });
     });
   });

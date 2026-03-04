@@ -148,6 +148,7 @@ describe('BootstrapStep', () => {
       isReconciled: true,
       healthMessage: undefined,
       healthStatusNotReady: false,
+      fieldErrors: undefined,
       refetch: jest.fn(),
     });
 
@@ -530,6 +531,7 @@ describe('BootstrapStep', () => {
         isReconciled: false, // Not yet reconciled
         healthMessage: ['Some temporary error'],
         healthStatusNotReady: true,
+        fieldErrors: undefined,
         refetch: jest.fn(),
       });
 
@@ -564,6 +566,7 @@ describe('BootstrapStep', () => {
         isReconciled: true, // Fully reconciled
         healthMessage: ['Connection failed'],
         healthStatusNotReady: false,
+        fieldErrors: undefined,
         refetch: jest.fn(),
       });
 
@@ -597,6 +600,7 @@ describe('BootstrapStep', () => {
         isReconciled: true,
         healthMessage: undefined,
         healthStatusNotReady: false,
+        fieldErrors: undefined,
         refetch: jest.fn(),
       });
 
