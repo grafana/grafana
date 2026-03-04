@@ -54,6 +54,13 @@ post-generate-cleanup: ## Clean up the generated code
 	@echo "" >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
 	@cat ./kinds/v2beta1/dashboard_spec.cue >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
 
+	# Copy dashboard/v2beta2 spec so we can use it for schema validation
+	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2beta2/dashboard_spec.cue
+	@echo "// Source: apps/dashboard/kinds/v2beta2/dashboard_spec.cue" >> ./pkg/apis/dashboard/v2beta2/dashboard_spec.cue
+	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v2beta2/dashboard_spec.cue
+	@echo "" >> ./pkg/apis/dashboard/v2beta2/dashboard_spec.cue
+	@cat ./kinds/v2beta2/dashboard_spec.cue >> ./pkg/apis/dashboard/v2beta2/dashboard_spec.cue
+
 .PHONY: generate-golden-files
 generate-golden-files: ## Generate golden output files (migration first, then conversion)
 	go test -run '$(MIGRATION_TESTS)' $(MIGRATION_PKG) -count=1
