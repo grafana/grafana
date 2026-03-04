@@ -308,7 +308,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       ? this.apiClient.fetchScopeNavigations
       : this.apiClient.fetchDashboards;
 
-    const res = await fetchNavigations(forScopeNames);
+    // depth=1 prefetches next-level sub-scope items so the first expansion is instant
+    const res = await fetchNavigations(forScopeNames, { depth: 1 });
 
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
       const folders = this.groupSuggestedItems(res);
