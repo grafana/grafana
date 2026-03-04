@@ -5452,11 +5452,13 @@
       "groupby": "GroupBy",
       "missing-adhoc": "No ad hoc filters available",
       "operator": "Operator",
+      "restore": "Restore default value",
       "search": {
         "aria-label": "Search filters",
         "placeholder": "Search..."
       },
       "title": "Edit filters",
+      "use-custom-value": "Use custom value",
       "value": "Value"
     },
     "gen-aihistory": {
