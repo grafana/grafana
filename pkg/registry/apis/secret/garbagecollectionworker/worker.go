@@ -68,6 +68,7 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 	if err != nil {
 		return nil, fmt.Errorf("fetching inactive secure values that need to be cleaned up: %w", err)
 	}
+
 	if len(secureValues) == 0 {
 		return nil, nil
 	}
@@ -112,8 +113,8 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 
 		if len(counts) > 0 {
 			secureValueIDs := slices.Collect(maps.Keys(counts))
-			if err := w.secureValueMetadataStorage.MoveToDLQ(ctx, secureValueIDs); err != nil {
-				return secureValues, errors.Join(append(errs, fmt.Errorf("moving secure values to dead letter queue: %w", err))...)
+			if err := w.secureValueMetadataStorage.DeleteByIds(ctx, secureValueIDs); err != nil {
+				return secureValues, errors.Join(append(errs, fmt.Errorf("deleting secure values by ids: %w", err))...)
 			}
 		}
 	}

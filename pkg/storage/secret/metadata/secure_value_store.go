@@ -795,70 +795,7 @@ func (s *secureValueMetadataStorage) fetchByIds(ctx context.Context, secureValue
 	return out, nil
 }
 
-func (s *secureValueMetadataStorage) MoveToDLQ(ctx context.Context, secureValueIDs []string) (err error) {
-	start := s.clock.Now()
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.MoveToDLQ", trace.WithAttributes(
-		attribute.StringSlice("secureValueIDs", secureValueIDs),
-	))
-
-	defer span.End()
-
-	defer func() {
-		success := err == nil
-
-		if !success {
-			span.SetStatus(codes.Error, "SecureValueMetadataStorage.MoveToDLQ failed")
-			span.RecordError(err)
-		}
-
-		s.metrics.SecureValueMoveToDLQ.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
-	}()
-
-	if err := s.idempotentAddToDlq(ctx, secureValueIDs); err != nil {
-		return fmt.Errorf("adding secure values to dead letter queue: %w", err)
-	}
-	if err := s.deleteByIds(ctx, secureValueIDs); err != nil {
-		return fmt.Errorf("deleting secure values by ids: %w", err)
-	}
-
-	return nil
-}
-
-func (s *secureValueMetadataStorage) idempotentAddToDlq(ctx context.Context, secureValueIDs []string) (err error) {
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.idempotentAddToDlq", trace.WithAttributes(
-		attribute.StringSlice("secureValueIDs", secureValueIDs),
-	))
-
-	defer span.End()
-
-	defer func() {
-		success := err == nil
-
-		if !success {
-			span.SetStatus(codes.Error, "SecureValueMetadataStorage.idempotentAddToDlq failed")
-			span.RecordError(err)
-		}
-	}()
-
-	req := addSecureValuesToDlq{
-		SQLTemplate:    sqltemplate.New(s.dialect),
-		SecureValueIDs: secureValueIDs,
-	}
-
-	q, err := sqltemplate.Execute(sqlSecureValuesAddToDlq, req)
-	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValuesAddToDlq.Name(), err)
-	}
-
-	_, err = s.db.ExecContext(ctx, q, req.GetArgs()...)
-	if err != nil {
-		return fmt.Errorf("adding secure values to dead letter queue: %w", err)
-	}
-
-	return nil
-}
-
-func (s *secureValueMetadataStorage) deleteByIds(ctx context.Context, secureValueIDs []string) (err error) {
+func (s *secureValueMetadataStorage) DeleteByIds(ctx context.Context, secureValueIDs []string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.deleteByIds", trace.WithAttributes(
 		attribute.StringSlice("secureValueIDs", secureValueIDs),
 	))

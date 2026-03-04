@@ -12,11 +12,10 @@ import (
 )
 
 const (
-	TableNameKeeper           = "secret_keeper"
-	TableNameSecureValue      = "secret_secure_value"
-	TableNameDataKey          = "secret_data_key"
-	TableNameEncryptedValue   = "secret_encrypted_value"
-	TableNameSecureValueGCDlq = "secret_secure_value_gc_dlq"
+	TableNameKeeper         = "secret_keeper"
+	TableNameSecureValue    = "secret_secure_value"
+	TableNameDataKey        = "secret_data_key"
+	TableNameEncryptedValue = "secret_encrypted_value"
 )
 
 type SecretDB struct {
@@ -249,53 +248,5 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Name:    "gc_attempts",
 		Type:    migrator.DB_Int,
 		Default: "0",
-	}))
-
-	mg.AddMigration("create table secret_secure_value_gc_dlq", migrator.NewAddTableMigration(migrator.Table{
-		Name: TableNameSecureValueGCDlq,
-		Columns: []*migrator.Column{
-			// Kubernetes Metadata
-			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
-			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
-			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "created_by", Type: migrator.DB_Text, Nullable: false},
-			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV (ResourceVersion)
-			{Name: "updated_by", Type: migrator.DB_Text, Nullable: false},
-			{Name: "owner_reference_api_group",
-				Type:     migrator.DB_NVarchar,
-				Length:   253, // Limit enforced by K8s.
-				Nullable: true},
-			{
-				Name:     "owner_reference_api_version",
-				Type:     migrator.DB_NVarchar,
-				Length:   253, // Limit enforced by K8s.
-				Nullable: true},
-			{Name: "owner_reference_kind",
-				Type:     migrator.DB_NVarchar,
-				Length:   253, // Limit enforced by K8s.
-				Nullable: true},
-			{Name: "owner_reference_name",
-				Type:     migrator.DB_NVarchar,
-				Length:   253, // Limit enforced by K8s.
-				Nullable: true},
-
-			// Kubernetes Status
-			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
-			{Name: "active", Type: migrator.DB_Bool, Nullable: false},
-			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
-
-			// Spec
-			{Name: "description", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Chosen arbitrarily, but should be enough.
-			{Name: "keeper", Type: migrator.DB_NVarchar, Length: 253, Nullable: true},       // Keeper name, if not set, use default keeper.
-			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
-			{Name: "ref", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // Reference to third-party storage secret path.Chosen arbitrarily, but should be enough.
-		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"namespace", "name", "version", "active"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex},
-		},
 	}))
 }

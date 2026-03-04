@@ -15,13 +15,14 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlKeeperCreate      = mustTemplate("keeper_create.sql")
-	sqlKeeperRead        = mustTemplate("keeper_read.sql")
-	sqlKeeperReadActive  = mustTemplate("keeper_read_active.sql")
-	sqlKeeperUpdate      = mustTemplate("keeper_update.sql")
-	sqlKeeperList        = mustTemplate("keeper_list.sql")
-	sqlKeeperDelete      = mustTemplate("keeper_delete.sql")
-	sqlKeeperSetAsActive = mustTemplate("keeper_set_as_active.sql")
+	sqlKeeperCreate            = mustTemplate("keeper_create.sql")
+	sqlKeeperRead              = mustTemplate("keeper_read.sql")
+	sqlKeeperReadActive        = mustTemplate("keeper_read_active.sql")
+	sqlKeeperUpdate            = mustTemplate("keeper_update.sql")
+	sqlKeeperList              = mustTemplate("keeper_list.sql")
+	sqlKeeperDelete            = mustTemplate("keeper_delete.sql")
+	sqlKeeperSetAsActive       = mustTemplate("keeper_set_as_active.sql")
+	sqlSecureValuesDeleteByIds = mustTemplate("secure_value_delete_by_ids.sql")
 
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
@@ -35,8 +36,6 @@ var (
 	sqlSecureValueLeaseInactive    = mustTemplate("secure_value_lease_inactive.sql")
 	sqlSecureValueListByLeaseToken = mustTemplate("secure_value_list_by_lease_token.sql")
 	sqlSecureValueAddGCRetryCount  = mustTemplate("secure_value_add_gc_retry_count.sql")
-	sqlSecureValuesAddToDlq        = mustTemplate("secure_value_add_to_dlq.sql")
-	sqlSecureValuesDeleteByIds     = mustTemplate("secure_value_delete_by_ids.sql")
 
 	sqlGetLatestSecureValueVersionAndCreatedAt = mustTemplate("secure_value_get_latest_version_and_created_at.sql")
 	sqlSecureValueSetVersionToActive           = mustTemplate("secure_value_set_version_to_active.sql")
@@ -227,26 +226,6 @@ func (r listSecureValuesByIDs) Validate() error {
 	return nil // TODO
 }
 
-type addSecureValuesToDlq struct {
-	sqltemplate.SQLTemplate
-	SecureValueIDs []string
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r addSecureValuesToDlq) Validate() error {
-	return nil // TODO
-}
-
-type deleteSecureValuesByIds struct {
-	sqltemplate.SQLTemplate
-	SecureValueIDs []string
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r deleteSecureValuesByIds) Validate() error {
-	return nil // TODO
-}
-
 type createSecureValue struct {
 	sqltemplate.SQLTemplate
 	Row *secureValueDB
@@ -314,5 +293,15 @@ type addGCAttemptCountSecureValues struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r addGCAttemptCountSecureValues) Validate() error {
+	return nil // TODO
+}
+
+type deleteSecureValuesByIds struct {
+	sqltemplate.SQLTemplate
+	SecureValueIDs []string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r deleteSecureValuesByIds) Validate() error {
 	return nil // TODO
 }

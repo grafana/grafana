@@ -42,7 +42,7 @@ type SecureValueMetadataStorage interface {
 	Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) ([]secretv1beta1.SecureValue, error)
 	AddGCAttemptCount(ctx context.Context, secureValueIDs []string) (map[string]int, error)
-	MoveToDLQ(ctx context.Context, secureValueIDs []string) error
+	DeleteByIds(ctx context.Context, secureValueIDs []string) (err error)
 }
 
 type SecureValueService interface {
