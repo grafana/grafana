@@ -131,6 +131,7 @@
 /pkg/extensions/ @grafana/grafana-backend-group
 /pkg/ifaces/ @grafana/grafana-backend-group
 /pkg/infra/db/ @grafana/grafana-backend-group
+/pkg/infra/features/ @grafana/grafana-backend-services-squad
 /pkg/infra/localcache/ @grafana/grafana-backend-group
 /pkg/infra/log/ @grafana/grafana-backend-group
 /pkg/infra/metrics/ @grafana/grafana-backend-group
@@ -1102,7 +1103,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
-/scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 eslint-suppressions.json @grafanabot
 
 # Design system
@@ -1240,6 +1240,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/build-package @grafana/grafana-developer-enablement-squad
 /.github/actions/change-detection @grafana/grafana-developer-enablement-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
+/.github/actions/yarn-install/action.yml @grafana/grafana-frontend-platform
 /.github/workflows/actionlint-format.txt @grafana/grafana-developer-enablement-squad
 /.github/workflows/actionlint.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling

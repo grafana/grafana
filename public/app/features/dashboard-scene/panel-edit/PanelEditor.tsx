@@ -238,7 +238,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         panelRef: this.state.panelRef,
         searchQuery: '',
         listMode: OptionFilter.All,
-        isVizPickerOpen: this.state.isNewPanel,
+        isVizPickerOpen: panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID,
         isNewPanel: this.state.isNewPanel,
       });
 

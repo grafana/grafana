@@ -69,7 +69,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// Helper log to find instances disabling migration
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
 	}
-	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
+	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
+	if cfg.SearchInjectFailuresPercent < 0 {
+		cfg.SearchInjectFailuresPercent = 0
+	} else if cfg.SearchInjectFailuresPercent > 100 {
+		cfg.SearchInjectFailuresPercent = 100
+	}
+	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()

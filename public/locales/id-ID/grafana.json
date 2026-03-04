@@ -2096,7 +2096,9 @@
       "select-namespace": "Pilih namespace"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Aturan peringatan",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Baru dihapus",
@@ -2322,8 +2324,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Lihat apa yang sedang mengirimkan peringatan dan telusuri data historis untuk menyelidiki masalah saat ini atau sebelumnya.",
-        "title": "Peringatan"
+        "subtitle": "Lihat apa yang sedang mengirimkan peringatan dan telusuri data historis untuk menyelidiki masalah saat ini atau sebelumnya."
       }
     },
     "panel-alert-tab-content": {
@@ -3248,6 +3249,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Bentuk templat",
+      "body-legacy": "",
       "label-examples-documentation": "Contoh dokumentasi",
       "label-template-group": "Grup templat",
       "label-template-group-name": "Nama grup templat",
@@ -3256,6 +3258,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Beri nama grup templat Anda",
       "title-error-saving-template": "Kesalahan saat menyimpan templat",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Cheat sheet templat"
     },
     "template-preview": {
@@ -3296,6 +3299,8 @@
       "help": {
         "intro": "Templat pemberitahuan menggunakan bahasa Templat Go untuk membuat pesan pemberitahuan.\n\nDi Grafana, grup templat dapat menentukan beberapa templat pemberitahuan menggunakan {{ define \"<NAME>\" }}.\nTemplat ini kemudian dapat digunakan di titik kontak dan dalam templat pemberitahuan lainnya dengan memanggil {{ template \"<NAME>\" }}.\nUntuk informasi terperinci tentang templat pemberitahuan, lihat dokumentasi kami."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Salah konfigurasi",
       "misconfigured-warning": "Templat ini salah dikonfigurasi.",
       "misconfigured-warning-details": "Templat harus ditentukan di bagian <2></2> dan <5></5> dari konfigurasi alertmanager Anda."
@@ -3406,7 +3411,14 @@
         "title": "Aturan tidak ditemukan"
       },
       "rules-with-firing-instances": "Aturan peringatan dengan instans yang diaktifkan",
-      "rules-with-pending-instances": "Aturan peringatan dengan instans yang tertunda"
+      "rules-with-pending-instances": "Aturan peringatan dengan instans yang tertunda",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Tambah pola"
@@ -4164,7 +4176,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -6840,10 +6851,10 @@
       "title-delete-all-transformations": "Hapus semua transformasi?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Alihkan tombol tampilan tabel",
-      "table-view-label-table-view": "Tampilan tabel"
+      "table-view-label-table-view": "Tampilan tabel",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6888,6 +6899,16 @@
     },
     "query-editor": {
       "query": "Kueri"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Grup tangkapan bernama dapat digunakan untuk memisahkan teks tampilan dan nilai (<1>lihat contoh</1>).",
@@ -7011,6 +7032,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Tidak dapat membuat peringatan dari panel ini karena tidak ada kueri ke sumber data berkemampuan peringatan yang ditemukan.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Aturan peringatan baru",
       "title-no-alerting-capable-query-found": "Tidak ada kueri berkemampuan peringatan yang ditemukan"
     },
@@ -7790,7 +7812,10 @@
     "pro-tip": "Kiat Pro: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Kami mencari, tetapi sepertinya tidak bisa menemukan {{lowerCaseEntity}} ini. Coba kembali ke <4>beranda</4> atau cari bantuan di situs komunitas <7>.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -9414,11 +9439,13 @@
       },
       "legend": {
         "category": "Legenda",
+        "description-limit": "",
         "description-values": "Pilih nilai atau perhitungan untuk ditampilkan dalam legenda",
         "mode-options": {
           "label-list": "Daftar",
           "label-table": "Tabel"
         },
+        "name-limit": "",
         "name-mode": "Mode",
         "name-placement": "Penempatan",
         "name-values": "Nilai",
@@ -10347,6 +10374,11 @@
     "subtitle": "Integrasi LDAP di Grafana memungkinkan pengguna Grafana Anda untuk login dengan kredensial LDAP mereka. Cari tahu selengkapnya di <2><1>dokumentasi</1></2> kami.",
     "title": "Pengaturan Dasar"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Panel pustaka dengan nama ini sudah ada",
@@ -11215,9 +11247,17 @@
       "subtitle": "Pelajari masalah di sistem Anda beberapa saat setelah  masalah terjadi",
       "title": "Alerting"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Kelola konfigurasi Alertmanager dan aktifkan penerimaan peringatan yang dikelola Grafana",
       "title": "Pengaturan"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Tentukan cara peringatan dirutekan ke titik kontak",
@@ -11880,8 +11920,6 @@
       "tooltip-delete": "Hapus"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Beberapa saran tidak dapat dimuat"
       },
@@ -12350,13 +12388,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "Jalur file di dalam repositori (.json atau .yaml)",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "Jalur folder di dalam repositori",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Cabang",
       "label-comment": "Komentar",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Jalur",
       "placeholder-branch": "Pilih atau masukkan nama cabang",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Cabang terakhir",
       "suffix-new-branch": "",
@@ -12467,6 +12510,8 @@
       "instance-fully-managed-tooltip": "Konfigurasi dinonaktifkan karena instans ini dikelola sepenuhnya"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12607,10 +12652,18 @@
       "label-sync-interval": "Interval Sinkronisasi (detik)"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13349,6 +13402,7 @@
       "card-click": "Pilih kartu {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Kueri & Ekspresi",
       "toggle-size": "Alihkan ukuran bilah sisi",
       "transformations": "Transformasi",
@@ -14300,6 +14354,11 @@
           "settings": "Pengaturan"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Sinkronisasi grup eksternal"
@@ -14356,6 +14415,19 @@
       "loading-teams": "Memuat tim...",
       "new-team": "Tim Baru",
       "placeholder-search-teams": "Cari tim"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Hal ini opsional dan secara spesifik digunakan untuk mengatur avatar profil tim (melalui layanan Gravatar)",
@@ -14587,6 +14659,12 @@
     "name-show-matches-only": "Hanya tampilkan kecocokan",
     "traces-panel": {
       "no-data-found-in-response": "Tidak ada data yang ditemukan dalam respons"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

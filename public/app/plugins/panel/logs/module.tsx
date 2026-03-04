@@ -24,6 +24,16 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         description: '',
       });
 
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'showLevel',
+        name: t('logs.name-show-level', 'Display log level'),
+        category,
+        defaultValue: true,
+        description: '',
+      });
+    }
+
     if (!config.featureToggles.newLogsPanel) {
       builder.addBooleanSwitch({
         path: 'showCommonLabels',

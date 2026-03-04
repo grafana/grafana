@@ -364,6 +364,29 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
+			name: "allows updating existing repo even when quota is surpassed",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "existing-repo", Namespace: "default"},
+				Spec:       provisioning.RepositorySpec{},
+			},
+			existingRepos: func() []provisioning.Repository {
+				// 15 repos exist but the limit is 5 — quota was lowered after creation
+				repos := make([]provisioning.Repository, 15)
+				for i := 0; i < 15; i++ {
+					repos[i] = provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
+					}
+				}
+				// replace one entry with the repo being updated
+				repos[7] = provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+				}
+				return repos
+			}(),
+			wantErr:         false,
+			maxRepositories: 5,
+		},
+		{
 			name: "allows unlimited repositories when maxRepositories is 0",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
