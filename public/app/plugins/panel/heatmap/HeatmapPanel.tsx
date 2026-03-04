@@ -43,14 +43,9 @@ export const HeatmapPanel = (props: HeatmapPanelProps) => {
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const info = useMemo(() => {
-    // exclude empty frames
-    const frames = data.series.filter(
-      (frame) => frame.length > 0 && frame.fields.length > 0 && frame.fields.every((field) => field.values.length > 0)
-    );
-
     try {
       return prepareHeatmapData({
-        frames,
+        frames: data.series,
         annotations: data.annotations,
         options,
         palette,
