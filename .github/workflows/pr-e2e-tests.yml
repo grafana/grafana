@@ -401,3 +401,16 @@ jobs:
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:
           GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
+
+  # 'All E2E tests complete' is still a required check. To help with this transition, we keep
+  # a placeholder job to avoid needing to remove the required check from github yet.
+  required-e2e-tests:
+    needs:
+      - required-playwright-tests
+    if: always()
+
+    name: All E2E tests complete
+    runs-on: ubuntu-x64-small
+    steps:
+    - name: Placeholder step
+      run: echo "This step is intentionally left blank. Check playwright-required-tests job for the actual test results."
