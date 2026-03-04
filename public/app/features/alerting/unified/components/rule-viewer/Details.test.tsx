@@ -2,12 +2,12 @@ import { render, screen } from 'test/test-utils';
 
 import { setupMockServer } from '@grafana/test-utils/server';
 
-import { setupBackendSrv } from '../../../mockApi';
-import { mockCombinedRule } from '../../../mocks';
-import { alertingFactory } from '../../../mocks/server/db';
-import { setupDataSources } from '../../../testSetup/datasources';
-import { RECEIVER_NAME, listContactPointsScenario } from '../ContactPointLink.test.scenario';
+import { setupBackendSrv } from '../../mockApi';
+import { mockCombinedRule } from '../../mocks';
+import { alertingFactory } from '../../mocks/server/db';
+import { setupDataSources } from '../../testSetup/datasources';
 
+import { RECEIVER_NAME, listContactPointsScenario } from './ContactPointLink.test.scenario';
 import { Details } from './Details';
 
 const server = setupMockServer();
@@ -17,7 +17,7 @@ beforeAll(() => {
   setupDataSources();
 });
 
-describe('render details tab', () => {
+describe('Details', () => {
   beforeEach(() => {
     // we'll re-use the scenario from the contact point link component
     server.use(...listContactPointsScenario);
