@@ -257,7 +257,7 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
       },
       {
         id: 'roleDisplayName',
-        header: 'Display Name',
+        header: 'Name',
         cell: ({ row }) => <span>{row.original.roleDisplayName}</span>,
         sortType: 'string',
       },

@@ -1,7 +1,5 @@
-import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
@@ -14,7 +12,6 @@ import {
   RadioButtonGroup,
   Stack,
   Tag,
-  useStyles2,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useDeleteRoleMutation, useListRolesQuery } from 'app/api/clients/roles';
@@ -70,7 +67,6 @@ const TYPE_BADGE_COLORS: Record<RoleType, 'blue' | 'green' | 'purple' | 'orange'
 };
 
 export const RolesListTab = () => {
-  const styles = useStyles2(getStyles);
   const { data: roles = [], isLoading } = useListRolesQuery({ includeHidden: true });
   const [deleteRole] = useDeleteRoleMutation();
 
@@ -108,6 +104,12 @@ export const RolesListTab = () => {
   const columns: Array<Column<Role>> = useMemo(
     () => [
       {
+        id: 'group',
+        header: t('admin.roles-list.column-group', 'Group'),
+        cell: ({ row: { original } }: CellProps<Role, unknown>) => <span>{original.group || '—'}</span>,
+        sortType: (a, b) => (a.original.group || '').localeCompare(b.original.group || ''),
+      },
+      {
         id: 'displayName',
         header: t('admin.roles-list.column-name', 'Name'),
         cell: ({ row: { original } }: CellProps<Role, unknown>) => {
@@ -116,16 +118,22 @@ export const RolesListTab = () => {
           // Fixed roles share generic names like "Reader" — qualify with group
           const displayName =
             roleType === 'fixed' && original.group ? `${original.group}: ${baseName}` : baseName;
-          return (
-            <button
-              className={styles.roleNameButton}
-              onClick={() => locationService.push(`/admin/roles/edit/${original.uid}`)}
-            >
-              {displayName}
-            </button>
-          );
+          return <span>{displayName}</span>;
         },
-        sortType: 'string',
+        sortType: (a, b) => {
+          const getDisplayName = (role: Role) => {
+            const baseName = role.displayName || role.name || '';
+            const roleType = getRoleType(role);
+            return roleType === 'fixed' && role.group ? `${role.group}: ${baseName}` : baseName;
+          };
+          return getDisplayName(a.original).localeCompare(getDisplayName(b.original));
+        },
+      },
+      {
+        id: 'role',
+        header: t('admin.roles-list.column-role', 'Role'),
+        cell: ({ row: { original } }: CellProps<Role, unknown>) => <span>{original.name || '—'}</span>,
+        sortType: (a, b) => (a.original.name || '').localeCompare(b.original.name || ''),
       },
       {
         id: 'type',
@@ -137,34 +145,31 @@ export const RolesListTab = () => {
         },
       },
       {
-        id: 'group',
-        header: t('admin.roles-list.column-group', 'Group'),
-        cell: ({ row: { original } }: CellProps<Role, unknown>) => original.group || '—',
-        sortType: 'string',
-      },
-      {
         id: 'actions',
         header: '',
         disableGrow: true,
         cell: ({ row: { original } }: CellProps<Role, unknown>) => {
-          if (!isRoleEditable(original)) {
-            return null;
-          }
-
+          const editable = isRoleEditable(original);
           const roleType = getRoleType(original);
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               <Button
-                icon="pen"
+                icon={editable ? 'pen' : 'eye'}
                 size="sm"
                 variant="secondary"
                 onClick={() => locationService.push(`/admin/roles/edit/${original.uid}`)}
-                tooltip={t('admin.roles-list.edit-button', 'Edit')}
-                aria-label={t('admin.roles-list.edit-aria', 'Edit role {{roleName}}', {
-                  roleName: original.displayName || original.name || '',
-                })}
+                tooltip={editable ? t('admin.roles-list.edit-button', 'Edit') : t('admin.roles-list.view-button', 'View')}
+                aria-label={
+                  editable
+                    ? t('admin.roles-list.edit-aria', 'Edit role {{roleName}}', {
+                        roleName: original.displayName || original.name || '',
+                      })
+                    : t('admin.roles-list.view-aria', 'View role {{roleName}}', {
+                        roleName: original.displayName || original.name || '',
+                      })
+                }
               />
-              {roleType === 'custom' && (
+              {editable && roleType === 'custom' && (
                 <DeleteButton
                   size="sm"
                   aria-label={t('admin.roles-list.delete-aria', 'Delete role {{roleName}}', {
@@ -182,7 +187,7 @@ export const RolesListTab = () => {
         },
       },
     ],
-    [deleteRole, styles.roleNameButton]
+    [deleteRole]
   );
 
   return (
@@ -213,17 +218,3 @@ export const RolesListTab = () => {
     </Page.Contents>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  roleNameButton: css({
-    background: 'none',
-    border: 'none',
-    color: theme.colors.text.link,
-    cursor: 'pointer',
-    padding: 0,
-    textAlign: 'left' as const,
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-  }),
-});
