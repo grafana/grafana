@@ -29,6 +29,9 @@ import (
 	"github.com/grafana/nanogit/retry"
 )
 
+// ErrNoBranches is returned when a repository has no branches (e.g., a completely empty repository).
+var ErrNoBranches = errors.New("no branches found in repository")
+
 type RepositoryConfig struct {
 	URL       string
 	Branch    string
@@ -123,7 +126,7 @@ func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
 
 	// No branches found
 	if firstBranch == "" {
-		return "", fmt.Errorf("no branches found in repository")
+		return "", ErrNoBranches
 	}
 
 	// Prefer main, then master, then first branch alphabetically
@@ -180,6 +183,17 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	if r.GetCurrentBranch() == "" {
 		branch, err := r.GetDefaultBranch(ctx)
 		if err != nil {
+			if errors.Is(err, ErrNoBranches) {
+				return &provisioning.TestResults{
+					Code:    http.StatusBadRequest,
+					Success: false,
+					Errors: []provisioning.ErrorDetails{{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", t, "branch").String(),
+						Detail: "repository has no branches; push at least one commit before configuring sync",
+					}},
+				}, nil
+			}
 			return nil, err
 		}
 
@@ -243,13 +257,17 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	if err != nil {
 		// Check for branch not found first (before mapping)
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
+			detail := fmt.Sprintf("branch %q not found", r.gitConfig.Branch)
+			if _, dbErr := r.GetDefaultBranch(ctx); errors.Is(dbErr, ErrNoBranches) {
+				detail = "repository has no branches; push at least one commit before configuring sync"
+			}
 			return &provisioning.TestResults{
 				Code:    http.StatusBadRequest,
 				Success: false,
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("spec", t, "branch").String(),
-					Detail: "branch not found",
+					Detail: detail,
 				}},
 			}, nil
 		}
