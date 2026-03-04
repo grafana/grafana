@@ -304,7 +304,13 @@ function NotificationStatusGroup({
 
   return (
     <div>
-      <button className={cx(styles.summaryRowBase, variantStyle)} onClick={() => setExpanded(!expanded)} type="button">
+      <button
+        className={cx(styles.summaryRowBase, variantStyle)}
+        onClick={() => setExpanded(!expanded)}
+        type="button"
+        aria-expanded={expanded}
+        aria-label={t('alerting.instance-details.timeline-toggle-notifications', 'Toggle notification details')}
+      >
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name={isFiring ? 'fire' : 'check-circle'} size="sm" />
           <Text variant="bodySmall" weight="medium">
