@@ -76,6 +76,7 @@ export default function EditCustomThemePage() {
         <Stack gap={2} direction="column">
           <Stack direction={{ xs: 'column', md: 'row' }} gap={2} alignItems="stretch">
             <Field
+              required
               className={styles.codeEditor}
               noMargin
               label={t('admin.edit-custom-theme-page.field-theme-json', 'Theme JSON')}

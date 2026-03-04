@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useEffect, useId, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -36,9 +36,11 @@ export default function NewCustomThemePage() {
     register,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<FormData>();
   const [themeID, themeJson] = watch(['themeID', 'themeJson']);
+  const themeIDInput = useId();
+
   const isBothFieldsPopulated = Boolean(themeID && themeJson);
   register('themeJson', { required: true });
 
@@ -49,6 +51,25 @@ export default function NewCustomThemePage() {
       return null;
     }
   }, [themeJson]);
+
+  // Auto-generate themeID from theme name when the user hasn't manually edited the field
+  useEffect(() => {
+    if (dirtyFields.themeID) {
+      return;
+    }
+    try {
+      const parsed = JSON.parse(themeJson);
+      if (typeof parsed.name === 'string' && parsed.name) {
+        const generated = parsed.name
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9\-_]/g, '');
+        setValue('themeID', generated, { shouldValidate: true });
+      }
+    } catch {
+      // invalid JSON, skip
+    }
+  }, [themeJson, setValue, dirtyFields.themeID]);
 
   const onSubmit = async ({ themeJson, themeID }: FormData) => {
     await createTheme({
@@ -70,6 +91,7 @@ export default function NewCustomThemePage() {
         <Stack direction="column" gap={2}>
           <Stack direction={{ xs: 'column', md: 'row' }} gap={2} alignItems="stretch">
             <Field
+              required
               className={styles.codeEditor}
               noMargin
               label={t('admin.new-custom-theme-page.field-theme-json', 'Theme JSON')}
@@ -111,15 +133,21 @@ export default function NewCustomThemePage() {
                 </Box>
               </Field>
               <Field
+                required
                 noMargin
                 label={t('admin.new-custom-theme-page.field-theme-id', 'Theme ID')}
                 invalid={!!errors.themeID}
                 error={
-                  errors.themeID &&
-                  t('admin.new-custom-theme-page.field-theme-id.validation-required', 'Theme ID is required')
+                  errors.themeID?.type === 'pattern'
+                    ? t(
+                        'admin.new-custom-theme-page.field-theme-id.validation-pattern',
+                        'Theme ID can only contain lowercase letters, numbers, hyphens and underscores'
+                      )
+                    : errors.themeID &&
+                      t('admin.new-custom-theme-page.field-theme-id.validation-required', 'Theme ID is required')
                 }
               >
-                <Input {...register('themeID', { required: true })} />
+                <Input {...register('themeID', { required: true, pattern: /^[a-zA-Z0-9:\-_.]*$/ })} id={themeIDInput} />
               </Field>
             </Stack>
           </Stack>
