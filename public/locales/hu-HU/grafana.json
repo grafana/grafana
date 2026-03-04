@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "A kapcsolattartási pontok lekérése nem sikerült"
     },
     "contact-points": {
-      "create": "Kapcsolattartási pont létrehozása",
+      "create": "",
       "custom-template-value": "Egyedi sablonérték",
       "delete-reasons": {
         "heading": "A kapcsolattartási pont nem törölhető a következő okok miatt:",
@@ -2105,7 +2105,9 @@
       "select-namespace": "Névtér kijelölése"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Riasztási szabályok",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Nemrég törölt",
@@ -2129,7 +2131,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Időintervallum hozzáadása"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2175,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2183,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Keresés kapcsolattartási pont alapján",
@@ -2252,7 +2253,7 @@
       "title-failed-to-fetch-notification-templates": "Az értesítési sablonok lekérése nem sikerült"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Értesítési sablonok csoportjának hozzáadása",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Értesítési sablonok létrehozása az értesítések testreszabásához."
     },
     "notifications-list": {
@@ -2279,6 +2280,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2304,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Adjon hozzá címkéket a felvételkészítési szabályok jobb kezeléséhez.",
@@ -2333,8 +2333,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Tekintse meg, hogy mi okoz jelenleg riasztást, és nézze át az előzményadatokat a jelenlegi vagy múltbeli problémák kivizsgálásához.",
-        "title": "Riasztások"
+        "subtitle": "Tekintse meg, hogy mi okoz jelenleg riasztást, és nézze át az előzményadatokat a jelenlegi vagy múltbeli problémák kivizsgálásához."
       }
     },
     "panel-alert-tab-content": {
@@ -3264,6 +3263,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Sablonűrlap",
+      "body-legacy": "",
       "label-examples-documentation": "Példák dokumentációja",
       "label-template-group": "Sabloncsoport",
       "label-template-group-name": "Sabloncsoportnév",
@@ -3272,6 +3272,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Adjon nevet a sabloncsoportjának",
       "title-error-saving-template": "Hiba a sablon mentése során",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Sablonkészítés puskalaphoz"
     },
     "template-preview": {
@@ -3312,6 +3313,8 @@
       "help": {
         "intro": "Az értesítési sablonok Go sablonnyelvet használnak az értesítési üzenetek létrehozásához.\n\nA Grafanában egy sabloncsoport több értesítési sablont is meghatározhat a {{ define \"<NAME>\" }} használatával.\nEzek a sablonok ezután felhasználhatók a kapcsolattartási pontokban és más értesítési sablonokban a {{ template \"<NAME>\" }} meghívásával.\nAz értesítési sablonokról részletes információt a dokumentációnkban talál."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Hibás konfiguráció",
       "misconfigured-warning": "Ez a sablon rosszul van konfigurálva.",
       "misconfigured-warning-details": "A sablonokat a riasztáskezelő konfigurációjának <2></2> és <5></5> szakaszában is meg kell határozni."
@@ -3350,7 +3353,7 @@
       "stop-alerting-when": "Riasztás (vagy függőben lévő állapot) leállítása ekkor:"
     },
     "time-interval": {
-      "add-time-interval": "Időintervallum hozzáadása",
+      "add-time-interval": "",
       "save": "Időintervallum mentése",
       "saving": "Időintervallum mentése"
     },
@@ -3422,7 +3425,14 @@
         "title": "A szabály nem található"
       },
       "rules-with-firing-instances": "Riasztási szabályok aktív példányokkal",
-      "rules-with-pending-instances": "Riasztási szabályok függőben lévő példányokkal"
+      "rules-with-pending-instances": "Riasztási szabályok függőben lévő példányokkal",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Kifejezés hozzáadása"
@@ -4185,7 +4195,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -6605,6 +6614,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Az irányítópult törlése nem sikerült",
       "cancel-action": "Mégse",
@@ -6861,10 +6876,10 @@
       "title-delete-all-transformations": "Törli az összes transzformációt?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Táblázatos nézet ki- és bekapcsolása",
-      "table-view-label-table-view": "Táblázat nézet"
+      "table-view-label-table-view": "Táblázat nézet",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6909,6 +6924,16 @@
     },
     "query-editor": {
       "query": "Lekérdezés"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Az elnevezett rögzítési csoportok felhasználhatók a megjelenített szöveg és érték elválasztására (<1>lásd a példákat</1>).",
@@ -7033,6 +7058,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Nem lehet riasztásokat létrehozni erről a panelről, mert nem található lekérdezés riasztásképes adatforráshoz.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Új riasztási szabály",
       "title-no-alerting-capable-query-found": "Nem található riasztásképes lekérdezés"
     },
@@ -7813,7 +7839,10 @@
     "pro-tip": "ProTip: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Keressük, de úgy tűnik, nem találjuk a következőt: {{lowerCaseEntity}}. Próbáljon visszatérni a <4>kezdőlapra</4>, vagy kérjen segítséget a <7>közösségi oldalon.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -9449,11 +9478,13 @@
       },
       "legend": {
         "category": "Jelmagyarázat",
+        "description-limit": "",
         "description-values": "Válassza ki a jelmagyarázatban megjeleníteni kívánt értékeket vagy számításokat",
         "mode-options": {
           "label-list": "Lista",
           "label-table": "Táblázat"
         },
+        "name-limit": "",
         "name-mode": "Mód",
         "name-placement": "Elhelyezés",
         "name-values": "Értékek",
@@ -10384,6 +10415,11 @@
     "subtitle": "A Grafana LDAP-integrációja lehetővé teszi a Grafana-felhasználók számára, hogy LDAP-hitelesítőadataikkal jelentkezzenek be. További információkat a <2><1>dokumentációnkban</1></2> talál.",
     "title": "Alapbeállítások"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Ilyen nevű könyvtárpanel már létezik",
@@ -11258,9 +11294,17 @@
       "subtitle": "További információ a rendszer problémáiról pillanatokkal azok bekövetkezése után",
       "title": "Riasztás"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "A riasztáskezelő konfigurációinak kezelése és a Grafana által felügyelt riasztások fogadásának engedélyezése",
       "title": "Beállítások"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Határozza meg, hogyan történjen a riasztások továbbítása a kapcsolattartási pontokhoz",
@@ -11926,8 +11970,6 @@
       "tooltip-delete": "Törlés"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Néhány javaslatot nem sikerült betölteni"
       },
@@ -12396,13 +12438,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Ág",
       "label-comment": "Megjegyzés",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Útvonal",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Utolsó ág",
       "suffix-new-branch": "",
@@ -12516,6 +12563,8 @@
       "instance-fully-managed-tooltip": "A konfiguráció le van tiltva, mert ez a példány teljesen felügyelt"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12655,6 +12704,20 @@
       "label-generate-dashboard-previews": "Irányítópult-előnézetek generálása",
       "label-read-only": "Csak olvasható",
       "label-sync-interval": "Szinkronizálási intervallum (másodperc)"
+    },
+    "fix-folder-metadata": {
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -12797,6 +12860,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13304,6 +13369,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13393,6 +13459,7 @@
       "card-click": "{{id}} kártya kiválasztása",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Lekérdezések és kifejezések",
       "toggle-size": "Oldalsáv méretének átváltása",
       "transformations": "Transzformációk",
@@ -14351,6 +14418,11 @@
           "settings": "Beállítások"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Külső csoport szinkronizálása"
@@ -14407,6 +14479,19 @@
       "loading-teams": "Csapatok betöltése…",
       "new-team": "Új csapat",
       "placeholder-search-teams": "Csapatok keresése"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Ez nem kötelező, és elsősorban a csapatprofil avatárjának beállítására szolgál (a Gravatar szolgáltatáson keresztül)",
@@ -14638,6 +14723,12 @@
     "name-show-matches-only": "Csak egyezések megjelenítése",
     "traces-panel": {
       "no-data-found-in-response": "Nem található adat a válaszban"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

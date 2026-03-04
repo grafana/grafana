@@ -53,6 +53,7 @@ runs:
             - '${{ inputs.self }}'
           dockerfile:
             - 'Dockerfile'
+            - 'Makefile'
           backend:
             - '!*.md'
             - '!docs/**'

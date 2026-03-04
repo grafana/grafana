@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Failed to fetch contact points"
     },
     "contact-points": {
-      "create": "Create contact point",
+      "create": "New contact point",
       "custom-template-value": "Custom template value",
       "delete-reasons": {
         "heading": "Contact point cannot be deleted for the following reasons:",
@@ -2105,7 +2105,9 @@
       "select-namespace": "Select namespace"
     },
     "navigation": {
+      "active-notifications": "Active notifications",
       "alert-rules": "Alert rules",
+      "alerts": "Alerts",
       "contact-points": "Contact points",
       "notification-policies": "Notification policies",
       "recently-deleted": "Recently deleted",
@@ -2129,7 +2131,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Add time interval"
+        "add-time-interval": "New time interval"
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,8 +2175,7 @@
         "status": "Status",
         "tooltip": "Use label matcher expression or click on a group label to filter instances, for example:"
       },
-      "firing-alerts_one": "Firing Alerts ({{count}})",
-      "firing-alerts_other": "Firing Alerts ({{count}})",
+      "firing-alerts": "Firing Alerts",
       "labels": "Labels:",
       "loading": "Loading notifications...",
       "notification-error": "Notification Error",
@@ -2182,8 +2183,8 @@
         "failed": "Failed",
         "success": "Success"
       },
-      "resolved-alerts_one": "Resolved Alerts ({{count}})",
-      "resolved-alerts_other": "Resolved Alerts ({{count}})",
+      "resolved-alerts": "Resolved Alerts",
+      "showing-alerts": "Showing {{ showing }} out of {{ total }} alerts",
       "started": "Started:",
       "status": {
         "firing": "Firing",
@@ -2252,7 +2253,7 @@
       "title-failed-to-fetch-notification-templates": "Failed to fetch notification templates"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Add notification template group",
+      "add-notification-template-group": "New notification template",
       "create-notification-templates-customize-notifications": "Create notification templates to customize your notifications."
     },
     "notifications-list": {
@@ -2279,8 +2280,7 @@
         "clear": "Clear filters"
       },
       "filterBy": "Filter by:",
-      "firing-alerts_one": "Firing Alerts ({{count}})",
-      "firing-alerts_other": "Firing Alerts ({{count}})",
+      "firing-alerts": "Firing Alerts",
       "header": {
         "contact-point": "Contact point",
         "group-labels": "Group Labels",
@@ -2304,8 +2304,8 @@
           "receiver": "Contact point:"
         }
       },
-      "resolved-alerts_one": "Resolved Alerts ({{count}})",
-      "resolved-alerts_other": "Resolved Alerts ({{count}})",
+      "resolved-alerts": "Resolved Alerts",
+      "showing-alerts": "Showing {{ showing }} out of {{ total }} alerts",
       "started": "Started: {{value}}",
       "status-filter-variable": {
         "label": {
@@ -2333,8 +2333,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues.",
-        "title": "Alerts"
+        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues."
       }
     },
     "panel-alert-tab-content": {
@@ -3264,6 +3263,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Template form",
+      "body-legacy": "This template was imported from a Mimir Alertmanager and uses a legacy format.",
       "label-examples-documentation": "Examples documentation",
       "label-template-group": "Template group",
       "label-template-group-name": "Template group name",
@@ -3272,6 +3272,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Give your template group a name",
       "title-error-saving-template": "Error saving template",
+      "title-legacy": "This template uses a legacy format",
       "title-templating-cheat-sheet": "Templating cheat sheet"
     },
     "template-preview": {
@@ -3312,12 +3313,14 @@
       "help": {
         "intro": "Notification templates use Go templating language to create notification messages.\n\nIn Grafana, a template group can define multiple notification templates using {{ define \"<NAME>\" }}.\nThese templates can then be used in contact points and within other notification templates by calling {{ template \"<NAME>\" }}.\nFor detailed information about notification templates, refer to our documentation."
       },
+      "legacy-badge-text": "Legacy",
+      "legacy-badge-tooltip": "This template was imported from a Mimir Alertmanager and uses a legacy format.",
       "misconfigured-badge-text": "Misconfigured",
       "misconfigured-warning": "This template is misconfigured.",
       "misconfigured-warning-details": "Templates must be defined in both the <2></2> and <5></5> sections of your alertmanager configuration."
     },
     "templates-page": {
-      "add-template": "Add notification template group",
+      "add-template": "New notification template",
       "description": "Create notification templates to customize your notifications."
     },
     "templates-picker": {
@@ -3350,7 +3353,7 @@
       "stop-alerting-when": "Stop alerting (or pending state) when"
     },
     "time-interval": {
-      "add-time-interval": "Add time interval",
+      "add-time-interval": "New time interval",
       "save": "Save time interval",
       "saving": "Saving time interval"
     },
@@ -3422,7 +3425,14 @@
         "title": "Rule not found"
       },
       "rules-with-firing-instances": "Alert rules with firing instances",
-      "rules-with-pending-instances": "Alert rules with pending instances"
+      "rules-with-pending-instances": "Alert rules with pending instances",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "Show only firing",
+          "folder-firing": "Show only firing, grouped by folder",
+          "folder-only": "Grouped by folder"
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -4185,7 +4195,6 @@
     "quota-banner": {
       "at-limit-body": "Clean up unused resources to free up space.",
       "at-limit-title": "You've hit your storage limits",
-      "dismiss": "Dismiss",
       "nearing-body": "New resources can't be created once the limit is reached. Clean up unused resources to free up space.",
       "nearing-title": "You're nearing your storage limits",
       "request-extension": "Request quota extension",
@@ -5443,11 +5452,13 @@
       "groupby": "GroupBy",
       "missing-adhoc": "No ad hoc filters available",
       "operator": "Operator",
+      "restore": "Restore default value",
       "search": {
         "aria-label": "Search filters",
         "placeholder": "Search..."
       },
       "title": "Edit filters",
+      "use-custom-value": "Use custom value",
       "value": "Value"
     },
     "gen-aihistory": {
@@ -6605,6 +6616,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "Default value",
+      "description": "Values that are pre-selected by default.",
+      "label": "Default value",
+      "placeholder": "Choose default values"
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
@@ -6861,10 +6878,10 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "Query editor v2",
-      "query-editor-version-toggle": "Toggle between query editor v1 and v2",
+      "back-to-classic": "Back to classic editor",
       "table-view-aria-label-toggletableview": "Toggle table view",
-      "table-view-label-table-view": "Table view"
+      "table-view-label-table-view": "Table view",
+      "try-new-editor": "Try new editor"
     },
     "panel-editor": {
       "text": {
@@ -6909,6 +6926,16 @@
     },
     "query-editor": {
       "query": "Query"
+    },
+    "query-editor-banner": {
+      "description-classic": "Try the improved query editing experience.",
+      "description-new": "Welcome to the improved query editing experience.",
+      "dismiss": "Dismiss",
+      "downgrade-title": "New query editor!",
+      "give-feedback": "Give feedback",
+      "go-back": "Back to classic",
+      "try-it": "Try it out",
+      "upgrade-title": "New editor available!"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
@@ -7033,6 +7060,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
+      "disabled-tooltip": "Save the dashboard before creating alert rules",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
@@ -7813,7 +7841,10 @@
     "pro-tip": "ProTip: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Try returning <4>home</4> or seeking help on the <7>community site.</7>"
+    "community-link": "Community Help",
+    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Please check the URL and try again.",
+    "home-link": "Back to Home",
+    "title": "{{entity}} not found"
   },
   "errors": {
     "dashboard-settings": {
@@ -9449,11 +9480,13 @@
       },
       "legend": {
         "category": "Legend",
+        "description-limit": "Limits how many items are shown by default",
         "description-values": "Select values or calculations to show in legend",
         "mode-options": {
           "label-list": "List",
           "label-table": "Table"
         },
+        "name-limit": "Limit",
         "name-mode": "Mode",
         "name-placement": "Placement",
         "name-values": "Values",
@@ -10384,6 +10417,11 @@
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><1>documentation</1></2>.",
     "title": "Basic Settings"
   },
+  "legend": {
+    "container": {
+      "show-all-series": "...show all {{total}} items"
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Library panel with this name already exists",
@@ -10865,6 +10903,7 @@
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
     "name-show-controls": "Show controls",
+    "name-show-level": "Display log level",
     "name-time": "Show timestamps",
     "name-unique-labels": "Unique labels",
     "name-unwrapped-columns": "Enable columns for displayed fields",
@@ -11258,9 +11297,17 @@
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
     },
+    "alerting-activity": {
+      "subtitle": "View alerts and active notifications",
+      "title": "Alert activity"
+    },
     "alerting-admin": {
       "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
+    },
+    "alerting-alerts": {
+      "subtitle": "Visualize active and pending alerts",
+      "title": "Alert activity"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",
@@ -11926,8 +11973,6 @@
       "tooltip-delete": "Delete"
     },
     "visualization-suggestions": {
-      "edit": "Edit",
-      "edit-aria-label": "Edit {{suggestionName}} visualization",
       "error-loading-some-suggestions": {
         "message": "Some suggestions could not be loaded"
       },
@@ -12396,13 +12441,18 @@
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
+      "description-filename": "File name for the dashboard (.json or .yaml)",
+      "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
       "info-branch-disabled": "Push to configured branch is disabled",
       "label-branch": "Branch",
       "label-comment": "Comment",
+      "label-filename": "Filename",
+      "label-folder": "Folder",
       "label-path": "Path",
       "placeholder-branch": "Select or enter branch name",
+      "placeholder-folder": "Select or enter folder path",
       "suffix-configured-branch": "Synchronized branch",
       "suffix-last-used": "Last branch",
       "suffix-new-branch": "New branch",
@@ -12516,6 +12566,8 @@
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
     "connect-step": {
+      "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",
+      "text-repository-folders-not-ready": "There was an issue connecting to the repository. You can still manually enter the folder path.",
       "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
     },
     "connection": {
@@ -12655,6 +12707,20 @@
       "label-generate-dashboard-previews": "Generate Dashboard Previews",
       "label-read-only": "Read only",
       "label-sync-interval": "Sync Interval (seconds)"
+    },
+    "fix-folder-metadata": {
+      "button": "Fix folder IDs"
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "Cancel",
+      "error-message": "Failed to start folder metadata fix job. Please try again.",
+      "error-title": "Error fixing folder metadata",
+      "loading": "Loading repository...",
+      "read-only-message": "Folder metadata cannot be fixed automatically.",
+      "submit": "Fix folder IDs",
+      "submitting": "Fixing...",
+      "success-title": "Folder metadata fixed successfully",
+      "title": "Fix folder metadata"
     },
     "folder-permissions": {
       "loading": "Loading..."
@@ -12797,6 +12863,8 @@
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
       "error-title": "Unable to check folder metadata status.",
       "message": "Since this folder doesn't contain a metadata file, the folder ID is based on the folder path. If you move or rename the folder, the folder ID will change, and permissions may no longer apply to the folder.",
+      "repo-message": "Folders without metadata files use path-based IDs. If moved or renamed, their IDs will change and permissions may break.",
+      "repo-title": "Some folders are missing metadata in this repository.",
       "title": "This folder is missing metadata."
     },
     "mode-options": {
@@ -13304,6 +13372,7 @@
     "action": {
       "add-transformation-filter": "Add filter",
       "duplicate": "Duplicate {{type}}",
+      "error": "Error",
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
       "hide-transformation-help": "Hide transformation help",
@@ -13399,6 +13468,7 @@
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
       "loading-queries-transformations": "Loading queries and transformations",
+      "new-type": "New {{type}}",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
@@ -14351,6 +14421,11 @@
           "settings": "Settings"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": "Folders"
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "External group sync"
@@ -14407,6 +14482,19 @@
       "loading-teams": "Loading teams...",
       "new-team": "New Team",
       "placeholder-search-teams": "Search teams"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "You can set up ownership of a folder from folder detail page",
+        "empty-state-message": "This team does not own any folders yet.",
+        "error-loading-folders": "Could not load team folders",
+        "loading": "Loading...",
+        "open-folder": "Open folder",
+        "table": {
+          "name": "Name",
+          "path": "Full path"
+        }
+      }
     },
     "team-settings": {
       "description-email": "This is optional and is primarily used to set the team profile avatar (via the Gravatar service)",
@@ -14638,6 +14726,12 @@
     "name-show-matches-only": "Show matches only",
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "{{name}} will be applied automatically to your data unless the transformation is disabled.",
+      "title": "No options to configure"
     }
   },
   "transformation-editor-renderer": {

@@ -328,17 +328,26 @@ func getDatasourcePlugins(pluginSources sources.Registry) ([]plugins.JSONData, e
 			return nil, err
 		}
 		for _, p := range res {
-			if !p.Primary.JSONData.Backend || p.Primary.JSONData.Type != plugins.TypeDataSource {
-				continue
+			if p.Primary.JSONData.Type == plugins.TypeDataSource {
+				if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
+					backend.Logger.Info("Found duplicate plugin %s when registering API groups.", p.Primary.JSONData.ID)
+					continue
+				}
+
+				uniquePlugins[p.Primary.JSONData.ID] = true
+				pluginJSONs = append(pluginJSONs, p.Primary.JSONData)
 			}
 
-			if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
-				backend.Logger.Info("Found duplicate plugin %s when registering API groups.", p.Primary.JSONData.ID)
-				continue
+			for _, child := range p.Children {
+				if child.JSONData.Type == plugins.TypeDataSource {
+					if _, found := uniquePlugins[child.JSONData.ID]; found {
+						backend.Logger.Info("Found duplicate plugin %s when registering API groups.", child.JSONData.ID)
+						continue
+					}
+					uniquePlugins[child.JSONData.ID] = true
+					pluginJSONs = append(pluginJSONs, child.JSONData)
+				}
 			}
-
-			uniquePlugins[p.Primary.JSONData.ID] = true
-			pluginJSONs = append(pluginJSONs, p.Primary.JSONData)
 		}
 	}
 	return pluginJSONs, nil

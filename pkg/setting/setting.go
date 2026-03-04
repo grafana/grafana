@@ -106,6 +106,7 @@ type Cfg struct {
 	ServeFromSubPath  bool
 	StaticRootPath    string
 	Protocol          Scheme
+	ServeOnSocket     bool
 	SocketGid         int
 	SocketMode        int
 	SocketPath        string
@@ -605,7 +606,7 @@ type Cfg struct {
 	// DisableDataMigrations will disable resources data migration to unified storage at startup
 	DisableDataMigrations bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
-	// Larger values reduce lock contention. Default: 50000 (50MB).
+	// Larger values reduce lock contention. Default: 1000000 (~1GB).
 	MigrationCacheSizeKB int
 	// MigrationParquetBuffer enables bulk migration data through a temporary Parquet file.
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
@@ -641,6 +642,7 @@ type Cfg struct {
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
+	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
@@ -663,6 +665,7 @@ type Cfg struct {
 	SimulatedNetworkLatency       time.Duration
 	TenantApiServerAddress        string
 	TenantWatcherAllowInsecureTLS bool
+	TenantWatcherCAFile           string
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -2006,6 +2009,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
 
 	protocolStr := valueAsString(server, "protocol", "http")
+
+	cfg.ServeOnSocket = server.Key("serve_on_socket").MustBool(false)
+	if cfg.ServeOnSocket && (protocolStr == "http" || protocolStr == "https" || protocolStr == "h2") {
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+	}
 
 	switch protocolStr {
 	case "https":
