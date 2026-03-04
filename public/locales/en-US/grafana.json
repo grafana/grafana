@@ -110,15 +110,16 @@
     },
     "edit-custom-theme-page": {
       "cancel": "Cancel",
+      "field-preview": "Preview",
+      "field-theme-id": "Theme ID",
       "field-theme-json": "Theme JSON",
-      "field-theme-name": "Theme name",
       "page-nav": {
         "subTitle": {
           "custom-theme-organization": "Edit a custom theme for your organization."
         },
         "text": "Edit custom theme"
       },
-      "submit": "Save custom theme"
+      "submit": "Save changes"
     },
     "edit-org": {
       "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
@@ -212,8 +213,9 @@
       "no-team": "No teams found via LDAP"
     },
     "new-custom-theme-page": {
+      "field-preview": "Preview",
+      "field-theme-id": "Theme ID",
       "field-theme-json": "Theme JSON",
-      "field-theme-name": "Theme name",
       "page-nav": {
         "subTitle": {
           "custom-theme-organization": "Add a custom theme for your organization."
@@ -380,8 +382,9 @@
     }
   },
   "admin.edit-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
+  "admin.new-custom-theme-page.field-theme-id.validation-pattern": "Theme ID can only contain lowercase letters, numbers, hyphens and underscores",
+  "admin.new-custom-theme-page.field-theme-id.validation-required": "Theme ID is required",
   "admin.new-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
-  "admin.new-custom-theme-page.field-theme-name.validation-required": "Theme name is required",
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"

@@ -127,7 +127,7 @@ export default function EditCustomThemePage() {
               <Trans i18nKey="admin.edit-custom-theme-page.cancel">Cancel</Trans>
             </Button>
             <Button type="submit" disabled={isLoading || isLoadingTheme || !isDirty}>
-              <Trans i18nKey="admin.edit-custom-theme-page.submit">Save custom theme</Trans>
+              <Trans i18nKey="admin.edit-custom-theme-page.submit">Save changes</Trans>
             </Button>
           </Stack>
         </Stack>
