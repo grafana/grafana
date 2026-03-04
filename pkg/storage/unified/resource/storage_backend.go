@@ -1087,13 +1087,16 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
-// ListModifiedSince returns instances of `ModifiedResource` representing changes in
-// the given `key` after the provided `sinceRv`.
-//
-// NOTE: due to the nature of how events are persisted in the storage backend, this
-// function should not be used in a loop to get updates over time, as it may miss events.
-// Callers are responsible for applying a "lookback" mechanism to reduce the chances
-// of missed events (see search implementation).
+// listModifiedSinceLookback is the duration subtracted from sinceRv before
+// querying the data or event store. This guards against concurrent writes that
+// commit slightly out-of-order, ensuring recently-committed events are re-scanned.
+const listModifiedSinceLookback = 500 * time.Millisecond
+
+// ListModifiedSince returns all resources that have changed since the given
+// resource version. A small lookback window (listModifiedSinceLookback) is
+// applied so that events committed concurrently with the previous call are not
+// missed. Because of this, callers may receive events with resource versions
+// slightly before sinceRv.
 func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
 	if !key.Valid() {
 		return 0, func(yield func(*ModifiedResource, error) bool) {
@@ -1118,9 +1121,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		}
 	}
 
-	if latestEvent.ResourceVersion == sinceRv {
-		return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
-	}
+	lookbackRv := subtractDurationFromSnowflake(sinceRv, listModifiedSinceLookback)
 
 	// Check if sinceRv is older than 1 hour
 	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
@@ -1129,11 +1130,11 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 
 	if sinceRvAge > time.Hour {
 		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
-		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, sinceRv)
+		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, lookbackRv)
 	}
 
 	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
-	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, sinceRv)
+	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, lookbackRv)
 }
 
 func convertEventType(action kv.DataAction) resourcepb.WatchEvent_Type {

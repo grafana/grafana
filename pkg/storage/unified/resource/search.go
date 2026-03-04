@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"iter"
 	"math/rand"
 	"slices"
 	"strings"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/hashicorp/golang-lru/v2/expirable"
-	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -133,106 +131,6 @@ type SearchBackend interface {
 	GetOpenIndexes() []NamespacedResource
 }
 
-type modifiedSinceLister interface {
-	ListModifiedSince(context.Context, NamespacedResource, int64) (int64, iter.Seq2[*ModifiedResource, error])
-	ProcessedBatch([]*ModifiedResource)
-}
-
-// noLookbackLister implements the modifiedSinceLister without any extra logic around
-// the provided storage backend implementation.
-type noLookbackLister struct {
-	storage StorageBackend
-}
-
-func (l *noLookbackLister) ListModifiedSince(ctx context.Context, nsr NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
-	return l.storage.ListModifiedSince(ctx, nsr, sinceRv)
-}
-
-func (l *noLookbackLister) ProcessedBatch(_ []*ModifiedResource) {}
-
-// listerWithLookback implements the modifiedSinceLister interface adding a `lookback` to
-// ListModifiedSince calls, and caching results to avoid processing duplicated events.
-type listerWithLookback struct {
-	listModifiedSinceFunc func(context.Context, NamespacedResource, int64) (int64, iter.Seq2[*ModifiedResource, error])
-	lookback              time.Duration
-	processed             *gocache.Cache
-
-	// As an optimization, the lister keeps track of the number of times the same
-	// `sinceRV` has been requested for a given NamespacedResource. If it is requested
-	// more than `maxUnchanged` times, the lookback does not apply. In this case,
-	// the common optimization in the storage backend's ListModifiedSince of not
-	// checking for modified keys if there are no recent events will apply, avoiding
-	// queries when there is a very high search:write ratio.
-	mu             sync.Mutex
-	unchangedCount map[NamespacedResource]int
-	lastRV         map[NamespacedResource]int64
-	maxUnchanged   int
-}
-
-func newListerWithLookback(storage StorageBackend, lookback time.Duration) *listerWithLookback {
-	// Requesting the same `sinceRV` 10 times should provide enough signal that
-	// we no longer need to apply a lookback and any missed events would have
-	// been returned by this point.
-	const maxUnchanged = 10
-
-	return &listerWithLookback{
-		listModifiedSinceFunc: storage.ListModifiedSince,
-		lookback:              lookback,
-		processed:             gocache.New(2*lookback, time.Minute),
-
-		unchangedCount: make(map[NamespacedResource]int),
-		lastRV:         make(map[NamespacedResource]int64),
-		maxUnchanged:   maxUnchanged,
-	}
-}
-
-func resourceCacheKey(res *ModifiedResource) string {
-	return fmt.Sprintf(
-		"%s~%s~%s~%s~%d",
-		res.Key.Group, res.Key.Resource, res.Key.Namespace, res.Key.Name, res.ResourceVersion,
-	)
-}
-
-func (l *listerWithLookback) ListModifiedSince(ctx context.Context, nsr NamespacedResource, sinceRV int64) (int64, iter.Seq2[*ModifiedResource, error]) {
-	l.mu.Lock()
-	if l.lastRV[nsr] == sinceRV {
-		l.unchangedCount[nsr] += 1
-	} else {
-		l.unchangedCount[nsr] = 0
-	}
-	l.lastRV[nsr] = sinceRV
-
-	if l.unchangedCount[nsr] < l.maxUnchanged {
-		sinceRV = subtractDurationFromSnowflake(sinceRV, l.lookback)
-	}
-	l.mu.Unlock()
-
-	newRV, iter := l.listModifiedSinceFunc(ctx, nsr, sinceRV)
-	return newRV, func(yield func(*ModifiedResource, error) bool) {
-		for res, err := range iter {
-			if err != nil {
-				yield(res, err)
-				return
-			}
-
-			cacheKey := resourceCacheKey(res)
-			if _, seen := l.processed.Get(cacheKey); seen {
-				continue
-			}
-
-			if !yield(res, err) {
-				return
-			}
-		}
-	}
-}
-
-func (l *listerWithLookback) ProcessedBatch(resources []*ModifiedResource) {
-	for _, r := range resources {
-		l.processed.Set(resourceCacheKey(r), struct{}{}, gocache.DefaultExpiration)
-	}
-}
-
 // searchServer supports indexing+search regardless of implementation.
 type searchServer struct {
 	log          log.Logger
@@ -243,12 +141,6 @@ type searchServer struct {
 	builders     *builderCache
 	initWorkers  int
 	initMinSize  int
-
-	// Configures a wrapper to perform the equivalent of the storage backend's
-	// `ListModifiedSince` function. For storage implementations that do not provide
-	// ordered event persistence guarantees (such as `kvStorageBackend`), this
-	// will use a lookback period to make sure events are not missed.
-	modifiedSince modifiedSinceLister
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -307,14 +199,6 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		}
 	}
 
-	// TODO: always apply the lookback once `kvStorageBackend` is the only
-	// production implementation of the storage backend interface.
-	var modifiedSince modifiedSinceLister = &noLookbackLister{storage}
-	if _, ok := storage.(*kvStorageBackend); ok {
-		const lookback = 500 * time.Millisecond
-		modifiedSince = newListerWithLookback(storage, lookback)
-	}
-
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
@@ -325,7 +209,6 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		initMinSize:    opts.InitMinCount,
 		indexMetrics:   indexMetrics,
 		ownsIndexFn:    ownsIndexFn,
-		modifiedSince:  modifiedSince,
 
 		dashboardIndexMaxAge:  opts.DashboardIndexMaxAge,
 		maxIndexAge:           opts.MaxIndexAge,
@@ -1259,7 +1142,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", sinceRV)))
 
-		rv, it := s.modifiedSince.ListModifiedSince(ctx, NamespacedResource{
+		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
 			Group:     nsr.Group,
 			Resource:  nsr.Resource,
 			Namespace: nsr.Namespace,
@@ -1269,7 +1152,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		// When dealing with large collections (e.g., 100k+ documents),
 		// loading all documents into memory at once can cause OOM errors.
 		items := make([]*BulkIndexItem, 0, maxBatchSize)
-		resourceBatch := make([]*ModifiedResource, 0, maxBatchSize)
 
 		docs := 0
 		for res, err := range it {
@@ -1301,14 +1183,12 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					Action: ActionIndex,
 					Doc:    doc,
 				})
-				resourceBatch = append(resourceBatch, res)
 			case resourcepb.WatchEvent_DELETED:
 				span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
 				items = append(items, &BulkIndexItem{
 					Action: ActionDelete,
 					Key:    &res.Key,
 				})
-				resourceBatch = append(resourceBatch, res)
 			default:
 				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
 				continue
@@ -1320,10 +1200,8 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
 					return 0, 0, err
 				}
-				s.modifiedSince.ProcessedBatch(resourceBatch)
 
 				items = items[:0]
-				resourceBatch = resourceBatch[:0]
 			}
 		}
 
@@ -1333,7 +1211,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
 				return 0, 0, err
 			}
-			s.modifiedSince.ProcessedBatch(resourceBatch)
 		}
 
 		return rv, docs, nil
@@ -1532,6 +1409,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 		Title: title,
 		Tags:  tags,
 		Fields: map[string]interface{}{
+			"title": title,
 			"value": val,
 		},
 	}, nil

@@ -950,14 +950,20 @@ func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 			require.Equal(t, mr.Key.Resource, ns.Resource)
 
 			expectedMr, ok := expectation.changes[mr.Key.Name]
-			require.True(t, ok, "ListModifiedSince yielded unexpected resource: ", mr.Key.String())
+			require.True(t, ok, "ListModifiedSince yielded unexpected resource: %s", mr.Key.String())
 			require.Equal(t, mr.ResourceVersion, expectedMr.ResourceVersion)
 			require.Equal(t, mr.Action, expectedMr.Action)
 			require.Equal(t, string(mr.Value), string(expectedMr.Value))
 			delete(expectation.changes, mr.Key.Name)
 		}
 
-		require.Equal(t, 0, len(expectation.changes), "ListModifiedSince failed to return one or more expected items")
+		// Events with RV >= sinceRv are required and must have been returned.
+		// Lookback events (RV < sinceRv) are optional — they may or may not
+		// be returned depending on timing.
+		for name, mr := range expectation.changes {
+			require.Less(t, mr.ResourceVersion, expectation.rv,
+				"required event for %s (rv=%d >= sinceRv=%d) was not returned", name, mr.ResourceVersion, expectation.rv)
+		}
 	}
 }
 
@@ -997,7 +1003,6 @@ func generateOldSnowflake(t *testing.T) int64 {
 	return snowflakeFromTime(twoHoursAgo)
 }
 
-// seedBackend seeds the kvstore with data and return the expected result for ListModifiedSince calls
 func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource) []expectation {
 	uniqueStringGen := randomStringGenerator()
 	nsDifferentNamespace := NamespacedResource{
@@ -1014,6 +1019,7 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 		changes: make(map[string]*ModifiedResource),
 	})
 
+	allResources := make(map[string]*ModifiedResource)
 	for range 100 {
 		updates := rand.IntN(5)
 		shouldDelete := rand.IntN(100) < 10
@@ -1022,6 +1028,8 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 			rv:      mr.ResourceVersion,
 			changes: make(map[string]*ModifiedResource),
 		})
+
+		allResources[mr.Key.Name] = mr
 
 		for _, expect := range expectations {
 			expect.changes[mr.Key.Name] = mr
@@ -1037,8 +1045,23 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 	rv, _ := backend.ListModifiedSince(ctx, ns, 1)
 	expectations = append(expectations, expectation{
 		rv:      rv,
-		changes: make(map[string]*ModifiedResource), // empty
+		changes: make(map[string]*ModifiedResource),
 	})
+
+	// ListModifiedSince applies a lookback window, so it may return resources
+	// whose latest RV is slightly before sinceRv. Add these to each
+	// expectation's changes map so the test can validate them.
+	for _, expect := range expectations {
+		lookbackRv := subtractDurationFromSnowflake(expect.rv, listModifiedSinceLookback)
+		for name, mr := range allResources {
+			if _, ok := expect.changes[name]; ok {
+				continue // already expected
+			}
+			if mr.ResourceVersion >= lookbackRv {
+				expect.changes[name] = mr
+			}
+		}
+	}
 
 	return expectations
 }

@@ -134,6 +134,8 @@ type StorageBackend interface {
 
 	// ListModifiedSince will return all resources that have changed since the given resource version.
 	// If a resource has changes, only the latest change will be returned.
+	// Implementations may return events shortly before sinceRv; callers should filter out
+	// events older than `sinceRv` if necessary.
 	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error])
 
 	// Get all events from the store
