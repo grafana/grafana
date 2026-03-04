@@ -315,20 +315,6 @@ describe('DefaultGridLayoutManager', () => {
       expect(clonedBodyA.state.title).toBe(panelA.state.title);
       expect(clonedBodyB.state.title).toBe(panelB.state.title);
     });
-
-    it('sets isDraggable to true when dashboard is in edit mode', () => {
-      const autoLayout = setupSceneWithAutoGrid(undefined, { isEditing: true });
-      const defaultLayout = DefaultGridLayoutManager.createFromLayout(autoLayout);
-
-      expect(defaultLayout.state.grid.state.isDraggable).toBe(true);
-    });
-
-    it('sets isDraggable to false when dashboard is not in edit mode', () => {
-      const autoLayout = setupSceneWithAutoGrid(undefined, { isEditing: false });
-      const defaultLayout = DefaultGridLayoutManager.createFromLayout(autoLayout);
-
-      expect(defaultLayout.state.grid.state.isDraggable).toBe(false);
-    });
   });
 });
 

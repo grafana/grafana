@@ -566,7 +566,7 @@ export class DefaultGridLayoutManager
 
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const panels = currentLayout.getVizPanels();
-    return DefaultGridLayoutManager.fromVizPanels(panels, getDashboardSceneFor(currentLayout).state.isEditing);
+    return DefaultGridLayoutManager.fromVizPanels(panels);
   }
 
   public static createEmpty(): DefaultGridLayoutManager {
@@ -615,7 +615,7 @@ export class DefaultGridLayoutManager
     return new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children: children,
-        isDraggable: isDraggable,
+        isDraggable: true,
         isResizable: true,
       }),
     });
