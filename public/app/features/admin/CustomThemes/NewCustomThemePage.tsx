@@ -7,14 +7,20 @@ import { useCreateThemeMutation, API_GROUP, API_VERSION } from '@grafana/api-cli
 import { createTheme as createGrafanaTheme, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { Trans, t } from '@grafana/i18n';
-import { Box, Button, CodeEditor, Field, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Button, CodeEditor, Field, Input, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../../../core/components/Page/Page';
 import { ThemePreview } from '../../../core/components/Theme/ThemePreview';
 
+import { fetchGcomTheme, validateGcomTheme } from './utils';
+
 interface FormData {
   themeJson: string;
   themeID: string;
+}
+
+interface GcomFormData {
+  gcomTheme: string;
 }
 
 export default function NewCustomThemePage() {
@@ -34,8 +40,14 @@ export default function NewCustomThemePage() {
     setValue,
     formState: { errors, dirtyFields },
   } = useForm<FormData>();
+  const {
+    register: registerGcom,
+    handleSubmit: handleSubmitGcom,
+    formState: { errors: gcomErrors },
+  } = useForm<GcomFormData>();
   const [themeID, themeJson] = watch(['themeID', 'themeJson']);
   const themeIDInput = useId();
+  const gcomThemeIDInput = useId();
 
   const isBothFieldsPopulated = Boolean(themeID && themeJson);
   register('themeJson', { required: true });
@@ -67,6 +79,29 @@ export default function NewCustomThemePage() {
     }
   }, [themeJson, setValue, dirtyFields.themeID]);
 
+  // Link component for Trans interpolation - the text is intentionally untranslated as it's a URL/brand name
+  const gcomLink = (
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    <TextLink variant="bodySmall" href="https://grafana.com/grafana/themes/" external>
+      grafana.com/grafana/themes
+    </TextLink>
+  );
+
+  const onGcomSubmit = async ({ gcomTheme }: GcomFormData) => {
+    let themeId;
+    const match = /(^\d+$)|themes\/(\d+)/.exec(gcomTheme);
+    if (match && match[1]) {
+      themeId = match[1];
+    } else if (match && match[2]) {
+      themeId = match[2];
+    }
+
+    if (themeId) {
+      const theme = await fetchGcomTheme(themeId);
+      setValue('themeJson', JSON.stringify(theme, null, 2), { shouldValidate: true, shouldDirty: true });
+    }
+  };
+
   const onSubmit = async ({ themeJson, themeID }: FormData) => {
     await createTheme({
       theme: {
@@ -83,77 +118,112 @@ export default function NewCustomThemePage() {
 
   return (
     <Page navId="custom-themes" pageNav={pageNav}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack direction="column" gap={2}>
-          <Stack direction={{ xs: 'column', md: 'row' }} gap={2} alignItems="stretch">
-            <Field
-              required
-              className={styles.codeEditor}
-              noMargin
-              label={t('admin.new-custom-theme-page.field-theme-json', 'Theme JSON')}
-              invalid={!!errors.themeJson}
-              error={
-                errors.themeJson &&
-                t('admin.new-custom-theme-page.field-theme-json.validation-required', 'Theme JSON is required')
+      <Stack direction="column" gap={2}>
+        <form onSubmit={handleSubmitGcom(onGcomSubmit)}>
+          <Field
+            label={t('admin.new-custom-theme-page.gcom-field.label', 'Grafana.com theme URL or ID')}
+            description={
+              <Trans i18nKey="admin.new-custom-theme-page.gcom-field.description" components={{ link: gcomLink }}>
+                {'Find and import themes at <link />'}
+              </Trans>
+            }
+            invalid={!!gcomErrors.gcomTheme}
+            error={gcomErrors.gcomTheme?.message}
+            noMargin
+          >
+            <Input
+              id={gcomThemeIDInput}
+              type="text"
+              {...registerGcom('gcomTheme', {
+                required: t(
+                  'admin.new-custom-theme-page.gcom-field.validation-required',
+                  'A Grafana theme URL or ID is required'
+                ),
+                validate: validateGcomTheme,
+              })}
+              addonAfter={
+                <Button type="submit">
+                  <Trans i18nKey="admin.new-custom-theme-page.gcom-field.load-button">Load</Trans>
+                </Button>
               }
-            >
-              <CodeEditor
-                value={themeJson ?? ''}
-                language="json"
-                height={400}
-                width="100%"
-                showLineNumbers={true}
-                onChange={(value) => setValue('themeJson', value, { shouldValidate: true, shouldDirty: true })}
-                onBeforeEditorMount={(monaco) => {
-                  monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-                    validate: true,
-                    schemas: [{ uri: 'theme-schema', fileMatch: ['*'], schema: themeJsonSchema }],
-                  });
-                }}
-              />
-            </Field>
-            <Stack direction="column" gap={2}>
-              <Field noMargin label={t('admin.new-custom-theme-page.field-preview', 'Preview')}>
-                <Box
-                  boxShadow="z1"
-                  display="flex"
-                  overflow="hidden"
-                  borderRadius="default"
-                  height={30}
-                  minWidth={40}
-                  width="100%"
-                  borderStyle="solid"
-                  borderColor="medium"
-                >
-                  {previewTheme && <ThemePreview theme={previewTheme} />}
-                </Box>
-              </Field>
+            />
+          </Field>
+        </form>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack direction="column" gap={2}>
+            <Stack direction={{ xs: 'column', md: 'row' }} gap={2} alignItems="stretch">
               <Field
                 required
+                className={styles.codeEditor}
                 noMargin
-                label={t('admin.new-custom-theme-page.field-theme-id', 'Theme ID')}
-                invalid={!!errors.themeID}
+                label={t('admin.new-custom-theme-page.field-theme-json', 'Theme JSON')}
+                invalid={!!errors.themeJson}
                 error={
-                  errors.themeID?.type === 'pattern'
-                    ? t(
-                        'admin.new-custom-theme-page.field-theme-id.validation-pattern',
-                        'Theme ID can only contain lowercase letters, numbers, hyphens and underscores'
-                      )
-                    : errors.themeID &&
-                      t('admin.new-custom-theme-page.field-theme-id.validation-required', 'Theme ID is required')
+                  errors.themeJson &&
+                  t('admin.new-custom-theme-page.field-theme-json.validation-required', 'Theme JSON is required')
                 }
               >
-                <Input {...register('themeID', { required: true, pattern: /^[a-zA-Z0-9:\-_.]*$/ })} id={themeIDInput} />
+                <CodeEditor
+                  value={themeJson ?? ''}
+                  language="json"
+                  height={400}
+                  width="100%"
+                  showLineNumbers={true}
+                  onChange={(value) => setValue('themeJson', value, { shouldValidate: true, shouldDirty: true })}
+                  onBeforeEditorMount={(monaco) => {
+                    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+                      validate: true,
+                      schemas: [{ uri: 'theme-schema', fileMatch: ['*'], schema: themeJsonSchema }],
+                    });
+                  }}
+                />
               </Field>
+              <Stack direction="column" gap={2}>
+                <Field noMargin label={t('admin.new-custom-theme-page.field-preview', 'Preview')}>
+                  <Box
+                    boxShadow="z1"
+                    display="flex"
+                    overflow="hidden"
+                    borderRadius="default"
+                    height={30}
+                    minWidth={40}
+                    width="100%"
+                    borderStyle="solid"
+                    borderColor="medium"
+                  >
+                    {previewTheme && <ThemePreview theme={previewTheme} />}
+                  </Box>
+                </Field>
+                <Field
+                  required
+                  noMargin
+                  label={t('admin.new-custom-theme-page.field-theme-id', 'Theme ID')}
+                  invalid={!!errors.themeID}
+                  error={
+                    errors.themeID?.type === 'pattern'
+                      ? t(
+                          'admin.new-custom-theme-page.field-theme-id.validation-pattern',
+                          'Theme ID can only contain lowercase letters, numbers, hyphens and underscores'
+                        )
+                      : errors.themeID &&
+                        t('admin.new-custom-theme-page.field-theme-id.validation-required', 'Theme ID is required')
+                  }
+                >
+                  <Input
+                    {...register('themeID', { required: true, pattern: /^[a-zA-Z0-9:\-_.]*$/ })}
+                    id={themeIDInput}
+                  />
+                </Field>
+              </Stack>
+            </Stack>
+            <Stack justifyContent="flex-end">
+              <Button type="submit" disabled={isLoading || !isBothFieldsPopulated}>
+                <Trans i18nKey="admin.new-custom-theme-page.submit">Add custom theme</Trans>
+              </Button>
             </Stack>
           </Stack>
-          <Stack justifyContent="flex-end">
-            <Button type="submit" disabled={isLoading || !isBothFieldsPopulated}>
-              <Trans i18nKey="admin.new-custom-theme-page.submit">Add custom theme</Trans>
-            </Button>
-          </Stack>
-        </Stack>
-      </form>
+        </form>
+      </Stack>
     </Page>
   );
 }
