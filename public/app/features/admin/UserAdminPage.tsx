@@ -18,7 +18,6 @@ import { UserLdapSyncInfo } from './UserLdapSyncInfo';
 import { UserOrgs } from './UserOrgs';
 import { UserPermissions } from './UserPermissions';
 import { UserProfile } from './UserProfile';
-import { UserRoles } from './UserRoles';
 import { UserSessions } from './UserSessions';
 import {
   loadAdminUserPage,
@@ -178,7 +177,6 @@ export const UserAdminPage = ({
               onOrgAdd={onOrgAdd}
             />
           )}
-          {roles && teams && orgs && <UserRoles roles={roles} teams={teams} orgs={orgs} userUid={user?.uid} />}
           {sessions && canReadSessions && (
             <UserSessions
               sessions={sessions}
