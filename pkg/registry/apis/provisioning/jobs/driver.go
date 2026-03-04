@@ -367,9 +367,12 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 
 		r := repo.Config()
 		connName := r.ConnectionName()
-		logger = logger.With("connection", connName)
+		logger = logger.With("connection", connName, "repository_type", r.Spec.Type)
 		ctx = logging.Context(ctx, logger)
-		span.SetAttributes(attribute.String("job.connection", connName))
+		span.SetAttributes(
+			attribute.String("job.connection", connName),
+			attribute.String("job.repository_type", string(r.Spec.Type)),
+		)
 
 		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
 			logger.Info("repository marked for deletion - skip job",
