@@ -258,10 +258,8 @@ export class LogLineVirtualization {
 }
 
 export interface DisplayOptions {
-  detailsMode: LogLineDetailsMode;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
-  showDetails: LogListModel[];
   showDuplicates: boolean;
   showTime: boolean;
   wrap: boolean;
@@ -272,7 +270,7 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap }: DisplayOptions,
+  { hasLogsWithErrors, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
   index: number
 ) {
   if (!container) {
