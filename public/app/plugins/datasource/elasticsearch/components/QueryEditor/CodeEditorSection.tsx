@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, useStyles2 } from '@grafana/ui';
@@ -8,6 +9,7 @@ import { useDispatch } from '../../hooks/useStatelessReducer';
 import { QueryLanguage } from '../../types';
 
 import { useDatasource } from './ElasticsearchQueryContext';
+import { EsqlQueryEditor } from './EsqlQueryEditor';
 import { QueryLanguageSelector } from './QueryLanguageSelector';
 import { RawQueryEditor } from './RawQueryEditor';
 import { changeEsqlQuery, changeQueryLanguage, changeRawDSLQuery } from './state';
@@ -30,7 +32,25 @@ export const CodeEditorSection = ({ value, queryLanguage, showQueryLanguageSelec
   const datasource = useDatasource();
   const styles = useStyles2(getStyles);
 
-  const editorLanguage = queryLanguage === 'esql' ? 'sql' : 'json';
+  const editorProps = useMemo(
+    () => ({
+      value: queryLanguage === 'raw_dsl' ? value.rawDSLQuery : value.esqlQuery,
+      onChange: (query: string) =>
+        dispatch(queryLanguage === 'raw_dsl' ? changeRawDSLQuery(query) : changeEsqlQuery(query)),
+      onFocusPopulate: (currentValue: string) => {
+        const index = datasource.index?.trim();
+        // Only prefill ES|QL queries when a datasource index is configured and the editor is empty.
+        if (queryLanguage !== 'esql' || !index || currentValue.trim()) {
+          return undefined;
+        }
+
+        // Return boilerplate text for editor-local population on focus; this avoids dispatching and triggering a query run.
+        return 'FROM $index ';
+      },
+      onRunQuery,
+    }),
+    [value, queryLanguage, dispatch, datasource, onRunQuery]
+  );
 
   return (
     <>
@@ -46,22 +66,11 @@ export const CodeEditorSection = ({ value, queryLanguage, showQueryLanguageSelec
         </div>
       )}
 
-      <RawQueryEditor
-        value={queryLanguage === 'raw_dsl' ? value.rawDSLQuery : value.esqlQuery}
-        language={editorLanguage}
-        onChange={(query) => dispatch(queryLanguage === 'raw_dsl' ? changeRawDSLQuery(query) : changeEsqlQuery(query))}
-        onFocusPopulate={(currentValue) => {
-          const index = datasource.index?.trim();
-          // Only prefill ES|QL queries when a datasource index is configured and the editor is empty.
-          if (queryLanguage !== 'esql' || !index || currentValue.trim()) {
-            return undefined;
-          }
-
-          // Return boilerplate text for editor-local population on focus; this avoids dispatching and triggering a query run.
-          return 'FROM $index ';
-        }}
-        onRunQuery={onRunQuery}
-      />
+      {queryLanguage === 'esql' ? (
+        <EsqlQueryEditor {...editorProps} />
+      ) : (
+        <RawQueryEditor {...editorProps} language="json" />
+      )}
     </>
   );
 };

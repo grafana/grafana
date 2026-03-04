@@ -10,17 +10,29 @@ interface Props {
   onChange: (value: string) => void;
   onRunQuery: () => void;
   onFocusPopulate?: (currentValue: string) => string | undefined;
+  onBeforeEditorMount?: (monaco: Monaco) => void;
+  onEditorDidMount?: (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => void;
 }
 
 // This offset was chosen by testing to match Prometheus behavior
 const EDITOR_HEIGHT_OFFSET = 2;
+export type RawQueryEditorProps = Props;
 
-export function RawQueryEditor({ value, language = 'json', onChange, onRunQuery, onFocusPopulate }: Props) {
+export function RawQueryEditor({
+  value,
+  language = 'json',
+  onChange,
+  onRunQuery,
+  onFocusPopulate,
+  onBeforeEditorMount,
+  onEditorDidMount,
+}: Props) {
   const styles = useStyles2(getStyles);
   const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const onRunQueryRef = useRef(onRunQuery);
   const onFocusPopulateRef = useRef(onFocusPopulate);
+  const onEditorDidMountRef = useRef(onEditorDidMount);
 
   useEffect(() => {
     onRunQueryRef.current = onRunQuery;
@@ -29,6 +41,10 @@ export function RawQueryEditor({ value, language = 'json', onChange, onRunQuery,
   useEffect(() => {
     onFocusPopulateRef.current = onFocusPopulate;
   }, [onFocusPopulate]);
+
+  useEffect(() => {
+    onEditorDidMountRef.current = onEditorDidMount;
+  }, [onEditorDidMount]);
 
   const handleEditorDidMount = useCallback((editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
     editorRef.current = editor;
@@ -64,6 +80,8 @@ export function RawQueryEditor({ value, language = 'json', onChange, onRunQuery,
 
     editor.onDidContentSizeChange(updateElementHeight);
     updateElementHeight();
+
+    onEditorDidMountRef.current?.(editor, monaco);
   }, []);
 
   const handleFormat = useCallback(() => {
@@ -113,6 +131,7 @@ export function RawQueryEditor({ value, language = 'json', onChange, onRunQuery,
           onBlur={handleQueryChange}
           monacoOptions={monacoOptions}
           onEditorDidMount={handleEditorDidMount}
+          onBeforeEditorMount={onBeforeEditorMount}
         />
       </div>
       <div className={styles.footer}>
