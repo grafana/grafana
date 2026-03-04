@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 
 import { OrgRole } from '@grafana/data';
 
@@ -7,6 +6,7 @@ import { RolePickerBadges } from './RolePickerBadges';
 
 const props = {
   disabled: false,
+  onOpenDrawer: jest.fn(),
   user: {
     login: 'admin',
     email: 'email@example.com',
@@ -37,12 +37,10 @@ const props = {
 };
 
 describe('RolePickerBadges', () => {
-  it('should render', async () => {
+  it('should render badges', () => {
     render(<RolePickerBadges {...props} />);
 
     expect(screen.getByText(/\+1/i)).toBeInTheDocument();
-
     expect(screen.getByText(/Admin/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByText('Admin'));
   });
 });

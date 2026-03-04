@@ -72,4 +72,8 @@ export const {
   useListUserRolesQuery,
   useSetUserRolesMutation,
   useListRolesQuery,
+  useCreateRoleMutation,
+  useUpdateRoleMutation,
+  useDeleteRoleMutation,
+  useGetRoleQuery,
 } = rolesAPI;

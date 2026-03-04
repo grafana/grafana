@@ -24,6 +24,7 @@ import {
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
+import { RolePickerDrawer } from 'app/core/components/RolePickerDrawer/RolePickerDrawer';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
@@ -70,6 +71,8 @@ export const OrgUsersTable = ({
 }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [drawerUserId, setDrawerUserId] = useState<number | null>(null);
+  const drawerUser = drawerUserId !== null ? users.find((u) => u.userId === drawerUserId) : undefined;
 
   useEffect(() => {
     async function fetchOptions() {
@@ -150,7 +153,13 @@ export const OrgUsersTable = ({
           };
 
           if (config.featureToggles.rolePickerDrawer) {
-            return <RolePickerBadges disabled={basicRoleDisabled} user={original} />;
+            return (
+              <RolePickerBadges
+                disabled={basicRoleDisabled}
+                user={original}
+                onOpenDrawer={() => setDrawerUserId(original.userId)}
+              />
+            );
           }
 
           return contextSrv.licensedAccessControlEnabled() ? (
@@ -263,6 +272,16 @@ export const OrgUsersTable = ({
       <Stack justifyContent="flex-end">
         <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
       </Stack>
+      {drawerUser && (
+        <RolePickerDrawer
+          onClose={() => setDrawerUserId(null)}
+          userName={drawerUser.name || drawerUser.login}
+          userId={drawerUser.userId}
+          orgId={orgId}
+          basicRole={drawerUser.role}
+          onBasicRoleChange={(newRole) => onRoleChange(newRole, drawerUser)}
+        />
+      )}
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={t('admin.org-users-table.body-delete', 'Are you sure you want to delete user {{user}}?', {

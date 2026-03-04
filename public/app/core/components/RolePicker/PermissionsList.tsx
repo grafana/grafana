@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Permission, RoleDto } from '@grafana/api-clients/rtkq/legacy';
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { FilterInput, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { fetchRoleDetail } from './hooks';
 
@@ -58,6 +58,7 @@ export const PermissionsList = ({ roleUid }: PermissionsListProps) => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -95,27 +96,51 @@ export const PermissionsList = ({ roleUid }: PermissionsListProps) => {
     return <div className={styles.container}><span className={styles.empty}>No permissions</span></div>;
   }
 
+  const sorted = permissions.slice().sort((a, b) => (a.action || '').localeCompare(b.action || ''));
+  const filtered = searchQuery
+    ? sorted.filter((p) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          (p.action || '').toLowerCase().includes(q) ||
+          (p.scope || '').toLowerCase().includes(q) ||
+          formatPermission(p).toLowerCase().includes(q)
+        );
+      })
+    : sorted;
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <span className={styles.count}>{permissions.length} {permissions.length === 1 ? 'permission' : 'permissions'}</span>
-        <Tooltip content={copied ? 'Copied!' : 'Copy as JSON'}>
-          <IconButton
-            name={copied ? 'check' : 'copy'}
-            size="sm"
-            onClick={onCopyJson}
-            aria-label="Copy permissions as JSON"
+        <div className={styles.headerActions}>
+          <FilterInput
+            placeholder="Filter permissions..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+            width={24}
           />
-        </Tooltip>
+          <Tooltip content={copied ? 'Copied!' : 'Copy as JSON'}>
+            <IconButton
+              name={copied ? 'check' : 'copy'}
+              size="sm"
+              onClick={onCopyJson}
+              aria-label="Copy permissions as JSON"
+            />
+          </Tooltip>
+        </div>
       </div>
       <div className={styles.list}>
-        {permissions
-          .sort((a, b) => (a.action || '').localeCompare(b.action || ''))
-          .map((perm, i) => (
-            <div key={i} className={styles.permissionLine}>
-              {formatPermission(perm)}
-            </div>
-          ))}
+        {filtered.map((perm, i) => (
+          <div key={i} className={styles.permissionLine}>
+            <span className={styles.permAction}>{perm.action}</span>
+            {perm.scope && perm.scope !== '' && (
+              <span className={styles.permScope}>{perm.scope}</span>
+            )}
+          </div>
+        ))}
+        {searchQuery && filtered.length === 0 && (
+          <span className={styles.empty}>No matching permissions</span>
+        )}
       </div>
     </div>
   );
@@ -154,10 +179,24 @@ const getPermissionsStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(0.25),
   }),
+  headerActions: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
   permissionLine: css({
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     lineHeight: 1.5,
     padding: theme.spacing(0, 0, 0, 0.5),
+    display: 'flex',
+    gap: theme.spacing(1),
+  }),
+  permAction: css({
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fontFamilyMonospace,
+  }),
+  permScope: css({
+    color: theme.colors.text.secondary,
   }),
 });

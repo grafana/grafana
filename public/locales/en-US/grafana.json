@@ -213,6 +213,41 @@
       "name-header": "Name",
       "new-org-button": "New org"
     },
+    "role-edit": {
+      "add-permission-button": "Add permission",
+      "basic-role-warning-body": "Changes to basic roles affect every user at this level. Basic roles update automatically — even if you remove a fixed role, future permissions associated with it will still be added to this basic role on upgrade.",
+      "basic-role-warning-title": "Editing a basic role",
+      "cancel-button": "Cancel",
+      "create-button": "Create role",
+      "custom-role-warning-body": "Custom roles do not automatically update. When Grafana adds new permissions associated with a fixed role you've selected here, those permissions will not be added to this custom role. You'll need to update it manually.",
+      "custom-role-warning-title": "Custom role",
+      "label-action": "Action",
+      "label-description": "Description",
+      "label-display-name": "Display name",
+      "label-group": "Group",
+      "label-scope": "Scope",
+      "loading": "Loading role details...",
+      "permissions-title": "Permissions",
+      "save-button": "Save changes"
+    },
+    "roles-list": {
+      "column-group": "Group",
+      "column-name": "Name",
+      "column-type": "Type",
+      "create-button": "New custom role",
+      "delete-button": "Delete",
+      "delete-modal-confirm": "Delete",
+      "delete-modal-title": "Delete role",
+      "edit-button": "Edit",
+      "loading": "Loading roles...",
+      "search-placeholder": "Search roles by name or group"
+    },
+    "roles-page": {
+      "no-permission": "You do not have permission to view roles.",
+      "tab-all-roles": "All roles",
+      "tab-create-role": "Create custom role",
+      "tab-edit-role": "Edit role"
+    },
     "server-settings": {
       "alerts-button": "Manage alerts",
       "dashboards-button": "Manage dashboards",
