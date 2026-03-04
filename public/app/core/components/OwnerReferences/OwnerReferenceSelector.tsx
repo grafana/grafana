@@ -2,6 +2,7 @@ import { QueryStatus } from '@reduxjs/toolkit/query';
 import { useEffect, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 import { Alert, Box, Combobox, ComboboxOption, Label } from '@grafana/ui';
 import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import {
@@ -33,11 +34,17 @@ export const OwnerReferenceSelector = ({
 
   useEffect(() => {
     if (defaultTeamUid) {
-      getTeam({ name: defaultTeamUid }, true).then((query) => {
-        if (query.status === QueryStatus.fulfilled) {
+      getTeam({ name: defaultTeamUid }, true).then(({ data, status }) => {
+        if (status === QueryStatus.fulfilled) {
           setSelectedTeam({
-            label: query.data.spec.title,
-            value: query.data.metadata.name!,
+            label: data.spec.title,
+            value: data.metadata.name!,
+          });
+        }
+        if (status === QueryStatus.rejected) {
+          setSelectedTeam({
+            label: t('manage-owner-references.team-not-found', '[Unknown team]'),
+            value: defaultTeamUid,
           });
         }
         // We ignore errors here as we handle them with the useLazyGetTeamQuery call
@@ -55,14 +62,24 @@ export const OwnerReferenceSelector = ({
 
     return mappedResults;
   };
+
+  const teamIsMissingOrForbidden = isFetchError(selectedTeamError) && [404, 403].includes(selectedTeamError.status);
+  const errorLevel = teamIsMissingOrForbidden ? 'warning' : 'error';
+  const teamErrorMessage = teamIsMissingOrForbidden ? (
+    <Trans i18nKey="manage-owner-references.selected-team-not-found">
+      Selected team not found, or you do not have the necessary permissions to view it.
+    </Trans>
+  ) : (
+    extractErrorMessage(selectedTeamError)
+  );
   return (
     <Box>
       {Boolean(selectedTeamError) && (
         <Alert
-          severity="error"
+          severity={errorLevel}
           title={t('manage-owner-references.error-load-team-details', 'Could not load team details')}
         >
-          {extractErrorMessage(selectedTeamError)}
+          {teamErrorMessage}
         </Alert>
       )}
       <Label htmlFor="owner-reference-selector">

@@ -10,13 +10,16 @@ import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 
 export type FolderMetadataStatus = 'loading' | 'missing' | 'error' | 'ok';
 
+export interface FolderMetadataResult {
+  status: FolderMetadataStatus;
+  repositoryName: string;
+}
+
 /**
- * Checks whether a provisioned folder has a `_folder.json` metadata file.
- * Only call this for folders already known to be provisioned — the caller
- * (FolderPermissions) gates on `isProvisionedFolder` before rendering the
- * component that uses this hook.
+ * Checks whether a single provisioned folder has a `_folder.json` metadata file.
+ * Only call this for folders already known to be provisioned.
  */
-export function useFolderMetadataStatus(folderUID: string): FolderMetadataStatus {
+export function useFolderMetadataStatus(folderUID: string): FolderMetadataResult {
   const {
     repository,
     folder,
@@ -29,21 +32,21 @@ export function useFolderMetadataStatus(folderUID: string): FolderMetadataStatus
   const repoName = repository?.name ?? '';
   const folderJsonPath = getFolderMetadataPath(sourcePath);
 
-  const { error, isFetching: isFileLoading } = useGetRepositoryFilesWithPathQuery(
+  const { error, isLoading: isFileLoading } = useGetRepositoryFilesWithPathQuery(
     repoName ? { name: repoName, path: folderJsonPath } : skipToken
   );
 
   if (isRepoViewLoading || isFileLoading) {
-    return 'loading';
+    return { status: 'loading', repositoryName: repoName };
   }
 
   if (isFetchError(error) && error.status === 404) {
-    return 'missing';
+    return { status: 'missing', repositoryName: repoName };
   }
 
   if (error) {
-    return 'error';
+    return { status: 'error', repositoryName: repoName };
   }
 
-  return 'ok';
+  return { status: 'ok', repositoryName: repoName };
 }

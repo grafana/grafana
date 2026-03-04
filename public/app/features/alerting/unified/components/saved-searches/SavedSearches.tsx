@@ -497,9 +497,7 @@ function ListMode({
                 typeof activeAction === 'object' && activeAction.type === 'renaming' && activeAction.id === search.id;
               const isDeleting =
                 typeof activeAction === 'object' && activeAction.type === 'deleting' && activeAction.id === search.id;
-              // Item is disabled if any action is active and this item is not the one being acted upon
               const isItemDisabled = isActionActive && !isRenaming && !isDeleting;
-
               const href = getHref(search);
 
               return (

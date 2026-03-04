@@ -906,7 +906,7 @@
       "title-failed-to-fetch-contact-points": "Misslyckades med att hämta kontaktpunkter"
     },
     "contact-points": {
-      "create": "Skapa kontaktpunkt",
+      "create": "",
       "custom-template-value": "Anpassat mallvärde",
       "delete-reasons": {
         "heading": "Kontaktpunkten kan inte raderas av följande skäl:",
@@ -2129,7 +2129,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Lägg till tidsintervall"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2173,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2181,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Sök efter kontaktpunkt",
@@ -2252,7 +2251,7 @@
       "title-failed-to-fetch-notification-templates": "Det gick inte att hämta aviseringsmallar"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Lägg till aviseringsmallgrupp",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Skapa aviseringsmallar för att anpassa dina aviseringar."
     },
     "notifications-list": {
@@ -2279,6 +2278,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2302,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Lägg till etiketter för att hjälpa dig att bättre hantera inspelningsregler.",
@@ -3264,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Mallformulär",
+      "body-legacy": "",
       "label-examples-documentation": "Exempeldokumentation",
       "label-template-group": "Mallgrupp",
       "label-template-group-name": "Namn för mallgrupp",
@@ -3272,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Ge din mallgrupp ett namn",
       "title-error-saving-template": "Fel vid sparande av mall",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Mall för fusklapp"
     },
     "template-preview": {
@@ -3312,6 +3312,8 @@
       "help": {
         "intro": "Aviseringsmallar använder Go-mallspråk för att skapa aviseringsmeddelanden.\n\nI Grafana kan en mallgrupp definiera flera aviseringsmallar med {{ define \"<NAME>\" }}.\nDessa mallar kan sedan användas i kontaktpunkter och i andra aviseringsmallar genom att anropa {{ template \"<NAME>\" }}.\nFör detaljerad information om aviseringsmallar, se vår dokumentation."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Felkonfigurerad",
       "misconfigured-warning": "Den här mallen är felkonfigurerad.",
       "misconfigured-warning-details": "Mallar måste definieras i både avsnitten <2></2> och <5></5> i Alertmanager-konfigurationen."
@@ -3350,7 +3352,7 @@
       "stop-alerting-when": "Stoppa larm (eller vänteläge) när "
     },
     "time-interval": {
-      "add-time-interval": "Lägg till tidsintervall",
+      "add-time-interval": "",
       "save": "Spara tidsintervall",
       "saving": "Sparar tidsintervall"
     },
@@ -3422,7 +3424,14 @@
         "title": "Regeln hittades inte"
       },
       "rules-with-firing-instances": "Larmregler med utlösningsinstanser",
-      "rules-with-pending-instances": "Larmregler med väntande instanser"
+      "rules-with-pending-instances": "Larmregler med väntande instanser",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Lägg till uttryck"
@@ -4182,6 +4191,15 @@
       "clear": "Rensa sökning och filter",
       "text": "Inga resultat hittades för din fråga"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Rensa historik",
       "error": "Nyligen visade instrumentpaneler kunde inte laddas.",
@@ -4853,6 +4871,10 @@
       "view-json-diff": "Visa JSON-diff för att se alla ändringar"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Lägg till ny",
     "alert": {
@@ -5054,7 +5076,7 @@
     "canvas-actions": {
       "add-panel": "Lägg till panel",
       "disabled-child-contains-tabs": "Kan inte ändra till flikar eftersom en rad redan innehåller flikar",
-      "disabled-nested-grouping": "Gruppering är begränsad till 2 nivåer",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Flikar kan inte kapslas inuti andra flikar",
       "group-into-row": "Gruppera i rad",
       "group-into-tab": "Gruppera i flik",
@@ -5682,10 +5704,7 @@
       "empty-state-message": "Kör en fråga för att visualisera den här eller gå till alla visualiseringar för att lägga till andra paneltyper",
       "menu-open-panel-editor": "Konfigurera",
       "menu-use-library-panel": "Använd bibliotekspanel",
-      "missing-config": "Panelkonfiguration saknas",
-      "suggestions": {
-        "empty-state-message": "Kör en fråga för att börja se föreslagna visualiseringar"
-      }
+      "missing-config": "Panelkonfiguration saknas"
     },
     "new-panel-title": "Ny panel",
     "on-create-new-row": {
@@ -6594,6 +6613,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Det gick inte att radera instrumentpanelen",
       "cancel-action": "Avbryt",
@@ -6920,11 +6945,11 @@
       "static-options-legend": "Statiska alternativ"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Avancerade alternativ",
         "classic": "Classic",
         "json": "JSON",
-        "v1-resource": "V1-resurs",
         "v2-resource": "V2-resurs",
         "yaml": "YAML"
       },
@@ -7802,7 +7827,10 @@
     "pro-tip": "ProTip: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Vi letar men kan inte hitta det här {{lowerCaseEntity}}. Försök att återvända <4>hem</4> eller sök hjälp på <7>communitywebbplatsen.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -10968,7 +10996,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Inga alternativ hittades"
@@ -11913,8 +11943,6 @@
       "tooltip-delete": "Ta bort"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Vissa förslag kunde inte laddas"
       },
@@ -11924,6 +11952,10 @@
         "title": "Fel",
         "try-again-button": "Försök igen"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Okänd visualiseringstyp"
     },
     "viz-type-picker": {
@@ -12367,6 +12399,11 @@
       "text-loading-teams": "Laddar team …"
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Lägg till en anteckning för att beskriva dina ändringar (valfritt)",
@@ -12634,6 +12671,15 @@
       "label-read-only": "Skrivskyddad",
       "label-sync-interval": "Synkroniseringsintervall (sekunder)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Inga resultat som matchar din fråga",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resurser hanteras av Git Sync.",
@@ -12767,6 +12813,14 @@
       "show-less": "visa mindre",
       "show-more": "visa mer",
       "truncated": "Meddelandet är avkortat"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "repo-message": "",
+      "repo-title": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13273,6 +13327,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13300,7 +13355,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13310,9 +13366,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13356,21 +13413,20 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Välj kort {{id}}",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
       "transformations": "Omvandlingar",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13567,6 +13623,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Inkludera paneler",
       "remove-datasource-filter": "Datakälla: {{datasource}}",
       "sort-placeholder": "Sortera",
@@ -14318,6 +14375,11 @@
           "settings": "Inställningar"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Extern gruppsynkronisering"
@@ -14374,6 +14436,19 @@
       "loading-teams": "Laddar team …",
       "new-team": "Nytt team",
       "placeholder-search-teams": "Sök team"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Detta är valfritt och används främst för att ställa in teamprofilens avatar (via Gravatartjänsten)",

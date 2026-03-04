@@ -912,7 +912,7 @@
       "title-failed-to-fetch-contact-points": "Nie udało się pobrać punktów kontaktu"
     },
     "contact-points": {
-      "create": "Utwórz punkt kontaktowy",
+      "create": "",
       "custom-template-value": "Niestandardowa wartość szablonu",
       "delete-reasons": {
         "heading": "Nie można usunąć punktu kontaktowego z następujących powodów:",
@@ -2147,7 +2147,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Dodaj odstęp czasu"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2191,6 +2191,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2198,20 +2199,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Szukaj według punktu kontaktu",
@@ -2274,7 +2269,7 @@
       "title-failed-to-fetch-notification-templates": "Nie udało się pobrać szablonów powiadomień"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Dodaj grupę szablonów powiadomień",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Utwórz szablony powiadomień, aby dostosować wysyłane powiadomienia."
     },
     "notifications-list": {
@@ -2301,6 +2296,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2324,21 +2320,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_few": "",
-      "firing-alerts_many": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_few": "",
-      "resolved-alerts_many": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Dodaj etykiety, aby lepiej zarządzać regułami rejestrowania.",
@@ -3300,6 +3290,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Formularz szablonu",
+      "body-legacy": "",
       "label-examples-documentation": "Dokumentacja przykładów",
       "label-template-group": "Grupa szablonów",
       "label-template-group-name": "Nazwa grupy szablonów",
@@ -3308,6 +3299,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Nadaj nazwę grupie szablonów",
       "title-error-saving-template": "Błąd podczas zapisywania szablonu",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Wskazówki dotyczące szablonów"
     },
     "template-preview": {
@@ -3348,6 +3340,8 @@
       "help": {
         "intro": "Szablony powiadomień są tworzone w języku szablonów Go.\n\nW usłudze Grafana, korzystając z polecenia {{ define \"<NAME>\" }}, można zdefiniować wiele szablonów powiadomień w obrębie grupy szablonów.\nSzablony te można następnie wykorzystać w punktach kontaktowych oraz w innych szablonach powiadomień, wywołując polecenie {{ template \"<NAME>\" }}.\nSzczegółowe informacje na temat szablonów powiadomień znajdziesz w dokumentacji."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Źle skonfigurowane",
       "misconfigured-warning": "Ten szablon jest źle skonfigurowany.",
       "misconfigured-warning-details": "Szablony muszą być zdefiniowane zarówno w sekcji <2></2>, jak i <5></5> konfiguracji menedżera alertów."
@@ -3386,7 +3380,7 @@
       "stop-alerting-when": "Zatrzymaj alerty (lub stan oczekiwania), gdy"
     },
     "time-interval": {
-      "add-time-interval": "Dodaj odstęp czasu",
+      "add-time-interval": "",
       "save": "Zapisz odstęp czasu",
       "saving": "Zapisywanie odstępu czasu"
     },
@@ -3458,7 +3452,14 @@
         "title": "Nie znaleziono reguły"
       },
       "rules-with-firing-instances": "Reguły alertów z instancjami w stanie uruchamiania",
-      "rules-with-pending-instances": "Reguły alertów z oczekującymi instancjami"
+      "rules-with-pending-instances": "Reguły alertów z oczekującymi instancjami",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Dodaj wyrażenie"
@@ -4228,6 +4229,15 @@
       "clear": "Wyczyść wyszukiwanie i filtry",
       "text": "Nie znaleziono wyników dla tego zapytania"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Wyczyść historię",
       "error": "Nie udało się załadować ostatnio wyświetlanych pulpitów.",
@@ -4905,6 +4915,10 @@
       "view-json-diff": "Wyświetl różnice w plikach JSON, aby zobaczyć wszystkie zmiany"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Dodaj nowe",
     "alert": {
@@ -5106,7 +5120,7 @@
     "canvas-actions": {
       "add-panel": "Dodaj panel",
       "disabled-child-contains-tabs": "Nie można zmienić na karty, ponieważ wiersz zawiera już karty",
-      "disabled-nested-grouping": "Grupowanie jest ograniczone do 2 poziomów",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Kart nie można zagnieżdżać w innych kartach",
       "group-into-row": "Grupuj w wierszu",
       "group-into-tab": "Grupuj na karcie",
@@ -5734,10 +5748,7 @@
       "empty-state-message": "Uruchom zapytanie, aby je tutaj zwizualizować, lub przejdź do wszystkich wizualizacji, aby dodać inne typy paneli",
       "menu-open-panel-editor": "Konfiguruj",
       "menu-use-library-panel": "Użyj panelu biblioteki",
-      "missing-config": "Brak konfiguracji panelu",
-      "suggestions": {
-        "empty-state-message": "Uruchom zapytanie, aby zobaczyć sugerowane wizualizacje"
-      }
+      "missing-config": "Brak konfiguracji panelu"
     },
     "new-panel-title": "Nowy panel",
     "on-create-new-row": {
@@ -6650,6 +6661,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Nie udało się usunąć pulpitu",
       "cancel-action": "Anuluj",
@@ -6978,11 +6995,11 @@
       "static-options-legend": "Opcje statyczne"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Opcje zaawansowane",
         "classic": "Klasyczny",
         "json": "JSON",
-        "v1-resource": "Zasób V1",
         "v2-resource": "Zasób V2",
         "yaml": "YAML"
       },
@@ -7864,7 +7881,10 @@
     "pro-tip": "Wskazówka: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Nie udało się znaleźć: {{lowerCaseEntity}}. Spróbuj wrócić na <4>stronę główną</4> lub poszukaj pomocy na <7> stronie społeczności.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -11070,7 +11090,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nie znaleziono opcji"
@@ -12021,8 +12043,6 @@
       "tooltip-delete": "Usuń"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Nie udało się wczytać niektórych sugestii"
       },
@@ -12032,6 +12052,10 @@
         "title": "Błąd",
         "try-again-button": "Spróbuj ponownie"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Nieznany typ wizualizacji"
     },
     "viz-type-picker": {
@@ -12475,6 +12499,11 @@
       "text-loading-teams": "Wczytywanie zespołów…"
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Dodaj notatkę, aby opisać zmiany (opcjonalnie)",
@@ -12750,6 +12779,15 @@
       "label-read-only": "Tylko do odczytu",
       "label-sync-interval": "Odstęp czasu synchronizacji (sekundy)"
     },
+    "fix-folder-metadata": {
+      "button": "",
+      "error-fixing": "",
+      "fixing": "",
+      "success": ""
+    },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Brak wyników pasujących do zapytania",
       "partial-managed": "{{managedCount}}/{{resourceCount}} zasobów jest objętych zarządzaniem przez synchronizację z usługą Git.",
@@ -12887,6 +12925,14 @@
       "show-less": "pokaż mniej",
       "show-more": "pokaż więcej",
       "truncated": "Wiadomość obcięta"
+    },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "repo-message": "",
+      "repo-title": "",
+      "title": ""
     },
     "mode-options": {
       "disabled": {
@@ -13395,6 +13441,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13422,7 +13469,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13432,9 +13480,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13478,17 +13527,14 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Wybierz kartę {{id}}",
       "data": "",
       "loading-queries-transformations": "",
       "queries-expressions": "Zapytania i wyrażenia",
       "toggle-size": "Przełącz rozmiar paska bocznego",
       "transformations": "Transformacje",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_few": "",
       "alerts_many": "",
@@ -13496,7 +13542,11 @@
       "footer-items_one": "",
       "footer-items_few": "",
       "footer-items_many": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_few": "",
+      "footer-items-alert_many": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13697,6 +13747,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Uwzględnij panele",
       "remove-datasource-filter": "Źródło danych: {{datasource}}",
       "sort-placeholder": "Sortuj",
@@ -14452,6 +14503,11 @@
           "settings": "Ustawienia"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Synchronizacja grupy zewnętrznej"
@@ -14508,6 +14564,19 @@
       "loading-teams": "Wczytywanie zespołów…",
       "new-team": "Nowy zespół",
       "placeholder-search-teams": "Szukaj zespołów"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Jest to opcjonalne i służy przede wszystkim do ustawiania awatara profilu zespołu (za pośrednictwem usługi Gravatar)",

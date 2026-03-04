@@ -12,6 +12,7 @@ import { AnnotationsPlugin2 } from './AnnotationsPlugin2';
 import {
   allAnnotationRegions,
   allAnnotations,
+  mockAlertingFrame,
   mockAnnotationFrame,
   mockIRMAnnotation,
   mockIRMAnnotationRegion,
@@ -308,7 +309,14 @@ describe('AnnotationsPlugin2', () => {
             canDeleteAnnotations: () => false,
           } as PanelContext);
           setUp({ annotations: [frame] });
-          const thirdMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[2];
+          const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+          expect(markers).toHaveLength(3);
+          // first marker cannot be edited or deleted since it has an id of 0
+          const firstMarker = markers[0];
+          await event(firstMarker);
+          expect(screen.queryByLabelText('Edit')).not.toBeInTheDocument();
+
+          const thirdMarker = markers[2];
           expect(thirdMarker).toBeVisible();
           await event(thirdMarker);
           const editButton = screen.getByLabelText('Edit');
@@ -336,7 +344,15 @@ describe('AnnotationsPlugin2', () => {
             onAnnotationDelete,
           } as PanelContext);
           setUp({ annotations: [frame] });
-          const thirdMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[2];
+
+          const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+          expect(markers).toHaveLength(3);
+          // first marker cannot be edited or deleted since it has an id of 0
+          const firstMarker = markers[0];
+          await event(firstMarker);
+          expect(screen.queryByLabelText('Delete')).not.toBeInTheDocument();
+
+          const thirdMarker = markers[2];
           expect(thirdMarker).toBeVisible();
           await event(thirdMarker);
           const deleteButton = screen.getByLabelText('Delete');
@@ -480,12 +496,52 @@ describe('AnnotationsPlugin2', () => {
   });
 
   describe('annotation fields', () => {
-    // @todo when the id field is set to 0 we're supposed to disable editing?
-    it.todo('id');
-    // @todo type looks unused?
-    it.todo('type');
-    // @todo source looks unused?
-    it.todo('source');
+    describe('alert state', () => {
+      // when newState and alertId are both defined we show a custom alert header
+      it('should render', async () => {
+        setUp({
+          annotations: [mockAlertingFrame],
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers).toHaveLength(11);
+
+        await userEvent.hover(markers[0]);
+        expect(screen.getByText('ALERTING')).toBeVisible();
+      });
+      // When alert state is defined we only render the annotation text, and not the title
+      it('should not render annotation title', async () => {
+        setUp({
+          annotations: [mockAlertingFrame],
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers).toHaveLength(11);
+        userEvent.hover(markers[0]);
+
+        await userEvent.hover(markers[0]);
+        expect(screen.queryByText('Title 1')).not.toBeInTheDocument();
+      });
+      it('should render text', async () => {
+        setUp({
+          annotations: [mockAlertingFrame],
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers).toHaveLength(11);
+
+        await userEvent.hover(markers[0]);
+        expect(screen.getByText('Launching HG Instance ops with hgrun version 1')).toBeVisible();
+      });
+      // The alert title currently renders after the text if the alertId and alertState is defined
+      it('should render alert specific title', async () => {
+        setUp({
+          annotations: [mockAlertingFrame],
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers).toHaveLength(11);
+
+        await userEvent.hover(markers[0]);
+        expect(screen.getByText('Error: Alerting error test!')).toBeVisible();
+      });
+    });
   });
 
   describe('overrides', () => {

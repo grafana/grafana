@@ -83,6 +83,10 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-silences.title', 'Silences');
     case 'groups':
       return t('nav.alerting-groups.title', 'Active notifications');
+    case 'alert-alerts':
+      return t('nav.alerting-alerts.title', 'Alert activity');
+    case 'alert-activity':
+      return t('nav.alerting-activity.title', 'Alert activity');
     case 'alerting-admin':
       return t('nav.alerting-admin.title', 'Settings');
     case 'alerts/recently-deleted':
@@ -247,6 +251,10 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.alerting-silences.subtitle', 'Stop notifications from one or more alerting rules');
     case 'groups':
       return t('nav.alerting-groups.subtitle', 'See grouped alerts with active notifications');
+    case 'alert-alerts':
+      return t('nav.alerting-alerts.subtitle', 'Visualize active and pending alerts');
+    case 'alert-activity':
+      return t('nav.alerting-activity.subtitle', 'View alerts and active notifications');
     case 'alerts/recently-deleted':
       return t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules');
     case 'datasources':

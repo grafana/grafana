@@ -10,16 +10,19 @@ import { useCancelWizardModal } from './useCancelWizardModal';
 interface CancelButtonProps {
   /** Custom redirect URL when canceling */
   redirectUrl?: RelativeUrl;
+  /** Callback fired when the user confirms cancellation */
+  onCancel?: () => void;
 }
 
 /**
  * CancelButton - button to exit the wizard without completing
  */
-export function CancelButton({ redirectUrl = '/alerting/list' }: CancelButtonProps) {
+export function CancelButton({ redirectUrl = '/alerting/list', onCancel }: CancelButtonProps) {
   const { formState } = useFormContext();
   const [CancelModal, handleCancel] = useCancelWizardModal({
     redirectUrl,
     isDirty: formState.isDirty,
+    onCancel,
   });
 
   return (

@@ -12,14 +12,8 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DashboardCard } from './DashboardCard';
 import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  CREATION_ORIGINS,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-  SuggestedDashboardInteractions,
-} from './interactions';
+import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { SuggestedDashboardInteractions } from './interactions';
 import { GnetDashboard } from './types';
 import {
   getThumbnailUrl,

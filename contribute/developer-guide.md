@@ -172,7 +172,7 @@ You can build the back-end as follows:
 3. Build the Grafana binaries:
 
 ```
-go run build.go build
+make build
 ```
 
 The Grafana binaries will be installed in `bin\\windows-amd64`.
@@ -201,11 +201,7 @@ go test -v ./pkg/...
 
 #### On Windows
 
-Running the backend tests on Windows currently needs some tweaking, so use the `build.go` script:
-
-```
-go run build.go test
-```
+Running the backend tests on Windows currently needs some tweaking; use `make test-go-unit` or the test commands in the Makefile.
 
 ### Run SQLite, PostgreSQL and MySQL integration tests
 
@@ -242,6 +238,8 @@ make test-go-integration-postgres
   - Download the _playwright-html-<number>_ artifact.
   - Unzip.
   - Run `yarn playwright show-report <reportLocation>`
+
+- There are also a set of acceptance tests that can be run with `yarn e2e:acceptance`. These tests should run against a Grafana instance with the default configuration (e.g. no provisioned dashboards/datasources), and are used to verify our cloud/on-prem images are working as expected.
 
 If you are curious about other commands, you can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options).
 

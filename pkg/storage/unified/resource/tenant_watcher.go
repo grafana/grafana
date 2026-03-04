@@ -48,6 +48,8 @@ type TenantWatcherConfig struct {
 	Token string
 	// TokenExchangeURL is the URL used to exchange the system token for an access token.
 	TokenExchangeURL string
+	// CAFile is the path to a PEM-encoded CA certificate bundle for verifying the tenant API server.
+	CAFile string
 	// AllowInsecure skips TLS verification (for local dev).
 	AllowInsecure bool
 	// ResyncInterval is how often the informer re-lists all tenants.
@@ -73,6 +75,7 @@ func NewTenantWatcherConfig(cfg *setting.Cfg) *TenantWatcherConfig {
 		TenantAPIServerURL: strings.TrimSpace(cfg.TenantApiServerAddress),
 		Token:              strings.TrimSpace(grpcSection.Key("token").MustString("")),
 		TokenExchangeURL:   strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString("")),
+		CAFile:             strings.TrimSpace(cfg.TenantWatcherCAFile),
 		AllowInsecure:      cfg.TenantWatcherAllowInsecureTLS,
 		Log:                logger,
 	}
@@ -120,10 +123,9 @@ func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
 		BearerToken: tokenResp.Token,
 	}
 
-	if cfg.AllowInsecure {
-		restCfg.TLSClientConfig = rest.TLSClientConfig{
-			Insecure: true,
-		}
+	restCfg.TLSClientConfig = rest.TLSClientConfig{
+		CAFile:   cfg.CAFile,
+		Insecure: cfg.AllowInsecure && cfg.CAFile == "",
 	}
 
 	return restCfg, nil

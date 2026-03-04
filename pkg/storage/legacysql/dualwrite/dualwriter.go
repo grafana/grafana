@@ -371,11 +371,11 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 		// If errors are okay and unified is not primary, we can just run it as background operation.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
-			_, _, err := d.unified.Delete(ctxBg, name, deleteValidation, options)
-			if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
+			if _, _, err := d.unified.Delete(ctxBg, name, deleteValidation, options); err != nil && !apierrors.IsNotFound(err) {
 				log.Error("failed background DELETE in unified storage", "err", err)
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
+		return objFromLegacy, asyncLegacy, nil
 	}
 	// Otherwise we just run it in the foreground and return an error if any might happen.
 	_, _, err = d.unified.Delete(ctx, name, deleteValidation, options)

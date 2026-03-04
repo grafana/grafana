@@ -663,6 +663,7 @@ export interface VizLegendOptions {
   calcs: Array<string>;
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
+  limit?: number;
   placement: LegendPlacement;
   showLegend: boolean;
   sortBy?: string;

@@ -34,7 +34,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -672,6 +671,25 @@ func (h *provisioningTestHelper) WaitForQuotaReconciliation(t *testing.T, repoNa
 	}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should have reason %s", expectedReason)
 }
 
+// WaitForConditionReason waits for the repository's condition of the given type to match the expected reason.
+func (h *provisioningTestHelper) WaitForConditionReason(t *testing.T, repoName string, conditionType string, expectedReason string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := h.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := unstructuredToRepository(t, repoObj)
+		condition := findCondition(repo.Status.Conditions, conditionType)
+		if !assert.NotNil(collect, condition, "%s condition not found", conditionType) {
+			return
+		}
+
+		assert.Equal(collect, expectedReason, condition.Reason, "%s condition reason mismatch", conditionType)
+	}, waitTimeoutDefault, waitIntervalDefault, "%s condition should have reason %s", conditionType, expectedReason)
+}
+
 // RequireRepoDashboardCount performs a one-off check that the number of dashboards managed by the given repo matches the expected count.
 func (h *provisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
 	t.Helper()
@@ -715,6 +733,12 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
 }
 
+func withRepositoryTypes(types []string) grafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningRepositoryTypes = types
+	}
+}
+
 func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
 	provisioningPath := t.TempDir()
 	opts := testinfra.GrafanaOpts{
@@ -739,10 +763,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
-	}
-
-	if extensions.IsEnterprise {
-		opts.ProvisioningRepositoryTypes = []string{"local", "git", "github", "gitlab", "bitbucket"}
 	}
 
 	for _, o := range options {
