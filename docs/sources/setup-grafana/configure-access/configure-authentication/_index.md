@@ -96,7 +96,7 @@ You can set up the following parameters:
 
 - `token_rotation_interval_minutes`: Specifies the rotation interval of the token for active authenticated users.
 - `login_maximum_lifetime_duration`: Specifies for how long a user remains authenticated before being prompted to authenticate again.
-- `login_maximum_inactive_lifetime_duration`: Specifies for how long inactive authenticated users will remain logged in. 
+- `login_maximum_inactive_lifetime_duration`: Specifies for how long inactive authenticated users will remain logged in.
   - A user can close a Grafana window and return before `now + login_maximum_inactive_lifetime_duration` to continue their session.
 
 ### Force logout
@@ -104,7 +104,7 @@ You can set up the following parameters:
 Under certain circumstances you may require your users to re-authenticate before their session naturally expires. While Grafana doesn't offer Admin session revocation as standard functionality, you have the following workarounds if you need to force the logout of a user:
 
 - Delete the user's token `user_auth_token` from the database. This requires database access as is not available to Grafana Cloud customers.
-- Set `login_maximum_lifetime_duration` to 1 minute, wait for the logout to take effect (usually it's executed in under 10 minutes), then reset `login_maximum_lifetime_duration` to its usual value. 
+- Set `login_maximum_lifetime_duration` to 1 minute, wait for the logout to take effect (usually it's executed in under 10 minutes), then reset `login_maximum_lifetime_duration` to its usual value.
 
 Use cases include:
 
