@@ -151,10 +151,25 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 	}
 
 	bp, err := r.gh.GetBranchProtection(ctx, r.owner, r.repo, r.GetCurrentBranch())
-	if err != nil || bp == nil {
+	if err != nil {
+		// Failed to check branch protection - return error to user
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("spec", "github", "branch").String(),
+				Detail: fmt.Sprintf("failed to check branch protection for branch %q: %v", r.GetCurrentBranch(), err),
+			}},
+		}
+	}
+
+	// No branch protection configured - check passes
+	if bp == nil {
 		return nil
 	}
 
+	// Check if protection rules would block direct pushes
 	if reasons := bp.BlocksDirectPush(); len(reasons) > 0 {
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
