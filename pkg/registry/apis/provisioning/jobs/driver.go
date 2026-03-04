@@ -372,7 +372,7 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		ctx = logging.Context(ctx, logger)
 		span.SetAttributes(
 			attribute.String("job.connection", connName),
-			attribute.String("job.repository_type", string(r.Spec.Type)),
+			attribute.String("repository.type", string(r.Spec.Type)),
 		)
 
 		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
