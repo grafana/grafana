@@ -368,7 +368,7 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 
 		r := repo.Config()
 		connName := r.ConnectionName()
-		logger = logger.With("connection", connName, "repository_type", r.Spec.Type)
+		logger = logger.With("connection", connName, "repositoryType", r.Spec.Type)
 		ctx = logging.Context(ctx, logger)
 		span.SetAttributes(
 			attribute.String("job.connection", connName),
