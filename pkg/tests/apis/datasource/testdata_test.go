@@ -41,6 +41,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
 			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
+			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,   // enables health subresource
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
@@ -169,6 +170,19 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1, "expected a single connection")
 		require.Equal(t, "test", list.Items[0].GetName(), "with the test uid")
+
+		rsp, err := client.Get(ctx, "test", metav1.GetOptions{}, "health")
+		require.NoError(t, err)
+		body, err := rsp.MarshalJSON()
+		require.NoError(t, err)
+		require.JSONEq(t, `{
+			"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
+			"code": 1,
+			"kind": "HealthCheckResult",
+			"message": "Data source is working",
+			"status": "OK"
+		  }
+		`, string(body))
 
 		// Test connecting to non-JSON marshaled data
 		raw := apis.DoRequest[any](helper, apis.RequestParams{
