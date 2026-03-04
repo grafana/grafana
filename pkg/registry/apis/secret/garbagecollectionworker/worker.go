@@ -113,6 +113,7 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 
 		if len(counts) > 0 {
 			secureValueIDs := slices.Collect(maps.Keys(counts))
+			logging.FromContext(ctx).Info("deleting secure values that gc worker is unable to clean up after retrying", "secureValueIDs", secureValueIDs)
 			if err := w.secureValueMetadataStorage.DeleteByIds(ctx, secureValueIDs); err != nil {
 				return secureValues, errors.Join(append(errs, fmt.Errorf("deleting secure values by ids: %w", err))...)
 			}
