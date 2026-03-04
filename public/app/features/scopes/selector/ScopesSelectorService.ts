@@ -295,6 +295,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       // Recursively builds a TreeNode with pre-populated descendants from the
       // depth response. Works for any depth level, not just one.
+      const visited = new Set<string>();
       const buildTreeWithDescendants = (nodeId: string, existing?: TreeNode): TreeNode => {
         const base: TreeNode = existing ?? {
           expanded: false,
@@ -302,6 +303,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           query: '',
           children: undefined,
         };
+
+        if (visited.has(nodeId)) {
+          return base;
+        }
+        visited.add(nodeId);
 
         const nodeDescendants = childrenByParent.get(nodeId);
         if (!nodeDescendants || nodeDescendants.length === 0) {

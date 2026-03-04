@@ -2457,7 +2457,7 @@ describe('ScopesSelectorService', () => {
       expect(service.state.tree?.children?.['container']?.children?.['child-container']?.expanded).toBe(true);
     });
 
-    it('should handle multi-level depth recursively (depth=2)', async () => {
+    it('should recursively nest descendants from flat depth response', async () => {
       // Build a 4-level tree: root → L1 container → L2 container → L3 leaf
       const l1Container: ScopeNode = {
         metadata: { name: 'l1' },
