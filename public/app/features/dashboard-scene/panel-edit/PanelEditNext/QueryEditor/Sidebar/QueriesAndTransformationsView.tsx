@@ -7,11 +7,11 @@ import { PENDING_CARD_ID, QueryEditorType } from '../../constants';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { AddCardButton } from './AddCardButton';
+import { GhostSidebarCard } from './Cards/GhostSidebarCard';
 import { QueryCard } from './Cards/QueryCard';
 import { TransformationCard } from './Cards/TransformationCard';
 import { DraggableList } from './DraggableList/DraggableList';
 import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
-import { GhostSidebarCard } from './GhostSidebarCard';
 import { SidebarCollapsableHeader } from './SidebarCollapsableHeader';
 
 export function QueriesAndTransformationsView() {

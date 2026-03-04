@@ -1,6 +1,6 @@
 import { Icon } from '@grafana/ui';
 
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
+import { PENDING_CARD_ID, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../../QueryEditorContext';
 import { Transformation } from '../../types';
 
@@ -39,7 +39,7 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
         <CardTitle title={transformationName} isHidden={isHidden} />
       </SidebarCard>
       {pendingTransformation?.insertAfter === transformation.transformId && (
-        <GhostSidebarCard id="__pending_transformation__" type={QueryEditorType.Transformation} />
+        <GhostSidebarCard id={PENDING_CARD_ID.transformation} type={QueryEditorType.Transformation} />
       )}
     </>
   );

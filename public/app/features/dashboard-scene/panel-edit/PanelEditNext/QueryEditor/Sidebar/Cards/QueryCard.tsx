@@ -7,9 +7,9 @@ import { ActionItem } from '../../../Actions';
 import { PENDING_CARD_ID, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../../QueryEditorContext';
 import { getEditorType } from '../../utils';
-import { GhostSidebarCard } from '../GhostSidebarCard';
 
 import { CardTitle } from './CardTitle';
+import { GhostSidebarCard } from './GhostSidebarCard';
 import { SidebarCard } from './SidebarCard';
 
 export const QueryCard = ({ query }: { query: DataQuery }) => {
