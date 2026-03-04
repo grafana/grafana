@@ -81,9 +81,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     return null;
   }
 
-  const editActions = isSelectable
-    ? (close: () => void) => <EditActions variable={variable} onClickAction={close} />
-    : null;
+  const editActions = isSelectable ? <EditActions variable={variable} /> : null;
 
   // For switch variables in menu, we want to show the switch on the left and the label on the right
   if (inMenu && sceneUtils.isSwitchVariable(variable)) {
@@ -169,13 +167,13 @@ function VariableLabel({
   );
 }
 
-function EditActions({ variable, onClickAction }: { variable: SceneVariable; onClickAction: () => void }) {
+function EditActions({ variable, onClickAction }: { variable: SceneVariable; onClickAction?: () => void }) {
   const styles = useStyles2(getStyles);
 
   const onEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
     dashboard.state.editPane.selectObject(variable, variable.state.key!);
-    onClickAction();
+    onClickAction?.();
   }, [variable, onClickAction]);
 
   const onDeleteVariable = useCallback(() => {
@@ -183,7 +181,7 @@ function EditActions({ variable, onClickAction }: { variable: SceneVariable; onC
     if (set instanceof SceneVariableSet) {
       dashboardEditActions.removeVariable({ source: set, removedObject: variable });
     }
-    onClickAction();
+    onClickAction?.();
   }, [variable, onClickAction]);
 
   return (
@@ -209,16 +207,9 @@ function EditActions({ variable, onClickAction }: { variable: SceneVariable; onC
   );
 }
 
-function ActionsPopover({
-  content,
-  children,
-}: {
-  content: ((onClose: () => void) => React.ReactNode) | null;
-  children: React.JSX.Element;
-}) {
+function ActionsPopover({ content, children }: { content: React.ReactNode | null; children: React.JSX.Element }) {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
-  const onClose = useCallback(() => setIsOpen(false), []);
 
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
@@ -237,7 +228,7 @@ function ActionsPopover({
       {isOpen && content && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>
-            {content(onClose)}
+            {content}
           </div>
         </Portal>
       )}
