@@ -12,11 +12,13 @@ import {
   QueryEditorType,
   SIDEBAR_CARD_HEIGHT,
   SIDEBAR_CARD_INDENT,
+  SIDEBAR_CARD_SPACING,
   getQueryEditorColors,
 } from '../../constants';
 import { getEditorBorderColor } from '../utils';
 
 import { AddCardButton } from './AddCardButton';
+import { getGhostCardVisuals } from './SidebarCardGhostStyles';
 
 interface SidebarCardProps {
   children: React.ReactNode;
@@ -78,10 +80,10 @@ export const SidebarCard = ({
   if (variant === 'ghost') {
     const typeConfig = QUERY_EDITOR_TYPE_CONFIG[item.type];
     return (
-      <div className={styles.wrapper} aria-hidden>
+      <div className={cx(styles.wrapper, styles.ghostWrapper)} aria-hidden>
         <div className={cx(styles.card, styles.ghostCard)}>
           <div className={styles.cardContent}>
-            <Icon name={typeConfig.icon} color={typeConfig.color} size="sm" />
+            <Icon name={typeConfig.icon} size="sm" className={styles.ghostCardIcon} />
             <span className={styles.ghostCardLabel}>
               {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: typeConfig.getLabel() })}
             </span>
@@ -105,7 +107,7 @@ export const SidebarCard = ({
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
         aria-pressed={isSelected}
       >
-        <div className={cx(styles.cardContent, { [styles.hidden]: item.isHidden })}>{children}</div>
+        <div className={styles.cardContent}>{children}</div>
         {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
         {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
         {hasActions && (
@@ -146,6 +148,7 @@ function getStyles(
     item: ActionItem;
   }
 ) {
+  // TODO: I think we should refactor this so we aren't relying on this border color for the selected card.
   const borderColor = getEditorBorderColor({
     theme,
     editorType: item.type,
@@ -154,7 +157,20 @@ function getStyles(
   });
 
   const themeColors = getQueryEditorColors(theme);
-  const hoverBackgroundColor = isSelected ? themeColors.card.activeBg : themeColors.card.hoverBg;
+  const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
+  const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
+  const {
+    ghostBackgroundColor,
+    ghostBorderColor,
+    ghostAnimations,
+    ghostAnimationDelays,
+    ghostBlobStrong,
+    ghostBlobMedium,
+    ghostBlobSoft,
+    ghostBlobOpacity,
+    ghostIconColor,
+  } = getGhostCardVisuals(theme);
+
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -165,7 +181,8 @@ function getStyles(
     paddingRight: theme.spacing(1),
     // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
-    background: `linear-gradient(270deg, ${hoverBackgroundColor} 80%, transparent 100%)`,
+    borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
+    background: `linear-gradient(270deg, ${hoverBackgroundColor} 70%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
@@ -177,6 +194,10 @@ function getStyles(
     },
   });
 
+  const cardBorder = !!item.error
+    ? `1px solid color-mix(in srgb, ${QUERY_EDITOR_COLORS.error} 50%, transparent)`
+    : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
+
   return {
     cardContentIcons: css({
       display: 'flex',
@@ -187,7 +208,8 @@ function getStyles(
     }),
     wrapper: css({
       position: 'relative',
-      marginInlineStart: theme.spacing(SIDEBAR_CARD_INDENT),
+      marginLeft: theme.spacing(SIDEBAR_CARD_INDENT),
+      marginRight: theme.spacing(SIDEBAR_CARD_INDENT),
 
       // Two slim pseudo-element strips extend the hover zone to the left and
       // below the card, covering the path to the "+" button without overlapping
@@ -222,22 +244,50 @@ function getStyles(
         pointerEvents: 'auto',
       },
     }),
+    ghostWrapper: css({
+      marginTop: theme.spacing(SIDEBAR_CARD_SPACING),
+    }),
 
     card: css({
       position: 'relative',
-      minHeight: `${SIDEBAR_CARD_HEIGHT}px`,
+      minHeight: SIDEBAR_CARD_HEIGHT,
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+
       width: '100%',
-      background: isSelected ? themeColors.card.activeBg : 'none',
-      borderLeft: `${isSelected ? 3 : 1}px solid ${borderColor}`,
+      background: isSelected ? selectedBg : themeColors.card.bg,
+      borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
 
-      // This transitions the background color of the card when it is hovered.
+      overflow: 'hidden',
+      border: cardBorder,
+      boxShadow: isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: isSelected ? 3 : 2,
+        background: borderColor,
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create(['width'], {
+            duration: theme.transitions.duration.standard,
+          }),
+        },
+      },
+
+      ...(item.isHidden && {
+        opacity: theme.isDark ? 0.6 : 0.7,
+        filter: 'grayscale(0.8)',
+        boxShadow: 'none',
+      }),
+
+      // This transitions the background color of the card when it is hovered or selected.
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color'], {
+        transition: theme.transitions.create(['background-color', 'box-shadow', 'opacity', 'filter'], {
           duration: theme.transitions.duration.standard,
         }),
       },
@@ -265,7 +315,7 @@ function getStyles(
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: theme.spacing(0.5, 1),
+      padding: theme.spacing(0.5, 1, 0.5, 1.25),
       overflow: 'hidden',
       minWidth: 0,
       flex: 1,
@@ -277,16 +327,41 @@ function getStyles(
       },
     }),
 
-    hidden: css({
-      opacity: 0.7,
-    }),
-
     ghostCard: css({
-      border: `1px dashed ${borderColor}`,
-      borderLeft: `3px solid ${borderColor}`,
-      background: 'transparent',
+      border: `1px solid ${ghostBorderColor}`,
+      background: ghostBackgroundColor,
       cursor: 'default',
-      opacity: 0.7,
+      opacity: 1,
+      '&::before': {
+        display: 'block',
+        width: 2,
+        background: borderColor,
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: '-15%',
+        pointerEvents: 'none',
+        backgroundImage: [
+          `radial-gradient(ellipse 42% 32% at 12% 28%, ${ghostBlobStrong}, transparent)`,
+          `radial-gradient(ellipse 34% 26% at 84% 18%, ${ghostBlobMedium}, transparent)`,
+          `radial-gradient(ellipse 30% 38% at 44% 82%, ${ghostBlobSoft}, transparent)`,
+        ].join(', '),
+        backgroundRepeat: 'no-repeat',
+        filter: 'blur(7px)',
+        opacity: ghostBlobOpacity,
+        [theme.transitions.handleMotion('no-preference')]: {
+          animation: ghostAnimations,
+          animationDelay: ghostAnimationDelays,
+        },
+      },
+      '& > div': {
+        position: 'relative',
+        zIndex: 1,
+      },
+    }),
+    ghostCardIcon: css({
+      color: ghostIconColor,
     }),
 
     ghostCardLabel: css({
@@ -296,10 +371,6 @@ function getStyles(
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-    }),
-
-    errorIcon: css({
-      paddingRight: theme.spacing(1),
     }),
   };
 }
