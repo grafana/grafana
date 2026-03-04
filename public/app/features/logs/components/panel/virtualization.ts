@@ -275,6 +275,28 @@ export function getLogLineSize(
   { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap }: DisplayOptions,
   index: number
 ) {
+  const height = getLogLineSize2(
+    virtualization,
+    logs,
+    container,
+    displayedFields,
+    { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap },
+    index
+  );
+
+  //console.log(index, height);
+
+  return height;
+}
+
+export function getLogLineSize2(
+  virtualization: LogLineVirtualization,
+  logs: LogListModel[],
+  container: HTMLDivElement | null,
+  displayedFields: string[],
+  { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap }: DisplayOptions,
+  index: number
+) {
   if (!container) {
     return 0;
   }
@@ -340,20 +362,7 @@ export interface LogFieldDimension {
   width: number;
 }
 
-export function getLogLineDOMHeight(
-  virtualization: LogLineVirtualization,
-  element: HTMLDivElement,
-  calculatedHeight?: number
-): number | null {
-  /**
-   * Extreme edge case: inline log details is open, the element is outside the viewport and will be removed
-   * from the DOM, so we can't relly on it's measurement.
-   * Possibly related with node reuse by react window or timing of useLayoutEffect.
-   */
-  if (element.querySelector('.log-line-inline-details') && element.scrollHeight < 100) {
-    return null;
-  }
-
+export function getLogLineDOMHeight(element: HTMLDivElement, calculatedHeight?: number): number | null {
   // Line overflows or is smaller than container
   let measuredHeight = element.scrollHeight;
   const height = calculatedHeight ?? element.scrollHeight;
