@@ -903,7 +903,7 @@
       "title-failed-to-fetch-contact-points": "連絡先の取得に失敗しました"
     },
     "contact-points": {
-      "create": "コンタクトポイントを作成",
+      "create": "",
       "custom-template-value": "カスタムテンプレート値",
       "delete-reasons": {
         "heading": "次の理由により、コンタクトポイントを削除できません。",
@@ -2096,7 +2096,9 @@
       "select-namespace": "名前空間を選択"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "アラートルール",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "最近削除",
@@ -2120,7 +2122,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "時間間隔を追加"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2166,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,14 +2174,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "連絡先で検索",
@@ -2241,7 +2244,7 @@
       "title-failed-to-fetch-notification-templates": "通知テンプレートの取得に失敗しました"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "通知テンプレートグループを追加",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "通知テンプレートを作成して通知をカスタマイズできます。"
     },
     "notifications-list": {
@@ -2268,6 +2271,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2291,15 +2295,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "ラベルを追加すると、記録ルールをより適切に管理できます。",
@@ -2320,8 +2324,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "現在アラートが発生しているものを確認し、履歴データを調べて現在または過去の問題を調査します。",
-        "title": "アラート"
+        "subtitle": "現在アラートが発生しているものを確認し、履歴データを調べて現在または過去の問題を調査します。"
       }
     },
     "panel-alert-tab-content": {
@@ -3246,6 +3249,7 @@
     },
     "template-form": {
       "aria-label-template-form": "テンプレートフォーム",
+      "body-legacy": "",
       "label-examples-documentation": "サンプルドキュメント",
       "label-template-group": "テンプレートグループ",
       "label-template-group-name": "テンプレートグループ名",
@@ -3254,6 +3258,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "テンプレートグループに名前を付けてください",
       "title-error-saving-template": "テンプレート保存中のエラー",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "テンプレートチートシート"
     },
     "template-preview": {
@@ -3294,6 +3299,8 @@
       "help": {
         "intro": "通知テンプレートは、Goテンプレート言語を使用して通知メッセージを作成します。\n\nGrafanaでは、テンプレートグループは{{ define \"<NAME>\" }}を使用して複数の通知テンプレートを定義できます。\nこれらのテンプレートは、コンタクトポイントや他の通知テンプレート内で{{ template \"<NAME>\" }}を呼び出すことで使用できます。\n通知テンプレートの詳細については、ドキュメントを参照してください。"
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "誤って構成されています",
       "misconfigured-warning": "このテンプレートは誤って構成されています。",
       "misconfigured-warning-details": "テンプレートは、Alertmanager設定の<2></2>と<5></5>セクションの両方で定義する必要があります。"
@@ -3332,7 +3339,7 @@
       "stop-alerting-when": "次の場合、アラート（または保留状態）を停止する"
     },
     "time-interval": {
-      "add-time-interval": "時間間隔を追加",
+      "add-time-interval": "",
       "save": "時間間隔を保存",
       "saving": "時間間隔を保存中"
     },
@@ -3404,7 +3411,14 @@
         "title": "ルールが見つかりません"
       },
       "rules-with-firing-instances": "発生中のインスタンスがあるアラートルール",
-      "rules-with-pending-instances": "保留中のインスタンスがあるアラートルール"
+      "rules-with-pending-instances": "保留中のインスタンスがあるアラートルール",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "式を追加"
@@ -4159,6 +4173,15 @@
       "clear": "検索とフィルタをクリア",
       "text": "クエリに一致する結果が見つかりませんでした。"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "履歴をクリア",
       "error": "最近表示したダッシュボードを読み込めませんでした。",
@@ -4827,6 +4850,10 @@
       "view-json-diff": "JSON diffを表示してすべての変更を確認する"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "新規追加",
     "alert": {
@@ -5028,7 +5055,7 @@
     "canvas-actions": {
       "add-panel": "パネルを追加",
       "disabled-child-contains-tabs": "行にすでにタブが含まれているため、タブに変更できません",
-      "disabled-nested-grouping": "グループ化は2つのレベルまでに制限されています",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "タブは他のタブ内にネストすることはできません",
       "group-into-row": "行にグループ化",
       "group-into-tab": "タブにグループ化",
@@ -6563,6 +6590,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "ダッシュボードの削除に失敗しました",
       "cancel-action": "キャンセル",
@@ -6818,10 +6851,10 @@
       "title-delete-all-transformations": "すべての変換を削除しますか？"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "テーブル表示を切り替え",
-      "table-view-label-table-view": "テーブル表示"
+      "table-view-label-table-view": "テーブル表示",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6866,6 +6899,16 @@
     },
     "query-editor": {
       "query": "クエリ"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "名前付きキャプチャグループを使用すると、表示テキストと値を分けることができます（<1>例を参照</1>）。",
@@ -6989,6 +7032,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "アラート対応データソースへのクエリが見つからないため、このパネルからアラートを作成できません。",
+      "disabled-tooltip": "",
       "new-alert-rule": "新しいアラートルール",
       "title-no-alerting-capable-query-found": "アラート対応クエリが見つかりません"
     },
@@ -7768,7 +7812,10 @@
     "pro-tip": "プロのヒント：{{proTip}} "
   },
   "entity-not-found": {
-    "description": "検索していますが、{{lowerCaseEntity}}が見つかりません。<4>ホーム</4>に戻るか、<7>コミュニティサイト</7>でヘルプを求めてみてください。</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -9392,11 +9439,13 @@
       },
       "legend": {
         "category": "凡例",
+        "description-limit": "",
         "description-values": "凡例に表示する値または計算を選択",
         "mode-options": {
           "label-list": "リスト",
           "label-table": "テーブル"
         },
+        "name-limit": "",
         "name-mode": "モード",
         "name-placement": "配置",
         "name-values": "値",
@@ -10325,6 +10374,11 @@
     "subtitle": "GrafanaのLDAP統合により、GrafanaユーザーはLDAP認証情報を使用してログインできます。詳細については、<2><1>ドキュメント</1></2>をご覧ください。",
     "title": "基本設定"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "この名前のライブラリパネルは既に存在します",
@@ -10914,7 +10968,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "オプションが見つかりません"
@@ -11191,9 +11247,17 @@
       "subtitle": "システムの問題が発生した直後にその内容を確認",
       "title": "アラート"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Alertmanager構成を管理し、Grafana管理のアラートの受信を有効にします",
       "title": "設定"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "アラートがコンタクトポイントにどのようにルーティングされるかを決定します",
@@ -11856,8 +11920,6 @@
       "tooltip-delete": "削除"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "一部の提案を読み込めませんでした"
       },
@@ -12314,6 +12376,11 @@
       "text-loading-teams": "チームを読み込み中..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "変更内容を説明するメモを追加（任意）",
@@ -12321,13 +12388,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "ブランチ",
       "label-comment": "コメント",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "パス",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "最新のブランチ",
       "suffix-new-branch": "",
@@ -12438,6 +12510,8 @@
       "instance-fully-managed-tooltip": "このインスタンスは完全に管理されているため、設定は無効です"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12576,6 +12650,20 @@
       "label-generate-dashboard-previews": "ダッシュボードプレビューを生成",
       "label-read-only": "読み出しのみ",
       "label-sync-interval": "同期間隔 (秒)"
+    },
+    "fix-folder-metadata": {
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -12716,6 +12804,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13222,6 +13312,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13311,12 +13402,14 @@
       "card-click": "カード{{id}}を選択",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
       "transformations": "変換",
       "view-toggle": "",
       "alerts_other": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -14261,6 +14354,11 @@
           "settings": "設定"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "外部グループ同期"
@@ -14317,6 +14415,19 @@
       "loading-teams": "チームを読み込み中...",
       "new-team": "新しいチーム",
       "placeholder-search-teams": "チームを検索"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "これはオプションで、主にチームプロフィールのアバター設定（Gravatarサービス経由）に使用されます",
@@ -14548,6 +14659,12 @@
     "name-show-matches-only": "一致するもののみを表示",
     "traces-panel": {
       "no-data-found-in-response": "応答にデータが見つかりません"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

@@ -168,6 +168,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				}
 			}
 
+			// Verify default values
 			if extensions.IsEnterprise {
 				assert.ElementsMatch(collect, []provisioning.RepositoryType{
 					provisioning.LocalRepositoryType,
@@ -239,6 +240,49 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			}, stats)
 		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})
+}
+
+func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	var helper *provisioningTestHelper
+	// Changing the repository types to check if users can override the default values
+	if !extensions.IsEnterprise {
+		helper = runGrafana(t, withRepositoryTypes([]string{"local", "github"}))
+	} else {
+		helper = runGrafana(t, withRepositoryTypes([]string{"local", "git", "github", "bitbucket"}))
+	}
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		settings := &provisioning.RepositoryViewList{}
+		rsp := helper.ViewerREST.Get().
+			Namespace("default").
+			Suffix("settings").
+			Do(context.Background())
+		if !assert.NoError(collect, rsp.Error()) {
+			return
+		}
+
+		err := rsp.Into(settings)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		// Verify default values
+		if extensions.IsEnterprise {
+			assert.ElementsMatch(collect, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitRepositoryType,
+				provisioning.GitHubRepositoryType,
+				provisioning.BitbucketRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		} else {
+			assert.ElementsMatch(collect, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		}
+	}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 }
 
 func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
@@ -809,6 +853,65 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 		require.Empty(t, repo.Spec.Workflows, "repository should have no workflows (read-only)")
 		require.Nil(t, repo.Status.Webhook, "read-only repository should not have a webhook")
 	})
+}
+
+func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	repoName := "webhook-unhealthy-test"
+	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+	require.NoError(t, os.MkdirAll(repoPath, 0o750))
+
+	helper.CreateRepo(t, TestRepo{
+		Name:                   repoName,
+		Path:                   repoPath,
+		Target:                 "folder",
+		SkipResourceAssertions: true,
+	})
+	helper.WaitForHealthyRepository(t, repoName)
+
+	// Make the repository unhealthy by removing its backing directory.
+	require.NoError(t, os.RemoveAll(repoPath))
+
+	// Trigger reconciliation so the controller detects the missing directory.
+	latestObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+	require.NoError(t, err)
+	updated := latestObj.DeepCopy()
+	updated.Object["spec"].(map[string]any)["title"] = "Webhook Unhealthy Test (updated)"
+	_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Wait for the controller to mark the repository unhealthy.
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories("default")
+
+	require.Eventually(t, func() bool {
+		repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		if err != nil {
+			return false
+		}
+		return repo.Status.ObservedGeneration == repo.Generation &&
+			repo.Status.Health.Checked > 0 &&
+			!repo.Status.Health.Healthy
+	}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
+
+	// POST to the webhook subresource — should return 424 because the repository is unhealthy.
+	var statusCode int
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("webhook").
+		SetHeader("Content-Type", "application/json").
+		Do(ctx).StatusCode(&statusCode)
+
+	require.Error(t, result.Error(), "webhook request should be rejected for unhealthy repository")
+	require.Equal(t, http.StatusFailedDependency, statusCode, "should return 424 Failed Dependency for unhealthy repository")
 }
 
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {

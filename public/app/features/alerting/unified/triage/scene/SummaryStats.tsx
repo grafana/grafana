@@ -1,15 +1,18 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { DataFrameView, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
 import { Box, Button, Divider, ErrorBoundaryAlert, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { FIELD_NAMES } from '../constants';
+
 import { AllLabelsDrawer } from './AllLabelsDrawer';
 import { LabelBadgeCounts } from './BadgeCounts';
+import { normalizeFrame } from './dataTransform';
 import { summaryInstanceCountQuery, summaryRuleCountQuery } from './queries';
 import { type LabelStats, useLabelsBreakdown } from './useLabelsBreakdown';
 import { addOrReplaceFilter, useQueryFilter } from './utils';
@@ -18,27 +21,21 @@ const PREVIEW_LABEL_COUNT = 5;
 
 type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
 
-interface Frame {
-  alertstate: AlertState;
-  Value: number;
-}
+export function countRules(ruleFrame: DataFrame) {
+  const ruleUIDField = ruleFrame.fields.find((f) => f.name === FIELD_NAMES.grafanaRuleUID);
+  const alertstateField = ruleFrame.fields.find((f) => f.name === FIELD_NAMES.alertstate);
 
-export interface RuleFrame {
-  alertstate: AlertState;
-  alertname: string;
-  grafana_folder: string;
-  grafana_rule_uid: string;
-  Value: number;
-}
+  if (!ruleUIDField || !alertstateField) {
+    return { firing: 0, pending: 0 };
+  }
 
-export function countRules(ruleDfv: DataFrameView<RuleFrame>) {
   const counts = {
     [PromAlertingRuleState.Firing]: new Set<string>(),
     [PromAlertingRuleState.Pending]: new Set<string>(),
   };
 
-  ruleDfv.fields.grafana_rule_uid.values.forEach((ruleUID, i) => {
-    const alertstate = ruleDfv.fields.alertstate.values[i];
+  ruleUIDField.values.forEach((ruleUID: string, i: number) => {
+    const alertstate: AlertState = alertstateField.values[i];
     counts[alertstate]?.add(ruleUID);
   });
 
@@ -48,10 +45,18 @@ export function countRules(ruleDfv: DataFrameView<RuleFrame>) {
   };
 }
 
-function countInstances(instanceDfv: DataFrameView<Frame>) {
+export function countInstances(instanceFrame: DataFrame) {
+  const frame = normalizeFrame(instanceFrame);
+  const alertstateField = frame.fields.find((f) => f.name === FIELD_NAMES.alertstate);
+  const valueField = frame.fields.find((f) => f.name === FIELD_NAMES.value);
+
+  if (!alertstateField || !valueField) {
+    return { firing: 0, pending: 0 };
+  }
+
   const getValue = (state: AlertState) => {
-    const index = instanceDfv.fields.alertstate.values.findIndex((s) => s === state);
-    return instanceDfv.fields.Value.values[index] ?? 0;
+    const index = alertstateField.values.findIndex((s: string) => s === state);
+    return valueField.values[index] ?? 0;
   };
   return { firing: getValue(PromAlertingRuleState.Firing), pending: getValue(PromAlertingRuleState.Pending) };
 }
@@ -204,15 +209,12 @@ function SummaryStatsContent() {
     return <div />;
   }
 
-  const instanceDfv = new DataFrameView<Frame>(instanceFrame);
-  const ruleDfv = new DataFrameView<RuleFrame>(ruleFrame);
-
-  if (instanceDfv.length === 0 && ruleDfv.length === 0) {
+  if (instanceFrame.length === 0 && ruleFrame.length === 0) {
     return <div />;
   }
 
-  const instances = countInstances(instanceDfv);
-  const rules = countRules(ruleDfv);
+  const instances = countInstances(instanceFrame);
+  const rules = countRules(ruleFrame);
   const hasFiring = instances.firing > 0 || rules.firing > 0;
   const hasPending = instances.pending > 0 || rules.pending > 0;
 

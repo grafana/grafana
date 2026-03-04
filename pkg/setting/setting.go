@@ -106,6 +106,7 @@ type Cfg struct {
 	ServeFromSubPath  bool
 	StaticRootPath    string
 	Protocol          Scheme
+	ServeOnSocket     bool
 	SocketGid         int
 	SocketMode        int
 	SocketPath        string
@@ -567,6 +568,9 @@ type Cfg struct {
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
 
+	// DatabaseRegisterDeprecatedMetrics decides whether to register the deprecated `grafana_database_conn_*` and `go_sql_stats_*` metrics.
+	DatabaseRegisterDeprecatedMetrics bool
+
 	// Public dashboards
 	PublicDashboardsEnabled bool
 
@@ -605,7 +609,7 @@ type Cfg struct {
 	// DisableDataMigrations will disable resources data migration to unified storage at startup
 	DisableDataMigrations bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
-	// Larger values reduce lock contention. Default: 50000 (50MB).
+	// Larger values reduce lock contention. Default: 1000000 (~1GB).
 	MigrationCacheSizeKB int
 	// MigrationParquetBuffer enables bulk migration data through a temporary Parquet file.
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
@@ -641,6 +645,7 @@ type Cfg struct {
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
+	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
@@ -650,14 +655,20 @@ type Cfg struct {
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
 	EnableGarbageCollection                    bool
+	GarbageCollectionDryRun                    bool
 	GarbageCollectionInterval                  time.Duration
 	GarbageCollectionBatchSize                 int
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
+
+	EventRetentionPeriod time.Duration
+	EventPruningInterval time.Duration
+
 	// SimulatedNetworkLatency is used for testing only
 	SimulatedNetworkLatency       time.Duration
 	TenantApiServerAddress        string
 	TenantWatcherAllowInsecureTLS bool
+	TenantWatcherCAFile           string
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -1493,6 +1504,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
+	cfg.DatabaseRegisterDeprecatedMetrics = databaseSection.Key("register_deprecated_metrics").MustBool(true)
 
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
@@ -2002,6 +2014,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	protocolStr := valueAsString(server, "protocol", "http")
 
+	cfg.ServeOnSocket = server.Key("serve_on_socket").MustBool(false)
+	if cfg.ServeOnSocket && (protocolStr == "http" || protocolStr == "https" || protocolStr == "h2") {
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+	}
+
 	switch protocolStr {
 	case "https":
 		cfg.Protocol = HTTPSScheme
@@ -2198,7 +2217,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 		}
 	}
 
-	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", "git|github|local"))
+	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", ""))
 	if repositoryTypes != "|" && repositoryTypes != "" {
 		cfg.ProvisioningRepositoryTypes = strings.Split(repositoryTypes, "|")
 		for i, s := range cfg.ProvisioningRepositoryTypes {

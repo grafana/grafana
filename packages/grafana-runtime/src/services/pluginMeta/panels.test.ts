@@ -4,6 +4,7 @@ import { BackendSrv, setBackendSrv } from '../backendSrv';
 
 import {
   getListedPanelPluginIds,
+  getListedPanelPluginMetas,
   getPanelPluginMeta,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
@@ -43,6 +44,13 @@ describe('when useMTPlugins flag is enabled', () => {
 
     it('getPanelPluginMetas should call initPluginMetas and return correct result', async () => {
       const panels = await getPanelPluginMetas();
+
+      expect(panels).toEqual([]);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('getListedPanelPluginMetas should call initPluginMetas and return correct result', async () => {
+      const panels = await getListedPanelPluginMetas();
 
       expect(panels).toEqual([]);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
@@ -94,6 +102,18 @@ describe('when useMTPlugins flag is enabled', () => {
       const panels = await getPanelPluginMetas();
 
       expect(panels).toEqual([panel]);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getListedPanelPluginMetas should not call initPluginMetas and return correct result', async () => {
+      setPanelPluginMetas({
+        'grafana-test-panel': panel,
+        'grafana-hidden-panel': { ...panel, id: 'grafana-hidden-panel', hideFromList: true },
+        'grafana-sorted-first-panel': { ...panel, id: 'grafana-sorted-first-panel', sort: 10 },
+      });
+      const panels = await getListedPanelPluginMetas();
+
+      expect(panels).toEqual([{ ...panel, id: 'grafana-sorted-first-panel', sort: 10 }, panel]);
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
@@ -262,6 +282,13 @@ describe('when useMTPlugins flag is disabled', () => {
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
+    it('getListedPanelPluginMetas should not call initPluginMetas and return correct result', async () => {
+      const panels = await getListedPanelPluginMetas();
+
+      expect(panels).toEqual([]);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
     it('getPanelPluginMetasMap should not call initPluginMetas and return correct result', async () => {
       const panels = await getPanelPluginMetasMap();
 
@@ -308,6 +335,18 @@ describe('when useMTPlugins flag is disabled', () => {
       const panels = await getPanelPluginMetas();
 
       expect(panels).toEqual([panel]);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getListedPanelPluginMetas should not call initPluginMetas and return correct result', async () => {
+      setPanelPluginMetas({
+        'grafana-test-panel': panel,
+        'grafana-hidden-panel': { ...panel, id: 'grafana-hidden-panel', hideFromList: true },
+        'grafana-sorted-first-panel': { ...panel, id: 'grafana-sorted-first-panel', sort: 10 },
+      });
+      const panels = await getListedPanelPluginMetas();
+
+      expect(panels).toEqual([{ ...panel, id: 'grafana-sorted-first-panel', sort: 10 }, panel]);
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
