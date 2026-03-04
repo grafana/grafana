@@ -2123,7 +2123,9 @@
       "select-namespace": "Vyberte jmenný prostor"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Pravidla výstrah",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Nedávno odstraněné",
@@ -2349,8 +2351,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Podívejte se na aktuální výstrahy a historická data, abyste prozkoumali aktuální nebo minulé problémy.",
-        "title": "Výstrahy"
+        "subtitle": "Podívejte se na aktuální výstrahy a historická data, abyste prozkoumali aktuální nebo minulé problémy."
       }
     },
     "panel-alert-tab-content": {
@@ -6925,10 +6926,10 @@
       "title-delete-all-transformations": "Odstranit všechny transformace?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Přepnout zobrazení tabulky",
-      "table-view-label-table-view": "Zobrazení tabulky"
+      "table-view-label-table-view": "Zobrazení tabulky",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6973,6 +6974,16 @@
     },
     "query-editor": {
       "query": "Dotaz"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Pojmenované skupiny zachycení lze použít k oddělení zobrazovaného textu a hodnoty (<1>viz příklady</1>).",
@@ -7099,6 +7110,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Nelze vytvořit výstrahy z tohoto panelu, protože nebyl nalezen žádný dotaz na zdroj dat, který by spustil upozorňování.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Nové pravidlo výstrahy",
       "title-no-alerting-capable-query-found": "Nebyl nalezen žádný dotaz, který by spustil upozorňování"
     },
@@ -9544,11 +9556,13 @@
       },
       "legend": {
         "category": "Legenda",
+        "description-limit": "",
         "description-values": "Vyberte hodnoty nebo výpočty, které chcete zobrazit v legendě",
         "mode-options": {
           "label-list": "Seznam",
           "label-table": "Tabulka"
         },
+        "name-limit": "",
         "name-mode": "Režim",
         "name-placement": "Umístění",
         "name-values": "Hodnoty",
@@ -10483,6 +10497,11 @@
     "subtitle": "Integrace LDAP v Grafaně umožňuje uživatelům Grafany přihlásit se pomocí svých přihlašovacích údajů LDAP. Další informace najdete v naší <2><1>dokumentaci</1></2>.",
     "title": "Základní nastavení"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Panel knihovny s tímto názvem už existuje",
@@ -11369,9 +11388,17 @@
       "subtitle": "Zjistěte víc o problémech v systému, jakmile k nim dojde",
       "title": "Výstrahy"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Spravovat konfigurace správce výstrah a povolit příjem výstrah spravovaných Grafanou",
       "title": "Nastavení"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Určete způsob přesměrování výstrah do kontaktních bodů",
@@ -12511,13 +12538,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Větev",
       "label-comment": "Komentář",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Cesta",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Poslední větev",
       "suffix-new-branch": "",
@@ -12637,6 +12669,8 @@
       "instance-fully-managed-tooltip": "Konfigurace je zakázána, protože tato instance je plně spravována"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12780,10 +12814,18 @@
       "label-sync-interval": "Interval synchronizace (sekundy)"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13531,6 +13573,7 @@
       "card-click": "Vybrat kartu {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
       "transformations": "Transformace",
@@ -14808,6 +14851,12 @@
     "name-show-matches-only": "Zobrazit pouze shody",
     "traces-panel": {
       "no-data-found-in-response": "V odpovědi nebyla nalezena žádná data"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

@@ -11,6 +11,7 @@ import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
 import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
+import { LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
@@ -29,9 +30,9 @@ export type LogLineDetailsMode = 'inline' | 'sidebar';
 
 export const LogLineDetails = memo(
   ({ containerElement, focusLogLine, logs, timeRange, timeZone, showControls, showFieldSelector }: Props) => {
-    const { noInteractions, logOptionsStorageKey } = useLogListContext();
+    const { noInteractions, fontSize, logOptionsStorageKey } = useLogListContext();
     const { detailsWidth, setDetailsWidth } = useLogDetailsContext();
-    const styles = useStyles2(getStyles, 'sidebar', showControls);
+    const styles = useStyles2(getStyles, 'sidebar', showControls, fontSize);
     const dragStyles = useStyles2(getDragStyles);
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -76,10 +77,10 @@ LogLineDetails.displayName = 'LogLineDetails';
 
 const LogLineDetailsTabs = memo(
   ({ focusLogLine, logs, timeRange, timeZone }: Pick<Props, 'focusLogLine' | 'logs' | 'timeRange' | 'timeZone'>) => {
-    const { app, noInteractions, wrapLogMessage } = useLogListContext();
+    const { app, fontSize, noInteractions, wrapLogMessage } = useLogListContext();
     const { currentLog, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
 
-    const styles = useStyles2(getStyles, 'sidebar');
+    const styles = useStyles2(getStyles, 'sidebar', undefined, fontSize);
 
     useEffect(() => {
       // When wrapping is enabled and details is in sidebar mode, the logs panel width changes and the
@@ -154,9 +155,9 @@ export interface InlineLogLineDetailsProps {
 }
 
 export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
-  const { app, noInteractions } = useLogListContext();
+  const { app, fontSize, noInteractions } = useLogListContext();
   const { detailsWidth } = useLogDetailsContext();
-  const styles = useStyles2(getStyles, 'inline');
+  const styles = useStyles2(getStyles, 'inline', undefined, fontSize);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -198,7 +199,12 @@ InlineLogLineDetails.displayName = 'InlineLogLineDetails';
 
 export const LOG_LINE_DETAILS_HEIGHT = 45;
 
-const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, showControls?: boolean) => ({
+const getStyles = (
+  theme: GrafanaTheme2,
+  mode: LogLineDetailsMode,
+  showControls: boolean | undefined,
+  fontSize: LogListFontSize
+) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
     height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
@@ -211,6 +217,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, showControls?
     borderRadius: theme.shape.radius.default,
     height: '100%',
     overflow: 'auto',
+    fontSize: fontSize === 'small' ? theme.typography.bodySmall.fontSize : undefined,
+    lineHeight: fontSize === 'small' ? theme.typography.bodySmall.lineHeight : undefined,
   }),
   container: css({
     backgroundColor: theme.colors.background.elevated,
@@ -221,6 +229,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, showControls?
     boxShadow: theme.shadows.z3,
     height: '100%',
     overflow: 'auto',
+    fontSize: fontSize === 'small' ? theme.typography.bodySmall.fontSize : undefined,
+    lineHeight: fontSize === 'small' ? theme.typography.bodySmall.lineHeight : undefined,
   }),
   scrollContainer: css({
     overflow: 'auto',

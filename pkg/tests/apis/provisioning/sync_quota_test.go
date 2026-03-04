@@ -22,10 +22,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("out of limit repo works fine with deletions", func(t *testing.T) {
-		// Set a limit and create repo that exceeds it
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 2 resources, 1 folder and 1 dashboard
-		})
+		helper := runGrafana(t)
 
 		const repo = "quota-deletion-test-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -34,17 +31,23 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				// Adding 2 dashboards will exceed the limit of 1
 				"testdata/all-panels.json":   "dashboard1.json",
 				"testdata/text-options.json": "dashboard2.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
 		helper.CreateRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
-		// Wait for quota condition to be exceeded
+		// Verify both dashboards were created with no quota restriction
+		helper.RequireRepoDashboardCount(t, repo, 2)
+
+		// Lower the quota to put the repo over the limit:
+		// 1 folder + 2 dashboards = 3 resources, new limit 2 → exceeded
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.SyncAndWait(t, repo, nil)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Now delete one file to test that deletions work even when over quota
@@ -108,12 +111,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 	})
 
-	// Is only possible to set the first sync to exceed quota when the repo is created.
-	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
 	t.Run("on the limit repo blocks new resource creation on subsequent sync", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 1 resource
-		})
+		helper := runGrafana(t)
 
 		const repo = "quota-blocks-creation-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -122,7 +121,6 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				// Adding 2 dashboards will exceed the limit of 1
 				"testdata/all-panels.json":   "dashboard1.json",
 				"testdata/text-options.json": "dashboard2.json",
 			},
@@ -132,7 +130,14 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.CreateRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
-		// Wait for quota condition to be exceeded after initial sync
+		// Verify 2 dashboards were created with no quota restriction
+		helper.RequireRepoDashboardCount(t, repo, 2)
+
+		// Lower the quota to put the repo over the limit:
+		// 1 folder + 2 dashboards = 3 resources, new limit 2 → exceeded
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+		helper.TriggerRepositoryReconciliation(t, testRepo.Name)
+		helper.SyncAndWait(t, repo, nil)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Verify the repo is over quota using the quotas package
@@ -140,9 +145,6 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		require.NoError(t, err)
 		typedRepo := unstructuredToRepository(t, repoObj)
 		require.True(t, quotas.IsQuotaExceeded(typedRepo.Status.Conditions), "quota should be exceeded")
-
-		// Verify 2 dashboards were created by the initial sync (first sync always succeeds)
-		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Now add a 3rd dashboard - this should be blocked by quota on the next full sync
 		dashboard3Content := helper.LoadFile("testdata/timeline-demo.json")
@@ -376,12 +378,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
-	// Is it not possible to set the repo out of limit in this test.
-	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
 	t.Run("out of limit repo allows delete-only sync", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 3 // Only allow 3 resource
-		})
+		helper := runGrafana(t)
 
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -390,7 +388,6 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				// Adding 3 dashboards (plus 1 folder) will exceed the limit of 3
 				"testdata/all-panels.json":    "dashboard1.json",
 				"testdata/text-options.json":  "dashboard2.json",
 				"testdata/timeline-demo.json": "dashboard3.json",
@@ -401,11 +398,62 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.CreateRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
-		// Wait for quota condition to be exceeded after initial sync
+		// Verify 3 dashboards were created with no quota restriction
+		helper.RequireRepoDashboardCount(t, repo, 3)
+
+		// Lower the quota to put the repo over the limit:
+		// 1 folder + 3 dashboards = 4 resources, new limit 3 → exceeded
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
+		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.SyncAndWait(t, repo, nil)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
-		// Verify 3 dashboards were created by the initial sync
+		// Delete two dashboard files - deletion-only syncs are always allowed even when over quota
+		err := os.Remove(filepath.Join(repoPath, "dashboard3.json"))
+		require.NoError(t, err, "should be able to delete dashboard3.json")
+
+		// Trigger full sync - should succeed because it's a delete-only sync
+		helper.SyncAndWait(t, repo, nil)
+
+		// Verify the deletion succeeded - only 2 dashboards should remain
+		helper.RequireRepoDashboardCount(t, repo, 2)
+
+		// Repository is now on quota (2 dashboards + 1 folder = 3 = limit of 3)
+		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
+
+		// Verify pull status condition is successful after deletion sync (delete-only syncs succeed)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
+	})
+
+	t.Run("out of limit repo allows delete-only sync when result is still over quota", func(t *testing.T) {
+		helper := runGrafana(t)
+
+		const repo = "quota-net-change-repo"
+		repoPath := filepath.Join(helper.ProvisioningPath, repo)
+		testRepo := TestRepo{
+			Name:   repo,
+			Path:   repoPath,
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json":    "dashboard1.json",
+				"testdata/text-options.json":  "dashboard2.json",
+				"testdata/timeline-demo.json": "dashboard3.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		}
+		helper.CreateRepo(t, testRepo)
+		helper.SyncAndWait(t, repo, nil)
+
+		// Verify 3 dashboards were created with no quota restriction
 		helper.RequireRepoDashboardCount(t, repo, 3)
+
+		// Lower the quota to put the repo over the limit:
+		// 1 folder + 3 dashboards = 4 resources, new limit 1 → exceeded
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
+		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.SyncAndWait(t, repo, nil)
+		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Delete two dashboard files - deletion-only syncs are always allowed even when over quota
 		err := os.Remove(filepath.Join(repoPath, "dashboard3.json"))
@@ -418,7 +466,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		// Repository is still over quota (2 dashboards + 1 folder = 3 = limit of 3)
-		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
+		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
 		// Verify pull status condition is successful after deletion sync (delete-only syncs succeed)
 		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)

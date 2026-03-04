@@ -5452,11 +5452,13 @@
       "groupby": "GroupBy",
       "missing-adhoc": "No ad hoc filters available",
       "operator": "Operator",
+      "restore": "Restore default value",
       "search": {
         "aria-label": "Search filters",
         "placeholder": "Search..."
       },
       "title": "Edit filters",
+      "use-custom-value": "Use custom value",
       "value": "Value"
     },
     "gen-aihistory": {
@@ -10901,6 +10903,7 @@
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
     "name-show-controls": "Show controls",
+    "name-show-level": "Display log level",
     "name-time": "Show timestamps",
     "name-unique-labels": "Unique labels",
     "name-unwrapped-columns": "Enable columns for displayed fields",

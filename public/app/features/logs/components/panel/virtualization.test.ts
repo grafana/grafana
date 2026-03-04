@@ -282,7 +282,9 @@ describe('Virtualization', () => {
 
   describe('calculateFieldDimensions', () => {
     test('Measures displayed fields including the log line body', () => {
-      expect(virtualization.calculateFieldDimensions([log], ['place', LOG_LINE_BODY_FIELD_NAME], 'ms')).toEqual([
+      expect(
+        virtualization.calculateFieldDimensions([log], ['place', LOG_LINE_BODY_FIELD_NAME], 'ms', undefined, true)
+      ).toEqual([
         {
           field: 'timestamp',
           internal: true,
@@ -305,7 +307,7 @@ describe('Virtualization', () => {
     });
 
     test('Measures nanosecond timestamps', () => {
-      expect(virtualization.calculateFieldDimensions([log], [], 'ns')).toEqual([
+      expect(virtualization.calculateFieldDimensions([log], [], 'ns', undefined, true)).toEqual([
         {
           field: 'timestamp',
           internal: true,
@@ -320,13 +322,17 @@ describe('Virtualization', () => {
     });
 
     test('Skips timestamp if not passed', () => {
-      expect(virtualization.calculateFieldDimensions([log], [])).toEqual([
+      expect(virtualization.calculateFieldDimensions([log], [], undefined, undefined, true)).toEqual([
         {
           field: 'level',
           internal: true,
           width: 4,
         },
       ]);
+    });
+
+    test('Omits level dimension when showLevel is false', () => {
+      expect(virtualization.calculateFieldDimensions([log], [], undefined, undefined, false)).toEqual([]);
     });
   });
 
