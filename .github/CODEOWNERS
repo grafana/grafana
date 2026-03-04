@@ -69,6 +69,8 @@
 /.bra.toml @grafana/grafana-backend-group
 /.golangci.yml @grafana/grafana-backend-group
 /scripts/modowners/ @grafana/grafana-backend-services-squad
+/scripts/featureflag-analysis/ @grafana/grafana-backend-services-squad
+/.github/workflows/featureflag-migration-metrics.yml @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
 /hack/ @grafana/grafana-app-platform-squad

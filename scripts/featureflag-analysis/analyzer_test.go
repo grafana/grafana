@@ -4,9 +4,9 @@ import "testing"
 
 func TestClassify(t *testing.T) {
 	tests := []struct {
-		name                    string
+		name                       string
 		beOld, beNew, feOld, feNew bool
-		want                    migrationStatus
+		want                       migrationStatus
 	}{
 		// No usage
 		{"not used anywhere", false, false, false, false, statusNoUsage},
