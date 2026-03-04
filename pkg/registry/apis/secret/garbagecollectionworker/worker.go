@@ -106,7 +106,7 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 			return secureValues, errors.Join(append(errs, fmt.Errorf("incrementing gc retry count for secure values: %w", err))...)
 		}
 
-		// Remove secure values that haven't reached the max number of attemps yet
+		// Remove secure values that haven't reached the max number of attempts yet
 		maps.DeleteFunc(counts, func(id string, count int) bool {
 			return count < w.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue
 		})
