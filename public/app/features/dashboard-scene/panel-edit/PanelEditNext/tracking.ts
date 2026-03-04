@@ -37,6 +37,13 @@ export function trackAddQuery(querySource: 'saved_query' | 'new_query', cardSour
   });
 }
 
+export function trackOpenSavedQueryPicker(source: AddCardSource) {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'open_saved_query_picker',
+    source,
+  });
+}
+
 export function trackAddExpressionInitiated(source: AddCardSource) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'add_expression_initiated',
@@ -65,10 +72,13 @@ export function trackTransformationToolAction(action: 'toggle_help' | 'toggle_fi
   });
 }
 
-export function trackQueryMenuAction(action: 'duplicate' | 'toggle_datasource_help' | 'open_inspector') {
+export function trackQueryMenuAction(
+  action: 'duplicate' | 'toggle_datasource_help' | 'open_inspector',
+  itemType: QueryEditorType.Query | QueryEditorType.Expression
+) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action,
-    item_type: QueryEditorType.Query,
+    item_type: itemType,
   });
 }
 

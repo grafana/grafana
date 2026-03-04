@@ -48,7 +48,7 @@ export function QueryActionsMenu() {
             label={t('query-editor-next.action.duplicate', 'Duplicate {{type}}', { type: typeLabel })}
             icon="copy"
             onClick={() => {
-              trackQueryMenuAction('duplicate');
+              trackQueryMenuAction('duplicate', cardType);
               duplicateQuery(selectedQuery.refId);
             }}
           />
@@ -64,7 +64,7 @@ export function QueryActionsMenu() {
               }
               icon="question-circle"
               onClick={() => {
-                trackQueryMenuAction('toggle_datasource_help');
+                trackQueryMenuAction('toggle_datasource_help', cardType);
                 toggleDatasourceHelp();
               }}
               active={showingDatasourceHelp}
@@ -76,7 +76,7 @@ export function QueryActionsMenu() {
             label={t('query-editor-next.action.inspector', 'Query inspector')}
             icon="brackets-curly"
             onClick={() => {
-              trackQueryMenuAction('open_inspector');
+              trackQueryMenuAction('open_inspector', cardType);
               onOpenInspector();
             }}
           />

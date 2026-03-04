@@ -10,7 +10,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { trackAddExpressionInitiated, trackAddQuery, trackAddTransformationInitiated } from '../../tracking';
+import {
+  trackAddExpressionInitiated,
+  trackAddQuery,
+  trackAddTransformationInitiated,
+  trackOpenSavedQueryPicker,
+} from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 function getButtonAriaLabel(variant: 'query' | 'transformation', afterId?: string) {
@@ -81,10 +86,14 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
             label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
             icon="book-open"
             onClick={() => {
-              trackAddQuery('saved_query', afterId ? 'inline' : 'section_header');
+              const cardSource = afterId ? 'inline' : 'section_header';
+              trackOpenSavedQueryPicker(cardSource);
               setPendingSavedQuery({ insertAfter: afterId ?? '' });
               openDrawer({
-                onSelectQuery: (query) => addAndSelectQuery(query),
+                onSelectQuery: (query) => {
+                  trackAddQuery('saved_query', cardSource);
+                  addAndSelectQuery(query);
+                },
                 options: { context: CoreApp.PanelEditor },
               });
             }}
