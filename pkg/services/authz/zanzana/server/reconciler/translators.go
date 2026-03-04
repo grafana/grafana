@@ -42,21 +42,48 @@ func TranslateFolderToTuples(obj *unstructured.Unstructured) ([]*openfgav1.Tuple
 }
 
 // TranslateRoleToTuples converts a Role CRD to permission tuples.
+// For backward compatibility and test use — no RoleRef resolution.
 func TranslateRoleToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
+	return translateRoleToTuples(obj, nil)
+}
+
+// translateRoleToTuples is the implementation of TranslateRoleToTuples.
+// globalRolePerms, if non-nil, is used to resolve RoleRefs + PermissionsOmitted.
+func translateRoleToTuples(
+	obj *unstructured.Unstructured,
+	globalRolePerms map[string][]*authzextv1.RolePermission,
+) ([]*openfgav1.TupleKey, error) {
 	var role iamv0.Role
 	if err := convertUnstructured(obj, &role); err != nil {
 		return nil, err
 	}
 
-	permissions := make([]*authzextv1.RolePermission, 0, len(role.Spec.Permissions))
-	for _, perm := range role.Spec.Permissions {
-		permissions = append(permissions, &authzextv1.RolePermission{
-			Action: perm.Action,
-			Scope:  perm.Scope,
-		})
+	effective := make(map[string]*authzextv1.RolePermission)
+
+	if len(role.Spec.RoleRefs) > 0 && globalRolePerms != nil {
+		// Basic role: compose from referenced GlobalRole, then apply own delta.
+		omitted := make(map[string]bool, len(role.Spec.PermissionsOmitted))
+		for _, p := range role.Spec.PermissionsOmitted {
+			omitted[p.Action+"|"+p.Scope] = true
+		}
+		for _, roleRef := range role.Spec.RoleRefs {
+			for _, p := range globalRolePerms[roleRef.Name] {
+				if !omitted[p.Action+"|"+p.Scope] {
+					effective[p.Action+"|"+p.Scope] = p
+				}
+			}
+		}
+	}
+	// Own permissions are always applied: additions for basic roles, full set for custom roles.
+	for _, p := range role.Spec.Permissions {
+		effective[p.Action+"|"+p.Scope] = &authzextv1.RolePermission{Action: p.Action, Scope: p.Scope}
 	}
 
-	return zanzana.RoleToTuples(role.Name, permissions)
+	perms := make([]*authzextv1.RolePermission, 0, len(effective))
+	for _, p := range effective {
+		perms = append(perms, p)
+	}
+	return zanzana.RoleToTuples(role.Name, perms)
 }
 
 // TranslateRoleBindingToTuples converts a RoleBinding CRD to assignee tuples.
@@ -71,6 +98,29 @@ func TranslateRoleBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.
 
 	tuples := make([]*openfgav1.TupleKey, 0, len(rb.Spec.RoleRefs))
 	for _, roleRef := range rb.Spec.RoleRefs {
+		tuple, err := zanzana.GetRoleBindingTuple(subjectKind, subjectName, roleRef.Name)
+		if err != nil {
+			return nil, err
+		}
+		tuples = append(tuples, tuple)
+	}
+
+	return tuples, nil
+}
+
+// TranslateGlobalRoleBindingToTuples converts a GlobalRoleBinding CRD to assignee tuples.
+// Subject kinds are the same as RoleBinding, so GetRoleBindingTuple is reused directly.
+func TranslateGlobalRoleBindingToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
+	var grb iamv0.GlobalRoleBinding
+	if err := convertUnstructured(obj, &grb); err != nil {
+		return nil, err
+	}
+
+	subjectKind := string(grb.Spec.Subject.Kind)
+	subjectName := grb.Spec.Subject.Name
+
+	tuples := make([]*openfgav1.TupleKey, 0, len(grb.Spec.RoleRefs))
+	for _, roleRef := range grb.Spec.RoleRefs {
 		tuple, err := zanzana.GetRoleBindingTuple(subjectKind, subjectName, roleRef.Name)
 		if err != nil {
 			return nil, err
