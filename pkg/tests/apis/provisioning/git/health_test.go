@@ -1,24 +1,24 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafanaWithGitServer(t)
-	ctx := context.Background()
 
 	t.Run("test endpoint returns error for empty repository with no branch specified", func(t *testing.T) {
 		remote, user := createEmptyGitRepo(t, helper, "test-empty-repo-no-branch")
@@ -51,26 +51,8 @@ func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {
 			},
 		}
 
-		configBytes, err := json.Marshal(repoConfig)
-		require.NoError(t, err)
-
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name("test-empty-repo-no-branch").
-			SubResource("test").
-			Body(configBytes).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-
-		require.NoError(t, result.Error(), "test endpoint should return a response, not an HTTP error")
-
-		obj, err := result.Get()
-		require.NoError(t, err)
-
-		testResults := parseGitTestResults(t, obj)
+		testResults := callTestEndpoint(t, helper, "test-empty-repo-no-branch", repoConfig, http.StatusBadRequest)
 		require.False(t, testResults.Success, "test should fail for empty repository")
-		require.Equal(t, 400, testResults.Code, "should return 400 for empty repository")
 		require.NotEmpty(t, testResults.Errors, "should have error details")
 		require.Contains(t, testResults.Errors[0].Detail, "no branches",
 			"error should mention the repository has no branches")
@@ -107,32 +89,15 @@ func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {
 			},
 		}
 
-		configBytes, err := json.Marshal(repoConfig)
-		require.NoError(t, err)
-
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name("test-empty-repo-with-branch").
-			SubResource("test").
-			Body(configBytes).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-
-		require.NoError(t, result.Error(), "test endpoint should return a response, not an HTTP error")
-
-		obj, err := result.Get()
-		require.NoError(t, err)
-
-		testResults := parseGitTestResults(t, obj)
+		testResults := callTestEndpoint(t, helper, "test-empty-repo-with-branch", repoConfig, http.StatusBadRequest)
 		require.False(t, testResults.Success, "test should fail for empty repository")
-		require.Equal(t, 400, testResults.Code, "should return 400 for empty repository")
 		require.NotEmpty(t, testResults.Errors, "should have error details")
 		require.Contains(t, testResults.Errors[0].Detail, "branch not found",
 			"error should mention branch not found")
 	})
 
 	t.Run("test endpoint succeeds after pushing a commit to empty repository", func(t *testing.T) {
+		ctx := context.Background()
 		remote, user := createEmptyGitRepo(t, helper, "test-empty-then-push")
 
 		local, err := gittest.NewLocalRepo(ctx)
@@ -174,27 +139,47 @@ func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {
 			},
 		}
 
-		configBytes, err := json.Marshal(repoConfig)
-		require.NoError(t, err)
-
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name("test-empty-then-push").
-			SubResource("test").
-			Body(configBytes).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-
-		require.NoError(t, result.Error(), "test endpoint should return a response")
-
-		obj, err := result.Get()
-		require.NoError(t, err)
-
-		testResults := parseGitTestResults(t, obj)
+		testResults := callTestEndpoint(t, helper, "test-empty-then-push", repoConfig, http.StatusOK)
 		require.True(t, testResults.Success, "test should succeed after pushing a commit")
-		require.Equal(t, 200, testResults.Code, "should return 200 for successful test")
 	})
+}
+
+// callTestEndpoint calls the /test subresource using raw HTTP and parses the TestResults.
+// This is needed because the test endpoint returns TestResults with non-2xx status codes
+// for failures, and the k8s REST client treats non-2xx as errors, losing the response body.
+func callTestEndpoint(t *testing.T, h *gitTestHelper, repoName string, repoConfig map[string]interface{}, expectedStatus int) *provisioning.TestResults {
+	t.Helper()
+
+	configBytes, err := json.Marshal(repoConfig)
+	require.NoError(t, err)
+
+	addr := h.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	url := fmt.Sprintf(
+		"http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/test",
+		addr, repoName,
+	)
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(configBytes))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	require.Equal(t, expectedStatus, resp.StatusCode,
+		"test endpoint should return expected HTTP status for repo %s", repoName)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	var testResults provisioning.TestResults
+	err = json.Unmarshal(body, &testResults)
+	require.NoError(t, err, "response body should be valid TestResults JSON")
+
+	return &testResults
 }
 
 // createEmptyGitRepo creates a git repository on the gittest server without any commits or branches.
@@ -210,20 +195,4 @@ func createEmptyGitRepo(t *testing.T, h *gitTestHelper, repoName string) (*gitte
 	require.NoError(t, err, fmt.Sprintf("failed to create remote repository %s", repoName))
 
 	return remote, user
-}
-
-func parseGitTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResults {
-	t.Helper()
-
-	unstructuredObj, ok := obj.(*unstructured.Unstructured)
-	require.True(t, ok, "expected unstructured object")
-
-	data, err := json.Marshal(unstructuredObj.Object)
-	require.NoError(t, err)
-
-	var testResults provisioning.TestResults
-	err = json.Unmarshal(data, &testResults)
-	require.NoError(t, err)
-
-	return &testResults
 }
