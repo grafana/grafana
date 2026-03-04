@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { AdHocFilterWithLabels, AdHocFiltersComboboxRenderer, AdHocFiltersController } from '@grafana/scenes';
-import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 
@@ -61,14 +61,6 @@ export function SilencesFilter({ silences }: SilencesFilterProps) {
     [silencesRef, filters, updateQueryString, wip]
   );
 
-  const hasFilters = Boolean(queryString);
-
-  const clearFilters = () => {
-    setFilters([]);
-    setWip({ key: '', operator: '=', value: '' });
-    setQueryParams({ queryString: null, silenceState: null });
-  };
-
   return (
     <Stack direction="row" alignItems="center" wrap="wrap">
       <div className={styles.comboboxWrapper}>
@@ -93,11 +85,6 @@ export function SilencesFilter({ silences }: SilencesFilterProps) {
       >
         <Icon name="info-circle" size="sm" />
       </Tooltip>
-      {hasFilters && (
-        <Button variant="secondary" icon="times" onClick={clearFilters}>
-          <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
-        </Button>
-      )}
     </Stack>
   );
 }

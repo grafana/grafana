@@ -71,7 +71,6 @@ const ui = {
   silenceRow: byTestId('row'),
   silencedAlertCell: byTestId('alerts'),
   addSilenceButton: byRole('link', { name: /add silence/i }),
-  clearFiltersButton: byRole('button', { name: /clear filters/i }),
   existingSilenceNotFound: byRole('alert', { name: /existing silence .* not found/i }),
   noPermissionToEdit: byRole('alert', { name: /do not have permission/i }),
   editor: {
@@ -214,30 +213,11 @@ describe('Silences', () => {
   );
 
   it(
-    'clears filters',
-    async () => {
-      const { user } = renderSilences('/alerting/silences?queryString=foo%3D%22bar%22');
-
-      expect(await ui.notExpiredTable.find()).toBeInTheDocument();
-      expect(ui.silenceRow.getAll()).toHaveLength(1);
-
-      await user.click(ui.clearFiltersButton.get());
-
-      const expectedActiveSilences = mockSilences.filter(
-        (silence) => silence.status.state !== SilenceState.Expired
-      ).length;
-      await waitFor(() => expect(ui.silenceRow.getAll()).toHaveLength(expectedActiveSilences));
-    },
-    TEST_TIMEOUT
-  );
-
-  it(
     'shows filter pills from URL',
     async () => {
       renderSilences('/alerting/silences?queryString=foo%3D%22bar%22');
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
-      expect(ui.clearFiltersButton.get()).toBeInTheDocument();
       expect(screen.getByLabelText(/Edit filter with key foo/i)).toBeInTheDocument();
     },
     TEST_TIMEOUT
