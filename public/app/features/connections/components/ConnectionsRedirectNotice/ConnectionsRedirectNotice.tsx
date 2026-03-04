@@ -29,7 +29,11 @@ export function ConnectionsRedirectNotice() {
         <Trans
           i18nKey="connections.connections-redirect-notice.body"
           defaults="Data sources have a new home! You can discover new data sources or manage existing ones in the <0>Connections page</0>, accessible from the main menu."
-          components={[<TextLink key="0" href={ROUTES.DataSources}>{''}</TextLink>]}
+          components={[
+            <TextLink key="0" href={ROUTES.DataSources}>
+              {''}
+            </TextLink>,
+          ]}
         />
       </p>
     </Alert>
