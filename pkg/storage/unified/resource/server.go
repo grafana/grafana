@@ -226,6 +226,9 @@ type SearchOptions struct {
 	// Minimum time between index updates. This is also used as a delay after a successful write operation, to guarantee
 	// that subsequent search will observe the effect of the writing.
 	IndexMinUpdateInterval time.Duration
+
+	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
+	InjectFailuresPercent int
 }
 
 type ResourceServerOptions struct {

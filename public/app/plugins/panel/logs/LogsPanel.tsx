@@ -145,6 +145,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     showFieldSelector,
     controlsStorageKey,
     showLabels,
+    showLevel,
     showTime,
     wrapLogMessage,
     showCommonLabels,
@@ -624,6 +625,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
               showControls={Boolean(showControls)}
               showFieldSelector={showFieldSelector}
               showLogAttributes={showLogAttributes}
+              showLevel={showLevel}
               showTime={showTime}
               showUniqueLabels={showLabels}
               sortOrder={sortOrder}
