@@ -3114,6 +3114,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardMatcherConfig(ref common.Referen
 							Format:      "",
 						},
 					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If set, limits the matcher to specific field types.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The matcher options. This is specific to the matcher implementation.",

@@ -75,11 +75,11 @@ LibraryPanelRef: {
 
 AnnotationPanelFilter: {
 	// Should the specified panels be included or excluded
-	exclude?: bool | *false 
+	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
 	ids: [...uint32]
-} 
+}
 
 // Annotation event field source. Defines how to obtain the value for an annotation event field.
 // - "field": Find the value with a matching key (default)
@@ -269,11 +269,15 @@ DynamicConfigValue: {
 	value?: _
 }
 
+MatcherType: "nested" | "annotation"
+
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 // It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 MatcherConfig: {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string | *""
+  // If set, limits the matcher to specific field types.
+  type?: MatcherType | *null
 	// The matcher options. This is specific to the matcher implementation.
 	options?: _
 }

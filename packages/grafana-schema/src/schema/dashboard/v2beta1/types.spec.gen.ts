@@ -220,6 +220,8 @@ export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
 export interface MatcherConfig {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string;
+	// If set, limits the matcher to specific field types.
+	type?: MatcherType | null;
 	// The matcher options. This is specific to the matcher implementation.
 	options?: any;
 }
@@ -227,6 +229,10 @@ export interface MatcherConfig {
 export const defaultMatcherConfig = (): MatcherConfig => ({
 	id: "",
 });
+
+export type MatcherType = "nested" | "annotation";
+
+export const defaultMatcherType = (): MatcherType => ("nested");
 
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.

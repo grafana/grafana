@@ -355,6 +355,8 @@ func (DashboardDataTransformerConfig) OpenAPIModelName() string {
 type DashboardMatcherConfig struct {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	Id string `json:"id"`
+	// If set, limits the matcher to specific field types.
+	Type *DashboardMatcherType `json:"type,omitempty"`
 	// The matcher options. This is specific to the matcher implementation.
 	Options interface{} `json:"options,omitempty"`
 }
@@ -369,6 +371,19 @@ func NewDashboardMatcherConfig() *DashboardMatcherConfig {
 // OpenAPIModelName returns the OpenAPI model name for DashboardMatcherConfig.
 func (DashboardMatcherConfig) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMatcherConfig"
+}
+
+// +k8s:openapi-gen=true
+type DashboardMatcherType string
+
+const (
+	DashboardMatcherTypeNested     DashboardMatcherType = "nested"
+	DashboardMatcherTypeAnnotation DashboardMatcherType = "annotation"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardMatcherType.
+func (DashboardMatcherType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardMatcherType"
 }
 
 // A topic is attached to DataFrame metadata in query results.

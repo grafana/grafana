@@ -742,7 +742,7 @@ lineage: schemas: [{
 		} @cuetsy(kind="interface")
 
     // Indidates what type of field this matcher is limited to matching.
-    #MatcherType: 0 | 1 @cuetsy(kind="enum",memberNames="Nested|Annotation") @grafanamaturity(NeedsExpertReview)
+    #MatcherType: "nested" | "annotation" @grafanamaturity(NeedsExpertReview)
 
 		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
@@ -750,7 +750,7 @@ lineage: schemas: [{
 			// The matcher id. This is used to find the matcher implementation from registry.
 			id: string | *"" @grafanamaturity(NeedsExpertReview)
 			// if set, limits the matcher to specific field types.
-      type?: #MatcherType
+			type?: #MatcherType | *null @grafanamaturity(NeedsExpertReview)
       // The matcher options. This is specific to the matcher implementation.
 			options?: _ @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
