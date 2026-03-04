@@ -184,10 +184,25 @@ export default function UserPermissionsPage() {
     return teams.filter((team) => team.orgId === currentOrgId);
   }, [teams, currentOrgId]);
 
-  // Get current role UIDs for current org
+  // Get current role UIDs for current org (directly assigned only)
   const currentRoleUids = useMemo(() => {
     return filteredRoles.filter((role) => !role.mapped).map((role) => role.uid);
   }, [filteredRoles]);
+
+  // Get all role UIDs (from any source: direct, team, org, external)
+  const allAssignedRoleUids = useMemo(() => {
+    const roleUids = new Set<string>();
+
+    // Add directly assigned roles
+    filteredRoles.forEach((role) => roleUids.add(role.uid));
+
+    // Add roles from teams
+    filteredTeams.forEach((team) => {
+      team.roles?.forEach((role) => roleUids.add(role.uid));
+    });
+
+    return Array.from(roleUids);
+  }, [filteredRoles, filteredTeams]);
 
   // Get current org object
   const currentOrg = useMemo(() => {
@@ -286,6 +301,7 @@ export default function UserPermissionsPage() {
                     userId={user.id}
                     userUid={user.uid}
                     currentRoleUids={currentRoleUids}
+                    allAssignedRoleUids={allAssignedRoleUids}
                     selectedOrgId={currentOrgId}
                     onDismiss={() => setIsAddRoleModalOpen(false)}
                     onRoleAdded={() => {

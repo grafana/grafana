@@ -16,6 +16,7 @@ import {
   useStyles2,
   IconButton,
   Tooltip,
+  Icon,
 } from '@grafana/ui';
 import { useListRolesQuery, useSetUserRolesMutation } from 'app/api/clients/roles';
 import { Role } from 'app/types/accessControl';
@@ -27,6 +28,7 @@ interface AddRoleModalProps {
   userId: number;
   userUid: string;
   currentRoleUids: string[];
+  allAssignedRoleUids: string[];
   selectedOrgId: number;
   onDismiss: () => void;
   onRoleAdded: () => void;
@@ -37,6 +39,7 @@ export const AddRoleModal = ({
   userId,
   userUid,
   currentRoleUids,
+  allAssignedRoleUids,
   selectedOrgId,
   onDismiss,
   onRoleAdded,
@@ -48,13 +51,13 @@ export const AddRoleModal = ({
   const { data: allRoles, isLoading } = useListRolesQuery({ delegatable: true });
   const [updateUserRoles, { isLoading: isUpdating }] = useSetUserRolesMutation();
 
-  // Filter out roles user already has in this org and non-delegatable roles
+  // Show all delegatable roles
   const availableRoles = useMemo(() => {
     if (!allRoles) {
       return [];
     }
-    return allRoles.filter((role) => !currentRoleUids.includes(role.uid) && role.delegatable);
-  }, [allRoles, currentRoleUids]);
+    return allRoles.filter((role) => role.delegatable);
+  }, [allRoles]);
 
   // Filter roles by search query
   const filteredRoles = useMemo(() => {
@@ -147,19 +150,31 @@ export const AddRoleModal = ({
       {
         id: 'add',
         header: 'Add',
-        cell: ({ row }) => (
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => handleAddRole(row.original.uid)}
-            disabled={isUpdating}
-          >
-            Add
-          </Button>
-        ),
+        cell: ({ row }) => {
+          const isAssigned = allAssignedRoleUids.includes(row.original.uid);
+
+          if (isAssigned) {
+            return (
+              <Tooltip content="Role already assigned">
+                <Icon name="check" size="lg" />
+              </Tooltip>
+            );
+          }
+
+          return (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => handleAddRole(row.original.uid)}
+              disabled={isUpdating}
+            >
+              Add
+            </Button>
+          );
+        },
       },
     ],
-    [isUpdating, handleAddRole]
+    [isUpdating, handleAddRole, allAssignedRoleUids]
   );
 
   return (
@@ -185,7 +200,7 @@ export const AddRoleModal = ({
 
           {!isLoading && filteredRoles.length === 0 && availableRoles.length === 0 && (
             <div>
-              <Trans i18nKey="admin.add-role-modal.no-roles">User already has all available roles</Trans>
+              <Trans i18nKey="admin.add-role-modal.no-roles">No delegatable roles available</Trans>
             </div>
           )}
 
