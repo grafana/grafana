@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { useDeleteThemeMutation, useListThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
+import { Theme, useDeleteThemeMutation, useListThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
 import { createTheme } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, EmptyState, Grid, LinkButton } from '@grafana/ui';
@@ -13,7 +13,7 @@ import { ThemeCard } from './ThemeCard';
 export default function CustomThemesPage() {
   const customThemes = useListThemeQuery({});
   const [deleteTheme] = useDeleteThemeMutation();
-  const [themeToDelete, setThemeToDelete] = useState<string>();
+  const [themeToDelete, setThemeToDelete] = useState<Theme>();
   const navigate = useNavigate();
 
   return (
@@ -45,7 +45,7 @@ export default function CustomThemesPage() {
               }}
               key={themeOption.metadata.uid}
               onEdit={() => navigate(`/themes/${themeOption.metadata.name}/edit`)}
-              onRemove={() => setThemeToDelete(themeOption.metadata.name)}
+              onRemove={() => setThemeToDelete(themeOption)}
             />
           ))}
         </Grid>
@@ -68,13 +68,13 @@ export default function CustomThemesPage() {
         title={t('admin.custom-themes.delete-modal.title', 'Delete custom theme')}
         confirmText={t('admin.custom-themes.delete-modal.confirm-text', 'Delete')}
         body={t('admin.custom-themes.delete-modal.body', 'Are you sure you want to delete the {{name}} theme?', {
-          name: themeToDelete,
+          name: themeToDelete?.spec.name,
         })}
         onConfirm={() => {
-          deleteTheme({ name: themeToDelete! });
+          deleteTheme({ name: themeToDelete?.metadata.name! });
           setThemeToDelete(undefined);
         }}
-        confirmationText={themeToDelete}
+        confirmationText={themeToDelete?.metadata.name}
         isOpen={Boolean(themeToDelete)}
         onDismiss={() => setThemeToDelete(undefined)}
       />

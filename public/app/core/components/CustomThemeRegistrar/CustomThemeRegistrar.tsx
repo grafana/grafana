@@ -23,7 +23,7 @@ export function CustomThemeRegistrar() {
     for (const theme of data?.items ?? []) {
       registerCustomTheme({
         id: theme.metadata.name!,
-        name: theme.metadata.name!,
+        name: theme.spec.name,
         isExtra: true,
         build: () => createTheme(theme.spec),
       });
