@@ -263,17 +263,9 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	}
 
 	// Filter results to those the user has permission to read
-	filtered := []annotationV0.Annotation{}
-	for _, item := range result.Items {
-		ok, err := s.authorizer.canRead(ctx, user, &item)
-		if err != nil {
-			return nil, fmt.Errorf("authorization check failed: %w", err)
-		}
-		if !ok {
-			continue
-		}
-
-		filtered = append(filtered, item)
+	filtered, err := s.authorizer.filterReadable(ctx, user, result.Items)
+	if err != nil {
+		return nil, fmt.Errorf("authorization check failed: %w", err)
 	}
 
 	// Return list with continue token for pagination
