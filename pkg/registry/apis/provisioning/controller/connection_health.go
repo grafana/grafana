@@ -163,7 +163,7 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
 func (hc *ConnectionHealthChecker) refreshHealth(ctx context.Context, conn *provisioning.Connection, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
-	logger := logging.FromContext(ctx).With("connection", conn.GetName(), "namespace", conn.GetNamespace())
+	logger := logging.FromContext(ctx)
 	start := time.Now()
 	outcome := utils.SuccessOutcome
 	defer func() {

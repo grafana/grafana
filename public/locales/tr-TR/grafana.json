@@ -2105,7 +2105,9 @@
       "select-namespace": "Ad alanı seç"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Uyarı kuralları",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Son silinenler",
@@ -2331,8 +2333,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Şu anda hangi uyarıların aktif olduğunu görün ve mevcut ya da geçmiş sorunları incelemek için geçmiş verilere göz atın.",
-        "title": "Uyarılar"
+        "subtitle": "Şu anda hangi uyarıların aktif olduğunu görün ve mevcut ya da geçmiş sorunları incelemek için geçmiş verilere göz atın."
       }
     },
     "panel-alert-tab-content": {
@@ -6875,10 +6876,10 @@
       "title-delete-all-transformations": "Tüm dönüşümler silinsin mi?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Tablo görünümünü aç/kapat",
-      "table-view-label-table-view": "Tablo görünümü"
+      "table-view-label-table-view": "Tablo görünümü",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6923,6 +6924,16 @@
     },
     "query-editor": {
       "query": "Sorgu"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Adlandırılmış yakalama grupları, görüntülenen metin ile değeri ayırmak için kullanılabilir (<1>örneklere bakın</1>).",
@@ -7047,6 +7058,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Uyarı destekleyen bir veri kaynağına yönelik sorgu bulunamadığından bu panelden uyarı oluşturulamıyor.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Yeni uyarı kuralı",
       "title-no-alerting-capable-query-found": "Uyarı oluşturabilecek sorgu bulunamadı"
     },
@@ -9466,11 +9478,13 @@
       },
       "legend": {
         "category": "Gösterge",
+        "description-limit": "",
         "description-values": "Açıklamada gösterilecek değerleri veya hesaplamaları seçin",
         "mode-options": {
           "label-list": "Liste",
           "label-table": "Tablo"
         },
+        "name-limit": "",
         "name-mode": "Mod",
         "name-placement": "Yerleşim",
         "name-values": "Değerler",
@@ -10401,6 +10415,11 @@
     "subtitle": "Grafana'daki LDAP entegrasyonu, Grafana kullanıcılarınızın LDAP kimlik bilgileriyle giriş yapmasına olanak tanır. Daha fazla bilgi için <2><1>belgelerimize</1></2> bakın.",
     "title": "Temel Ayarlar"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Bu ada sahip kütüphane paneli zaten var",
@@ -11275,9 +11294,17 @@
       "subtitle": "Sistemlerinizdeki sorunlardan anında haberdar olun",
       "title": "Uyarı sistemi"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Alertmanager yapılandırmalarını yönetin ve Grafana tarafından yönetilen uyarıların alınmasını etkinleştirin",
       "title": "Ayarlar"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Uyarıların doğru iletişim noktalarına nasıl yönlendirileceğini belirleyin",
@@ -12411,13 +12438,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "Depo içindeki dosya yolu (.json veya .yaml)",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "Depo içindeki klasör yolu",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Dal",
       "label-comment": "Yorum",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Yol",
       "placeholder-branch": "Dal adını seçin veya girin",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Son dal",
       "suffix-new-branch": "",
@@ -12531,6 +12563,8 @@
       "instance-fully-managed-tooltip": "Bu örnek tamamen yönetildiği için yapılandırma devre dışı bırakılmıştır"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12672,10 +12706,18 @@
       "label-sync-interval": "Eşitleme Aralığı (saniye)"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13417,6 +13459,7 @@
       "card-click": "{{id}} kartını seçin",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Sorgular ve İfadeler",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
       "transformations": "Dönüşümler",
@@ -14680,6 +14723,12 @@
     "name-show-matches-only": "Sadece eşleşenleri göster",
     "traces-panel": {
       "no-data-found-in-response": "Yanıtta veri bulunamadı"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

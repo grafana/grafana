@@ -2105,7 +2105,9 @@
       "select-namespace": "Namespace selecteren"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Waarschuwingsregels",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Onlangs verwijderd",
@@ -2331,8 +2333,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Bekijk welke waarschuwingen momenteel actief zijn en verken historische gegevens om huidige of eerdere problemen te onderzoeken.",
-        "title": "Waarschuwingen"
+        "subtitle": "Bekijk welke waarschuwingen momenteel actief zijn en verken historische gegevens om huidige of eerdere problemen te onderzoeken."
       }
     },
     "panel-alert-tab-content": {
@@ -6875,10 +6876,10 @@
       "title-delete-all-transformations": "Alle transformaties verwijderen?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Tabelweergave in-/uitschakelen",
-      "table-view-label-table-view": "Tabelweergave"
+      "table-view-label-table-view": "Tabelweergave",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6923,6 +6924,16 @@
     },
     "query-editor": {
       "query": "Query"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Benoemde capturegroepen kunnen worden gebruikt om de weergavetekst en de waarde te scheiden (<1>zie voorbeelden</1>).",
@@ -7047,6 +7058,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Kan geen waarschuwingen maken vanuit dit paneel omdat er geen query is gevonden naar een gegevensbron die waarschuwingen mogelijk maakt.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Nieuwe waarschuwingsregel",
       "title-no-alerting-capable-query-found": "Geen query gevonden die waarschuwingen mogelijk maakt"
     },
@@ -9466,11 +9478,13 @@
       },
       "legend": {
         "category": "Legenda",
+        "description-limit": "",
         "description-values": "Selecteer waarden of berekeningen om in legenda weer te geven",
         "mode-options": {
           "label-list": "Lijst",
           "label-table": "Tabel"
         },
+        "name-limit": "",
         "name-mode": "Modus",
         "name-placement": "Plaatsing",
         "name-values": "Waarden",
@@ -10401,6 +10415,11 @@
     "subtitle": "Met de LDAP-integratie in Grafana kunnen uw Grafana-gebruikers inloggen met hun LDAP-inloggegevens. Lees meer in onze <2><1>documentatie</1></2>.",
     "title": "Basisinstellingen"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Een bibliotheekpaneel met deze naam bestaat al",
@@ -11275,9 +11294,17 @@
       "subtitle": "Word vrijwel onmiddellijk op de hoogte gebracht van problemen in je systemen",
       "title": "Alerting"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Beheer Alertmanager-configuraties en schakel het ontvangen van door Grafana beheerde waarschuwingen in",
       "title": "Instellingen"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Bepaal hoe waarschuwingen naar contactpunten worden gerouteerd",
@@ -12411,13 +12438,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Vestiging",
       "label-comment": "Opmerking",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Path",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Laatste branch",
       "suffix-new-branch": "",
@@ -12531,6 +12563,8 @@
       "instance-fully-managed-tooltip": "Configuratie is uitgeschakeld omdat deze instantie volledig wordt beheerd"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12672,10 +12706,18 @@
       "label-sync-interval": "Synchronisatie-interval (seconden)"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13417,6 +13459,7 @@
       "card-click": "Kaart {{id}} selecteren",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
       "transformations": "Transformaties",
@@ -14680,6 +14723,12 @@
     "name-show-matches-only": "Alleen overeenkomende resultaten weergeven",
     "traces-panel": {
       "no-data-found-in-response": "Geen gegevens gevonden in reactie"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {
