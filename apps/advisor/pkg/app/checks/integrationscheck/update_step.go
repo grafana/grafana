@@ -33,29 +33,30 @@ func (s *updateStep) Resolution() string {
 }
 
 func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) ([]advisor.CheckReportFailure, error) {
-	log.Debug("update step: starting", "itemType", fmt.Sprintf("%T", it))
+	log = log.With(LogQueryKey, logQueryValue)
+	log.Info("update step: starting", "itemType", fmt.Sprintf("%T", it))
 	item, ok := it.(*IntegrationItem)
 	if !ok {
-		log.Debug("update step: invalid item type", "got", fmt.Sprintf("%T", it))
+		log.Info("update step: invalid item type", "got", fmt.Sprintf("%T", it))
 		return nil, fmt.Errorf("invalid item type %T", it)
 	}
 	if item == nil {
-		log.Debug("update step: item is nil, skipping")
+		log.Info("update step: item is nil, skipping")
 		return nil, nil
 	}
-	log.Debug("update step: checking integration", "slug", item.Slug, "name", item.Name, "installed", item.InstalledVersion, "latest", item.LatestVersion)
+	log.Info("update step: checking integration", "slug", item.Slug, "name", item.Name, "installed", item.InstalledVersion, "latest", item.LatestVersion)
 
 	outdated, err := isOutdated(item.InstalledVersion, item.LatestVersion)
 	if err != nil {
-		log.Debug("update step: skip version check (parse error)", "slug", item.Slug, "error", err)
+		log.Info("update step: skip version check (parse error)", "slug", item.Slug, "error", err)
 		return nil, nil
 	}
 	if !outdated {
-		log.Debug("update step: integration up to date", "slug", item.Slug)
+		log.Info("update step: integration up to date", "slug", item.Slug)
 		return nil, nil
 	}
 
-	log.Debug("update step: integration outdated, reporting failure", "slug", item.Slug, "installed", item.InstalledVersion, "latest", item.LatestVersion)
+	log.Info("update step: integration outdated, reporting failure", "slug", item.Slug, "installed", item.InstalledVersion, "latest", item.LatestVersion)
 	return []advisor.CheckReportFailure{
 		checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
