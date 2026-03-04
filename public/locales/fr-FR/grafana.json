@@ -2105,7 +2105,9 @@
       "select-namespace": "Sélectionner le namespace"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Règles d’alerte",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Supprimé récemment",
@@ -2331,8 +2333,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Visualisez les alertes en cours et explorez les données historiques pour analyser des incidents actuels ou passés.",
-        "title": "Alertes"
+        "subtitle": "Visualisez les alertes en cours et explorez les données historiques pour analyser des incidents actuels ou passés."
       }
     },
     "panel-alert-tab-content": {
@@ -6875,10 +6876,10 @@
       "title-delete-all-transformations": "Supprimer toutes les transformations ?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Basculer la vue du tableau",
-      "table-view-label-table-view": "Vue du tableau"
+      "table-view-label-table-view": "Vue du tableau",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6923,6 +6924,16 @@
     },
     "query-editor": {
       "query": "Requête"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Des groupes de capture nommés peuvent être utilisés pour séparer le texte affiché et la valeur (<1>voir des exemples</1>).",
@@ -7047,6 +7058,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Impossible de créer des alertes à partir de ce panneau, car aucune requête à une source de données capable d’alerter n’a été trouvée.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Nouvelle règle d'alerte",
       "title-no-alerting-capable-query-found": "Aucune requête capable d’alerter n’a été trouvée"
     },
@@ -9466,11 +9478,13 @@
       },
       "legend": {
         "category": "Légende",
+        "description-limit": "",
         "description-values": "Sélectionner les valeurs ou les calculs à afficher dans la légende",
         "mode-options": {
           "label-list": "Liste",
           "label-table": "Tableau"
         },
+        "name-limit": "",
         "name-mode": "Mode",
         "name-placement": "Placement",
         "name-values": "Valeurs",
@@ -10401,6 +10415,11 @@
     "subtitle": "L’intégration LDAP sur Grafana permet aux utilisateurs Grafana de se connecter à l’aide de leurs identifiants LDAP. Pour en savoir plus, consultez notre <2><1>documentation</1></2>.",
     "title": "Paramètres de base"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Un panneau de bibliothèque avec ce nom existe déjà",
@@ -11275,9 +11294,17 @@
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
       "title": "Alerte"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Gérez les configurations d'Alertmanager et activez la réception des alertes gérées par Grafana",
       "title": "Paramètres"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Déterminer comment les alertes sont acheminées vers les points de contact",
@@ -12411,13 +12438,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Branche",
       "label-comment": "Commentaire",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Chemin d’accès",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Dernière branche",
       "suffix-new-branch": "",
@@ -12531,6 +12563,8 @@
       "instance-fully-managed-tooltip": "La configuration est désactivée car cette instance est entièrement gérée"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12672,10 +12706,18 @@
       "label-sync-interval": "Intervalle de synchronisation (secondes)"
     },
     "fix-folder-metadata": {
-      "button": "",
-      "error-fixing": "",
-      "fixing": "",
-      "success": ""
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -13417,6 +13459,7 @@
       "card-click": "Sélectionner la carte {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
       "transformations": "Transformations",
@@ -14680,6 +14723,12 @@
     "name-show-matches-only": "Afficher uniquement les correspondances",
     "traces-panel": {
       "no-data-found-in-response": "Aucune donnée trouvée dans la réponse"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {
