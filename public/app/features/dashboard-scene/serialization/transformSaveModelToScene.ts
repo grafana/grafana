@@ -313,7 +313,7 @@ export function createDashboardSceneFromDashboardModel(
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
   } else {
-    variables = createVariablesForDashboard(oldModel);
+    variables = createVariablesForDashboard(oldModel, options?.defaultVariables);
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
@@ -411,12 +411,13 @@ export function createDashboardSceneFromDashboardModel(
 
   const dashboardScene = new DashboardScene(
     {
+      id: oldModel.id,
       uid,
       description: oldModel.description,
       editable: oldModel.editable,
       preload: dto.preload ?? false,
       isDirty: false,
-      links: oldModel.links || [],
+      links: [...(options?.defaultLinks ?? []), ...(oldModel.links ?? [])],
       meta: oldModel.meta,
       tags: oldModel.tags || [],
       title: oldModel.title,

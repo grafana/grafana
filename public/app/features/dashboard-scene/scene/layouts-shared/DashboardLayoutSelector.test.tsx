@@ -50,7 +50,7 @@ describe('DashboardLayoutSelector', () => {
 
     render(<DashboardLayoutSelector layoutManager={layoutManager} />);
 
-    await user.click(screen.getByLabelText('layout-selection-option-Auto grid'));
+    await user.click(screen.getByLabelText('layout-selection-option-Auto'));
     let confirmButton = screen.getByTestId(selectors.pages.ConfirmModal.delete);
     expect(confirmButton).toBeInTheDocument();
 

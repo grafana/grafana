@@ -11,9 +11,9 @@ test.describe(
       const soloPanelUrl = selectors.pages.SoloPanel.url('ZqZnVvFZz/datasource-tests-shared-queries?orgId=1&panelId=4');
       await page.goto(soloPanelUrl);
 
-      // Check that there are 6 canvas elements
-      const canvasElements = page.locator('canvas');
-      await expect(canvasElements).toHaveCount(6);
+      // Check that there are 3 gauges
+      const svgElements = page.getByTestId(selectors.components.Panels.Visualization.Gauge.Container);
+      await expect(svgElements).toHaveCount(3);
     });
 
     test('Can view solo panel in scenes', async ({ page, selectors }) => {

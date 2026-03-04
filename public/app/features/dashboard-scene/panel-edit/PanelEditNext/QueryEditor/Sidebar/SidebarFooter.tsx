@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_COLORS, QueryEditorType } from '../../constants';
+import { FOOTER_HEIGHT, getQueryEditorColors, QueryEditorType } from '../../constants';
 import {
   useAlertingContext,
   usePanelContext,
@@ -26,10 +26,14 @@ export function SidebarFooter() {
     : queries.filter((q) => q.hide).length + transformations.filter((t) => t.transformConfig.disabled).length;
   const visible = total - hidden;
 
+  const suffixText = isAlertView
+    ? t('query-editor-next.sidebar.footer-items-alert', '{{count}} alerts', { count: total })
+    : t('query-editor-next.sidebar.footer-items', '{{count}} items', { count: total });
+
   return (
     <div className={styles.footer}>
       <Text weight="medium" variant="bodySmall">
-        {t('query-editor-next.sidebar.footer-items', '{{count}} items', { count: total })}
+        {suffixText}
       </Text>
       {!isAlertView && (
         <Stack direction="row" alignItems="center" gap={2}>
@@ -52,15 +56,18 @@ export function SidebarFooter() {
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const themeColors = getQueryEditorColors(theme);
   return {
     footer: css({
       marginTop: 'auto',
-      background: QUERY_EDITOR_COLORS.sidebarFooterBackground,
-      padding: theme.spacing(1, 1.5),
+      background: themeColors.sidebarFooterBackground,
+      padding: theme.spacing(0, 1.5),
+      height: FOOTER_HEIGHT,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       borderRadius: `0 0 ${theme.shape.radius.default} ${theme.shape.radius.default}`,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     icon: css({
       color: theme.colors.text.secondary,

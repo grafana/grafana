@@ -3,11 +3,14 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
+import { useRepoMetadataStatus } from '../hooks/useRepoMetadataStatus';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -24,6 +27,9 @@ function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
+  const repoName = repo.metadata?.name ?? '';
+  const showFolderMetadataCheck = config.featureToggles.provisioningFolderMetadata;
+  const { status: folderMetadataStatus } = useRepoMetadataStatus(showFolderMetadataCheck ? repoName : '');
 
   const status = repo.status;
   const webhookURL = getWebhookURL(repo);
@@ -53,6 +59,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
+        {showFolderMetadataCheck && folderMetadataStatus === 'missing' && (
+          <MissingFolderMetadataBanner repositoryName={repoName} variant="repo" />
+        )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
             <Card noMargin className={styles.card}>

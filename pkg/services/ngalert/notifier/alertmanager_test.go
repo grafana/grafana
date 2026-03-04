@@ -83,7 +83,7 @@ func TestAlertmanager_SaveAndApplyConfig_WithExternalSecrets(t *testing.T) {
 			},
 			Receivers: []*definitions.PostableApiReceiver{
 				{
-					Receiver: config.Receiver{Name: "default-receiver"},
+					Receiver: definitions.Receiver{Name: "default-receiver"},
 				},
 			},
 		},
@@ -157,7 +157,7 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			},
 			Receivers: []*definitions.PostableApiReceiver{
 				{
-					Receiver: config.Receiver{
+					Receiver: definitions.Receiver{
 						Name: "default-receiver",
 					},
 				},

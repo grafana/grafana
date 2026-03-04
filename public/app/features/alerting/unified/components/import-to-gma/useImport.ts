@@ -1,5 +1,5 @@
 import { load } from 'js-yaml';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -270,7 +270,7 @@ export function useDryRunNotifications() {
     [dryRunAlertmanagerConfig]
   );
 
-  const result = data ? parseDryRunResponse(data) : undefined;
+  const result = useMemo(() => (data ? parseDryRunResponse(data) : undefined), [data]);
   const error = mutationError ? stringifyErrorLike(mutationError) : preRunError;
 
   return { runDryRun, isLoading, result, error };

@@ -6,7 +6,6 @@ import { Panel } from '@grafana/schema';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
-import * as panelUtils from '../../../panel/state/util';
 import * as api from '../../state/api';
 import { LibraryElementsSearchResult } from '../../types';
 
@@ -50,12 +49,16 @@ jest.mock('@grafana/runtime/internal', () => ({
     loading: false,
     error: undefined,
   })),
+  useListedPanelPluginMetas: jest.fn(() => ({
+    value: [graph, timeseries],
+    loading: false,
+    error: undefined,
+  })),
 }));
 
 const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels');
 jest.spyOn(api, 'getConnectedDashboards').mockResolvedValue([]);
 jest.spyOn(api, 'deleteLibraryPanel').mockResolvedValue({ message: 'success' });
-jest.spyOn(panelUtils, 'getAllPanelPluginMeta').mockReturnValue([graph, timeseries]);
 
 async function getTestContext(
   propOverrides: Partial<LibraryPanelsSearchProps> = {},

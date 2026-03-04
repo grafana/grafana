@@ -1,10 +1,14 @@
 import { act, renderHook } from '@testing-library/react';
 import { UseFormReturn } from 'react-hook-form';
 
+import { extractFormErrors, getFormErrors } from '../../utils/getFormErrors';
 import { Step } from '../Stepper';
 import { WizardFormData, WizardStep } from '../types';
 
 import { useWizardSubmission, UseWizardSubmissionParams } from './useWizardSubmission';
+
+const mockGetFormErrors = jest.mocked(getFormErrors);
+const mockExtractFormErrors = jest.mocked(extractFormErrors);
 
 jest.mock('@grafana/i18n', () => ({
   t: jest.fn((key: string, defaultValue: string) => defaultValue),
@@ -20,6 +24,7 @@ jest.mock('../../utils/data', () => ({
 
 jest.mock('../../utils/getFormErrors', () => ({
   getFormErrors: jest.fn(() => [['repository.url', { message: 'Invalid URL' }]]),
+  extractFormErrors: jest.fn(() => []),
 }));
 
 describe('useWizardSubmission', () => {
@@ -36,6 +41,7 @@ describe('useWizardSubmission', () => {
     name: 'Connection',
     title: 'Set up connection',
     submitOnNext: true,
+    formFields: ['repository.branch', 'repository.path'],
   };
 
   const bootstrapStep: Step<WizardStep> = {
@@ -50,6 +56,7 @@ describe('useWizardSubmission', () => {
     name: 'Auth Type',
     title: 'Select auth type',
     submitOnNext: true,
+    formFields: ['repository.url', 'repository.token', 'repository.tokenUser'],
   };
 
   function createMockMethods() {
@@ -216,7 +223,7 @@ describe('useWizardSubmission', () => {
     });
 
     describe('error handling', () => {
-      it('should handle thrown fetch errors with form field errors', async () => {
+      it('should set inline error for fields visible on the current step', async () => {
         mockSubmitData.mockRejectedValue({
           data: {
             message: 'Validation failed',
@@ -230,6 +237,41 @@ describe('useWizardSubmission', () => {
           await result.current.handleSubmit();
         });
 
+        // repository.url belongs to the authType step, not the connection step,
+        // so setError should NOT be called (prevents phantom errors blocking retry)
+        expect(mockSetError).not.toHaveBeenCalled();
+
+        // The error should appear in the step status banner instead
+        expect(mockSetStepStatusInfo).toHaveBeenCalledWith(
+          expect.objectContaining({
+            status: 'error',
+            error: expect.objectContaining({ message: 'Invalid URL' }),
+          })
+        );
+      });
+
+      it('should set inline error for fields visible on the authType step', async () => {
+        mockSubmitData.mockRejectedValue({
+          data: {
+            message: 'Validation failed',
+            errors: { 'repository.url': 'Invalid URL' },
+          },
+        });
+
+        const { result } = renderHook(() =>
+          useWizardSubmission(
+            createParams({
+              activeStep: 'authType',
+              currentStepConfig: authTypeStep,
+            })
+          )
+        );
+
+        await act(async () => {
+          await result.current.handleSubmit();
+        });
+
+        // repository.url IS visible on authType step, so setError should be called
         expect(mockSetError).toHaveBeenCalledWith('repository.url', {
           message: 'Invalid URL',
         });
@@ -247,6 +289,47 @@ describe('useWizardSubmission', () => {
         expect(mockSetStepStatusInfo).toHaveBeenCalledWith({
           status: 'error',
           error: 'Repository connection failed',
+        });
+      });
+
+      it('should show error details when errors do not map to form fields', async () => {
+        mockGetFormErrors.mockReturnValueOnce([]);
+        mockExtractFormErrors.mockReturnValueOnce([
+          {
+            type: 'FieldValueForbidden',
+            field: 'spec',
+            detail: 'Maximum number of 1 repositories reached',
+          },
+        ]);
+
+        mockSubmitData.mockRejectedValue({
+          data: {
+            kind: 'TestResults',
+            apiVersion: 'provisioning.grafana.app/v0alpha1',
+            code: 422,
+            success: false,
+            errors: [
+              {
+                type: 'FieldValueForbidden',
+                field: 'spec',
+                detail: 'Maximum number of 1 repositories reached',
+              },
+            ],
+          },
+        });
+
+        const { result } = renderHook(() => useWizardSubmission(createParams()));
+
+        await act(async () => {
+          await result.current.handleSubmit();
+        });
+
+        expect(mockSetStepStatusInfo).toHaveBeenLastCalledWith({
+          status: 'error',
+          error: {
+            title: 'Repository connection failed',
+            message: ['Maximum number of 1 repositories reached'],
+          },
         });
       });
 
