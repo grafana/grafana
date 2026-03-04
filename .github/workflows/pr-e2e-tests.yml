@@ -44,17 +44,20 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repo
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - uses: actions/cache@v5
+      - name: Cache backend build
+        uses: actions/cache@v5
         id: cache
         with:
           key: "e2e-build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'embed.go') }}"
           path: bin
 
-      - uses: actions/setup-go@v6.3.0
+      - name: Setup Go
+        uses: actions/setup-go@v6.3.0
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           go-version-file: 'go.mod'
@@ -64,7 +67,8 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: make build-go
 
-      - uses: actions/upload-artifact@v7
+      - name: Upload backend build artifacts
+        uses: actions/upload-artifact@v7
         with:
           name: grafana-backend
           path: bin/
@@ -79,18 +83,19 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repo
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - uses: actions/cache@v5
+      - name: Cache frontend build
+        uses: actions/cache@v5
         id: cache
         with:
-          key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'e2e-playwright/test-plugins/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
+          key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
           path: |
             public/build
             public/app/plugins/*/*/dist
-            e2e-playwright/test-plugins
 
       - name: Setup Node.js
         if: steps.cache.outputs.cache-hit != 'true'
@@ -104,11 +109,8 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: make build-js
 
-      - name: Build e2e test plugins
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: yarn e2e:plugin:build
-
-      - uses: actions/upload-artifact@v7
+      - name: Upload frontend build artifacts
+        uses: actions/upload-artifact@v7
         with:
           name: grafana-frontend
           path: |
@@ -117,12 +119,6 @@ jobs:
             !public/**/*.tsx
             !public/**/node_modules/
             !public/locales/
-          retention-days: 1
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: grafana-test-plugins
-          path: e2e-playwright/test-plugins/
           retention-days: 1
 
   run-storybook-test:
@@ -179,6 +175,15 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      # It's quicker to build them in each test shard then prebuild and upload/download them as artifacts
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
       - name: Download backend artifacts
         uses: actions/download-artifact@v8
@@ -192,11 +197,6 @@ jobs:
         with:
           name: grafana-frontend
           path: grafana-server/public
-      - name: Download test plugins
-        uses: actions/download-artifact@v8
-        with:
-          name: grafana-test-plugins
-          path: grafana-server/data/plugins
       - name: Copy misc server files
         run: |
           cp -r conf/ grafana-server
@@ -211,6 +211,8 @@ jobs:
           cp devenv/dashboards.yaml grafana-server/conf/provisioning/dashboards/
           cp devenv/alert_rules.yaml grafana-server/conf/provisioning/alerting/
           cp devenv/plugins.yaml grafana-server/conf/provisioning/plugins/
+          mkdir -p grafana-server/data/plugins
+          cp -r e2e-playwright/test-plugins/. grafana-server/data/plugins/
 
       # Start Grafana from the standalone directory
       - name: Start Grafana
@@ -234,11 +236,6 @@ jobs:
             elapsed=$((elapsed + 1))
           done
           printf "\nGrafana is ready\n"
-
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
 
       - name: Install Playwright browsers
         run: yarn playwright install chromium --with-deps
