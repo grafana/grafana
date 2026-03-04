@@ -10901,6 +10901,7 @@
     "name-order": "Order",
     "name-prettify-json": "Prettify JSON",
     "name-show-controls": "Show controls",
+    "name-show-level": "Display log level",
     "name-time": "Show timestamps",
     "name-unique-labels": "Unique labels",
     "name-unwrapped-columns": "Enable columns for displayed fields",
