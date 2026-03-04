@@ -172,7 +172,6 @@ func (ThemePurpleHue) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type ThemeSpec struct {
 	Name          string                       `json:"name"`
-	Id            string                       `json:"id"`
 	Colors        *ThemeV0alpha1SpecColors     `json:"colors,omitempty"`
 	Spacing       *ThemeV0alpha1SpecSpacing    `json:"spacing,omitempty"`
 	Shape         *ThemeV0alpha1SpecShape      `json:"shape,omitempty"`

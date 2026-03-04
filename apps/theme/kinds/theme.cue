@@ -21,7 +21,6 @@ themeV0alpha1: {
   schema: {
     spec: {
         name: string
-        id: string
         colors?: {
             mode?: "light" | "dark"
             primary?: #ColorSection

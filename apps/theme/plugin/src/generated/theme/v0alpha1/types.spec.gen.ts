@@ -122,7 +122,6 @@ export const defaultPurpleHue = (): PurpleHue => ({
 
 export interface Spec {
 	name: string;
-	id: string;
 	colors?: {
 		mode?: "light" | "dark";
 		primary?: ColorSection;
@@ -189,6 +188,5 @@ export interface Spec {
 
 export const defaultSpec = (): Spec => ({
 	name: "",
-	id: "",
 });
 
