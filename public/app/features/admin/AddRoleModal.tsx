@@ -48,6 +48,15 @@ export const AddRoleModal = ({
   const [selectedRoleForPerms, setSelectedRoleForPerms] = useState<{ uid: string; name: string } | null>(null);
   const styles = useStyles2(getStyles);
 
+  // Handle dismiss - don't close if permissions modal is open
+  const handleDismiss = useCallback(() => {
+    if (selectedRoleForPerms) {
+      // Don't close the add role modal if permissions modal is open
+      return;
+    }
+    onDismiss();
+  }, [selectedRoleForPerms, onDismiss]);
+
   const { data: allRoles, isLoading } = useListRolesQuery({ delegatable: true });
   const [updateUserRoles, { isLoading: isUpdating }] = useSetUserRolesMutation();
 
@@ -182,7 +191,7 @@ export const AddRoleModal = ({
       <Modal
         title="Add Role to User"
         isOpen={isOpen}
-        onDismiss={onDismiss}
+        onDismiss={handleDismiss}
         className={styles.modal}
         contentClassName={styles.modalContent}
       >
@@ -218,7 +227,7 @@ export const AddRoleModal = ({
         </div>
 
         <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onDismiss}>
+          <Button variant="secondary" onClick={handleDismiss}>
             Cancel
           </Button>
         </Modal.ButtonRow>
@@ -229,7 +238,9 @@ export const AddRoleModal = ({
           roleUid={selectedRoleForPerms.uid}
           roleName={selectedRoleForPerms.name}
           isOpen={true}
-          onDismiss={() => setSelectedRoleForPerms(null)}
+          onDismiss={() => {
+            setSelectedRoleForPerms(null);
+          }}
         />
       )}
     </>
