@@ -74,7 +74,7 @@ export function trackTransformationToolAction(action: 'toggle_help' | 'toggle_fi
 
 export function trackQueryMenuAction(
   action: 'duplicate' | 'toggle_datasource_help' | 'open_inspector',
-  itemType: QueryEditorType.Query | QueryEditorType.Expression
+  itemType: QueryEditorType
 ) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action,
