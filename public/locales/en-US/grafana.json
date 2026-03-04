@@ -4782,7 +4782,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link to Connections",
-      "body": "Data sources have a new home! You can discover new data sources or manage existing ones in the Connections page, accessible from the main menu.",
+      "body": "Data sources have a new home! You can discover new data sources or manage existing ones in the <0>Connections page</0>, accessible from the main menu.",
       "go-to-connections": "Go to connections"
     },
     "data-source-details-page": {
