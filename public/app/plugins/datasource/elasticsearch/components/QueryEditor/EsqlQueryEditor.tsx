@@ -9,7 +9,7 @@ import { RawQueryEditor, RawQueryEditorProps } from './RawQueryEditor';
 
 const ESQL_LANG_ID = 'esql';
 const ESQL_MARKER_OWNER = 'esql-parse-validation';
-const NOT_ALLOWED_SOURCE_COMMANDS = ['PROMQL', 'TS'];
+const NOT_ALLOWED_SOURCE_COMMANDS = ['PROMQL'];
 
 // Monaco language registration is global, so we only do this once per page lifecycle.
 let ESQL_SETUP_STARTED = false;
