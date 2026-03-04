@@ -7,7 +7,7 @@ import {
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Box, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
@@ -128,9 +128,9 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
   }
 
   return (
-    <div className={styles.timeline}>
+    <Stack direction="column">
       {entries.map((entry, index) => (
-        <div key={`${entry.type}-${entry.timestamp}-${index}`} className={styles.groupRow}>
+        <Stack key={`${entry.type}-${entry.timestamp}-${index}`} direction="row">
           <div className={styles.timestampCol}>
             <Text variant="bodySmall" color="secondary">
               {dateFormatter.format(new Date(entry.timestamp))}
@@ -148,16 +148,16 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
             )}
 
             {entry.type === 'state-change' && entry.previous && entry.current && (
-              <div className={styles.stateChangeContent}>
+              <Stack direction="row" alignItems="center" gap={1}>
                 <EventState state={entry.previous} showLabel addFilter={noop} type="from" />
                 <Icon name="arrow-right" size="sm" />
                 <EventState state={entry.current} showLabel addFilter={noop} type="to" />
-              </div>
+              </Stack>
             )}
           </div>
-        </div>
+        </Stack>
       ))}
-    </div>
+    </Stack>
   );
 }
 
@@ -238,7 +238,7 @@ function NotificationStatusGroup({
   }
 
   return (
-    <div className={styles.notificationSummaryWrapper}>
+    <Box marginTop={1}>
       <button className={cx(styles.summaryRowBase, variantStyle)} onClick={() => setExpanded(!expanded)} type="button">
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name={isFiring ? 'fire' : 'check-circle'} size="sm" />
@@ -278,7 +278,7 @@ function NotificationStatusGroup({
           ))}
         </div>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -339,16 +339,6 @@ function IntegrationIcon({ integration }: { integration: string }) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  timeline: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-
-  groupRow: css({
-    display: 'flex',
-    flexDirection: 'row',
-  }),
-
   timestampCol: css({
     width: '140px',
     flexShrink: 0,
@@ -395,18 +385,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingLeft: theme.spacing(1.5),
     paddingBottom: theme.spacing(2),
     minWidth: 0,
-  }),
-
-  stateChangeContent: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    paddingTop: theme.spacing(0.25),
-  }),
-
-  notificationSummaryWrapper: css({
-    marginTop: theme.spacing(1),
   }),
 
   summaryRowBase: css({
