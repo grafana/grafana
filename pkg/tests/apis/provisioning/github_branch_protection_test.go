@@ -258,15 +258,21 @@ func startTestGitServer(t *testing.T) *httptest.Server {
 
 	mux := http.NewServeMux()
 
-	// Handle git-upload-pack info request (used for repository validation)
+	// Handle git-upload-pack and git-receive-pack info requests
 	mux.HandleFunc("/owner/repo.git/info/refs", func(w http.ResponseWriter, r *http.Request) {
 		service := r.URL.Query().Get("service")
-		if service == "git-upload-pack" {
+		switch service {
+		case "git-upload-pack":
 			w.Header().Set("Content-Type", "application/x-git-upload-pack-advertisement")
 			w.WriteHeader(http.StatusOK)
 			// Minimal valid git protocol response
 			_, _ = w.Write([]byte("001e# service=git-upload-pack\n0000"))
-		} else {
+		case "git-receive-pack":
+			w.Header().Set("Content-Type", "application/x-git-receive-pack-advertisement")
+			w.WriteHeader(http.StatusOK)
+			// Minimal valid git protocol response for push operations
+			_, _ = w.Write([]byte("001f# service=git-receive-pack\n0000"))
+		default:
 			w.WriteHeader(http.StatusBadRequest)
 		}
 	})
@@ -277,6 +283,14 @@ func startTestGitServer(t *testing.T) *httptest.Server {
 		w.WriteHeader(http.StatusOK)
 		// Minimal response with a ref
 		_, _ = w.Write([]byte("003d7fd1a60b01f91b314f59955a4e4d4e80d8edf11d refs/heads/main\n0000"))
+	})
+
+	// Handle git-receive-pack request (used for pushing/write permission checks)
+	mux.HandleFunc("/owner/repo.git/git-receive-pack", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/x-git-receive-pack-result")
+		w.WriteHeader(http.StatusOK)
+		// Minimal response indicating success
+		_, _ = w.Write([]byte("0000"))
 	})
 
 	server := httptest.NewServer(mux)
