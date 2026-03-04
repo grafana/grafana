@@ -94,6 +94,14 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
   },
 }));
 
+jest.mock('../utils/dashboardControls', () => ({
+  ...jest.requireActual('../utils/dashboardControls'),
+  loadDefaultControlsFromDatasources: jest.fn().mockResolvedValue({
+    defaultVariables: [],
+    defaultLinks: [],
+  }),
+}));
+
 const mockUserStorageGetItem = jest.fn();
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
@@ -883,6 +891,35 @@ describe('DashboardScenePageStateManager v2', () => {
         expect(loader.state.loadError).toBeUndefined();
       });
 
+      it('should preserve query params when redirecting to custom home dashboard', async () => {
+        const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+        const originalReplace = locationService.replace;
+        const originalGetLocation = locationService.getLocation;
+
+        try {
+          mockLocationService.replace = jest.fn();
+          mockLocationService.getLocation = jest.fn().mockReturnValue({
+            pathname: '/',
+            search: '?doc=some-query-value',
+            hash: '',
+            state: {},
+          });
+
+          setBackendSrv({
+            get: () => Promise.resolve({ redirectUri: '/d/custom-home?tab=recent' }),
+          } as unknown as BackendSrv);
+
+          const loader = new DashboardScenePageStateManagerV2({});
+          await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+          expect(mockLocationService.replace).toHaveBeenCalledWith('/d/custom-home?tab=recent&doc=some-query-value');
+          expect(loader.state.dashboard).toBeUndefined();
+        } finally {
+          locationService.replace = originalReplace;
+          locationService.getLocation = originalGetLocation;
+        }
+      });
+
       it('should handle invalid home dashboard request', async () => {
         setBackendSrv({
           get: () =>
@@ -1614,6 +1651,37 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.loadError).toBeUndefined();
       expect(locationService.getLocation().pathname).toBe('/d/asd');
+    });
+
+    it('should preserve query params when redirecting to custom home dashboard', async () => {
+      const mockLocationService = locationService as jest.Mocked<typeof locationService>;
+      const originalReplace = locationService.replace;
+      const originalGetLocation = locationService.getLocation;
+
+      try {
+        mockLocationService.replace = jest.fn();
+        mockLocationService.getLocation = jest.fn().mockReturnValue({
+          pathname: '/',
+          search: '?doc=some-query-value',
+          hash: '',
+          state: {},
+        });
+
+        setBackendSrv({
+          get: () => Promise.resolve({ redirectUri: '/a/custom-home-plugin?tab=recent' }),
+        } as unknown as BackendSrv);
+
+        const loader = new UnifiedDashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+        expect(mockLocationService.replace).toHaveBeenCalledWith(
+          '/a/custom-home-plugin?tab=recent&doc=some-query-value'
+        );
+        expect(loader.state.dashboard).toBeUndefined();
+      } finally {
+        locationService.replace = originalReplace;
+        locationService.getLocation = originalGetLocation;
+      }
     });
 
     it('should handle invalid home dashboard request', async () => {

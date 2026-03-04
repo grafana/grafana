@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcegrpc "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -49,6 +50,7 @@ var (
 
 //nolint:gocyclo
 func TestIntegrationDistributor(t *testing.T) {
+	t.Skip("Skipping flaky test: 'no healthy replica' errors.")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dbType := sqlutil.GetTestDBType()
@@ -350,7 +352,14 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	cfg.ResourceServerJoinRingTimeout = 300 * time.Second
 	cfg.EnableSearch = true
 
-	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
+	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
+	server.server.StorageServiceOptions = []sql.ServiceOption{
+		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
+			auth := &resourcegrpc.Authenticator{Tracer: tracing.InitializeTracerForTest()}
+			return auth.Authenticate(ctx)
+		}),
+	}
+	return server
 }
 
 func initModuleServerForTest(

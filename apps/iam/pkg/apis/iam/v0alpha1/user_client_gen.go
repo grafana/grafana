@@ -101,11 +101,11 @@ func (c *UserClient) Delete(ctx context.Context, identifier resource.Identifier,
 	return c.client.Delete(ctx, identifier, opts)
 }
 
-type GetTeamsRequest struct {
+type GetUserTeamsRequest struct {
 	Headers http.Header
 }
 
-func (c *UserClient) GetTeams(ctx context.Context, identifier resource.Identifier, request GetTeamsRequest) (*GetTeamsResponse, error) {
+func (c *UserClient) GetUserTeams(ctx context.Context, identifier resource.Identifier, request GetUserTeamsRequest) (*GetUserTeamsResponse, error) {
 	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
 		Path:    "/teams",
 		Verb:    "GET",
@@ -114,10 +114,10 @@ func (c *UserClient) GetTeams(ctx context.Context, identifier resource.Identifie
 	if err != nil {
 		return nil, err
 	}
-	cast := GetTeamsResponse{}
+	cast := GetUserTeamsResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetTeamsResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetUserTeamsResponse: %w", err)
 	}
 	return &cast, nil
 }

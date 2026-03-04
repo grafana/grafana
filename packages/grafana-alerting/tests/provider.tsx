@@ -17,7 +17,13 @@ setBackendSrv(new MockBackendSrv());
 // create an empty store
 export const store: ReturnType<typeof configureStore> = configureStore({
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(notificationsAPIv0alpha1.middleware).concat(rulesAPIv0alpha1.middleware),
+    getDefaultMiddleware({
+      // Disable performance-heavy middleware checks in tests
+      serializableCheck: false,
+      immutableCheck: false,
+    })
+      .concat(notificationsAPIv0alpha1.middleware)
+      .concat(rulesAPIv0alpha1.middleware),
   reducer: {
     [notificationsAPIv0alpha1.reducerPath]: notificationsAPIv0alpha1.reducer,
     [rulesAPIv0alpha1.reducerPath]: rulesAPIv0alpha1.reducer,

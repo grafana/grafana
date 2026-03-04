@@ -160,7 +160,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart ?? '',
     tags: state.tags,
-    links: state.links,
+    links: state.links.filter((l) => l.origin === undefined),
     graphTooltip,
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,

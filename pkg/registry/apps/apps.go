@@ -35,6 +35,7 @@ import (
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
 	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 	playlistAppInstaller *playlist.AppInstaller,
 	pluginsAppInstaller *plugins.AppInstaller,
 	liveAppInstaller *live.AppInstaller,
@@ -78,10 +79,7 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesLogsDrilldown) {
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
-	//nolint:staticcheck
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAnnotations) {
-		installers = append(installers, annotationAppInstaller)
-	}
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
 		installers = append(installers, advisorAppInstaller)
@@ -99,6 +97,18 @@ func ProvideAppInstallers(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagDashboardValidatorApp) {
 		installers = append(installers, dashvalidatorAppInstaller)
+	}
+
+	// Applications under active development should be disabled by default
+	// and enabled in a dedicated section of **config.ini**.
+	//
+	// We kindly ask developers not to rely on `features.IsEnabledGlobally` to control app registration
+	// as this API has been deprecated and will be removed in future releases.
+	//
+	// Developers are encouraged to explore the built-in functionality of the App Platform
+	// to control the app registration (see `docs/apps/example/README.md`).
+	if cfg.KubernetesAnnotationsAppEnabled {
+		installers = append(installers, annotationAppInstaller)
 	}
 	return installers
 }

@@ -24,12 +24,12 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
     // Add filter and group by variables if the datasource supports it
     const defaultDs = await getDatasourceSrv().get();
 
-    if (defaultDs.getTagKeys) {
-      const datasourceRef = {
-        type: defaultDs.meta.id,
-        uid: defaultDs.uid,
-      };
+    const datasourceRef = {
+      type: defaultDs.meta.id,
+      uid: defaultDs.uid,
+    };
 
+    if (defaultDs.getTagKeys) {
       const filterVariable = {
         datasource: datasourceRef,
         filters: [],
@@ -37,13 +37,17 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
         type: 'adhoc',
       };
 
+      variablesList = (variablesList || []).concat([filterVariable as VariableModel]);
+    }
+
+    if (defaultDs.getGroupByKeys) {
       const groupByVariable: VariableModel = {
         datasource: datasourceRef,
         name: 'Group by',
         type: 'groupby',
       };
 
-      variablesList = (variablesList || []).concat([filterVariable as VariableModel, groupByVariable]);
+      variablesList = (variablesList || []).concat([groupByVariable]);
     }
   }
 
@@ -86,12 +90,12 @@ export async function buildNewDashboardSaveModelV2(
     // Add filter and group by variables if the datasource supports it
     const defaultDs = await getDatasourceSrv().get();
 
-    if (defaultDs.getTagKeys) {
-      const datasourceRef = {
-        type: defaultDs.meta.id,
-        uid: defaultDs.uid,
-      };
+    const datasourceRef = {
+      type: defaultDs.meta.id,
+      uid: defaultDs.uid,
+    };
 
+    if (defaultDs.getTagKeys) {
       const filterVariable: AdhocVariableKind = {
         kind: 'AdhocVariable',
         group: datasourceRef.type,
@@ -101,6 +105,10 @@ export async function buildNewDashboardSaveModelV2(
         spec: { ...defaultAdhocVariableSpec(), name: 'Filter' },
       };
 
+      variablesList = (variablesList || []).concat([filterVariable]);
+    }
+
+    if (defaultDs.getGroupByKeys) {
       const groupByVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
         group: datasourceRef.type,
@@ -113,7 +121,7 @@ export async function buildNewDashboardSaveModelV2(
         },
       };
 
-      variablesList = (variablesList || []).concat([filterVariable, groupByVariable]);
+      variablesList = (variablesList || []).concat([groupByVariable]);
     }
   }
 

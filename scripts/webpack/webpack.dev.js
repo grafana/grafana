@@ -48,7 +48,7 @@ function scenesModule() {
 const envConfig = getEnvConfig();
 
 module.exports = (env = {}) => {
-  return merge(common, {
+  return merge(common(env), {
     devtool: 'source-map',
     mode: 'development',
 
@@ -152,7 +152,7 @@ module.exports = (env = {}) => {
             failOnError: false,
           }),
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[contenthash].css',
+        filename: env.react19 ? 'grafana.[name]-react19.[contenthash].css' : 'grafana.[name].[contenthash].css',
       }),
       new DefinePlugin({
         'process.env': {
@@ -164,6 +164,7 @@ module.exports = (env = {}) => {
         integrity: true,
         integrityHashes: ['sha384', 'sha512'],
         publicPath: true,
+        output: env.react19 ? 'assets-manifest-react19.json' : 'assets-manifest.json',
       }),
       new WebpackBar({
         color: '#eb7b18',

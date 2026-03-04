@@ -35,17 +35,37 @@ func (e *PathCreationError) Error() string {
 	return fmt.Sprintf("failed to create path %s: %v", e.Path, e.Err)
 }
 
+// FolderCreationInterceptor is called before a folder is created during path
+// traversal. Return an error to prevent the folder from being created.
+type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
+
+type FolderManagerOption func(*FolderManager)
+
 type FolderManager struct {
-	repo   repository.ReaderWriter
-	tree   FolderTree
-	client dynamic.ResourceInterface
+	repo         repository.ReaderWriter
+	tree         FolderTree
+	client       dynamic.ResourceInterface
+	beforeCreate FolderCreationInterceptor
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree) *FolderManager {
-	return &FolderManager{
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
+	fm := &FolderManager{
 		repo:   repo,
 		tree:   lookup,
 		client: client,
+		beforeCreate: func(context.Context, Folder) error {
+			return nil
+		},
+	}
+	for _, opt := range opts {
+		opt(fm)
+	}
+	return fm
+}
+
+func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
+	return func(fm *FolderManager) {
+		fm.beforeCreate = beforeCreate
 	}
 }
 
@@ -88,7 +108,6 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		}
 
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
-			// Wrap in PathCreationError to indicate which path failed
 			return &PathCreationError{
 				Path: f.Path,
 				Err:  fmt.Errorf("ensure folder exists: %w", err),
@@ -124,6 +143,11 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		return nil
 	} else if !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if folder exists: %w", err)
+	}
+
+	// Run creation guard only when the folder does not already exist.
+	if err := fm.beforeCreate(ctx, folder); err != nil {
+		return err
 	}
 
 	// Always use the provisioning identity when writing

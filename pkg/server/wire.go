@@ -262,6 +262,7 @@ var wireBasicSet = wire.NewSet(
 	mysql.ProvideService,
 	mssql.ProvideService,
 	store.ProvideEntityEventsService,
+	legacydualwrite.ProvideMetrics,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),

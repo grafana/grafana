@@ -12,14 +12,8 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DashboardCard } from './DashboardCard';
 import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  CREATION_ORIGINS,
-  DashboardLibraryInteractions,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-} from './interactions';
+import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { SuggestedDashboardInteractions } from './interactions';
 import { GnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -164,7 +158,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
         ),
       ];
 
-      DashboardLibraryInteractions.loaded({
+      SuggestedDashboardInteractions.loaded({
         numberOfItems: result.dashboards.length,
         contentKinds,
         datasourceTypes: [datasourceType],
@@ -209,7 +203,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       return;
     }
 
-    DashboardLibraryInteractions.itemClicked({
+    SuggestedDashboardInteractions.itemClicked({
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [ds.type],
       libraryItemId: dashboard.uid,
@@ -247,7 +241,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       }
 
       // Track item click
-      DashboardLibraryInteractions.itemClicked({
+      SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [ds.type],
         libraryItemId: String(dashboard.id),

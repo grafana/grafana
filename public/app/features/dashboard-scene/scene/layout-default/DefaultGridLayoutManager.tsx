@@ -83,8 +83,8 @@ export class DefaultGridLayoutManager
     icon: 'window-grid',
   };
 
-  public serialize(): DashboardV2Spec['layout'] {
-    return serializeDefaultGridLayout(this);
+  public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
+    return serializeDefaultGridLayout(this, isSnapshot);
   }
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
@@ -567,6 +567,16 @@ export class DefaultGridLayoutManager
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const panels = currentLayout.getVizPanels();
     return DefaultGridLayoutManager.fromVizPanels(panels);
+  }
+
+  public static createEmpty(): DefaultGridLayoutManager {
+    return new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [],
+        isDraggable: true,
+        isResizable: true,
+      }),
+    });
   }
 
   public static fromVizPanels(panels: VizPanel[] = []): DefaultGridLayoutManager {

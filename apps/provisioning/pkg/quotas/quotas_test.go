@@ -559,6 +559,29 @@ func TestQuotaExceededError(t *testing.T) {
 	})
 }
 
+func TestFixedQuotaGetter_SetQuotaStatus(t *testing.T) {
+	ctx := context.Background()
+	getter := NewFixedQuotaGetter(provisioning.QuotaStatus{
+		MaxResourcesPerRepository: 100,
+		MaxRepositories:           10,
+	})
+
+	status, err := getter.GetQuotaStatus(ctx, "ns")
+	require.NoError(t, err)
+	assert.Equal(t, int64(100), status.MaxResourcesPerRepository)
+	assert.Equal(t, int64(10), status.MaxRepositories)
+
+	getter.SetQuotaStatus(provisioning.QuotaStatus{
+		MaxResourcesPerRepository: 50,
+		MaxRepositories:           2,
+	})
+
+	status, err = getter.GetQuotaStatus(ctx, "ns")
+	require.NoError(t, err)
+	assert.Equal(t, int64(50), status.MaxResourcesPerRepository)
+	assert.Equal(t, int64(2), status.MaxRepositories)
+}
+
 func TestFixedQuotaGetter_ImplementsInterface(t *testing.T) {
 	// Verify that FixedQuotaGetter implements QuotaGetter interface
 	var _ QuotaGetter = (*FixedQuotaGetter)(nil)

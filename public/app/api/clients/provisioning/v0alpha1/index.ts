@@ -167,9 +167,8 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
     createRepositoryJobs: {
       onQueryStarted: async ({ jobSpec }, { queryFulfilled, dispatch }) => {
         try {
-          const showMsg = jobSpec.action === 'pull' || jobSpec.action === 'migrate';
           await queryFulfilled;
-          if (showMsg) {
+          if (jobSpec.action === 'pull' || jobSpec.action === 'migrate') {
             dispatch(
               notifyApp(
                 createSuccessNotification(t('provisioning.sync-repository.success-pull-started', 'Pull started'))

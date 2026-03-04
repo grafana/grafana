@@ -466,10 +466,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanager Eksternal",
-      "extra-config-warning": {
-        "content": "Ini menunjukkan gabungan konfigurasi alertmanager Grafana dengan konfigurasi yang diimpor. Tampilan gabungan ini bersifat hanya-baca di UI.",
-        "title": "Konfigurasi yang diimpor"
-      },
       "noOptionsMessage-no-datasources-found": "Tidak ada sumber data yang ditemukan"
     },
     "alert-menu": {
@@ -907,7 +903,7 @@
       "title-failed-to-fetch-contact-points": "Gagal mengambil titik kontak"
     },
     "contact-points": {
-      "create": "Buat titik kontak",
+      "create": "",
       "custom-template-value": "Nilai templat kustom",
       "delete-reasons": {
         "heading": "Titik kontak tidak dapat dihapus karena alasan berikut:",
@@ -1735,8 +1731,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1762,7 +1763,9 @@
         "target-folder": "",
         "target-folder-desc": "",
         "upload": "",
-        "yaml-file": ""
+        "yaml-error": "",
+        "yaml-file": "",
+        "yaml-required": ""
       },
       "success": "",
       "target-folder": {
@@ -1824,10 +1827,18 @@
       "apply": "Terapkan"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Gagal memuat riwayat status",
       "history-error-desc": "Tidak dapat mengambil riwayat transisi status untuk instans ini.",
       "no-history": "Tidak ada perubahan status terbaru",
-      "state-history": "Perubahan Status Terbaru"
+      "state-error-description": "",
+      "state-history": "Perubahan Status Terbaru",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Label yang tidak cocok",
@@ -2085,7 +2096,9 @@
       "select-namespace": "Pilih namespace"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Aturan peringatan",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Baru dihapus",
@@ -2109,7 +2122,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Tambahkan interval waktu"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2153,6 +2166,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2160,14 +2174,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Cari berdasarkan titik kontak",
@@ -2230,7 +2244,7 @@
       "title-failed-to-fetch-notification-templates": "Gagal mengambil templat pemberitahuan"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Tambah grup templat pemberitahuan",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Buat templat pemberitahuan untuk menyesuaikan pemberitahuan Anda."
     },
     "notifications-list": {
@@ -2257,6 +2271,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2280,15 +2295,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Tambahkan label untuk membantu Anda mengelola aturan perekaman dengan lebih baik.",
@@ -2309,8 +2324,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Lihat apa yang sedang mengirimkan peringatan dan telusuri data historis untuk menyelidiki masalah saat ini atau sebelumnya.",
-        "title": "Peringatan"
+        "subtitle": "Lihat apa yang sedang mengirimkan peringatan dan telusuri data historis untuk menyelidiki masalah saat ini atau sebelumnya."
       }
     },
     "panel-alert-tab-content": {
@@ -3120,6 +3134,17 @@
       "label-silence-start-and-end": "Kesenyapan mulai dan berakhir",
       "placeholder-select-time-range": "Pilih rentang waktu"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "selama {{duration}}"
     },
@@ -3224,6 +3249,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Bentuk templat",
+      "body-legacy": "",
       "label-examples-documentation": "Contoh dokumentasi",
       "label-template-group": "Grup templat",
       "label-template-group-name": "Nama grup templat",
@@ -3232,6 +3258,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Beri nama grup templat Anda",
       "title-error-saving-template": "Kesalahan saat menyimpan templat",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Cheat sheet templat"
     },
     "template-preview": {
@@ -3272,6 +3299,8 @@
       "help": {
         "intro": "Templat pemberitahuan menggunakan bahasa Templat Go untuk membuat pesan pemberitahuan.\n\nDi Grafana, grup templat dapat menentukan beberapa templat pemberitahuan menggunakan {{ define \"<NAME>\" }}.\nTemplat ini kemudian dapat digunakan di titik kontak dan dalam templat pemberitahuan lainnya dengan memanggil {{ template \"<NAME>\" }}.\nUntuk informasi terperinci tentang templat pemberitahuan, lihat dokumentasi kami."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Salah konfigurasi",
       "misconfigured-warning": "Templat ini salah dikonfigurasi.",
       "misconfigured-warning-details": "Templat harus ditentukan di bagian <2></2> dan <5></5> dari konfigurasi alertmanager Anda."
@@ -3310,7 +3339,7 @@
       "stop-alerting-when": "Hentikan peringatan (atau status tertunda) jika"
     },
     "time-interval": {
-      "add-time-interval": "Tambahkan interval waktu",
+      "add-time-interval": "",
       "save": "Simpan interval waktu",
       "saving": "Menyimpan interval waktu"
     },
@@ -3382,7 +3411,14 @@
         "title": "Aturan tidak ditemukan"
       },
       "rules-with-firing-instances": "Aturan peringatan dengan instans yang diaktifkan",
-      "rules-with-pending-instances": "Aturan peringatan dengan instans yang tertunda"
+      "rules-with-pending-instances": "Aturan peringatan dengan instans yang tertunda",
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      }
     },
     "type-selector-button": {
       "add-expression": "Tambah pola"
@@ -3428,7 +3464,8 @@
       },
       "title-edit": "Edit",
       "title-recreate": "Buat ulang",
-      "title-unsilence": "Batalkan Senyap"
+      "title-unsilence": "Batalkan Senyap",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -4136,6 +4173,15 @@
       "clear": "Hapus pencarian dan filter",
       "text": "Hasil untuk kueri Anda tidak ditemukan"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "Hapus riwayat",
       "error": "Dasbor yang baru dilihat tidak dapat dimuat.",
@@ -4804,6 +4850,10 @@
       "view-json-diff": "Lihat selisih JSON untuk melihat semua perubahan"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Tambahkan baru",
     "alert": {
@@ -4950,6 +5000,7 @@
       "description-color-annotation-event-markers": "Warna yang akan digunakan untuk penanda peristiwa anotasi",
       "description-enabled-annotation-query-issued-every-dashboard": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap muat ulang dasbor",
       "description-hidden": "Kueri anotasi dapat diaktifkan atau dinonaktifkan di bagian atas dasbor. Dengan mencentang opsi ini, tombol ini akan disembunyikan.",
+      "error-loading-panels": "",
       "label-color": "Warna",
       "label-data-source": "Sumber data",
       "label-enabled": "Aktif",
@@ -4982,7 +5033,7 @@
           }
         }
       },
-      "name": "Kisi otomatis",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Hapus"
@@ -5004,7 +5055,7 @@
     "canvas-actions": {
       "add-panel": "Tambah panel",
       "disabled-child-contains-tabs": "Tidak dapat mengubah ke tab karena baris sudah berisi tab",
-      "disabled-nested-grouping": "Pengelompokan dibatasi hingga 2 level",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Tab tidak dapat disarangkan di dalam tab lain",
       "group-into-row": "Kelompokkan ke dalam baris",
       "group-into-tab": "Kelompokkan ke dalam tab",
@@ -5371,6 +5422,21 @@
         "failed-to-fetch-dashboard": "Gagal mengambil dasbor"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Kirim umpan balik kustom",
       "footer-text": "Konten ini dibuat AI menggunakan <2>plugin Grafana LLM</2>",
@@ -5617,10 +5683,7 @@
       "empty-state-message": "Jalankan kueri untuk memvisualisasikannya di sini atau buka semua visualisasi untuk menambahkan jenis panel lainnya",
       "menu-open-panel-editor": "Konfigurasikan",
       "menu-use-library-panel": "Gunakan panel pustaka",
-      "missing-config": "Konfigurasi panel tidak ada",
-      "suggestions": {
-        "empty-state-message": "Jalankan kueri untuk mulai melihat visualisasi yang disarankan"
-      }
+      "missing-config": "Konfigurasi panel tidak ada"
     },
     "new-panel-title": "Panel baru",
     "on-create-new-row": {
@@ -6074,6 +6137,8 @@
       "title-transformations": "Transformasi"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Cari transformasi",
       "show-images": "Tampilkan gambar",
       "sql-expressions-message-description": "Cara baru untuk memanipulasi dan mengubah hasil kueri sumber data menggunakan sintaksis mirip MySQL.",
@@ -6211,11 +6276,12 @@
     "browse-grafana-com": "Telusuri Grafana.com",
     "browse-plugins": "Telusuri plugin",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Sumber data disediakan",
       "details-tooltip": "Detail",
       "no-preview": "Tidak ada pratinjau yang tersedia",
       "use-dashboard-button": "Gunakan dasbor",
-      "use-template-button": "Gunakan templat"
+      "view-template-button": ""
     },
     "community-empty-title": "Tidak ada dasbor komunitas yang ditemukan",
     "community-empty-title-with-datasource": "Tidak ada dasbor {{datasourceType}} komunitas yang ditemukan",
@@ -6324,10 +6390,12 @@
         "new-panel": "Panel baru"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -6369,6 +6437,7 @@
       "delete": "Hapus",
       "description-color-annotation-event-markers": "Warna yang akan digunakan untuk penanda peristiwa anotasi",
       "description-enabled-annotation-query-issued-every-dashboard": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap muat ulang dasbor",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Tampilkan kontrol anotasi di",
       "label-color": "Warna",
       "label-data-source": "Sumber data",
@@ -6520,6 +6589,12 @@
           "row-title": "Judul baris"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Gagal menghapus dasbor",
@@ -6776,10 +6851,10 @@
       "title-delete-all-transformations": "Hapus semua transformasi?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
+      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Alihkan tombol tampilan tabel",
-      "table-view-label-table-view": "Tampilan tabel"
+      "table-view-label-table-view": "Tampilan tabel",
+      "try-new-editor": ""
     },
     "panel-editor": {
       "text": {
@@ -6825,6 +6900,16 @@
     "query-editor": {
       "query": "Kueri"
     },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
+    },
     "query-variable-editor-form": {
       "description-examples": "Grup tangkapan bernama dapat digunakan untuk memisahkan teks tampilan dan nilai (<1>lihat contoh</1>).",
       "description-optional": "Opsional, jika Anda ingin mengekstrak bagian dari nama seri atau segmen node metrik.",
@@ -6846,11 +6931,11 @@
       "static-options-legend": "Opsi statis"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Opsi lanjutan",
         "classic": "Klasik",
         "json": "JSON",
-        "v1-resource": "Sumber Daya V1",
         "v2-resource": "Sumber Daya V2",
         "yaml": "YAML"
       },
@@ -6947,6 +7032,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Tidak dapat membuat peringatan dari panel ini karena tidak ada kueri ke sumber data berkemampuan peringatan yang ditemukan.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Aturan peringatan baru",
       "title-no-alerting-capable-query-found": "Tidak ada kueri berkemampuan peringatan yang ditemukan"
     },
@@ -7249,7 +7335,14 @@
       "title": "Versi"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": "Tambahkan dari kueri tersimpan"
     },
@@ -7719,7 +7812,10 @@
     "pro-tip": "Kiat Pro: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Kami mencari, tetapi sepertinya tidak bisa menemukan {{lowerCaseEntity}} ini. Coba kembali ke <4>beranda</4> atau cari bantuan di situs komunitas <7>.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -7803,6 +7899,11 @@
       "continue-without-saving": "Lanjutkan tanpa menyimpan",
       "save-correlation": "Simpan korelasi",
       "title-unsaved-changes-to-correlation": "Perubahan korelasi belum tersimpan"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Klik dan tarik pemisah abu-abu di area berwarna, di bawah ini.",
@@ -8583,6 +8684,8 @@
     "description-show-measure": "Tampilkan alat untuk melakukan pengukuran di peta",
     "description-show-scale": "Tunjukkan skala peta",
     "description-show-zoom": "Tampilkan tombol kontrol zoom di sudut kiri atas",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Layer"
@@ -8644,7 +8747,9 @@
     "name-show-measure": "Tampilkan alat ukur",
     "name-show-scale": "Tampilkan skala",
     "name-show-zoom": "Tampilkan kontrol zoom",
+    "name-sync-view-variable": "",
     "name-tooltip": "Tooltip",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Tidak ada bidang string yang ditemukan"
     },
@@ -8697,6 +8802,9 @@
     },
     "utils": {
       "get-next-layer-name": "Lapisan {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9331,11 +9439,13 @@
       },
       "legend": {
         "category": "Legenda",
+        "description-limit": "",
         "description-values": "Pilih nilai atau perhitungan untuk ditampilkan dalam legenda",
         "mode-options": {
           "label-list": "Daftar",
           "label-table": "Tabel"
         },
+        "name-limit": "",
         "name-mode": "Mode",
         "name-placement": "Penempatan",
         "name-values": "Nilai",
@@ -10264,6 +10374,11 @@
     "subtitle": "Integrasi LDAP di Grafana memungkinkan pengguna Grafana Anda untuk login dengan kredensial LDAP mereka. Cari tahu selengkapnya di <2><1>dokumentasi</1></2> kami.",
     "title": "Pengaturan Dasar"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Panel pustaka dengan nama ini sudah ada",
@@ -10853,7 +10968,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Opsi tidak ditemukan"
@@ -11130,9 +11247,17 @@
       "subtitle": "Pelajari masalah di sistem Anda beberapa saat setelah  masalah terjadi",
       "title": "Alerting"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Kelola konfigurasi Alertmanager dan aktifkan penerimaan peringatan yang dikelola Grafana",
       "title": "Pengaturan"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Tentukan cara peringatan dirutekan ke titik kontak",
@@ -11675,6 +11800,8 @@
     },
     "user-invite-form": {
       "back": "Kembali",
+      "disabled-message": "",
+      "disabled-title": "",
       "label-email-or-username": "Email atau nama pengguna",
       "label-name": "Nama",
       "label-send-invite-email": "Kirim email undangan",
@@ -11793,8 +11920,6 @@
       "tooltip-delete": "Hapus"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Beberapa saran tidak dapat dimuat"
       },
@@ -11804,6 +11929,10 @@
         "title": "Kesalahan",
         "try-again-button": "Coba lagi"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Jenis visualisasi tidak diketahui"
     },
     "viz-type-picker": {
@@ -12247,6 +12376,11 @@
       "text-loading-teams": "Memuat tim..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
@@ -12254,15 +12388,21 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "Jalur file di dalam repositori (.json atau .yaml)",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "Jalur folder di dalam repositori",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Cabang",
       "label-comment": "Komentar",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Jalur",
       "placeholder-branch": "Pilih atau masukkan nama cabang",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Cabang terakhir",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Cabang permintaan penarikan",
       "suffix-read-only-branch": ""
     }
@@ -12299,10 +12439,10 @@
       },
       "pr-workflow-description": "Memungkinkan pengguna untuk memilih apakah akan membuka permintaan penarikan saat menyimpan perubahan. Jika repositori tidak mengizinkan perubahan langsung ke cabang utama, permintaan penarikan mungkin tetap diperlukan.",
       "pr-workflow-label": "Aktifkan opsi permintaan penarikan saat menyimpan",
-      "token-description": "Kata Sandi Aplikasi Bitbucket dengan izin repositori",
-      "token-label": "Kata Sandi Aplikasi",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Token Bitbucket diperlukan",
-      "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan kata sandi aplikasi",
+      "token-user-description": "",
       "token-user-required": "Nama Pengguna wajib diisi",
       "url-description": "URL repositori Bitbucket",
       "url-required": "URL repositori wajib diisi"
@@ -12325,9 +12465,6 @@
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
-    },
-    "check-repository": {
-      "check": "Periksa"
     },
     "code-block": {
       "aria-label-copy": "Salin kode ke papan klip"
@@ -12373,6 +12510,8 @@
       "instance-fully-managed-tooltip": "Konfigurasi dinonaktifkan karena instans ini dikelola sepenuhnya"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12512,6 +12651,23 @@
       "label-read-only": "Hanya baca",
       "label-sync-interval": "Interval Sinkronisasi (detik)"
     },
+    "fix-folder-metadata": {
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
+    },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Tidak ada hasil yang cocok dengan kueri Anda",
       "partial-managed": "{{managedCount}}/{{resourceCount}} sumber daya dikelola oleh sinkronisasi Git.",
@@ -12644,6 +12800,14 @@
       "show-more": "tampilkan lebih banyak",
       "truncated": "Pesan terpotong"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "repo-message": "",
+      "repo-title": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "Sinkronisasi instans lengkap dinonaktifkan karena folder lain sudah disinkronkan dengan repositori.",
@@ -12712,6 +12876,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Diperiksa:",
       "connection-status": "Status koneksi:",
       "finished": "Penarikan terakhir yang berhasil:",
@@ -12721,7 +12886,9 @@
       "last-ref": "Ref Terakhir:",
       "messages": "Pesan:",
       "not-available": "N/A",
+      "path": "",
       "pull-status": "Status pull",
+      "repo-url": "",
       "resources": "Sumber Daya",
       "status": "Status:",
       "unhealthy": "Tidak Sehat",
@@ -12771,6 +12938,7 @@
       "header-status": "Status",
       "header-title": "Judul",
       "header-type": "Jenis",
+      "missing-folder-metadata": "",
       "search-placeholder": "Cari berdasarkan jalur atau judul",
       "source": "Sumber",
       "status-pending": "Tertunda",
@@ -12844,19 +13012,22 @@
       "tooltip-unhealthy-repository": "Tidak dapat menerapkan pull pada repositori yang tidak sehat"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "Sinkronisasi instance memerlukan semua sumber daya untuk dikelola. Sumber daya yang sudah ada akan dimigrasikan secara otomatis.",
       "migrate-resources-description": "",
       "options": "Opsi",
       "repository-error": "Kesalahan repositori",
       "repository-error-message": "Tidak dapat memeriksa status repositori. Harap verifikasi konfigurasi repositori dan coba lagi.",
       "repository-unhealthy": "Repositori tidak dapat disinkronkan. Batalkan penyediaan dan coba lagi setelah masalah terselesaikan. Lihat detail di bawah ini.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "dan klik",
       "bitbucket": {
-        "create-token-button": "Buat kata sandi Aplikasi",
-        "token-text": "Token Akses Pribadi Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Tambahkan token baru",
@@ -13141,6 +13312,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13153,6 +13325,10 @@
       "show-transformation-help": "",
       "transformation-debug": ""
     },
+    "alerts": {
+      "no-alerts": "",
+      "no-alerts-description": ""
+    },
     "delete-modal": {
       "body-query": "",
       "body-transformation": "",
@@ -13164,7 +13340,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13174,9 +13351,10 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
     "footer": {
@@ -13194,6 +13372,7 @@
       "query-options": ""
     },
     "header": {
+      "alert": "",
       "expression": "",
       "pending-expression": "",
       "pending-expression-cancel": "",
@@ -13219,16 +13398,18 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "tooltip": ""
-      },
+      "alerts-loading": "",
       "card-click": "Pilih kartu {{id}}",
       "data": "",
-      "data-mode": "",
+      "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Kueri & Ekspresi",
       "toggle-size": "Alihkan ukuran bilah sisi",
-      "transformations": "Transformasi"
+      "transformations": "Transformasi",
+      "view-toggle": "",
+      "alerts_other": "",
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13314,15 +13495,12 @@
       "duration-selected": "Pilih interval waktu muat ulang dengan interval saat ini {{durationAriaLabel}} yang dipilih"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Aktifkan streaming langsung",
       "label": "Langsung"
     },
     "off-option": {
-      "aria-label": "Nonaktifkan muat ulang otomatis",
       "label": "Nonaktif"
     },
     "tooltip": {
@@ -13426,6 +13604,7 @@
       "panel-type": "Panel: {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Sertakan panel",
       "remove-datasource-filter": "Sumber data: {{datasource}}",
       "sort-placeholder": "Urutkan",
@@ -13849,7 +14028,8 @@
       "no-matching-silences": "Tidak ada kesenyapan yang cocok;",
       "noConfig": "Buat titik kontak baru untuk membuat konfigurasi menggunakan nilai default atau hubungi administrator Anda untuk mengatur Alertmanager.",
       "recreate-button": "Buat ulang",
-      "unsilence-button": "Batalkan Senyap"
+      "unsilence-button": "Batalkan Senyap",
+      "view-button": ""
     }
   },
   "silences-table": {
@@ -14174,6 +14354,11 @@
           "settings": "Pengaturan"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Sinkronisasi grup eksternal"
@@ -14215,12 +14400,34 @@
       "columns": {
         "aria-label-delete-button": "Hapus tim {{teamName}}",
         "aria-label-edit-team": "Edit tim {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Edit tim",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Edit tim"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Memuat tim...",
       "new-team": "Tim Baru",
       "placeholder-search-teams": "Cari tim"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Hal ini opsional dan secara spesifik digunakan untuk mengatur avatar profil tim (melalui layanan Gravatar)",
@@ -14452,6 +14659,12 @@
     "name-show-matches-only": "Hanya tampilkan kecocokan",
     "traces-panel": {
       "no-data-found-in-response": "Tidak ada data yang ditemukan dalam respons"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

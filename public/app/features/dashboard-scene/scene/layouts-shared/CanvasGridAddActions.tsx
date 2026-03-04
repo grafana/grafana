@@ -25,38 +25,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   const localStyles = useStyles2(getStyles);
   const { hasCopiedPanel } = useClipboardState();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const { disableGrouping, disableTabs } = useMemo(() => {
-    if (config.featureToggles.unlimitedLayoutsNesting) {
-      return { disableGrouping: false, disableTabs: false };
-    }
-
-    let parent = layoutManager.parent;
-    const layouts = [];
-
-    while (parent) {
-      if (isDashboardLayoutManager(parent)) {
-        layouts.push(parent.descriptor.id);
-      }
-
-      if (layouts.length === 2) {
-        parent = undefined;
-        break;
-      }
-
-      parent = parent.parent;
-    }
-
-    if (layouts.length === 2) {
-      return { disableGrouping: true, disableTabs: true };
-    }
-
-    if (layouts.length === 1 && layouts[0] === TabsLayoutManager.descriptor.id) {
-      return { disableGrouping: false, disableTabs: true };
-    }
-
-    return { disableGrouping: false, disableTabs: false };
-  }, [layoutManager]);
+  const { disableGrouping, disableTabs } = useNestingRestrictions(layoutManager);
 
   return (
     <div
@@ -122,7 +91,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           disabled={disableGrouping}
           tooltip={
             disableGrouping
-              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 2 levels')
+              ? t('dashboard.canvas-actions.disabled-nested-grouping', 'Grouping is limited to 3 levels')
               : undefined
           }
         >
@@ -145,6 +114,36 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
       )}
     </div>
   );
+}
+
+const MAX_NESTING_DEPTH = 3;
+
+export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
+  return useMemo(() => {
+    if (config.featureToggles.unlimitedLayoutsNesting) {
+      return { disableGrouping: false, disableTabs: false };
+    }
+
+    const layouts: string[] = [];
+    let parent = layoutManager.parent;
+
+    while (parent) {
+      if (isDashboardLayoutManager(parent)) {
+        layouts.push(parent.descriptor.id);
+      }
+
+      if (layouts.length === MAX_NESTING_DEPTH) {
+        break;
+      }
+
+      parent = parent.parent;
+    }
+
+    const disableGrouping = layouts.length >= MAX_NESTING_DEPTH;
+    const disableTabs = disableGrouping || layouts.includes(TabsLayoutManager.descriptor.id);
+
+    return { disableGrouping, disableTabs };
+  }, [layoutManager]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

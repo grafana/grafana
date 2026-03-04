@@ -16,17 +16,13 @@ keywords:
 
 # Grafana Advisor
 
-{{< docs/public-preview product="Grafana Advisor" featureFlag="grafanaAdvisor" >}}
+{{< admonition type="note" >}}
+Grafana Advisor is available in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-## Overview
+Currently, Grafana Advisor performs regular checks on data sources, plugins, and your Grafana instance, but we're planning to expand its capabilities in future releases to cover more aspects of your Grafana environment. You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
+{{< /admonition >}}
 
 Grafana Advisor is a monitoring tool that helps administrators keep their Grafana instances running smoothly and securely. It automatically performs regular health checks on your Grafana server, providing actionable insights and recommendations for maintaining optimal system performance.
-
-{{< admonition type="note" >}}
-Currently, Grafana Advisor performs regular checks on data sources, plugins, and your Grafana instance, but we're planning to expand its capabilities in future releases to cover more aspects of your Grafana environment.
-
-You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
-{{< /admonition >}}
 
 {{< youtube id="o84EfY-KP-c" >}}
 
@@ -35,7 +31,7 @@ You can suggest new checks and provide feedback through this [form](https://docs
 To set up Grafana Advisor you need:
 
 - Administration rights in your Grafana organization.
-- If you're running Grafana on-premise, enable the required feature toggle in your Grafana instance. Refer to [Enable required feature toggles](#enable-feature-toggles) for instructions. This is not required if you're using Grafana Cloud, as the feature toggles are enabled by default.
+- If you're running Grafana on-premise, enable the required feature toggle in your Grafana instance. Refer to [Enable required feature toggles](#enable-feature-toggles) for instructions. If you're using Grafana Cloud feature toggles are enabled by default.
 
 ### Enable feature toggles
 
@@ -55,289 +51,72 @@ To enable the required feature toggles, add them to your Grafana configuration f
 
 ## Access Grafana Advisor
 
-1. Log in to your Grafana instance with an administrator account
-1. Navigate to the Administration section
-1. Select "Advisor" from the navigation menu
+To access Grafana Advisor:
 
-![<Grafana Advisor UI>](/media/docs/grafana-advisor/grafana-advisor-ui.png)
+1. Log in to your Grafana instance with an **Administrator account**.
+1. Navigate to the **Administration** section on the left navigation menu.
+1. Click **Advisor**.
+1. If you're a first time user, select **Generate report** to run Advisor and obtain your first report. From now on, reporting is automated and updated periodically.
 
-## Understand the Advisor interface
+## Navigate the Advisor report
 
-### Action needed section
+An Advisor report can contain the following tasks and action suggestions:
 
-This collapsible section displays issues requiring immediate attention:
+- [Action needed](#action-needed)
+- [Investigation needed](#investigation-needed)
+- [No action needed](#no-action-needed)
 
-- For each item, Grafana Advisor displays the specific name of the item that needs to be fixed.
-- For data source issues, Grafana Advisor displays the specific data source name.
-- One or more buttons appear. These buttons point you to different links to fix the issue, retry the check or hide the error.
-
-![Action needed](/media/docs/grafana-advisor/action_needed.png)
-
-### Investigation needed section
-
-This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the "Action needed" section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
-
-![Investigation needed](/media/docs/grafana-advisor/investigation-needed.png)
-
-### More info section
-
-This collapsible section provides more details about which checks have been performed and how many items have been analyzed.
-
-![<Grafana Advisor - More info tab>](/media/docs/grafana-advisor/more_info.png)
-
-{{< admonition type="tip" >}}
-Click the cogwheel in this section to access Grafana Advisor settings, where you can enable or disable checks according to your preferences.
-{{< /admonition >}}
-
-### Enable LLM suggestions
-
-If the [Grafana LLM app](https://grafana.com/grafana/plugins/grafana-llm-app/) is installed, the Advisor can use it to generate suggestions for issues. Enable the LLM app and click the magic (✨) button to generate a suggestion for an issue.
-
-![<Grafana Advisor - LLM suggestions>](/media/docs/grafana-advisor/llm-suggestions.png)
-
-## Address issues
-
-To resolve issues flagged by Grafana Advisor and maintain system reliability, follow the best practices below. Regularly check the Advisor to keep your Grafana instance secure and up to date.
-
-### Best practices
-
-- **Regular Monitoring:** Check the Advisor page often to identify and address emerging issues
-- **Immediate Action:** Address "Action needed" items promptly to ensure system reliability
-- **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass
-- **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet
-
-## How to create an alert based on Advisor results
-
-This guide walks you through creating a Grafana alert that monitors Advisor check results and triggers when failures are detected.
-
-### Step 1: Create a service account and token
-
-1. Navigate to **Administration → Users and access → Service accounts** in your Grafana instance
-2. Click **Add service account**
-3. Provide a name (for example, "advisor-alert-service-account")
-4. Set the role to **Admin** to ensure proper permissions
-5. Click **Create**
-6. In the service account details, click **Add service account token**
-7. Provide a token name and set an appropriate expiration date
-8. Click **Generate token**
-
-{{< admonition type="caution" >}}
-Copy the token value immediately and store it securely - you won't be able to see it again.
-{{< /admonition >}}
-
-### Step 2: Set up the Grafana Infinity data source
+![Action needed](/media/docs/grafana-advisor/advisor-g13.png)
 
 {{< admonition type="note" >}}
-Use Infinity plugin >=v3.3.0 for the JQ parser used later.
+
+You can configure which checks Advisor will run. See how in [Configure application](#advisor-menu).
+
 {{< /admonition >}}
 
-1. Go to **Connections → Add new connection**
-2. Search for "Infinity"
-3. If not installed, click **Install**. Wait for the plugin to be installed.
-4. From the plugin page, click **Add new data source**.
-5. Configure the data source:
-   - **Name**: Give it a descriptive name (e.g., "Advisor API")
-   - **Setup Authentication**: In the **Auth type**, select **Bearer Token**. In the **Auth details** section, paste the service account token from Step 1 and in the **Allowed hosts** section, write your Grafana app URL and click the "Add" button (e.g., `https://your-grafana-host.com`).
-6. Click **Save & test** to verify the connection
+### Action needed
 
-### Step 3: Create the alert rule
+This collapsible section displays issues requiring immediate attention. For each item, Grafana Advisor displays the specific name of the item that needs to be fixed. For data source issues, Grafana Advisor displays the specific data source name.
 
-Now you have everything you need to create an alert based on Advisor results.
+For each item, one or more buttons appear:
 
-1. Navigate to **Alerting → Alert rules**
-2. Click **New alert rule**
-3. Provide a rule name (e.g., "Advisor Failures Alert")
+- Fix the issue.
+- The [Grafana Assistant](#use-grafana-advisor-with-grafana-assistant) sparkle icon, which will take you to the Assistant.
+- Retry the check.
+- Hide the error. If you hide an error you can see it again by clicking the **Hide/Show silenced errors** eye icon on the top right corner.
 
-#### Configure the query
+### Investigation needed
 
-1. **Data source**: Select the Infinity data source created in Step 3
-2. Configure the query settings:
-   - **Type**: JSON
-   - **Parser**: JQ
-   - **Source**: URL
-   - **Format**: Table
-   - **Method**: GET
-   - **URL**: Get this from the Advisor interface:
-     - Visit the Advisor in your Grafana instance
-     - Open browser Developer Tools (F12) → Network tab
-     - Look for a request ending with `/checks`
-     - Copy the full URL (format: `https://<your_grafana_host>/apis/advisor.grafana.app/v0alpha1/namespaces/<your_namespace>/checks`)
+This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the **Action needed** section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
 
-#### Configure parsing options
+### No action needed
 
-**Rows/Root** (paste this JQ expression):
+This collapsible section provides more details about which checks have been performed and how many items have been analyzed. You can configure which checks Advisor will run. See how in [Advisor menu > Configure application](#advisor-menu).
 
-```jq
-.items | map({
-  type: .metadata.labels["advisor.grafana.app/type"],
-  creationTimestamp: .metadata.creationTimestamp,
-  failuresCount: (.status.report.failures | length)
-}) | group_by(.type) | map(sort_by(.creationTimestamp) | last)
-```
+### Use Grafana Advisor with Grafana Assistant
 
-This JQ query processes Grafana Advisor check data to get the most recent result for each check type. It transforms each check into a simplified object with type, timestamp, and failure count.
-The result is a clean array showing the current state of each check type (data source, plugin, configuration, etc.) with their failure counts, perfect for alerting when any type has failures > 0.
+You can use Advisor with the Grafana Assistant, a purpose-built LLM in Grafana Cloud that allows you to troubleshoot incidents, manage resources, and answer product questions in minutes. The Assistant removes manual operations and speeds up response time. Strong privacy and security controls ensure conversations respect RBAC, route through vetted service providers, and rely on your telemetry to produce action-ready results.
 
-**Columns** (add these three columns):
+If you click on the sparkle icon next to each issue detected, you will open a chat with the Assistant with all the existing information about the issue.
 
-- **Selector**: `creationTimestamp`, **Format**: Time
-- **Selector**: `failuresCount`, **Format**: Number
-- **Selector**: `type`, **Format**: String
+To learn more, refer to the [Grafana Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/).
 
-#### Optional: Filter by check type
+## Advisor menu
 
-If you want to alert only for specific check types:
+On the top right corner of the Advisor UI you have the following options and settings:
 
-1. In the **Computed columns, Filter, Group by** section
-2. Add a **Filter**: `type == "license"` (replace "license" with your desired check type)
+- **Refresh** the report.
+- **Configure application**. Click the cogwheel button to access Grafana Advisor plugin settings, where you can enable or disable checks according to your preferences. Available checks cover configuration, installed plugins and data sources, Grafana instance versions, or SSO settings.
+- **Hide/Show silenced issues**.
+- **Delete reports**.
 
-#### Set alert condition
+## Address issues detected by Grafana Advisor
 
-- **Alert condition**: Select "WHEN Last OF QUERY Is above 0"
-- This will trigger when any check type has failures.
-- Click on "Preview alert rule condition" to see the result of the query.
+To maintain system reliability and keep your Grafana instance secure and up to date, regularly check the Advisor page to resolve issues flagged by Grafana Advisor:
 
-#### Complete alert configuration
+- **Regular Monitoring:** Check the Advisor page often to identify and address emerging issues.
+- **Immediate Action:** Address "Action needed" items promptly to ensure system reliability.
+- **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass.
+- **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet.
 
-Select your preferred evaluation (e.g. every 24 hours) and notification settings.
-
-### Step 4: Save the alert rule
-
-Click **Save** and check the alert is being triggered.
-
-Your alert is now configured to monitor Advisor results and notify you when failures are detected!
-
-## How to manage Advisor using the Grafana CLI `grafanactl`
-
-The Grafana CLI `grafanactl` tool is a command-line tool for managing Grafana resources as code. See how to install and configure it in the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/) documentation.
-
-It can be used to manage Advisor `checks` and `checktypes`. We'll cover some examples below.
-
-{{< tabs >}}
-{{< tab-content name="Get the list of checks" >}}
-
-```bash
-grafanactl resources get checks -o wide
-```
-
-For a more detailed view, you can get the list of elements checked and failing inspecting the JSON output:
-
-```bash
-grafanactl resources get checks -o json | jq -r '
-  ["TYPE","CHECKED","FAILURES"],
-  (
-    [.items[] | {
-      type: .metadata.labels["advisor.grafana.app/type"],
-      ts: .metadata.creationTimestamp,
-      count: (.status.report.count // 0),
-      failures: ((.status.report.failures // []) | length)
-    }]
-    | group_by(.type)
-    | map(sort_by(.ts) | last)
-    | sort_by(.type)
-    | .[]
-    | [.type, (.count | tostring), (.failures | tostring)]
-  )
-  | @tsv
-' | column -t -s $'\t'
-```
-
-{{< /tab-content >}}
-{{< tab-content name="Get the list of check types" >}}
-
-```bash
-grafanactl resources get checktypes -o wide
-```
-
-{{< /tab-content >}}
-{{< tab-content name="Show all failures across every check type" >}}
-
-```bash
-grafanactl resources get checks -o json | jq -r '
-  ["SEVERITY","ITEM","RULE","TYPE"],
-  (
-    [.items[] | {
-      type: .metadata.labels["advisor.grafana.app/type"],
-      ts: .metadata.creationTimestamp,
-      failures: (.status.report.failures // [])
-    }]
-    | group_by(.type)
-    | map(sort_by(.ts) | last)
-    | map(select((.failures | length) > 0))
-    | .[]
-    | .type as $t
-    | .failures[]
-    | [.severity, .item, .stepID, $t]
-  )
-  | @tsv
-' | column -t -s $'\t'
-```
-
-{{< /tab-content >}}
-{{< tab-content name="Run checks for a type" >}}
-
-Create the check resource and push it:
-
-```bash
-mkdir -p resources/Check/
-echo '{
-  "kind":"Check",
-  "metadata":{
-    "name":"check-manual",
-    "labels":{"advisor.grafana.app/type":"datasource"}, # Replace with the check type you want to run
-    "namespace":"<namespace>" # Replace with the namespace of your Grafana instance or "default" for on-premise
-  },
-  "apiVersion":"advisor.grafana.app/v0alpha1",
-  "spec":{"data":{}},
-  "status":{
-    "report":{
-      "count":0,
-      "failures":[]
-    }
-  }
-}' > resources/Check/check-manual.json
-grafanactl push checks/check-manual
-```
-
-Then wait for the check to run and the results to be available:
-
-```bash
-grafanactl resources get checks/check-manual -o json | jq '.status.report'
-```
-
-{{< /tab-content >}}
-{{< tab-content name="Get plugins that need an update" >}}
-
-```bash
-grafanactl resources get checks -o json | jq -r '
-  ["PLUGIN","SEVERITY","PLUGIN PATH"],
-  (
-    [.items[] | select(.metadata.labels["advisor.grafana.app/type"] == "plugin")]
-    | sort_by(.metadata.creationTimestamp) | last
-    | .status.report.failures[]?
-    | select(.stepID == "update")
-    | [.item, .severity, (.links[0].url // "-")]
-  )
-  | @tsv
-' | column -t -s $'\t'
-```
-
-{{< /tab-content >}}
-{{< tab-content name="Unhealthy datasources" >}}
-
-```bash
-grafanactl resources get checks -o json | jq -r '
-  ["DATASOURCE","SEVERITY","DATASOURCE PATH"],
-  (
-    [.items[] | select(.metadata.labels["advisor.grafana.app/type"] == "datasource")]
-    | sort_by(.metadata.creationTimestamp) | last
-    | .status.report.failures[]?
-    | select(.stepID == "health-check")
-    | [.item, .severity, (.links[0].url // "-")]
-  )
-  | @tsv
-' | column -t -s $'\t'
-```
-
-{{< /tab-content >}}
-{{< /tabs >}}
+You can also set up your own alerts with **Grafana Alerting**, which allows you to monitor your incoming data and set up alerts for specific events or circumstances. You can then create, manage, and take action on your alerts from a single, consolidated view.Refer to the [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/index.md) for more information.
