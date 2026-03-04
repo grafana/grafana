@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
 
@@ -37,16 +36,20 @@ export function ProvisionedLinksSection({ links }: { links: DashboardLink[] }) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   titleWrapper: css({
     width: '20vw',
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    display: 'inline-block',
   }),
   urlWrapper: css({
     width: '40vw',
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    display: 'inline-block',
   }),
   sourceCell: css({
     width: '1%',
