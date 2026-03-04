@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -31,7 +32,7 @@ func Compare(ctx context.Context, repo repository.Reader, repositoryResources re
 		return nil, fmt.Errorf("error reading tree: %w", err)
 	}
 
-	changes, err := Changes(source, target)
+	changes, err := Changes(ctx, source, target)
 	if err != nil {
 		return nil, fmt.Errorf("calculate changes: %w", err)
 	}
@@ -45,7 +46,8 @@ func Compare(ctx context.Context, repo repository.Reader, repositoryResources re
 	return changes, nil
 }
 
-func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceList) ([]ResourceFileChange, error) {
+func Changes(ctx context.Context, source []repository.FileTreeEntry, target *provisioning.ResourceList) ([]ResourceFileChange, error) {
+	logger := logging.FromContext(ctx)
 	lookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
 	for _, item := range target.Items {
 		if item.Path == "" {
@@ -96,6 +98,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 			// _folder.json is a folder-metadata file (like .keep), not a resource.
 			// Skip it here; the parent directory change handles folder creation.
 			if resources.IsFolderMetadataFile(file.Path) {
+				logger.Debug("skipping folder metadata file", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
 					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 				}
