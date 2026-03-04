@@ -103,5 +103,5 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Toggle for enabling authz management apis
 	features featuremgmt.FeatureToggles
 
-	tracing *tracing.TracingService
+	tracing tracing.Tracer
 }

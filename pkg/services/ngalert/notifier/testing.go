@@ -98,6 +98,13 @@ func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfigurati
 	}
 }
 
+func NewFakeNotificationStore(t *testing.T, notificationSettings map[int64]map[models.AlertRuleKey]models.ContactPointRouting) *fakeConfigStore {
+	t.Helper()
+	return &fakeConfigStore{
+		notificationSettings: notificationSettings,
+	}
+}
+
 func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
 	result := make([]*models.AlertConfiguration, 0, len(f.configs))
 	for _, configuration := range f.configs {
@@ -509,6 +516,10 @@ type TestMultiOrgAlertmanagerOptions struct {
 	featureToggles featuremgmt.FeatureToggles
 	peer           alertingNotify.ClusterPeer
 	waitReady      bool
+	secretService  *secretsManager.SecretsService
+	alertmanagers  map[int64]Alertmanager
+	cfgStore       AlertingStore
+	skipLoad       bool
 }
 
 type TestMultiOrgAlertmanagerOption func(*TestMultiOrgAlertmanagerOptions)
@@ -549,6 +560,30 @@ func WithWaitReady() TestMultiOrgAlertmanagerOption {
 	}
 }
 
+func WithSecretService(secretService *secretsManager.SecretsService) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.secretService = secretService
+	}
+}
+
+func WithAlertmanagers(alertmanagers map[int64]Alertmanager) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.alertmanagers = alertmanagers
+	}
+}
+
+func WithConfigStore(cfgStore AlertingStore) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.cfgStore = cfgStore
+	}
+}
+
+func WithSkipLoad() TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.skipLoad = true
+	}
+}
+
 func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerOption) *MultiOrgAlertmanager {
 	t.Helper()
 
@@ -565,11 +600,19 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 
 	tmpDir := t.TempDir()
 	orgStore := NewFakeOrgStore(t, options.orgs)
-	cfgStore := NewFakeConfigStore(t, options.configs)
+	var cfgStore AlertingStore
+	if options.cfgStore != nil {
+		cfgStore = options.cfgStore
+	} else {
+		cfgStore = NewFakeConfigStore(t, options.configs)
+	}
 	kvStore := fakes.NewFakeKVStore(t)
 	registry := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(registry)
-	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
+	secretsService := options.secretService
+	if secretsService == nil {
+		secretsService = secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
+	}
 	decryptFn := secretsService.GetDecryptedValue
 
 	cfg := &setting.Cfg{
@@ -603,7 +646,16 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		moaOpts...,
 	)
 	require.NoError(t, err)
-	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+
+	if options.alertmanagers != nil {
+		for orgID, am := range options.alertmanagers {
+			moa.alertmanagers[orgID] = am
+		}
+	}
+
+	if !options.skipLoad {
+		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+	}
 
 	if options.waitReady {
 		require.Eventually(t, func() bool {

@@ -195,9 +195,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 	t.Run("quota exceeded blocks both create and update via files endpoint", func(t *testing.T) {
 		// With folder target: 2 dashboards + 1 folder = 3 resources, limit 1 → exceeded
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 1
-		})
+		helper := runGrafana(t)
 		ctx := context.Background()
 
 		const repo = "files-quota-exceeded-repo"
@@ -214,6 +212,10 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
+		helper.SyncAndWait(t, repo, nil)
+
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
+		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.SyncAndWait(t, repo, nil)
 		// Wait for quota condition to show exceeded
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
