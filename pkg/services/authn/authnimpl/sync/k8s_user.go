@@ -6,12 +6,10 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/aggregator/apiserver/scheme"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -30,7 +28,6 @@ type K8sUserService struct {
 	restConfigProvider apiserver.RestConfigProvider
 	clientGenerator    resource.ClientGenerator
 	userClient         *iamv0alpha1.UserClient
-	restClient         *rest.RESTClient
 	initClients        sync.Once
 }
 
@@ -65,17 +62,6 @@ func (s *K8sUserService) initK8sClients(ctx context.Context, logger log.Logger) 
 			logger.Warn("Failed to create user client", "error", err)
 		} else {
 			s.userClient = c
-		}
-
-		restConfigCopy := rest.CopyConfig(restConfig)
-		restConfigCopy.GroupVersion = &iamv0alpha1.SchemeGroupVersion
-		restConfigCopy.NegotiatedSerializer = scheme.Codecs
-		restConfigCopy.APIPath = "/apis"
-
-		if c, err := rest.RESTClientFor(restConfigCopy); err != nil {
-			logger.Warn("Failed to create REST client", "error", err)
-		} else {
-			s.restClient = c
 		}
 	})
 }
