@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import * as React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -12,7 +11,6 @@ import {
   getPortalContainer,
   UPlotConfigBuilder,
   usePanelContext,
-  useStyles2,
   useTheme2,
 } from '@grafana/ui';
 
@@ -66,6 +64,9 @@ function getVals(frame: DataFrame) {
   return vals;
 }
 
+export const getPinnedId = (frameIdx: number, i: number) => {
+  return `${frameIdx}:${i}`;
+};
 export const AnnotationsPlugin2 = ({
   annotations,
   timeZone,
@@ -79,8 +80,7 @@ export const AnnotationsPlugin2 = ({
   const [plot, setPlot] = useState<uPlot>();
 
   const [portalRoot] = useState(() => getPortalContainer());
-  const [annoIdx, setAnnoIdx] = useState<string | undefined>();
-  const styles = useStyles2(getStyles);
+  const [pinnedAnnoId, setPinnedAnnoId] = useState<string | undefined>();
   const getColorByName = useTheme2().visualization.getColorByName;
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -238,7 +238,7 @@ export const AnnotationsPlugin2 = ({
 
   // Set active annotation tooltip state
   const setAnnotationIndex = useCallback((annoIdx: string | undefined) => {
-    setAnnoIdx(annoIdx);
+    setPinnedAnnoId(annoIdx);
   }, []);
 
   if (plot) {
@@ -254,7 +254,6 @@ export const AnnotationsPlugin2 = ({
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
         let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
         let style: React.CSSProperties | null = null;
-        let className = '';
         let isVisible = true;
 
         if (vals.isRegion?.[i]) {
@@ -267,14 +266,12 @@ export const AnnotationsPlugin2 = ({
             let clampedRight = Math.min(plot.rect.width, right);
 
             style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
-            className = styles.annoRegion;
           }
         } else {
           isVisible = left >= 0 && left <= plot.rect.width;
 
           if (isVisible) {
             style = { left, borderBottomColor: color, top };
-            className = styles.annoMarker;
           }
         }
 
@@ -283,7 +280,7 @@ export const AnnotationsPlugin2 = ({
           const isWip = frame.meta?.custom?.isWip;
           const setPinned = (active: boolean) => {
             if (active) {
-              setAnnotationIndex(`${frameIdx}:${i}`);
+              setAnnotationIndex(getPinnedId(frameIdx, i));
             } else {
               setAnnotationIndex(undefined);
             }
@@ -291,15 +288,15 @@ export const AnnotationsPlugin2 = ({
 
           markers.push(
             <AnnotationMarker2
+              frameIndex={frameIdx}
+              key={getPinnedId(frameIdx, i)}
               setPinned={setPinned}
-              isPinned={annoIdx === `${frameIdx}:${i}`}
+              pinnedId={pinnedAnnoId}
               frame={frame}
               annoIdx={i}
               annoVals={vals}
-              className={className}
               style={style}
               timeZone={timeZone}
-              key={`${frameIdx}:${i}`}
               exitWipEdit={isWip ? exitWipEdit : null}
               portalRoot={portalRoot}
               canExecuteActions={userCanExecuteActions}
@@ -317,30 +314,3 @@ export const AnnotationsPlugin2 = ({
 
   return null;
 };
-
-const getStyles = () => ({
-  annoMarker: css({
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    border: 'none',
-    borderLeft: '5px solid transparent',
-    borderRight: '5px solid transparent',
-    borderBottomWidth: '5px',
-    borderBottomStyle: 'solid',
-    transform: 'translateX(-50%)',
-    cursor: 'pointer',
-    zIndex: 1,
-    padding: 0,
-    background: 'none',
-  }),
-  annoRegion: css({
-    border: 'none',
-    position: 'absolute',
-    height: '5px',
-    cursor: 'pointer',
-    zIndex: 1,
-    padding: 0,
-    background: 'none',
-  }),
-});
