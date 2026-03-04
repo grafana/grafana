@@ -322,18 +322,19 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     return;
   }
 
-  const dashboardBindingsUrl: string =
-    '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
-    scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
+  // Match URLs by path and scope params, ignoring additional query params (depth, rootScope, etc.)
+  const expectedScopeParams = scopes.map((scope) => `scope-${scope.name}`);
+  const matchesScopeUrl = (endpoint: string) => (url: URL) =>
+    url.pathname.includes(`/find/${endpoint}`) &&
+    expectedScopeParams.every((scopeParam) => url.searchParams.getAll('scope').includes(scopeParam));
 
-  const scopeNavigationsUrl: string =
-    '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_navigations?' +
-    scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
+  const matchDashboardBindings = matchesScopeUrl('scope_dashboard_bindings');
+  const matchScopeNavigations = matchesScopeUrl('scope_navigations');
 
   const groups: string[] = ['Most relevant', 'Dashboards', 'Something else', ''];
 
-  // Mock scope_dashboard_bindings endpoint with scope-specific URL pattern
-  await page.route(dashboardBindingsUrl, async (route) => {
+  // Mock scope_dashboard_bindings endpoint
+  await page.route(matchDashboardBindings, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -386,8 +387,8 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
     });
   });
 
-  // Mock scope_navigations endpoint with scope-specific URL pattern
-  await page.route(scopeNavigationsUrl, async (route) => {
+  // Mock scope_navigations endpoint
+  await page.route(matchScopeNavigations, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
