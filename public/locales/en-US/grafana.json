@@ -6631,6 +6631,10 @@
     "description-label": {
       "description": "Description"
     },
+    "edit-actions": {
+      "aria-label-delete-variable": "Delete variable",
+      "aria-label-edit-variable": "Edit variable"
+    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
