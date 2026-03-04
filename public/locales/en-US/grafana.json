@@ -6887,10 +6887,8 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "Back to classic editor",
       "table-view-aria-label-toggletableview": "Toggle table view",
-      "table-view-label-table-view": "Table view",
-      "try-new-editor": "Try new editor"
+      "table-view-label-table-view": "Table view"
     },
     "panel-editor": {
       "text": {
@@ -6940,11 +6938,11 @@
       "description-classic": "Try the improved query editing experience.",
       "description-new": "Welcome to the improved query editing experience.",
       "dismiss": "Dismiss",
-      "downgrade-title": "New query editor!",
+      "downgrade-title": "New query editor",
       "give-feedback": "Give feedback",
       "go-back": "Back to classic",
       "try-it": "Try it out",
-      "upgrade-title": "New editor available!"
+      "upgrade-title": "New editor available"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
@@ -12027,6 +12025,12 @@
       "could-anything-matching-query": "Could not find anything matching your query"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "Try the new editor",
+      "tooltip": "Switch to the new query editor experience"
+    }
+  },
   "panel-group-by": {
     "button": "Group by",
     "loading": "Loading options",
@@ -13455,6 +13459,12 @@
       "width-of-panel": "Width of panel"
     },
     "edit-query-name": "Edit query name",
+    "experimental-button": {
+      "aria-label": "Experimental feature options",
+      "back-to-classic": "Go back to classic editor",
+      "give-feedback": "Give feedback",
+      "tooltip": "Experimental feature options"
+    },
     "footer": {
       "edit-option": "Edit {{label}}",
       "label": {

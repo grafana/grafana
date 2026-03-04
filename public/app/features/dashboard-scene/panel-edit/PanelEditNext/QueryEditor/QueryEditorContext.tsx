@@ -93,9 +93,11 @@ export interface QueryEditorUIState {
   pendingTransformation: PendingTransformation | null;
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
+  showVersionBanner: boolean;
 }
 
 export interface QueryEditorActions {
+  onSwitchToClassic?: () => void;
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
