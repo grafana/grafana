@@ -23,12 +23,15 @@ type Dashboard struct {
 	Spec DashboardSpec `json:"spec" yaml:"spec"`
 
 	Status DashboardStatus `json:"status" yaml:"status"`
+
+	Context DashboardContext `json:"context" yaml:"context"`
 }
 
 func NewDashboard() *Dashboard {
 	return &Dashboard{
-		Spec:   *NewDashboardSpec(),
-		Status: *NewDashboardStatus(),
+		Spec:    *NewDashboardSpec(),
+		Status:  *NewDashboardStatus(),
+		Context: *NewDashboardContext(),
 	}
 }
 
@@ -48,6 +51,8 @@ func (o *Dashboard) SetSpec(spec any) error {
 func (o *Dashboard) GetSubresources() map[string]any {
 	return map[string]any{
 		"status": o.Status,
+
+		"context": o.Context,
 	}
 }
 
@@ -55,6 +60,9 @@ func (o *Dashboard) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
 		return o.Status, true
+
+	case "context":
+		return o.Context, true
 	default:
 		return nil, false
 	}
@@ -68,6 +76,14 @@ func (o *Dashboard) SetSubresource(name string, value any) error {
 			return fmt.Errorf("cannot set status type %#v, not of type DashboardStatus", value)
 		}
 		o.Status = cast
+		return nil
+
+	case "context":
+		cast, ok := value.(DashboardContext)
+		if !ok {
+			return fmt.Errorf("cannot set context type %#v, not of type DashboardContext", value)
+		}
+		o.Context = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
@@ -241,6 +257,7 @@ func (o *Dashboard) DeepCopyInto(dst *Dashboard) {
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
 	o.Status.DeepCopyInto(&dst.Status)
+	o.Context.DeepCopyInto(&dst.Context)
 }
 
 func (Dashboard) OpenAPIModelName() string {
@@ -330,5 +347,17 @@ func (s *DashboardStatus) DeepCopy() *DashboardStatus {
 
 // DeepCopyInto deep copies DashboardStatus into another DashboardStatus object
 func (s *DashboardStatus) DeepCopyInto(dst *DashboardStatus) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of DashboardContext
+func (s *DashboardContext) DeepCopy() *DashboardContext {
+	cpy := &DashboardContext{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies DashboardContext into another DashboardContext object
+func (s *DashboardContext) DeepCopyInto(dst *DashboardContext) {
 	resource.CopyObjectInto(dst, s)
 }
