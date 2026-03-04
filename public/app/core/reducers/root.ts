@@ -2,10 +2,10 @@ import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
 import { allReducers as allApiClientReducers } from '@grafana/api-clients/rtkq';
+import { generatedAPI as legacyAPI } from '@grafana/api-clients/rtkq/legacy';
 import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
 import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/rtkq/legacy/preferences';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
-import { legacyAPI } from 'app/api/clients/legacy';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
