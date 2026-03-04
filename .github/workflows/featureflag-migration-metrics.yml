@@ -1,6 +1,9 @@
 name: Feature Flag Migration Metrics
 
 on:
+  push:
+    branches:
+      - undef1nd/openfeature-migration-metrics
   schedule:
     - cron: '0 6 * * *' # Daily at 6am UTC
   workflow_dispatch:
