@@ -78,6 +78,7 @@ runs:
             - '.github/actions/change-detection/**'
             - '**.cue'
             - 'devenv/docker/blocks/*_tests/**'
+            - 'scripts/ci/backend-tests/**'
             - 'kindsv2/**'
             - '${{ inputs.self }}'
           frontend:

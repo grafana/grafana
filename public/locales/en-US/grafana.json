@@ -388,7 +388,6 @@
         "timing-options": "Timings"
       },
       "pending-period": "Pending period",
-      "rule": "Rule",
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
@@ -3404,10 +3403,15 @@
     },
     "triage": {
       "alert-instances": "Alert instances",
+      "all-labels": "All labels",
       "all-labels-drawer-title": "All labels",
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
       "collapse-sidebar": "Collapse sidebar",
+      "compact-firing": "firing",
+      "compact-instances": "instances",
+      "compact-pending": "pending",
+      "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
       "expand": "Expand",
       "expand-all": "Expand all",
@@ -3415,6 +3419,9 @@
       "group-row": {
         "no-label": "No {{label}}"
       },
+      "hidden-label-count_one": "and {{ count }} more",
+      "hidden-label-count_other": "and {{ count }} more",
+      "high-activity-labels": "High Activity Labels",
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
@@ -3433,8 +3440,6 @@
         "description": "The requested rule could not be found.",
         "title": "Rule not found"
       },
-      "rules-with-firing-instances": "Alert rules with firing instances",
-      "rules-with-pending-instances": "Alert rules with pending instances",
       "saved-searches": {
         "predefined": {
           "firing-only": "Show only firing",
@@ -3451,7 +3456,9 @@
       "showing-groups-count_other": "Showing {{count}} groups",
       "state-filter-title": "State",
       "state-firing": "Firing",
-      "state-pending": "Pending"
+      "state-pending": "Pending",
+      "tooltip-more-values_one": "and {{ count }} more",
+      "tooltip-more-values_other": "and {{ count }} more"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -3549,7 +3556,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Details",
           "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
@@ -7177,6 +7183,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": "Variables"
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard.",
@@ -7270,6 +7283,24 @@
       "preview-of-values_one": "Preview of values ({{count}})",
       "preview-of-values_other": "Preview of values ({{count}})",
       "show-more": "Show more"
+    },
+    "variables-list": {
+      "add-variable": "Add variable",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": "Reorder variables list"
+        }
+      },
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})",
+      "title-hidden_one": "Hidden ({{count}})",
+      "title-hidden_other": "Hidden ({{count}})"
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "Drag to reorder",
+      "select": "Select"
     },
     "version-history": {
       "comparison": {
