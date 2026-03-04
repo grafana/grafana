@@ -229,3 +229,9 @@ export const EXPRESSION_IMAGE_MAP: Record<ExpressionQueryType, { dark: string; l
   [ExpressionQueryType.classic]: { dark: classicConditionDarkImage, light: classicConditionLightImage },
   [ExpressionQueryType.threshold]: { dark: thresholdDarkImage, light: thresholdLightImage },
 };
+
+export const PENDING_CARD_ID = {
+  expression: 'pending-expression',
+  savedQuery: 'pending-saved-query',
+  transformation: 'pending-transformation',
+} as const;

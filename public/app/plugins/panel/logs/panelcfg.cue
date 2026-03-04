@@ -29,6 +29,7 @@ composableKinds: PanelCfg: {
 					showLabels:               bool
 					showCommonLabels:         bool
 					showFieldSelector?:       bool
+					showLevel?:               bool
 					showTime:                 bool
 					showLogContextToggle:     bool
 					showControls?:            bool
