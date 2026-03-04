@@ -1720,6 +1720,591 @@ func TestDefaultListOptions(t *testing.T) {
 	}
 }
 
+func TestGithubClient_GetRulesets(t *testing.T) {
+	tests := []struct {
+		name         string
+		mockHandler  *http.Client
+		owner        string
+		repository   string
+		branch       string
+		wantRulesets *Rulesets
+		wantErr      error
+	}{
+		{
+			name: "no rulesets configured",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rulesets := []*github.RepositoryRuleset{}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "ruleset requires pull request",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						target := github.RulesetTargetBranch
+						rulesets := []*github.RepositoryRuleset{
+							{
+								ID:          github.Ptr(int64(1)),
+								Name:        "main protection",
+								Enforcement: github.RulesetEnforcementActive,
+								Target:      &target,
+								Conditions: &github.RepositoryRulesetConditions{
+									RefName: &github.RepositoryRulesetRefConditionParameters{
+										Include: []string{"refs/heads/main"},
+									},
+								},
+								Rules: &github.RepositoryRulesetRules{
+									PullRequest: &github.PullRequestRuleParameters{},
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+				HasBlockingRules:    false,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ruleset with required status checks",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						target := github.RulesetTargetBranch
+						rulesets := []*github.RepositoryRuleset{
+							{
+								ID:          github.Ptr(int64(2)),
+								Name:        "main protection",
+								Enforcement: github.RulesetEnforcementActive,
+								Target:      &target,
+								Conditions: &github.RepositoryRulesetConditions{
+									RefName: &github.RepositoryRulesetRefConditionParameters{
+										Include: []string{"main"},
+									},
+								},
+								Rules: &github.RepositoryRulesetRules{
+									RequiredStatusChecks: &github.RequiredStatusChecksRuleParameters{},
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: false,
+				HasBlockingRules:    true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ruleset with pull request and blocking rules",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						target := github.RulesetTargetBranch
+						rulesets := []*github.RepositoryRuleset{
+							{
+								ID:          github.Ptr(int64(3)),
+								Name:        "comprehensive protection",
+								Enforcement: github.RulesetEnforcementActive,
+								Target:      &target,
+								Conditions: &github.RepositoryRulesetConditions{
+									RefName: &github.RepositoryRulesetRefConditionParameters{
+										Include: []string{"main"},
+									},
+								},
+								Rules: &github.RepositoryRulesetRules{
+									PullRequest:          &github.PullRequestRuleParameters{},
+									RequiredStatusChecks: &github.RequiredStatusChecksRuleParameters{},
+									RequiredSignatures:   &github.EmptyRuleParameters{},
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+				HasBlockingRules:    true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "disabled ruleset is ignored",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						target := github.RulesetTargetBranch
+						rulesets := []*github.RepositoryRuleset{
+							{
+								ID:          github.Ptr(int64(4)),
+								Name:        "disabled protection",
+								Enforcement: github.RulesetEnforcementDisabled,
+								Target:      &target,
+								Rules: &github.RepositoryRulesetRules{
+									PullRequest: &github.PullRequestRuleParameters{},
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "evaluate-only ruleset is ignored",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						target := github.RulesetTargetBranch
+						rulesets := []*github.RepositoryRuleset{
+							{
+								ID:          github.Ptr(int64(5)),
+								Name:        "evaluation only",
+								Enforcement: github.RulesetEnforcementEvaluate,
+								Target:      &target,
+								Rules: &github.RepositoryRulesetRules{
+									PullRequest: &github.PullRequestRuleParameters{},
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "tag target is ignored",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						target := github.RulesetTargetTag
+						rulesets := []*github.RepositoryRuleset{
+							{
+								ID:          github.Ptr(int64(6)),
+								Name:        "tag protection",
+								Enforcement: github.RulesetEnforcementActive,
+								Target:      &target,
+								Rules: &github.RepositoryRulesetRules{
+									PullRequest: &github.PullRequestRuleParameters{},
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "branch not matching include pattern",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						target := github.RulesetTargetBranch
+						rulesets := []*github.RepositoryRuleset{
+							{
+								ID:          github.Ptr(int64(7)),
+								Name:        "specific branch protection",
+								Enforcement: github.RulesetEnforcementActive,
+								Target:      &target,
+								Conditions: &github.RepositoryRulesetConditions{
+									RefName: &github.RepositoryRulesetRefConditionParameters{
+										Include: []string{"refs/heads/production"},
+									},
+								},
+								Rules: &github.RepositoryRulesetRules{
+									PullRequest: &github.PullRequestRuleParameters{},
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "branch matching exclude pattern",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						target := github.RulesetTargetBranch
+						rulesets := []*github.RepositoryRuleset{
+							{
+								ID:          github.Ptr(int64(8)),
+								Name:        "exclude pattern",
+								Enforcement: github.RulesetEnforcementActive,
+								Target:      &target,
+								Conditions: &github.RepositoryRulesetConditions{
+									RefName: &github.RepositoryRulesetRefConditionParameters{
+										Include: []string{"refs/heads/*"},
+										Exclude: []string{"refs/heads/main"},
+									},
+								},
+								Rules: &github.RepositoryRulesetRules{
+									PullRequest: &github.PullRequestRuleParameters{},
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "unauthorized error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnauthorized,
+							},
+							Message: "Unauthorized",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      ErrUnauthorized,
+		},
+		{
+			name: "forbidden error is gracefully skipped",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusForbidden,
+							},
+							Message: "Forbidden",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "not found error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      ErrResourceNotFound,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service Unavailable",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      ErrServiceUnavailable,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			rulesets, err := client.GetRulesets(context.Background(), tt.owner, tt.repository, tt.branch)
+
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+				assert.Nil(t, rulesets)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantRulesets, rulesets)
+			}
+		})
+	}
+}
+
+func TestMatchesPattern(t *testing.T) {
+	tests := []struct {
+		name    string
+		pattern string
+		branch  string
+		want    bool
+	}{
+		{
+			name:    "exact match",
+			pattern: "main",
+			branch:  "main",
+			want:    true,
+		},
+		{
+			name:    "exact match with refs/heads prefix in pattern",
+			pattern: "refs/heads/main",
+			branch:  "main",
+			want:    true,
+		},
+		{
+			name:    "no match",
+			pattern: "main",
+			branch:  "develop",
+			want:    false,
+		},
+		{
+			name:    "default branch pattern always matches",
+			pattern: "~DEFAULT_BRANCH",
+			branch:  "main",
+			want:    true,
+		},
+		{
+			name:    "default branch pattern matches any branch conservatively",
+			pattern: "~DEFAULT_BRANCH",
+			branch:  "feature",
+			want:    true,
+		},
+		{
+			name:    "pattern with refs/heads and different branch",
+			pattern: "refs/heads/production",
+			branch:  "main",
+			want:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := matchesPattern(tt.pattern, tt.branch)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestRulesetMatchesBranch(t *testing.T) {
+	tests := []struct {
+		name    string
+		ruleset *github.RepositoryRuleset
+		branch  string
+		want    bool
+	}{
+		{
+			name: "no conditions matches all branches",
+			ruleset: &github.RepositoryRuleset{
+				Conditions: nil,
+			},
+			branch: "main",
+			want:   true,
+		},
+		{
+			name: "no ref name conditions matches all branches",
+			ruleset: &github.RepositoryRuleset{
+				Conditions: &github.RepositoryRulesetConditions{
+					RefName: nil,
+				},
+			},
+			branch: "main",
+			want:   true,
+		},
+		{
+			name: "include pattern matches",
+			ruleset: &github.RepositoryRuleset{
+				Conditions: &github.RepositoryRulesetConditions{
+					RefName: &github.RepositoryRulesetRefConditionParameters{
+						Include: []string{"main"},
+					},
+				},
+			},
+			branch: "main",
+			want:   true,
+		},
+		{
+			name: "include pattern does not match",
+			ruleset: &github.RepositoryRuleset{
+				Conditions: &github.RepositoryRulesetConditions{
+					RefName: &github.RepositoryRulesetRefConditionParameters{
+						Include: []string{"production"},
+					},
+				},
+			},
+			branch: "main",
+			want:   false,
+		},
+		{
+			name: "exclude pattern excludes branch",
+			ruleset: &github.RepositoryRuleset{
+				Conditions: &github.RepositoryRulesetConditions{
+					RefName: &github.RepositoryRulesetRefConditionParameters{
+						Include: []string{"refs/heads/*"},
+						Exclude: []string{"refs/heads/main"},
+					},
+				},
+			},
+			branch: "main",
+			want:   false,
+		},
+		{
+			name: "exclude pattern does not exclude branch",
+			ruleset: &github.RepositoryRuleset{
+				Conditions: &github.RepositoryRulesetConditions{
+					RefName: &github.RepositoryRulesetRefConditionParameters{
+						Include: []string{"refs/heads/main", "refs/heads/develop"},
+						Exclude: []string{"refs/heads/production"},
+					},
+				},
+			},
+			branch: "main",
+			want:   true,
+		},
+		{
+			name: "multiple include patterns with match",
+			ruleset: &github.RepositoryRuleset{
+				Conditions: &github.RepositoryRulesetConditions{
+					RefName: &github.RepositoryRulesetRefConditionParameters{
+						Include: []string{"main", "develop", "staging"},
+					},
+				},
+			},
+			branch: "develop",
+			want:   true,
+		},
+		{
+			name: "multiple include patterns without match",
+			ruleset: &github.RepositoryRuleset{
+				Conditions: &github.RepositoryRulesetConditions{
+					RefName: &github.RepositoryRulesetRefConditionParameters{
+						Include: []string{"main", "develop", "staging"},
+					},
+				},
+			},
+			branch: "feature",
+			want:   false,
+		},
+		{
+			name: "default branch pattern matches",
+			ruleset: &github.RepositoryRuleset{
+				Conditions: &github.RepositoryRulesetConditions{
+					RefName: &github.RepositoryRulesetRefConditionParameters{
+						Include: []string{"~DEFAULT_BRANCH"},
+					},
+				},
+			},
+			branch: "main",
+			want:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := rulesetMatchesBranch(tt.ruleset, tt.branch)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestGithubClient_GetRepository(t *testing.T) {
 	tests := []struct {
 		name        string
