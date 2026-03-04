@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { Button, Icon, IconButton, LinkButton, useStyles2 } from '@grafana/ui';
 
 import { QUERY_EDITOR_BANNER_FEEDBACK_URL, getQueryEditorBannerColors } from './PanelEditNext/constants';
+import { trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
 
 interface Props {
   useQueryExperienceNext: boolean;
@@ -47,6 +48,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
             href={QUERY_EDITOR_BANNER_FEEDBACK_URL}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={trackFeedbackClick}
           >
             {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
           </LinkButton>
@@ -64,7 +66,10 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
           name="times"
           size="md"
           tooltip={t('dashboard-scene.query-editor-banner.dismiss', 'Dismiss')}
-          onClick={onDismiss}
+          onClick={() => {
+            trackBannerDismiss();
+            onDismiss();
+          }}
           className={styles.closeButton}
           aria-label={t('dashboard-scene.query-editor-banner.dismiss', 'Dismiss')}
         />
