@@ -75,6 +75,14 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
 			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					// Return empty rulesets array (no rulesets configured)
+					_, _ = w.Write([]byte("[]"))
+				}),
+			),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -108,6 +116,13 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte("[]"))
 				}),
 			),
 		)
@@ -146,6 +161,13 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
 			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte("[]"))
+				}),
+			),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -179,6 +201,13 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
 						Message: "Branch not protected",
 					}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte("[]"))
 				}),
 			),
 		)
@@ -217,6 +246,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
 			),
+			// No need to mock rulesets since branch protection check isn't called with branch workflow
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -250,6 +280,13 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusForbidden)
 					_, _ = w.Write([]byte(`{"message":"Resource not accessible by integration"}`))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte("[]"))
 				}),
 			),
 		)
@@ -359,6 +396,13 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
 			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte("[]"))
+				}),
+			),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -451,6 +495,13 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte("[]"))
 				}),
 			),
 		)
