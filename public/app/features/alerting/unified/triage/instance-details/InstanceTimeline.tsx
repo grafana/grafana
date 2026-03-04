@@ -7,7 +7,7 @@ import {
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, RadioButtonGroup, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
@@ -137,12 +137,44 @@ function getEntryDotStyle(entry: TimelineEntry, styles: Styles): string {
   return isFiring ? styles.dotFiring : styles.dotResolved;
 }
 
+type TimelineFilter = 'all' | 'states' | 'notifications';
+
+function useTimelineFilterOptions(): Array<{ label: string; value: TimelineFilter }> {
+  return useMemo(
+    () => [
+      { label: t('alerting.instance-details.timeline-filter-all', 'All'), value: 'all' as const },
+      {
+        label: t('alerting.instance-details.timeline-filter-states', 'State changes'),
+        value: 'states' as const,
+      },
+      {
+        label: t('alerting.instance-details.timeline-filter-notifications', 'Notifications'),
+        value: 'notifications' as const,
+      },
+    ],
+    []
+  );
+}
+
 export function InstanceTimeline({ records, notifications }: InstanceTimelineProps) {
   const styles = useStyles2(getStyles);
-  const groups = useMemo(() => buildTimelineGroups(records, notifications), [records, notifications]);
-  const entries = useMemo(() => buildTimelineEntries(groups), [groups]);
+  const [filter, setFilter] = useState<TimelineFilter>('all');
+  const filterOptions = useTimelineFilterOptions();
 
-  if (entries.length === 0) {
+  const groups = useMemo(() => buildTimelineGroups(records, notifications), [records, notifications]);
+  const allEntries = useMemo(() => buildTimelineEntries(groups), [groups]);
+
+  const entries = useMemo(() => {
+    if (filter === 'all') {
+      return allEntries;
+    }
+    if (filter === 'states') {
+      return allEntries.filter((e) => e.type === 'state-change');
+    }
+    return allEntries.filter((e) => e.type === 'notifications');
+  }, [allEntries, filter]);
+
+  if (allEntries.length === 0) {
     return (
       <Text color="secondary">
         {t('alerting.instance-details.timeline-empty', 'No events found for this time range')}
@@ -151,35 +183,45 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
   }
 
   return (
-    <Stack direction="column">
-      {entries.map((entry, index) => (
-        <Stack key={`${entry.type}-${entry.timestamp}-${index}`} direction="row">
-          <div className={styles.timestampCol}>
-            <Text variant="bodySmall" color="secondary">
-              {dateFormatter.format(new Date(entry.timestamp))}
-            </Text>
-          </div>
+    <Stack direction="column" gap={1}>
+      <RadioButtonGroup options={filterOptions} value={filter} onChange={setFilter} size="sm" />
 
-          <div className={styles.connectorCol}>
-            <div className={getEntryDotStyle(entry, styles)} />
-            {index < entries.length - 1 && <div className={styles.connectorLine} />}
-          </div>
+      {entries.length === 0 ? (
+        <Text color="secondary">
+          {t('alerting.instance-details.timeline-filter-empty', 'No matching events for this filter')}
+        </Text>
+      ) : (
+        <Stack direction="column">
+          {entries.map((entry, index) => (
+            <Stack key={`${entry.type}-${entry.timestamp}-${index}`} direction="row">
+              <div className={styles.timestampCol}>
+                <Text variant="bodySmall" color="secondary">
+                  {dateFormatter.format(new Date(entry.timestamp))}
+                </Text>
+              </div>
 
-          <div className={styles.contentCol}>
-            {entry.type === 'notifications' && entry.notifications && (
-              <NotificationSummary notifications={entry.notifications} />
-            )}
+              <div className={styles.connectorCol}>
+                <div className={getEntryDotStyle(entry, styles)} />
+                {index < entries.length - 1 && <div className={styles.connectorLine} />}
+              </div>
 
-            {entry.type === 'state-change' && entry.previous && entry.current && (
-              <Stack direction="row" alignItems="center" gap={1}>
-                <EventState state={entry.previous} showLabel addFilter={noop} type="from" />
-                <Icon name="arrow-right" size="sm" />
-                <EventState state={entry.current} showLabel addFilter={noop} type="to" />
-              </Stack>
-            )}
-          </div>
+              <div className={styles.contentCol}>
+                {entry.type === 'notifications' && entry.notifications && (
+                  <NotificationSummary notifications={entry.notifications} />
+                )}
+
+                {entry.type === 'state-change' && entry.previous && entry.current && (
+                  <Stack direction="row" alignItems="center" gap={1}>
+                    <EventState state={entry.previous} showLabel addFilter={noop} type="from" />
+                    <Icon name="arrow-right" size="sm" />
+                    <EventState state={entry.current} showLabel addFilter={noop} type="to" />
+                  </Stack>
+                )}
+              </div>
+            </Stack>
+          ))}
         </Stack>
-      ))}
+      )}
     </Stack>
   );
 }
