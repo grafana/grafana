@@ -13,7 +13,7 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -119,7 +119,7 @@ export class RowsLayoutManager
   }
 
   // a single panel ID generator is shared across all rows to ensure that each gets a unique range of panel IDs
-  public duplicate(panelIdGenerator?: () => number): DashboardLayoutManager {
+  public duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
     const gen = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(this);
     const newRows = this.state.rows.map((row) => row.duplicate(gen));
     return this.clone({ rows: newRows, key: undefined });

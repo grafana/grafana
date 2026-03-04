@@ -31,7 +31,7 @@ import {
 } from '../../edit-pane/shared';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
@@ -326,7 +326,7 @@ export class DefaultGridLayoutManager
   }
 
   // panelIdGenerator is a shared counter to ensure unique panel IDs across siblings.
-  public duplicate(panelIdGenerator?: () => number): DashboardLayoutManager {
+  public duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
     const children = this.state.grid.state.children;
     const hasGridItem = children.find((child) => child instanceof DashboardGridItem);
     const clonedChildren: SceneGridItemLike[] = [];

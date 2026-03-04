@@ -22,6 +22,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
+import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -183,7 +184,7 @@ export class TabItem
 
   // panelIdGenerator is a shared sequential counter created by the parent layout
   // we forward id to ensure sibling tabs never produce duplicate panel IDs
-  public duplicate(panelIdGenerator?: () => number): TabItem {
+  public duplicate(panelIdGenerator?: PanelIdGenerator): TabItem {
     return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
   }
 

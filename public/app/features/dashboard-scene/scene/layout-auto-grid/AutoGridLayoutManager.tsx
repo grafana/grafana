@@ -14,7 +14,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import {
   forceRenderChildren,
@@ -187,7 +187,7 @@ export class AutoGridLayoutManager
   }
 
   // panelIdGenerator is a shared counter to ensure unique panel IDs across siblings.
-  public duplicate(panelIdGenerator?: () => number): DashboardLayoutManager {
+  public duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
     const children = this.state.layout.state.children;
     const clonedChildren: AutoGridItem[] = [];
 

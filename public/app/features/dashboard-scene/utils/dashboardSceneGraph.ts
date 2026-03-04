@@ -50,11 +50,13 @@ export function getNextPanelId(scene: SceneObject): number {
   return max + 1;
 }
 
+export type PanelIdGenerator = () => number;
+
 /**
  * Returns a sequential ID generator seeded from the current max panel ID.
  * Shared across sibling layouts to prevent duplicate panel IDs during duplication.
  */
-export function getPanelIdGenerator(scene: SceneObject): () => number {
+export function getPanelIdGenerator(scene: SceneObject): PanelIdGenerator {
   let id = getNextPanelId(scene);
   return () => id++;
 }
