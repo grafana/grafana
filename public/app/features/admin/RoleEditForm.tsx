@@ -128,13 +128,15 @@ function formatPermissionsForClipboard(
 interface RoleEditFormProps {
   role?: Role;
   onSaved: () => void;
+  forceReadOnly?: boolean;
 }
 
-export const RoleEditForm = ({ role, onSaved }: RoleEditFormProps) => {
+export const RoleEditForm = ({ role, onSaved, forceReadOnly = false }: RoleEditFormProps) => {
   const styles = useStyles2(getStyles);
   const isEditing = !!role;
   const isBasicRole = role ? getRoleType(role) === 'basic' : false;
-  const isReadOnly = role ? isReadOnlyRole(role) : false;
+  const roleIsReadOnly = role ? isReadOnlyRole(role) : false;
+  const isReadOnly = forceReadOnly || roleIsReadOnly;
   const availableActions = useAvailableActions();
   const { data: allRoles = [] } = useListRolesQuery({ includeHidden: true });
 
@@ -334,13 +336,22 @@ export const RoleEditForm = ({ role, onSaved }: RoleEditFormProps) => {
           {/* Warning banners */}
           {isReadOnly && (
             <Alert
-              title={t('admin.role-edit.read-only-title', 'Read-only role')}
+              title={
+                forceReadOnly && !roleIsReadOnly
+                  ? t('admin.role-edit.no-permission-title', 'Read-only view')
+                  : t('admin.role-edit.read-only-title', 'Read-only role')
+              }
               severity="info"
             >
-              {t(
-                'admin.role-edit.read-only-body',
-                'This role is managed by Grafana and cannot be edited. You can view its permissions below.'
-              )}
+              {forceReadOnly && !roleIsReadOnly
+                ? t(
+                    'admin.role-edit.no-permission-body',
+                    'You do not have permission to edit this role. You can view its configuration below.'
+                  )
+                : t(
+                    'admin.role-edit.read-only-body',
+                    'This role is managed by Grafana and cannot be edited. You can view its permissions below.'
+                  )}
             </Alert>
           )}
 

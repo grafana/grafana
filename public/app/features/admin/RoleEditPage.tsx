@@ -13,6 +13,7 @@ import { RoleEditForm } from './RoleEditForm';
 export default function RoleEditPage() {
   const { uid } = useParams<{ uid: string }>();
   const hasAccess = contextSrv.hasPermission(AccessControlAction.ActionRolesList);
+  const canWrite = contextSrv.hasPermission(AccessControlAction.ActionRolesWrite);
 
   // Fetch role data if editing (uid === 'new' means creating)
   const isCreating = uid === 'new';
@@ -54,7 +55,11 @@ export default function RoleEditPage() {
   return (
     <Page navId="admin-roles" pageNav={pageNav}>
       <Page.Contents>
-        <RoleEditForm role={isCreating ? undefined : role} onSaved={() => window.history.back()} />
+        <RoleEditForm
+          role={isCreating ? undefined : role}
+          onSaved={() => window.history.back()}
+          forceReadOnly={!canWrite}
+        />
       </Page.Contents>
     </Page>
   );
