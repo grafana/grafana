@@ -15,7 +15,6 @@ import {
   FeatureBadge,
   Combobox,
   ComboboxOption,
-  TextLink,
   WeekStart,
   isWeekStart,
 } from '@grafana/ui';
