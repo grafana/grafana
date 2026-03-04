@@ -19,7 +19,6 @@ interface AnnoBoxProps {
   annoVals: Record<string, any[]>;
   annoIdx: number;
   style: React.CSSProperties | null;
-  className: string;
   timeZone: TimeZone;
   exitWipEdit?: null | (() => void);
   portalRoot: HTMLElement;
@@ -27,7 +26,8 @@ interface AnnoBoxProps {
   replaceVariables: InterpolateFunction;
   setPinned: (pin: boolean) => void;
   isPinned: boolean;
-  showOnHover: boolean;
+  // Determines if we should display the tooltip when hovering, keeps adjacent annotations from rendering a tooltip that overlays the pinned tooltip
+  showTooltipOnHover: boolean;
 }
 
 const STATE_DEFAULT = 0;
@@ -37,7 +37,6 @@ export const AnnotationMarker2 = ({
   frame,
   annoVals,
   annoIdx,
-  className,
   style,
   exitWipEdit,
   timeZone,
@@ -45,11 +44,12 @@ export const AnnotationMarker2 = ({
   replaceVariables,
   canExecuteActions,
   setPinned,
-  showOnHover,
+  showTooltipOnHover,
   isPinned,
 }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
+  const isRegion = annoVals?.isRegion[annoIdx] === true;
 
   const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
   const [isHovering, setIsHovering] = useState(false);
@@ -79,7 +79,7 @@ export const AnnotationMarker2 = ({
   }
 
   const contents =
-    (isPinned && !(state === STATE_EDITING)) || (showOnHover && isHovering && !(state === STATE_EDITING)) ? (
+    (isPinned && !(state === STATE_EDITING)) || (showTooltipOnHover && isHovering && !(state === STATE_EDITING)) ? (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
@@ -107,12 +107,12 @@ export const AnnotationMarker2 = ({
   return (
     <button
       ref={refs.setReference}
-      className={className}
+      className={isRegion ? styles.annoRegion : styles.annoMarker}
       style={style!}
       onFocus={() => setIsHovering(true)}
       onBlur={() => setIsHovering(false)}
       onClick={() => setPinned(true)}
-      onMouseEnter={() => showOnHover && setIsHovering(true)}
+      onMouseEnter={() => showTooltipOnHover && setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       data-testid={selectors.pages.Dashboard.Annotations.marker}
     >
@@ -130,6 +130,30 @@ export const AnnotationMarker2 = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  annoMarker: css({
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    border: 'none',
+    borderLeft: '5px solid transparent',
+    borderRight: '5px solid transparent',
+    borderBottomWidth: '5px',
+    borderBottomStyle: 'solid',
+    transform: 'translateX(-50%)',
+    cursor: 'pointer',
+    zIndex: 1,
+    padding: 0,
+    background: 'none',
+  }),
+  annoRegion: css({
+    border: 'none',
+    position: 'absolute',
+    height: '5px',
+    cursor: 'pointer',
+    zIndex: 1,
+    padding: 0,
+    background: 'none',
+  }),
   // NOTE: shares much with TooltipPlugin2
   annoBox: css({
     top: 0,
