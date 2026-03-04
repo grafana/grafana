@@ -29,6 +29,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
   redoStack: DashboardEditActionEventPayload[];
   openPane?: DashboardSidebarPaneName;
   isDocked?: boolean;
+  aiMode?: boolean;
 }
 
 export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add';
@@ -197,6 +198,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this.performAction(action);
 
     this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
+  }
+
+  public toggleAiMode() {
+    this.setState({ aiMode: !this.state.aiMode });
   }
 
   public enableSelection() {

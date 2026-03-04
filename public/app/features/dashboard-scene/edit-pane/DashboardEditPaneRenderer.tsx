@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, SceneObject, SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
-import { Sidebar } from '@grafana/ui';
+import { Icon, Sidebar, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -32,8 +34,9 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selection, openPane, aiMode } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
+  const toggleStyles = useStyles2(getToggleStyles);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = selection?.getFirstObject();
@@ -90,12 +93,44 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
     <>
       {editableElement && (
         <Sidebar.OpenPane>
-          <ElementEditPane
-            key={selectedObject?.state.key}
-            editPane={editPane}
-            element={editableElement}
-            isNewElement={isNewElement}
-          />
+          <div className={toggleStyles.toggleBar}>
+            <Text
+              color={aiMode ? 'primary' : 'secondary'}
+              weight={aiMode ? 'bold' : 'regular'}
+            >
+              <Trans i18nKey="dashboard.edit-pane.ai-mode-label">AI Assistant</Trans>
+            </Text>
+            <Switch
+              value={!!aiMode}
+              onChange={() => editPane.toggleAiMode()}
+              aria-label={t('dashboard.edit-pane.ai-mode-toggle-aria', 'Toggle AI assistant mode')}
+            />
+            <Text
+              color={aiMode ? 'secondary' : 'primary'}
+              weight={aiMode ? 'regular' : 'bold'}
+            >
+              <Trans i18nKey="dashboard.edit-pane.manual-mode-label">Manual Mode</Trans>
+            </Text>
+          </div>
+          {aiMode ? (
+            <div className={toggleStyles.aiPlaceholder}>
+              <Stack direction="column" alignItems="center" justifyContent="center" gap={2}>
+                <Icon name="ai-sparkle" size="xxl" />
+                <Text color="secondary" textAlignment="center">
+                  <Trans i18nKey="dashboard.edit-pane.ai-placeholder">
+                    AI Assistant chat will appear here
+                  </Trans>
+                </Text>
+              </Stack>
+            </div>
+          ) : (
+            <ElementEditPane
+              key={selectedObject?.state.key}
+              editPane={editPane}
+              element={editableElement}
+              isNewElement={isNewElement}
+            />
+          )}
         </Sidebar.OpenPane>
       )}
       {openPane === 'add' && (
@@ -250,4 +285,25 @@ function RedoButton({ dashboard }: ToolbarActionProps) {
       onClick={() => editPane.redoAction()}
     />
   );
+}
+
+function getToggleStyles(theme: GrafanaTheme2) {
+  return {
+    toggleBar: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing(1.5),
+      padding: theme.spacing(1.5, 2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    aiPlaceholder: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexGrow: 1,
+      padding: theme.spacing(4),
+      minHeight: '200px',
+    }),
+  };
 }
