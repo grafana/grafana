@@ -353,7 +353,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				require.Equal(t, title, foundTitle, "in object: %s", obj.GetName())
 
 				// ID must not be a saved element
-				internalId, ok, err := unstructured.NestedInt64(obj.Object, "spec", "id")
+				_, ok, _ := unstructured.NestedInt64(obj.Object, "spec", "id")
 				require.False(t, ok, "internal id should not be part of the saved spec")
 
 				// Update the title -- try to save without overwrite=false
@@ -394,13 +394,14 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				// Update by internal id (without name)
 				meta, err := utils.MetaAccessor(found)
 				require.NoError(t, err)
-				internalId = meta.GetDeprecatedInternalID() // nolint:staticcheck
+				internalId := meta.GetDeprecatedInternalID() // nolint:staticcheck
 				require.True(t, internalId > 0)
 
 				title = "updated using internal ID"
 				unstructured.RemoveNestedField(obj.Object, "spec", "uid")
 				unstructured.RemoveNestedField(obj.Object, "metadata", "name")
-				unstructured.SetNestedField(obj.Object, internalId, "spec", "id")
+				err = unstructured.SetNestedField(obj.Object, internalId, "spec", "id")
+				require.NoError(t, err)
 				body = getLegacySaveCommand(obj, title, true)
 				rsp := adminClient.Post().AbsPath("api", "dashboards", "db").
 					Body(body).
