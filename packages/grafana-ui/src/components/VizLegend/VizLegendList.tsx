@@ -28,6 +28,9 @@ export const VizLegendList = <T extends unknown>({
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
 
+  const selectedCount = useMemo(() => items.filter((item) => !item.disabled).length, [items]);
+  const allItemsSelected = items.length === selectedCount;
+
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = (item) => (
@@ -37,6 +40,7 @@ export const VizLegendList = <T extends unknown>({
         onLabelMouseOver={onLabelMouseOver}
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
+        allItemsSelected={allItemsSelected}
       />
     );
   }

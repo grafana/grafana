@@ -24,6 +24,7 @@ export interface Props<T> {
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
+  allItemsSelected: boolean;
 }
 
 /**
@@ -36,6 +37,7 @@ export const VizLegendListItem = <T = unknown,>({
   onLabelMouseOut,
   className,
   readonly,
+  allItemsSelected,
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
 
@@ -66,6 +68,13 @@ export const VizLegendListItem = <T = unknown,>({
     [item, onLabelClick]
   );
 
+  const getAriaLabel = () => {
+    if (allItemsSelected) {
+      return 'All series selected';
+    }
+    return `Only ${item.label} selected`;
+  };
+
   return (
     <div
       className={cx(styles.itemWrapper, item.disabled && styles.itemDisabled, className)}
@@ -81,7 +90,7 @@ export const VizLegendListItem = <T = unknown,>({
       <button
         disabled={readonly}
         type="button"
-        aria-pressed={!item.disabled}
+        aria-label={getAriaLabel()}
         onBlur={onMouseOut}
         onFocus={onMouseOver}
         onMouseOver={onMouseOver}
