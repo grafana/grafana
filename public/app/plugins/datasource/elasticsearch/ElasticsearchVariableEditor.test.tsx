@@ -1,10 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
 
 import { dateTime, FieldType } from '@grafana/data';
 
 import { ElasticsearchVariableEditor } from './ElasticsearchVariableEditor';
-import { ElasticQueryEditorProps } from './components/QueryEditor';
+import { ElasticQueryEditorProps, QueryEditor } from './components/QueryEditor';
 import { ElasticsearchDataQuery } from './dataquery.gen';
 import { ElasticDatasource } from './datasource';
 
@@ -175,24 +175,53 @@ describe('ElasticsearchVariableEditor', () => {
     expect((defaultProps.datasource.query as jest.Mock).mock.calls.length).toBeGreaterThan(initialCallCount);
   });
 
-  it('should reset meta fields when queryType changes', async () => {
+  it('should reset meta fields when QueryEditor fires onChange with a new queryType', () => {
     const onChange = jest.fn();
     const queryWithMeta: ElasticsearchDataQuery = {
       ...defaultProps.query,
       queryType: 'lucene',
       meta: { textField: 'name', valueField: 'id' },
     };
-    const props = { ...defaultProps, query: queryWithMeta, onChange };
 
-    const { rerender } = render(<ElasticsearchVariableEditor {...props} />);
+    render(<ElasticsearchVariableEditor {...{ ...defaultProps, query: queryWithMeta, onChange }} />);
 
-    const updatedQuery: ElasticsearchDataQuery = { ...queryWithMeta, queryType: 'dsl' };
-    rerender(<ElasticsearchVariableEditor {...props} query={updatedQuery} />);
+    const queryEditorOnChange = (QueryEditor as jest.Mock).mock.calls.at(-1)[0].onChange;
+    act(() => queryEditorOnChange({ ...queryWithMeta, queryType: 'dsl' }));
 
-    await waitFor(() => {
-      const calls = onChange.mock.calls;
-      const resetCall = calls.find((call) => call[0].meta && Object.keys(call[0].meta).length === 0);
-      expect(resetCall).toBeDefined();
-    });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ queryType: 'dsl', meta: {} }));
+  });
+
+  it('should reset meta fields when the metric type tab changes', () => {
+    const onChange = jest.fn();
+    const queryWithMeta: ElasticsearchDataQuery = {
+      ...defaultProps.query,
+      metrics: [{ type: 'raw_document', id: '1' }],
+      meta: { textField: 'name', valueField: 'id' },
+    };
+
+    render(<ElasticsearchVariableEditor {...{ ...defaultProps, query: queryWithMeta, onChange }} />);
+
+    // Simulate the user clicking the Metrics tab inside QueryEditor
+    const queryEditorOnChange = (QueryEditor as jest.Mock).mock.calls.at(-1)[0].onChange;
+    act(() => queryEditorOnChange({ ...queryWithMeta, metrics: [{ type: 'count', id: '1' }] }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ meta: {} }));
+  });
+
+  it('should not reset meta fields when only the query string changes', () => {
+    const onChange = jest.fn();
+    const queryWithMeta: ElasticsearchDataQuery = {
+      ...defaultProps.query,
+      meta: { textField: 'name', valueField: 'id' },
+    };
+
+    render(<ElasticsearchVariableEditor {...{ ...defaultProps, query: queryWithMeta, onChange }} />);
+
+    const queryEditorOnChange = (QueryEditor as jest.Mock).mock.calls.at(-1)[0].onChange;
+    act(() => queryEditorOnChange({ ...queryWithMeta, query: 'updated lucene query' }));
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ query: 'updated lucene query', meta: { textField: 'name', valueField: 'id' } })
+    );
   });
 });

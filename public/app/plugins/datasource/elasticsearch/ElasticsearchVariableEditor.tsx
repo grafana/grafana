@@ -13,9 +13,22 @@ type ElasticsearchVariableQueryEditorProps = ElasticQueryEditorProps;
 export const ElasticsearchVariableEditor = (props: ElasticsearchVariableQueryEditorProps) => {
   const query = useMemo(() => migrateVariableQuery(props.query), [props.query]);
 
+  const handleQueryChange = (newQuery: ElasticsearchDataQuery) => {
+    // Clear field mapping when the query structure changes significantly — the available fields
+    // may be completely different (e.g. switching between Raw Document and Metrics tabs, or
+    // switching between Lucene and DSL query types).
+    const metricTypeChanged = newQuery.metrics?.[0]?.type !== query.metrics?.[0]?.type;
+    const queryTypeChanged = newQuery.queryType !== query.queryType;
+    if (metricTypeChanged || queryTypeChanged) {
+      props.onChange({ ...newQuery, meta: {} });
+    } else {
+      props.onChange(newQuery);
+    }
+  };
+
   return (
     <>
-      <QueryEditor {...props} query={query} />
+      <QueryEditor {...props} query={query} onChange={handleQueryChange} />
       <FieldMapping datasource={props.datasource} query={query} onChange={props.onChange} />
     </>
   );
@@ -46,16 +59,6 @@ const FieldMapping = (props: FieldMappingProps) => {
       }),
     [query.query, query.metrics, query.bucketAggs, query.queryType]
   );
-
-  // Reset field mappings when the query type changes — the available fields may be completely different
-  const prevQueryTypeRef = useRef(query.queryType);
-  useEffect(() => {
-    const prevQueryType = prevQueryTypeRef.current;
-    prevQueryTypeRef.current = query.queryType;
-    if (prevQueryType !== undefined && prevQueryType !== query.queryType) {
-      onChange({ ...queryRef.current, meta: {} });
-    }
-  }, [query.queryType, onChange]);
 
   useEffect(() => {
     let isActive = true;
