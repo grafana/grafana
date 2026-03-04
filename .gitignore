@@ -265,6 +265,10 @@ public/mockServiceWorker.js
 .hippo
 
 coverage-summary.json
+
+# older path, but keeping to avoid surprises for devs who may have the earlier gitignored data
+devenv/blocks/auth/signer/keys/ec_private_key.pem
+
 devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
 
 # Spec-kit files shouldn't be committed without a major design process

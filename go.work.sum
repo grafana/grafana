@@ -1077,6 +1077,7 @@ github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4/go.mod h1:qe
 github.com/grafana/authlib/types v0.0.0-20251203163023-dd5a97c606e3/go.mod h1:CZ5McGzO/q6lnRb8xvTODCC2bJniQoQ+gho0AVZC/zY=
 github.com/grafana/authlib/types v0.0.0-20260119104241-f33edcf42077/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/authlib/types v0.0.0-20260203092119-c346f8341c0b/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
+github.com/grafana/authlib/types v0.0.0-20260304161757-e152786a5bb4/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/cloudflare-go v0.0.0-20230110200409-c627cf6792f2 h1:qhugDMdQ4Vp68H0tp/0iN17DM2ehRo1rLEdOFe/gB8I=
 github.com/grafana/cloudflare-go v0.0.0-20230110200409-c627cf6792f2/go.mod h1:w/aiO1POVIeXUQyl0VQSZjl5OAGDTL5aX+4v0RA1tcw=
 github.com/grafana/cog v0.0.48/go.mod h1:ZHTb53Vc5C5OdIISZoW0pfqlI8KiFD2bSOJDRANA20I=
