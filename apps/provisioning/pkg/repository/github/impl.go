@@ -34,10 +34,15 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 
 		// 403: token lacks permission to read branch protection (graceful skip).
 		// 404: branch or repo not found via this endpoint (graceful skip).
+		// 5xx: GitHub API temporarily unavailable (graceful skip).
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) {
-			switch ghErr.Response.StatusCode {
-			case http.StatusForbidden, http.StatusNotFound:
+			statusCode := ghErr.Response.StatusCode
+			switch {
+			case statusCode == http.StatusForbidden, statusCode == http.StatusNotFound:
+				return nil, nil
+			case statusCode >= 500 && statusCode < 600:
+				// Server-side errors: skip the check since we can't determine protection status
 				return nil, nil
 			}
 		}

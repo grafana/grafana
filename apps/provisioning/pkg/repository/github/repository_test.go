@@ -1289,6 +1289,14 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 			expectedSuccess: true,
 		},
 		{
+			name:            "GetBranchProtection server error skips check gracefully",
+			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:          "main",
+			bpError:         errors.New("failed to get branch protection: 503 Service Unavailable"),
+			expectBPCall:    true,
+			expectedSuccess: true,
+		},
+		{
 			name:            "protection with no blocking rules does not block",
 			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
 			branch:          "main",
