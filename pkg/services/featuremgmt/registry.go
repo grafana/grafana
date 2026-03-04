@@ -2372,10 +2372,10 @@ var (
 		},
 		{
 			Name:         "pluginSearchAssistant",
-			Description:  "Shows a search/assistant toggle on the plugin search field to help users find the right plugin",
+			Description:  "Enables plugin search with Assistant",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaOSSBigTent,
+			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
 		},
 		{
