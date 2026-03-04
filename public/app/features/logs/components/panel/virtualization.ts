@@ -275,28 +275,6 @@ export function getLogLineSize(
   { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap }: DisplayOptions,
   index: number
 ) {
-  const height = getLogLineSize2(
-    virtualization,
-    logs,
-    container,
-    displayedFields,
-    { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap },
-    index
-  );
-
-  //console.log(index, height);
-
-  return height;
-}
-
-export function getLogLineSize2(
-  virtualization: LogLineVirtualization,
-  logs: LogListModel[],
-  container: HTMLDivElement | null,
-  displayedFields: string[],
-  { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap }: DisplayOptions,
-  index: number
-) {
   if (!container) {
     return 0;
   }
