@@ -108,11 +108,9 @@ If the default URI claims don't work, adjust your user mapping to the following:
 
 ## Configure a Graph API application in Entra ID
 
-While an Entra ID tenant can be configured in Grafana via SAML, some additional information is only accessible via the Graph API. To retrieve this information, create a new application in Entra ID and grant it the necessary permissions.
+While you can configure an Entra ID tenant in Grafana via SAML, some additional information is only accessible via the Graph API. To retrieve this information, create a new application in Entra ID and grant it the necessary permissions. To learn more refer to [Entra ID SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim).
 
-> [Entra ID SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
-
-> For the following configuration, the URL `https://localhost` will be used as the Grafana URL. Replace it with your Grafana instance URL.
+The following configuration example uses the URL `https://localhost` as the Grafana URL. Replace it with your Grafana instance URL.
 
 ### Create a new App registration
 
