@@ -30,7 +30,7 @@ If you use the same email address in Microsoft Entra ID and in other authenticat
 Refer to [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) for more information.
 {{< /admonition >}}
 
-## Register you application with Microsoft Entra ID
+## Register your application with Microsoft Entra ID
 
 To enable the Entra ID OAuth, register your application with Entra ID.
 
