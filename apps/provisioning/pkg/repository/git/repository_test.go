@@ -492,8 +492,18 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "", // Empty branch should trigger GetDefaultBranch
 			},
-			wantResults: nil,
-			wantError:   errors.New("no branches found in repository"),
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "branch").String(),
+						Detail: "repository has no branches; push at least one commit before configuring sync",
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
 		},
 		{
 			name: "failure - empty branch and GetDefaultBranch fails (list refs error)",
@@ -819,8 +829,11 @@ func TestGitRepository_Test(t *testing.T) {
 				require.NoError(t, err, "Test method should not return an error")
 				require.Equal(t, tt.wantResults, results, "Test results mismatch")
 
-				// Verify the mock calls only when no error
-				require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
+				// Verify mock calls only when the flow reaches those steps.
+				// Cases that fail early (e.g., no branches from GetDefaultBranch) never call IsAuthorized.
+				if mockClient.IsAuthorizedCallCount() > 0 {
+					require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
+				}
 
 				if mockClient.RepoExistsCallCount() > 0 {
 					require.Equal(t, 1, mockClient.RepoExistsCallCount(), "RepoExists should be called at most once")
