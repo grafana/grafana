@@ -42,7 +42,11 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
         )}
       </div>
       {nextDataPane && (
-        <QueryEditorContextWrapper dataPane={nextDataPane}>
+        <QueryEditorContextWrapper
+          dataPane={nextDataPane}
+          onSwitchToClassic={model.onToggleQueryEditorVersion}
+          showVersionBanner={showBanner}
+        >
           {showBanner && (
             <QueryEditorBanner
               useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
