@@ -6,16 +6,18 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { PanelEditor } from '../PanelEditor';
+import { QueryEditorBanner } from '../QueryEditorBanner';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
 import { QueryEditorSidebar } from './QueryEditor/Sidebar/QueryEditorSidebar';
 import { SidebarSize } from './constants';
-import { useVizAndDataPaneLayout } from './hooks';
+import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scene, layout } = useVizAndDataPaneLayout(model, containerRef);
+  const { showBanner, dismissBanner } = useQueryEditorBanner();
+  const { scene, layout } = useVizAndDataPaneLayout(model, containerRef, showBanner);
   const styles = useStyles2(getStyles, layout.sidebarSize);
 
   const nextDataPane = scene.dataPane instanceof PanelDataPaneNext ? scene.dataPane : null;
@@ -41,6 +43,14 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
       </div>
       {nextDataPane && (
         <QueryEditorContextWrapper dataPane={nextDataPane}>
+          {showBanner && (
+            <QueryEditorBanner
+              useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
+              onToggle={model.onToggleQueryEditorVersion}
+              onDismiss={dismissBanner}
+              className={styles.versionToggle}
+            />
+          )}
           <div className={styles.sidebar}>
             <div className={styles.sidebarContent}>
               <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
@@ -69,6 +79,14 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       gap: theme.spacing(2),
       overflow: 'hidden',
       paddingBottom: theme.spacing(2),
+    }),
+    versionToggle: css({
+      gridArea: 'version-toggle',
+      minWidth: 0,
+      overflow: 'hidden',
+      ...(sidebarSize === SidebarSize.Mini && {
+        marginLeft: theme.spacing(2),
+      }),
     }),
     sidebar: css({
       gridArea: 'sidebar',

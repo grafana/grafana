@@ -13,6 +13,11 @@ import { useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('./hooks', () => ({
   useVizAndDataPaneLayout: jest.fn(),
+  useQueryEditorBanner: jest.fn().mockReturnValue({ showBanner: false, dismissBanner: jest.fn() }),
+}));
+
+jest.mock('../QueryEditorBanner', () => ({
+  QueryEditorBanner: () => <div data-testid="query-editor-banner" />,
 }));
 
 jest.mock('./QueryEditor/QueryEditorContextWrapper', () => ({
