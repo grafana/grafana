@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 interface Props {
   src: string | undefined;
 }
-// @todo write unit test that avatar url is sanitized
+
 export function AnnotationAvatar({ src }: Props) {
   const styles = useStyles2(getStyles);
   return src && <img className={styles.avatar} alt="Annotation avatar" src={textUtil.sanitizeUrl(src)} />;
