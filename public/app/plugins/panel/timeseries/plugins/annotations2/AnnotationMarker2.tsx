@@ -32,7 +32,6 @@ interface AnnoBoxProps {
 
 const STATE_DEFAULT = 0;
 const STATE_EDITING = 1;
-const STATE_HOVERED = 2;
 
 export const AnnotationMarker2 = ({
   frame,
@@ -69,7 +68,7 @@ export const AnnotationMarker2 = ({
   const links: LinkModel[] = [];
   const actions: ActionModel[] = [];
 
-  if (STATE_HOVERED) {
+  if (isHovering || isPinned) {
     frame.fields.forEach((field) => {
       links.push(...getDataLinks(field, annoIdx));
 

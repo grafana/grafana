@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { ScopedVars } from '@grafana/data';
+import { applyFieldOverrides, createDataFrame, createTheme, FieldConfigOptionsRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelContext, UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
 import { TimeRange2 } from '@grafana/ui/internal';
@@ -91,18 +91,29 @@ describe('AnnotationsPlugin2', () => {
       });
     }
 
+    const annotations = props?.annotations ?? [mockAnnotationFrame];
+    const frames = annotations.map((fr) => createDataFrame(fr));
+    const withOverrides = applyFieldOverrides({
+      data: frames,
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+      fieldConfigRegistry: new FieldConfigOptionsRegistry(),
+    });
+
     const result = render(
       <div>
         <AnnotationsPlugin2
-          annotations={[mockAnnotationFrame]}
           config={config}
           timeZone={'browser'}
           newRange={null}
           setNewRange={function (newRange: TimeRange2 | null): void {}}
-          replaceVariables={function (value: string, scopedVars?: ScopedVars, format?: string | Function): string {
-            throw new Error('Function not implemented.');
-          }}
+          replaceVariables={(value) => value}
           {...props}
+          annotations={withOverrides}
         />
         <div id="grafana-portal-container"></div>
       </div>
@@ -461,7 +472,31 @@ describe('AnnotationsPlugin2', () => {
   });
 
   describe('overrides', () => {
-    it.todo('links');
-    it.todo('actions');
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it.each([userEvent.hover, userEvent.click])('links', async (event) => {
+      setUp({
+        annotations: [mockAlertingFrame],
+      });
+      const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
+      await event(firstMarker);
+      expect(screen.getByText('Link 1')).toBeVisible();
+      expect(screen.getByText('Link 2')).toBeVisible();
+    });
+
+    it.each([userEvent.hover, userEvent.click])('actions', async (event) => {
+      mockUsePanelContext.mockReturnValue({
+        canExecuteActions: () => true,
+      } as PanelContext);
+      setUp({
+        annotations: [mockAlertingFrame],
+      });
+      const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
+      await event(firstMarker);
+      expect(screen.getByText('Action 1')).toBeVisible();
+      expect(screen.getByText('Action 2')).toBeVisible();
+    });
   });
 });
