@@ -22,10 +22,6 @@ export default function NewCustomThemePage() {
     icon: 'palette',
     id: 'custom-themes-new',
     text: t('admin.new-custom-theme-page.page-nav.text.add-custom-theme', 'Add custom theme'),
-    subTitle: t(
-      'admin.new-custom-theme-page.page-nav.subTitle.custom-theme-organization',
-      'Add a custom theme for your organization.'
-    ),
   };
 
   const [createTheme, { isLoading }] = useCreateThemeMutation();

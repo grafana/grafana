@@ -28,10 +28,6 @@ export default function EditCustomThemePage() {
     icon: 'palette',
     id: 'custom-themes-edit',
     text: t('admin.edit-custom-theme-page.page-nav.text', 'Edit custom theme'),
-    subTitle: t(
-      'admin.edit-custom-theme-page.page-nav.subTitle.custom-theme-organization',
-      'Edit a custom theme for your organization.'
-    ),
   };
 
   const {

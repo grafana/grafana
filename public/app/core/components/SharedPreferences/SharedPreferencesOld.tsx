@@ -56,7 +56,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.themeOptions = themes.map((theme) => ({
       value: theme.id,
       label: getTranslatedThemeName(theme),
-      group: theme.isExtra ? t('shared-preferences.theme.experimental', 'Experimental') : undefined,
+      group: theme.isExtra ? t('shared-preferences.theme.custom', 'Custom themes') : undefined,
     }));
     this.languageOptions = getLanguageOptions();
     this.regionalFormatOptions = getRegionalFormatOptions();
@@ -174,20 +174,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
-            description={
-              config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
-                <Trans i18nKey="shared-preferences.fields.theme-description">
-                  Enjoying the experimental themes? Tell us what you'd like to see{' '}
-                  <TextLink
-                    variant="bodySmall"
-                    external
-                    href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
-                  >
-                    here.
-                  </TextLink>
-                </Trans>
-              ) : undefined
-            }
           >
             <Combobox
               options={this.themeOptions}
