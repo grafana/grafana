@@ -152,10 +152,14 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
-          {!isCollapsed && sectionVariablesEnabled && rowVariablesSet && (
-            <SectionVariableControls variableSet={rowVariablesSet} />
+          {!isCollapsed && (
+            <div>
+              {sectionVariablesEnabled && rowVariablesSet && (
+                <SectionVariableControls variableSet={rowVariablesSet} />
+              )}
+              <layout.Component model={layout} />
+            </div>
           )}
-          {!isCollapsed && <layout.Component model={layout} />}
           {conditionalRenderingOverlay}
         </div>
       )}
