@@ -10,17 +10,17 @@ import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertingRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { Time } from '../../../../../explore/Time';
-import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
-import { makeEditTimeIntervalLink } from '../../../utils/misc';
-import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../../utils/rules';
-import { isNullDate } from '../../../utils/time';
-import { Tokenize } from '../../Tokenize';
-import { DetailText } from '../../common/DetailText';
-import { TimingOptionsMeta } from '../../notification-policies/Policy';
-import { ContactPointLink } from '../ContactPointLink';
+import { Time } from '../../../../explore/Time';
+import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
+import { makeEditTimeIntervalLink } from '../../utils/misc';
+import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../utils/rules';
+import { isNullDate } from '../../utils/time';
+import { Tokenize } from '../Tokenize';
+import { DetailText } from '../common/DetailText';
+import { TimingOptionsMeta } from '../notification-policies/Policy';
 
-import { UpdatedByUser } from './version-history/UpdatedBy';
+import { ContactPointLink } from './ContactPointLink';
+import { UpdatedByUser } from './tabs/version-history/UpdatedBy';
 
 enum RuleType {
   GrafanaManagedAlertRule = 'Grafana-managed alert rule',

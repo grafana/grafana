@@ -71,10 +71,10 @@ import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
 
 import { ContactPointLink } from './ContactPointLink';
+import { Details } from './Details';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
-import { Details } from './tabs/Details';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
 import { Notifications } from './tabs/Notifications';
