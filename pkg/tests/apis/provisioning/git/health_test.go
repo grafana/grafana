@@ -92,8 +92,8 @@ func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {
 		testResults := callTestEndpoint(t, helper, "test-empty-repo-with-branch", repoConfig, http.StatusBadRequest)
 		require.False(t, testResults.Success, "test should fail for empty repository")
 		require.NotEmpty(t, testResults.Errors, "should have error details")
-		require.Contains(t, testResults.Errors[0].Detail, "branch not found",
-			"error should mention branch not found")
+		require.Contains(t, testResults.Errors[0].Detail, "no branches",
+			"error should mention the repository has no branches")
 	})
 
 	t.Run("test endpoint succeeds after pushing a commit to empty repository", func(t *testing.T) {

@@ -257,13 +257,17 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	if err != nil {
 		// Check for branch not found first (before mapping)
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
+			detail := fmt.Sprintf("branch %q not found", r.gitConfig.Branch)
+			if _, dbErr := r.GetDefaultBranch(ctx); errors.Is(dbErr, ErrNoBranches) {
+				detail = "repository has no branches; push at least one commit before configuring sync"
+			}
 			return &provisioning.TestResults{
 				Code:    http.StatusBadRequest,
 				Success: false,
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("spec", t, "branch").String(),
-					Detail: "branch not found",
+					Detail: detail,
 				}},
 			}, nil
 		}

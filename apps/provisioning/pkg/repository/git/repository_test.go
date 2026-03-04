@@ -383,11 +383,14 @@ func TestGitRepository_Test(t *testing.T) {
 			wantError: nil,
 		},
 		{
-			name: "failure - branch not found",
+			name: "failure - branch not found (other branches exist)",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.IsAuthorizedReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/main", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+				}, nil)
 			},
 			gitConfig: RepositoryConfig{
 				Branch: "nonexistent",
@@ -398,7 +401,31 @@ func TestGitRepository_Test(t *testing.T) {
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("spec", "test_type", "branch").String(),
-						Detail: "branch not found",
+						Detail: `branch "nonexistent" not found`,
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - branch not found (empty repository)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+				mockClient.ListRefsReturns([]nanogit.Ref{}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "branch").String(),
+						Detail: "repository has no branches; push at least one commit before configuring sync",
 					},
 				},
 				Code: http.StatusBadRequest,
