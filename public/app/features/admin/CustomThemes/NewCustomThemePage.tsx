@@ -14,7 +14,7 @@ import { ThemePreview } from '../../../core/components/Theme/ThemePreview';
 
 interface FormData {
   themeJson: string;
-  themeName: string;
+  themeID: string;
 }
 
 export default function NewCustomThemePage() {
@@ -38,8 +38,8 @@ export default function NewCustomThemePage() {
     setValue,
     formState: { errors },
   } = useForm<FormData>();
-  const [themeName, themeJson] = watch(['themeName', 'themeJson']);
-  const isBothFieldsPopulated = Boolean(themeName && themeJson);
+  const [themeID, themeJson] = watch(['themeID', 'themeJson']);
+  const isBothFieldsPopulated = Boolean(themeID && themeJson);
   register('themeJson', { required: true });
 
   const previewTheme = useMemo(() => {
@@ -50,13 +50,13 @@ export default function NewCustomThemePage() {
     }
   }, [themeJson]);
 
-  const onSubmit = async ({ themeJson, themeName }: FormData) => {
+  const onSubmit = async ({ themeJson, themeID }: FormData) => {
     await createTheme({
       theme: {
         apiVersion: `${API_GROUP}/${API_VERSION}`,
         kind: 'Theme',
         metadata: {
-          name: themeName,
+          name: themeID,
         },
         spec: JSON.parse(themeJson),
       },
@@ -68,17 +68,6 @@ export default function NewCustomThemePage() {
     <Page navId="custom-themes" pageNav={pageNav}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack direction="column" gap={2}>
-          <Field
-            noMargin
-            label={t('admin.new-custom-theme-page.field-theme-name', 'Theme name')}
-            invalid={!!errors.themeName}
-            error={
-              errors.themeName &&
-              t('admin.new-custom-theme-page.field-theme-name.validation-required', 'Theme name is required')
-            }
-          >
-            <Input {...register('themeName', { required: true })} />
-          </Field>
           <Stack direction={{ xs: 'column', md: 'row' }} gap={2} alignItems="stretch">
             <Field
               className={styles.codeEditor}
@@ -105,21 +94,34 @@ export default function NewCustomThemePage() {
                 }}
               />
             </Field>
-            <Field noMargin label={t('admin.new-custom-theme-page.field-preview', 'Preview')}>
-              <Box
-                boxShadow="z1"
-                display="flex"
-                overflow="hidden"
-                borderRadius="default"
-                height={30}
-                minWidth={40}
-                width="100%"
-                borderStyle="solid"
-                borderColor="medium"
+            <Stack direction="column" gap={2}>
+              <Field noMargin label={t('admin.new-custom-theme-page.field-preview', 'Preview')}>
+                <Box
+                  boxShadow="z1"
+                  display="flex"
+                  overflow="hidden"
+                  borderRadius="default"
+                  height={30}
+                  minWidth={40}
+                  width="100%"
+                  borderStyle="solid"
+                  borderColor="medium"
+                >
+                  {previewTheme && <ThemePreview theme={previewTheme} />}
+                </Box>
+              </Field>
+              <Field
+                noMargin
+                label={t('admin.new-custom-theme-page.field-theme-id', 'Theme ID')}
+                invalid={!!errors.themeID}
+                error={
+                  errors.themeID &&
+                  t('admin.new-custom-theme-page.field-theme-id.validation-required', 'Theme ID is required')
+                }
               >
-                {previewTheme && <ThemePreview theme={previewTheme} />}
-              </Box>
-            </Field>
+                <Input {...register('themeID', { required: true })} />
+              </Field>
+            </Stack>
           </Stack>
           <Stack justifyContent="flex-end">
             <Button type="submit" disabled={isLoading || !isBothFieldsPopulated}>

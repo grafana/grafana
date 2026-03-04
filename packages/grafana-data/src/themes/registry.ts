@@ -78,7 +78,7 @@ for (const [name, json] of Object.entries(extraThemes)) {
   } else {
     const theme = result.data;
     themeRegistry.register({
-      id: theme.id,
+      id: name,
       name: theme.name,
       build: () => createTheme(theme),
       isExtra: true,

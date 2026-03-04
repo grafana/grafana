@@ -14,7 +14,7 @@ import { ThemePreview } from '../../../core/components/Theme/ThemePreview';
 
 interface FormData {
   themeJson: string;
-  themeName: string;
+  themeID: string;
 }
 
 export default function EditCustomThemePage() {
@@ -48,7 +48,7 @@ export default function EditCustomThemePage() {
   useEffect(() => {
     if (theme) {
       reset({
-        themeName: theme.metadata.name,
+        themeID: theme.metadata.name,
         themeJson: JSON.stringify(theme.spec, null, 2),
       });
     }
@@ -74,9 +74,6 @@ export default function EditCustomThemePage() {
     <Page navId="custom-themes" pageNav={pageNav}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack gap={2} direction="column">
-          <Field noMargin label={t('admin.edit-custom-theme-page.field-theme-name', 'Theme name')}>
-            <Input {...register('themeName')} disabled />
-          </Field>
           <Stack direction={{ xs: 'column', md: 'row' }} gap={2} alignItems="stretch">
             <Field
               className={styles.codeEditor}
@@ -103,21 +100,26 @@ export default function EditCustomThemePage() {
                 }}
               />
             </Field>
-            <Field noMargin label={t('admin.edit-custom-theme-page.field-preview', 'Preview')}>
-              <Box
-                boxShadow="z1"
-                display="flex"
-                overflow="hidden"
-                borderRadius="default"
-                height={30}
-                minWidth={40}
-                width="100%"
-                borderStyle="solid"
-                borderColor="medium"
-              >
-                {previewTheme && <ThemePreview theme={previewTheme} />}
-              </Box>
-            </Field>
+            <Stack direction="column" gap={2}>
+              <Field noMargin label={t('admin.edit-custom-theme-page.field-preview', 'Preview')}>
+                <Box
+                  boxShadow="z1"
+                  display="flex"
+                  overflow="hidden"
+                  borderRadius="default"
+                  height={30}
+                  minWidth={40}
+                  width="100%"
+                  borderStyle="solid"
+                  borderColor="medium"
+                >
+                  {previewTheme && <ThemePreview theme={previewTheme} />}
+                </Box>
+              </Field>
+              <Field noMargin label={t('admin.edit-custom-theme-page.field-theme-id', 'Theme ID')}>
+                <Input {...register('themeID')} disabled />
+              </Field>
+            </Stack>
           </Stack>
           <Stack justifyContent="flex-end">
             <Button variant="secondary" onClick={() => navigate('/themes')}>
