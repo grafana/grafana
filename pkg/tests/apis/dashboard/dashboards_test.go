@@ -661,7 +661,7 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
-			UnifiedStorageEnableSearch: mode >= rest.Mode3,
+			UnifiedStorageDisableSearch: mode < rest.Mode3,
 		})
 		defer helper.Shutdown()
 

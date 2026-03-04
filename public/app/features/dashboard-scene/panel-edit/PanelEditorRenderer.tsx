@@ -13,7 +13,9 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
+import { useQueryEditorBanner } from './PanelEditNext/hooks';
 import { PanelEditor } from './PanelEditor';
+import { QueryEditorBanner } from './QueryEditorBanner';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
@@ -86,6 +88,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
+  const { showBanner, dismissBanner } = useQueryEditorBanner();
 
   const isScrollingLayout = useScrollReflowLimit();
 
@@ -133,6 +136,14 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         {dataPane && (
           <>
             <div {...splitterProps} />
+            {showBanner && (
+              <QueryEditorBanner
+                useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
+                onToggle={model.onToggleQueryEditorVersion}
+                onDismiss={dismissBanner}
+                className={styles.bannerWrapper}
+              />
+            )}
             <div
               {...secondaryProps}
               className={cx(secondaryProps.className, isScrollingLayout && styles.fullSizeEditor)}
@@ -269,6 +280,10 @@ function getStyles(theme: GrafanaTheme2) {
       svg: {
         rotate: '-90deg',
       },
+    }),
+    bannerWrapper: css({
+      marginLeft: theme.spacing(2),
+      flexShrink: 0,
     }),
     vizWrapper: css({
       height: '100%',

@@ -6,6 +6,7 @@ import {
   PanelPlugin,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
@@ -154,7 +155,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         },
       });
 
-    commonOptionsBuilder.addLegendOptions(builder, false);
+    commonOptionsBuilder.addLegendOptions(builder, false, true, config.featureToggles.vizLegendSeriesLimit);
     commonOptionsBuilder.addTooltipOptions(builder);
   })
   .setSuggestionsSupplier(
