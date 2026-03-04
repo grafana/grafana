@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, LoadingState } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, dateTime, LoadingState } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { CustomVariable, SceneFlexLayout, SceneVariableSet } from '@grafana/scenes';
 
@@ -244,6 +244,95 @@ describe('MixedDatasource', () => {
     ).toEmitValuesWith((results) => {
       expect(results).toHaveLength(1);
       expect(results[0].data).toHaveLength(0);
+    });
+  });
+
+  describe('sub-datasource interval handling', () => {
+    it('should respect sub-datasource interval when it produces a larger intervalMs', async () => {
+      const promDS = new MockObservableDataSourceApi('Prometheus', [{ data: ['prom-data'] }]);
+      promDS.interval = '1m';
+      const querySpy = jest.spyOn(promDS, 'query');
+
+      const noIntervalDS = new MockObservableDataSourceApi('NoInterval', [{ data: ['other-data'] }]);
+      const noIntervalSpy = jest.spyOn(noIntervalDS, 'query');
+
+      setDataSourceSrv({
+        ...datasourceSrv,
+        get: (ref: DataSourceRef) => {
+          const uid = typeof ref === 'string' ? ref : ref?.uid;
+          if (uid === 'prom') {
+            return Promise.resolve(promDS);
+          }
+          if (uid === 'other') {
+            return Promise.resolve(noIntervalDS);
+          }
+          return datasourceSrv.get(ref);
+        },
+        getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+        getList: jest.fn(),
+        reload: jest.fn(),
+        registerRuntimeDataSource: jest.fn(),
+      } as unknown as DataSourceSrv);
+
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const now = dateTime();
+      const request = getQueryOptions({
+        targets: [
+          { refId: 'QA', datasource: { uid: 'prom' } },
+          { refId: 'QB', datasource: { uid: 'other' } },
+        ],
+        range: { from: now.subtract(1, 'hour'), to: now, raw: { from: 'now-1h', to: 'now' } },
+        maxDataPoints: 500,
+        interval: '5s',
+        intervalMs: 5000,
+      });
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(2);
+      });
+
+      const promRequest = querySpy.mock.calls[0][0];
+      expect(promRequest.intervalMs).toBeGreaterThanOrEqual(60000);
+      expect(promRequest.scopedVars.__interval_ms?.value).toBe(promRequest.intervalMs);
+
+      const otherRequest = noIntervalSpy.mock.calls[0][0];
+      expect(otherRequest.intervalMs).toBe(5000);
+    });
+
+    it('should keep panel minInterval when it is larger than sub-datasource interval', async () => {
+      const promDS = new MockObservableDataSourceApi('Prometheus', [{ data: ['prom-data'] }]);
+      promDS.interval = '30s';
+      const querySpy = jest.spyOn(promDS, 'query');
+
+      setDataSourceSrv({
+        ...datasourceSrv,
+        get: (ref: DataSourceRef) => {
+          const uid = typeof ref === 'string' ? ref : ref?.uid;
+          if (uid === 'prom') {
+            return Promise.resolve(promDS);
+          }
+          return datasourceSrv.get(ref);
+        },
+        getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+        getList: jest.fn(),
+        reload: jest.fn(),
+        registerRuntimeDataSource: jest.fn(),
+      } as unknown as DataSourceSrv);
+
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = getQueryOptions({
+        targets: [{ refId: 'QA', datasource: { uid: 'prom' } }],
+        interval: '2m',
+        intervalMs: 120000,
+      });
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(1);
+      });
+
+      const promRequest = querySpy.mock.calls[0][0];
+      expect(promRequest.intervalMs).toBe(120000);
+      expect(promRequest.interval).toBe('2m');
     });
   });
 });
