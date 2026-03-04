@@ -94,7 +94,7 @@ describe('VisualizationSuggestionCard', () => {
   it('should render successfully when isSelected is true', () => {
     render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} isSelected={true} />);
 
-    const button = screen.getByRole('button', { name: 'Time series' });
+    const button = screen.getByLabelText('Time series');
     expect(button).toBeInTheDocument();
     expect(button).toBeVisible();
   });
