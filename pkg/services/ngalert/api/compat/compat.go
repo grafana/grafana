@@ -533,7 +533,7 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 		MuteTimeIntervals:   ns.MuteTimeIntervals,
 		ActiveTimeIntervals: ns.ActiveTimeIntervals,
 	}
-	if !cpr.Equals(&models.ContactPointRouting{}) {
+	if !cpr.IsEmpty() {
 		// If any field related to contact point routing is specified, we create an instance of ContactPointRouting so
 		// that it is eventually validated.
 		res.ContactPointRouting = &cpr

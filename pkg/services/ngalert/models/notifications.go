@@ -235,6 +235,11 @@ func (s *ContactPointRouting) IsAllDefault() bool {
 	return len(s.GroupBy) == 0 && s.GroupWait == nil && s.GroupInterval == nil && s.RepeatInterval == nil && len(s.MuteTimeIntervals) == 0 && len(s.ActiveTimeIntervals) == 0
 }
 
+// IsEmpty checks if the ContactPointRouting object is equal to the zero value (all fields are empty).
+func (s *ContactPointRouting) IsEmpty() bool {
+	return s.Receiver == "" && s.IsAllDefault()
+}
+
 // NewDefaultContactPointRouting creates a new default ContactPointRouting with the specified receiver.
 func NewDefaultContactPointRouting(receiver string) ContactPointRouting {
 	return ContactPointRouting{
