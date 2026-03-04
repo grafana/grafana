@@ -2375,6 +2375,8 @@
         "title-new-notification-policy": "New notification policy"
       },
       "default-policy": {
+        "route-count_one": "{{count}} route",
+        "route-count_other": "{{count}} routes",
         "title": "Default policy",
         "update": "Update policy"
       },
