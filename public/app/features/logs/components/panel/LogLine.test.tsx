@@ -97,6 +97,26 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
+  test('Renders a log line with no level when showLevel is false', () => {
+    render(
+      <LogListContextProvider {...contextProps} showLevel={false}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+    expect(screen.queryByText(log.displayLevel)).not.toBeInTheDocument();
+  });
+
+  test('Renders a log line with level by default', () => {
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+    expect(screen.queryByText(log.displayLevel)).toBeInTheDocument();
+  });
+
   test('Renders a log line with millisecond timestamps', () => {
     log.timestamp = '2025-08-06 11:35:19.504';
     render(

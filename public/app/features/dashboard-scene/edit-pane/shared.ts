@@ -25,8 +25,8 @@ import { VariableEditableElement } from '../settings/variables/VariableEditableE
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
 
-import { DashboardEditableElement } from './DashboardEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
+import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 
 export function useEditPaneCollapsed() {
   return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);

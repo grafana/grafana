@@ -4,12 +4,12 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
 
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { activateFullSceneTree } from '../utils/test-utils';
+import { DashboardScene, DashboardSceneState } from '../../scene/DashboardScene';
+import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
+import { activateFullSceneTree } from '../../utils/test-utils';
+import { DashboardEditPane } from '../DashboardEditPane';
 
-import { DashboardEditPane } from './DashboardEditPane';
-import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardEditableElement';
+import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
 
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
