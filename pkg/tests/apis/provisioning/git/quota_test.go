@@ -62,8 +62,8 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		require.Len(t, jobObj.Status.Warnings, 1,
 			"exactly 1 quota warning expected for the skipped dashboard")
-		require.Contains(t, jobObj.Status.Warnings,
-			"resource quota exceeded, skipping creation of dashboard3.json",
+		require.Equal(t, "resource quota exceeded, skipping creation of dashboard3.json (file: dashboard3.json, name: , action: ignored)",
+			jobObj.Status.Warnings[0],
 			"quota warning should identify the skipped file")
 
 		// Quota is still at 2/2 — dashboard3 was never created.
@@ -142,42 +142,138 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		ctx := context.Background()
 
 		const repo = "incr-quota-release-repo"
-		_, _ = helper.createGitRepo(t, repo, map[string][]byte{
+		// No write workflow needed — changes are committed directly to the local repo.
+		_, local := helper.createGitRepo(t, repo, map[string][]byte{
 			"dashboard1.json": dashboardJSON("incr-rel-dash-001", "Dashboard One", 1),
 			"dashboard2.json": dashboardJSON("incr-rel-dash-002", "Dashboard Two", 1),
-		}, "write")
+		})
 
 		helper.syncAndWait(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
-		// Incremental sync 1 — delete dashboard1, freeing one slot.
-		require.NoError(t, helper.AdminREST.Delete().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("files", "dashboard1.json").
-			Param("message", "delete dashboard1").
-			Do(ctx).Error())
+		// Incremental sync 1 — commit a deletion of dashboard1 to the git repo,
+		// freeing one quota slot when the sync picks it up.
+		require.NoError(t, local.DeleteFile("dashboard1.json"))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "delete dashboard1")
+		require.NoError(t, err)
+		_, err = local.Git("push", "origin", "main")
+		require.NoError(t, err)
 
 		helper.syncAndWaitIncremental(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 1)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
-		// Incremental sync 2 — add dashboard3; the freed slot should be used.
-		require.NoError(t, helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("files", "dashboard3.json").
-			Param("message", "add dashboard3").
-			Body(dashboardJSON("incr-rel-dash-003", "Dashboard Three", 1)).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx).Error())
+		// Incremental sync 2 — commit dashboard3 to the git repo; the freed slot
+		// should be picked up during the incremental sync.
+		require.NoError(t, local.CreateFile("dashboard3.json",
+			string(dashboardJSON("incr-rel-dash-003", "Dashboard Three", 1))))
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add dashboard3")
+		require.NoError(t, err)
+		_, err = local.Git("push", "origin", "main")
+		require.NoError(t, err)
 
 		helper.syncAndWaitIncremental(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
+	})
+
+	// ─── Folder+dashboard pair skipped when at quota ───────────────
+	t.Run("folder and its dashboard creation are skipped when at quota", func(t *testing.T) {
+		// quota=3 accounts for exactly: 1 folder + 2 dashboards from the initial
+		// setup, so the repo starts at capacity.
+		helper := runGrafanaWithGitServer(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxResourcesPerRepository = 3
+		})
+		ctx := context.Background()
+
+		const repo = "incr-quota-folder-block-repo"
+		_, local := helper.createGitRepo(t, repo, map[string][]byte{
+			"folder1/dashboard1.json": dashboardJSON("incr-fblock-dash-001", "Dashboard One", 1),
+			"folder1/dashboard2.json": dashboardJSON("incr-fblock-dash-002", "Dashboard Two", 1),
+		})
+
+		// Initial full sync: 2 dashboards + 1 implicit folder = 3/3 resources.
+		helper.syncAndWait(t, repo)
+		requireRepoDashboardCount(t, helper, ctx, repo, 2)
+		requireRepoFolderCount(t, helper, ctx, repo, 1)
+		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
+
+		// Push a new dashboard inside a brand-new subfolder.
+		require.NoError(t, local.CreateFile("folder2/dashboard3.json",
+			string(dashboardJSON("incr-fblock-dash-003", "Dashboard Three", 1))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add folder2/dashboard3 (quota-blocked)")
+		require.NoError(t, err)
+		_, err = local.Git("push", "origin", "main")
+		require.NoError(t, err)
+
+		job := helper.triggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+		// The dashboard (and with it the new folder) must be skipped.
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"incremental sync should warn when a create is skipped due to quota")
+		require.Empty(t, jobObj.Status.Errors, "quota-skipped resources produce warnings, not errors")
+		require.Len(t, jobObj.Status.Warnings, 1,
+			"exactly 1 quota warning expected for the skipped dashboard")
+		require.Equal(t,
+			"resource quota exceeded, skipping creation of folder2/dashboard3.json (file: folder2/dashboard3.json, name: , action: ignored)",
+			jobObj.Status.Warnings[0],
+			"quota warning should identify the skipped file")
+
+		// Still 2 dashboards and 1 folder — folder2 was never created.
+		requireRepoDashboardCount(t, helper, ctx, repo, 2)
+		requireRepoFolderCount(t, helper, ctx, repo, 1)
+		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
+	})
+
+	// ─── Delete folder's last dashboard: orphaned folder cleaned up ───────────
+	t.Run("deleting folder's only dashboard releases quota and cleans up orphaned folder", func(t *testing.T) {
+		// quota=3: 1 folder (folder1) + 1 subfolder dashboard + 1 root dashboard = 3/3.
+		helper := runGrafanaWithGitServer(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxResourcesPerRepository = 3
+		})
+		ctx := context.Background()
+
+		const repo = "incr-quota-folder-cleanup-repo"
+		_, local := helper.createGitRepo(t, repo, map[string][]byte{
+			"folder1/dashboard1.json": dashboardJSON("incr-fclean-dash-001", "Dashboard One", 1),
+			"dashboard2.json":         dashboardJSON("incr-fclean-dash-002", "Dashboard Two", 1),
+		})
+
+		// Initial full sync: folder1 + dash1 + dash2 = 3/3 resources.
+		helper.syncAndWait(t, repo)
+		requireRepoDashboardCount(t, helper, ctx, repo, 2)
+		requireRepoFolderCount(t, helper, ctx, repo, 1)
+		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
+
+		// Remove the only dashboard inside folder1 so the folder becomes orphaned.
+		require.NoError(t, local.DeleteFile("folder1/dashboard1.json"))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "delete folder1/dashboard1")
+		require.NoError(t, err)
+		_, err = local.Git("push", "origin", "main")
+		require.NoError(t, err)
+
+		// Incremental sync processes the deletion; orphan cleanup removes folder1.
+		helper.syncAndWaitIncremental(t, repo)
+
+		// dashboard1 and folder1 are gone; only dashboard2 remains.
+		requireRepoDashboardCount(t, helper, ctx, repo, 1)
+		requireRepoFolderCount(t, helper, ctx, repo, 0)
+		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 	})
 
 	// ─── Unlimited quota never blocks incremental creates ─────────────────────
@@ -187,24 +283,25 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		ctx := context.Background()
 
 		const repo = "incr-quota-unlimited-repo"
-		_, _ = helper.createGitRepo(t, repo, map[string][]byte{
+		// No write workflow needed — dashboards are committed directly to the local repo.
+		_, local := helper.createGitRepo(t, repo, map[string][]byte{
 			"dashboard1.json": dashboardJSON("incr-ulim-dash-001", "Dashboard One", 1),
-		}, "write")
+		})
 
 		helper.syncAndWait(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 1)
 
-		// Add three more dashboards as separate commits.
+		// Add three more dashboards as separate git commits pushed to the remote.
 		for i, uid := range []string{"incr-ulim-dash-002", "incr-ulim-dash-003", "incr-ulim-dash-004"} {
-			require.NoError(t, helper.AdminREST.Post().
-				Namespace("default").
-				Resource("repositories").
-				Name(repo).
-				SubResource("files", uid+".json").
-				Param("message", "add "+uid).
-				Body(dashboardJSON(uid, "Dashboard "+uid, 1)).
-				SetHeader("Content-Type", "application/json").
-				Do(ctx).Error(), "commit %d should succeed", i+2)
+			require.NoError(t, local.CreateFile(uid+".json",
+				string(dashboardJSON(uid, "Dashboard "+uid, 1))),
+				"create file %d should succeed", i+2)
+			_, err := local.Git("add", ".")
+			require.NoError(t, err)
+			_, err = local.Git("commit", "-m", "add "+uid)
+			require.NoError(t, err)
+			_, err = local.Git("push", "origin", "main")
+			require.NoError(t, err)
 		}
 
 		// A single incremental sync covers all three commits.

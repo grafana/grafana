@@ -13,88 +13,118 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationProvisioning_IncrementalGitSync verifies that incremental sync
-// correctly applies file-level changes (add, update, delete) from a real git
-// repository without re-processing the entire tree on each sync.
-//
-// Changes are committed via Grafana's repository write API (files subresource)
-// so that each operation creates a real git commit, advancing the ref that
-// incremental sync compares against. Sub-tests share a single Grafana + Gitea
-// instance so that LastRef state carries over between syncs.
-func TestIntegrationProvisioning_IncrementalGitSync(t *testing.T) {
+// TestIntegrationProvisioning_IncrementalGitSync_Add verifies that incremental
+// sync imports a newly committed file without re-processing the full tree.
+func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafanaWithGitServer(t)
 	ctx := context.Background()
 
-	const repoName = "git-incremental-repo"
+	const repoName = "git-incremental-add"
 
-	// Seed the git repo with one dashboard so the initial full sync has something
-	// to import. The "write" workflow is required for the files API calls below.
-	_, _ = helper.createGitRepo(t, repoName, map[string][]byte{
+	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
 		"dashboard1.json": dashboardJSON("incr-dash-001", "Dashboard One", 1),
-	}, "write")
+	}, "write", "branch")
 
-	// Initial full sync imports dashboard1.
 	helper.syncAndWait(t, repoName)
 	requireDashboardCount(t, helper, ctx, 1)
 
-	t.Run("incremental sync adds new dashboard", func(t *testing.T) {
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repoName).
-			SubResource("files", "dashboard2.json").
-			Param("message", "add dashboard2").
-			Body(dashboardJSON("incr-dash-002", "Dashboard Two", 1)).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "failed to create dashboard2.json via files API")
+	require.NoError(t, local.CreateFile("dashboard2.json", string(dashboardJSON("incr-dash-002", "Dashboard Two", 1))))
+	_, err := local.Git("add", ".")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "add dashboard2")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
-		requireDashboardCount(t, helper, ctx, 2)
-	})
+	helper.syncAndWaitIncremental(t, repoName)
+	requireDashboardCount(t, helper, ctx, 2)
+}
 
-	t.Run("incremental sync updates existing dashboard", func(t *testing.T) {
-		result := helper.AdminREST.Put().
-			Namespace("default").
-			Resource("repositories").
-			Name(repoName).
-			SubResource("files", "dashboard1.json").
-			Param("message", "update dashboard1 title").
-			Body(dashboardJSON("incr-dash-001", "Dashboard One Updated", 2)).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "failed to update dashboard1.json via files API")
+// TestIntegrationProvisioning_IncrementalGitSync_Update verifies that
+// incremental sync applies an in-place file modification.
+func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-		helper.syncAndWaitIncremental(t, repoName)
-		requireDashboardCount(t, helper, ctx, 2)
-		requireDashboardTitle(t, helper, ctx, "incr-dash-001", "Dashboard One Updated")
-	})
+	helper := runGrafanaWithGitServer(t)
+	ctx := context.Background()
 
-	t.Run("incremental sync deletes removed dashboard", func(t *testing.T) {
-		result := helper.AdminREST.Delete().
-			Namespace("default").
-			Resource("repositories").
-			Name(repoName).
-			SubResource("files", "dashboard2.json").
-			Param("message", "delete dashboard2").
-			Do(ctx)
-		require.NoError(t, result.Error(), "failed to delete dashboard2.json via files API")
+	const repoName = "git-incremental-update"
 
-		helper.syncAndWaitIncremental(t, repoName)
-		requireDashboardCount(t, helper, ctx, 1)
+	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		"dashboard1.json": dashboardJSON("incr-dash-001", "Dashboard One", 1),
+	}, "write", "branch")
 
-		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			_, err := helper.DashboardsV1.Resource.Get(ctx, "incr-dash-002", metav1.GetOptions{})
-			assert.True(c, apierrors.IsNotFound(err), "dashboard incr-dash-002 should be deleted")
-		}, waitTimeoutDefault, waitIntervalDefault, "deleted dashboard should be removed from Grafana")
-	})
+	helper.syncAndWait(t, repoName)
+	requireDashboardCount(t, helper, ctx, 1)
 
-	t.Run("incremental sync is a noop when there are no changes", func(t *testing.T) {
-		helper.syncAndWaitIncremental(t, repoName)
-		requireDashboardCount(t, helper, ctx, 1)
-	})
+	require.NoError(t, local.UpdateFile("dashboard1.json", string(dashboardJSON("incr-dash-001", "Dashboard One Updated", 2))))
+	_, err := local.Git("add", ".")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "update dashboard1 title")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	helper.syncAndWaitIncremental(t, repoName)
+	requireDashboardCount(t, helper, ctx, 1)
+	requireDashboardTitle(t, helper, ctx, "incr-dash-001", "Dashboard One Updated")
+}
+
+// TestIntegrationProvisioning_IncrementalGitSync_Delete verifies that
+// incremental sync removes a dashboard whose file was deleted from the repo.
+func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafanaWithGitServer(t)
+	ctx := context.Background()
+
+	const repoName = "git-incremental-delete"
+
+	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		"dashboard1.json": dashboardJSON("incr-dash-001", "Dashboard One", 1),
+		"dashboard2.json": dashboardJSON("incr-dash-002", "Dashboard Two", 1),
+	}, "write", "branch")
+
+	helper.syncAndWait(t, repoName)
+	requireDashboardCount(t, helper, ctx, 2)
+
+	_, err := local.Git("rm", "dashboard2.json")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "delete dashboard2")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	helper.syncAndWaitIncremental(t, repoName)
+	requireDashboardCount(t, helper, ctx, 1)
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		_, err := helper.DashboardsV1.Resource.Get(ctx, "incr-dash-002", metav1.GetOptions{})
+		assert.True(c, apierrors.IsNotFound(err), "dashboard incr-dash-002 should be deleted")
+	}, waitTimeoutDefault, waitIntervalDefault, "deleted dashboard should be removed from Grafana")
+}
+
+// TestIntegrationProvisioning_IncrementalGitSync_Noop verifies that incremental
+// sync is a no-op when there are no new commits since the last sync.
+func TestIntegrationProvisioning_IncrementalGitSync_Noop(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafanaWithGitServer(t)
+	ctx := context.Background()
+
+	const repoName = "git-incremental-noop"
+
+	helper.createGitRepo(t, repoName, map[string][]byte{
+		"dashboard1.json": dashboardJSON("incr-dash-001", "Dashboard One", 1),
+	}, "write", "branch")
+
+	helper.syncAndWait(t, repoName)
+	requireDashboardCount(t, helper, ctx, 1)
+
+	helper.syncAndWaitIncremental(t, repoName)
+	requireDashboardCount(t, helper, ctx, 1)
 }
 
 // requireDashboardCount asserts the total number of dashboards in the instance.
