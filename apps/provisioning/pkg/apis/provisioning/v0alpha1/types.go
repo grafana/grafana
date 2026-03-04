@@ -263,6 +263,15 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+// ConnectionName returns the name of the connection referenced by this repository,
+// or an empty string if the repository does not use a connection.
+func (r *Repository) ConnectionName() string {
+	if r.Spec.Connection != nil {
+		return r.Spec.Connection.Name
+	}
+	return ""
+}
+
 type ConnectionInfo struct {
 	Name string `json:"name"`
 }
