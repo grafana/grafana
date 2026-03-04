@@ -194,15 +194,6 @@ func (r *Repository) Branch() string {
 	return ""
 }
 
-// ConnectionName returns the connection name if the repository references one,
-// or an empty string otherwise.
-func (r *Repository) ConnectionName() string {
-	if r.Spec.Connection != nil {
-		return r.Spec.Connection.Name
-	}
-	return ""
-}
-
 // URL returns the URL for git-based repositories
 // or an empty string for local repositories
 func (r *Repository) URL() string {
