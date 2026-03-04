@@ -3,7 +3,7 @@ import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataFrameView, GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { TextLink, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 
 import { NewsItem } from '../types';
@@ -41,14 +41,9 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
         </time>
 
         <h1 className={styles.title} id={titleId}>
-          <a
-            className={styles.link}
-            href={textUtil.sanitizeUrl(newsItem.link)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <TextLink href={textUtil.sanitizeUrl(newsItem.link)} external inline={false}>
             {newsItem.title}
-          </a>
+          </TextLink>
         </h1>
         <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(newsItem.content) }} />
       </div>
@@ -122,15 +117,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '> img': {
       width: '250px',
       borderRadius: theme.shape.radius.default,
-    },
-  }),
-  link: css({
-    color: theme.colors.text.link,
-    display: 'inline-block',
-
-    '&:hover': {
-      color: theme.colors.text.link,
-      textDecoration: 'underline',
     },
   }),
   title: css({

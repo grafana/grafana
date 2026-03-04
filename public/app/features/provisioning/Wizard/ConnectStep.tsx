@@ -1,9 +1,10 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, Stack } from '@grafana/ui';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { useGetRepositoryFolders } from '../hooks/useGetRepositoryFolders';
 import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
@@ -17,24 +18,45 @@ export const ConnectStep = memo(function ConnectStep() {
     formState: { errors },
     getValues,
     watch,
+    setValue,
   } = useFormContext<WizardFormData>();
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryName = ''] = watch(['repositoryName']);
+  const [repositoryName = '', branch = ''] = watch(['repositoryName', 'repository.branch']);
   const isGitBased = isGitProvider(type);
 
   const {
     options: repositoryRefsOptions,
     loading: isRefsLoading,
     error: refsError,
+    defaultBranch,
   } = useGetRepositoryRefs({
     repositoryType: type,
     repositoryName: repositoryName,
   });
 
+  const {
+    options: folderOptions,
+    loading: isFoldersLoading,
+    error: foldersError,
+    hint: foldersHint,
+  } = useGetRepositoryFolders({
+    repositoryName: repositoryName || undefined,
+    ref: branch || undefined,
+  });
+
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
+
+  const hasAutoSelectedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasAutoSelectedRef.current && defaultBranch && !getValues('repository.branch')) {
+      setValue('repository.branch', defaultBranch);
+      hasAutoSelectedRef.current = true;
+    }
+  }, [defaultBranch, getValues, setValue]);
 
   return (
     <Stack direction="column" gap={2}>
@@ -59,7 +81,6 @@ export const ConnectStep = memo(function ConnectStep() {
                   placeholder={gitFields.branchConfig.placeholder}
                   options={repositoryRefsOptions || []}
                   loading={isRefsLoading}
-                  disabled={isRefsLoading}
                   createCustomValue
                   isClearable
                   {...field}
@@ -71,15 +92,27 @@ export const ConnectStep = memo(function ConnectStep() {
           <Field
             noMargin
             label={gitFields.pathConfig.label}
-            description={gitFields.pathConfig.description}
-            error={errors?.repository?.path?.message}
-            invalid={!!errors?.repository?.path?.message}
+            description={foldersHint || gitFields.pathConfig.description}
+            error={errors?.repository?.path?.message || foldersError}
+            invalid={Boolean(errors?.repository?.path?.message || foldersError)}
             required={gitFields.pathConfig.required}
           >
-            <Input
-              {...register('repository.path', gitFields.pathConfig.validation)}
-              id="git-path"
-              placeholder={gitFields.pathConfig.placeholder}
+            <Controller
+              name="repository.path"
+              control={control}
+              rules={gitFields.pathConfig.validation}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Combobox
+                  invalid={!!errors?.repository?.path?.message}
+                  onChange={(option) => onChange(option?.value || '')}
+                  placeholder={gitFields.pathConfig.placeholder}
+                  options={folderOptions}
+                  loading={isFoldersLoading}
+                  createCustomValue
+                  isClearable
+                  {...field}
+                />
+              )}
             />
           </Field>
         </>

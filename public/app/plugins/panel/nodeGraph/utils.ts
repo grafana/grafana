@@ -10,7 +10,8 @@ import {
 } from '@grafana/data';
 
 import { nodeR } from './Node';
-import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
+import { Options as NodeGraphOptions } from './panelcfg.gen';
+import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 

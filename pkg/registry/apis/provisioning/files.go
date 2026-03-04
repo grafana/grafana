@@ -324,19 +324,19 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 		return nil, err
 	}
 
-	files := &provisioning.FileList{}
+	items := make([]provisioning.FileItem, 0, len(rsp))
 	for _, v := range rsp {
 		if !v.Blob {
-			continue // folder item
+			continue
 		}
-		files.Items = append(files.Items, provisioning.FileItem{
+		items = append(items, provisioning.FileItem{
 			Path: v.Path,
 			Size: v.Size,
 			Hash: v.Hash,
 		})
 	}
 
-	return files, nil
+	return &provisioning.FileList{Items: items}, nil
 }
 
 // checkQuota verifies that the repository resource quota allows the operation.

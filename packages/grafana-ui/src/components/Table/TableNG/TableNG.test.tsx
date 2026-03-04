@@ -553,10 +553,10 @@ describe('TableNG', () => {
         expect(screen.getByText(text)).toBeInTheDocument();
       });
 
-      const grid = container.querySelector('[role="grid"]');
+      const grid = container.querySelector('[role="treegrid"]');
       expect(grid).toBeInTheDocument();
 
-      const expandIcons = container.querySelectorAll('svg[aria-label="Expand row"]');
+      const expandIcons = container.querySelectorAll('[aria-label="Expand row"]');
       expect(expandIcons.length).toBeGreaterThan(0);
     });
 
@@ -579,7 +579,7 @@ describe('TableNG', () => {
       const initialRowCount = initialRows.length;
 
       // Find the expand button
-      const expandButton = container.querySelector('svg[aria-label="Expand row"]');
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
       expect(expandButton).toBeInTheDocument();
 
       // Click the expand button

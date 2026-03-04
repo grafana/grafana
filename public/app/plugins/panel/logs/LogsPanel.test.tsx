@@ -15,7 +15,7 @@ import {
   DataFrameType,
   LogSortOrderChangeEvent,
 } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
 import * as grafanaUI from '@grafana/ui';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
@@ -722,6 +722,89 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         expect(screen.getByLabelText('Filter for value')).toBeInTheDocument();
         expect(screen.getByLabelText('Filter out value')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Field selector', () => {
+    const originalFlagState = config.featureToggles.newLogsPanel;
+    const series = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            values: ['logline text'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                app: 'common_app',
+              },
+            ],
+          },
+        ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
+      }),
+    ];
+
+    beforeAll(() => {
+      config.featureToggles.newLogsPanel = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.newLogsPanel = originalFlagState;
+    });
+
+    it('shows field selector when showFieldSelector is enabled', async () => {
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showFieldSelector: true,
+            enableLogDetails: true,
+          },
+        },
+        showControls
+      );
+
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
+
+      expect(screen.queryByPlaceholderText('Search fields by name')).toBeInTheDocument();
+    });
+
+    it('does not show field selector when showFieldSelector is disabled', async () => {
+      setup(
+        {
+          data: {
+            ...defaultProps.data,
+            series,
+          },
+          options: {
+            ...defaultProps.options,
+            showFieldSelector: false,
+            enableLogDetails: true,
+          },
+        },
+        showControls
+      );
+
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
+
+      expect(screen.queryByPlaceholderText('Search fields by name')).not.toBeInTheDocument();
     });
   });
 

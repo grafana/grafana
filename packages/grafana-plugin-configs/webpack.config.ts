@@ -112,6 +112,8 @@ const config = async (env: Env): Promise<Configuration> => {
       'slate-plain-serializer',
       '@grafana/slate-react',
       'react',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
       'react-dom',
       'react-redux',
       'redux',

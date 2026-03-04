@@ -16,10 +16,10 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -147,8 +147,8 @@ func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 						{
 							Actions:           []string{accesscontrol.ActionAlertingReceiversTestCreate},
 							Resource:          models.ScopeReceiversRoot,
-							ResourceAttribute: "type",
-							ResourceID:        alertingauthz.NewReceiverType,
+							ResourceAttribute: "uid",
+							ResourceID:        models.NewReceiverScopeID,
 						},
 					})
 				}(),
@@ -388,8 +388,8 @@ func TestIntegrationTesting(t *testing.T) {
 		{
 			Actions:           []string{accesscontrol.ActionAlertingReceiversTestCreate},
 			Resource:          models.ScopeReceiversRoot,
-			ResourceAttribute: "type",
-			ResourceID:        alertingauthz.NewReceiverType,
+			ResourceAttribute: "uid",
+			ResourceID:        models.NewReceiverScopeID,
 		},
 	})
 

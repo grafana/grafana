@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v4"
 	"github.com/fullstorydev/grpchan"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/dskit/services"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -111,22 +109,7 @@ func newClient(opts options.StorageOptions,
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
-		if opts.DataPath == "" {
-			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
-		}
-
-		// Create BadgerDB instance
-		db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
-			WithLogger(nil))
-		if err != nil {
-			return nil, err
-		}
-
-		kv := resource.NewBadgerKV(db)
-		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-			KvStore: kv,
-			Log:     log.New(),
-		})
+		backend, err := sql.NewFileBackend(cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -178,17 +161,27 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
+		backend, err := sql.NewStorageBackend(cfg, db, reg, storageMetrics, tracer, false)
+		if err != nil {
+			return nil, err
+		}
+
+		if backendService, ok := backend.(services.Service); ok {
+			if err := services.StartAndAwaitRunning(ctx, backendService); err != nil {
+				return nil, fmt.Errorf("failed to start storage backend: %w", err)
+			}
+		}
+
 		serverOptions := sql.ServerOptions{
-			DB:             db,
-			Cfg:            cfg,
-			Tracer:         tracer,
-			Reg:            reg,
-			AccessClient:   authzc,
-			SearchOptions:  searchOptions,
-			StorageMetrics: storageMetrics,
-			IndexMetrics:   indexMetrics,
-			Features:       features,
-			SecureValues:   secure,
+			Backend:       backend,
+			Cfg:           cfg,
+			Tracer:        tracer,
+			Reg:           reg,
+			AccessClient:  authzc,
+			SearchOptions: searchOptions,
+			IndexMetrics:  indexMetrics,
+			Features:      features,
+			SecureValues:  secure,
 		}
 
 		if cfg.QOSEnabled {

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
+import { useNotificationPoliciesNav } from '../../navigation/useNotificationConfigNav';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -34,13 +35,15 @@ const PoliciesTreeWrapper = () => {
 function PolicyPage() {
   const { name = '' } = useParams();
   const routeName = name === ROOT_ROUTE_NAME ? 'Default Policy' : decodeURIComponent(name);
+  const { navId, pageNav } = useNotificationPoliciesNav();
 
   return (
     <AlertmanagerPageWrapper
-      navId="am-routes"
+      navId={navId}
       accessType="notification"
       pageNav={{
         text: routeName,
+        parentItem: pageNav,
       }}
       renderTitle={(title) => <Title name={title} returnToFallback={'/alerting/routes'} />}
       subTitle={t(

@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { GroupByVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
-import { Button, Checkbox, ClickOutsideWrapper, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, ClickOutsideWrapper, FilterInput, Stack, useStyles2 } from '@grafana/ui';
 
 interface Props {
   groupByVariable: GroupByVariable;
@@ -45,21 +45,13 @@ export function PanelGroupByActionPopover({
   };
 
   const handleApply = useCallback(() => {
-    if (!values.length) {
-      return;
-    }
-
     groupByVariable.changeValueTo(values, values.map(String), true);
     onCancel();
   }, [groupByVariable, onCancel, values]);
 
-  const isAnyOptionChecked = () => {
-    if (!values.length) {
-      return false;
-    }
-
-    return values.some((value) => options.find((option) => option.value === value));
-  };
+  const groupByHasCurrentValues = Array.isArray(groupByVariable.state.value)
+    ? groupByVariable.state.value.length > 0
+    : Boolean(groupByVariable.state.value);
 
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
@@ -68,11 +60,11 @@ export function PanelGroupByActionPopover({
       <div className={styles.menuContainer} onClick={(ev) => ev.stopPropagation()}>
         <Stack direction="column">
           <div className={styles.searchContainer}>
-            <Input
-              prefix={<Icon name="search" />}
+            <FilterInput
               placeholder={t('panel-group-by.search-placeholder', 'Search')}
               value={searchValue}
-              onChange={(e) => setSearchValue(e.currentTarget.value)}
+              onChange={setSearchValue}
+              escapeRegex={false}
             />
           </div>
 
@@ -97,7 +89,7 @@ export function PanelGroupByActionPopover({
           </div>
 
           <Stack justifyContent="end" direction="row-reverse">
-            <Button size="sm" onClick={handleApply} disabled={!isAnyOptionChecked()}>
+            <Button size="sm" onClick={handleApply} disabled={!values.length && !groupByHasCurrentValues}>
               <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
             </Button>
             <Button size="sm" variant="secondary" onClick={onCancel}>

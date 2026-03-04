@@ -79,7 +79,9 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 			}
 		}
 	}
-	ctx = request.WithNamespace(ctx, namespace)
+	if namespace != "" {
+		ctx = request.WithNamespace(ctx, namespace)
+	}
 
 	// Note: OpenFeature is already initialized by target.go before this service starts.
 	// The frontend service only needs to set evaluation context per request
@@ -89,6 +91,7 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	}
 	evalCtx := openfeature.NewEvaluationContext(openFeatureNamespace, map[string]any{
 		"namespace": openFeatureNamespace,
+		"hostname":  hostname,
 	})
 	ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
 

@@ -1,9 +1,9 @@
 package resources
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
 
@@ -15,9 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -128,7 +127,6 @@ type ParsedResource struct {
 }
 
 func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
-	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
 		Info: info,
 		Repo: r.repo,
@@ -139,13 +137,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	var gvk *schema.GroupVersionKind
-	parsed.Obj, gvk, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
-	if err != nil || gvk == nil {
-		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
-		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
-		if err != nil || gvk == nil {
-			return nil, NewResourceValidationError(err)
-		}
+	parsed.Obj, gvk, parsed.Classic, err = ParseFileResource(ctx, info)
+	if err != nil {
+		return nil, err
 	}
 
 	parsed.GVK = *gvk
@@ -155,6 +149,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		if err != nil {
 			return nil, fmt.Errorf("load resource URLs: %w", err)
 		}
+	}
+
+	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
+		return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
 	}
 
 	// Remove the internal dashboard UID,version and id if they exist

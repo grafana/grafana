@@ -13,17 +13,6 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Graphite data source issues
 weight: 400
-refs:
-  configure-graphite:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/graphite/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/graphite/configure/
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/graphite/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/graphite/query-editor/
 ---
 
 # Troubleshoot Graphite data source issues
@@ -59,7 +48,7 @@ If you receive 401 or 403 errors:
 - Ensure the **With Credentials** toggle is enabled if your Graphite server requires cookies for authentication.
 - Check that your TLS client certificates are valid and match what the server expects.
 
-For detailed authentication configuration, refer to [Configure the Graphite data source](ref:configure-graphite).
+For detailed authentication configuration, refer to [Configure the Graphite data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/configure/).
 
 ## Query issues
 
@@ -91,7 +80,7 @@ If the query editor displays parser errors:
 - Verify that function arguments are in the correct format.
 - Ensure metric paths don't contain unsupported characters.
 
-For query syntax help, refer to [Graphite query editor](ref:query-editor).
+For query syntax help, refer to [Graphite query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/query-editor/).
 
 ## Version and feature issues
 

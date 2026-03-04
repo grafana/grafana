@@ -84,6 +84,9 @@ type DashboardCompatibilityScoreQueryBreakdown struct {
 	// Calculated as: (foundMetrics / totalMetrics) * 100
 	// 100 = query will work perfectly, 0 = query will return no data.
 	CompatibilityScore float64 `json:"compatibilityScore"`
+	// Optional error message for queries that failed to parse.
+	// When present, the query is treated as 0% compatible.
+	ParseError *string `json:"parseError,omitempty"`
 }
 
 // NewDashboardCompatibilityScoreQueryBreakdown creates a new DashboardCompatibilityScoreQueryBreakdown object.

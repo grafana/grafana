@@ -17,25 +17,14 @@ labels:
 menuTitle: TestData
 title: TestData data source
 weight: 1500
-refs:
-  panels-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
 ---
 
 # TestData data source
 
-Grafana ships with a TestData data source, which creates simulated time series data for any [panel](ref:panels-visualizations).
+Grafana ships with a TestData data source, which creates simulated time series data for any [panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/).
 You can use it to build your own fake and random time series data and render it in any panel, which helps you verify dashboard functionality since you can safely and easily share the data.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
 Only users with the organization administrator role can add data sources.
 
 ## Configure the data source

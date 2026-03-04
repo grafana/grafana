@@ -36,25 +36,20 @@ var (
 
 var userResource = iamv0alpha1.UserResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, tracer}
 }
 
 type LegacyStore struct {
-	store               legacy.LegacyIdentityStore
-	ac                  claims.AccessClient
-	enableAuthnMutation bool
-	tracer              trace.Tracer
+	store  legacy.LegacyIdentityStore
+	ac     claims.AccessClient
+	tracer trace.Tracer
 }
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "user.Update")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(userResource.GroupResource(), "update")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -111,10 +106,6 @@ func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "user.Delete")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(userResource.GroupResource(), "delete")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -181,12 +172,23 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	ctx, span := s.tracer.Start(ctx, "user.List")
 	defer span.End()
 
+	query := legacy.ListUserQuery{}
+
+	if options.FieldSelector != nil {
+		if email, ok := options.FieldSelector.RequiresExactMatch("spec.email"); ok {
+			query.Email = email
+		}
+		if login, ok := options.FieldSelector.RequiresExactMatch("spec.login"); ok {
+			query.Login = login
+		}
+	}
+
 	res, err := common.List(
 		ctx, userResource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.User], error) {
-			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
-				Pagination: p,
-			})
+			q := query
+			q.Pagination = p
+			found, err := s.store.ListUsers(ctx, ns, q)
 
 			if err != nil {
 				return nil, err
@@ -250,10 +252,6 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	ctx, span := s.tracer.Start(ctx, "user.Create")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(userResource.GroupResource(), "create")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {

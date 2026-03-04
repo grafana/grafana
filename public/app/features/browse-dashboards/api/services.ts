@@ -4,7 +4,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, NestedFolderDTO } from 'app/features/search/service/types';
-import { queryResultToViewItem } from 'app/features/search/service/utils';
+import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -81,8 +81,7 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
-    managedBy: item.managedBy,
-
+    managedBy: extractManagerKind(item.managedBy),
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
     url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),
   }));

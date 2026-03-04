@@ -168,24 +168,18 @@ func testMigrationUnified(t *testing.T, dash map[string]interface{}, inputFileNa
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
 	require.NoError(t, err, "failed to marshal migrated dashboard")
 
-	// 6. Check if output file already exists
-	if _, err := os.Stat(outPath); os.IsNotExist(err) {
-		// 7a. If no existing file, create a new one (ensure directory exists first)
-		outDir := filepath.Dir(outPath)
-		err = os.MkdirAll(outDir, 0750)
-		require.NoError(t, err, "failed to create output directory %s", outDir)
+	outDir := filepath.Dir(outPath)
+	//nolint:gosec
+	err = os.MkdirAll(outDir, 0755)
+	require.NoError(t, err, "failed to create output directory %s", outDir)
 
-		err = os.WriteFile(outPath, outBytes, 0644)
-		require.NoError(t, err, "failed to write new output file %s", outPath)
-		return
-	}
+	err = os.WriteFile(outPath, outBytes, 0644)
+	require.NoError(t, err, "failed to write output file %s", outPath)
 
-	// 7b. If existing file exists, compare them and fail if different
-	// We can ignore gosec G304 here since it's a test
-	// nolint:gosec
-	existingBytes, err := os.ReadFile(outPath)
-	require.NoError(t, err, "failed to read existing output file %s", outPath)
-	require.JSONEq(t, string(existingBytes), string(outBytes), "output file %s did not match expected result", outPath)
+	key, err := migrationtestutil.ChecksumKey("testdata", outPath)
+	require.NoError(t, err)
+
+	goldenChecksums.ValidateOrUpdate(t, key, outBytes)
 }
 
 func getSchemaVersion(t *testing.T, dash map[string]interface{}) int {
