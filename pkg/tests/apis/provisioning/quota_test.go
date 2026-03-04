@@ -75,9 +75,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
 	t.Run("quota condition is ResourceQuotaExceeded when limit is exceeded", func(t *testing.T) {
 		// Set a low resource limit
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 2 // Only allow 2 resources
-		})
+		helper := runGrafana(t)
 		ctx := context.Background()
 
 		const repo = "quota-exceeded-repo"
@@ -95,6 +93,10 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 		helper.CreateRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 2)
+
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for the repository to be synced and check the Quota condition
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
