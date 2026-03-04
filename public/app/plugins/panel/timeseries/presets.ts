@@ -13,6 +13,7 @@ import {
 } from '@grafana/schema';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
+import { defaultGraphConfig } from './config';
 import { Options } from './panelcfg.gen';
 
 const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) => {
@@ -67,7 +68,7 @@ const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
   name: t('timeseries.presets.default', 'Default'),
   fieldConfig: {
     defaults: {
-      custom: {},
+      custom: defaultGraphConfig,
     },
     overrides: [],
   },
@@ -291,7 +292,13 @@ const stackedAreaGradientPreset = (): VisualizationSuggestion<Options, GraphFiel
 
 export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = (context) => {
   if (isStacked(context)) {
-    return [stackedStepPreset(), smoothStackedPreset(), stackedAreaPercentPointsPreset(), stackedAreaGradientPreset()];
+    return [
+      defaultPreset(),
+      stackedStepPreset(),
+      smoothStackedPreset(),
+      stackedAreaPercentPointsPreset(),
+      stackedAreaGradientPreset(),
+    ];
   }
 
   return [defaultPreset(), smoothPreset(), areaPreset(), stepPreset(), stepFilledPreset(), stepHuePreset()];
