@@ -588,3 +588,102 @@ func TestCreateFolder(t *testing.T) {
 		})
 	}
 }
+
+func TestMoveDirectory_FolderMetadata(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T) (*DualReadWriter, DualWriteOptions)
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name: "flag disabled: moves directory, no _folder.json written",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.LocalRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Move", mock.Anything, "old/", "new/", "feature-branch", "move").Return(nil)
+				dw := &DualReadWriter{repo: rw, folderMetadataEnabled: false}
+				return dw, DualWriteOptions{
+					OriginalPath: "old/",
+					Path:         "new/",
+					Ref:          "feature-branch",
+					Message:      "move",
+				}
+			},
+		},
+		{
+			name: "flag enabled: moves directory, no _folder.json written",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.LocalRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Move", mock.Anything, "old/", "new/", "feature-branch", "move").Return(nil)
+
+				dw := &DualReadWriter{repo: rw, folderMetadataEnabled: true}
+				return dw, DualWriteOptions{
+					OriginalPath: "old/",
+					Path:         "new/",
+					Ref:          "feature-branch",
+					Message:      "move",
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dw, opts := tt.setup(t)
+			result, err := dw.moveDirectory(context.Background(), opts)
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, result)
+		})
+	}
+}
+
+func TestCreateFolder_Nested_FolderMetadata(t *testing.T) {
+	t.Run("flag enabled: nested folder creates _folder.json only for the leaf, not the parent", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		// Only the leaf _folder.json should be created.
+		rw.On("Create", mock.Anything, "parent/child/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			return json.Unmarshal(b, &f) == nil && f.Name != "" && f.Spec.Title == "child"
+		}), "").Return(nil)
+
+		dw := &DualReadWriter{repo: rw, access: accessMock, folderMetadataEnabled: true}
+		result, err := dw.CreateFolder(context.Background(), DualWriteOptions{Path: "parent/child/"})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		// Verify parent/_folder.json was never created.
+		rw.AssertNotCalled(t, "Create", mock.Anything, "parent/_folder.json",
+			mock.Anything, mock.Anything, mock.Anything)
+		rw.AssertExpectations(t)
+	})
+}

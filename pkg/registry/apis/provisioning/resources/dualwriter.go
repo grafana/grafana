@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // DualReadWriter is a wrapper around a repository that can read from and write resources
@@ -171,11 +172,14 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	}
 
 	// When the feature flag is enabled, write a _folder.json with a stable UID
-	// instead of the legacy .keep placeholder created by the git layer.
+	// for this folder only. Intermediate ancestor folders are not given a
+	// _folder.json automatically — they receive one only when explicitly created.
 	var stableUID string
 	if r.folderMetadataEnabled {
+		uid := util.GenerateShortUID()
+		manifest := NewFolderManifest(uid, safepath.Base(opts.Path))
 		var err error
-		stableUID, err = WriteFolderMetadata(ctx, r.repo, opts.Path, opts.Ref, opts.Message)
+		stableUID, err = WriteFolderMetadata(ctx, r.repo, opts.Path, manifest, opts.Ref, opts.Message)
 		if err != nil {
 			return nil, err
 		}

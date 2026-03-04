@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // IsFolderMetadataEnabled reports whether the provisioningFolderMetadata feature flag is on.
@@ -19,7 +19,12 @@ func IsFolderMetadataEnabled(cfg *setting.Cfg) bool {
 	return cfg.IsFeatureToggleEnabled(featuremgmt.FlagProvisioningFolderMetadata)
 }
 
-const FolderMetadataFileName = "_folder.json"
+const folderMetadataFileName = "_folder.json"
+
+// IsFolderMetadataFile reports whether path refers to a _folder.json file.
+func IsFolderMetadataFile(path string) bool {
+	return filepath.Base(path) == folderMetadataFileName
+}
 
 // NewFolderManifest builds a Folder resource ready for serialization into _folder.json.
 // uid is the stable K8s name; title is the human-readable folder name.
@@ -31,39 +36,38 @@ func NewFolderManifest(uid, title string) *folders.Folder {
 	return f
 }
 
-// MarshalFolderManifest generates a stable UID and marshals a _folder.json manifest
-// for the given folderPath. The title is derived from the last path segment.
-// Returns the uid, the JSON bytes, and any error.
-func MarshalFolderManifest(folderPath string) (uid string, data []byte, err error) {
-	uid = util.GenerateShortUID()
-	title := safepath.Base(folderPath)
-	manifest := NewFolderManifest(uid, title)
-	data, err = json.Marshal(manifest)
+// marshalFolderManifest serializes a Folder resource to JSON.
+func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
+	data, err := json.Marshal(folder)
 	if err != nil {
-		return "", nil, fmt.Errorf("marshal folder manifest: %w", err)
+		return nil, fmt.Errorf("marshal folder manifest: %w", err)
 	}
-	return uid, data, nil
+	return data, nil
 }
 
-// FolderManifestUID parses a _folder.json byte slice and returns the stable UID
-// stored in metadata.name.
-func FolderManifestUID(data []byte) (string, error) {
-	var f folders.Folder
-	if err := json.Unmarshal(data, &f); err != nil {
-		return "", fmt.Errorf("parse folder manifest: %w", err)
+// ReadFolderMetadata reads _folder.json from folderPath and returns the Folder resource.
+func ReadFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath, ref string) (*folders.Folder, error) {
+	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
+	info, err := repo.Read(ctx, metadataPath, ref)
+	if err != nil {
+		return nil, err
 	}
-	return f.Name, nil
+	var f folders.Folder
+	if err := json.Unmarshal(info.Data, &f); err != nil {
+		return nil, fmt.Errorf("parse folder manifest: %w", err)
+	}
+	return &f, nil
 }
 
 // WriteFolderMetadata writes _folder.json into folderPath and returns the stable UID.
-func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string) (string, error) {
-	stableUID, metadataBytes, err := MarshalFolderManifest(folderPath)
+func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath string, folder *folders.Folder, ref, message string) (string, error) {
+	data, err := marshalFolderManifest(folder)
 	if err != nil {
 		return "", fmt.Errorf("marshal folder metadata: %w", err)
 	}
-	metadataPath := safepath.Join(folderPath, FolderMetadataFileName)
-	if err := repo.Create(ctx, metadataPath, ref, metadataBytes, message); err != nil {
+	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
+	if err := repo.Create(ctx, metadataPath, ref, data, message); err != nil {
 		return "", fmt.Errorf("failed to create folder metadata: %w", err)
 	}
-	return stableUID, nil
+	return folder.Name, nil
 }

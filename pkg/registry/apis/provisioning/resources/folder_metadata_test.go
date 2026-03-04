@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -13,78 +14,85 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
-func TestMarshalFolderManifest(t *testing.T) {
-	uid, data, err := MarshalFolderManifest("my-folder/")
-
-	require.NoError(t, err)
-	assert.NotEmpty(t, uid)
-	assert.NotEmpty(t, data)
-
-	var f folders.Folder
-	require.NoError(t, json.Unmarshal(data, &f))
-	assert.Equal(t, "folder.grafana.app/v1beta1", f.APIVersion)
-	assert.Equal(t, "Folder", f.Kind)
-	assert.Equal(t, uid, f.Name)
-	assert.Equal(t, "my-folder", f.Spec.Title)
+func TestIsFolderMetadataFile(t *testing.T) {
+	assert.True(t, IsFolderMetadataFile("_folder.json"))
+	assert.True(t, IsFolderMetadataFile("myfolder/_folder.json"))
+	assert.True(t, IsFolderMetadataFile("a/b/c/_folder.json"))
+	assert.False(t, IsFolderMetadataFile("myfolder/dashboard.json"))
+	assert.False(t, IsFolderMetadataFile("myfolder/"))
 }
 
-func TestMarshalFolderManifest_NestedPath(t *testing.T) {
-	uid, data, err := MarshalFolderManifest("parent/child-folder/")
+func TestReadFolderMetadata(t *testing.T) {
+	const stableUID = "stable-uid-from-folder-json"
 
-	require.NoError(t, err)
-	assert.NotEmpty(t, uid)
-
-	var f folders.Folder
-	require.NoError(t, json.Unmarshal(data, &f))
-	// Title should be derived from the last path segment only
-	assert.Equal(t, "child-folder", f.Spec.Title)
-	assert.Equal(t, uid, f.Name)
-}
-
-func TestFolderManifestUID_RoundTrip(t *testing.T) {
-	uid, data, err := MarshalFolderManifest("some-path/")
+	manifest := NewFolderManifest(stableUID, "my-folder")
+	validData, err := json.Marshal(manifest)
 	require.NoError(t, err)
 
-	got, err := FolderManifestUID(data)
-	require.NoError(t, err)
-	assert.Equal(t, uid, got)
-}
+	t.Run("valid _folder.json returns Folder with correct UID", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(&repository.FileInfo{Data: validData}, nil)
 
-func TestFolderManifestUID_InvalidJSON(t *testing.T) {
-	_, err := FolderManifestUID([]byte("not-json"))
-	assert.Error(t, err)
+		result, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.Equal(t, stableUID, result.Name)
+	})
+
+	t.Run("read error returns error", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(nil, errors.New("file not found"))
+
+		_, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+
+		require.Error(t, err)
+	})
+
+	t.Run("invalid JSON returns error", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte("not-json")}, nil)
+
+		_, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+
+		require.Error(t, err)
+	})
 }
 
 func TestWriteFolderMetadata(t *testing.T) {
 	t.Run("writes _folder.json and returns stable UID", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 
-		var capturedUID string
+		const uid = "my-stable-uid"
+		manifest := NewFolderManifest(uid, "myfolder")
+
 		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
 			var f folders.Folder
 			if err := json.Unmarshal(b, &f); err != nil {
 				return false
 			}
-			capturedUID = f.Name
 			return f.APIVersion == "folder.grafana.app/v1beta1" &&
 				f.Kind == "Folder" &&
-				f.Name != "" &&
+				f.Name == uid &&
 				f.Spec.Title == "myfolder"
 		}), "").Return(nil)
 
-		uid, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", "", "")
+		returnedUID, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "")
 
 		require.NoError(t, err)
-		assert.NotEmpty(t, uid)
-		assert.Equal(t, capturedUID, uid, "returned UID must match the one written to _folder.json")
+		assert.Equal(t, uid, returnedUID)
 	})
 
 	t.Run("returns error when repo.Create fails", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
+		manifest := NewFolderManifest("some-uid", "myfolder")
 		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").
 			Return(assert.AnError)
 
-		_, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", "", "")
+		_, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "")
 
 		require.Error(t, err)
 	})

@@ -1084,18 +1084,9 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag_Nested(t *testi
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
 
-	// Verify parent _folder.json was created
-	parentWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
-	require.NoError(t, err, "parent _folder.json should be readable via the files endpoint")
-
-	parentAPIVersion, _, _ := unstructured.NestedString(parentWrap.Object, "resource", "file", "apiVersion")
-	require.Equal(t, "folder.grafana.app/v1beta1", parentAPIVersion)
-
-	parentUID, _, _ := unstructured.NestedString(parentWrap.Object, "resource", "file", "metadata", "name")
-	require.NotEmpty(t, parentUID, "parent _folder.json should contain a non-empty metadata.name (stable UID)")
-
-	parentTitle, _, _ := unstructured.NestedString(parentWrap.Object, "resource", "file", "spec", "title")
-	require.Equal(t, "parent-folder", parentTitle)
+	// Verify parent _folder.json was NOT created
+	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
+	require.Error(t, err, "parent _folder.json should not exist — only the directly-created folder gets one")
 
 	// Verify child _folder.json was created
 	childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/child-folder/_folder.json")
@@ -1110,10 +1101,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag_Nested(t *testi
 	childTitle, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "spec", "title")
 	require.Equal(t, "child-folder", childTitle)
 
-	// Verify both Grafana folders exist with their stable UIDs
-	_, err = helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
-	require.NoError(t, err, "parent Grafana folder should exist with the stable UID from _folder.json")
-
+	// Verify child Grafana folder exists with stable UID from child _folder.json
 	_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
 	require.NoError(t, err, "child Grafana folder should exist with the stable UID from _folder.json")
 }
