@@ -10,12 +10,11 @@ import { QueryEditorType } from './constants';
  */
 const EVENT_PANEL_EDIT_NEXT = 'grafana_panel_edit_next_interaction';
 
-export const trackTransformationSearch = debounce((query: string, resultCount: number) => {
+export const trackTransformationSearch = debounce((query: string) => {
   if (query) {
     reportInteraction(EVENT_PANEL_EDIT_NEXT, {
       action: 'search_transformations',
       query,
-      result_count: resultCount,
     });
   }
 }, 300);

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -33,13 +33,6 @@ export function TransformationTypePicker() {
     allTransformationsCount,
   } = useTransformationSearchAndFilter(finalizePendingTransformation);
 
-  useEffect(() => {
-    trackTransformationSearch(search, filteredTransformations.length);
-    return () => {
-      trackTransformationSearch.cancel();
-    };
-  }, [search, filteredTransformations.length]);
-
   const searchBoxSuffix = useMemo(() => {
     if (filteredTransformations.length === allTransformationsCount) {
       return null;
@@ -70,7 +63,10 @@ export function TransformationTypePicker() {
             'dashboard.transformation-picker-ng.placeholder-search-for-transformation',
             'Search for transformation'
           )}
-          onChange={({ target: { value } }: ChangeEvent<HTMLInputElement>) => setSearch(value)}
+          onChange={({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
+            setSearch(value);
+            trackTransformationSearch(value);
+          }}
           onKeyDown={onSearchKeyDown}
           suffix={searchBoxSuffix}
         />
