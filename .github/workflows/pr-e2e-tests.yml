@@ -18,7 +18,7 @@ jobs:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
     outputs:
@@ -127,7 +127,7 @@ jobs:
 
   run-storybook-test:
     name: Verify Storybook (Playwright)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     timeout-minutes: 15
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
@@ -282,7 +282,7 @@ jobs:
       - run-storybook-test
     if: ${{ !cancelled() }}
     name: All Playwright tests complete
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
       id-token: write
@@ -380,7 +380,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
