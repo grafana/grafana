@@ -13,7 +13,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -34,7 +33,7 @@ type TeamSearchHandler struct {
 }
 
 func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *TeamSearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher, features)
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher, features)
 
 	return &TeamSearchHandler{
 		client:   searchClient,
@@ -165,8 +164,8 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	searchRequest := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
-				Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
-				Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
+				Group:     iamv0.TeamResourceInfo.GroupResource().Group,
+				Resource:  iamv0.TeamResourceInfo.GroupResource().Resource,
 				Namespace: requester.GetNamespace(),
 			},
 		},
