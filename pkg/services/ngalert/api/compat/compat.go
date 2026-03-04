@@ -463,8 +463,10 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns *models.Notificati
 	if ns == nil {
 		return nil
 	}
+	// Should convert faithfully and not worry about validity.
+	res := definitions.AlertRuleNotificationSettings{}
 	if m := ns.ContactPointRouting; m != nil {
-		return &definitions.AlertRuleNotificationSettings{
+		res = definitions.AlertRuleNotificationSettings{
 			Receiver:            m.Receiver,
 			GroupBy:             m.GroupBy,
 			GroupWait:           m.GroupWait,
@@ -475,11 +477,9 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns *models.Notificati
 		}
 	}
 	if m := ns.PolicyRouting; m != nil {
-		return &definitions.AlertRuleNotificationSettings{
-			Policy: &m.Policy,
-		}
+		res.Policy = &m.Policy
 	}
-	return nil
+	return &res
 }
 
 // AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
