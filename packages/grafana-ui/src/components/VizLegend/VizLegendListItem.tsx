@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -70,9 +71,9 @@ export const VizLegendListItem = <T = unknown,>({
 
   const getAriaLabel = () => {
     if (allItemsSelected) {
-      return 'All series selected';
+      return t('grafana-ui.viz-legend.all-series-selected', 'All series selected');
     }
-    return `Only ${item.label} selected`;
+    return t('grafana-ui.viz-legend.only-this-series-selected', 'Only {{label}} selected', { label: item.label });
   };
 
   return (
