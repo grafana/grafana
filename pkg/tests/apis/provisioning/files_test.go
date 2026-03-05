@@ -1028,12 +1028,13 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		t.Cleanup(func() { resp.Body.Close() })
 		return resp
 	}
 
 	t.Run("simple folder creation writes _folder.json with stable UID", func(t *testing.T) {
 		resp := postFolder(t, "meta-test-folder/")
+		// nolint:errcheck
+		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
 
 		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/_folder.json")
@@ -1057,6 +1058,8 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 
 	t.Run("nested creation writes _folder.json only for the leaf", func(t *testing.T) {
 		resp := postFolder(t, "parent-folder/child-folder/")
+		// nolint:errcheck
+		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
 
 		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
@@ -1078,6 +1081,8 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 
 	t.Run("child created inside existing managed folder gets its own _folder.json", func(t *testing.T) {
 		resp := postFolder(t, "managed-parent/")
+		// nolint:errcheck
+		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating parent folder should succeed")
 
 		parentWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/_folder.json")
@@ -1086,6 +1091,8 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.NotEmpty(t, parentUID, "parent should have a non-empty stable UID")
 
 		resp2 := postFolder(t, "managed-parent/child-folder/")
+		// nolint:errcheck
+		defer resp2.Body.Close()
 		require.Equal(t, http.StatusOK, resp2.StatusCode, "creating child folder should succeed")
 
 		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/child-folder/_folder.json")
@@ -1105,5 +1112,4 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child Grafana folder should exist")
 	})
-
 }

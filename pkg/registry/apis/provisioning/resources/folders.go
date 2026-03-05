@@ -42,18 +42,18 @@ type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
 type FolderManagerOption func(*FolderManager)
 
 type FolderManager struct {
-	repo         repository.ReaderWriter
-	tree         FolderTree
-	client       dynamic.ResourceInterface
-	beforeCreate FolderCreationInterceptor
+	repo                  repository.ReaderWriter
+	tree                  FolderTree
+	client                dynamic.ResourceInterface
+	beforeCreate          FolderCreationInterceptor
 	folderMetadataEnabled bool
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderMetadataEnabled bool, opts ...FolderManagerOption) *FolderManager {
 	fm := &FolderManager{
-		repo:   repo,
-		tree:   lookup,
-		client: client,
+		repo:                  repo,
+		tree:                  lookup,
+		client:                client,
 		folderMetadataEnabled: folderMetadataEnabled,
 		beforeCreate: func(context.Context, Folder) error {
 			return nil
