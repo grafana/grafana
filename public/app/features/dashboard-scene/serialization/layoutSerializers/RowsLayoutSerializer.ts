@@ -2,6 +2,7 @@ import { Spec as DashboardV2Spec, RowsLayoutRowKind } from '@grafana/schema/apis
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';
@@ -66,7 +67,7 @@ export function deserializeRowsLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): RowsLayoutManager {
   if (layout.kind !== 'RowsLayout') {
     throw new Error('Invalid layout kind');
@@ -79,7 +80,7 @@ export function deserializeRow(
   row: RowsLayoutRowKind,
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): RowItem {
   const layout = row.spec.layout;
 

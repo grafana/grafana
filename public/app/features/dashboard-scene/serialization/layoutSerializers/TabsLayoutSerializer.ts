@@ -2,6 +2,7 @@ import { Spec as DashboardV2Spec, TabsLayoutTabKind } from '@grafana/schema/apis
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';
@@ -46,7 +47,7 @@ export function deserializeTabsLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): TabsLayoutManager {
   if (layout.kind !== 'TabsLayout') {
     throw new Error('Invalid layout kind');
@@ -63,7 +64,7 @@ export function deserializeTab(
   tab: TabsLayoutTabKind,
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): TabItem {
   const layout = tab.spec.layout;
 

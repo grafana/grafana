@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { SidebarSize } from '../../constants';
 import { ds1SettingsMock, renderWithQueryEditorProvider } from '../testUtils';
 
-import { QueryEditorSidebar } from './QueryEditorSidebar';
+import { Sidebar } from './Sidebar';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -20,7 +20,7 @@ describe('QueryEditorSidebar', () => {
   it('should call setSidebarSize with Full when toggling from Mini', async () => {
     const setSidebarSize = jest.fn();
     const { user } = renderWithQueryEditorProvider(
-      <QueryEditorSidebar sidebarSize={SidebarSize.Mini} setSidebarSize={setSidebarSize} />
+      <Sidebar sidebarSize={SidebarSize.Mini} setSidebarSize={setSidebarSize} />
     );
 
     await user.click(screen.getByRole('button', { name: /toggle sidebar size/i }));
@@ -31,7 +31,7 @@ describe('QueryEditorSidebar', () => {
   it('should call setSidebarSize with Mini when toggling from Full', async () => {
     const setSidebarSize = jest.fn();
     const { user } = renderWithQueryEditorProvider(
-      <QueryEditorSidebar sidebarSize={SidebarSize.Full} setSidebarSize={setSidebarSize} />
+      <Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={setSidebarSize} />
     );
 
     await user.click(screen.getByRole('button', { name: /toggle sidebar size/i }));

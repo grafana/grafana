@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 
 import { DataQuery } from '@grafana/schema';
 
-import { Transformation } from '../types';
+import { Transformation } from '../../types';
 
 import { useSidebarDragAndDrop } from './useSidebarDragAndDrop';
 
@@ -24,7 +24,7 @@ const transformations: Transformation[] = [
   { transformId: 't3', registryItem: undefined, transformConfig: { id: 'filter', options: {} } },
 ];
 
-jest.mock('../QueryEditorContext', () => ({
+jest.mock('../../QueryEditorContext', () => ({
   useQueryRunnerContext: () => ({
     queries,
   }),

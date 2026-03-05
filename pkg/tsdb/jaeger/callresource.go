@@ -31,13 +31,14 @@ func (s *Service) withDatasourceHandlerFunc(getHandler func(d *datasourceInfo) h
 
 func getServicesHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		cfg := backend.GrafanaConfigFromContext(r.Context())
+		ctx := r.Context()
+		cfg := backend.GrafanaConfigFromContext(ctx)
 		var services []string
 		var err error
 		if cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint") {
-			services, err = ds.JaegerClient.GrpcServices()
+			services, err = ds.JaegerClient.GrpcServices(ctx)
 		} else {
-			services, err = ds.JaegerClient.Services()
+			services, err = ds.JaegerClient.Services(ctx)
 		}
 		writeResponse(services, err, rw, ds.JaegerClient.logger)
 	}
@@ -45,14 +46,15 @@ func getServicesHandler(ds *datasourceInfo) http.HandlerFunc {
 
 func getOperationsHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		cfg := backend.GrafanaConfigFromContext(r.Context())
+		ctx := r.Context()
+		cfg := backend.GrafanaConfigFromContext(ctx)
 		service := strings.TrimSpace(r.PathValue("service"))
 		var operations []string
 		var err error
 		if cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint") {
-			operations, err = ds.JaegerClient.GrpcOperations(service)
+			operations, err = ds.JaegerClient.GrpcOperations(ctx, service)
 		} else {
-			operations, err = ds.JaegerClient.Operations(service)
+			operations, err = ds.JaegerClient.Operations(ctx, service)
 		}
 		writeResponse(operations, err, rw, ds.JaegerClient.logger)
 	}

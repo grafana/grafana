@@ -69,7 +69,7 @@ export function RepositoryList({ items }: Props) {
             {isFreeTierLicense() && (
               <>
                 <br />
-                <Trans i18nKey="provisioning.free-tier-limit.message-connection">
+                <Trans i18nKey="provisioning.folder-repository-list.free-tier-limit.message-connection">
                   Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,
                 </Trans>{' '}
                 <TextLink href={UPGRADE_URL} external>
