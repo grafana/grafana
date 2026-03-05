@@ -27,7 +27,7 @@ interface AnnotationEditFormDTO {
 export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
   const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
-  const focusRef = useRef<HTMLTextAreaElement | null>(null);
+  const focusRef = useRef<HTMLButtonElement | null>(null);
   const clickAwayRef = useRef(null);
 
   useClickAway(clickAwayRef, dismiss);
@@ -87,6 +87,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
             <div>{time}</div>
           </Stack>
           <AnnotationTooltipHeaderCloseIcon
+            forwardRef={focusRef}
             onClick={(e) => {
               // Don't trigger onClick
               e.stopPropagation();
@@ -114,7 +115,6 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
                     {...register('description', {
                       required: 'Annotation description is required',
                     })}
-                    ref={focusRef}
                   />
                 </Field>
                 <Field label={t('timeseries.annotation-editor2.label-tags', 'Tags')}>
