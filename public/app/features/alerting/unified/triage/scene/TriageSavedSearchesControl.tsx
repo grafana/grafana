@@ -15,7 +15,11 @@ import { shouldUseTriageSavedSearches } from '../../featureToggles';
 import { VARIABLES } from '../constants';
 import { useTriagePredefinedOverrides } from '../hooks/useTriagePredefinedOverrides';
 import { trackTriageSavedSearchApplied, useTriageSavedSearches } from '../hooks/useTriageSavedSearches';
-import { getTriagePredefinedSearches, isTriagePredefinedSearchId } from '../triagePredefinedSearches';
+import {
+  TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID,
+  getTriagePredefinedSearches,
+  isTriagePredefinedSearchId,
+} from '../triagePredefinedSearches';
 
 import {
   applyTriageSavedSearchState,
@@ -105,8 +109,9 @@ function TriageSavedSearchesControlRenderer({ model }: SceneComponentProps<Triag
     return generateTriageUrl(search.query);
   }, []);
 
-  // Effective default: explicit default ID (predefined or user) or legacy isDefault from saved list
-  const effectiveDefaultId = defaultSearchId ?? savedSearches.find((s) => s.isDefault)?.id ?? null;
+  // Effective default: explicit default ID, legacy isDefault from saved list, or predefined "grouped by folder"
+  const effectiveDefaultId =
+    defaultSearchId ?? savedSearches.find((s) => s.isDefault)?.id ?? TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID;
 
   // Predefined list: exclude dismissed, apply custom names and effective isDefault
   const predefinedList = useMemo(

@@ -388,7 +388,6 @@
         "timing-options": "计时"
       },
       "pending-period": "待处理时段",
-      "rule": "规则",
       "rule-identifier": "规则标识符",
       "rule-type": "规则类型",
       "state-error-timeout": "如果执行错误或超时，则提醒状态",
@@ -3390,8 +3389,14 @@
     },
     "triage": {
       "alert-instances": "警报实例",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "加载规则时出错",
-      "firing-instances-count": "触发警报实例",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "实例详情"
       },
@@ -3401,7 +3406,6 @@
       "no-matching-instances-with-filters": "在所选时间范围内，没有符合您当前筛选条件组的警报实例。",
       "open-in-sidebar": "在侧边栏中打开",
       "open-rule-details": "打开规则详情",
-      "pending-instances-count": "待处理的警报实例",
       "rule-details": {
         "subtitle": "规则详情和条件",
         "title": "规则详情"
@@ -3410,15 +3414,17 @@
         "description": "找不到请求的规则。",
         "title": "未找到规则"
       },
-      "rules-with-firing-instances": "带触发实例的警报规则",
-      "rules-with-pending-instances": "带待处理实例的警报规则",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_other": "",
+      "show-all-labels_other": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "添加表达式"
@@ -3516,7 +3522,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "详情",
           "enrichment": "警报扩充",
           "history": "历史记录",
           "instances": "实例",
@@ -4751,7 +4756,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "关联的链接",
-      "body": "数据源有了新家！您可以在“关联”页面中发现新的数据源或管理现有数据源，该页面可从主菜单访问。",
+      "body": "数据源有了新家！您可以在<0>「关联」页面</0>中发现新的数据源或管理现有数据源，该页面可从主菜单访问。",
       "go-to-connections": "前往关联"
     },
     "data-source-details-page": {
@@ -5430,11 +5435,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6851,10 +6858,8 @@
       "title-delete-all-transformations": "删除所有转换？"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "切换表格视图",
-      "table-view-label-table-view": "表视图",
-      "try-new-editor": ""
+      "table-view-label-table-view": "表视图"
     },
     "panel-editor": {
       "text": {
@@ -7130,6 +7135,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "数据面板已保存"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "此变量未被任何变量或数据面板引用。",
       "aria-label-variable-referenced-other-variables-dashboard": "此变量被其他变量或数据面板引用。",
@@ -7222,6 +7234,21 @@
     "variable-values-preview": {
       "show-more": "显示更多",
       "preview-of-values_other": "值预览 ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9846,6 +9873,7 @@
       "csv-placeholder": "在此处输入 CSV...",
       "filter": {
         "add-all": "将所有显示的值添加到筛选条件",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10854,6 +10882,7 @@
     "name-order": "顺序",
     "name-prettify-json": "美化 JSON",
     "name-show-controls": "显示控件",
+    "name-show-level": "",
     "name-time": "显示时间戳",
     "name-unique-labels": "唯一标签",
     "name-unwrapped-columns": "",
@@ -11939,6 +11968,12 @@
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "分组方式",
     "loading": "正在加载选项",
@@ -12381,6 +12416,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "添加备注以描述您的更改（可选）",
@@ -12420,9 +12461,6 @@
     "title-created-branch-in-repo": "已在 {{repoType}} 的分支中创建新资源。",
     "title-loaded-pull-request-in-repo": "此资源从您刚刚在 {{repoType}} 中创建的分支加载，并且仅对您可见"
   },
-  "provisioned-resource-request-handler": "资源已成功保存",
-  "provisioned-resource-request-handler-dashboard": "数据面板已成功保存",
-  "provisioned-resource-request-handler-folder": "文件夹已成功创建",
   "provisioning": {
     "banner": {
       "message": "此功能目前正在积极开发中。为了获得最佳体验和最新改进，我们建议您使用 Grafana 的<2>夜间版本</2>。"
@@ -13357,6 +13395,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

@@ -289,9 +289,14 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 
 	// For resources that exist in folders, set the header annotation
 	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
-		// Make sure the parent folders exist
+		// Make sure the parent folders exist.
+		// For _folder.json the resource IS the folder, so its parent is one level above.
+		folderPath := path
+		if IsFolderMetadataFile(path) {
+			folderPath = safepath.Dir(safepath.Dir(path))
+		}
 		folderCtx, folderSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.ensure_folder")
-		folder, err := r.folders.EnsureFolderPathExist(folderCtx, path)
+		folder, err := r.folders.EnsureFolderPathExist(folderCtx, folderPath)
 		if err != nil {
 			folderSpan.RecordError(err)
 			folderSpan.End()
