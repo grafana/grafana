@@ -186,6 +186,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
     let loadMax = 0;
     let pending: Promise<void> | undefined = undefined;
+
+    // This is the frame we will return. We keep this in closure of the getNextPage function, which may be appending
+    // to it if called upstream.
+    const view = new DataFrameView<DashboardQueryResult>(first);
+
     const getNextPage = async () => {
       while (loadMax > view.dataFrame.length) {
         const offset = view.dataFrame.length;
@@ -199,21 +204,35 @@ export class UnifiedSearcher implements GrafanaSearcher {
           console.log('no results', frame);
           return;
         }
-        if (frame.fields.length !== view.dataFrame.fields.length) {
-          console.log('invalid shape', frame, view.dataFrame);
-          return;
+        const existingLength = view.dataFrame.length;
+        const newLength = existingLength + frame.length;
+
+        // Add new fields from the incoming frame that don't exist in the view yet
+        for (const f of frame.fields) {
+          if (!view.dataFrame.fields.find((vf) => vf.name === f.name)) {
+            view.dataFrame.fields.push({
+              ...f,
+              values: new Array(existingLength).fill(null).concat(f.values),
+            });
+          }
         }
 
-        // Append the raw values to the same array buffer
-        const length = frame.length + view.dataFrame.length;
-        frame.fields.forEach((f) => {
+        // Append values from matching fields
+        for (const f of frame.fields) {
           const field = view.dataFrame.fields.find((vf) => vf.name === f.name);
-          if (field) {
+          if (field && field.values.length === existingLength) {
             field.values.push(...f.values);
           }
-        });
+        }
 
-        view.dataFrame.length = length;
+        // Pad fields that don't exist in the incoming frame with null
+        for (const field of view.dataFrame.fields) {
+          while (field.values.length < newLength) {
+            field.values.push(null);
+          }
+        }
+
+        view.dataFrame.length = newLength;
 
         // Add all the location lookup info
         const submeta = frame.meta?.custom;
@@ -228,10 +247,13 @@ export class UnifiedSearcher implements GrafanaSearcher {
       pending = undefined;
     };
 
-    const view = new DataFrameView<DashboardQueryResult>(first);
     return {
       totalRows: meta.count ?? first.length,
       view,
+      // Not using the startIndex because it is required to satisfy the typing that is shared between this and SQL
+      // searcher. The SQL searcher though does not support loadMoreItems at all though so I guess it's just weird.
+      // TODO: maybe we can just remove it. SearchResultsTable seems to be using it but obviously it does not do
+      //  anything.
       loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
         loadMax = Math.max(loadMax, stopIndex + 1);
         if (!pending) {
