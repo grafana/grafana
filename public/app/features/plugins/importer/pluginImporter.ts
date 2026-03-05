@@ -13,6 +13,7 @@ import {
   throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { commandPaletteContextActionRegistry } from 'app/features/commandPalette/CommandPaletteContextActionRegistry';
 import { commandPaletteDynamicRegistry } from 'app/features/commandPalette/CommandPaletteDynamicRegistry';
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
@@ -104,6 +105,10 @@ const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async 
   addedLinksRegistry.register({ pluginId: meta.id, configs: plugin.addedLinkConfigs || [] });
   addedFunctionsRegistry.register({ pluginId: meta.id, configs: plugin.addedFunctionConfigs || [] });
   commandPaletteDynamicRegistry.register({ pluginId: meta.id, configs: plugin.commandPaletteDynamicConfigs || [] });
+  commandPaletteContextActionRegistry.register({
+    pluginId: meta.id,
+    configs: plugin.commandPaletteContextActionConfigs || [],
+  });
 
   pluginsCache.set(meta.id, plugin);
   return plugin;

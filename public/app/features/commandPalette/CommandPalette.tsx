@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
+import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, useRegisterActions, ActionImpl } from 'kbar';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
@@ -13,6 +13,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, IconButton, IconName, LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { CategoryPillBar } from './CategoryPillBar';
+import { ContextActionStepList, ContextActionStepState } from './ContextActionStepList';
 import { FacetBreadcrumbs } from './FacetBreadcrumbs';
 import { FacetPillBar } from './FacetPillBar';
 import { FacetValueList } from './FacetValueList';
@@ -23,6 +24,7 @@ import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './actions/scopeActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import { ContextActionEntry, useContextActions } from './actions/useContextActions';
 import { useDynamicExtensionResults } from './actions/useDynamicExtensionActions';
 import { CommandPaletteAction } from './types';
 import { useFacetState } from './useFacetState';
@@ -57,6 +59,45 @@ function CommandPaletteContents() {
 
   const queryToggle = useCallback(() => query.toggle(), [query]);
   const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
+
+  // Context-aware actions (time range, filters, etc.)
+  const contextActionEntries = useContextActions();
+  const [contextStepState, setContextStepState] = useState<ContextActionStepState | null>(null);
+  const isInContextActionMode = contextStepState !== null;
+
+  const enterContextStepMode = useCallback(
+    (entry: ContextActionEntry) => {
+      if (!entry.config.steps) {
+        return;
+      }
+      setContextStepState({
+        currentStep: entry.config.steps,
+        breadcrumbs: [],
+        selectedOptions: [],
+      });
+    },
+    []
+  );
+
+  const exitContextStepMode = useCallback(() => {
+    setContextStepState(null);
+  }, []);
+
+  // Build kbar actions for context entries, wiring step-based ones to enterContextStepMode
+  const contextActions = useMemo(
+    () =>
+      contextActionEntries.map((entry) => {
+        if (entry.hasSteps) {
+          return {
+            ...entry.action,
+            perform: () => enterContextStepMode(entry),
+          };
+        }
+        return entry.action;
+      }),
+    [contextActionEntries, enterContextStepMode]
+  );
+  useRegisterActions(contextActions, [contextActions]);
 
   // Category selection: scopes command palette to a specific provider category
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -171,25 +212,43 @@ function CommandPaletteContents() {
     return () => document.removeEventListener('keydown', handler, true);
   }, [selectedCategory, hasFacets, availableFacets, activateFacet, hasCategories, availableCategories, handleSelectCategory]);
 
-  // Escape handler: deselect category before closing palette
+  // Escape handler: step back through the hierarchy before closing palette.
+  // Priority order: context action mode → drill-down → facet selection → category → close.
   useEffect(() => {
-    if (!selectedCategory) {
+    const hasState = isInContextActionMode || currentRootActionId || isInFacetMode || selectedCategory;
+    if (!hasState) {
       return;
     }
     const handler = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') {
         return;
       }
-      if (isInFacetMode) {
-        return; // useFacetState's FacetValueList handles this
+
+      // Context action mode handles its own Escape via stopImmediatePropagation
+      if (isInContextActionMode) {
+        return;
       }
+
       e.preventDefault();
-      e.stopPropagation();
-      handleDeselectCategory();
+      e.stopImmediatePropagation();
+
+      if (currentRootActionId) {
+        query.setCurrentRootAction(null);
+        query.setSearch('');
+        return;
+      }
+      if (isInFacetMode) {
+        cancelFacetSelection();
+        return;
+      }
+      if (selectedCategory) {
+        handleDeselectCategory();
+        return;
+      }
     };
     document.addEventListener('keydown', handler, true);
     return () => document.removeEventListener('keydown', handler, true);
-  }, [selectedCategory, isInFacetMode, handleDeselectCategory]);
+  }, [isInContextActionMode, currentRootActionId, isInFacetMode, selectedCategory, query, cancelFacetSelection, handleDeselectCategory]);
 
   // Dashboard/folder search: hidden when scoped to a category or in facet/drill mode
   const { searchResults: dashboardFolderResults, isFetchingSearchResults } = useSearchResults({
@@ -237,8 +296,8 @@ function CommandPaletteContents() {
       <KBarAnimator className={cx(styles.animator, hasDetailPanel && styles.animatorWide)}>
         <FocusScope contain autoFocus restoreFocus>
           <div {...overlayProps} {...dialogProps}>
-            {/* KBarSearch container — visually hidden in facet mode but stays mounted so kbar keeps its input ref */}
-            <div className={cx(styles.searchContainer, isInFacetMode && styles.srOnly)}>
+            {/* KBarSearch container — visually hidden in facet/context-action mode but stays mounted so kbar keeps its input ref */}
+            <div className={cx(styles.searchContainer, (isInFacetMode || isInContextActionMode) && styles.srOnly)}>
               <Icon name="search" size="md" className={styles.searchIcon} />
               {selectedCategory ? (
                 <FacetBreadcrumbs
@@ -282,8 +341,23 @@ function CommandPaletteContents() {
               </div>
             </div>
 
-            {/* Body — facet value selection vs normal results */}
-            {isInFacetMode && selectingFacet && selectedCategory ? (
+            {/* Body — context action step mode, facet value selection, or normal results */}
+            {isInContextActionMode ? (
+              <ContextActionStepList
+                state={contextStepState}
+                onTransition={(next) => {
+                  if (next === null) {
+                    exitContextStepMode();
+                  } else {
+                    setContextStepState(next);
+                  }
+                }}
+                onClose={() => {
+                  exitContextStepMode();
+                  query.setVisualState(VisualState.animatingOut);
+                }}
+              />
+            ) : isInFacetMode && selectingFacet && selectedCategory ? (
               <>
                 <FacetValueList
                   values={filteredFacetValues}

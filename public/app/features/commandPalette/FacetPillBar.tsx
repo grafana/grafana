@@ -119,9 +119,9 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
       marginLeft: theme.spacing(0.25),
       cursor: 'pointer',
-      color: theme.colors.text.secondary,
+      color: '#000000',
       '&:hover': {
-        color: theme.colors.text.primary,
+        color: '#333333',
       },
     }),
   };

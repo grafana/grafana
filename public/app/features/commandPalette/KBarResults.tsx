@@ -3,6 +3,7 @@ import { usePointerMovedSinceMount } from 'kbar/lib/utils';
 import * as React from 'react';
 import { useVirtual } from 'react-virtual';
 
+import { isContextActionId } from './actions/useContextActions';
 import { URLCallback } from './types';
 
 // From https://github.com/timc1/kbar/blob/main/src/KBarResults.tsx
@@ -216,7 +217,9 @@ export const KBarResults = (props: KBarResultsProps) => {
         }
         item.command.perform(item);
         // TODO: ideally the perform method would return some marker or we would have something like preventDefault()
-        if (!item.id.startsWith('scopes/') || item.id === 'scopes/apply') {
+        if (isContextActionId(item.id)) {
+          // Context actions with steps manage their own lifecycle; don't close the palette.
+        } else if (!item.id.startsWith('scopes/') || item.id === 'scopes/apply') {
           query.toggle();
         }
       } else if (url) {

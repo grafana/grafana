@@ -11,6 +11,7 @@ import {
   PluginExtensionAddedLinkConfig,
   PluginExtensionAddedFunctionConfig,
   PluginExtensionCommandPaletteDynamicConfig,
+  CommandPaletteContextActionConfig,
 } from './pluginExtensions';
 
 /**
@@ -64,6 +65,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   private _addedLinkConfigs: PluginExtensionAddedLinkConfig[] = [];
   private _addedFunctionConfigs: PluginExtensionAddedFunctionConfig[] = [];
   private _commandPaletteDynamicConfigs: PluginExtensionCommandPaletteDynamicConfig[] = [];
+  private _commandPaletteContextActionConfigs: CommandPaletteContextActionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -123,13 +125,19 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._commandPaletteDynamicConfigs;
   }
 
+  get commandPaletteContextActionConfigs() {
+    return this._commandPaletteContextActionConfigs;
+  }
+
   addLink<Context extends object>(linkConfig: PluginExtensionAddedLinkConfig<Context>) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     this._addedLinkConfigs.push(linkConfig as PluginExtensionAddedLinkConfig);
 
     return this;
   }
 
   addComponent<Props = {}>(addedComponentConfig: PluginExtensionAddedComponentConfig<Props>) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     this._addedComponentConfigs.push(addedComponentConfig as PluginExtensionAddedComponentConfig);
 
     return this;
@@ -142,6 +150,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   }
 
   exposeComponent<Props = {}>(componentConfig: PluginExtensionExposedComponentConfig<Props>) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     this._exposedComponentConfigs.push(componentConfig as PluginExtensionExposedComponentConfig);
 
     return this;
@@ -178,6 +187,17 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
    */
   addCommandPaletteDynamicProvider(config: PluginExtensionCommandPaletteDynamicConfig) {
     this._commandPaletteDynamicConfigs.push(config);
+    return this;
+  }
+
+  /**
+   * Register a context-aware command palette action.
+   *
+   * Context actions appear conditionally based on the current page (checked via `isAvailable`).
+   * They can be simple one-shot actions (via `perform`) or multi-step drill-downs (via `steps`).
+   */
+  addCommandPaletteContextAction(config: CommandPaletteContextActionConfig) {
+    this._commandPaletteContextActionConfigs.push(config);
     return this;
   }
 }

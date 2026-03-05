@@ -606,6 +606,15 @@ export {
   type CommandPaletteDynamicFacet,
   type CommandPaletteFacetValue,
   type CommandPaletteFacetContext,
+  type CommandPaletteContextActionConfig,
+  type CommandPaletteContextStep,
+  type CommandPalettePageContext,
+  type ContextStepOption,
+  type ContextStepBreadcrumb,
+  type ContextStepTransition,
+  type ContextStepHelpPanel,
+  type ContextStepHelpSection,
+  type ContextStepHelpItem,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

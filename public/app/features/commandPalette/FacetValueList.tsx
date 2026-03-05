@@ -87,7 +87,9 @@ export function FacetValueList({
   return (
     <div className={styles.container} onKeyDown={handleKeyDown} role="listbox" aria-label={facetLabel} tabIndex={0}>
       <div className={styles.inputContainer}>
-        <Icon name="search" size="md" className={styles.inputIcon} />
+        <button className={styles.backButton} onClick={onBack} aria-label={t('command-palette.facet-values.back', 'Back')} type="button">
+          <Icon name="arrow-left" size="md" />
+        </button>
         {breadcrumbs}
         <input
           ref={inputRef}
@@ -152,10 +154,19 @@ function getStyles(theme: GrafanaTheme2) {
       borderBottom: '1px solid rgba(83, 83, 85, 0.5)',
       gap: theme.spacing(1),
     }),
-    inputIcon: css({
+    backButton: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      cursor: 'pointer',
       color: theme.colors.text.secondary,
       flexShrink: 0,
-      marginRight: theme.spacing(1),
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
     input: css({
       width: '100%',

@@ -488,6 +488,132 @@ export interface CommandPaletteDynamicFacet {
   getValues: (context: CommandPaletteFacetContext) => Promise<CommandPaletteFacetValue[]>;
 }
 
+// Context-Aware Command Palette Action Types
+// --------------------------------------------------------
+
+/**
+ * Page context passed to isAvailable/perform callbacks for context-aware actions.
+ */
+export interface CommandPalettePageContext {
+  pathname: string;
+  search: string;
+}
+
+/**
+ * A single option shown in a context action step dropdown.
+ */
+export interface ContextStepOption {
+  id: string;
+  label: string;
+  icon?: React.ReactNode;
+  description?: string;
+  /** Group header for visual grouping (e.g., "Quick ranges" vs "Time controls") */
+  group?: string;
+}
+
+/**
+ * A breadcrumb entry tracking selections across steps.
+ */
+export interface ContextStepBreadcrumb {
+  label: string;
+  value: string;
+}
+
+/**
+ * Transition returned by onSelect to control what happens after a selection.
+ */
+export type ContextStepTransition =
+  | { type: 'next'; step: CommandPaletteContextStep; breadcrumb: ContextStepBreadcrumb }
+  | { type: 'apply'; close?: boolean }
+  | { type: 'callback'; fn: () => void; close?: boolean }
+  | { type: 'goBack'; breadcrumb?: ContextStepBreadcrumb };
+
+/**
+ * A step in a multi-level context action flow.
+ * Each step defines a pill label, placeholder, options, and selection handler.
+ */
+export interface CommandPaletteContextStep {
+  pillLabel: string;
+  pillIcon?: string;
+  placeholder: string;
+  multiSelect?: boolean;
+  /** Controls when selections take effect. 'eager' (default) applies immediately; 'deferred' batches until Cmd+Enter. */
+  applyMode?: 'eager' | 'deferred';
+  getOptions: (
+    query: string,
+    signal: AbortSignal,
+    breadcrumbs: ContextStepBreadcrumb[]
+  ) => Promise<ContextStepOption[]>;
+  onSelect: (option: ContextStepOption, breadcrumbs: ContextStepBreadcrumb[]) => ContextStepTransition;
+  onApply?: (selected: ContextStepOption[], breadcrumbs: ContextStepBreadcrumb[]) => void;
+  /** Called on Cmd+Enter when applyMode is 'deferred'. Receives all accumulated breadcrumbs so the plugin can batch-apply. */
+  onCommit?: (breadcrumbs: ContextStepBreadcrumb[]) => void;
+  /** Called when a breadcrumb is removed via Backspace. Allows the plugin to un-apply the filter in eager mode. */
+  onRemoveBreadcrumb?: (breadcrumb: ContextStepBreadcrumb) => void;
+  /**
+   * When going back from this step (via Escape with multi-select), collapse this many
+   * additional history entries. Default 0 (go back one level).
+   * Useful for N-level flows (e.g. label -> operator -> values) where Escape from the
+   * deepest step should return to the root instead of the intermediate step.
+   */
+  collapseSteps?: number;
+  /**
+   * Custom breadcrumb builder when collapsing multiple steps.
+   * Receives the breadcrumbs accumulated across the collapsed levels and the
+   * comma-separated summary of selected values.
+   * If not provided, breadcrumbs are joined by their labels.
+   */
+  buildCollapsedBreadcrumb?: (breadcrumbs: ContextStepBreadcrumb[], summary: string) => ContextStepBreadcrumb;
+  /**
+   * Optional static help panel displayed to the right of the options list.
+   * Useful for showing syntax hints, examples, or contextual guidance.
+   */
+  helpPanel?: ContextStepHelpPanel;
+}
+
+/**
+ * Static help content rendered as a right sidebar alongside the options list.
+ */
+export interface ContextStepHelpPanel {
+  sections: ContextStepHelpSection[];
+}
+
+/**
+ * A section within the help panel (e.g., "Common regex patterns", "Examples").
+ */
+export interface ContextStepHelpSection {
+  title: string;
+  items: ContextStepHelpItem[];
+}
+
+/**
+ * A single item in a help section.
+ */
+export interface ContextStepHelpItem {
+  /** Symbol or code snippet (displayed in a code-style badge) */
+  symbol: string;
+  /** Optional description text next to the symbol */
+  description?: string;
+}
+
+/**
+ * Configuration for a context-aware command palette action.
+ * Context actions appear conditionally based on the current page.
+ */
+export interface CommandPaletteContextActionConfig {
+  id: string;
+  title: string;
+  icon?: string;
+  /** Section in the results list. Defaults to 'Pages'. */
+  section?: string;
+  /** Determines if this action is available on the current page. */
+  isAvailable: (context: CommandPalettePageContext) => boolean;
+  /** Simple action with no drill-down (e.g., "Clear filters"). */
+  perform?: (context: CommandPalettePageContext) => void;
+  /** Step-based drill-down (e.g., "Select time range", "Add filter"). */
+  steps?: CommandPaletteContextStep;
+}
+
 /**
  * Configuration for registering a dynamic command palette provider
  */

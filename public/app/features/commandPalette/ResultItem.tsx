@@ -97,7 +97,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     row: css({
       padding: theme.spacing(1, 2),
       display: 'flex',
-      alightItems: 'center',
+      alignItems: 'center',
       justifyContent: 'space-between',
       cursor: 'pointer',
       position: 'relative',
@@ -106,7 +106,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     }),
     activeRow: css({
       color: theme.colors.text.maxContrast,
-      borderRadius: '6px',
+      borderRadius: theme.shape.radius.default,
       background: 'rgba(204, 204, 220, 0.12)',
     }),
     actionContainer: css({
@@ -155,6 +155,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       marginLeft: 'auto',
       flexShrink: 0,
+      alignSelf: 'center',
     }),
   };
 };
