@@ -431,8 +431,11 @@ export class BackendSrv implements BackendService {
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {
+      const message = isHtmlResponse(err.data)
+        ? `${err.status} ${err.statusText ?? 'Error'}`
+        : err.data;
       err.data = {
-        message: err.data,
+        message,
         error: err.statusText,
         response: err.data,
       };
@@ -654,6 +657,11 @@ export class BackendSrv implements BackendService {
       showErrorAlert: false,
     });
   }
+}
+
+function isHtmlResponse(value: string): boolean {
+  const trimmed = value.trimStart().toLowerCase();
+  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html');
 }
 
 // Used for testing and things that really need BackendSrv
