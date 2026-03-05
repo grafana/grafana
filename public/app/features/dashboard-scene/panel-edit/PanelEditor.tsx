@@ -205,6 +205,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   private gotPanelPlugin(plugin: PanelPlugin) {
+    const panel = this.getPanel();
+
     // First time initialization
     if (this.state.isInitializing) {
       this.setOriginalState(this.state.panelRef);
