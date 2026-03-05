@@ -1168,15 +1168,12 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			calledAt = lastCalledAt
 		}
 
+		listModifiedTime := time.Now()
 		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
 			Group:     nsr.Group,
 			Resource:  nsr.Resource,
 			Namespace: nsr.Namespace,
 		}, sinceRV, calledAt)
-
-		now := time.Now()
-		lastSinceRV = sinceRV
-		lastCalledAt = &now
 
 		// Process documents in batches to avoid memory issues
 		// When dealing with large collections (e.g., 100k+ documents),
@@ -1259,6 +1256,11 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 
 			addToDedupCache(pendingKeys)
 		}
+
+		// Update timestamp of calling the given `sinceRV` to be used the next
+		// time this function is called.
+		lastSinceRV = sinceRV
+		lastCalledAt = &listModifiedTime
 
 		return rv, docs, nil
 	}
