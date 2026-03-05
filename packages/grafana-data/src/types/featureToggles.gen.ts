@@ -1578,6 +1578,11 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryGlobal?: boolean;
   /**
+  * Enables the notification history timeline in the triage instance details drawer
+  * @default false
+  */
+  alertingNotificationHistoryTriage?: boolean;
+  /**
   * Whether to use the new React 19 runtime
   * @default false
   */
