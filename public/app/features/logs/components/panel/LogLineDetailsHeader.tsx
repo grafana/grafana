@@ -285,6 +285,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   header: css({
     alignItems: 'center',
+    borderTopLeftRadius: theme.shape.radius.default,
+    borderTopRightRadius: theme.shape.radius.default,
     background: theme.colors.background.canvas,
     display: 'flex',
     flexDirection: !wrapLogMessage && mode === 'inline' ? 'row-reverse' : 'row',
