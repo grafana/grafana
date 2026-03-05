@@ -10129,8 +10129,6 @@
       "weekStarts-label-sunday": "Sunday"
     }
   },
-  "grafana-ui.builder.annotations.multi-lane-name": "Enable multi-row annotations",
-  "grafana-ui.builder.annotations.multi-row-desc": "Breaks each annotation frame into a separate row in the visualization",
   "graph": {
     "container": {
       "content": "Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.",

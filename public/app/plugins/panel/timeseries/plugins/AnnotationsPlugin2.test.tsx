@@ -17,6 +17,7 @@ import {
   mockIRMAnnotation,
   mockIRMAnnotationRegion,
 } from './mocks/mockAnnotationFrames';
+import { ANNOTATION_LANE_SIZE } from './utils';
 
 const minTime = 1759388895560;
 const maxTime = 1759390250000 + 1;
@@ -544,6 +545,21 @@ describe('AnnotationsPlugin2', () => {
 
         await userEvent.hover(markers[0]);
         expect(screen.getByText('Error: Alerting error test!')).toBeVisible();
+      });
+    });
+  });
+
+  describe('options', () => {
+    describe('multiRowAnnotations', () => {
+      it('should render each frame into separate lanes in the viz', () => {
+        setUp({
+          annotations: [mockAlertingFrame, mockIRMAnnotationRegion],
+          multiLane: true,
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers).toHaveLength(14);
+        expect(markers[0].getAttribute('style')).toContain('top: 0px');
+        expect(markers[13].getAttribute('style')).toContain(`top: ${ANNOTATION_LANE_SIZE}px`);
       });
     });
   });
