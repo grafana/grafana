@@ -7,6 +7,8 @@ import { Stack, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui
 import { VizTooltipFooter } from '@grafana/ui/internal';
 import alertDef from 'app/features/alerting/state/alertDef';
 
+import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
+
 interface Props {
   annoVals: Record<string, any[]>;
   annoIdx: number;
@@ -113,16 +115,13 @@ export const AnnotationTooltip2 = ({
                 />
               )}
               {isPinned && (
-                <IconButton
+                <AnnotationTooltipHeaderCloseIcon
                   ref={canEdit || canDelete ? null : focusRef}
-                  name={'times'}
-                  size={'sm'}
                   onClick={(e) => {
                     // Don't trigger onClick
                     e.stopPropagation();
                     onClose();
                   }}
-                  tooltip={t('timeseries.annotation-tooltip2.tooltip-close', 'Close')}
                 />
               )}
             </div>
