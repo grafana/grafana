@@ -27,19 +27,19 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       return undefined;
     }
 
-    const dashboardFilters: AdHocFilterWithLabels[] = [];
-    const nonDashboardFilters: AdHocFilterWithLabels[] = [];
+    const dashboardOriginFilters: AdHocFilterWithLabels[] = [];
+    const nonDashboardOriginFilters: AdHocFilterWithLabels[] = [];
     for (const filter of originFilters ?? []) {
       if (filter.origin === 'dashboard') {
-        dashboardFilters.push(filter);
+        dashboardOriginFilters.push(filter);
       } else {
-        nonDashboardFilters.push(filter);
+        nonDashboardOriginFilters.push(filter);
       }
     }
 
     return new AdHocOriginFiltersController(
-      dashboardFilters,
-      (filters) => variable.setState({ originFilters: [...nonDashboardFilters, ...filters] }),
+      dashboardOriginFilters,
+      (filters) => variable.setState({ originFilters: [...nonDashboardOriginFilters, ...filters] }),
       wip,
       setWip,
       allowCustomValue,
