@@ -4,7 +4,6 @@ import { MetricAggregation } from '../../../dataquery.gen';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { useQuery } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
-import { QueryEditorSpecialMetricRow } from '../QueryEditorSpecialMetricRow';
 
 import { MetricEditor } from './MetricEditor';
 import { addMetric, removeMetric, toggleMetricVisibility } from './state/actions';
@@ -23,17 +22,12 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
     <>
       {metrics?.map((metric, index) => {
         switch (metric.type) {
-          case 'logs':
-            return <QueryEditorSpecialMetricRow key={`${metric.type}-${metric.id}`} name="Logs" metric={metric} />;
-          case 'raw_data':
-            return <QueryEditorSpecialMetricRow key={`${metric.type}-${metric.id}`} name="Raw Data" metric={metric} />;
+           case 'logs':
+            return;
+           case 'raw_data':
+            return;
           case 'raw_document':
-            return (
-              <>
-                <QueryEditorSpecialMetricRow key={`${metric.type}-${metric.id}`} name="Raw Document" metric={metric} />
-                <Alert severity="warning" title="The 'Raw Document' query type is deprecated." />
-              </>
-            );
+            return <Alert severity="warning" title="The 'Raw Document' query type is deprecated." />;
           default:
             return (
               <QueryEditorRow
