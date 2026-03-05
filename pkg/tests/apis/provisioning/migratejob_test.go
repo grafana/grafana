@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -14,11 +15,11 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Run Grafana WITHOUT the export feature flag enabled
-	helper := runGrafana(t, withoutExportFeatureFlag)
+	helper := common.RunGrafana(t, common.WithoutExportFeatureFlag)
 
 	// Create a repository
 	const repo = "test-repository"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:   repo,
 		Target: "instance",
 	}

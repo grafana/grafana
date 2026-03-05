@@ -388,7 +388,6 @@
         "timing-options": "タイミング"
       },
       "pending-period": "保留期間",
-      "rule": "ルール",
       "rule-identifier": "ルール識別子",
       "rule-type": "ルールタイプ",
       "state-error-timeout": "実行エラーまたはタイムアウトの場合のアラートステート",
@@ -3390,8 +3389,14 @@
     },
     "triage": {
       "alert-instances": "アラートインスタンス",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "ルールの読み込みエラー",
-      "firing-instances-count": "発生中のアラートインスタンス",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "インスタンスの詳細"
       },
@@ -3401,7 +3406,6 @@
       "no-matching-instances-with-filters": "選択した時間範囲に、現在のフィルタの組み合わせに一致するアラートインスタンスはありません。",
       "open-in-sidebar": "サイドバーで開く",
       "open-rule-details": "ルールの詳細を開く",
-      "pending-instances-count": "保留中のアラートインスタンス",
       "rule-details": {
         "subtitle": "ルールの詳細と条件",
         "title": "ルールの詳細"
@@ -3410,15 +3414,17 @@
         "description": "要求されたルールが見つかりませんでした。",
         "title": "ルールが見つかりません"
       },
-      "rules-with-firing-instances": "発生中のインスタンスがあるアラートルール",
-      "rules-with-pending-instances": "保留中のインスタンスがあるアラートルール",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_other": "",
+      "show-all-labels_other": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "式を追加"
@@ -3516,7 +3522,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "詳細",
           "enrichment": "アラートのエンリッチメント",
           "history": "履歴",
           "instances": "インスタンス",
@@ -4751,7 +4756,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "接続へのリンク",
-      "body": "データソース用の新しいページができました！メインメニューからアクセスできる「接続」ページで、新しいデータソースを探したり、既存のデータソースを管理したりできます。",
+      "body": "データソース用の新しいページができました！メインメニューからアクセスできる<0>「接続」ページ</0>で、新しいデータソースを探したり、既存のデータソースを管理したりできます。",
       "go-to-connections": "接続へ移動"
     },
     "data-source-details-page": {
@@ -5430,11 +5435,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6851,10 +6858,8 @@
       "title-delete-all-transformations": "すべての変換を削除しますか？"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "テーブル表示を切り替え",
-      "table-view-label-table-view": "テーブル表示",
-      "try-new-editor": ""
+      "table-view-label-table-view": "テーブル表示"
     },
     "panel-editor": {
       "text": {
@@ -7130,6 +7135,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "ダッシュボードが保存されました"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "この変数はどの変数やダッシュボードからも参照されていません。",
       "aria-label-variable-referenced-other-variables-dashboard": "この変数は他の変数やダッシュボードから参照されています。",
@@ -7222,6 +7234,21 @@
     "variable-values-preview": {
       "show-more": "さらに表示",
       "preview-of-values_other": "値のプレビュー（{{count}}）"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9846,6 +9873,7 @@
       "csv-placeholder": "ここにCSVを入力...",
       "filter": {
         "add-all": "表示されたすべての値をフィルターに追加",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10854,6 +10882,7 @@
     "name-order": "順番",
     "name-prettify-json": "JSONを整形",
     "name-show-controls": "コントロールを表示",
+    "name-show-level": "",
     "name-time": "タイムスタンプを表示",
     "name-unique-labels": "一意のラベル",
     "name-unwrapped-columns": "",
@@ -11939,6 +11968,12 @@
       "could-anything-matching-query": "クエリに一致するものが見つかりませんでした"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "グループ化",
     "loading": "オプションを読み込み中",
@@ -12381,6 +12416,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "変更内容を説明するメモを追加（任意）",
@@ -12420,9 +12461,6 @@
     "title-created-branch-in-repo": "{{repoType}}のブランチに新しいリソースが作成されました。",
     "title-loaded-pull-request-in-repo": "このリソースは{{repoType}}で作成したブランチから読み込まれており、あなたにのみ表示されます"
   },
-  "provisioned-resource-request-handler": "リソースが正常に保存されました",
-  "provisioned-resource-request-handler-dashboard": "ダッシュボードが正常に保存されました",
-  "provisioned-resource-request-handler-folder": "フォルダが正常に作成されました",
   "provisioning": {
     "banner": {
       "message": "この機能は現在開発中です。最高の体験と最新の改善を利用するには、Grafanaの<2>ナイトリービルド</2>の使用をお勧めします。"
@@ -13357,6 +13395,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

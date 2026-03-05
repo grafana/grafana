@@ -11,19 +11,16 @@ import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorConte
 import { EMPTY_ALERT } from '../types';
 
 import { AlertsView } from './Alerts/AlertsView';
+import { SidebarFooter } from './Footer/SidebarFooter';
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
-import { SidebarFooter } from './SidebarFooter';
 import { SidebarHeaderActions } from './SidebarHeaderActions';
 
-interface QueryEditorSidebarProps {
+interface SidebarProps {
   sidebarSize: SidebarSize;
   setSidebarSize: (size: SidebarSize) => void;
 }
 
-export const QueryEditorSidebar = memo(function QueryEditorSidebar({
-  sidebarSize,
-  setSidebarSize,
-}: QueryEditorSidebarProps) {
+export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
   const styles = useStyles2(getStyles);
   const { setSelectedAlert, cardType } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
