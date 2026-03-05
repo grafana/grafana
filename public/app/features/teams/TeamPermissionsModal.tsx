@@ -19,11 +19,6 @@ interface Permission {
   scope?: string;
 }
 
-interface RolePermission {
-  action: string;
-  scope?: string;
-}
-
 export const TeamPermissionsModal = ({ teamId, isOpen, onDismiss }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +63,10 @@ export const TeamPermissionsModal = ({ teamId, isOpen, onDismiss }: Props) => {
           // Flatten and deduplicate permissions by action+scope
           const permissionMap = new Map<string, Permission>();
           allRolePermissions.flat().forEach((perm) => {
+            // Skip permissions without an action
+            if (!perm.action) {
+              return;
+            }
             const key = `${perm.action}-${perm.scope || '*'}`;
             if (!permissionMap.has(key)) {
               permissionMap.set(key, {

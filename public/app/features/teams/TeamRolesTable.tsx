@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import { useMemo, useState, useCallback } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Column, InteractiveTable, IconButton, Tooltip } from '@grafana/ui';
+import { Column, InteractiveTable, IconButton, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { useSetTeamRolesMutation } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
@@ -51,6 +53,7 @@ export const TeamRolesTable = ({ roles, teamId, onRolesChanged }: Props) => {
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isTeamPermissionsModalOpen, setIsTeamPermissionsModalOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const styles = useStyles2(getStyles);
 
   const [updateTeamRoles] = useSetTeamRolesMutation();
 
@@ -92,7 +95,11 @@ export const TeamRolesTable = ({ roles, teamId, onRolesChanged }: Props) => {
       {
         id: 'roleGroup',
         header: 'Group',
-        cell: ({ row }) => <span>{row.original.roleGroup}</span>,
+        cell: ({ row }) => (
+          <Text color="secondary" variant="bodySmall">
+            {row.original.roleGroup}
+          </Text>
+        ),
         sortType: 'string',
       },
       {
@@ -104,7 +111,7 @@ export const TeamRolesTable = ({ roles, teamId, onRolesChanged }: Props) => {
       {
         id: 'roleName',
         header: 'Role',
-        cell: ({ row }) => <span>{row.original.roleName}</span>,
+        cell: ({ row }) => <span className={styles.roleId}>{row.original.roleName}</span>,
         sortType: 'string',
       },
       {
@@ -176,7 +183,7 @@ export const TeamRolesTable = ({ roles, teamId, onRolesChanged }: Props) => {
     ];
 
     return cols;
-  }, [isRemoving, handleRemoveRole, canRemoveRoles]);
+  }, [isRemoving, handleRemoveRole, canRemoveRoles, styles.roleId]);
 
   const handleRoleModalDismiss = () => {
     setIsRoleModalOpen(false);
@@ -211,3 +218,12 @@ export const TeamRolesTable = ({ roles, teamId, onRolesChanged }: Props) => {
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  roleId: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    wordBreak: 'break-all',
+  }),
+});
