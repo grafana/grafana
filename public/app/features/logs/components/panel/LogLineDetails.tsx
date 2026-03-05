@@ -6,7 +6,7 @@ import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useStat
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { getDragStyles, Icon, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
@@ -118,7 +118,7 @@ const LogLineDetailsTabs = memo(
     }
 
     return (
-      <>
+      <div className={styles.tabsWrapper}>
         {showDetails.length > 1 && (
           <TabsBar>
             {tabs.map((log) => {
@@ -144,8 +144,8 @@ const LogLineDetailsTabs = memo(
             })}
           </TabsBar>
         )}
-        <div className={styles.scrollContainer}>
-          <LogLineDetailsHeader focusLogLine={focusLogLine} log={currentLog} search={search} onSearch={handleSearch} />
+        <LogLineDetailsHeader focusLogLine={focusLogLine} log={currentLog} search={search} onSearch={handleSearch} />
+        <ScrollContainer>
           <LogLineDetailsComponent
             log={currentLog}
             logs={logs}
@@ -153,8 +153,8 @@ const LogLineDetailsTabs = memo(
             timeRange={timeRange}
             timeZone={timeZone}
           />
-        </div>
-      </>
+        </ScrollContainer>
+      </div>
     );
   }
 );
@@ -203,17 +203,21 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
   }, []);
 
   useEffect(() => {
-    if (!scrollRef.current) {
+    if (!scrollRef.current || inlineLogDetailsNoScrolls) {
       return;
     }
     scrollRef.current.scrollTop = getDetailsScrollPosition(log);
-  }, [log]);
+  }, [inlineLogDetailsNoScrolls, log]);
 
   return (
     <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
       <div className={styles.inlineContainer}>
-        <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
-          <LogLineDetailsHeader log={log} search={search} onSearch={handleSearch} />
+        <LogLineDetailsHeader log={log} search={search} onSearch={handleSearch} />
+        <div
+          className={inlineLogDetailsNoScrolls ? undefined : styles.scrollContainer}
+          ref={scrollRef}
+          onScroll={saveScroll}
+        >
           <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
         </div>
       </div>
@@ -257,11 +261,9 @@ const getStyles = (
     fontSize: fontSize === 'small' ? theme.typography.bodySmall.fontSize : undefined,
     lineHeight: fontSize === 'small' ? theme.typography.bodySmall.lineHeight : undefined,
   }),
+  tabsWrapper: css({ height: '100%', display: 'flex', flexDirection: 'column' }),
   scrollContainer: css({
     overflow: 'auto',
     height: '100%',
-  }),
-  componentWrapper: css({
-    padding: theme.spacing(0, 1, 1, 1),
   }),
 });
