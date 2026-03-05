@@ -1,6 +1,8 @@
 import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
+import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+
 import { wellFormedTree } from '../../../../fixtures/folders';
 
 const [mockTree] = wellFormedTree();
@@ -16,8 +18,28 @@ const typeFilterMap: Record<string, string> = {
   folders: 'folder',
 };
 
-const getSearchHandler = () =>
-  http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search', ({ request }) => {
+const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
+
+export function getCustomSearchHandler(options: { folders?: DashboardHit[]; dashboards?: DashboardHit[] }) {
+  return http.get(searchRoute, ({ request }) => {
+    const url = new URL(request.url);
+    let hits: DashboardHit[] = [];
+    const types = url.searchParams.getAll('type');
+    if (types.includes('folder') || !types.length) {
+      hits = hits.concat(options.folders ?? []);
+    }
+    if (types.includes('dashboard') || !types.length) {
+      hits = hits.concat(options.dashboards ?? []);
+    }
+    return HttpResponse.json({
+      hits: hits,
+      totalHits: hits.length,
+    });
+  });
+}
+
+const getDefaultSearchHandler = () =>
+  http.get(searchRoute, ({ request }) => {
     const limitFilter = new URL(request.url).searchParams.get('limit') || null;
     const folderFilter = new URL(request.url).searchParams.get('folder') || null;
     const typeFilter = new URL(request.url).searchParams.get('type') || null;
@@ -87,4 +109,4 @@ const getSearchHandler = () =>
     });
   });
 
-export default [getSearchHandler()];
+export default [getDefaultSearchHandler()];

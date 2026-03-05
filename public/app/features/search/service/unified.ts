@@ -159,6 +159,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return this.fallbackSearcher.search(query);
     }
 
+    // We add parent folder information into meta.custom of the data frame. This is loaded separately in
+    // loadLocationInfo. Used to show parent information upstream.
     const customMeta = first.meta?.custom;
     const meta: SearchResultMeta = {
       count: customMeta?.count ?? first.length,
@@ -241,7 +243,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   async fetchResponse(uri: string) {
+    // TODO: use API client for this
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+
+    // we check the locationInfo staleness by whether we have all the folders info. This does not mean though
+    // that we actually have the latest info about the folders (like changed labels). Also we will never actually
+    // have folder access to folders in "shared with me" folder. We deal with it here, but it triggers a
+    // loadLocationInfo that is unneccessary.
+
     const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
     if (!isFolderCacheStale) {
       return rsp;
@@ -434,8 +443,10 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
 }
 
 async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
-  // TODO: use proper pagination for search.
-  const uri = `${searchURI}?type=folders&limit=100000`;
+  // TODO: use proper pagination and API client for search.
+  // TODO: This tries to load all the folders upfront even though it may not be neccessary if user does not render all
+  //  the search results.
+  const uri = `${searchURI}?type=folder&limit=100000`;
   const rsp = getBackendSrv()
     .get<SearchAPIResponse>(uri)
     .then((rsp) => {
