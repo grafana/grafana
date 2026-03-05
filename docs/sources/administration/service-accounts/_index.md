@@ -71,6 +71,10 @@ Service accounts replace [API keys](ref:migrate-api-keys) as the primary way to 
 Use service accounts to access the Grafana HTTP API (dashboards, users, data sources, alerts). If you're a Grafana Cloud user and need to send or query telemetry data (metrics, logs, traces), use [Cloud Access Policies](https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/) instead.
 {{< /admonition >}}
 
+{{< admonition type="note" >}}
+Service accounts are for accessing the Grafana HTTP API (dashboards, users, data sources, alerts). For Grafana Cloud users who need to send or query telemetry data (metrics, logs, traces), use [Cloud Access Policies](/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/) instead.
+{{< /admonition >}}
+
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
 
 - Schedule reports for specific dashboards to be delivered on a daily/weekly/monthly basis
