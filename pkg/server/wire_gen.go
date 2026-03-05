@@ -749,7 +749,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	middleware := api2.ProvideMiddleware()
 	apiApi := api2.ProvideApi(publicDashboardServiceImpl, routeRegisterImpl, accessControl, featureToggles, middleware, cfg, ossLicensingService)
 	loginattemptimplService := loginattemptimpl.ProvideService(sqlStore, cfg, serverLockService)
-	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl)
+	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -949,7 +949,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory, connectionFactory)
+	quotaGetter := extras.ProvideQuotaGetter(cfg)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory, connectionFactory, quotaGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -1444,7 +1445,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	middleware := api2.ProvideMiddleware()
 	apiApi := api2.ProvideApi(publicDashboardServiceImpl, routeRegisterImpl, accessControl, featureToggles, middleware, cfg, ossLicensingService)
 	loginattemptimplService := loginattemptimpl.ProvideService(sqlStore, cfg, serverLockService)
-	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl)
+	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1644,7 +1645,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory, connectionFactory)
+	quotaGetter := extras.ProvideQuotaGetter(cfg)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory, connectionFactory, quotaGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -1682,7 +1684,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	testEnv, err := ProvideTestEnv(testingT, serverServer, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, githubFactory, decryptService)
+	testEnv, err := ProvideTestEnv(testingT, serverServer, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, githubFactory, decryptService, quotaGetter)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -197,7 +198,8 @@ func TestSyncer_Sync(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 			)
 
-			ref, err := syncer.Sync(context.Background(), repo, tt.options, repoResources, clients, progress)
+			quotaTracker := quotas.NewMockQuotaTracker(t)
+			ref, err := syncer.Sync(context.Background(), repo, tt.options, repoResources, clients, progress, quotaTracker)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
 			} else {
