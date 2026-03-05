@@ -272,6 +272,71 @@ func TestValidator_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "valid webhook base URL",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "https://grafana.example.com/"},
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
+			name: "webhook base URL missing HTTPS",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "http://grafana.example.com/"},
+					},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "must use HTTPS scheme")
+			},
+		},
+		{
+			name: "webhook base URL missing host",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "https://"},
+					},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "must include a host")
+			},
+		},
+		{
+			name: "nil webhook section is allowed",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
 			name: "no finalizers on resource not marked for deletion",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
