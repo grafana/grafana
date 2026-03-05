@@ -1607,4 +1607,9 @@ export interface FeatureToggles {
   * @default false
   */
   analyticsFramework?: boolean;
+  /**
+  * Prevents flickering in scenes
+  * @default false
+  */
+  scenesNoFlickering?: boolean;
 }

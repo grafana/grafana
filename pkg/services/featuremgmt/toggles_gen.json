@@ -3941,6 +3941,20 @@
     },
     {
       "metadata": {
+        "name": "scenesNoFlickering",
+        "resourceVersion": "1772550452248",
+        "creationTimestamp": "2026-03-03T15:07:32Z"
+      },
+      "spec": {
+        "description": "Prevents flickering in scenes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "scopeApi",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-11-27T07:58:25Z"

@@ -193,7 +193,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
     datasource,
     queries: queriesWithUniqueRefIds.map(panelQueryKindToSceneQuery),
     maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
-    maxDataPointsFromWidth: true,
+    maxDataPointsFromWidth: false,
     cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
     queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
     minInterval: panel.data.spec.queryOptions.interval ?? undefined,

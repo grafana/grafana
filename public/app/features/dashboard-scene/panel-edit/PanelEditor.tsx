@@ -29,12 +29,7 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import {
-  activateSceneObjectAndParentTree,
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-} from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -110,16 +105,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       })
     );
 
-    const deactivateParents = activateSceneObjectAndParentTree(panel);
-
     this.waitForPlugin();
 
     return () => {
       this.commitChanges();
-
-      if (deactivateParents) {
-        deactivateParents();
-      }
     };
   }
 
@@ -159,7 +148,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     dashboard.state.editPane.setPanelEditAction(editAction);
   }
 
-  private waitForPlugin(retry = 0) {
+  public waitForPlugin(retry = 0) {
     const panel = this.getPanel();
     const plugin = panel.getPlugin();
 
@@ -223,15 +212,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this.setOriginalState(this.state.panelRef);
       this._setupChangeDetection();
       this._updateDataPane(plugin);
-
-      // Listen for panel plugin changes
-      this._subs.add(
-        panel.subscribeToState((n, p) => {
-          if (n.pluginId !== p.pluginId) {
-            this.waitForPlugin();
-          }
-        })
-      );
 
       // Setup options pane
       const optionsPane = new PanelOptionsPane({

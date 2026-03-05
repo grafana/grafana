@@ -171,6 +171,10 @@ export interface DashboardSceneState extends SceneObjectState {
   layoutOrchestrator?: DashboardLayoutOrchestrator;
 }
 
+//if (config.featureToggles.scenesNoFlickering) {
+SceneObjectBase.RENDER_BEFORE_ACTIVATION_DEFAULT = true;
+//}
+
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
   static Component = DashboardSceneRenderer;
 
@@ -206,8 +210,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Panels with an accepted suggestion
    */
   private _panelSuggestionsReceipts = new Map<string, PanelSuggestionInfo>();
-
-  protected _renderBeforeActivation = true;
 
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,

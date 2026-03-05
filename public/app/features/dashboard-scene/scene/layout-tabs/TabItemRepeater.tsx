@@ -32,7 +32,7 @@ export function TabItemRepeater({
 
   // Subscribe to variable state changes and perform repeats when the variable changes
   useEffect(() => {
-    performTabRepeats(variable, tab, false);
+    setTimeout(() => performTabRepeats(variable, tab, false), 0);
 
     const variableChangeSub = variable.subscribeToState((state) => performTabRepeats(variable, tab, false));
     const editEventSub = tab.subscribeToEvent(DashboardStateChangedEvent, (e) =>
