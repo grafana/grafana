@@ -34,19 +34,31 @@ const tooltipMessage = (
 );
 
 interface Props {
-  basicRole: OrgRole;
+  basicRole?: OrgRole;
   appliedRoles: Role[];
   roleOptions: Role[];
   teamRoles?: TeamRole[];
   basicRoleDisabled?: boolean;
   disabledMessage?: string;
   canUpdateRoles: boolean;
-  onUpdate: (newRoles: Role[], newBasicRole?: OrgRole) => void;
-  /** User UID for linking to advanced permissions view */
-  userUid?: string;
+  /** Drawer mode: called when user clicks Save */
+  onUpdate?: (newRoles: Role[], newBasicRole?: OrgRole) => void;
+  /** Inline/form mode: called on every change (no save button shown) */
+  onChange?: (newRoles: Role[], newBasicRole?: OrgRole) => void;
+  /** URL linking to the advanced permissions view for this entity */
+  advancedViewUrl?: string;
 }
 
 export type { TeamRole };
+
+const sortRoles = (roles: Role[]) =>
+  [...roles].sort((a, b) => {
+    const groupCmp = (a.group || '').localeCompare(b.group || '');
+    if (groupCmp !== 0) {
+      return groupCmp;
+    }
+    return (a.displayName || a.name).localeCompare(b.displayName || b.name);
+  });
 
 export const AssignRoles = ({
   basicRole,
@@ -57,21 +69,30 @@ export const AssignRoles = ({
   disabledMessage,
   canUpdateRoles,
   onUpdate,
-  userUid,
+  onChange,
+  advancedViewUrl,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const [selectedBasicRole, setSelectedBasicRole] = useState<OrgRole>(basicRole);
-  const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
+  const isInlineMode = !!onChange;
+  const [selectedBasicRole, setSelectedBasicRole] = useState<OrgRole | undefined>(basicRole);
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>(sortRoles(appliedRoles));
   const [searchQuery, setSearchQuery] = useState('');
 
   // Sync state when props update (e.g. data loads after initial mount)
   useEffect(() => {
-    setSelectedRoles(appliedRoles);
+    setSelectedRoles(sortRoles(appliedRoles));
   }, [appliedRoles]);
 
   useEffect(() => {
     setSelectedBasicRole(basicRole);
   }, [basicRole]);
+
+  // In inline mode, notify parent on every change
+  const notifyChange = (roles: Role[], basic?: OrgRole) => {
+    if (onChange) {
+      onChange(roles, basic);
+    }
+  };
 
   // Filter assigned roles by search
   const filteredRoles = useMemo(() => {
@@ -145,21 +166,33 @@ export const AssignRoles = ({
     }
     const role = roleOptions.find((r) => r.uid === selected.value);
     if (role) {
-      setSelectedRoles((prev) => [...prev, role]);
+      const next = sortRoles([...selectedRoles, role]);
+      setSelectedRoles(next);
+      notifyChange(next, selectedBasicRole);
     }
   };
 
   const handleRemoveRole = (uid: string) => {
-    setSelectedRoles((prev) => prev.filter((r) => r.uid !== uid));
+    const next = selectedRoles.filter((r) => r.uid !== uid);
+    setSelectedRoles(next);
+    notifyChange(next, selectedBasicRole);
+  };
+
+  const handleBasicRoleChange = (newRole: OrgRole) => {
+    setSelectedBasicRole(newRole);
+    notifyChange(selectedRoles, newRole);
   };
 
   const handleClear = () => {
-    // Keep mapped (IdP) roles that can't be removed
-    setSelectedRoles(selectedRoles.filter((r) => r.mapped));
+    const kept = selectedRoles.filter((r) => r.mapped);
+    setSelectedRoles(kept);
+    notifyChange(kept, selectedBasicRole);
   };
 
   const handleSave = () => {
-    onUpdate(selectedRoles, selectedBasicRole);
+    if (onUpdate) {
+      onUpdate(selectedRoles, selectedBasicRole);
+    }
   };
 
   const hasChanges =
@@ -205,7 +238,7 @@ export const AssignRoles = ({
             )}
           </Stack>
         </div>
-        {!source && !role.mapped && (
+        {!source && !role.mapped && canUpdateRoles && (
           <IconButton
             name="trash-alt"
             size="sm"
@@ -226,29 +259,31 @@ export const AssignRoles = ({
 
   return (
     <div className={styles.container}>
-      {/* Basic role selector */}
-      <div className={styles.section}>
-        <Stack direction="row" gap={1} alignItems="center">
-          <Text weight="medium">
-            {t('role-picker-drawer.basic-role-label', 'Basic role')}
-          </Text>
-          <Tooltip content={tooltipMessage} interactive>
-            <IconButton name="info-circle" size="sm" aria-label="Basic role info" />
-          </Tooltip>
-        </Stack>
-        {basicRoleDisabled && disabledMessage && (
-          <Text color="secondary" variant="bodySmall" italic>
-            {disabledMessage}
-          </Text>
-        )}
-        <RadioButtonGroup
-          options={BASIC_ROLE_OPTIONS}
-          value={selectedBasicRole}
-          onChange={setSelectedBasicRole}
-          disabled={basicRoleDisabled}
-          size="md"
-        />
-      </div>
+      {/* Basic role selector — only shown when entity has a basic role */}
+      {basicRole !== undefined && (
+        <div className={styles.section}>
+          <Stack direction="row" gap={1} alignItems="center">
+            <Text weight="medium">
+              {t('role-picker-drawer.basic-role-label', 'Basic role')}
+            </Text>
+            <Tooltip content={tooltipMessage} interactive>
+              <IconButton name="info-circle" size="sm" aria-label="Basic role info" />
+            </Tooltip>
+          </Stack>
+          {basicRoleDisabled && disabledMessage && (
+            <Text color="secondary" variant="bodySmall" italic>
+              {disabledMessage}
+            </Text>
+          )}
+          <RadioButtonGroup
+            options={BASIC_ROLE_OPTIONS}
+            value={selectedBasicRole}
+            onChange={handleBasicRoleChange}
+            disabled={basicRoleDisabled}
+            size="md"
+          />
+        </div>
+      )}
 
       {/* Assigned roles */}
       <div className={styles.section}>
@@ -318,25 +353,27 @@ export const AssignRoles = ({
         </div>
       )}
 
-      {/* Actions */}
-      <div className={styles.actions}>
-        <Stack direction="row" gap={1} justifyContent="space-between" grow={1}>
-          {userUid && (
-            <TextLink href={`/admin/users/roles/${userUid}`} variant="bodySmall">
-              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-              View advanced permissions →
-            </TextLink>
-          )}
-          <Stack direction="row" gap={1}>
-            <Button size="sm" fill="text" onClick={handleClear} disabled={!canUpdateRoles}>
-              <Trans i18nKey="role-picker-drawer.clear-all">Clear all</Trans>
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={!hasChanges && canUpdateRoles}>
-              <Trans i18nKey="role-picker-drawer.save">Save</Trans>
-            </Button>
+      {/* Actions — only in drawer mode (onUpdate), hidden in inline/form mode (onChange) */}
+      {!isInlineMode && (
+        <div className={styles.actions}>
+          <Stack direction="row" gap={1} justifyContent="space-between" grow={1}>
+            {advancedViewUrl && (
+              <TextLink href={advancedViewUrl} variant="bodySmall">
+                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+                View advanced permissions →
+              </TextLink>
+            )}
+            <Stack direction="row" gap={1}>
+              <Button size="sm" fill="text" onClick={handleClear} disabled={!canUpdateRoles}>
+                <Trans i18nKey="role-picker-drawer.clear-all">Clear all</Trans>
+              </Button>
+              <Button size="sm" onClick={handleSave} disabled={!hasChanges && canUpdateRoles}>
+                <Trans i18nKey="role-picker-drawer.save">Save</Trans>
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

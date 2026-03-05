@@ -1,17 +1,18 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2, Badge, Stack } from '@grafana/ui';
-import { OrgUser } from 'app/types/user';
+import { Role } from 'app/types/accessControl';
 
 export interface Props {
   disabled?: boolean;
-  user: OrgUser;
+  basicRole?: OrgRole;
+  roles?: Role[];
   onOpenDrawer: () => void;
 }
 
-export const RolePickerBadges = ({ disabled, user, onOpenDrawer }: Props) => {
+export const RolePickerBadges = ({ disabled, basicRole, roles, onOpenDrawer }: Props) => {
   const { badge, badgeDisabled } = useStyles2(getStyles);
   const badgeStyle = disabled ? badgeDisabled : badge;
 
@@ -23,13 +24,15 @@ export const RolePickerBadges = ({ disabled, user, onOpenDrawer }: Props) => {
 
   return (
     <Stack gap={1}>
-      <Badge className={badgeStyle} color="blue" onClick={handleClick} text={user.role} />
-      {user.roles && user.roles.length > 0 && (
+      {basicRole && (
+        <Badge className={badgeStyle} color="blue" onClick={handleClick} text={basicRole} />
+      )}
+      {roles && roles.length > 0 && (
         <Badge
           className={badgeStyle}
           color="blue"
           onClick={handleClick}
-          text={t('role-picker-drawer.user-count', '+{{numUsers}}', { numUsers: user.roles.length })}
+          text={t('role-picker-drawer.role-count', '+{{count}}', { count: roles.length })}
         />
       )}
     </Stack>

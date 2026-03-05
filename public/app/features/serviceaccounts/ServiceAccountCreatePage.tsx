@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState, type JSX } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
 
 import { OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -9,7 +8,7 @@ import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
-import { RolePickerSelect } from 'app/core/components/RolePickerDrawer/RolePickerSelect';
+import { AssignRoles } from 'app/core/components/RolePickerDrawer/AssignRoles';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
 import { ServiceAccountDTO, ServiceAccountCreateApiResponse } from 'app/types/serviceaccount';
@@ -44,19 +43,6 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
 
-  const methods = useForm({
-    defaultValues: {
-      name: '',
-      role: defaultServiceAccount.role,
-      roleCollection: [defaultServiceAccount.role],
-      roles: [],
-    },
-  });
-  const {
-    formState: { errors },
-    register,
-  } = methods;
-
   const currentOrgId = contextSrv.user.orgId;
   const [serviceAccount, setServiceAccount] = useState<ServiceAccountDTO>(defaultServiceAccount);
 
@@ -68,7 +54,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
           setRoleOptions(options);
         }
       } catch (e) {
-        console.error('Error loading options', e); // TODO: handle error
+        console.error('Error loading options', e);
       }
     }
     if (contextSrv.licensedAccessControlEnabled()) {
@@ -101,7 +87,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
           await updateUserRoles(pendingRoles, newAccount.id, newAccount.orgId);
         }
       } catch (e) {
-        console.error(e); // TODO: handle error
+        console.error(e);
       }
       locationService.push(`/org/serviceaccounts/${response.uid}`);
     },
@@ -116,9 +102,19 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   };
 
   const onPendingRolesUpdate = (roles: Role[], userId: number, orgId: number | undefined) => {
-    // keep the new role assignments for user
     setPendingRoles(roles);
   };
+
+  const handleInlineChange = (newRoles: Role[], newBasicRole?: OrgRole) => {
+    setPendingRoles(newRoles);
+    if (newBasicRole !== undefined) {
+      setServiceAccount((prev) => ({ ...prev, role: newBasicRole }));
+    }
+  };
+
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
   return (
     <Page
@@ -126,78 +122,83 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
       pageNav={{ text: t('service-account-create-page.page-nav.label', 'Create service account') }}
     >
       <Page.Contents>
-        {config.featureToggles.rolePickerDrawer && (
-          <FormProvider {...methods}>
-            <form>
-              <FieldSet>
-                <Field
-                  label={t('service-account-create-page.name.label', 'Display name')}
-                  required
-                  invalid={!!errors.name}
-                  error={
-                    errors.name
-                      ? t('service-account-create-page.name.required-error', 'Display name is required')
-                      : undefined
-                  }
-                >
-                  <Input id="name" {...register('name', { required: true })} autoFocus />
-                </Field>
-                <Field label={t('service-account-create-page.role.label', 'Role')}>
-                  <RolePickerSelect />
-                </Field>
-              </FieldSet>
-              <Button type="submit">
-                <Trans i18nKey="service-account-create-page.create.button">Create</Trans>
-              </Button>
-            </form>
-          </FormProvider>
-        )}
-        {!config.featureToggles.rolePickerDrawer && (
+        {config.featureToggles.rolePickerDrawer ? (
           <Form onSubmit={onSubmit} validateOn="onSubmit">
-            {({ register, errors }) => {
-              return (
-                <>
-                  <FieldSet>
-                    <Field
-                      label={t('service-account-create-page.name.label', 'Display name')}
-                      required
-                      invalid={!!errors.name}
-                      error={
-                        errors.name
-                          ? t('service-account-create-page.name.required-error', 'Display name is required')
-                          : undefined
-                      }
-                    >
-                      <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
-                    </Field>
-                    <Field label={t('service-account-create-page.role.label', 'Role')}>
-                      {contextSrv.licensedAccessControlEnabled() ? (
-                        <UserRolePicker
-                          apply
-                          userId={serviceAccount.id || 0}
-                          orgId={serviceAccount.orgId}
-                          basicRole={serviceAccount.role}
-                          onBasicRoleChange={onRoleChange}
-                          roleOptions={roleOptions}
-                          onApplyRoles={onPendingRolesUpdate}
-                          pendingRoles={pendingRoles}
-                          maxWidth="100%"
-                        />
-                      ) : (
-                        <OrgRolePicker
-                          aria-label={t('service-account-create-page.role.label', 'Role')}
-                          value={serviceAccount.role}
-                          onChange={onRoleChange}
-                        />
-                      )}
-                    </Field>
-                  </FieldSet>
+            {({ register, errors }) => (
+              <>
+                <FieldSet>
+                  <Field
+                    label={t('service-account-create-page.name.label', 'Display name')}
+                    required
+                    invalid={!!errors.name}
+                    error={
+                      errors.name
+                        ? t('service-account-create-page.name.required-error', 'Display name is required')
+                        : undefined
+                    }
+                  >
+                    <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
+                  </Field>
+                </FieldSet>
+                <AssignRoles
+                  basicRole={serviceAccount.role}
+                  appliedRoles={[]}
+                  roleOptions={roleOptions}
+                  canUpdateRoles={canUpdateRoles}
+                  onChange={handleInlineChange}
+                />
+                <div style={{ marginTop: 16 }}>
                   <Button type="submit">
                     <Trans i18nKey="service-account-create-page.create.button">Create</Trans>
                   </Button>
-                </>
-              );
-            }}
+                </div>
+              </>
+            )}
+          </Form>
+        ) : (
+          <Form onSubmit={onSubmit} validateOn="onSubmit">
+            {({ register, errors }) => (
+              <>
+                <FieldSet>
+                  <Field
+                    label={t('service-account-create-page.name.label', 'Display name')}
+                    required
+                    invalid={!!errors.name}
+                    error={
+                      errors.name
+                        ? t('service-account-create-page.name.required-error', 'Display name is required')
+                        : undefined
+                    }
+                  >
+                    <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
+                  </Field>
+                  <Field label={t('service-account-create-page.role.label', 'Role')}>
+                    {contextSrv.licensedAccessControlEnabled() ? (
+                      <UserRolePicker
+                        apply
+                        userId={serviceAccount.id || 0}
+                        orgId={serviceAccount.orgId}
+                        basicRole={serviceAccount.role}
+                        onBasicRoleChange={onRoleChange}
+                        roleOptions={roleOptions}
+                        onApplyRoles={onPendingRolesUpdate}
+                        pendingRoles={pendingRoles}
+                        maxWidth="100%"
+                      />
+                    ) : (
+                      <OrgRolePicker
+                        aria-label={t('service-account-create-page.role.label', 'Role')}
+                        value={serviceAccount.role}
+                        onChange={onRoleChange}
+                      />
+                    )}
+                  </Field>
+                </FieldSet>
+                <Button type="submit">
+                  <Trans i18nKey="service-account-create-page.create.button">Create</Trans>
+                </Button>
+              </>
+            )}
           </Form>
         )}
       </Page.Contents>

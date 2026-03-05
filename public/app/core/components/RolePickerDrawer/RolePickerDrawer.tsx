@@ -1,108 +1,67 @@
 import { css, keyframes } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
 import { IconButton, ScrollContainer, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { useListUserRolesQuery, useListRolesQuery, useSetUserRolesMutation } from 'app/api/clients/roles';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role } from 'app/types/accessControl';
+import { Role } from 'app/types/accessControl';
 
 import { AssignRoles, TeamRole } from './AssignRoles';
 
 export interface Props {
   onClose: () => void;
-  userName: string;
-  userId: number;
-  userUid?: string;
-  orgId?: number;
-  basicRole: OrgRole;
-  onBasicRoleChange: (newRole: OrgRole) => void;
+  entityName: string;
+
+  // Role data — provided by parent
+  appliedRoles: Role[];
+  roleOptions: Role[];
+  teamRoles?: TeamRole[];
+
+  // Basic role — optional (teams don't have one)
+  basicRole?: OrgRole;
+  onBasicRoleChange?: (newRole: OrgRole) => void;
   basicRoleDisabled?: boolean;
   basicRoleDisabledMessage?: string;
+
+  // Save handler — parent provides the right mutation
+  onSave: (newRoles: Role[], newBasicRole?: OrgRole) => Promise<void>;
+  canUpdateRoles: boolean;
+
+  // Link to advanced view (optional)
+  advancedViewUrl?: string;
 }
 
 export const RolePickerDrawer = ({
   onClose,
-  userName,
-  userId,
-  userUid,
-  orgId,
+  entityName,
+  appliedRoles,
+  roleOptions,
+  teamRoles,
   basicRole,
   onBasicRoleChange,
   basicRoleDisabled,
   basicRoleDisabledMessage,
+  onSave,
+  canUpdateRoles,
+  advancedViewUrl,
 }: Props) => {
   const styles = useStyles2(getDrawerStyles);
 
-  const hasPermission = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0;
-  const { data: userRoles = [] } = useListUserRolesQuery(
-    hasPermission ? { userId, includeHidden: true, includeMapped: true, targetOrgId: orgId } : { userId: 0 }
-  );
-  const { data: roleOptions = [] } = useListRolesQuery(
-    { delegatable: true, targetOrgId: orgId }
-  );
-  const [updateUserRoles] = useSetUserRolesMutation();
-
-  // Fetch user's teams and their roles
-  const [teamRoles, setTeamRoles] = useState<TeamRole[]>([]);
-  useEffect(() => {
-    if (userId <= 0) {
-      return;
-    }
-    let cancelled = false;
-    const fetchTeamRoles = async () => {
-      try {
-        const teams = await getBackendSrv().get<Array<{ id: number; uid: string; name: string }>>(`/api/users/${userId}/teams`);
-        const allTeamRoles: TeamRole[] = [];
-        for (const team of teams) {
-          try {
-            const roles = await getBackendSrv().get<Role[]>(`/api/access-control/teams/${team.id}/roles`);
-            for (const role of roles) {
-              allTeamRoles.push({ role, teamName: team.name, teamUid: team.uid });
-            }
-          } catch {
-            // Skip teams we can't fetch roles for
-          }
-        }
-        if (!cancelled) {
-          setTeamRoles(allTeamRoles);
-        }
-      } catch {
-        // User may not have permission to list teams
-      }
-    };
-    fetchTeamRoles();
-    return () => { cancelled = true; };
-  }, [userId]);
-
-  const canUpdateRoles =
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
-
   const onUpdate = useCallback(async (newRoles: Role[], newBuiltInRole?: OrgRole) => {
-    if (newBuiltInRole && newBuiltInRole !== basicRole) {
+    if (newBuiltInRole && newBuiltInRole !== basicRole && onBasicRoleChange) {
       onBasicRoleChange(newBuiltInRole);
     }
 
-    if (canUpdateRoles) {
-      try {
-        const filteredRoles = newRoles.filter((role) => !role.mapped);
-        const roleUids = filteredRoles.map((role) => role.uid);
-        await updateUserRoles({
-          userId,
-          targetOrgId: orgId,
-          setUserRolesCommand: { roleUids },
-        }).unwrap();
-      } catch (error) {
-        console.error('Error updating user roles', error);
-      }
+    try {
+      const filteredRoles = newRoles.filter((role) => !role.mapped);
+      await onSave(filteredRoles, newBuiltInRole);
+    } catch (error) {
+      console.error('Error updating roles', error);
     }
 
     onClose();
-  }, [basicRole, canUpdateRoles, onBasicRoleChange, onClose, orgId, updateUserRoles, userId]);
+  }, [basicRole, onBasicRoleChange, onClose, onSave]);
 
   // Close on Escape key
   useEffect(() => {
@@ -128,7 +87,7 @@ export const RolePickerDrawer = ({
   return createPortal(
     <>
       <div className={styles.backdrop} onClick={onClose} />
-      <div className={styles.panel} role="dialog" aria-label={userName}>
+      <div className={styles.panel} role="dialog" aria-label={entityName}>
         <div className={styles.header}>
           <div className={styles.closeButton}>
             <IconButton
@@ -140,7 +99,7 @@ export const RolePickerDrawer = ({
           </div>
           <Stack direction="column">
             <Text element="h3" truncate>
-              {userName}
+              {entityName}
             </Text>
             <Text color="secondary" variant="bodySmall">
               {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
@@ -160,14 +119,14 @@ export const RolePickerDrawer = ({
           <div className={styles.body}>
             <AssignRoles
               basicRole={basicRole}
-              appliedRoles={userRoles}
+              appliedRoles={appliedRoles}
               roleOptions={roleOptions}
               teamRoles={teamRoles}
               basicRoleDisabled={basicRoleDisabled}
               disabledMessage={basicRoleDisabledMessage}
               canUpdateRoles={canUpdateRoles}
               onUpdate={onUpdate}
-              userUid={userUid}
+              advancedViewUrl={advancedViewUrl}
             />
           </div>
         </ScrollContainer>

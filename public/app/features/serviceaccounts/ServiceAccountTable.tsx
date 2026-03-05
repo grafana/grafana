@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Avatar,
   CellProps,
@@ -15,7 +16,10 @@ import {
   IconButton,
   Icon,
 } from '@grafana/ui';
+import { useListUserRolesQuery, useListRolesQuery, useSetUserRolesMutation } from 'app/api/clients/roles';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
+import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
+import { RolePickerDrawer } from 'app/core/components/RolePickerDrawer/RolePickerDrawer';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
 import { ServiceAccountDTO } from 'app/types/serviceaccount';
@@ -56,6 +60,36 @@ export const ServiceAccountTable = ({
   currentPage,
   isLoading,
 }: ServiceAccountTableProps) => {
+  // Drawer state
+  const [drawerSaId, setDrawerSaId] = useState<number | null>(null);
+  const drawerSa = drawerSaId !== null ? services.find((s) => s.id === drawerSaId) : undefined;
+
+  // RTK Query hooks for drawer data
+  const hasPermission = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && (drawerSa?.id ?? 0) > 0;
+  const { data: drawerSaRoles = [] } = useListUserRolesQuery(
+    hasPermission ? { userId: drawerSa?.id ?? 0, includeHidden: true, includeMapped: true, targetOrgId: drawerSa?.orgId } : { userId: 0 },
+  );
+  const { data: drawerRoleOptions = [] } = useListRolesQuery(
+    drawerSa ? { delegatable: true, targetOrgId: drawerSa.orgId } : { delegatable: true, targetOrgId: -1 },
+  );
+  const [updateUserRolesMutation] = useSetUserRolesMutation();
+
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
+
+  const handleDrawerSave = useCallback(async (newRoles: Role[]) => {
+    if (!drawerSa) {
+      return;
+    }
+    const roleUids = newRoles.map((role) => role.uid);
+    await updateUserRolesMutation({
+      userId: drawerSa.id,
+      targetOrgId: drawerSa.orgId,
+      setUserRolesCommand: { roleUids },
+    }).unwrap();
+  }, [drawerSa, updateUserRolesMutation]);
+
   const columns: Array<Column<ServiceAccountDTO>> = useMemo(
     () => [
       {
@@ -84,6 +118,20 @@ export const ServiceAccountTable = ({
         id: 'role',
         header: 'Roles',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
+          if (config.featureToggles.rolePickerDrawer) {
+            if (isLoading) {
+              return <Skeleton width={100} />;
+            }
+            const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original);
+            return (
+              <RolePickerBadges
+                disabled={original.isExternal || original.isDisabled || !canUpdateRole}
+                basicRole={original.role}
+                roles={original.roles}
+                onOpenDrawer={() => setDrawerSaId(original.id)}
+              />
+            );
+          }
           return getRoleCell(value, original, isLoading, roleOptions, onRoleChange);
         },
       },
@@ -111,6 +159,19 @@ export const ServiceAccountTable = ({
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />
         </Stack>
+      )}
+      {drawerSa && (
+        <RolePickerDrawer
+          onClose={() => setDrawerSaId(null)}
+          entityName={drawerSa.name}
+          appliedRoles={drawerSaRoles}
+          roleOptions={drawerRoleOptions}
+          basicRole={drawerSa.role}
+          onBasicRoleChange={(newRole) => onRoleChange(newRole, drawerSa)}
+          basicRoleDisabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, drawerSa)}
+          onSave={handleDrawerSave}
+          canUpdateRoles={canUpdateRoles}
+        />
       )}
     </Stack>
   );

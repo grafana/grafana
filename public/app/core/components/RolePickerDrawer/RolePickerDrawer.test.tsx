@@ -7,18 +7,17 @@ import { RolePickerDrawer } from './RolePickerDrawer';
 
 const props = {
   onClose: jest.fn(),
-  userName: 'test-user',
-  userId: 1,
-  orgId: 1,
+  entityName: 'test-user',
+  appliedRoles: [],
+  roleOptions: [],
   basicRole: OrgRole.Editor,
   onBasicRoleChange: jest.fn(),
+  onSave: jest.fn().mockResolvedValue(undefined),
+  canUpdateRoles: true,
 };
 
 describe('RolePickerDrawer', () => {
   it('should render', () => {
-    // useInheritedRoles makes async API calls that produce act() warnings in tests
-    jest.spyOn(console, 'error').mockImplementation();
-
     render(
       <TestProvider>
         <RolePickerDrawer {...props} />
@@ -27,6 +26,5 @@ describe('RolePickerDrawer', () => {
 
     expect(screen.getByRole('heading', { name: 'test-user' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'documentation' })).toBeInTheDocument();
   });
 });

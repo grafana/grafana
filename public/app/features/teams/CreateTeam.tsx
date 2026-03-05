@@ -3,15 +3,16 @@ import { useForm } from 'react-hook-form';
 
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, Field, Input, FieldSet, Stack } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
+import { AssignRoles } from 'app/core/components/RolePickerDrawer/AssignRoles';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { Role } from 'app/types/accessControl';
+import { Role, AccessControlAction } from 'app/types/accessControl';
 import { TeamDTO } from 'app/types/teams';
 
 import { useCreateTeam } from './hooks';
@@ -35,6 +36,14 @@ const CreateTeam = (): JSX.Element => {
     register,
     formState: { errors },
   } = useForm<TeamDTO>();
+
+  const canUpdateTeamRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRemove);
+
+  const handleInlineChange = (newRoles: Role[]) => {
+    setPendingRoles(newRoles);
+  };
 
   const createTeam = async (formModel: TeamDTO) => {
     try {
@@ -78,17 +87,26 @@ const CreateTeam = (): JSX.Element => {
                 <Input {...register('name', { required: true })} id="team-name" />
               </Field>
               {contextSrv.licensedAccessControlEnabled() && (
-                <Field noMargin label={t('teams.create-team.label-role', 'Role')}>
-                  <TeamRolePicker
-                    teamId={0}
+                config.featureToggles.rolePickerDrawer ? (
+                  <AssignRoles
+                    appliedRoles={[]}
                     roleOptions={roleOptions}
-                    disabled={false}
-                    apply={true}
-                    onApplyRoles={setPendingRoles}
-                    pendingRoles={pendingRoles}
-                    maxWidth="100%"
+                    canUpdateRoles={canUpdateTeamRoles}
+                    onChange={handleInlineChange}
                   />
-                </Field>
+                ) : (
+                  <Field noMargin label={t('teams.create-team.label-role', 'Role')}>
+                    <TeamRolePicker
+                      teamId={0}
+                      roleOptions={roleOptions}
+                      disabled={false}
+                      apply={true}
+                      onApplyRoles={setPendingRoles}
+                      pendingRoles={pendingRoles}
+                      maxWidth="100%"
+                    />
+                  </Field>
+                )
               )}
               <Field
                 noMargin

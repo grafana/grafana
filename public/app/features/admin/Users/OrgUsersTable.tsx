@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import {
   Avatar,
   Box,
@@ -25,8 +25,10 @@ import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
 import { RolePickerDrawer } from 'app/core/components/RolePickerDrawer/RolePickerDrawer';
+import { TeamRole } from 'app/core/components/RolePickerDrawer/AssignRoles';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useListUserRolesQuery, useListRolesQuery, useSetUserRolesMutation } from 'app/api/clients/roles';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 import { OrgUser } from 'app/types/user';
 
@@ -73,6 +75,65 @@ export const OrgUsersTable = ({
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const [drawerUserId, setDrawerUserId] = useState<number | null>(null);
   const drawerUser = drawerUserId !== null ? users.find((u) => u.userId === drawerUserId) : undefined;
+
+  // RTK Query hooks for drawer data
+  const hasPermission = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && (drawerUser?.userId ?? 0) > 0;
+  const { data: drawerUserRoles = [] } = useListUserRolesQuery(
+    hasPermission ? { userId: drawerUser?.userId ?? 0, includeHidden: true, includeMapped: true, targetOrgId: orgId } : { userId: 0 },
+  );
+  const { data: drawerRoleOptions = [] } = useListRolesQuery(
+    drawerUser ? { delegatable: true, targetOrgId: orgId } : { delegatable: true, targetOrgId: -1 },
+  );
+  const [updateUserRolesMutation] = useSetUserRolesMutation();
+
+  // Fetch team roles for drawer user
+  const [teamRoles, setTeamRoles] = useState<TeamRole[]>([]);
+  useEffect(() => {
+    if (!drawerUser || drawerUser.userId <= 0) {
+      setTeamRoles([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchTeamRoles = async () => {
+      try {
+        const teams = await getBackendSrv().get<Array<{ id: number; uid: string; name: string }>>(`/api/users/${drawerUser.userId}/teams`);
+        const allTeamRoles: TeamRole[] = [];
+        for (const team of teams) {
+          try {
+            const roles = await getBackendSrv().get<Role[]>(`/api/access-control/teams/${team.id}/roles`);
+            for (const role of roles) {
+              allTeamRoles.push({ role, teamName: team.name, teamUid: team.uid });
+            }
+          } catch {
+            // Skip teams we can't fetch roles for
+          }
+        }
+        if (!cancelled) {
+          setTeamRoles(allTeamRoles);
+        }
+      } catch {
+        // User may not have permission to list teams
+      }
+    };
+    fetchTeamRoles();
+    return () => { cancelled = true; };
+  }, [drawerUser]);
+
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
+
+  const handleDrawerSave = useCallback(async (newRoles: Role[]) => {
+    if (!drawerUser) {
+      return;
+    }
+    const roleUids = newRoles.map((role) => role.uid);
+    await updateUserRolesMutation({
+      userId: drawerUser.userId,
+      targetOrgId: orgId,
+      setUserRolesCommand: { roleUids },
+    }).unwrap();
+  }, [drawerUser, orgId, updateUserRolesMutation]);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -156,7 +217,8 @@ export const OrgUsersTable = ({
             return (
               <RolePickerBadges
                 disabled={basicRoleDisabled}
-                user={original}
+                basicRole={original.role}
+                roles={original.roles}
                 onOpenDrawer={() => setDrawerUserId(original.userId)}
               />
             );
@@ -275,12 +337,17 @@ export const OrgUsersTable = ({
       {drawerUser && (
         <RolePickerDrawer
           onClose={() => setDrawerUserId(null)}
-          userName={drawerUser.name || drawerUser.login}
-          userId={drawerUser.userId}
-          userUid={drawerUser.uid}
-          orgId={orgId}
+          entityName={drawerUser.name || drawerUser.login}
+          appliedRoles={drawerUserRoles}
+          roleOptions={drawerRoleOptions}
+          teamRoles={teamRoles}
           basicRole={drawerUser.role}
           onBasicRoleChange={(newRole) => onRoleChange(newRole, drawerUser)}
+          basicRoleDisabled={getBasicRoleDisabled(drawerUser)}
+          basicRoleDisabledMessage={disabledRoleMessage}
+          onSave={handleDrawerSave}
+          canUpdateRoles={canUpdateRoles}
+          advancedViewUrl={drawerUser.uid ? `/admin/users/roles/${drawerUser.uid}` : undefined}
         />
       )}
       {Boolean(userToRemove) && (

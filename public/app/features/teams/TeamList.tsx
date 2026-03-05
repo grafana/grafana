@@ -24,8 +24,11 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
+import { useListTeamRolesQuery, useListRolesQuery, useSetTeamRolesMutation } from 'app/api/clients/roles';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
+import { RolePickerDrawer } from 'app/core/components/RolePickerDrawer/RolePickerDrawer';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
@@ -71,7 +74,36 @@ const TeamList = () => {
   const notifyApp = useAppNotification();
   const foldersQueryRef = useRef<ReturnType<typeof triggerFoldersQuery> | null>(null);
 
+  // Drawer state
+  const [drawerTeamId, setDrawerTeamId] = useState<number | null>(null);
   const teams = teamData?.teams || [];
+  const drawerTeam = drawerTeamId !== null ? teams.find((t) => t.id === drawerTeamId) : undefined;
+
+  // RTK Query hooks for drawer data
+  const canSeeDrawerRoles = contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) && (drawerTeam?.id ?? 0) > 0;
+  const { data: drawerTeamRoles = [] } = useListTeamRolesQuery(
+    canSeeDrawerRoles ? { teamId: drawerTeam?.id ?? 0, includeHidden: true } : { teamId: 0 },
+  );
+  const { data: drawerRoleOptions = [] } = useListRolesQuery(
+    drawerTeam ? { delegatable: true } : { delegatable: true, targetOrgId: -1 },
+  );
+  const [setTeamRolesMutation] = useSetTeamRolesMutation();
+
+  const canUpdateTeamRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRemove);
+
+  const handleDrawerSave = useCallback(async (newRoles: Role[]) => {
+    if (!drawerTeam) {
+      return;
+    }
+    const roleUids = newRoles.map((role) => role.uid);
+    await setTeamRolesMutation({
+      teamId: drawerTeam.id,
+      setTeamRolesCommand: { roleUids },
+    }).unwrap();
+  }, [drawerTeam, setTeamRolesMutation]);
+
   const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
   const noTeams = teams?.length === 0;
   const changeSort = useCallback(
@@ -174,16 +206,28 @@ const TeamList = () => {
                   AccessControlAction.ActionTeamsRolesList,
                   original
                 );
-                return (
-                  canSeeTeamRoles && (
-                    <TeamRolePicker
-                      teamId={original.id}
+
+                if (!canSeeTeamRoles) {
+                  return null;
+                }
+
+                if (config.featureToggles.rolePickerDrawer) {
+                  return (
+                    <RolePickerBadges
                       roles={original.roles || []}
-                      isLoading={isLoading}
-                      roleOptions={roleOptions}
-                      width={40}
+                      onOpenDrawer={() => setDrawerTeamId(original.id)}
                     />
-                  )
+                  );
+                }
+
+                return (
+                  <TeamRolePicker
+                    teamId={original.id}
+                    roles={original.roles || []}
+                    isLoading={isLoading}
+                    roleOptions={roleOptions}
+                    width={40}
+                  />
                 );
               },
             },
@@ -372,6 +416,16 @@ const TeamList = () => {
           </>
         )}
         {!query && <EnterpriseAuthFeaturesCard page="teams" />}
+        {drawerTeam && (
+          <RolePickerDrawer
+            onClose={() => setDrawerTeamId(null)}
+            entityName={drawerTeam.name}
+            appliedRoles={drawerTeamRoles}
+            roleOptions={drawerRoleOptions}
+            canUpdateRoles={canUpdateTeamRoles}
+            onSave={handleDrawerSave}
+          />
+        )}
       </Page.Contents>
     </Page>
   );
