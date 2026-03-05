@@ -145,7 +145,7 @@ func (r *githubClient) Commits(ctx context.Context, owner, repository, path, bra
 		listFn,
 		defaultListOptions(maxCommits),
 	)
-	if errors.Is(err, ErrTooManyItems) {
+	if errors.Is(err, repository.ErrTooManyItems) {
 		return nil, fmt.Errorf("too many commits to fetch (more than %d)", maxCommits)
 	}
 	if err != nil {
@@ -199,7 +199,7 @@ func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository strin
 		listFn,
 		defaultListOptions(maxWebhooks),
 	)
-	if errors.Is(err, ErrTooManyItems) {
+	if errors.Is(err, repository.ErrTooManyItems) {
 		return nil, fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks)
 	}
 	if err != nil {
@@ -322,7 +322,7 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, owner, reposito
 		listFn,
 		defaultListOptions(maxPRFiles),
 	)
-	if errors.Is(err, ErrTooManyItems) {
+	if errors.Is(err, repository.ErrTooManyItems) {
 		return nil, fmt.Errorf("pull request contains too many files (more than %d)", maxPRFiles)
 	}
 	if err != nil {
@@ -400,7 +400,7 @@ func paginatedList[T any](
 
 		// Check if we've exceeded the maximum allowed items
 		if len(allItems) > opts.MaxItems {
-			return nil, ErrTooManyItems
+			return nil, repository.ErrTooManyItems
 		}
 
 		// If there are no more pages, break

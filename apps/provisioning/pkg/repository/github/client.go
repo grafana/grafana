@@ -4,16 +4,7 @@ package github
 
 import (
 	"context"
-	"errors"
 	"time"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-)
-
-// GitHub-specific errors
-var (
-	// ErrTooManyItems indicates pagination limits were exceeded
-	ErrTooManyItems = errors.New("maximum number of items exceeded")
 )
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter

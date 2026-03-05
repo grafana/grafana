@@ -1624,7 +1624,7 @@ func TestPaginatedList(t *testing.T) {
 				}
 			},
 			want:    nil,
-			wantErr: ErrTooManyItems,
+			wantErr: repository.ErrTooManyItems,
 		},
 	}
 
