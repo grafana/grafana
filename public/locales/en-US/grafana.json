@@ -8676,6 +8676,14 @@
     "name-show-threshold-markers": "Show threshold markers",
     "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
+    "presets": {
+      "blocks": "Blocks",
+      "default": "Default",
+      "glow": "Glow",
+      "segmented": "Segmented",
+      "spotlight": "Spotlight",
+      "threshold": "Threshold"
+    },
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",
