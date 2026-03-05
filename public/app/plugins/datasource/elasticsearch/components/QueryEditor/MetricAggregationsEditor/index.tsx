@@ -22,9 +22,9 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
     <>
       {metrics?.map((metric, index) => {
         switch (metric.type) {
-           case 'logs':
+          case 'logs':
             return;
-           case 'raw_data':
+          case 'raw_data':
             return;
           case 'raw_document':
             return <Alert severity="warning" title="The 'Raw Document' query type is deprecated." />;

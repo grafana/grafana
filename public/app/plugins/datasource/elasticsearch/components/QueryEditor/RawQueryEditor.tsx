@@ -94,7 +94,6 @@ export function RawQueryEditor({ value, onChange, onRunQuery, onFormatReady }: P
           onEditorDidMount={handleEditorDidMount}
         />
       </div>
-
     </Box>
   );
 }

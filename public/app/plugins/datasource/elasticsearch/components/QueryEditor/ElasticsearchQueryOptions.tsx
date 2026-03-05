@@ -25,13 +25,14 @@ export function ElasticsearchQueryOptions({ onFormat }: Props) {
 
   if (firstMetricWithSettings !== null) {
     const isLogs = firstMetricWithSettings.type === 'logs';
-    const isRawData =
-      firstMetricWithSettings.type === 'raw_data' || firstMetricWithSettings.type === 'raw_document';
+    const isRawData = firstMetricWithSettings.type === 'raw_data' || firstMetricWithSettings.type === 'raw_document';
 
     if (isLogs || isRawData) {
       const label = isLogs ? 'Limit' : 'Size';
       const settingName = isLogs ? 'limit' : 'size';
-      const currentValue = String((isLogs ? firstMetricWithSettings.settings?.limit : firstMetricWithSettings.settings?.size) ?? '');
+      const currentValue = String(
+        (isLogs ? firstMetricWithSettings.settings?.limit : firstMetricWithSettings.settings?.size) ?? ''
+      );
 
       if (currentValue) {
         collapsedInfo = [`${label}: ${currentValue}`];
