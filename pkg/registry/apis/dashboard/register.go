@@ -393,6 +393,11 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
+	// Check that the we are not sending v2 objects to v0|v1
+	if err := validateNotV2Object(dashObj); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting requester: %w", err)
@@ -569,6 +574,26 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	}
 
 	return title, refresh, nil
+}
+
+// validateNotV2Object validates that all dashboard tags are within the maximum length
+func validateNotV2Object(obj runtime.Object) error {
+	var spec map[string]any
+
+	switch d := obj.(type) {
+	case *dashv0.Dashboard:
+		spec = d.Spec.Object
+	case *dashv1.Dashboard:
+		spec = d.Spec.Object
+	default:
+		return nil
+	}
+
+	if dashboards.LooksLikeV2Spec(spec) {
+		// nolint:staticcheck ST1005
+		return fmt.Errorf(dashboards.LooksLikeV2SpecMessage)
+	}
+	return nil
 }
 
 // validateDashboardTags validates that all dashboard tags are within the maximum length

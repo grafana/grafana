@@ -388,7 +388,6 @@
         "timing-options": "Horaires"
       },
       "pending-period": "Période en attente",
-      "rule": "Règle",
       "rule-identifier": "Identifiant de la règle",
       "rule-type": "Type de règle",
       "state-error-timeout": "État d'alerte en cas d'erreur d'exécution ou de délai d'attente",
@@ -469,10 +468,6 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externes",
-      "extra-config-warning": {
-        "content": "Cette vue présente la configuration fusionnée de l’Alertmanager Grafana avec les configurations importées. Cette vue fusionnée est en lecture seule dans l’interface utilisateur.",
-        "title": "Configuration importée"
-      },
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
     "alert-menu": {
@@ -910,7 +905,7 @@
       "title-failed-to-fetch-contact-points": "Échec de la récupération des points de contact"
     },
     "contact-points": {
-      "create": "Créer un point de contact",
+      "create": "",
       "custom-template-value": "Valeur du modèle personnalisé",
       "delete-reasons": {
         "heading": "Le point de contact ne peut pas être supprimé pour les raisons suivantes :",
@@ -1741,8 +1736,13 @@
         "namespace-desc": "",
         "no-permission-desc": "",
         "no-permission-title": "",
+        "override-warning-body": "",
+        "override-warning-details": "",
+        "override-warning-title": "",
         "pause-alerting": "",
         "pause-recording": "",
+        "plugin-rules-warning-body": "",
+        "plugin-rules-warning-title": "",
         "policy-desc": "",
         "policy-title": "",
         "policy-tree": "",
@@ -1834,10 +1834,18 @@
       "apply": "Appliquer"
     },
     "instance-details": {
+      "drawer-time-range-short": {
+        "description": "",
+        "title": ""
+      },
       "history-error": "Échec du chargement de l’historique des états",
       "history-error-desc": "Impossible de récupérer l’historique des transitions d’état pour cette instance.",
       "no-history": "Aucun changement d’état récent",
-      "state-history": "Changements d’état récents"
+      "state-error-description": "",
+      "state-history": "Changements d’état récents",
+      "state-nodata": {
+        "description": ""
+      }
     },
     "instance-match": {
       "non-matching-labels": "Étiquettes non correspondantes",
@@ -2096,7 +2104,9 @@
       "select-namespace": "Sélectionner le namespace"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Règles d’alerte",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Supprimé récemment",
@@ -2120,7 +2130,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Ajouter un intervalle de temps"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2174,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,16 +2182,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Recherche par point de contact",
@@ -2243,7 +2252,7 @@
       "title-failed-to-fetch-notification-templates": "Échec de la récupération des modèles de notification"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Ajouter un groupe de modèles de notification",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Créez des modèles de notification pour personnaliser vos notifications."
     },
     "notifications-list": {
@@ -2270,6 +2279,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2293,17 +2303,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Ajoutez des étiquettes pour vous aider à mieux gérer vos règles d’enregistrement.",
@@ -2324,8 +2332,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Visualisez les alertes en cours et explorez les données historiques pour analyser des incidents actuels ou passés.",
-        "title": "Alertes"
+        "subtitle": "Visualisez les alertes en cours et explorez les données historiques pour analyser des incidents actuels ou passés."
       }
     },
     "panel-alert-tab-content": {
@@ -3140,6 +3147,17 @@
       "label-silence-start-and-end": "Mise en sourdine au début et à la fin",
       "placeholder-select-time-range": "Sélectionner la plage temporelle"
     },
+    "silence-view": {
+      "affected-alerts": "",
+      "alert-rule": "",
+      "error": "",
+      "loading": "",
+      "matchers": "",
+      "page-nav": {
+        "parent": "",
+        "text": ""
+      }
+    },
     "silenced-alerts-table-row": {
       "silenced-for": "pour {{duration}}"
     },
@@ -3244,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Formulaire du modèle",
+      "body-legacy": "",
       "label-examples-documentation": "Documentation des exemples",
       "label-template-group": "Groupe de modèles",
       "label-template-group-name": "Nom du groupe de modèles",
@@ -3252,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Donner un nom au groupe de modèles",
       "title-error-saving-template": "Erreur lors de l’enregistrement du modèle",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Aide-mémoire de modélisation"
     },
     "template-preview": {
@@ -3292,6 +3312,8 @@
       "help": {
         "intro": "Les modèles de notification utilisent le langage de modélisation Go pour créer des messages de notification.\n\nDans Grafana, un groupe de modèles peut définir plusieurs modèles de notification en utilisant {{ définir « <NAME> » }}.\nCes modèles peuvent ensuite être utilisés dans les points de contact et dans d'autres modèles de notification en appelant {{ modèle « <NAME> » }}.\nPour en savoir plus sur les modèles de notification, reportez-vous à notre documentation."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Mal configuré",
       "misconfigured-warning": "Ce modèle est mal configuré.",
       "misconfigured-warning-details": "Les modèles doivent être définis dans les sections <2></2> et <5></5> de la configuration de votre Alertmanager."
@@ -3330,7 +3352,7 @@
       "stop-alerting-when": "Arrêter l’alerte (ou l’état en attente) lorsque"
     },
     "time-interval": {
-      "add-time-interval": "Ajouter un intervalle de temps",
+      "add-time-interval": "",
       "save": "Enregistrer l’intervalle de temps",
       "saving": "Enregistrement de l’intervalle de temps"
     },
@@ -3381,8 +3403,14 @@
     },
     "triage": {
       "alert-instances": "Instances d’alerte",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Erreur lors du chargement de la règle",
-      "firing-instances-count": "Instances d’alerte déclenchées",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Détails de l’instance"
       },
@@ -3392,7 +3420,6 @@
       "no-matching-instances-with-filters": "Aucune instance d’alerte ne correspond aux filtres actuellement sélectionnés pour la plage temporelle choisie.",
       "open-in-sidebar": "Ouvrir dans la barre latérale",
       "open-rule-details": "Ouvrir les détails de la règle",
-      "pending-instances-count": "Instances d’alerte en attente",
       "rule-details": {
         "subtitle": "Détails et conditions de la règle",
         "title": "Détails de la règle"
@@ -3401,8 +3428,21 @@
         "description": "La règle demandée est introuvable.",
         "title": "Règle introuvable"
       },
-      "rules-with-firing-instances": "Règles d’alerte avec des instances déclenchées",
-      "rules-with-pending-instances": "Règles d’alerte avec des instances en attente"
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Ajouter une expression"
@@ -3448,7 +3488,8 @@
       },
       "title-edit": "Modifier",
       "title-recreate": "Recréer",
-      "title-unsilence": "Réactiver le son"
+      "title-unsilence": "Réactiver le son",
+      "title-view": ""
     },
     "use-combined-labels": {
       "grouped-options": {
@@ -3499,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Détails",
           "enrichment": "Enrichissement des alertes",
           "history": "Historique",
           "instances": "Instances",
@@ -4160,6 +4200,15 @@
     "no-results": {
       "clear": "Effacer la recherche et les filtres",
       "text": "Aucun résultat n'a été trouvé pour votre requête"
+    },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
     },
     "recently-viewed": {
       "clear": "Effacer l’historique",
@@ -4832,6 +4881,10 @@
       "view-json-diff": "Afficher JSON diff pour voir toutes les modifications"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Ajouter un nouveau",
     "alert": {
@@ -4978,6 +5031,7 @@
       "description-color-annotation-event-markers": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
       "description-enabled-annotation-query-issued-every-dashboard": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
       "description-hidden": "Les requêtes d’annotation peuvent être activées ou désactivées en haut du tableau de bord. Lorsque cette option est cochée, ce bouton sera masqué.",
+      "error-loading-panels": "",
       "label-color": "Couleur",
       "label-data-source": "Source de données",
       "label-enabled": "Activé",
@@ -5010,7 +5064,7 @@
           }
         }
       },
-      "name": "Grille automatique",
+      "name": "",
       "options": {
         "custom-min-height": {
           "clear": "Effacer"
@@ -5032,7 +5086,7 @@
     "canvas-actions": {
       "add-panel": "Ajouter un panneau",
       "disabled-child-contains-tabs": "Impossible de passer aux onglets car une ligne contient déjà des onglets",
-      "disabled-nested-grouping": "Le regroupement est limité à 2 niveaux",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Les onglets ne peuvent pas être imbriqués dans d’autres onglets",
       "group-into-row": "Grouper en ligne",
       "group-into-tab": "Grouper dans un onglet",
@@ -5399,6 +5453,23 @@
         "failed-to-fetch-dashboard": "Échec de la récupération du tableau de bord"
       }
     },
+    "filters-overview": {
+      "apply": "",
+      "apply-close": "",
+      "close": "",
+      "empty": "",
+      "groupby": "",
+      "missing-adhoc": "",
+      "operator": "",
+      "restore": "",
+      "search": {
+        "aria-label": "",
+        "placeholder": ""
+      },
+      "title": "",
+      "use-custom-value": "",
+      "value": ""
+    },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "Envoyer un commentaire personnalisé",
       "footer-text": "Ce contenu est généré par l’IA à l’aide du <2>plugin Grafana LLM</2>",
@@ -5645,10 +5716,7 @@
       "empty-state-message": "Exécutez une requête pour la visualiser ici ou accédez à toutes les visualisations, afin d’ajouter d’autres types de panneaux",
       "menu-open-panel-editor": "Configurer",
       "menu-use-library-panel": "Utiliser le panneau de bibliothèque",
-      "missing-config": "Configuration de panneau manquante",
-      "suggestions": {
-        "empty-state-message": "Exécutez une requête pour commencer à voir les visualisations suggérées"
-      }
+      "missing-config": "Configuration de panneau manquante"
     },
     "new-panel-title": "Nouveau panneau",
     "on-create-new-row": {
@@ -6103,6 +6171,8 @@
       "title-transformations": "Transformations"
     },
     "transformation-picker-ng": {
+      "clear-search": "",
+      "no-transformations-found": "",
       "placeholder-search-for-transformation": "Rechercher une transformation",
       "show-images": "Afficher les images",
       "sql-expressions-message-description": "Manipulez et transformez les résultats de vos requêtes de sources de données via une syntaxe proche de MySQL.",
@@ -6240,11 +6310,12 @@
     "browse-grafana-com": "Parcourir Grafana.com",
     "browse-plugins": "Parcourir les plugins",
     "card": {
+      "customize-with-assistant-button": "",
       "datasource-provided-badge": "Source de données fournie",
       "details-tooltip": "Détails",
       "no-preview": "Aucun aperçu disponible",
       "use-dashboard-button": "Utiliser le tableau de bord",
-      "use-template-button": "Utiliser le modèle"
+      "view-template-button": ""
     },
     "community-empty-title": "Aucun tableau de bord communautaire trouvé",
     "community-empty-title-with-datasource": "Aucun tableau de bord communautaire trouvé pour {{datasourceType}}",
@@ -6354,10 +6425,12 @@
         "new-panel": "Nouveau panneau"
       }
     },
+    "add-variable": {
+      "label-variable": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
-      "label-annotation-query": "",
-      "tooltip-add-new-annotation-query": ""
+      "label-annotation-query": ""
     },
     "annotation-edit-actions": {
       "description": {
@@ -6399,6 +6472,7 @@
       "delete": "Supprimer",
       "description-color-annotation-event-markers": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
       "description-enabled-annotation-query-issued-every-dashboard": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
+      "error-loading-panels": "",
       "label-annotation-controls-display": "Afficher les contrôles d’annotation dans",
       "label-color": "Couleur",
       "label-data-source": "Source de données",
@@ -6550,6 +6624,12 @@
           "row-title": "Titre de la ligne"
         }
       }
+    },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
       "api-error": "Échec de la suppression du tableau de bord",
@@ -6807,8 +6887,6 @@
       "title-delete-all-transformations": "Supprimer toutes les transformations ?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Basculer la vue du tableau",
       "table-view-label-table-view": "Vue du tableau"
     },
@@ -6856,6 +6934,16 @@
     "query-editor": {
       "query": "Requête"
     },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
+    },
     "query-variable-editor-form": {
       "description-examples": "Des groupes de capture nommés peuvent être utilisés pour séparer le texte affiché et la valeur (<1>voir des exemples</1>).",
       "description-optional": "Facultatif, si vous souhaitez extraire une partie d’un nom de série ou d’un segment de nœud de métrique.",
@@ -6877,11 +6965,11 @@
       "static-options-legend": "Options statiques"
     },
     "resource-export": {
+      "classic-v2-warning": "",
       "label": {
         "advanced-options": "Options avancées",
         "classic": "Classique",
         "json": "JSON",
-        "v1-resource": "Ressource V1",
         "v2-resource": "Ressource V2",
         "yaml": "YAML"
       },
@@ -6979,6 +7067,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Impossible de créer des alertes à partir de ce panneau, car aucune requête à une source de données capable d’alerter n’a été trouvée.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Nouvelle règle d'alerte",
       "title-no-alerting-capable-query-found": "Aucune requête capable d’alerter n’a été trouvée"
     },
@@ -7076,6 +7165,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Tableau de bord enregistré"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Cette variable n’est référencée par aucune variable ou aucun tableau de bord.",
       "aria-label-variable-referenced-other-variables-dashboard": "Cette variable est référencée par d’autres variables ou d’autres tableaux de bord.",
@@ -7169,6 +7265,24 @@
       "show-more": "Afficher plus",
       "preview-of-values_one": "Aperçu des valeurs ({{count}})",
       "preview-of-values_other": "Aperçu des valeurs ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -7282,7 +7396,14 @@
       "title": "Versions"
     }
   },
+  "dashboard.filters-overview.operator.placeholder": "",
+  "dashboard.filters-overview.value.placeholder": "",
   "dashboards": {
+    "filters-overview": {
+      "all-filters": "",
+      "filters": "",
+      "open": ""
+    },
     "panel-queries": {
       "add-from-saved-queries": ""
     },
@@ -7752,7 +7873,10 @@
     "pro-tip": "Conseil de pro : {{proTip}}"
   },
   "entity-not-found": {
-    "description": "Nous cherchons, mais ne trouvons pas ce {{lowerCaseEntity}}. Essayez de retourner à la <4>page d'accueil</4> ou de chercher de l'aide sur le <7>site communautaire.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -7836,6 +7960,11 @@
       "continue-without-saving": "Continuer sans enregistrer",
       "save-correlation": "Enregistrer la corrélation",
       "title-unsaved-changes-to-correlation": "Modifications non enregistrées de la corrélation"
+    },
+    "custom-container": {
+      "body-find-plugin": "",
+      "error-with-stack": "",
+      "title-find-plugin": ""
     },
     "draggable-manager-demo": {
       "click-and-drag-gray-divider": "Cliquez et faites glisser le séparateur gris dans la zone colorée ci-dessous.",
@@ -8618,6 +8747,8 @@
     "description-show-measure": "Afficher les outils de mesure sur la carte",
     "description-show-scale": "Indiquer l’échelle cartographique",
     "description-show-zoom": "Afficher les boutons de contrôle du zoom dans le coin supérieur gauche",
+    "description-sync-view-variable": "",
+    "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Couche"
@@ -8679,7 +8810,9 @@
     "name-show-measure": "Afficher les outils de mesure",
     "name-show-scale": "Afficher l’échelle",
     "name-show-zoom": "Afficher le contrôle du zoom",
+    "name-sync-view-variable": "",
     "name-tooltip": "Infobulle",
+    "name-variable-name": "",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "Aucun champ de type chaîne de caractères trouvé"
     },
@@ -8732,6 +8865,9 @@
     },
     "utils": {
       "get-next-layer-name": "Calque {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": ""
     }
   },
   "get-enterprise": {
@@ -9376,11 +9512,13 @@
       },
       "legend": {
         "category": "Légende",
+        "description-limit": "",
         "description-values": "Sélectionner les valeurs ou les calculs à afficher dans la légende",
         "mode-options": {
           "label-list": "Liste",
           "label-table": "Tableau"
         },
+        "name-limit": "",
         "name-mode": "Mode",
         "name-placement": "Placement",
         "name-values": "Valeurs",
@@ -9781,6 +9919,7 @@
       "csv-placeholder": "Saisir le CSV ici…",
       "filter": {
         "add-all": "Ajouter toutes les valeurs affichées au filtre",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10311,6 +10450,11 @@
     "subtitle": "L’intégration LDAP sur Grafana permet aux utilisateurs Grafana de se connecter à l’aide de leurs identifiants LDAP. Pour en savoir plus, consultez notre <2><1>documentation</1></2>.",
     "title": "Paramètres de base"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Un panneau de bibliothèque avec ce nom existe déjà",
@@ -10792,6 +10936,7 @@
     "name-order": "Ordre",
     "name-prettify-json": "Embellir le JSON",
     "name-show-controls": "Afficher les contrôles",
+    "name-show-level": "",
     "name-time": "Afficher les horodatages",
     "name-unique-labels": "Étiquettes uniques",
     "name-unwrapped-columns": "",
@@ -10906,7 +11051,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
@@ -11183,9 +11330,17 @@
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
       "title": "Alerte"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Gérez les configurations d'Alertmanager et activez la réception des alertes gérées par Grafana",
       "title": "Paramètres"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Déterminer comment les alertes sont acheminées vers les points de contact",
@@ -11851,8 +12006,6 @@
       "tooltip-delete": "Supprimer"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Certaines suggestions n’ont pas pu être chargées"
       },
@@ -11862,10 +12015,20 @@
         "title": "Erreur",
         "try-again-button": "Réessayer"
       },
+      "or-divider": "",
+      "run-query-hint": "",
+      "start-without-data-description": "",
+      "start-without-data-title": "",
       "unknown-viz-type": "Type de visualisation inconnu"
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Impossible de trouver quoi que ce soit correspondant à votre requête"
+    }
+  },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "panel-group-by": {
@@ -12305,6 +12468,17 @@
       "text-loading-teams": "Chargement des équipes..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Ajouter une note pour décrire vos modifications (facultatif)",
@@ -12312,15 +12486,21 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Branche",
       "label-comment": "Commentaire",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Chemin d’accès",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Dernière branche",
+      "suffix-new-branch": "",
       "suffix-pr-branch": "Branche de requête de tirage",
       "suffix-read-only-branch": ""
     }
@@ -12338,9 +12518,6 @@
     "title-created-branch-in-repo": "Une nouvelle ressource a été créée dans une branche dans {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Cette ressource est chargée depuis la branche que vous venez de créer dans {{repoType}} et elle est uniquement visible pour vous"
   },
-  "provisioned-resource-request-handler": "Ressource enregistrée avec succès",
-  "provisioned-resource-request-handler-dashboard": "Tableau de bord enregistré avec succès",
-  "provisioned-resource-request-handler-folder": "Dossier créé avec succès",
   "provisioning": {
     "banner": {
       "message": "Cette fonctionnalité est actuellement en cours de développement. Pour une expérience optimale et les dernières améliorations, nous vous recommandons d’utiliser la <2>compilation nocturne</2> de Grafana."
@@ -12357,10 +12534,10 @@
       },
       "pr-workflow-description": "Permet aux utilisateurs de choisir s’ils souhaitent ouvrir une demande de tirage lors de l’enregistrement des modifications. Si le dépôt n’autorise pas les modifications directes sur la branche principale, une demande de tirage peut tout de même être nécessaire.",
       "pr-workflow-label": "Activer l’option de demande de tirage à l’enregistrement",
-      "token-description": "Mot de passe d’application Bitbucket avec autorisations sur le dépôt",
-      "token-label": "Mot de passe d’application",
+      "token-description": "",
+      "token-label": "",
       "token-required": "Le token Bitbucket est requis",
-      "token-user-description": "Le nom d’utilisateur qui sera utilisé pour accéder au dépôt avec le mot de passe d’application",
+      "token-user-description": "",
       "token-user-required": "Le nom d’utilisateur est requis",
       "url-description": "L’URL du dépôt Bitbucket",
       "url-required": "L’URL du dépôt est requise"
@@ -12386,9 +12563,6 @@
       "files-count_other": "{{count}} fichiers",
       "folders-count_one": "{{count}} dossier",
       "folders-count_other": "{{count}} dossier"
-    },
-    "check-repository": {
-      "check": "Vérifier"
     },
     "code-block": {
       "aria-label-copy": "Copier le code dans le presse-papiers"
@@ -12434,6 +12608,8 @@
       "instance-fully-managed-tooltip": "La configuration est désactivée car cette instance est entièrement gérée"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12574,6 +12750,23 @@
       "label-read-only": "Lecture seule",
       "label-sync-interval": "Intervalle de synchronisation (secondes)"
     },
+    "fix-folder-metadata": {
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
+    },
+    "folder-permissions": {
+      "loading": ""
+    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Aucun résultat ne correspond à votre requête",
       "partial-managed": "{{managedCount}} ressources sur {{resourceCount}} sont gérées par la synchronisation Git.",
@@ -12708,6 +12901,14 @@
       "show-more": "afficher plus",
       "truncated": "Message tronqué"
     },
+    "missing-folder-metadata-banner": {
+      "error-message": "",
+      "error-title": "",
+      "message": "",
+      "repo-message": "",
+      "repo-title": "",
+      "title": ""
+    },
     "mode-options": {
       "disabled": {
         "folder-connected": "La synchronisation complète de l’instance est désactivée, car un autre dossier est déjà synchronisé avec un référentiel.",
@@ -12776,6 +12977,7 @@
       "no-repositories": ""
     },
     "repository-overview": {
+      "branch": "",
       "checked": "Vérifié :",
       "connection-status": "État de la connexion :",
       "finished": "Dernière récupération réussie :",
@@ -12785,7 +12987,9 @@
       "last-ref": "Dernière réf :",
       "messages": "Messages :",
       "not-available": "S/O",
+      "path": "",
       "pull-status": "Statut de fusion",
+      "repo-url": "",
       "resources": "Ressources",
       "status": "Statut :",
       "unhealthy": "Non sain",
@@ -12835,6 +13039,7 @@
       "header-status": "Statut",
       "header-title": "Titre",
       "header-type": "Type",
+      "missing-folder-metadata": "",
       "search-placeholder": "Rechercher par chemin ou par titre",
       "source": "Source",
       "status-pending": "En attente",
@@ -12908,19 +13113,22 @@
       "tooltip-unhealthy-repository": "Impossible de fusionner un référentiel en mauvais état"
     },
     "synchronize-step": {
+      "field-errors": "",
+      "field-errors-message": "",
       "instance-migrate-resources-description": "La synchronisation de l’instance nécessite que toutes les ressources soient gérées. Les ressources existantes seront migrées automatiquement.",
       "migrate-resources-description": "",
       "options": "Options",
       "repository-error": "Erreur du référentiel",
       "repository-error-message": "Impossible de vérifier l’état du référentiel. Veuillez vérifier la configuration du référentiel et réessayer.",
       "repository-unhealthy": "Le référentiel ne peut pas être synchronisé. Annulez le provisionnement et réessayez une fois le problème résolu. Voir les détails ci-dessous.",
+      "review-configuration": "",
       "text-checking-repository": ""
     },
     "token-permissions-info": {
       "and-click": "et cliquez",
       "bitbucket": {
-        "create-token-button": "Créer des mots de passe d’application",
-        "token-text": "Jeton d’accès personnel Bitbucket"
+        "create-token-button": "",
+        "token-text": ""
       },
       "gitlab": {
         "create-token-button": "Ajouter un nouveau jeton",
@@ -13206,6 +13414,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13233,7 +13442,8 @@
       "cache-timeout-tooltip": "",
       "cache-ttl": "",
       "cache-ttl-tooltip": "",
-      "collapse": "",
+      "hide-time-override": "",
+      "hide-time-override-tooltip": "",
       "interval": "",
       "interval-tooltip": "",
       "max-data-points": "",
@@ -13243,11 +13453,18 @@
       "no-limit": "",
       "relative-time": "",
       "relative-time-tooltip": "",
+      "time-range-max-data-points": "",
       "time-shift": "",
       "time-shift-tooltip": "",
-      "title": ""
+      "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {
@@ -13289,20 +13506,21 @@
       "add-saved-query": "",
       "add-transformation": "",
       "add-transformation-below": "",
-      "alert-indicator": {
-        "button-label": "",
-        "button-label-hide": "",
-        "close": ""
-      },
+      "alerts-loading": "",
       "card-click": "Sélectionner la carte {{id}}",
       "data": "",
+      "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
       "transformations": "Transformations",
+      "view-toggle": "",
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -13390,15 +13608,12 @@
       "duration-selected": "Choisir l'intervalle de temps d'actualisation avec l'intervalle actuel {{durationAriaLabel}} sélectionné"
     },
     "auto-option": {
-      "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "Activer la diffusion en direct",
       "label": "En direct"
     },
     "off-option": {
-      "aria-label": "Désactiver l'actualisation automatique",
       "label": "Désactivé"
     },
     "tooltip": {
@@ -13502,6 +13717,7 @@
       "panel-type": "Panneau : {{panel}}"
     },
     "actions": {
+      "created-by-me": "",
       "include-panels": "Inclure des panneaux",
       "remove-datasource-filter": "Source de données : {{datasource}}",
       "sort-placeholder": "Trier",
@@ -13926,7 +14142,8 @@
       "no-matching-silences": "Aucune mise en sourdine correspondante trouvée ;",
       "noConfig": "Créez un nouveau point de contact pour créer une configuration à l'aide des valeurs par défaut ou contactez votre administrateur pour configurer Alertmanager.",
       "recreate-button": "Recréer",
-      "unsilence-button": "Réactiver le son"
+      "unsilence-button": "Réactiver le son",
+      "view-button": ""
     }
   },
   "silences-table": {
@@ -14252,6 +14469,11 @@
           "settings": "Paramètres"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Synchronisation de groupe externe"
@@ -14293,12 +14515,34 @@
       "columns": {
         "aria-label-delete-button": "Supprimer l’équipe {{teamName}}",
         "aria-label-edit-team": "Modifier l’équipe {{teamName}}",
+        "delete-modal": {
+          "confirm-button": "",
+          "title": ""
+        },
+        "delete-modal-invalid-text": "",
+        "delete-modal-invalid-title": "",
+        "delete-modal-text": "",
         "title-edit-team": "Modifier l’équipe",
+        "tooltip-delete-button": "",
         "tooltip-edit-team": "Modifier l’équipe"
       },
+      "failed-to-check-folders": "",
       "loading-teams": "Chargement des équipes…",
       "new-team": "Nouvelle équipe",
       "placeholder-search-teams": "Rechercher les équipes"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Facultatif : principalement utilisé pour définir l’avatar du profil de l’équipe (via le service Gravatar)",
@@ -14530,6 +14774,12 @@
     "name-show-matches-only": "Afficher uniquement les correspondances",
     "traces-panel": {
       "no-data-found-in-response": "Aucune donnée trouvée dans la réponse"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

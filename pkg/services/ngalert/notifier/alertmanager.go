@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/nfstatus"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -386,20 +385,41 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 	amConfig := mergeResult.Config
 
 	// Add extra route as managed route to the configuration.
+	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
+	// route
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		managed := maps.Clone(cfg.ManagedRoutes)
-		if managed == nil {
-			managed = make(map[string]*apimodels.Route)
+		managedRoutes := maps.Clone(cfg.ManagedRoutes)
+		if managedRoutes == nil {
+			managedRoutes = make(map[string]*apimodels.Route)
 		}
+
+		managedInhibitionRules := maps.Clone(cfg.ManagedInhibitionRules)
+		if managedInhibitionRules == nil {
+			managedInhibitionRules = make(apimodels.ManagedInhibitionRules)
+		}
+
 		if mergeResult.ExtraRoute != nil {
-			if _, ok := managed[mergeResult.Identifier]; ok {
+			if _, ok := managedRoutes[mergeResult.Identifier]; ok {
 				am.logger.Warn("Imported configuration name conflicts with existing managed routes, skipping adding imported config.", "identifier", mergeResult.Identifier)
 			} else {
-				managed[mergeResult.Identifier] = mergeResult.ExtraRoute
+				managedRoutes[mergeResult.Identifier] = mergeResult.ExtraRoute
+
+				importedRules, err := legacy_storage.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
+				if err != nil {
+					am.logger.Warn("failed to build managed inhibition rules for imported configuration", "identifier", mergeResult.Identifier, "err", err)
+				} else {
+					maps.Copy(managedInhibitionRules, importedRules)
+				}
 			}
 		}
-		amConfig.Route = legacy_storage.WithManagedRoutes(amConfig.Route, managed)
+
+		amConfig.Route = legacy_storage.WithManagedRoutes(amConfig.Route, managedRoutes)
+
+		amConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(
+			amConfig.InhibitRules,
+			managedInhibitionRules,
+		)
 	}
 
 	templates := alertingNotify.PostableAPITemplatesToTemplateDefinitions(cfg.GetMergedTemplateDefinitions())
@@ -424,22 +444,14 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		return false, nil
 	}
 
-	receivers := alertingNotify.PostableAPIReceiversToAPIReceivers(amConfig.Receivers)
-	for _, recv := range receivers {
-		err = patchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
-		if err != nil {
-			return false, err
-		}
-	}
-
 	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
 	err = am.Base.ApplyConfig(alertingNotify.NotificationsConfiguration{
-		RoutingTree:       amConfig.Route.AsAMRoute(),
+		RoutingTree:       amConfig.Route,
 		InhibitRules:      amConfig.InhibitRules,
 		MuteTimeIntervals: amConfig.MuteTimeIntervals,
 		TimeIntervals:     amConfig.TimeIntervals,
 		Templates:         templates,
-		Receivers:         receivers,
+		Receivers:         alertingNotify.PostableAPIReceiversToAPIReceivers(amConfig.Receivers),
 		Limits:            am.dynamicLimits,
 		Raw:               rawConfig,
 		Hash:              configHash,
@@ -450,50 +462,6 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 
 	am.updateConfigMetrics(cfg, len(rawConfig))
 	return true, nil
-}
-
-func patchNewSecureFields(ctx context.Context, api *alertingNotify.APIReceiver, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
-	for _, integration := range api.Integrations {
-		switch integration.Type {
-		case "dingding":
-			err := patchSettingsFromSecureSettings(ctx, integration, "url", decode, decrypt)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func patchSettingsFromSecureSettings(ctx context.Context, integration *models.IntegrationConfig, key string, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
-	if _, ok := integration.SecureSettings[key]; !ok {
-		return nil
-	}
-	decoded, err := decode(integration.SecureSettings)
-	if err != nil {
-		return err
-	}
-	settings := map[string]any{}
-	err = json.Unmarshal(integration.Settings, &settings)
-	if err != nil {
-		return err
-	}
-	currentValue, ok := settings[key]
-	currentString := ""
-	if ok {
-		currentString, _ = currentValue.(string)
-	}
-	secretValue := decrypt(ctx, decoded, key, currentString)
-	if secretValue == currentString {
-		return nil
-	}
-	settings[key] = secretValue
-	data, err := json.Marshal(settings)
-	if err != nil {
-		return err
-	}
-	integration.Settings = data
-	return nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not

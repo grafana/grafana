@@ -33,6 +33,10 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
+import {
+  PanelSuggestionInfo,
+  VizSuggestionsInteractions,
+} from 'app/features/panel/components/VizTypePicker/interactions';
 import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 import { VariablesChanged } from 'app/features/variables/types';
 import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
@@ -112,6 +116,9 @@ type CopiedPanelStyles = {
 };
 
 export interface DashboardSceneState extends SceneObjectState {
+  /** @deprecated */
+  id?: number | undefined;
+
   /** The title */
   title: string;
   /** The description */
@@ -195,6 +202,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
+  /**
+   * Panels with an accepted suggestion
+   */
+  private _panelSuggestionsReceipts = new Map<string, PanelSuggestionInfo>();
+
   protected _renderBeforeActivation = true;
 
   public serializer: DashboardSceneSerializerLike<
@@ -231,20 +243,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     window.__grafanaSceneContext = this;
 
-    // SECURITY: The mutation client is intentionally NOT stored as a field on
-    // this scene instance. window.__grafanaSceneContext exposes the scene to
-    // all plugins. Storing the client here would let any plugin bypass the
-    // RestrictedGrafanaApis access control. The client reference lives only in
-    // the module-level store (dashboardMutationApi.ts), which plugins cannot
-    // import. Do not add a _mutationClient property to this class.
-    let mutationClient: DashboardMutationClient | undefined;
-    try {
-      mutationClient = new DashboardMutationClient(this);
-      setDashboardMutationClient(mutationClient);
-    } catch (error) {
-      console.error('Failed to register Dashboard Mutation API:', error);
-    }
-
     this._initializePanelSearch();
 
     if (this.state.isEditing) {
@@ -270,11 +268,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
+    let mutationClient: DashboardMutationClient | undefined;
+    try {
+      mutationClient = new DashboardMutationClient(this);
+      setDashboardMutationClient(mutationClient);
+    } catch (error) {
+      console.error('Failed to register Dashboard Mutation API:', error);
+    }
+
     // Deactivation logic
     return () => {
-      window.__grafanaSceneContext = prevSceneContext;
       setDashboardMutationClient(null);
       mutationClient = undefined;
+      window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
       oldDashboardWrapper.destroy();
@@ -309,6 +315,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._changeTracker.startTrackingChanges();
   };
 
+  public recordPanelSuggestion(panelKey: string, info: PanelSuggestionInfo | undefined) {
+    if (info) {
+      this._panelSuggestionsReceipts.set(panelKey, info);
+    } else {
+      this._panelSuggestionsReceipts.delete(panelKey);
+    }
+  }
+
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
     this.serializer.onSaveComplete(saveModel, result);
 
@@ -328,6 +342,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       },
       overlay: undefined,
     });
+
+    for (const info of this._panelSuggestionsReceipts.values()) {
+      VizSuggestionsInteractions.panelSaved(info);
+    }
+    this._panelSuggestionsReceipts.clear();
 
     this.state.editPanel?.dashboardSaved();
 

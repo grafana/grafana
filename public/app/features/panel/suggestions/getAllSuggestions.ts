@@ -10,10 +10,10 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { getListedPanelPluginMetas, getPanelPluginMeta } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
-import { importPanelPlugin, isBuiltInPlugin } from 'app/features/plugins/importPanelPlugin';
-
-import { getAllPanelPluginMeta } from '../state/util';
+import { isBuiltinPluginPath } from 'app/features/plugins/built_in_plugins';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { panelsToCheckFirst } from './consts';
 
@@ -22,12 +22,21 @@ interface PluginLoadResult {
   hasErrors: boolean;
 }
 
-function getPanelPluginIds(): string[] {
-  return config.featureToggles.externalVizSuggestions
-    ? getAllPanelPluginMeta()
-        .filter((panel) => panel.suggestions)
-        .map((m) => m.id)
-    : panelsToCheckFirst;
+async function getPanelPluginIds(): Promise<string[]> {
+  if (config.featureToggles.externalVizSuggestions) {
+    const plugins = await getListedPanelPluginMetas();
+    return plugins.filter((panel) => panel.suggestions).map((m) => m.id);
+  }
+
+  return panelsToCheckFirst;
+}
+
+async function isBuiltInPlugin(id?: string): Promise<boolean> {
+  if (!id) {
+    return false;
+  }
+  const meta = await getPanelPluginMeta(id);
+  return Boolean(meta != null && isBuiltinPluginPath(meta.module));
 }
 
 /**
@@ -51,7 +60,7 @@ export async function loadPlugins(pluginIds: string[]): Promise<PluginLoadResult
       const pluginId = pluginIds[i];
       console.error(`Failed to load ${pluginId} for visualization suggestions:`, settled.reason);
 
-      if (isBuiltInPlugin(pluginId)) {
+      if (await isBuiltInPlugin(pluginId)) {
         hasErrors = true;
       } else {
         appEvents.publish({
@@ -89,11 +98,22 @@ const mapPreferredVisualisationTypeToPlugin = (type: string): PreferredVisualisa
 /**
  * given a list of suggestions, sort them in place based on score and preferred visualisation type
  */
-export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[], dataSummary: PanelDataSummary) {
+export async function sortSuggestions(
+  suggestions: PanelPluginVisualizationSuggestion[],
+  dataSummary: PanelDataSummary
+): Promise<void> {
+  const builtInMap: Record<string, boolean> = {};
+  await Promise.all(
+    suggestions.map(async (s) => {
+      const isBuiltIn = await isBuiltInPlugin(s.pluginId);
+      builtInMap[s.pluginId] = isBuiltIn;
+    })
+  );
+
   suggestions.sort((a, b) => {
     // if one of these suggestions is from a built-in panel and the other isn't, prioritize the core panel.
-    const isPluginABuiltIn = isBuiltInPlugin(a.pluginId);
-    const isPluginBBuiltIn = isBuiltInPlugin(b.pluginId);
+    const isPluginABuiltIn = builtInMap[a.pluginId];
+    const isPluginBBuiltIn = builtInMap[b.pluginId];
     if (isPluginABuiltIn && !isPluginBBuiltIn) {
       return -1;
     }
@@ -132,7 +152,7 @@ export async function getAllSuggestions(series?: DataFrame[]): Promise<Suggestio
   const dataSummary = getPanelDataSummary(series);
   const list: PanelPluginVisualizationSuggestion[] = [];
 
-  const pluginIds: string[] = getPanelPluginIds();
+  const pluginIds: string[] = await getPanelPluginIds();
   const { plugins, hasErrors: pluginLoadErrors } = await loadPlugins(pluginIds);
 
   let pluginSuggestionsError = false;
@@ -148,7 +168,7 @@ export async function getAllSuggestions(series?: DataFrame[]): Promise<Suggestio
     }
   }
 
-  sortSuggestions(list, dataSummary);
+  await sortSuggestions(list, dataSummary);
 
   return { suggestions: list, hasErrors: pluginLoadErrors || pluginSuggestionsError };
 }

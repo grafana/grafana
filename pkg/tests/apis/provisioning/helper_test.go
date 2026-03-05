@@ -34,7 +34,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -652,6 +651,22 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	}
 }
 
+// WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository
+// matches the expected limit.
+func (h *provisioningTestHelper) WaitForResourceQuotaLimit(t *testing.T, repoName string, expectedLimit int64) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := h.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := unstructuredToRepository(t, repoObj)
+		assert.Equal(collect, expectedLimit, repo.Status.Quota.MaxResourcesPerRepository,
+			"repository quota limit not yet updated by controller")
+	}, waitTimeoutDefault, waitIntervalDefault, "Status.Quota.MaxResourcesPerRepository should be %d", expectedLimit)
+}
+
 // WaitForQuotaReconciliation waits for the repository's quota condition to match the expected reason.
 // It uses the typed Repository object and the quotas package to check conditions.
 func (h *provisioningTestHelper) WaitForQuotaReconciliation(t *testing.T, repoName string, expectedReason string) {
@@ -672,6 +687,25 @@ func (h *provisioningTestHelper) WaitForQuotaReconciliation(t *testing.T, repoNa
 	}, waitTimeoutDefault, waitIntervalDefault, "Quota condition should have reason %s", expectedReason)
 }
 
+// WaitForConditionReason waits for the repository's condition of the given type to match the expected reason.
+func (h *provisioningTestHelper) WaitForConditionReason(t *testing.T, repoName string, conditionType string, expectedReason string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := h.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := unstructuredToRepository(t, repoObj)
+		condition := findCondition(repo.Status.Conditions, conditionType)
+		if !assert.NotNil(collect, condition, "%s condition not found", conditionType) {
+			return
+		}
+
+		assert.Equal(collect, expectedReason, condition.Reason, "%s condition reason mismatch", conditionType)
+	}, waitTimeoutDefault, waitIntervalDefault, "%s condition should have reason %s", conditionType, expectedReason)
+}
+
 // RequireRepoDashboardCount performs a one-off check that the number of dashboards managed by the given repo matches the expected count.
 func (h *provisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoName string, expectedCount int) {
 	t.Helper()
@@ -686,6 +720,35 @@ func (h *provisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 		}
 	}
 	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+}
+
+// HACK: TriggerRepositoryReconciliation forces the controller to re-process a repo
+// by touching its status (aging the health timestamp by 1ms).
+// Updating it by incrementing its generation by +1 is not triggering a reconciliation.
+// Retries on conflict errors caused by optimistic locking.
+func (h *provisioningTestHelper) TriggerRepositoryReconciliation(t *testing.T, name string) {
+	t.Helper()
+	ctx := t.Context()
+
+	const maxRetries = 5
+	for attempt := range maxRetries {
+		repo, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err, "failed to get repository %s", name)
+
+		health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
+		require.True(t, ok, "missing status.health on repository %s", name)
+
+		health["checked"] = time.Now().UnixMilli() - 1
+
+		_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
+		if err == nil {
+			return
+		}
+		if apierrors.IsConflict(err) && attempt < maxRetries-1 {
+			continue
+		}
+		require.NoError(t, err, "failed to update status for repository %s", name)
+	}
 }
 
 // WaitForHealthyRepository waits for a repository to become healthy.
@@ -705,6 +768,23 @@ func (h *provisioningTestHelper) WaitForHealthyRepository(t *testing.T, name str
 	}, waitTimeoutDefault, waitIntervalDefault, "repository %s should become healthy", name)
 }
 
+func (h *provisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name string) {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoStatus, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository status") {
+			return
+		}
+		// Check that health check has run (Checked > 0)
+		checked, found := mustNestedInt64(repoStatus.Object, "status", "health", "checked")
+		assert.True(collect, found, "repository %s does not have checked field", name)
+		assert.Greater(collect, checked, int64(0), "repository %s health check has not run yet", name)
+		// Check that repository is unhealthy
+		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
+		assert.True(collect, found, "repository %s does not have health status", name)
+		assert.False(collect, status, "repository %s should be unhealthy", name)
+	}, waitTimeoutDefault, waitIntervalDefault, "repository %s should become unhealthy", name)
+}
+
 type grafanaOption func(opts *testinfra.GrafanaOpts)
 
 // Useful for debugging a test in development.
@@ -715,11 +795,18 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
 }
 
+func withRepositoryTypes(types []string) grafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningRepositoryTypes = types
+	}
+}
+
 func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
 	provisioningPath := t.TempDir()
 	opts := testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagProvisioningExport,
 		},
 		// Provisioning requires resources to be fully migrated to unified storage.
 		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
@@ -738,10 +825,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
-	}
-
-	if extensions.IsEnterprise {
-		opts.ProvisioningRepositoryTypes = []string{"local", "github", "gitlab", "bitbucket"}
 	}
 
 	for _, o := range options {
@@ -858,6 +941,14 @@ func mustNestedStringSlice(obj map[string]interface{}, fields ...string) []strin
 		panic(err)
 	}
 	return v
+}
+
+func mustNestedInt64(obj map[string]interface{}, fields ...string) (int64, bool) {
+	v, found, err := unstructured.NestedInt64(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
+	return v, found
 }
 
 func asJSON(obj any) []byte {
@@ -1052,7 +1143,13 @@ func (h *provisioningTestHelper) CreateGithubConnection(
 		return nil, err
 	}
 
-	return h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+	var res *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		res, err = h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(collect, err)
+	}, waitTimeoutDefault, waitIntervalDefault, "connection should be created")
+
+	return res, nil
 }
 
 func (h *provisioningTestHelper) UpdateGithubConnection(
@@ -1067,7 +1164,13 @@ func (h *provisioningTestHelper) UpdateGithubConnection(
 		return nil, err
 	}
 
-	return h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+	var res *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		res, err = h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+		require.NoError(collect, err)
+	}, waitTimeoutDefault, waitIntervalDefault, "connection should be updated")
+
+	return res, nil
 }
 
 func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstructured.Unstructured) error {
@@ -1134,6 +1237,12 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				w.WriteHeader(http.StatusOK)
 				installation := github.Installation{
 					ID: &idInt,
+					Permissions: &github.InstallationPermissions{
+						Contents:        github.Ptr("write"),
+						Metadata:        github.Ptr("read"),
+						PullRequests:    github.Ptr("write"),
+						RepositoryHooks: github.Ptr("write"),
+					},
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
 			}),
@@ -1220,4 +1329,16 @@ func findCondition(conditions []metav1.Condition, conditionType string) *metav1.
 		}
 	}
 	return nil
+}
+
+// withoutExportFeatureFlag disables the provisioningExport feature flag
+func withoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
+	// Remove provisioningExport from the enabled feature toggles
+	filtered := []string{}
+	for _, flag := range opts.EnableFeatureToggles {
+		if flag != "provisioningExport" {
+			filtered = append(filtered, flag)
+		}
+	}
+	opts.EnableFeatureToggles = filtered
 }

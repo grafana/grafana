@@ -6,7 +6,7 @@ import { isFetchError } from '@grafana/runtime';
 import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { dataToSpec } from '../../utils/data';
-import { getFormErrors } from '../../utils/getFormErrors';
+import { extractFormErrors, getFormErrors } from '../../utils/getFormErrors';
 import { Step } from '../Stepper';
 import { StepStatusInfo, WizardFormData, WizardStep } from '../types';
 
@@ -52,6 +52,7 @@ export function useWizardSubmission({
     const formData = getValues();
 
     if (currentStepConfig?.submitOnNext) {
+      setStepStatusInfo({ status: 'idle' });
       const fieldsToValidate =
         activeStep === 'connection' || activeStep === 'authType'
           ? (['repository'] as const)
@@ -109,6 +110,10 @@ export function useWizardSubmission({
       } catch (error) {
         if (isFetchError(error)) {
           const errors = getFormErrors(error.data);
+          const extractedErrors = extractFormErrors(error.data);
+          const extractedMessage = extractedErrors
+            .map((error) => error.detail)
+            .filter((detail): detail is string => Boolean(detail));
           // Check for special case: token error when using GitHub App
           const tokenError = errors.find(([field]) => field === 'repository.token');
           if (tokenError && activeStep === 'connection' && formData.githubAuthType !== 'pat') {
@@ -121,9 +126,13 @@ export function useWizardSubmission({
               },
             });
           } else if (errors.length > 0) {
+            const visibleFields = currentStepConfig?.formFields;
             for (const [field, errorMessage] of errors) {
-              setError(field, errorMessage);
+              if (!visibleFields || visibleFields.includes(field)) {
+                setError(field, errorMessage);
+              }
             }
+
             const combinedMessage = errors.map(([, err]) => err.message).join('\n');
             setStepStatusInfo({
               status: 'error',
@@ -137,7 +146,7 @@ export function useWizardSubmission({
               status: 'error',
               error: {
                 title: repositoryConnectionFailed,
-                message: error.data.message,
+                message: extractedMessage || error.data.message,
               },
             });
           }

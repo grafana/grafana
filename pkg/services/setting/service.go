@@ -48,8 +48,8 @@ var tracer tracing.Tracer = &settingTracer{otel.Tracer("github.com/grafana/grafa
 const LogPrefix = "setting.service"
 
 const DefaultPageSize = int64(500)
-const DefaultQPS = float32(15)
-const DefaultBurst = 40
+const DefaultQPS = float32(200)
+const DefaultBurst = 300
 const DefaultCacheTTL = 1 * time.Second
 const DefaultCacheMaxEntries = 1000
 

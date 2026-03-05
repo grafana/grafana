@@ -30,6 +30,7 @@ export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null 
     if (!processes[span.spanID]) {
       processes[span.spanID] = {
         serviceName: span.serviceName,
+        serviceNamespace: span.serviceNamespace,
         tags: span.serviceTags,
       };
     }

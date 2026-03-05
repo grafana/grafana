@@ -350,60 +350,67 @@ function useColumns(alertManagerSourceName: string) {
         size: 7,
       },
     ];
-    if (updateSupported) {
-      columns.push({
-        id: 'actions',
-        label: t('alerting.use-columns.label.actions', 'Actions'),
-        renderCell: function renderActions({ data: silence }) {
-          const isExpired = silence.status.state === SilenceState.Expired;
+    columns.push({
+      id: 'actions',
+      label: t('alerting.use-columns.label.actions', 'Actions'),
+      renderCell: function renderActions({ data: silence }) {
+        const isExpired = silence.status.state === SilenceState.Expired;
 
-          const canCreate = silence?.accessControl?.create;
-          const canWrite = silence?.accessControl?.write;
+        const canCreate = silence?.accessControl?.create;
+        const canWrite = silence?.accessControl?.write;
 
-          const canRecreate = isExpired && (isGrafanaFlavoredAlertmanager ? canCreate : updateAllowed);
-          const canEdit = !isExpired && (isGrafanaFlavoredAlertmanager ? canWrite : updateAllowed);
+        const canRecreate = updateSupported && isExpired && (isGrafanaFlavoredAlertmanager ? canCreate : updateAllowed);
+        const canEdit = updateSupported && !isExpired && (isGrafanaFlavoredAlertmanager ? canWrite : updateAllowed);
 
-          return (
-            <Stack gap={0.5} wrap="wrap">
-              {canRecreate && (
+        return (
+          <Stack gap={0.5} wrap="wrap">
+            <LinkButton
+              title={t('alerting.use-columns.title-view', 'View')}
+              size="sm"
+              variant="secondary"
+              icon="eye"
+              href={makeAMLink(`/alerting/silence/${silence.id}/view`, alertManagerSourceName)}
+            >
+              <Trans i18nKey="silences.table.view-button">View</Trans>
+            </LinkButton>
+            {canRecreate && (
+              <LinkButton
+                title={t('alerting.use-columns.title-recreate', 'Recreate')}
+                size="sm"
+                variant="secondary"
+                icon="sync"
+                href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
+              >
+                <Trans i18nKey="silences.table.recreate-button">Recreate</Trans>
+              </LinkButton>
+            )}
+            {canEdit && (
+              <>
                 <LinkButton
-                  title={t('alerting.use-columns.title-recreate', 'Recreate')}
+                  title={t('alerting.use-columns.title-unsilence', 'Unsilence')}
                   size="sm"
                   variant="secondary"
-                  icon="sync"
+                  icon="bell"
+                  onClick={() => handleExpireSilenceClick(silence.id)}
+                >
+                  <Trans i18nKey="silences.table.unsilence-button">Unsilence</Trans>
+                </LinkButton>
+                <LinkButton
+                  title={t('alerting.use-columns.title-edit', 'Edit')}
+                  size="sm"
+                  variant="secondary"
+                  icon="pen"
                   href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
                 >
-                  <Trans i18nKey="silences.table.recreate-button">Recreate</Trans>
+                  <Trans i18nKey="silences.table.edit-button">Edit</Trans>
                 </LinkButton>
-              )}
-              {canEdit && (
-                <>
-                  <LinkButton
-                    title={t('alerting.use-columns.title-unsilence', 'Unsilence')}
-                    size="sm"
-                    variant="secondary"
-                    icon="bell"
-                    onClick={() => handleExpireSilenceClick(silence.id)}
-                  >
-                    <Trans i18nKey="silences.table.unsilence-button">Unsilence</Trans>
-                  </LinkButton>
-                  <LinkButton
-                    title={t('alerting.use-columns.title-edit', 'Edit')}
-                    size="sm"
-                    variant="secondary"
-                    icon="pen"
-                    href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
-                  >
-                    <Trans i18nKey="silences.table.edit-button">Edit</Trans>
-                  </LinkButton>
-                </>
-              )}
-            </Stack>
-          );
-        },
-        size: 5,
-      });
-    }
+              </>
+            )}
+          </Stack>
+        );
+      },
+      size: 5,
+    });
     return columns;
   }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported]);
 }

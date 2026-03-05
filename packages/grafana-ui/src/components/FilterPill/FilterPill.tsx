@@ -56,6 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     selected: css({
       color: theme.colors.text.primary,
       background: theme.colors.action.selected,
+      border: `1px solid ${theme.colors.action.selectedBorder}`,
 
       '&:hover': {
         background: theme.colors.action.focus,

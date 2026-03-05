@@ -2,10 +2,12 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -13,17 +15,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/server"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
+var _ zanzana.MTReconciler = (*Reconciler)(nil)
+
 type Reconciler struct {
-	server        *server.Server
+	server        zanzana.ServerInternal
 	clientFactory resources.ClientFactory
 	cfg           Config
 	logger        log.Logger
 	tracer        tracing.Tracer
+	metrics       *reconcilerMetrics
 
 	workQueue chan string
+
+	globalRoleMu sync.RWMutex
+	// resolved effective permissions per GlobalRole name (for Role composition)
+	globalRolePerms map[string][]*authzextv1.RolePermission
 }
 
 // Config holds the reconciler configuration.
@@ -41,7 +51,7 @@ func (c Config) queueSize() int {
 	return c.QueueSize
 }
 
-// GVRs that need to be reconciled from Unistore to Zanzana.
+// GVRs that need to be reconciled from Unistore to Zanzana (namespaced).
 var reconcileGVRs = []schema.GroupVersionResource{
 	folderv1.FolderResourceInfo.GroupVersionResource(),
 	iamv0.RoleInfo.GroupVersionResource(),
@@ -53,11 +63,12 @@ var reconcileGVRs = []schema.GroupVersionResource{
 
 // NewReconciler creates a new reconciler instance.
 func NewReconciler(
-	srv *server.Server,
+	srv zanzana.ServerInternal,
 	clientFactory resources.ClientFactory,
 	cfg Config,
 	logger log.Logger,
 	tracer tracing.Tracer,
+	reg prometheus.Registerer,
 ) *Reconciler {
 	return &Reconciler{
 		server:        srv,
@@ -65,8 +76,21 @@ func NewReconciler(
 		cfg:           cfg,
 		logger:        logger,
 		tracer:        tracer,
+		metrics:       newReconcilerMetrics(reg),
 		workQueue:     make(chan string, cfg.queueSize()),
 	}
+}
+
+func (r *Reconciler) setGlobalRolePerms(perms map[string][]*authzextv1.RolePermission) {
+	r.globalRoleMu.Lock()
+	defer r.globalRoleMu.Unlock()
+	r.globalRolePerms = perms
+}
+
+func (r *Reconciler) getGlobalRolePerms() map[string][]*authzextv1.RolePermission {
+	r.globalRoleMu.RLock()
+	defer r.globalRoleMu.RUnlock()
+	return r.globalRolePerms
 }
 
 // Run starts the reconciler's main loop and worker goroutines.
@@ -108,6 +132,18 @@ func (r *Reconciler) Run(ctx context.Context) error {
 
 // queueAllNamespaces lists all OpenFGA stores and queues them for reconciliation.
 func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
+	ctx, span := r.tracer.Start(ctx, "reconciler.queueAllNamespaces")
+	defer span.End()
+
+	// Fetch global role permissions once per tick and cache them for all namespaces.
+	globalPerms, err := r.fetchGlobalRolePerms(ctx)
+	if err != nil {
+		r.logger.Error("Failed to fetch global roles", "error", err)
+		globalPerms = nil
+	}
+
+	r.setGlobalRolePerms(globalPerms)
+
 	stores, err := r.server.ListAllStores(ctx)
 	if err != nil {
 		r.logger.Error("Failed to list stores", "error", err)
@@ -120,6 +156,7 @@ func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
 		namespace := store.Name
 		select {
 		case r.workQueue <- namespace:
+			r.metrics.workQueueDepth.Inc()
 			r.logger.Debug("Queued namespace for reconciliation", "namespace", namespace)
 		case <-ctx.Done():
 			return
@@ -141,23 +178,29 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 				return
 			}
 
+			r.metrics.workQueueDepth.Dec()
 			r.logger.Info("Reconciling namespace", "namespace", namespace, "workerID", workerID)
 			start := time.Now()
 
-			if err := r.reconcileNamespace(ctx, namespace); err != nil {
+			err := r.reconcileNamespace(ctx, namespace)
+			elapsed := time.Since(start)
+			status := "success"
+			if err != nil {
+				status = "error"
 				r.logger.Error("Failed to reconcile namespace",
 					"namespace", namespace,
 					"workerID", workerID,
 					"error", err,
-					"duration", time.Since(start),
+					"duration", elapsed,
 				)
 			} else {
 				r.logger.Info("Successfully reconciled namespace",
 					"namespace", namespace,
 					"workerID", workerID,
-					"duration", time.Since(start),
+					"duration", elapsed,
 				)
 			}
+			r.metrics.namespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())
 		}
 	}
 }
@@ -214,6 +257,33 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 		"added", len(toAdd),
 		"deleted", len(toDelete),
 	)
+
+	return nil
+}
+
+func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) error {
+	ctx, span := r.tracer.Start(ctx, "reconciler.EnsureNamespace")
+	defer span.End()
+
+	store, err := r.server.GetStore(ctx, namespace)
+	if err != nil && !errors.Is(err, zanzana.ErrStoreNotFound) {
+		return fmt.Errorf("failed to get store: %w", err)
+	}
+
+	if store != nil {
+		return nil
+	}
+
+	// Create store if it doesn't exist
+	_, err = r.server.GetOrCreateStore(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to create store: %w", err)
+	}
+
+	err = r.reconcileNamespace(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("failed to reconcile namespace: %w", err)
+	}
 
 	return nil
 }

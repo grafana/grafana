@@ -32,8 +32,10 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
+		helper.SyncAndWait(t, repo, nil)
 
 		// Wait for quota condition to show unlimited
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaUnlimited)
@@ -90,9 +92,10 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-
+		helper.SyncAndWait(t, repo, nil)
 		// Wait for quota condition to show within quota
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
@@ -148,9 +151,10 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-
+		helper.SyncAndWait(t, repo, nil)
 		// Wait for quota condition to show reached
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
@@ -191,9 +195,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 	t.Run("quota exceeded blocks both create and update via files endpoint", func(t *testing.T) {
 		// With folder target: 2 dashboards + 1 folder = 3 resources, limit 1 → exceeded
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 1
-		})
+		helper := runGrafana(t)
 		ctx := context.Background()
 
 		const repo = "files-quota-exceeded-repo"
@@ -207,9 +209,15 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 				"testdata/all-panels.json":   "dashboard1.json",
 				"testdata/text-options.json": "dashboard2.json",
 			},
+			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
+		helper.SyncAndWait(t, repo, nil)
 
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
+		helper.TriggerRepositoryReconciliation(t, repo)
+		helper.WaitForResourceQuotaLimit(t, repo, 1)
+		helper.SyncAndWait(t, repo, nil)
 		// Wait for quota condition to show exceeded
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 
