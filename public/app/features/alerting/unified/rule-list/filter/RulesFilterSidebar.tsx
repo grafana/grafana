@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { PropsOf } from '@emotion/react';
 import { useCallback, useEffect, useRef } from 'react';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
-import { useToggle } from 'react-use';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -25,7 +24,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { trackAlertRuleFilterEvent } from '../../Analytics';
-import { Spacer } from '../../components/Spacer';
 import {
   useAlertingDataSourceOptions,
   useLabelOptions,
@@ -48,37 +46,23 @@ const SIDEBAR_WIDTH = 250;
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
 /**
- * Persistent collapsible filter sidebar for the alert rule list v2.
+ * Persistent filter sidebar for the alert rule list v2.
  * All filters apply immediately on change.
  */
 export function RulesFilterSidebar() {
-  const [open, toggleOpen] = useToggle(true);
   const styles = useStyles2(getStyles);
+  const { hasActiveFilters, clearAll } = useRulesFilter();
 
   return (
-    <div className={cx(styles.sidebar, !open && styles.sidebarCollapsed)}>
-      {open ? (
-        <>
-          <Stack direction="row" alignItems="center">
-            <Button size="sm" variant="primary" fill="text" onClick={() => {}}>
-              <Trans i18nKey="alerting.rules-filter-sidebar.clear-filters">Clear filters</Trans>
-            </Button>
-            <Spacer />
-            <Button size="sm" variant="secondary" icon="angle-left" onClick={toggleOpen}>
-              <Trans i18nKey="alerting.rules-filter-sidebar.hide-filters">Hide filters</Trans>
-            </Button>
-          </Stack>
-          <FilterSidebarForm />
-        </>
-      ) : (
-        <Button
-          variant="secondary"
-          size="sm"
-          icon="filter"
-          onClick={toggleOpen}
-          aria-label={t('alerting.rule-list.filter-sidebar.collapse', 'Show filters')}
-        />
-      )}
+    <div className={styles.sidebar}>
+      <Stack direction="column" gap={0}>
+        <Stack direction="row" justifyContent="flex-end">
+          <Button size="sm" variant="primary" fill="text" onClick={clearAll} disabled={!hasActiveFilters}>
+            <Trans i18nKey="alerting.rules-filter-sidebar.clear-filters">Clear filters</Trans>
+          </Button>
+        </Stack>
+        <FilterSidebarForm />
+      </Stack>
     </div>
   );
 }
@@ -539,10 +523,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexShrink: 0,
       paddingRight: theme.spacing(2),
       paddingBottom: theme.spacing(2),
-    }),
-    sidebarCollapsed: css({
-      width: 0,
-      borderRight: 'none',
     }),
     section: css({
       display: 'flex',

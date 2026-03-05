@@ -34,17 +34,19 @@ function RuleList() {
   return (
     <Stack direction="column">
       <AlertsActivityBanner />
-      <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
-      <div style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
-        {filterV2Enabled && <RulesFilterSidebar />}
-        <div style={{ flex: 1, minWidth: 0, paddingLeft: filterV2Enabled ? '16px' : undefined }}>
-          {viewMode === 'list' ? (
-            <FilterView filterState={filterState} />
-          ) : (
-            <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
-          )}
+      <Stack direction="column" gap={2}>
+        <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
+        <div style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
+          {filterV2Enabled && <RulesFilterSidebar />}
+          <div style={{ flex: 1, minWidth: 0, paddingLeft: filterV2Enabled ? '16px' : undefined }}>
+            {viewMode === 'list' ? (
+              <FilterView filterState={filterState} />
+            ) : (
+              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+            )}
+          </div>
         </div>
-      </div>
+      </Stack>
     </Stack>
   );
 }
