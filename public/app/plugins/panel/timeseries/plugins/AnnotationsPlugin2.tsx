@@ -290,6 +290,7 @@ export const AnnotationsPlugin2 = ({
               portalRoot={portalRoot}
               canExecuteActions={userCanExecuteActions}
               replaceVariables={replaceVariables}
+              xAxisElem={xAxisRef.current!}
             />
           );
         }

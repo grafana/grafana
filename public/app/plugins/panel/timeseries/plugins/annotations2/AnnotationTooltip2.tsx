@@ -77,22 +77,8 @@ export const AnnotationTooltip2 = ({
     text = annoVals.title[annoIdx] + (text ? `<br />${text}` : '');
   }
 
-  let ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isPinned) {
-      ref.current?.closest('.u-axis')?.style.pointerEvents = 'none';
-    }
-
-    return () => {
-      if (isPinned) {
-        ref.current?.closest('.u-axis')?.style.pointerEvents = 'all';
-      }
-    };
-  }, [isPinned]);
-
   return (
-    <div className={styles.wrapper} ref={ref}>
+    <div className={styles.wrapper}>
       <div className={styles.header}>
         <Stack gap={2} basis="100%" justifyContent="space-between" alignItems="center">
           <div className={styles.meta}>

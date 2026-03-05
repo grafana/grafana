@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { autoUpdate } from '@floating-ui/dom';
 import { useFloating } from '@floating-ui/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
@@ -25,6 +25,7 @@ interface AnnoBoxProps {
   portalRoot: HTMLElement;
   canExecuteActions: boolean;
   replaceVariables: InterpolateFunction;
+  xAxisElem: HTMLElement;
 }
 
 const STATE_DEFAULT = 0;
@@ -43,6 +44,7 @@ export const AnnotationMarker2 = ({
   portalRoot,
   replaceVariables,
   canExecuteActions,
+  xAxisElem,
 }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
   const placement = 'bottom';
@@ -92,6 +94,18 @@ export const AnnotationMarker2 = ({
         }}
       />
     ) : null;
+
+  useEffect(() => {
+    if (state === STATE_PINNED) {
+      xAxisElem.style.pointerEvents = 'none';
+    }
+
+    return () => {
+      if (state === STATE_PINNED) {
+        xAxisElem.style.pointerEvents = 'all';
+      }
+    };
+  }, [state]);
 
   return (
     <div
