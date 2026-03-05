@@ -277,6 +277,11 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 	return nil
 }
 
+// EnsureNamespace is not gated by leader election: it is called inline from
+// the authorization request path and must complete before the caller can
+// proceed. It only creates stores for new namespaces. Any overlap with the
+// leader's background reconciliation loop is safe because reconcileNamespace
+// is idempotent.
 func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) error {
 	ctx, span := r.tracer.Start(ctx, "reconciler.EnsureNamespace")
 	defer span.End()
@@ -289,13 +294,6 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 	if store != nil {
 		return nil
 	}
-
-	// EnsureNamespace is not gated by leader election: it is called inline from
-	// the authorization request path and must complete before the caller can
-	// proceed. It only runs reconcileNamespace for truly new stores, so there is
-	// no write race with the leader's background loop (the leader cannot be
-	// reconciling a store that doesn't exist yet). In the unlikely event of
-	// overlap the diff is idempotent.
 
 	// Create store if it doesn't exist
 	_, err = r.server.GetOrCreateStore(ctx, namespace)
