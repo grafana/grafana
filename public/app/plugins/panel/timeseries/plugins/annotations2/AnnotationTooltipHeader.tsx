@@ -75,7 +75,10 @@ export function AnnotationTooltipHeader({
                 />
               )}
               {onRemove && isPinned && (
-                <AnnotationTooltipHeaderCloseIcon onClick={onRemove} ref={canEdit || canDelete ? null : focusRef} />
+                <AnnotationTooltipHeaderCloseIcon
+                  onClick={onRemove}
+                  forwardRef={canEdit || canDelete ? null : focusRef}
+                />
               )}
             </div>
           )}

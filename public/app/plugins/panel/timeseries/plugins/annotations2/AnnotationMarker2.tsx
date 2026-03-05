@@ -86,6 +86,7 @@ export const AnnotationMarker2 = ({
 
   if (isHovering || isPinned) {
     frame.fields.forEach((field) => {
+      // @todo https://github.com/grafana/grafana/issues/119619, need to set getLinks on field, or applyFieldOverrides on dataframe
       links.push(...getDataLinks(field, annoIdx));
 
       if (canExecuteActions) {
@@ -93,6 +94,16 @@ export const AnnotationMarker2 = ({
       }
     });
   }
+
+  // @todo sync with base branch changes
+  // Is the annotation being edited
+  // const showEditor = state === STATE_EDITING;
+  // // Is the tooltip pinned and not being edited
+  // const isTooltipPinned = isPinned && !showEditor;
+  // // Is the tooltip hovered and another tooltip is not pinned and not being edited
+  // const isTooltipHovered = showTooltipOnHover && isHovering && !showEditor;
+  // // Show the tooltip if pinned or hovered
+  // const showTooltip = isTooltipPinned || isTooltipHovered;
 
   const isEditing = editAnnotationId !== null;
   const showTooltip = (isPinned && !isEditing) || (showTooltipOnHover && isHovering && !isEditing);
@@ -128,7 +139,6 @@ export const AnnotationMarker2 = ({
       />
     ) : isEditing ? (
       <AnnotationEditor2
-        isPinned={isPinned}
         annoIdx={editIdx}
         annoVals={annoVals}
         timeZone={timeZone}

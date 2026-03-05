@@ -26,7 +26,7 @@ interface AnnotationsPluginProps {
   annotations: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
-  setNewRange: (newRage: TimeRange2 | null) => void;
+  setNewRange: (newRange: TimeRange2 | null) => void;
   canvasRegionRendering?: boolean;
   replaceVariables: InterpolateFunction;
 }
@@ -189,6 +189,7 @@ export const AnnotationsPlugin2 = ({
       const ctx = u.ctx;
 
       ctx.save();
+
       ctx.beginPath();
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
@@ -290,12 +291,17 @@ export const AnnotationsPlugin2 = ({
   }, [xAnnos, plot]);
 
   // Set active annotation tooltip state
-  const setPinnedAnootationIndex = useCallback((annoIdx: string | undefined) => {
+  const setPinnedAnnotationIndex = useCallback((annoIdx: string | undefined) => {
     setPinnedAnnotationId(annoIdx);
   }, []);
 
   if (plot) {
+    const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
+    const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
+    const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time?.[0] && wipVals?.time?.[0] > 0;
+
     const markers = xAnnoRef.current.flatMap((frame, frameIdx) => {
+      const isWipFrame = frame?.meta?.custom?.isWip;
       const vals = getVals<AnnotationVals>(frame);
       const markers: React.ReactNode[] = [];
 
@@ -332,27 +338,32 @@ export const AnnotationsPlugin2 = ({
 
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
-          const isWip = frame.meta?.custom?.isWip;
           const setPinned = (active: boolean) => {
             if (active) {
-              setPinnedAnootationIndex(getAnnotationKey(frameIdx, i));
+              setPinnedAnnotationIndex(getAnnotationKey(frameIdx, i));
             } else {
-              setPinnedAnootationIndex(undefined);
+              setPinnedAnnotationIndex(undefined);
             }
           };
+
+          // Do not let other tooltips render if one is already pinned, or the wip is being edited
+          const showTooltipOnHover = !pinnedAnnotationId && !isWipVisible;
+
+          // The tooltip should render as pinned if the pinned state index matches this annotation
+          const isPinned = pinnedAnnotationId === getAnnotationKey(frameIdx, i);
 
           markers.push(
             <AnnotationMarker2
               key={getAnnotationKey(frameIdx, i)}
               setPinned={setPinned}
-              isPinned={pinnedAnnotationId === getAnnotationKey(frameIdx, i)}
-              showTooltipOnHover={!pinnedAnnotationId}
+              isPinned={isPinned}
+              showTooltipOnHover={showTooltipOnHover}
               frame={frame}
               annoIdx={i}
               annoVals={vals}
               style={style}
               timeZone={timeZone}
-              exitWipEdit={isWip ? exitWipEdit : null}
+              exitWipEdit={isWipFrame ? exitWipEdit : null}
               portalRoot={portalRoot}
               canExecuteActions={userCanExecuteActions}
               replaceVariables={replaceVariables}

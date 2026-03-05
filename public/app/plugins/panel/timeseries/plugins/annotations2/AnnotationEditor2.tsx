@@ -19,7 +19,6 @@ interface Props {
   annoIdx: number;
   timeZone: string;
   dismiss: () => void;
-  isPinned: boolean;
 }
 
 interface AnnotationEditFormDTO {
@@ -27,7 +26,7 @@ interface AnnotationEditFormDTO {
   tags: string[];
 }
 
-export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, isPinned, ...otherProps }: Props) => {
+export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
   const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
 
@@ -79,22 +78,21 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, isPinn
     <div ref={clickAwayRef} className={styles.editor} {...otherProps}>
       <div className={styles.header}>
         <Stack justifyContent={'space-between'} alignItems={'center'}>
-          <Stack width={'100%'} justifyContent={'space-between'} alignItems={'center'}>
-            {isUpdatingAnnotation
-              ? t('timeseries.annotation-editor2.edit-annotation', 'Edit annotation')
-              : t('timeseries.annotation-editor2.add-annotation', 'Add annotation')}
+          <Stack width="100%" justifyContent={'space-between'} alignItems={'center'}>
+            <div>
+              {isUpdatingAnnotation
+                ? t('timeseries.annotation-editor2.edit-annotation', 'Edit annotation')
+                : t('timeseries.annotation-editor2.add-annotation', 'Add annotation')}
+            </div>
             <div>{time}</div>
           </Stack>
-
-          {isPinned && (
-            <AnnotationTooltipHeaderCloseIcon
-              onClick={(e) => {
-                // Don't trigger onClick
-                e.stopPropagation();
-                dismiss();
-              }}
-            />
-          )}
+          <AnnotationTooltipHeaderCloseIcon
+            onClick={(e) => {
+              // Don't trigger onClick
+              e.stopPropagation();
+              dismiss();
+            }}
+          />
         </Stack>
       </div>
       <Form<AnnotationEditFormDTO>
@@ -158,6 +156,12 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, isPinn
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    controls: css({
+      display: 'flex',
+      '> :last-child': {
+        marginLeft: 0,
+      },
+    }),
     editor: css({
       background: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,

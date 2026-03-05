@@ -24,6 +24,7 @@ import {
   mockIRMAnnotation,
   mockIRMAnnotationRegion,
   mockIRMClusteringAnnotation,
+  mockWipFrame,
 } from './mocks/mockAnnotationFrames';
 
 const minTime = 1759388895560;
@@ -289,6 +290,42 @@ describe('AnnotationsPlugin2', () => {
           );
         });
 
+        it('cannot hover other tooltips while wip is being edited', async () => {
+          mockUsePanelContext.mockReturnValue({
+            canExecuteActions: () => true,
+            canEditAnnotations: () => true,
+            canDeleteAnnotations: () => true,
+          } as PanelContext);
+
+          setUp({ annotations: [frame, mockWipFrame] });
+
+          // Wait for AnnotationsPlugin2 setTimeout(forceUpdate) to complete
+          await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          });
+
+          // WIP edit state should be visible
+          expect(screen.getByText('Add annotation')).toBeVisible();
+
+          // Wip edit state should have close icon (like the pinned state)
+          expect(screen.getByRole('button', { name: 'Close' })).toBeVisible();
+
+          const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+          const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
+
+          expect(firstMarker).toBeVisible();
+          expect(markers).toHaveLength(4);
+
+          // Hover over another marker that is not the wip anno
+          await userEvent.hover(firstMarker);
+
+          // Should only be one tooltip visible
+          expect(screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.tooltip)).toHaveLength(1);
+
+          // And it should be the wip edit tooltip
+          expect(screen.getByText('Add annotation')).toBeVisible();
+        });
+
         it('pins on keyboard', async () => {
           mockUsePanelContext.mockReturnValue({
             canExecuteActions: () => false,
@@ -479,7 +516,7 @@ describe('AnnotationsPlugin2', () => {
   });
 
   describe('wip', () => {
-    // Apparently you can command click and drag to create an annotation region? These might be better to test in e2e
+    // These might be better to test in e2e since they are generated in the parent viz component
     it.todo('can create annotation region');
     it.todo('can create annotation');
   });
