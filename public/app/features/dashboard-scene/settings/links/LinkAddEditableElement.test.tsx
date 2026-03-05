@@ -5,7 +5,6 @@ import { DashboardLink } from '@grafana/schema';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
-import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { LinkEdit, LinkEditEditableElement, linkSelectionId, openAddLinkPane } from './LinkAddEditableElement';
@@ -70,15 +69,6 @@ describe('LinkAddEditableElement', () => {
       expect(dashboard.state.links).toHaveLength(2);
       expect(dashboard.state.links[0].title).toBe('Existing');
       expect(dashboard.state.links[1].title).toBe(NEW_LINK.title);
-    });
-
-    it('tracks the add-link interaction', () => {
-      const spy = jest.spyOn(DashboardInteractions, 'addLinkButtonClicked');
-      const dashboard = buildDashboard();
-
-      openAddLinkPane(dashboard);
-
-      expect(spy).toHaveBeenCalledWith({ source: 'edit_pane' });
     });
 
     it('registers an undoable action on the edit pane', () => {

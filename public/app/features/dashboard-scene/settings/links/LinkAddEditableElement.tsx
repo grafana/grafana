@@ -8,7 +8,6 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
-import { DashboardInteractions } from '../../utils/interactions';
 
 import {
   LinkAsDropdownSwitch,
@@ -37,7 +36,6 @@ export function openAddLinkPane(dashboard: DashboardScene) {
   const element = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
 
   linkEditActions.addLink({ dashboard, link: newLink, addedObject: element });
-  DashboardInteractions.addLinkButtonClicked({ source: 'edit_pane' });
 }
 
 export function linkSelectionId(linkIndex: number) {
