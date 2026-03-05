@@ -388,7 +388,6 @@
         "timing-options": "타이밍"
       },
       "pending-period": "보류 기간",
-      "rule": "규칙",
       "rule-identifier": "규칙 식별자",
       "rule-type": "규칙 유형",
       "state-error-timeout": "실행 오류 또는 타임아웃 시 경고 상태",
@@ -3390,8 +3389,14 @@
     },
     "triage": {
       "alert-instances": "알림 인스턴스",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "규칙 로딩 중 오류 발생",
-      "firing-instances-count": "발동 중인 알림 인스턴스",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "인스턴스 세부 정보"
       },
@@ -3401,7 +3406,6 @@
       "no-matching-instances-with-filters": "선택한 시간 범위의 필터 설정과 일치되는 알림 인스턴스가 없습니다.",
       "open-in-sidebar": "사이드바에서 열기",
       "open-rule-details": "규칙 세부 정보 열기",
-      "pending-instances-count": "대기 중 알림 인스턴스",
       "rule-details": {
         "subtitle": "규칙 세부 정보 및 조건",
         "title": "규칙 세부 정보"
@@ -3410,15 +3414,17 @@
         "description": "요청된 규칙을 찾을 수 없습니다.",
         "title": "규칙을 찾을 수 없습니다"
       },
-      "rules-with-firing-instances": "발동 중인 인스턴스의 알림 규칙",
-      "rules-with-pending-instances": "대기 중인 인스턴스의 알림 규칙",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_other": "",
+      "show-all-labels_other": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "표현식 추가"
@@ -3516,7 +3522,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "세부 정보",
           "enrichment": "알림 강화 기능",
           "history": "이력",
           "instances": "인스턴스",
@@ -4751,7 +4756,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "연결 페이지 링크",
-      "body": "데이터 소스를 위한 새로운 홈이 생겼습니다! 메인 메뉴에서 액세스할 수 있는 연결 페이지에서 새 데이터 소스를 검색하거나 기존 데이터 소스를 관리할 수 있습니다.",
+      "body": "데이터 소스를 위한 새로운 홈이 생겼습니다! 메인 메뉴에서 액세스할 수 있는 <0>연결 페이지</0>에서 새 데이터 소스를 검색하거나 기존 데이터 소스를 관리할 수 있습니다.",
       "go-to-connections": "연결 페이지로 이동"
     },
     "data-source-details-page": {
@@ -5430,11 +5435,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6851,10 +6858,8 @@
       "title-delete-all-transformations": "모든 변환을 삭제하시겠어요?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "표 보기 토글",
-      "table-view-label-table-view": "테이블 보기",
-      "try-new-editor": ""
+      "table-view-label-table-view": "테이블 보기"
     },
     "panel-editor": {
       "text": {
@@ -7130,6 +7135,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "대시보드가 저장되었습니다"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "이 변수는 어떤 변수나 대시보드에서도 참조되지 않습니다.",
       "aria-label-variable-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조됩니다.",
@@ -7222,6 +7234,21 @@
     "variable-values-preview": {
       "show-more": "더 보기",
       "preview-of-values_other": "값 미리보기({{count}}개)"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9846,6 +9873,7 @@
       "csv-placeholder": "여기에 CSV를 입력하세요...",
       "filter": {
         "add-all": "표시된 모든 값을 필터에 추가",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10854,6 +10882,7 @@
     "name-order": "순서",
     "name-prettify-json": "JSON을 보기 좋게 정리",
     "name-show-controls": "컨트롤 표시",
+    "name-show-level": "",
     "name-time": "타임스탬프 표시",
     "name-unique-labels": "고유 레이블",
     "name-unwrapped-columns": "",
@@ -11939,6 +11968,12 @@
       "could-anything-matching-query": "쿼리와 일치하는 항목을 찾을 수 없습니다"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "그룹화 기준",
     "loading": "옵션 불러오는 중",
@@ -12381,6 +12416,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "변경 사항을 설명하는 메모 추가(선택 사항)",
@@ -12420,9 +12461,6 @@
     "title-created-branch-in-repo": "{{repoType}}의 브랜치에 새 리소스가 생성되었습니다.",
     "title-loaded-pull-request-in-repo": "이 리소스는 방금 {{repoType}}에 생성한 브랜치에서 로드되며 본인만 볼 수 있습니다"
   },
-  "provisioned-resource-request-handler": "리소스가 성공적으로 저장되었습니다",
-  "provisioned-resource-request-handler-dashboard": "대시보드가 성공적으로 저장되었습니다",
-  "provisioned-resource-request-handler-folder": "폴더가 성공적으로 생성되었습니다",
   "provisioning": {
     "banner": {
       "message": "이 기능은 현재 적극적으로 개발 중입니다. 최상의 경험과 최신 개선 사항 적용을 위해 Grafana의 <2>야간 빌드</2>를 사용하는 것이 좋습니다."
@@ -13357,6 +13395,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

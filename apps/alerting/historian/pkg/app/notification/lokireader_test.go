@@ -34,6 +34,11 @@ func (m *mockLokiClient) MetricsQuery(ctx context.Context, logQL string, ts int6
 	return args.Get(0).(lokiclient.MetricsQueryRes), args.Error(1)
 }
 
+func (m *mockLokiClient) MetricsRangeQuery(ctx context.Context, logQL string, start, end, limit, step int64) (lokiclient.MetricsRangeQueryRes, error) {
+	args := m.Called(ctx, logQL, start, end, limit, step)
+	return args.Get(0).(lokiclient.MetricsRangeQueryRes), args.Error(1)
+}
+
 func TestLokiReader_Query(t *testing.T) {
 	now := time.Now().UTC()
 	testTimestamp := now.Add(-1 * time.Hour)
@@ -1194,6 +1199,237 @@ func TestParseCount(t *testing.T) {
 			assert.Equal(t, tt.want.Status, got.Status)
 			assert.Equal(t, tt.want.Outcome, got.Outcome)
 			assert.Equal(t, tt.want.Error, got.Error)
+		})
+	}
+}
+
+func TestLokiReader_Query_RangeCounts(t *testing.T) {
+	now := time.Now().UTC()
+	queryTypeRangeCounts := v0alpha1.CreateNotificationqueryRequestBodyTypeRangeCounts
+
+	makeRangeSample := func(metric map[string]string, values [][2]any) lokiclient.MetricRangeSample {
+		svs := make([]lokiclient.MetricSampleValue, 0, len(values))
+		for _, v := range values {
+			ts, _ := json.Marshal(v[0])
+			val, _ := json.Marshal(v[1])
+			svs = append(svs, lokiclient.MetricSampleValue{ts, val})
+		}
+		return lokiclient.MetricRangeSample{Metric: metric, Values: svs}
+	}
+
+	tests := []struct {
+		name          string
+		query         Query
+		lokiResponse  lokiclient.MetricsRangeQueryRes
+		responseError error
+		experr        bool
+		validateFn    func(t *testing.T, result QueryResult)
+	}{
+		{
+			name: "successful range_counts query with results",
+			query: Query{
+				Type:    &queryTypeRangeCounts,
+				GroupBy: &QueryGroupBy{Receiver: true},
+			},
+			lokiResponse: lokiclient.MetricsRangeQueryRes{
+				Data: lokiclient.MetricsRangeQueryData{
+					Result: []lokiclient.MetricRangeSample{
+						makeRangeSample(
+							map[string]string{"receiver": "email"},
+							[][2]any{{1234567890.0, "5"}, {1234567950.0, "10"}},
+						),
+					},
+				},
+			},
+			validateFn: func(t *testing.T, result QueryResult) {
+				require.Len(t, result.Counts, 1)
+				require.NotNil(t, result.Counts[0].Receiver)
+				assert.Equal(t, "email", *result.Counts[0].Receiver)
+				require.Len(t, result.Counts[0].Values, 2)
+				assert.Equal(t, int64(5), result.Counts[0].Values[0].Count)
+				assert.Equal(t, int64(10), result.Counts[0].Values[1].Count)
+			},
+		},
+		{
+			name: "range_counts query with over max limit",
+			query: Query{
+				Type:  &queryTypeRangeCounts,
+				Limit: int64Ptr(1001),
+			},
+			lokiResponse: lokiclient.MetricsRangeQueryRes{},
+			experr:       true,
+		},
+		{
+			name: "range_counts query loki error is propagated",
+			query: Query{
+				Type: &queryTypeRangeCounts,
+			},
+			lokiResponse:  lokiclient.MetricsRangeQueryRes{},
+			responseError: fmt.Errorf("loki unavailable"),
+			experr:        true,
+		},
+		{
+			name: "range_counts query uses custom step",
+			query: Query{
+				Type: &queryTypeRangeCounts,
+				From: timePtr(now.Add(-time.Hour)),
+				To:   timePtr(now),
+				Step: int64Ptr(300),
+			},
+			lokiResponse: lokiclient.MetricsRangeQueryRes{},
+			validateFn: func(t *testing.T, result QueryResult) {
+				assert.Empty(t, result.Counts)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mockLokiClient{}
+			mockClient.On("MetricsRangeQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(tt.lokiResponse, tt.responseError)
+
+			reader := &LokiReader{
+				client: mockClient,
+				logger: &logging.NoOpLogger{},
+			}
+
+			result, err := reader.Query(context.Background(), tt.query)
+			if tt.experr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			if tt.validateFn != nil {
+				tt.validateFn(t, result)
+			}
+		})
+	}
+}
+
+func TestBuildMetricsRangeQuery(t *testing.T) {
+	step := 60 * time.Second
+
+	tests := []struct {
+		name       string
+		logqlInner string
+		step       time.Duration
+		groupBy    QueryGroupBy
+		expected   string
+	}{
+		{
+			name:       "no grouping",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{},
+			expected:   `sum(count_over_time({foo="bar"} | json[60s]))`,
+		},
+		{
+			name:       "group by receiver",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{Receiver: true},
+			expected:   `sum by (receiver) (count_over_time({foo="bar"} | json[60s]))`,
+		},
+		{
+			name:       "group by outcome adds label_format",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{Outcome: true},
+			expected:   `sum by (outcome) (count_over_time({foo="bar"} | json | label_format outcome="{{ if .error }}error{{ else }}success{{ end }}"[60s]))`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := buildMetricsRangeQuery(tt.logqlInner, tt.step, tt.groupBy)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestParseRangeCount(t *testing.T) {
+	makeValue := func(ts float64, count string) lokiclient.MetricSampleValue {
+		tsRaw, _ := json.Marshal(ts)
+		countRaw, _ := json.Marshal(count)
+		return lokiclient.MetricSampleValue{tsRaw, countRaw}
+	}
+
+	tests := []struct {
+		name    string
+		sample  lokiclient.MetricRangeSample
+		wantErr bool
+		want    Count
+	}{
+		{
+			name: "empty metric labels",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{},
+				Values: []lokiclient.MetricSampleValue{makeValue(1234567890.0, "5")},
+			},
+			want: Count{
+				Values: []RangeValue{{Timestamp: 1234567890, Count: 5}},
+			},
+		},
+		{
+			name: "with receiver label",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{"receiver": "email"},
+				Values: []lokiclient.MetricSampleValue{makeValue(1000.0, "3")},
+			},
+			want: Count{
+				Receiver: stringPtr("email"),
+				Values:   []RangeValue{{Timestamp: 1000, Count: 3}},
+			},
+		},
+		{
+			name: "multiple values",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{},
+				Values: []lokiclient.MetricSampleValue{
+					makeValue(100.0, "1"),
+					makeValue(200.0, "2"),
+					makeValue(300.0, "3"),
+				},
+			},
+			want: Count{
+				Values: []RangeValue{
+					{Timestamp: 100, Count: 1},
+					{Timestamp: 200, Count: 2},
+					{Timestamp: 300, Count: 3},
+				},
+			},
+		},
+		{
+			name: "non-integer count returns error",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{},
+				Values: []lokiclient.MetricSampleValue{makeValue(100.0, "not-a-number")},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseRangeCount(tt.sample)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want.Receiver, got.Receiver)
+			assert.Equal(t, tt.want.Integration, got.Integration)
+			assert.Equal(t, tt.want.IntegrationIndex, got.IntegrationIndex)
+			assert.Equal(t, tt.want.Status, got.Status)
+			assert.Equal(t, tt.want.Outcome, got.Outcome)
+			assert.Equal(t, tt.want.Error, got.Error)
+			require.Len(t, got.Values, len(tt.want.Values))
+			for i, v := range tt.want.Values {
+				assert.Equal(t, v.Timestamp, got.Values[i].Timestamp)
+				assert.Equal(t, v.Count, got.Values[i].Count)
+			}
 		})
 	}
 }

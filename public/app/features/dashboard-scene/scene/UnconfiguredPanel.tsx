@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { CoreApp, GrafanaTheme2, PanelPlugin, PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -19,7 +19,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { NEW_PANEL_TITLE } from '../../dashboard/utils/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -63,18 +62,6 @@ function UnconfiguredPanelComp(props: PanelProps) {
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
   };
-
-  useEffect(() => {
-    if (!panel || !config.featureToggles.newVizSuggestions) {
-      return;
-    }
-
-    if (panelContext.app === CoreApp.PanelEditor) {
-      panel.setState({ title: '' });
-    } else if (!panel.state.title) {
-      panel.setState({ title: NEW_PANEL_TITLE });
-    }
-  }, [panel, panelContext.app]);
 
   const MenuActions = () => (
     <Menu>
