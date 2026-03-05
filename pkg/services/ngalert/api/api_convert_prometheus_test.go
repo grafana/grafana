@@ -726,7 +726,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 					Receiver: "",
 				}),
 				expectedStatus: http.StatusBadRequest,
-				expectedBody:   "at least one of policy routing or contact point routing must be specified",
+				expectedBody:   "notification policy or receiver must be specified",
 			},
 			{
 				name: "returns error when both receiver and policy are specified",

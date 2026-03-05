@@ -55,9 +55,6 @@ func (s *NotificationSettings) Validate() error {
 	if s.PolicyRouting != nil && s.ContactPointRouting != nil {
 		return errors.New("only one of policy routing or contact point routing can be specified")
 	}
-	if s.PolicyRouting == nil && s.ContactPointRouting == nil {
-		return errors.New("at least one of policy routing or contact point routing must be specified")
-	}
 	if s.ContactPointRouting != nil {
 		return s.ContactPointRouting.Validate()
 	}

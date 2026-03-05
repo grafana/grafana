@@ -1076,7 +1076,7 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 		{
 			name:                 "contact point and policy routing both unspecific is invalid",
 			notificationSettings: apimodels.AlertRuleNotificationSettings{},
-			expErrorContains:     "at least one of policy routing or contact point routing must be specified",
+			expErrorContains:     "notification policy or receiver must be specified",
 		},
 		{
 			name:                 "contact point and policy routing both specific is invalid",

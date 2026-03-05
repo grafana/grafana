@@ -112,9 +112,8 @@ func TestValidate(t *testing.T) {
 			expErrorContains:     "default",
 		},
 		{
-			name:                 "contact point and policy routing both unspecific is invalid",
-			notificationSettings: NotificationSettings{},
-			expErrorContains:     "at least one of policy routing or contact point routing must be specified",
+			name:                 "contact point and policy routing both unspecific is valid",
+			notificationSettings: NotificationSettings{}, // Additional checks are done at the API level to reject this, but at the model level it's ok to ignore this state.
 		},
 		{
 			name:                 "contact point and policy routing both specific is invalid",
