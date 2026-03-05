@@ -310,6 +310,344 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		require.True(t, testResults.Success, "test should succeed when branch protection check returns 403 (lacks admin permissions)")
 		require.Equal(t, 200, testResults.Code)
 	})
+
+	// Rulesets-specific test cases
+	t.Run("write workflow with ruleset requiring pull request returns error", func(t *testing.T) {
+		repoFactory := helper.GetEnv().GithubRepoFactory
+		// Mock no classic branch protection, but rulesets require PR
+		repoFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+						Message: "Branch not protected",
+					}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					target := github.RulesetTargetBranch
+					rulesets := []*github.RepositoryRuleset{
+						{
+							ID:          github.Ptr(int64(1)),
+							Name:        github.Ptr("main protection"),
+							Enforcement: github.Ptr(github.RulesetEnforcementActive),
+							Target:      &target,
+							Conditions: &github.RepositoryRulesetConditions{
+								RefName: &github.RepositoryRulesetRefConditionParameters{
+									Include: []string{"refs/heads/main"},
+								},
+							},
+							Rules: &github.RepositoryRulesetRules{
+								PullRequest: &github.PullRequestRuleParameters{},
+							},
+						},
+					}
+					w.WriteHeader(http.StatusOK)
+					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+				}),
+			),
+		)
+		helper.SetGithubRepositoryFactory(repoFactory)
+
+		rawBody, _ := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-ruleset-pr").
+			SubResource("test").
+			Body(makeRepoConfig("test-ruleset-pr", []string{"write"})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).
+			Raw()
+
+		var testResults provisioning.TestResults
+		require.NoError(t, json.Unmarshal(rawBody, &testResults))
+		require.False(t, testResults.Success, "test should fail when ruleset requires pull request")
+		require.NotEmpty(t, testResults.Errors, "should have errors")
+		require.Equal(t, "spec.workflows", testResults.Errors[0].Field, "error should target spec.workflows")
+		require.Contains(t, testResults.Errors[0].Detail, "ruleset requires pull request")
+		require.Contains(t, testResults.Errors[0].Detail, "protection rules that prevent direct pushes")
+	})
+
+	t.Run("write workflow with ruleset having blocking rules returns error", func(t *testing.T) {
+		repoFactory := helper.GetEnv().GithubRepoFactory
+		// Mock no classic branch protection, but rulesets have blocking rules
+		repoFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+						Message: "Branch not protected",
+					}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					target := github.RulesetTargetBranch
+					rulesets := []*github.RepositoryRuleset{
+						{
+							ID:          github.Ptr(int64(2)),
+							Name:        github.Ptr("main protection"),
+							Enforcement: github.Ptr(github.RulesetEnforcementActive),
+							Target:      &target,
+							Conditions: &github.RepositoryRulesetConditions{
+								RefName: &github.RepositoryRulesetRefConditionParameters{
+									Include: []string{"main"},
+								},
+							},
+							Rules: &github.RepositoryRulesetRules{
+								RequiredStatusChecks: &github.RequiredStatusChecksRuleParameters{},
+							},
+						},
+					}
+					w.WriteHeader(http.StatusOK)
+					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+				}),
+			),
+		)
+		helper.SetGithubRepositoryFactory(repoFactory)
+
+		rawBody, _ := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-ruleset-blocking").
+			SubResource("test").
+			Body(makeRepoConfig("test-ruleset-blocking", []string{"write"})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).
+			Raw()
+
+		var testResults provisioning.TestResults
+		require.NoError(t, json.Unmarshal(rawBody, &testResults))
+		require.False(t, testResults.Success, "test should fail when ruleset has blocking rules")
+		require.NotEmpty(t, testResults.Errors, "should have errors")
+		require.Equal(t, "spec.workflows", testResults.Errors[0].Field, "error should target spec.workflows")
+		require.Contains(t, testResults.Errors[0].Detail, "ruleset has blocking rules")
+		require.Contains(t, testResults.Errors[0].Detail, "protection rules that prevent direct pushes")
+	})
+
+	t.Run("write workflow with both classic protection and rulesets returns error with all reasons", func(t *testing.T) {
+		repoFactory := helper.GetEnv().GithubRepoFactory
+		// Mock both classic branch protection and rulesets
+		repoFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					protection := &github.Protection{
+						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
+					}
+					_, _ = w.Write(ghmock.MustMarshal(protection))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					target := github.RulesetTargetBranch
+					rulesets := []*github.RepositoryRuleset{
+						{
+							ID:          github.Ptr(int64(3)),
+							Name:        github.Ptr("main protection"),
+							Enforcement: github.Ptr(github.RulesetEnforcementActive),
+							Target:      &target,
+							Conditions: &github.RepositoryRulesetConditions{
+								RefName: &github.RepositoryRulesetRefConditionParameters{
+									Include: []string{"refs/heads/main"},
+								},
+							},
+							Rules: &github.RepositoryRulesetRules{
+								PullRequest: &github.PullRequestRuleParameters{},
+							},
+						},
+					}
+					w.WriteHeader(http.StatusOK)
+					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+				}),
+			),
+		)
+		helper.SetGithubRepositoryFactory(repoFactory)
+
+		rawBody, _ := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-combined-protection").
+			SubResource("test").
+			Body(makeRepoConfig("test-combined-protection", []string{"write"})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).
+			Raw()
+
+		var testResults provisioning.TestResults
+		require.NoError(t, json.Unmarshal(rawBody, &testResults))
+		require.False(t, testResults.Success, "test should fail when both classic protection and rulesets are active")
+		require.NotEmpty(t, testResults.Errors, "should have errors")
+		require.Equal(t, "spec.workflows", testResults.Errors[0].Field, "error should target spec.workflows")
+		// Should contain both classic protection and ruleset reasons
+		require.Contains(t, testResults.Errors[0].Detail, "branch is locked")
+		require.Contains(t, testResults.Errors[0].Detail, "ruleset requires pull request")
+		require.Contains(t, testResults.Errors[0].Detail, "protection rules that prevent direct pushes")
+	})
+
+	t.Run("write workflow with disabled ruleset succeeds", func(t *testing.T) {
+		repoFactory := helper.GetEnv().GithubRepoFactory
+		// Mock ruleset that is disabled (should be ignored)
+		repoFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+						Message: "Branch not protected",
+					}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					target := github.RulesetTargetBranch
+					rulesets := []*github.RepositoryRuleset{
+						{
+							ID:          github.Ptr(int64(4)),
+							Name:        github.Ptr("disabled ruleset"),
+							Enforcement: github.Ptr(github.RulesetEnforcementDisabled),
+							Target:      &target,
+							Rules: &github.RepositoryRulesetRules{
+								PullRequest: &github.PullRequestRuleParameters{},
+							},
+						},
+					}
+					w.WriteHeader(http.StatusOK)
+					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+				}),
+			),
+		)
+		helper.SetGithubRepositoryFactory(repoFactory)
+
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-disabled-ruleset").
+			SubResource("test").
+			Body(makeRepoConfig("test-disabled-ruleset", []string{"write"})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.NoError(t, result.Error())
+
+		obj, err := result.Get()
+		require.NoError(t, err)
+
+		testResults := parseTestResults(t, obj)
+		require.True(t, testResults.Success, "test should succeed when ruleset is disabled")
+		require.Equal(t, 200, testResults.Code)
+	})
+
+	t.Run("write workflow with ruleset not matching branch succeeds", func(t *testing.T) {
+		repoFactory := helper.GetEnv().GithubRepoFactory
+		// Mock ruleset that doesn't match the branch we're testing (main)
+		repoFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+						Message: "Branch not protected",
+					}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					target := github.RulesetTargetBranch
+					rulesets := []*github.RepositoryRuleset{
+						{
+							ID:          github.Ptr(int64(5)),
+							Name:        github.Ptr("production protection"),
+							Enforcement: github.Ptr(github.RulesetEnforcementActive),
+							Target:      &target,
+							Conditions: &github.RepositoryRulesetConditions{
+								RefName: &github.RepositoryRulesetRefConditionParameters{
+									Include: []string{"refs/heads/production"},
+								},
+							},
+							Rules: &github.RepositoryRulesetRules{
+								PullRequest: &github.PullRequestRuleParameters{},
+							},
+						},
+					}
+					w.WriteHeader(http.StatusOK)
+					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
+				}),
+			),
+		)
+		helper.SetGithubRepositoryFactory(repoFactory)
+
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-non-matching-ruleset").
+			SubResource("test").
+			Body(makeRepoConfig("test-non-matching-ruleset", []string{"write"})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.NoError(t, result.Error())
+
+		obj, err := result.Get()
+		require.NoError(t, err)
+
+		testResults := parseTestResults(t, obj)
+		require.True(t, testResults.Success, "test should succeed when ruleset doesn't match the branch")
+		require.Equal(t, 200, testResults.Code)
+	})
+
+	t.Run("write workflow with forbidden (403) rulesets check succeeds", func(t *testing.T) {
+		// Simulate a 403 Forbidden response when checking rulesets.
+		// This happens when the token lacks permissions to view rulesets.
+		// The test should succeed (skip the check gracefully) rather than fail.
+		repoFactory := helper.GetEnv().GithubRepoFactory
+		repoFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+						Message: "Branch not protected",
+					}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesetsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusForbidden)
+					_, _ = w.Write([]byte(`{"message":"Resource not accessible"}`))
+				}),
+			),
+		)
+		helper.SetGithubRepositoryFactory(repoFactory)
+
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name("test-ruleset-forbidden").
+			SubResource("test").
+			Body(makeRepoConfig("test-ruleset-forbidden", []string{"write"})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.NoError(t, result.Error())
+
+		obj, err := result.Get()
+		require.NoError(t, err)
+
+		testResults := parseTestResults(t, obj)
+		require.True(t, testResults.Success, "test should succeed when rulesets check returns 403 (gracefully skip)")
+		require.Equal(t, 200, testResults.Code)
+	})
 }
 
 // startTestGitServer creates a minimal HTTP server that responds to git smart HTTP protocol requests.
