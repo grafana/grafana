@@ -356,6 +356,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, dbConfig *ngmodels.Aler
 		AutogenRuleStore: am.Store,
 		Logger:           am.logger,
 		Features:         am.features,
+		Limits:           am.dynamicLimits,
 	})
 	if err != nil {
 		return false, fmt.Errorf("unable to prepare configuration: %w", err)
