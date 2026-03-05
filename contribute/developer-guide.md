@@ -169,6 +169,7 @@ CGO_ENABLED=0 make build-go
 # Build with Go defaults
 unset CGO_ENABLED && make build-go
 ```
+
 #### Build on Windows
 
 The Grafana backend includes SQLite, a database which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC with binutils version 2.37 or later.
