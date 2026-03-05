@@ -28,7 +28,7 @@ interface AnnotationsPluginProps {
   annotations: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
-  setNewRange: (newRage: TimeRange2 | null) => void;
+  setNewRange: (newRange: TimeRange2 | null) => void;
   canvasRegionRendering?: boolean;
   replaceVariables: InterpolateFunction;
   multiLane?: boolean;
@@ -234,7 +234,7 @@ export const AnnotationsPlugin2 = ({
   }, [xAnnos, plot]);
 
   // Set active annotation tooltip state
-  const setPinnedAnootationIndex = useCallback((annoIdx: string | undefined) => {
+  const setPinnedAnnotationIndex = useCallback((annoIdx: string | undefined) => {
     setPinnedAnnotationId(annoIdx);
   }, []);
 
@@ -277,9 +277,9 @@ export const AnnotationsPlugin2 = ({
           const isWip = frame.meta?.custom?.isWip;
           const setPinned = (active: boolean) => {
             if (active) {
-              setPinnedAnootationIndex(getAnnotationKey(frameIdx, i));
+              setPinnedAnnotationIndex(getAnnotationKey(frameIdx, i));
             } else {
-              setPinnedAnootationIndex(undefined);
+              setPinnedAnnotationIndex(undefined);
             }
           };
 
@@ -287,7 +287,9 @@ export const AnnotationsPlugin2 = ({
             <AnnotationMarker2
               key={getAnnotationKey(frameIdx, i)}
               setPinned={setPinned}
+              //@todo we want to set isPinned if the current annotation is in a wip editing state
               isPinned={pinnedAnnotationId === getAnnotationKey(frameIdx, i)}
+              // @todo we want showTooltipOnHover to be false when a wip tooltip is displayed to prevent tooltips from overlaying the wip editor
               showTooltipOnHover={!pinnedAnnotationId}
               frame={frame}
               annoIdx={i}

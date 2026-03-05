@@ -86,34 +86,39 @@ export const AnnotationMarker2 = ({
     });
   }
 
-  const isTooltipPinned = isPinned && !(state === STATE_EDITING);
-  const isTooltipHovered = showTooltipOnHover && isHovering && !(state === STATE_EDITING);
+  // Is the annotation being edited
+  const showEditor = state === STATE_EDITING;
+  // Is the tooltip pinned and not being edited
+  const isTooltipPinned = isPinned && !showEditor;
+  // Is the tooltip hovered and another tooltip is not pinned and not being edited
+  const isTooltipHovered = showTooltipOnHover && isHovering && !showEditor;
+  // Show the tooltip if pinned or hovered
+  const showTooltip = isTooltipPinned || isTooltipHovered;
 
-  const contents =
-    isTooltipPinned || isTooltipHovered ? (
-      <AnnotationTooltip2
-        annoIdx={annoIdx}
-        annoVals={annoVals}
-        timeZone={timeZone}
-        onClose={onClose}
-        isPinned={isPinned}
-        onEdit={() => setState(STATE_EDITING)}
-        links={links}
-        actions={actions}
-      />
-    ) : state === STATE_EDITING ? (
-      <AnnotationEditor2
-        isPinned={isPinned}
-        annoIdx={annoIdx}
-        annoVals={annoVals}
-        timeZone={timeZone}
-        dismiss={() => {
-          exitWipEdit?.();
-          setState(STATE_DEFAULT);
-          onClose();
-        }}
-      />
-    ) : null;
+  const contents = showTooltip ? (
+    <AnnotationTooltip2
+      annoIdx={annoIdx}
+      annoVals={annoVals}
+      timeZone={timeZone}
+      onClose={onClose}
+      isPinned={isPinned}
+      onEdit={() => setState(STATE_EDITING)}
+      links={links}
+      actions={actions}
+    />
+  ) : showEditor ? (
+    <AnnotationEditor2
+      isPinned={isPinned}
+      annoIdx={annoIdx}
+      annoVals={annoVals}
+      timeZone={timeZone}
+      dismiss={() => {
+        exitWipEdit?.();
+        setState(STATE_DEFAULT);
+        onClose();
+      }}
+    />
+  ) : null;
 
   return (
     <button
