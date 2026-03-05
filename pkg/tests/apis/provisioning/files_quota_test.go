@@ -196,9 +196,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 	t.Run("quota exceeded blocks both create and update via files endpoint", func(t *testing.T) {
 		// With folder target: 2 dashboards + 1 folder = 3 resources, limit 1 → exceeded
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 1
-		})
+		helper := common.RunGrafana(t)
 		ctx := context.Background()
 
 		const repo = "files-quota-exceeded-repo"
