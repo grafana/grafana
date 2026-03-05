@@ -238,6 +238,10 @@ export class ScopesService implements ScopesContextValue {
    * edit mode scopes changes). It remains available for programmatic control by external
    * consumers or plugins that may need to temporarily disable scopes selection.
    */
+  public setRedirectEnabled = (enabled: boolean) => {
+    this.selectorService.setRedirectEnabled(enabled);
+  };
+
   public setReadOnly = (readOnly: boolean) => {
     if (this.state.readOnly !== readOnly) {
       this.updateState({ readOnly });

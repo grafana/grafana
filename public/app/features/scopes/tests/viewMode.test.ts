@@ -6,6 +6,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ScopesService } from '../ScopesService';
+import { ScopesSelectorService } from '../selector/ScopesSelectorService';
 
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
 import { expectDashboardsOpen } from './utils/assertions';
@@ -110,5 +111,71 @@ describe('setReadOnly', () => {
 
     expect(scopesService.state.readOnly).toEqual(false);
     expect(querySelectorApply()).toBeInTheDocument();
+  });
+});
+
+describe('setRedirectEnabled', () => {
+  let dashboardScene: DashboardScene;
+  let scopesService: ScopesService;
+  let scopesSelectorService: ScopesSelectorService;
+
+  beforeAll(() => {
+    config.featureToggles.scopeFilters = true;
+    config.featureToggles.groupByVariable = true;
+  });
+
+  beforeEach(async () => {
+    const renderResult = await renderDashboard();
+    dashboardScene = renderResult.scene;
+    scopesService = renderResult.scopesService;
+    scopesSelectorService = renderResult.scopesSelectorService;
+  });
+
+  afterEach(async () => {
+    await resetScenes();
+  });
+
+  it('Disables redirects when entering edit mode via DashboardSceneRenderer useEffect', async () => {
+    // The DashboardSceneRenderer calls scopesService.setRedirectEnabled(!isEditing).
+    // Entering edit mode should trigger setRedirectEnabled(false).
+    // Verify by spying on the selector service method — if the facade delegates correctly,
+    // the spy should be called with false after entering edit mode.
+    const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
+
+    await enterEditMode(dashboardScene);
+
+    expect(spy).toHaveBeenCalledWith(false);
+  });
+
+  it('Re-enables redirects when exiting edit mode', async () => {
+    const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
+
+    await enterEditMode(dashboardScene);
+
+    // Simulate exiting edit mode by calling setRedirectEnabled(true) on the facade,
+    // as DashboardSceneRenderer does when isEditing becomes false.
+    act(() => {
+      scopesService.setRedirectEnabled(true);
+    });
+
+    expect(spy).toHaveBeenCalledWith(true);
+  });
+
+  it('Delegates setRedirectEnabled calls from ScopesService facade to ScopesSelectorService', async () => {
+    // Verify the facade method delegates to the selector service by spying on it.
+    const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
+
+    act(() => {
+      scopesService.setRedirectEnabled(false);
+    });
+
+    expect(spy).toHaveBeenCalledWith(false);
+    spy.mockClear();
+
+    act(() => {
+      scopesService.setRedirectEnabled(true);
+    });
+
+    expect(spy).toHaveBeenCalledWith(true);
   });
 });

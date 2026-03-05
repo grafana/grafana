@@ -2,7 +2,6 @@ import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
-import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -52,6 +51,12 @@ export interface ScopesSelectorServiceState {
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
+  private redirectEnabled = true;
+
+  public setRedirectEnabled(enabled: boolean) {
+    this.redirectEnabled = enabled;
+  }
+
   constructor(
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
@@ -487,10 +492,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
-    // Don't redirect if we're editing a dashboard - users expect to stay on the current dashboard
-    // when changing scopes while editing
-    const dashboard = getDashboardScenePageStateManager().state.dashboard;
-    if (dashboard?.state.isEditing) {
+    if (!this.redirectEnabled) {
       return;
     }
 
