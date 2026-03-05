@@ -72,7 +72,6 @@ func NewRemoteSecondaryFactory(
 	cfgStore configStore,
 	syncInterval time.Duration,
 	crypto Crypto,
-	autogenRuleStore autogenRuleStore,
 	m *metrics.RemoteAlertmanager,
 	t tracing.Tracer,
 	withRemoteState bool,
@@ -83,7 +82,7 @@ func NewRemoteSecondaryFactory(
 			// Create the remote Alertmanager first so we don't need to unregister internal AM metrics if this fails.
 			cfg.OrgID = orgID
 			l := log.New("ngalert.forked-alertmanager.remote-secondary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenRuleStore, m, t, features)
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, m, t, features)
 			if err != nil && withRemoteState {
 				// We can't start the internal Alertmanager without the remote state.
 				return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
