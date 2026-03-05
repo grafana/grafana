@@ -3,7 +3,7 @@ import sloSvg from 'img/slo_logo.svg';
 
 import AdCard, { AdCardProps } from './AdCard';
 
-const LINK = 'https://grafana.com/products/cloud/slo/';
+const LINK = 'https://grafana.com/auth/sign-up/create-user?redirectPath=slo&src=oss-grafana&cnt=alerting-slo';
 const HELP_FLAG_SLO = 0x0040;
 
 export function getSloCardConfig(): AdCardProps {

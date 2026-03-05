@@ -3,12 +3,13 @@ import knowledgeGraphSvg from 'img/knowledge_graph_logo.svg';
 
 import AdCard, { AdCardProps } from './AdCard';
 
-const LINK = 'https://grafana.com/auth/sign-up/create-user?redirectPath=asserts&src=oss-grafana&cnt=alerting-asserts';
+const LINK =
+  'https://grafana.com/auth/sign-up/create-user?redirectPath=knowledge-graph&src=oss-grafana&cnt=alerting-knowledge-graph';
 const HELP_FLAG_ASSERTS = 0x0020;
 
 export function getAssertsCardConfig(): AdCardProps {
   return {
-    title: t('alerting.home.asserts-card-title', 'Grafana Knowledge Graph'),
+    title: t('alerting.home.asserts-card-title', 'Knowledge Graph'),
     description: t(
       'alerting.home.asserts-card-description',
       'Find and fix issues faster with automated root cause analysis for your services.'

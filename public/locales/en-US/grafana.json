@@ -1577,7 +1577,7 @@
       "asserts-card-item-2": "Detect anomalies and surface root causes without manual queries.",
       "asserts-card-item-3": "Correlate metrics, logs, and traces in a unified workflow.",
       "asserts-card-item-4": "Reduce mean time to resolution with AI-assisted investigation.",
-      "asserts-card-title": "Grafana Knowledge Graph",
+      "asserts-card-title": "Knowledge Graph",
       "irm-card-description": "Unify on-call, alerting, and incident response with Grafana Cloud IRM.",
       "irm-card-item-1": "Manage on-call schedules with your calendar or Terraform.",
       "irm-card-item-2": "Respond to incidents via web, app, Slack, or other channels.",
