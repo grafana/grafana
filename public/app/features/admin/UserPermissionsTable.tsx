@@ -3,7 +3,7 @@ import { useMemo, useState, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Column, FilterInput, Icon, InteractiveTable, TextLink, IconButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Column, FilterInput, Icon, InteractiveTable, RadioButtonGroup, TextLink, IconButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { useSetUserRolesMutation } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
@@ -13,6 +13,29 @@ import { UserOrg } from 'app/types/user';
 import { RolePermissionsModal } from './RolePermissionsModal';
 import { UserPermissionsModal } from './UserPermissionsModal';
 import { RoleWithOrg } from './UserPermissionsPage';
+
+type RoleType = 'basic' | 'fixed' | 'custom' | 'plugin';
+
+function getRoleType(roleName: string): RoleType {
+  if (roleName.startsWith('basic:')) {
+    return 'basic';
+  }
+  if (roleName.startsWith('fixed:')) {
+    return 'fixed';
+  }
+  if (roleName.startsWith('plugins:')) {
+    return 'plugin';
+  }
+  return 'custom';
+}
+
+const TYPE_OPTIONS = [
+  { label: 'All', value: '' },
+  { label: 'Basic', value: 'basic' },
+  { label: 'Fixed', value: 'fixed' },
+  { label: 'Custom', value: 'custom' },
+  { label: 'Plugin', value: 'plugin' },
+];
 
 interface Props {
   roles: RoleWithOrg[];
@@ -31,6 +54,7 @@ interface PermissionRow {
   roleDisplayName: string;
   roleDescription?: string;
   roleGroup: string;
+  roleType: RoleType;
   source: string;
   sourceType: 'direct' | 'org' | 'team' | 'external';
   teamUid?: string;
@@ -79,6 +103,8 @@ const transformRolesToPermissionRows = (
     const hasExternal = isMapped;
     const hasDirect = !hasOrgRole && !hasExternal;
 
+    const roleType = getRoleType(role.name || '');
+
     if (hasTeams) {
       teamsWithRole.forEach((team) => {
         rows.push({
@@ -88,6 +114,7 @@ const transformRolesToPermissionRows = (
           roleDisplayName: role.displayName || role.name || 'Unknown',
           roleDescription: role.description,
           roleGroup: getGroup(role) || 'Other',
+          roleType,
           source: team.name || 'Unknown Team',
           sourceType: 'team',
           teamUid: team.uid,
@@ -106,6 +133,7 @@ const transformRolesToPermissionRows = (
         roleDisplayName: role.displayName || role.name || 'Unknown',
         roleDescription: role.description,
         roleGroup: getGroup(role) || 'Other',
+        roleType,
         source: 'Organization Role',
         sourceType: 'org',
         orgId: role.orgId,
@@ -122,6 +150,7 @@ const transformRolesToPermissionRows = (
         roleDisplayName: role.displayName || role.name || 'Unknown',
         roleDescription: role.description,
         roleGroup: getGroup(role) || 'Other',
+        roleType,
         source: 'Identity Provider',
         sourceType: 'external',
         orgId: role.orgId,
@@ -138,6 +167,7 @@ const transformRolesToPermissionRows = (
         roleDisplayName: role.displayName || role.name || 'Unknown',
         roleDescription: role.description,
         roleGroup: getGroup(role) || 'Other',
+        roleType,
         source: 'Direct',
         sourceType: 'direct',
         orgId: role.orgId,
@@ -164,6 +194,7 @@ const transformRolesToPermissionRows = (
               roleDisplayName: role.displayName || role.name || 'Unknown',
               roleDescription: role.description,
               roleGroup: getGroup(role) || 'Other',
+              roleType: getRoleType(role.name || ''),
               source: t.name || 'Unknown Team',
               sourceType: 'team',
               teamUid: t.uid,
@@ -188,6 +219,7 @@ const transformRolesToPermissionRows = (
       roleDisplayName: org.role,
       roleDescription: `Organization ${org.role} role`,
       roleGroup: 'Basic',
+      roleType: 'basic',
       source: 'Organization Role',
       sourceType: 'org',
       orgId: org.orgId,
@@ -265,6 +297,7 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
   const [isUserPermissionsModalOpen, setIsUserPermissionsModalOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
 
   const [updateUserRoles] = useSetUserRolesMutation();
 
@@ -273,21 +306,26 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
 
   const allRows = useMemo(() => transformRolesToPermissionRows(roles, teams, orgs), [roles, teams, orgs]);
 
-  // Filter rows by search
+  // Filter rows by search and type
   const rows = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return allRows;
-    }
-    const q = searchQuery.toLowerCase();
-    return allRows.filter(
-      (r) =>
+    return allRows.filter((r) => {
+      const matchesType = !typeFilter || r.roleType === typeFilter;
+      if (!matchesType) {
+        return false;
+      }
+      if (!searchQuery.trim()) {
+        return true;
+      }
+      const q = searchQuery.toLowerCase();
+      return (
         r.roleDisplayName.toLowerCase().includes(q) ||
         r.roleName.toLowerCase().includes(q) ||
         r.roleGroup.toLowerCase().includes(q) ||
         r.source.toLowerCase().includes(q) ||
         (r.roleDescription || '').toLowerCase().includes(q)
-    );
-  }, [allRows, searchQuery]);
+      );
+    });
+  }, [allRows, searchQuery, typeFilter]);
 
   const handleRemoveRole = useCallback(
     async (roleUidToRemove: string, roleOrgId: number) => {
@@ -465,10 +503,13 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
     <>
       <div className={styles.tableHeader}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Text color="secondary" variant="bodySmall">
-            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-            {allRows.length} {allRows.length === 1 ? 'role' : 'roles'} assigned
-          </Text>
+          <Stack direction="row" alignItems="center" gap={2}>
+            <Text color="secondary" variant="bodySmall">
+              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+              {rows.length} {rows.length === 1 ? 'role' : 'roles'}{typeFilter ? ` (${typeFilter})` : ' assigned'}
+            </Text>
+            <RadioButtonGroup options={TYPE_OPTIONS} value={typeFilter} onChange={setTypeFilter} size="sm" />
+          </Stack>
           {allRows.length > 3 && (
             <div className={styles.searchWrapper}>
               <FilterInput
@@ -484,10 +525,10 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
 
       <InteractiveTable columns={columns} data={rows} getRowId={(row) => row.id} />
 
-      {searchQuery && rows.length === 0 && (
+      {(searchQuery || typeFilter) && rows.length === 0 && (
         <Text color="secondary" italic>
           {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-          No roles matching &quot;{searchQuery}&quot;
+          No {typeFilter || ''} roles{searchQuery ? ` matching "${searchQuery}"` : ' assigned'}
         </Text>
       )}
 
