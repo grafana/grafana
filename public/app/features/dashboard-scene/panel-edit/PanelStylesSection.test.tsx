@@ -172,12 +172,12 @@ describe('PanelStylesSection', () => {
     expect(onApplyPreset).toHaveBeenCalledWith(mockPresets[1], mockFieldConfig);
   });
 
-  it('does not call onApplyPreset when preset has no fieldConfig', async () => {
+  it('does not call onApplyPreset when preset has no fieldConfig and no options', async () => {
     const user = userEvent.setup();
-    const presetsWithoutFieldConfig: PanelPluginVisualizationSuggestion[] = [
-      { pluginId: 'timeseries', name: 'No Config', hash: 'no-config-hash', options: {} },
+    const presetsWithoutConfig: PanelPluginVisualizationSuggestion[] = [
+      { pluginId: 'timeseries', name: 'No config', hash: 'no-config-hash' },
     ];
-    mockGetPresets.mockResolvedValue(presetsWithoutFieldConfig);
+    mockGetPresets.mockResolvedValue(presetsWithoutConfig);
 
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(screen.getByTestId('preset-no-config-hash')).toBeInTheDocument());
@@ -185,6 +185,21 @@ describe('PanelStylesSection', () => {
     await user.click(screen.getByTestId('preset-no-config-hash'));
 
     expect(onApplyPreset).not.toHaveBeenCalled();
+  });
+
+  it('calls onApplyPreset when preset has options but no fieldConfig', async () => {
+    const user = userEvent.setup();
+    const presetsWithOptionsOnly: PanelPluginVisualizationSuggestion[] = [
+      { pluginId: 'gauge', name: 'Only options', hash: 'only-options-hash', options: { barShape: 'rounded' } },
+    ];
+    mockGetPresets.mockResolvedValue(presetsWithOptionsOnly);
+
+    render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
+    await waitFor(() => expect(screen.getByTestId('preset-only-options-hash')).toBeInTheDocument());
+
+    await user.click(screen.getByTestId('preset-only-options-hash'));
+
+    expect(onApplyPreset).toHaveBeenCalledWith(presetsWithOptionsOnly[0], mockFieldConfig);
   });
 
   it('marks the clicked card as selected', async () => {
