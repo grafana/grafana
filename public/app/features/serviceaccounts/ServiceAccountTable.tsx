@@ -171,6 +171,7 @@ export const ServiceAccountTable = ({
           basicRoleDisabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, drawerSa)}
           onSave={handleDrawerSave}
           canUpdateRoles={canUpdateRoles}
+          advancedViewUrl={drawerSa.uid ? `/org/serviceaccounts/edit/${drawerSa.uid}/roles` : undefined}
         />
       )}
     </Stack>
