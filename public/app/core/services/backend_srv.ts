@@ -431,9 +431,7 @@ export class BackendSrv implements BackendService {
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {
-      const message = isHtmlResponse(err.data)
-        ? `${err.status} ${err.statusText ?? 'Error'}`
-        : err.data;
+      const message = isHtmlResponse(err.data) ? `${err.status} ${err.statusText ?? 'Error'}` : err.data;
       err.data = {
         message,
         error: err.statusText,

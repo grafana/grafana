@@ -348,11 +348,7 @@ describe('backendSrv', () => {
             jest.advanceTimersByTime(50);
           })
           .catch((error) => {
-            expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [
-              '502 Bad Gateway',
-              '',
-              undefined,
-            ]);
+            expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, ['502 Bad Gateway', '', undefined]);
           });
       });
 
