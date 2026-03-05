@@ -58,6 +58,7 @@ export function getQueryEditorColors(theme: GrafanaTheme2) {
     card: {
       activeBg: theme.isDark ? '#314158' : 'oklch(92.9% 0.013 255.508)',
       hoverBg: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+      bg: theme.colors.background.primary,
     },
   };
 }

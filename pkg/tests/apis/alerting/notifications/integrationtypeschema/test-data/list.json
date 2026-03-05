@@ -7889,7 +7889,7 @@
                     "inputType": "text",
                     "label": "Region",
                     "placeholder": "",
-                    "propertyName": "Region",
+                    "propertyName": "region",
                     "required": false,
                     "secure": false,
                     "showWhen": {
@@ -7905,7 +7905,7 @@
                     "inputType": "text",
                     "label": "Access key",
                     "placeholder": "",
-                    "propertyName": "AccessKey",
+                    "propertyName": "access_key",
                     "required": false,
                     "secure": false,
                     "showWhen": {
@@ -7921,7 +7921,7 @@
                     "inputType": "password",
                     "label": "Secret key",
                     "placeholder": "",
-                    "propertyName": "SecretKey",
+                    "propertyName": "secret_key",
                     "required": false,
                     "secure": true,
                     "showWhen": {
@@ -7937,7 +7937,7 @@
                     "inputType": "text",
                     "label": "Profile",
                     "placeholder": "",
-                    "propertyName": "Profile",
+                    "propertyName": "profile",
                     "required": false,
                     "secure": false,
                     "showWhen": {
@@ -7953,7 +7953,7 @@
                     "inputType": "text",
                     "label": "Role ARN",
                     "placeholder": "",
-                    "propertyName": "RoleARN",
+                    "propertyName": "role_arn",
                     "required": false,
                     "secure": false,
                     "showWhen": {
