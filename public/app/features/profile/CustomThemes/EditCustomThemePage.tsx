@@ -27,7 +27,7 @@ export default function EditCustomThemePage() {
   const pageNav: NavModelItem = {
     icon: 'palette',
     id: 'custom-themes-edit',
-    text: t('admin.edit-custom-theme-page.page-nav.text', 'Edit custom theme'),
+    text: t('profile.edit-custom-theme-page.page-nav.text', 'Edit theme'),
   };
 
   const {
@@ -75,11 +75,11 @@ export default function EditCustomThemePage() {
               required
               className={styles.codeEditor}
               noMargin
-              label={t('admin.edit-custom-theme-page.field-theme-json', 'Theme JSON')}
+              label={t('profile.edit-custom-theme-page.field-theme-json', 'Theme JSON')}
               invalid={!!errors.themeJson}
               error={
                 errors.themeJson &&
-                t('admin.edit-custom-theme-page.field-theme-json.validation-required', 'Theme JSON is required')
+                t('profile.edit-custom-theme-page.field-theme-json.validation-required', 'Theme JSON is required')
               }
             >
               <CodeEditor
@@ -98,7 +98,7 @@ export default function EditCustomThemePage() {
               />
             </Field>
             <Stack direction="column" gap={2}>
-              <Field noMargin label={t('admin.edit-custom-theme-page.field-preview', 'Preview')}>
+              <Field noMargin label={t('profile.edit-custom-theme-page.field-preview', 'Preview')}>
                 <Box
                   boxShadow="z1"
                   display="flex"
@@ -113,17 +113,17 @@ export default function EditCustomThemePage() {
                   {previewTheme && <ThemePreview theme={previewTheme} />}
                 </Box>
               </Field>
-              <Field noMargin label={t('admin.edit-custom-theme-page.field-theme-id', 'Theme ID')}>
+              <Field noMargin label={t('profile.edit-custom-theme-page.field-theme-id', 'Theme ID')}>
                 <Input {...register('themeID')} disabled />
               </Field>
             </Stack>
           </Stack>
           <Stack justifyContent="flex-end">
             <Button variant="secondary" onClick={() => navigate('/profile?tab=themes')}>
-              <Trans i18nKey="admin.edit-custom-theme-page.cancel">Cancel</Trans>
+              <Trans i18nKey="profile.edit-custom-theme-page.cancel">Cancel</Trans>
             </Button>
             <Button type="submit" disabled={isLoading || isLoadingTheme || !isDirty}>
-              <Trans i18nKey="admin.edit-custom-theme-page.submit">Save changes</Trans>
+              <Trans i18nKey="profile.edit-custom-theme-page.submit">Save changes</Trans>
             </Button>
           </Stack>
         </Stack>

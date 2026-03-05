@@ -27,7 +27,8 @@ export default function NewCustomThemePage() {
   const pageNav: NavModelItem = {
     icon: 'palette',
     id: 'custom-themes-new',
-    text: t('admin.new-custom-theme-page.page-nav.text.add-custom-theme', 'Add custom theme'),
+    text: t('profile.new-custom-theme-page.page-nav.text.add-custom-theme', 'Add theme'),
+    subTitle: t('profile.new-custom-theme-page.page-nav.sub-title', 'Add a new custom theme visible only to you'),
   };
 
   const [createTheme, { isLoading }] = useCreateUserThemeMutation();
@@ -124,9 +125,9 @@ export default function NewCustomThemePage() {
       <Stack direction="column" gap={2}>
         <form onSubmit={handleSubmitGcom(onGcomSubmit)}>
           <Field
-            label={t('admin.new-custom-theme-page.gcom-field.label', 'Grafana.com theme URL or ID')}
+            label={t('profile.new-custom-theme-page.gcom-field.label', 'Grafana.com theme URL or ID')}
             description={
-              <Trans i18nKey="admin.new-custom-theme-page.gcom-field.description" components={{ link: gcomLink }}>
+              <Trans i18nKey="profile.new-custom-theme-page.gcom-field.description" components={{ link: gcomLink }}>
                 {'Find and import themes at <link />'}
               </Trans>
             }
@@ -142,7 +143,7 @@ export default function NewCustomThemePage() {
               })}
               addonAfter={
                 <Button type="submit">
-                  <Trans i18nKey="admin.new-custom-theme-page.gcom-field.load-button">Load</Trans>
+                  <Trans i18nKey="profile.new-custom-theme-page.gcom-field.load-button">Load</Trans>
                 </Button>
               }
             />
@@ -155,11 +156,11 @@ export default function NewCustomThemePage() {
                 required
                 className={styles.codeEditor}
                 noMargin
-                label={t('admin.new-custom-theme-page.field-theme-json', 'Theme JSON')}
+                label={t('profile.new-custom-theme-page.field-theme-json', 'Theme JSON')}
                 invalid={!!errors.themeJson}
                 error={
                   errors.themeJson &&
-                  t('admin.new-custom-theme-page.field-theme-json.validation-required', 'Theme JSON is required')
+                  t('profile.new-custom-theme-page.field-theme-json.validation-required', 'Theme JSON is required')
                 }
               >
                 <CodeEditor
@@ -178,7 +179,7 @@ export default function NewCustomThemePage() {
                 />
               </Field>
               <Stack direction="column" gap={2}>
-                <Field noMargin label={t('admin.new-custom-theme-page.field-preview', 'Preview')}>
+                <Field noMargin label={t('profile.new-custom-theme-page.field-preview', 'Preview')}>
                   <Box
                     boxShadow="z1"
                     display="flex"
@@ -196,16 +197,16 @@ export default function NewCustomThemePage() {
                 <Field
                   required
                   noMargin
-                  label={t('admin.new-custom-theme-page.field-theme-id', 'Theme ID')}
+                  label={t('profile.new-custom-theme-page.field-theme-id', 'Theme ID')}
                   invalid={!!errors.themeID}
                   error={
                     errors.themeID?.type === 'pattern'
                       ? t(
-                          'admin.new-custom-theme-page.field-theme-id.validation-pattern',
+                          'profile.new-custom-theme-page.field-theme-id.validation-pattern',
                           'Theme ID can only contain lowercase letters, numbers, hyphens and underscores'
                         )
                       : errors.themeID &&
-                        t('admin.new-custom-theme-page.field-theme-id.validation-required', 'Theme ID is required')
+                        t('profile.new-custom-theme-page.field-theme-id.validation-required', 'Theme ID is required')
                   }
                 >
                   <Input
@@ -217,7 +218,7 @@ export default function NewCustomThemePage() {
             </Stack>
             <Stack justifyContent="flex-end">
               <Button type="submit" disabled={isLoading || !isBothFieldsPopulated}>
-                <Trans i18nKey="admin.new-custom-theme-page.submit">Add custom theme</Trans>
+                <Trans i18nKey="profile.new-custom-theme-page.submit">Add theme</Trans>
               </Button>
             </Stack>
           </Stack>

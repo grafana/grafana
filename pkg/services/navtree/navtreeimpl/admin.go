@@ -36,9 +36,9 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	}
 	if hasAccess(ac.OrgPreferencesAccessEvaluator) {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-			Text:     "Custom themes",
+			Text:     "Themes",
 			Id:       "custom-themes",
-			SubTitle: "Manage custom themes for your organization",
+			SubTitle: "Manage custom themes shared to all users in your organization",
 			Icon:     "palette",
 			Url:      s.cfg.AppSubURL + "/themes",
 		})

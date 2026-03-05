@@ -197,6 +197,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.detect.title', 'Detect');
     case 'plugin-page-grafana-quaderno-app':
       return t('nav.grafana-quaderno.title', 'Grafana Quaderno');
+    case 'custom-themes':
+      return t('nav.custom-themes.title', 'Themes');
     default:
       return undefined;
   }
@@ -319,6 +321,8 @@ export function getNavSubTitle(navId: string | undefined) {
       );
     case 'plugin-page-grafana-ml-app':
       return t('nav.machine-learning.subtitle', 'Explore AI and machine learning features');
+    case 'custom-themes':
+      return t('nav.custom-themes.subtitle', 'Manage custom themes shared to all users in your organization');
     default:
       return undefined;
   }

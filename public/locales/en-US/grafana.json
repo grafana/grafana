@@ -103,10 +103,10 @@
       "delete-modal": {
         "body": "Are you sure you want to delete the {{name}} theme?",
         "confirm-text": "Delete",
-        "title": "Delete custom theme"
+        "title": "Delete theme"
       },
-      "empty-state": "No custom themes",
-      "empty-state-description": "Add a custom theme to apply a unique look and feel to your organization."
+      "empty-state": "You haven't added any custom themes yet",
+      "empty-state-description": "Add a custom theme to apply a unique look and feel to your organization"
     },
     "edit-custom-theme-page": {
       "cancel": "Cancel",
@@ -114,7 +114,7 @@
       "field-theme-id": "Theme ID",
       "field-theme-json": "Theme JSON",
       "page-nav": {
-        "text": "Edit custom theme"
+        "text": "Edit theme"
       },
       "submit": "Save changes"
     },
@@ -219,11 +219,12 @@
         "load-button": "Load"
       },
       "page-nav": {
+        "sub-title": "Add a new custom theme shared with all users in your organization",
         "text": {
-          "add-custom-theme": "Add custom theme"
+          "add-custom-theme": "Add theme"
         }
       },
-      "submit": "Add custom theme",
+      "submit": "Add theme",
       "validation": {
         "invalid-theme-id": "Could not find a valid Grafana.com theme ID"
       }
@@ -11432,6 +11433,10 @@
     "create-import": {
       "title": "Import dashboard"
     },
+    "custom-themes": {
+      "subtitle": "Manage custom themes shared to all users in your organization",
+      "title": "Themes"
+    },
     "dashboards": {
       "subtitle": "Create and manage dashboards to visualize your data",
       "title": "Dashboards"
@@ -12425,6 +12430,16 @@
     },
     "change-theme": "Change theme",
     "custom-themes": "Custom themes",
+    "edit-custom-theme-page": {
+      "cancel": "Cancel",
+      "field-preview": "Preview",
+      "field-theme-id": "Theme ID",
+      "field-theme-json": "Theme JSON",
+      "page-nav": {
+        "text": "Edit theme"
+      },
+      "submit": "Save changes"
+    },
     "enable-kiosk-mode": "Enable kiosk mode",
     "feature-toggle-page": {
       "profile-not-enabled": "Profile is not enabled."
@@ -12434,6 +12449,23 @@
     },
     "input-suffix": {
       "content-login-details-locked-because-managed-another": "Login details locked because they are managed in another system."
+    },
+    "new-custom-theme-page": {
+      "field-preview": "Preview",
+      "field-theme-id": "Theme ID",
+      "field-theme-json": "Theme JSON",
+      "gcom-field": {
+        "description": "Find and import themes at <link />",
+        "label": "Grafana.com theme URL or ID",
+        "load-button": "Load"
+      },
+      "page-nav": {
+        "sub-title": "Add a new custom theme visible only to you",
+        "text": {
+          "add-custom-theme": "Add theme"
+        }
+      },
+      "submit": "Add theme"
     },
     "user-organizations": {
       "text-loading-organizations": "Loading organizations..."
@@ -12452,6 +12484,16 @@
       "text-loading-teams": "Loading teams..."
     }
   },
+  "profile.custom-themes.add-button": "Add custom theme",
+  "profile.custom-themes.delete-modal.body": "Are you sure you want to delete the {{name}} theme?",
+  "profile.custom-themes.delete-modal.confirm-text": "Delete",
+  "profile.custom-themes.delete-modal.title": "Delete theme",
+  "profile.custom-themes.empty-state": "You haven't added any custom themes yet",
+  "profile.custom-themes.empty-state-description": "Add a custom theme visible only to you to personalise the look and feel of Grafana",
+  "profile.edit-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
+  "profile.new-custom-theme-page.field-theme-id.validation-pattern": "Theme ID can only contain lowercase letters, numbers, hyphens and underscores",
+  "profile.new-custom-theme-page.field-theme-id.validation-required": "Theme ID is required",
+  "profile.new-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
   "provisioned-folder-preview-banner": {
     "folder-pushed-to-repository": "Folder pushed to repository",
     "sync-needed": "The folder has been successfully pushed to the repository but is not yet available in Grafana. It will appear once changes are synced from the repository",
@@ -15594,7 +15636,8 @@
       "username-label": "Username"
     },
     "tabs": {
-      "general": "General"
+      "general": "General",
+      "themes": "Themes"
     }
   },
   "user-session": {

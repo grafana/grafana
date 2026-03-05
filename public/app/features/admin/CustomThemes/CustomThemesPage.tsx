@@ -56,15 +56,15 @@ export default function CustomThemesPage() {
               <Trans i18nKey="admin.custom-themes.add-button">Add custom theme</Trans>
             </LinkButton>
           }
-          message={t('admin.custom-themes.empty-state', 'No custom themes')}
+          message={t('admin.custom-themes.empty-state', "You haven't added any custom themes yet")}
         >
           <Trans i18nKey="admin.custom-themes.empty-state-description">
-            Add a custom theme to apply a unique look and feel to your organization.
+            Add a custom theme to apply a unique look and feel to your organization
           </Trans>
         </EmptyState>
       )}
       <ConfirmModal
-        title={t('admin.custom-themes.delete-modal.title', 'Delete custom theme')}
+        title={t('admin.custom-themes.delete-modal.title', 'Delete theme')}
         confirmText={t('admin.custom-themes.delete-modal.confirm-text', 'Delete')}
         body={t('admin.custom-themes.delete-modal.body', 'Are you sure you want to delete the {{name}} theme?', {
           name: themeToDelete?.spec.name,
@@ -73,7 +73,7 @@ export default function CustomThemesPage() {
           deleteTheme({ name: themeToDelete?.metadata.name! });
           setThemeToDelete(undefined);
         }}
-        confirmationText={themeToDelete?.metadata.name}
+        confirmationText={themeToDelete?.spec.name}
         isOpen={Boolean(themeToDelete)}
         onDismiss={() => setThemeToDelete(undefined)}
       />

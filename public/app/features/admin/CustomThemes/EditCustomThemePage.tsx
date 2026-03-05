@@ -27,7 +27,7 @@ export default function EditCustomThemePage() {
   const pageNav: NavModelItem = {
     icon: 'palette',
     id: 'custom-themes-edit',
-    text: t('admin.edit-custom-theme-page.page-nav.text', 'Edit custom theme'),
+    text: t('admin.edit-custom-theme-page.page-nav.text', 'Edit theme'),
   };
 
   const {

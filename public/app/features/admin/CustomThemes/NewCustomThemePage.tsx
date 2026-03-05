@@ -26,7 +26,11 @@ export default function NewCustomThemePage() {
   const pageNav: NavModelItem = {
     icon: 'palette',
     id: 'custom-themes-new',
-    text: t('admin.new-custom-theme-page.page-nav.text.add-custom-theme', 'Add custom theme'),
+    text: t('admin.new-custom-theme-page.page-nav.text.add-custom-theme', 'Add theme'),
+    subTitle: t(
+      'admin.new-custom-theme-page.page-nav.sub-title',
+      'Add a new custom theme shared with all users in your organization'
+    ),
   };
 
   const [createTheme, { isLoading }] = useCreateThemeMutation();
@@ -213,7 +217,7 @@ export default function NewCustomThemePage() {
             </Stack>
             <Stack justifyContent="flex-end">
               <Button type="submit" disabled={isLoading || !isBothFieldsPopulated}>
-                <Trans i18nKey="admin.new-custom-theme-page.submit">Add custom theme</Trans>
+                <Trans i18nKey="admin.new-custom-theme-page.submit">Add theme</Trans>
               </Button>
             </Stack>
           </Stack>

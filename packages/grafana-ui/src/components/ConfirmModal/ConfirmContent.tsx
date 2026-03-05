@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -64,6 +64,7 @@ export const ConfirmContent = ({
   const [isDisabled, setIsDisabled] = useState(disabled);
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const inputId = useId();
 
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
     setIsDisabled(confirmPromptText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
@@ -91,7 +92,7 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
-  const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
+  const label = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
     confirmPromptText,
   });
   return (
@@ -102,9 +103,10 @@ export const ConfirmContent = ({
         {confirmPromptText ? (
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
-              <Field disabled={disabled}>
+              <Field disabled={disabled} label={label}>
                 <Input
-                  placeholder={placeholder}
+                  id={inputId}
+                  placeholder={confirmPromptText}
                   onChange={onConfirmationTextChange}
                   data-testid={selectors.pages.ConfirmModal.input}
                 />
