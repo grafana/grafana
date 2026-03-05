@@ -116,7 +116,7 @@ export const AnnotationTooltip2 = ({
               )}
               {isPinned && (
                 <AnnotationTooltipHeaderCloseIcon
-                  ref={canEdit || canDelete ? null : focusRef}
+                  forwardRef={canEdit || canDelete ? null : focusRef}
                   onClick={(e) => {
                     // Don't trigger onClick
                     e.stopPropagation();
