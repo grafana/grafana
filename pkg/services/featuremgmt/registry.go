@@ -1017,6 +1017,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingAlertListPanelEnhancements",
+			Description:  "Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingNavigationV2",
 			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
 			Stage:        FeatureStageExperimental,
@@ -2486,6 +2494,14 @@ var (
 		{
 			Name:         "alertingNotificationHistoryGlobal",
 			Description:  "Enables the notification history global menu item viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryTriage",
+			Description:  "Enables the notification history timeline in the triage instance details drawer",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
