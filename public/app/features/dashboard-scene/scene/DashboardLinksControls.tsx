@@ -5,8 +5,6 @@ import { sceneGraph } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 
-import { openLinkEditPane } from '../settings/links/LinkAddEditableElement';
-
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 import { DashboardScene } from './DashboardScene';
 
@@ -17,7 +15,7 @@ export interface Props {
 
 export function DashboardLinksControls({ links, dashboard }: Props) {
   sceneGraph.getTimeRange(dashboard).useState();
-  const { uid, isEditing } = dashboard.useState();
+  const { uid } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const linksToDisplay = excludeControlMenuLinks(links);
 
@@ -27,18 +25,9 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
 
   return (
     <div className={styles.linksContainer}>
-      {linksToDisplay.map((link: DashboardLink, index: number) => {
-        const linkIndex = links.indexOf(link);
-        return (
-          <DashboardLinkRenderer
-            link={link}
-            dashboardUID={uid}
-            key={`${link.title}-$${index}`}
-            linkIndex={linkIndex}
-            onEditClick={isEditing && linkIndex >= 0 ? () => openLinkEditPane(dashboard, linkIndex) : undefined}
-          />
-        );
-      })}
+      {linksToDisplay.map((link: DashboardLink, index: number) => (
+        <DashboardLinkRenderer link={link} dashboardUID={uid} key={`${link.title}-$${index}`} />
+      ))}
     </div>
   );
 }
