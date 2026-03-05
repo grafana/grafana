@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Stack, Alert, Button, Modal, Field } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { Role, AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types/accessControl';
 import { TeamWithRoles } from 'app/types/teams';
 import { UserDTO, UserOrg } from 'app/types/user';
 
