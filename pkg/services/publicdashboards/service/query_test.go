@@ -1067,6 +1067,73 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 
 		assert.Equal(t, 3, totalQueries)
 	})
+
+	t.Run("queries with invalid datasource UIDs (saved queries) are replaced with panel datasource", func(t *testing.T) {
+		dashboardWithSavedQueryDatasource := `
+{
+  "panels": [
+    {
+      "id": 2,
+      "datasource": {
+          "type": "prometheus",
+          "uid": "valid-datasource-uid"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "saved-queries:abc123xyz"
+          },
+          "expr": "go_goroutines{job=\"$job\"}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "another-valid-uid"
+          },
+          "expr": "query2",
+          "refId": "B"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
+		json, err := simplejson.NewJson([]byte(dashboardWithSavedQueryDatasource))
+		require.NoError(t, err)
+
+		queries := groupQueriesByPanelId(json)
+		require.Len(t, queries, 1)
+		require.Contains(t, queries, int64(2))
+		require.Len(t, queries[2], 2)
+
+		// First query should have saved-queries datasource replaced with panel datasource
+		query1, err := queries[2][0].MarshalJSON()
+		require.NoError(t, err)
+		require.JSONEq(t, `{
+			"datasource": {
+				"type": "public-ds",
+				"uid": "valid-datasource-uid"
+			},
+			"expr": "go_goroutines{job=\"$job\"}",
+			"refId": "A"
+		}`, string(query1))
+
+		// Second query should keep its valid datasource
+		query2, err := queries[2][1].MarshalJSON()
+		require.NoError(t, err)
+		require.JSONEq(t, `{
+			"datasource": {
+				"type": "prometheus",
+				"uid": "another-valid-uid"
+			},
+			"expr": "query2",
+			"refId": "B"
+		}`, string(query2))
+	})
 }
 
 func TestGroupQueriesByDataSource(t *testing.T) {
@@ -1365,6 +1432,26 @@ func TestBuildTimeSettings(t *testing.T) {
 			assert.Equal(t, test.want, buildTimeSettings(test.dashboard, test.reqDTO, test.pubdash, test.panelID))
 		})
 	}
+}
+
+func TestIsInvalidDatasourceUID(t *testing.T) {
+	t.Run("returns true for saved query UIDs", func(t *testing.T) {
+		assert.True(t, isInvalidDatasourceUID("saved-queries:abc123"))
+	})
+
+	t.Run("returns true for other user storage UIDs", func(t *testing.T) {
+		assert.True(t, isInvalidDatasourceUID("some-service:user123"))
+	})
+
+	t.Run("returns false for valid datasource UIDs", func(t *testing.T) {
+		assert.False(t, isInvalidDatasourceUID("prometheus-uid-123"))
+		assert.False(t, isInvalidDatasourceUID("abc123xyz"))
+		assert.False(t, isInvalidDatasourceUID("_yxMP8Ynk"))
+	})
+
+	t.Run("returns false for empty string", func(t *testing.T) {
+		assert.False(t, isInvalidDatasourceUID(""))
+	})
 }
 
 func groupQueriesByDataSource(t *testing.T, queries []*simplejson.Json) (result [][]*simplejson.Json) {
