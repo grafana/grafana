@@ -1750,6 +1750,199 @@ func TestDefaultListOptions(t *testing.T) {
 	}
 }
 
+func TestGithubClient_GetRulesets(t *testing.T) {
+	tests := []struct {
+		name         string
+		mockHandler  *http.Client
+		owner        string
+		repository   string
+		branch       string
+		wantRulesets *Rulesets
+		wantErr      error
+	}{
+		{
+			name: "no rules configured",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// No rules apply to this branch (empty array)
+						rules := []interface{}{}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "pull request rule is active",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// API returns array of rule objects
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "only non-blocking rules",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// API returns array with non-blocking rules
+						rules := []map[string]interface{}{
+							{
+								"type":                "non_fast_forward",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+							},
+							{
+								"type":                "required_status_checks",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "unauthorized error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusUnauthorized},
+							Message:  "Bad credentials",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      repo.ErrUnauthorized,
+		},
+		{
+			name: "forbidden error is gracefully skipped",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusForbidden},
+							Message:  "Forbidden",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "not found error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusNotFound},
+							Message:  "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      repo.ErrFileNotFound,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusServiceUnavailable},
+							Message:  "Service Unavailable",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      repo.ErrServerUnavailable,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			client := &githubClient{
+				gh: github.NewClient(tt.mockHandler),
+			}
+
+			got, err := client.GetRulesets(ctx, tt.owner, tt.repository, tt.branch)
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantRulesets, got)
+		})
+	}
+}
+
 func TestGithubClient_GetRepository(t *testing.T) {
 	tests := []struct {
 		name        string

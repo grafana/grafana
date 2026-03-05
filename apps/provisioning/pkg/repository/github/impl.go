@@ -117,6 +117,58 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 	return bp, nil
 }
 
+func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branch string) (*Rulesets, error) {
+	// Create logger with base context
+	logger := logging.FromContext(ctx).With(
+		slog.String("owner", owner),
+		slog.String("repository", repository),
+		slog.String("branch", branch))
+
+	// Get all active rules that apply to this specific branch
+	// This API returns only active rules (no disabled/evaluate enforcement)
+	branchRules, _, err := r.gh.Repositories.GetRulesForBranch(ctx, owner, repository, branch, nil)
+	if err != nil {
+		// Handle common error cases
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) {
+			switch ghErr.Response.StatusCode {
+			case http.StatusUnauthorized:
+				return nil, repo.ErrUnauthorized
+			case http.StatusForbidden:
+				// User lacks permissions to view rules (though Metadata read should be enough).
+				// Skip check gracefully.
+				logger.Warn("Skipping ruleset check: insufficient permissions")
+				return nil, nil
+			case http.StatusNotFound:
+				return nil, repo.ErrFileNotFound
+			case http.StatusServiceUnavailable:
+				return nil, repo.ErrServerUnavailable
+			}
+		}
+
+		return nil, fmt.Errorf("failed to get rules for branch: %w", err)
+	}
+
+	// No rules apply to this branch
+	if branchRules == nil {
+		logger.Debug("No rules configured for branch")
+		return nil, nil
+	}
+
+	// Check if pull request rule is active
+	// Only pull_request rules actually block direct pushes.
+	// Other rules like non_fast_forward (blocks force push only),
+	// required_status_checks (checks run after push), etc. do not prevent regular git push operations.
+	if len(branchRules.PullRequest) > 0 {
+		logger.Debug("Branch requires pull request (blocks direct push)",
+			slog.Int("pr_rule_count", len(branchRules.PullRequest)))
+		return &Rulesets{RequiresPullRequest: true}, nil
+	}
+
+	logger.Debug("No blocking rules found for branch")
+	return nil, nil
+}
+
 func (r *githubClient) GetRepository(ctx context.Context, owner, repository string) (Repository, error) {
 	repo, _, err := r.gh.Repositories.Get(ctx, owner, repository)
 	if err != nil {
