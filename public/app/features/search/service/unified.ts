@@ -6,7 +6,7 @@ import {
   ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
-import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
+import { arrayToDataFrame, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
@@ -420,7 +420,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       ...field,
     };
   });
-  const frame = toDataFrame(dashboardHits);
+  const frame = arrayToDataFrame(dashboardHits);
   frame.meta = {
     custom: {
       count: rsp.totalHits,
