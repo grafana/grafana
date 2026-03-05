@@ -4756,7 +4756,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "連結到連線",
-      "body": "資料來源有新的位置！您可以在「連線」頁面中探索新的資料來源或管理現有的資料來源，該頁面可從主選單存取。",
+      "body": "資料來源有新的位置！您可以在<0>「連線」頁面</0>中探索新的資料來源或管理現有的資料來源，該頁面可從主選單存取。",
       "go-to-connections": "前往連線"
     },
     "data-source-details-page": {

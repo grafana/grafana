@@ -2500,6 +2500,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingNotificationHistoryTriage",
+			Description:  "Enables the notification history timeline in the triage instance details drawer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "react19",
 			Description:  "Whether to use the new React 19 runtime",
 			Stage:        FeatureStageExperimental,
