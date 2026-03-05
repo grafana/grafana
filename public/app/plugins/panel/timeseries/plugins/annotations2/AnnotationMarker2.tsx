@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { ActionModel, DataFrame, GrafanaTheme2, InterpolateFunction, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeZone } from '@grafana/schema';
-import { floatingUtils, useStyles2 } from '@grafana/ui';
+import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
 import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
@@ -30,6 +30,7 @@ interface AnnoBoxProps {
 const STATE_DEFAULT = 0;
 const STATE_EDITING = 1;
 const STATE_HOVERED = 2;
+const STATE_PINNED = 3;
 
 export const AnnotationMarker2 = ({
   frame,
@@ -69,7 +70,7 @@ export const AnnotationMarker2 = ({
   }
 
   const contents =
-    state === STATE_HOVERED ? (
+    state === STATE_HOVERED || state === STATE_PINNED ? (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
@@ -77,6 +78,8 @@ export const AnnotationMarker2 = ({
         onEdit={() => setState(STATE_EDITING)}
         links={links}
         actions={actions}
+        isPinned={state === STATE_PINNED}
+        dismiss={() => setState(STATE_DEFAULT)}
       />
     ) : state === STATE_EDITING ? (
       <AnnotationEditor2
@@ -92,17 +95,22 @@ export const AnnotationMarker2 = ({
 
   return (
     <div
+      tabIndex={0}
       ref={refs.setReference}
       className={className}
       style={style!}
-      onMouseEnter={() => state !== STATE_EDITING && setState(STATE_HOVERED)}
-      onMouseLeave={() => state !== STATE_EDITING && setState(STATE_DEFAULT)}
+      onMouseEnter={() => state !== STATE_PINNED && state !== STATE_EDITING && setState(STATE_HOVERED)}
+      onMouseLeave={() => state !== STATE_PINNED && state !== STATE_EDITING && setState(STATE_DEFAULT)}
+      onClick={() => state !== STATE_EDITING && setState(STATE_PINNED)}
+      // onKeyUp={(e) => state !== STATE_EDITING && setState(STATE_DEFAULT)}
       data-testid={selectors.pages.Dashboard.Annotations.marker}
     >
       {contents &&
         createPortal(
           <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles} data-testid="annotation-marker">
-            {contents}
+            <ClickOutsideWrapper includeButtonPress={false} useCapture={true} onClick={() => setState(STATE_DEFAULT)}>
+              {contents}
+            </ClickOutsideWrapper>
           </div>,
           portalRoot
         )}

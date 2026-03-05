@@ -14,11 +14,22 @@ interface Props {
   onEdit: () => void;
   links?: LinkModel[];
   actions?: ActionModel[];
+  dismiss?: () => void;
+  isPinned?: boolean;
 }
 
 const retFalse = () => false;
 
-export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links = [], actions = [] }: Props) => {
+export const AnnotationTooltip2 = ({
+  annoVals,
+  annoIdx,
+  timeZone,
+  onEdit,
+  links = [],
+  actions = [],
+  dismiss,
+  isPinned = false,
+}: Props) => {
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
@@ -67,6 +78,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links 
 
   return (
     <div className={styles.wrapper}>
+      {isPinned && <div style={{ background: 'transparent', height: 7, marginTop: -7 }} />}
       <div className={styles.header}>
         <Stack gap={2} basis="100%" justifyContent="space-between" alignItems="center">
           <div className={styles.meta}>
@@ -95,6 +107,19 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links 
                 />
               )}
             </div>
+          )}
+          {isPinned && (
+            <IconButton
+              // ref={canEdit || canDelete ? null : focusRef}
+              name={'times'}
+              size={'sm'}
+              onClick={(e) => {
+                // Don't trigger onClick
+                e.stopPropagation();
+                dismiss?.();
+              }}
+              tooltip={t('timeseries.annotation-tooltip2.tooltip-close', 'Close')}
+            />
           )}
         </Stack>
       </div>
