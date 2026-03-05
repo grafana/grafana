@@ -4,9 +4,7 @@ import { createLogLine } from '../mocks/logRow';
 import {
   getDisplayedFieldsForLogs,
   getOtelAttributesField,
-  getSuggestedFieldsForAnyLogs,
   getSuggestedFieldsForLogs,
-  getSuggestedOTelDisplayFormat,
   identifyOTelLanguage,
   identifyOTelLanguages,
   OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
