@@ -38,7 +38,7 @@ import { trackDashboardLoaded } from '../utils/tracking';
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 import { emitDashboardViewEvent } from './analyticsProcessor';
-import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
+import { cleanUpDashboard, dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 
 const INIT_DASHBOARD_MEASUREMENT = 'initDashboard';
 
@@ -75,6 +75,8 @@ async function fetchDashboard(
         // if user specified a custom home dashboard redirect to that
         if (isRedirectResponse(dashDTO)) {
           const newUrl = locationUtil.processRedirectUri(dashDTO.redirectUri, locationService.getLocation());
+          // Clean up the fetching state before redirecting to prevent hanging in "Fetching" state
+          dispatch(cleanUpDashboard());
           locationService.replace(newUrl);
           return null;
         }

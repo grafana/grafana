@@ -13,7 +13,7 @@ export interface Props {
 export const DashboardLoading = ({ initPhase }: Props) => {
   const styles = useStyles2(getStyles);
   const cancelVariables = () => {
-    locationService.push('/');
+    locationService.push('/dashboards');
   };
 
   return (
