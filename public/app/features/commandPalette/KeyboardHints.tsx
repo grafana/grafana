@@ -73,7 +73,7 @@ function getStyles(theme: GrafanaTheme2) {
     hint: css({
       display: 'inline-flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.75),
       fontSize: theme.typography.body.fontSize,
       color: theme.colors.text.primary,
     }),

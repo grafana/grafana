@@ -317,7 +317,7 @@ function CommandPaletteContents() {
               {(searchQuery || selectedCategory) && (
                 <IconButton
                   name="times"
-                  size="sm"
+                  size="lg"
                   variant="secondary"
                   aria-label={t('command-palette.search-box.clear', 'Clear search')}
                   className={styles.clearButton}
@@ -401,7 +401,7 @@ function CommandPaletteContents() {
                   />
                 )}
                 {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
-                <div className={styles.resultsContainer}>
+                <div>
                   <RenderResults
                     isFetchingSearchResults={isFetchingSearchResults || isDynamicLoading}
                     searchResults={searchResults}
@@ -620,11 +620,9 @@ const RenderResults = ({
       items={items}
       maxHeight={650}
       onRender={({ item, active }) => {
-        const isFirst = items[0] === item;
-
         const renderedItem =
           typeof item === 'string' ? (
-            <div className={cx(styles.sectionHeader, isFirst && !selectedCategory && styles.sectionHeaderFirst)}>{item}</div>
+            <div className={styles.sectionHeader}>{item}</div>
           ) : (
             <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
           );
@@ -734,9 +732,6 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     spinner: css({
       height: '22px',
     }),
-    resultsContainer: css({
-      paddingBottom: theme.spacing(1.5),
-    }),
     splitPane: css({
       display: 'flex',
       flexDirection: 'row',
@@ -759,9 +754,6 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
-    }),
-    sectionHeaderFirst: css({
-      paddingTop: theme.spacing(0.5),
     }),
     breadcrumbs: css({
       label: 'breadcrumbs',

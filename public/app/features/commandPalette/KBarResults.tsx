@@ -11,6 +11,7 @@ import { URLCallback } from './types';
 // Remember to remove dependency on react-virtual when removing this file
 
 const START_INDEX = 0;
+const SCROLL_BOTTOM_PADDING = 12;
 
 interface RenderParams<T = ActionImpl | string> {
   item: T;
@@ -26,7 +27,7 @@ interface KBarResultsProps {
 
 export const KBarResults = (props: KBarResultsProps) => {
   const activeRef = React.useRef<HTMLElement>(null);
-  const parentRef = React.useRef(null);
+  const parentRef = React.useRef<HTMLDivElement>(null);
 
   // store a ref to all items so we do not have to pass
   // them as a dependency when setting up event listeners.
@@ -251,7 +252,7 @@ export const KBarResults = (props: KBarResultsProps) => {
         role="listbox"
         id={KBAR_LISTBOX}
         style={{
-          height: `${rowVirtualizer.totalSize}px`,
+          height: `${rowVirtualizer.totalSize + SCROLL_BOTTOM_PADDING}px`,
           width: '100%',
         }}
       >

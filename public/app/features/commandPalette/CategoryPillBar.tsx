@@ -47,6 +47,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(1, 2),
       flexWrap: 'wrap',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     pill: css({
       display: 'inline-flex',
