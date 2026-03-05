@@ -93,6 +93,7 @@ describe('AnnotationsPlugin2', () => {
 
     const annotations = props?.annotations ?? [mockAnnotationFrame];
     const frames = annotations.map((fr) => createDataFrame(fr));
+    // @todo we need to call applyFieldOverrides to add the link supplier to the frames on the frames in AnnotationsPlugin2
     const withOverrides = applyFieldOverrides({
       data: frames,
       fieldConfig: {
