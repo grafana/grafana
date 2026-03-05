@@ -14,5 +14,6 @@ export default defineConfig({
     defaultNS: 'grafana',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
+    warnOnConflicts: 'error',
   },
 });

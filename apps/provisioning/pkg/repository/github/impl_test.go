@@ -14,6 +14,8 @@ import (
 	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func TestGithubClient_GetCommits(t *testing.T) {
@@ -153,7 +155,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 			wantCommits: nil,
-			wantErr:     ErrResourceNotFound,
+			wantErr:     repo.ErrFileNotFound,
 		},
 		{
 			name: "commits missing author",
@@ -303,7 +305,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 			wantCommits: nil,
-			wantErr:     ErrServiceUnavailable,
+			wantErr:     repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -328,7 +330,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 			wantCommits: nil,
-			wantErr:     errors.New("Internal server error"),
+			wantErr:     errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -484,7 +486,7 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			owner:        "test-owner",
 			repository:   "test-repo",
 			wantWebhooks: nil,
-			wantErr:      ErrServiceUnavailable,
+			wantErr:      repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -505,7 +507,7 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			owner:        "test-owner",
 			repository:   "test-repo",
 			wantWebhooks: nil,
-			wantErr:      errors.New("Internal server error"),
+			wantErr:      errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -522,9 +524,13 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
+				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
+					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -677,7 +683,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				Secret:      "secret123",
 			},
 			want:    WebhookConfig{},
-			wantErr: ErrServiceUnavailable,
+			wantErr: repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -705,7 +711,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				Secret:      "secret123",
 			},
 			want:    WebhookConfig{},
-			wantErr: errors.New("Internal server error"),
+			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -722,9 +728,13 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
+				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
+					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -833,7 +843,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			repository: "test-repo",
 			webhookID:  999,
 			want:       WebhookConfig{},
-			wantErr:    ErrResourceNotFound,
+			wantErr:    repo.ErrFileNotFound,
 		},
 		{
 			name: "service unavailable",
@@ -855,7 +865,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			repository: "test-repo",
 			webhookID:  123,
 			want:       WebhookConfig{},
-			wantErr:    ErrServiceUnavailable,
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -877,7 +887,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			repository: "test-repo",
 			webhookID:  123,
 			want:       WebhookConfig{},
-			wantErr:    errors.New("Internal server error"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -894,9 +904,13 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
+				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
+					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -952,7 +966,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  456,
-			wantErr:    ErrResourceNotFound,
+			wantErr:    repo.ErrFileNotFound,
 		},
 		{
 			name: "service unavailable",
@@ -973,7 +987,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  789,
-			wantErr:    ErrServiceUnavailable,
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "unauthorized to delete the webhook",
@@ -994,7 +1008,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  789,
-			wantErr:    ErrUnauthorized,
+			wantErr:    repo.ErrUnauthorized,
 		},
 		{
 			name: "other error",
@@ -1015,7 +1029,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  101,
-			wantErr:    errors.New("Internal server error"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -1032,9 +1046,13 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
+				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
+					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -1176,7 +1194,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				ContentType: "json",
 				Secret:      "secret123",
 			},
-			wantErr: ErrServiceUnavailable,
+			wantErr: repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -1204,7 +1222,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				ContentType: "json",
 				Secret:      "secret123",
 			},
-			wantErr: errors.New("Internal server error"),
+			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -1221,9 +1239,13 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
+				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
+					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -1361,7 +1383,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			repository: "test-repo",
 			number:     101,
 			wantFiles:  nil,
-			wantErr:    ErrServiceUnavailable,
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -1383,7 +1405,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			repository: "test-repo",
 			number:     202,
 			wantFiles:  nil,
-			wantErr:    errors.New("Internal server error"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -1400,9 +1422,13 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
+				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
+					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -1476,7 +1502,7 @@ func TestCreatePullRequestComment(t *testing.T) {
 			repository: "test-repo",
 			number:     101,
 			body:       "Test comment",
-			wantErr:    ErrServiceUnavailable,
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -1498,7 +1524,7 @@ func TestCreatePullRequestComment(t *testing.T) {
 			repository: "test-repo",
 			number:     101,
 			body:       "Test comment",
-			wantErr:    errors.New("Internal server error"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -1515,9 +1541,13 @@ func TestCreatePullRequestComment(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
+				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
+					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -1606,7 +1636,7 @@ func TestPaginatedList(t *testing.T) {
 				return listFn, defaultListOptions(100)
 			},
 			want:    nil,
-			wantErr: ErrServiceUnavailable,
+			wantErr: repo.ErrServerUnavailable,
 		},
 		{
 			name: "resource not found error",
@@ -1621,7 +1651,7 @@ func TestPaginatedList(t *testing.T) {
 				return listFn, defaultListOptions(100)
 			},
 			want:    nil,
-			wantErr: ErrResourceNotFound,
+			wantErr: repo.ErrFileNotFound,
 		},
 		{
 			name: "too many items error",
@@ -1645,7 +1675,7 @@ func TestPaginatedList(t *testing.T) {
 				}
 			},
 			want:    nil,
-			wantErr: ErrTooManyItems,
+			wantErr: repo.ErrTooManyItems,
 		},
 	}
 
@@ -1716,6 +1746,199 @@ func TestDefaultListOptions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := defaultListOptions(tt.maxItems)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGithubClient_GetRulesets(t *testing.T) {
+	tests := []struct {
+		name         string
+		mockHandler  *http.Client
+		owner        string
+		repository   string
+		branch       string
+		wantRulesets *Rulesets
+		wantErr      error
+	}{
+		{
+			name: "no rules configured",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// No rules apply to this branch (empty array)
+						rules := []interface{}{}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "pull request rule is active",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// API returns array of rule objects
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "only non-blocking rules",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// API returns array with non-blocking rules
+						rules := []map[string]interface{}{
+							{
+								"type":                "non_fast_forward",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+							},
+							{
+								"type":                "required_status_checks",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "unauthorized error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusUnauthorized},
+							Message:  "Bad credentials",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      repo.ErrUnauthorized,
+		},
+		{
+			name: "forbidden error is gracefully skipped",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusForbidden},
+							Message:  "Forbidden",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "not found error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusNotFound},
+							Message:  "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      repo.ErrFileNotFound,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusServiceUnavailable},
+							Message:  "Service Unavailable",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      repo.ErrServerUnavailable,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			client := &githubClient{
+				gh: github.NewClient(tt.mockHandler),
+			}
+
+			got, err := client.GetRulesets(ctx, tt.owner, tt.repository, tt.branch)
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantRulesets, got)
 		})
 	}
 }
@@ -1849,7 +2072,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "nonexistent-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrFileNotFound,
 		},
 		{
 			name: "service unavailable error",
@@ -1870,7 +2093,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "unauthorized access",
@@ -1891,7 +2114,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "private-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrUnauthorized,
 		},
 		{
 			name: "forbidden access",
@@ -1912,7 +2135,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "restricted-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrPermissionDenied,
 		},
 		{
 			name: "rate limit exceeded",
@@ -1933,7 +2156,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrPermissionDenied,
 		},
 		{
 			name: "internal server error",
@@ -1954,7 +2177,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal Server Error)"),
 		},
 		{
 			name: "repository with special characters in name",
@@ -1996,7 +2219,13 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.wantErr.Error())
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				// For generic errors, verify the error message contains expected text
+				if errors.Is(err, tt.wantErr) {
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
 				assert.Equal(t, tt.wantRepo, got)
 			} else {
 				assert.NoError(t, err)
