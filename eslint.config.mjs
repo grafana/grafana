@@ -1,20 +1,21 @@
 // @ts-check
-const emotionPlugin = require('@emotion/eslint-plugin');
-const restrictedGlobals = require('confusing-browser-globals');
-const importPlugin = require('eslint-plugin-import');
-const jestPlugin = require('eslint-plugin-jest');
-const jestDomPlugin = require('eslint-plugin-jest-dom');
-const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
-const lodashPlugin = require('eslint-plugin-lodash');
-const barrelPlugin = require('eslint-plugin-no-barrel-files');
-const reactPlugin = require('eslint-plugin-react');
-const reactPreferFunctionComponentPlugin = require('eslint-plugin-react-prefer-function-component');
-const testingLibraryPlugin = require('eslint-plugin-testing-library');
-const unicornPlugin = require('eslint-plugin-unicorn');
+import * as emotionPlugin from '@emotion/eslint-plugin';
+import restrictedGlobals from 'confusing-browser-globals';
+import { defineConfig } from 'eslint/config';
+import importPlugin from 'eslint-plugin-import';
+import jestPlugin from 'eslint-plugin-jest';
+import jestDomPlugin from 'eslint-plugin-jest-dom';
+import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
+import lodashPlugin from 'eslint-plugin-lodash';
+import barrelPlugin from 'eslint-plugin-no-barrel-files';
+import reactPlugin from 'eslint-plugin-react';
+import reactPreferFunctionComponentPlugin from 'eslint-plugin-react-prefer-function-component';
+import testingLibraryPlugin from 'eslint-plugin-testing-library';
+import unicornPlugin from 'eslint-plugin-unicorn';
 
-const grafanaConfig = require('@grafana/eslint-config/flat');
-const grafanaPlugin = require('@grafana/eslint-plugin');
-const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
+import grafanaConfig from '@grafana/eslint-config';
+import grafanaPlugin from '@grafana/eslint-plugin';
+import grafanaI18nPlugin from '@grafana/i18n/eslint-plugin';
 
 const pluginsToTranslate = [
   'public/app/plugins/panel',
@@ -96,10 +97,7 @@ const datavizDefaultImportsRestrictions = [
   },
 ];
 
-/**
- * @type {Array<import('eslint').Linter.Config>}
- */
-module.exports = [
+export default defineConfig([
   {
     name: 'grafana/ignores',
     ignores: [
@@ -346,7 +344,6 @@ module.exports = [
     name: 'grafana/alerting-overrides',
     plugins: {
       unicorn: unicornPlugin,
-      react: reactPlugin,
       '@grafana': grafanaPlugin,
     },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}', 'packages/grafana-alerting/**/*.{ts,tsx,js,jsx}'],
@@ -608,9 +605,7 @@ module.exports = [
             'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
         },
         {
-          // eslint-disable-next-line no-restricted-syntax
           selector: 'Literal[value=/gf-form/], TemplateElement[value.cooked=/gf-form/]',
-          // eslint-disable-next-line no-restricted-syntax
           message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
         },
         {
@@ -716,4 +711,4 @@ module.exports = [
   //     '@grafana/no-plugin-external-import-paths': 'error',
   //   },
   // },
-];
+]);
