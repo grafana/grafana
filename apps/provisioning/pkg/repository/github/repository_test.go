@@ -1511,7 +1511,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 			name:               "GetRulesets unauthorized (401) returns test failure",
 			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
 			branch:             "main",
-			rulesetsError:      ErrUnauthorized,
+			rulesetsError:      repo.ErrUnauthorized,
 			expectRulesetsCall: true,
 			expectedSuccess:    false,
 			expectedErrField:   "spec.github.branch",

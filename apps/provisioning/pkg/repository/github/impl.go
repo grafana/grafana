@@ -133,16 +133,16 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 		if errors.As(err, &ghErr) {
 			switch ghErr.Response.StatusCode {
 			case http.StatusUnauthorized:
-				return nil, ErrUnauthorized
+				return nil, repo.ErrUnauthorized
 			case http.StatusForbidden:
 				// User lacks permissions to view rules (though Metadata read should be enough).
 				// Skip check gracefully.
 				logger.Warn("Skipping ruleset check: insufficient permissions")
 				return nil, nil
 			case http.StatusNotFound:
-				return nil, ErrResourceNotFound
+				return nil, repo.ErrFileNotFound
 			case http.StatusServiceUnavailable:
-				return nil, ErrServiceUnavailable
+				return nil, repo.ErrServerUnavailable
 			}
 		}
 

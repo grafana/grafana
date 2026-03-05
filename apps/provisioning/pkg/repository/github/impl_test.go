@@ -1859,7 +1859,7 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 			repository:   "test-repo",
 			branch:       "main",
 			wantRulesets: nil,
-			wantErr:      ErrUnauthorized,
+			wantErr:      repo.ErrUnauthorized,
 		},
 		{
 			name: "forbidden error is gracefully skipped",
@@ -1899,7 +1899,7 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 			repository:   "test-repo",
 			branch:       "main",
 			wantRulesets: nil,
-			wantErr:      ErrResourceNotFound,
+			wantErr:      repo.ErrFileNotFound,
 		},
 		{
 			name: "service unavailable error",
@@ -1919,7 +1919,7 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 			repository:   "test-repo",
 			branch:       "main",
 			wantRulesets: nil,
-			wantErr:      ErrServiceUnavailable,
+			wantErr:      repo.ErrServerUnavailable,
 		},
 	}
 
