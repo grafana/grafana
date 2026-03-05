@@ -25,7 +25,7 @@ import {
   SearchQuery,
   SearchResultMeta,
 } from './types';
-import { filterSearchResults, replaceCurrentFolderQuery } from './utils';
+import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
@@ -204,35 +204,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
           console.log('no results', frame);
           return;
         }
-        const existingLength = view.dataFrame.length;
-        const newLength = existingLength + frame.length;
 
-        // Add new fields from the incoming frame that don't exist in the view yet
-        for (const f of frame.fields) {
-          if (!view.dataFrame.fields.find((vf) => vf.name === f.name)) {
-            view.dataFrame.fields.push({
-              ...f,
-              values: new Array(existingLength).fill(null).concat(f.values),
-            });
-          }
-        }
-
-        // Append values from matching fields
-        for (const f of frame.fields) {
-          const field = view.dataFrame.fields.find((vf) => vf.name === f.name);
-          if (field && field.values.length === existingLength) {
-            field.values.push(...f.values);
-          }
-        }
-
-        // Pad fields that don't exist in the incoming frame with null
-        for (const field of view.dataFrame.fields) {
-          while (field.values.length < newLength) {
-            field.values.push(null);
-          }
-        }
-
-        view.dataFrame.length = newLength;
+        appendFrame(view.dataFrame, frame);
 
         // Add all the location lookup info
         const submeta = frame.meta?.custom;
