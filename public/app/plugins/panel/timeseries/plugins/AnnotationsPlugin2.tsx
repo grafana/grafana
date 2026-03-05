@@ -77,7 +77,7 @@ export const AnnotationsPlugin2 = ({
   const [plot, setPlot] = useState<uPlot>();
 
   const [portalRoot] = useState(() => getPortalContainer());
-  const [annoIdx, setAnnoIdx] = useState<string | undefined>();
+  const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
   const getColorByName = useTheme2().visualization.getColorByName;
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -234,8 +234,8 @@ export const AnnotationsPlugin2 = ({
   }, [xAnnos, plot]);
 
   // Set active annotation tooltip state
-  const setAnnotationIndex = useCallback((annoIdx: string | undefined) => {
-    setAnnoIdx(annoIdx);
+  const setPinnedAnootationIndex = useCallback((annoIdx: string | undefined) => {
+    setPinnedAnnotationId(annoIdx);
   }, []);
 
   if (plot) {
@@ -277,18 +277,18 @@ export const AnnotationsPlugin2 = ({
           const isWip = frame.meta?.custom?.isWip;
           const setPinned = (active: boolean) => {
             if (active) {
-              setAnnotationIndex(`${frameIdx}:${i}`);
+              setPinnedAnootationIndex(getAnnotationKey(frameIdx, i));
             } else {
-              setAnnotationIndex(undefined);
+              setPinnedAnootationIndex(undefined);
             }
           };
 
           markers.push(
             <AnnotationMarker2
-              key={`${frameIdx}:${i}`}
+              key={getAnnotationKey(frameIdx, i)}
               setPinned={setPinned}
-              isPinned={annoIdx === `${frameIdx}:${i}`}
-              showTooltipOnHover={!annoIdx}
+              isPinned={pinnedAnnotationId === getAnnotationKey(frameIdx, i)}
+              showTooltipOnHover={!pinnedAnnotationId}
               frame={frame}
               annoIdx={i}
               annoVals={vals}
@@ -310,4 +310,13 @@ export const AnnotationsPlugin2 = ({
   }
 
   return null;
+};
+
+/**
+ * helper method to return a unique identifier for an annotation
+ * @param frameIdx
+ * @param i
+ */
+const getAnnotationKey = (frameIdx: number, i: number) => {
+  return `${frameIdx}:${i}`;
 };
