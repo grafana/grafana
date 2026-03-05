@@ -5,7 +5,7 @@ import { IconButton } from '@grafana/ui';
 
 interface Props {
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  ref: React.Ref<HTMLButtonElement> | null;
+  ref?: React.Ref<HTMLButtonElement> | null;
 }
 export function AnnotationTooltipHeaderCloseIcon({ onClick, ref }: Props) {
   return (
