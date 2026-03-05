@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsyncFn, useClickAway } from 'react-use';
 
@@ -27,10 +27,15 @@ interface AnnotationEditFormDTO {
 export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
   const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
-
+  const focusRef = useRef<HTMLTextAreaElement | null>(null);
   const clickAwayRef = useRef(null);
 
   useClickAway(clickAwayRef, dismiss);
+
+  // focus text area on render
+  useEffect(() => {
+    focusRef.current?.focus();
+  }, []);
 
   const [createAnnotationState, createAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
     const result = await onAnnotationCreate!(event);
@@ -73,7 +78,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
     <div ref={clickAwayRef} className={styles.editor} {...otherProps}>
       <div className={styles.header}>
         <Stack justifyContent={'space-between'} alignItems={'center'}>
-          <Stack width="100%" justifyContent={'space-between'} alignItems={'center'}>
+          <Stack gap={0} width="100%" justifyContent={'space-between'} alignItems={'center'}>
             <div>
               {isUpdatingAnnotation
                 ? t('timeseries.annotation-editor2.edit-annotation', 'Edit annotation')
@@ -99,16 +104,17 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
             <>
               <div className={styles.content}>
                 <Field
-                  autoFocus={true}
                   label={t('timeseries.annotation-editor2.label-description', 'Description')}
                   invalid={!!errors.description}
                   error={errors?.description?.message}
                 >
                   <TextArea
+                    data-testid={'annotation-editor-description'}
                     className={styles.textarea}
                     {...register('description', {
                       required: 'Annotation description is required',
                     })}
+                    ref={focusRef}
                   />
                 </Field>
                 <Field label={t('timeseries.annotation-editor2.label-tags', 'Tags')}>

@@ -233,11 +233,6 @@ export const AnnotationsPlugin2 = ({
     }
   }, [xAnnos, plot]);
 
-  // Set active annotation tooltip state
-  const setPinnedAnnotationIndex = useCallback((annoIdx: string | undefined) => {
-    setPinnedAnnotationId(annoIdx);
-  }, []);
-
   if (plot) {
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals(wipFrame) : null;
@@ -281,9 +276,9 @@ export const AnnotationsPlugin2 = ({
         if (isVisible) {
           const setPinned = (active: boolean) => {
             if (active) {
-              setPinnedAnnotationIndex(getAnnotationKey(frameIdx, i));
+              setPinnedAnnotationId(getAnnotationKey(frameIdx, i));
             } else {
-              setPinnedAnnotationIndex(undefined);
+              setPinnedAnnotationId(undefined);
             }
           };
 
