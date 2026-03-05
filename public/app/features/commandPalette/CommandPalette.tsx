@@ -286,10 +286,6 @@ function CommandPaletteContents() {
     return selectedCategory;
   }, [selectedCategory, hasActiveFacets, dynamicResultCount]);
 
-  // Show keyboard hints when categories or facets are relevant
-  const showKeyboardHints =
-    (selectedCategory && hasFacets && (isInFacetMode || hasActiveFacets || dynamicResultCount > 0)) ||
-    (!selectedCategory && hasCategories);
 
   return (
     <KBarPositioner className={styles.positioner}>
@@ -379,7 +375,7 @@ function CommandPaletteContents() {
                   }
                 />
                 <KeyboardHints
-                  showBack={true}
+                  escAction="back"
                   showFacetShortcuts={false}
                   showSelect={filteredFacetValues.length > 0}
                 />
@@ -415,14 +411,12 @@ function CommandPaletteContents() {
                     selectedCategory={selectedCategory}
                   />
                 </div>
-                {showKeyboardHints && (
-                  <KeyboardHints
-                    showBack={!!selectedCategory || hasActiveFacets || !!currentRootActionId}
-                    showFacetShortcuts={!currentRootActionId}
-                    facetShortcutRange={shortcutRange}
-                    showSelect={true}
-                  />
-                )}
+                <KeyboardHints
+                  escAction={selectedCategory || hasActiveFacets || currentRootActionId ? 'back' : 'close'}
+                  showFacetShortcuts={!currentRootActionId && (hasCategories || hasFacets)}
+                  facetShortcutRange={shortcutRange}
+                  showSelect={true}
+                />
               </>
             )}
           </div>
