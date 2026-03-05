@@ -1,6 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { act, fireEvent, render, screen, userEvent } from 'test/test-utils';
 
 import { SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
@@ -67,17 +65,13 @@ function createLinkEdit(dashboard: DashboardScene, linkIndex = 0) {
   return new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex });
 }
 
-function renderWithProvider(ui: React.ReactElement) {
-  return render(<TestProvider>{ui}</TestProvider>);
-}
-
 describe('LinkBasicOptions', () => {
   describe('LinkTitleInput', () => {
     it('renders with the current link title', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkTitleInput linkEdit={linkEdit} />);
+      render(<LinkTitleInput linkEdit={linkEdit} />);
 
       expect(screen.getByRole('textbox')).toHaveValue('Test Link');
     });
@@ -86,7 +80,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkTitleInput linkEdit={linkEdit} />);
+      render(<LinkTitleInput linkEdit={linkEdit} />);
 
       const input = screen.getByRole('textbox');
       fireEvent.focus(input);
@@ -102,7 +96,7 @@ describe('LinkBasicOptions', () => {
       const linkEdit = createLinkEdit(dashboard);
       const editPane = dashboard.state.editPane;
 
-      renderWithProvider(<LinkTitleInput linkEdit={linkEdit} />);
+      render(<LinkTitleInput linkEdit={linkEdit} />);
 
       const input = screen.getByRole('textbox');
 
@@ -129,7 +123,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([]);
       const linkEdit = createLinkEdit(dashboard, 99);
 
-      const { container } = renderWithProvider(<LinkTitleInput linkEdit={linkEdit} />);
+      const { container } = render(<LinkTitleInput linkEdit={linkEdit} />);
 
       expect(container.innerHTML).toBe('');
     });
@@ -140,7 +134,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_DASHBOARDS]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkTypeSelect linkEdit={linkEdit} />);
+      render(<LinkTypeSelect linkEdit={linkEdit} />);
 
       expect(dashboard.state.links[0].tags).toEqual(['tag1']);
 
@@ -155,7 +149,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkTypeSelect linkEdit={linkEdit} />);
+      render(<LinkTypeSelect linkEdit={linkEdit} />);
 
       expect(dashboard.state.links[0].url).toBe('https://example.com');
 
@@ -173,7 +167,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_DASHBOARDS]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkTagsInput linkEdit={linkEdit} />);
+      render(<LinkTagsInput linkEdit={linkEdit} />);
 
       expect(screen.getByText('With tags')).toBeInTheDocument();
     });
@@ -182,7 +176,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      const { container } = renderWithProvider(<LinkTagsInput linkEdit={linkEdit} />);
+      const { container } = render(<LinkTagsInput linkEdit={linkEdit} />);
 
       expect(container.innerHTML).toBe('');
     });
@@ -193,7 +187,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkUrlInput linkEdit={linkEdit} />);
+      render(<LinkUrlInput linkEdit={linkEdit} />);
 
       expect(screen.getByRole('textbox')).toHaveValue('https://example.com');
     });
@@ -202,7 +196,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_DASHBOARDS]);
       const linkEdit = createLinkEdit(dashboard);
 
-      const { container } = renderWithProvider(<LinkUrlInput linkEdit={linkEdit} />);
+      const { container } = render(<LinkUrlInput linkEdit={linkEdit} />);
 
       expect(container.innerHTML).toBe('');
     });
@@ -211,7 +205,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkUrlInput linkEdit={linkEdit} />);
+      render(<LinkUrlInput linkEdit={linkEdit} />);
 
       const input = screen.getByRole('textbox');
       fireEvent.focus(input);
@@ -229,7 +223,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkTooltipInput linkEdit={linkEdit} />);
+      render(<LinkTooltipInput linkEdit={linkEdit} />);
 
       expect(screen.getByRole('textbox')).toHaveValue('Test tooltip');
     });
@@ -238,7 +232,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_DASHBOARDS]);
       const linkEdit = createLinkEdit(dashboard);
 
-      const { container } = renderWithProvider(<LinkTooltipInput linkEdit={linkEdit} />);
+      const { container } = render(<LinkTooltipInput linkEdit={linkEdit} />);
 
       expect(container.innerHTML).toBe('');
     });
@@ -249,7 +243,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkIconSelect linkEdit={linkEdit} />);
+      render(<LinkIconSelect linkEdit={linkEdit} />);
 
       expect(screen.getByText('Icon')).toBeInTheDocument();
     });
@@ -258,7 +252,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_DASHBOARDS]);
       const linkEdit = createLinkEdit(dashboard);
 
-      const { container } = renderWithProvider(<LinkIconSelect linkEdit={linkEdit} />);
+      const { container } = render(<LinkIconSelect linkEdit={linkEdit} />);
 
       expect(container.innerHTML).toBe('');
     });
@@ -269,7 +263,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkKeepTimeSwitch linkEdit={linkEdit} id="keep-time" />);
+      render(<LinkKeepTimeSwitch linkEdit={linkEdit} id="keep-time" />);
 
       const toggle = document.getElementById('keep-time') as HTMLInputElement;
       expect(toggle.checked).toBe(false);
@@ -282,7 +276,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkIncludeVarsSwitch linkEdit={linkEdit} id="include-vars" />);
+      render(<LinkIncludeVarsSwitch linkEdit={linkEdit} id="include-vars" />);
 
       const toggle = document.getElementById('include-vars') as HTMLInputElement;
       expect(toggle.checked).toBe(false);
@@ -295,7 +289,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkTargetBlankSwitch linkEdit={linkEdit} id="target-blank" />);
+      render(<LinkTargetBlankSwitch linkEdit={linkEdit} id="target-blank" />);
 
       const toggle = document.getElementById('target-blank') as HTMLInputElement;
       expect(toggle.checked).toBe(false);
@@ -308,7 +302,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkPlacementSwitch linkEdit={linkEdit} id="placement" />);
+      render(<LinkPlacementSwitch linkEdit={linkEdit} id="placement" />);
 
       const toggle = document.getElementById('placement') as HTMLInputElement;
       await userEvent.click(toggle);
@@ -319,7 +313,7 @@ describe('LinkBasicOptions', () => {
       const dashboard = buildDashboard([{ ...LINK_TYPE_DASHBOARDS, asDropdown: false }]);
       const linkEdit = createLinkEdit(dashboard);
 
-      renderWithProvider(<LinkAsDropdownSwitch linkEdit={linkEdit} id="as-dropdown" />);
+      render(<LinkAsDropdownSwitch linkEdit={linkEdit} id="as-dropdown" />);
 
       const toggle = document.getElementById('as-dropdown') as HTMLInputElement;
       expect(toggle.checked).toBe(false);
