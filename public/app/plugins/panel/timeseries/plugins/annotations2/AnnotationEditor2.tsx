@@ -73,12 +73,14 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
     <div ref={clickAwayRef} className={styles.editor} {...otherProps}>
       <div className={styles.header}>
         <Stack justifyContent={'space-between'} alignItems={'center'}>
-          <div>
-            {isUpdatingAnnotation
-              ? t('timeseries.annotation-editor2.edit-annotation', 'Edit annotation')
-              : t('timeseries.annotation-editor2.add-annotation', 'Add annotation')}
-          </div>
-          <div>{time}</div>
+          <Stack width="100%" justifyContent={'space-between'} alignItems={'center'}>
+            <div>
+              {isUpdatingAnnotation
+                ? t('timeseries.annotation-editor2.edit-annotation', 'Edit annotation')
+                : t('timeseries.annotation-editor2.add-annotation', 'Add annotation')}
+            </div>
+            <div>{time}</div>
+          </Stack>
           <AnnotationTooltipHeaderCloseIcon
             onClick={(e) => {
               // Don't trigger onClick
@@ -149,6 +151,12 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    controls: css({
+      display: 'flex',
+      '> :last-child': {
+        marginLeft: 0,
+      },
+    }),
     editor: css({
       background: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,
