@@ -18,29 +18,28 @@ export function DataSourcesListPage() {
   const { lastChecked } = useAdvisorHealthStatus();
   const styles = useStyles2(getStyles);
 
-  const actions = dataSourcesCount > 0 ? (
-    <Stack direction="row" gap={1}>
-      {advisorEnabled && (
-        <Button
-          variant="secondary"
-          icon={isRunning ? 'spinner' : 'sync'}
-          onClick={runHealthChecks}
-          disabled={isRunning}
-        >
-          {isRunning
-            ? t('datasources.health-checks.running', 'Running health checks…')
-            : t('datasources.health-checks.run', 'Run health checks')}
-        </Button>
-      )}
-      <DataSourceAddButton />
-    </Stack>
-  ) : undefined;
+  const actions =
+    dataSourcesCount > 0 ? (
+      <Stack direction="row" gap={1}>
+        {advisorEnabled && (
+          <Button
+            variant="secondary"
+            icon={isRunning ? 'spinner' : 'sync'}
+            onClick={runHealthChecks}
+            disabled={isRunning}
+          >
+            {isRunning
+              ? t('datasources.health-checks.running', 'Running health checks…')
+              : t('datasources.health-checks.run', 'Run health checks')}
+          </Button>
+        )}
+        <DataSourceAddButton />
+      </Stack>
+    ) : undefined;
 
   const subTitle = advisorEnabled ? (
     <div className={styles.subTitle}>
-      <span>
-        {t('datasources.subtitle', 'View and manage your connected data connections')}
-      </span>
+      <span>{t('datasources.subtitle', 'View and manage your connected data connections')}</span>
       {lastChecked && (
         <span className={styles.lastChecked}>
           <Icon name="clock-nine" size="xs" />

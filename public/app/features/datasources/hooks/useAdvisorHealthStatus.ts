@@ -79,10 +79,7 @@ export function findLatestDatasourceCheck(items: Check[]): Check | undefined {
       continue;
     }
 
-    if (
-      !latest ||
-      new Date(check.metadata.creationTimestamp ?? 0) > new Date(latest.metadata.creationTimestamp ?? 0)
-    ) {
+    if (!latest || new Date(check.metadata.creationTimestamp ?? 0) > new Date(latest.metadata.creationTimestamp ?? 0)) {
       latest = check;
     }
   }

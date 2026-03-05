@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import {
-  useCreateCheckMutation,
-  useListCheckQuery,
-} from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import { useCreateCheckMutation, useListCheckQuery } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 
 import { findLatestDatasourceCheck } from './useAdvisorHealthStatus';
 

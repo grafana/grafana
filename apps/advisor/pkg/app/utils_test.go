@@ -601,9 +601,9 @@ func (f *failingMockStep) Run(_ context.Context, _ logging.Logger, _ *advisorv0a
 }
 
 func (f *failingMockStep) Title() string       { return "failing mock" }
-func (f *failingMockStep) Description() string  { return "failing mock" }
-func (f *failingMockStep) Resolution() string   { return "failing mock" }
-func (f *failingMockStep) ID() string           { return f.stepID }
+func (f *failingMockStep) Description() string { return "failing mock" }
+func (f *failingMockStep) Resolution() string  { return "failing mock" }
+func (f *failingMockStep) ID() string          { return f.stepID }
 
 // headerModifyingStep is a mock step that modifies HTTP headers to simulate
 // the behavior of CookiesMiddleware and other middleware that caused the original panic

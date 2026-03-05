@@ -33,7 +33,11 @@ export interface DataSourcesListHeaderProps {
   onHealthFilterChange?: (value: HealthFilter) => void;
 }
 
-export function DataSourcesListHeader({ filterCheckbox, healthFilter, onHealthFilterChange }: DataSourcesListHeaderProps) {
+export function DataSourcesListHeader({
+  filterCheckbox,
+  healthFilter,
+  onHealthFilterChange,
+}: DataSourcesListHeaderProps) {
   const dispatch = useDispatch();
   const styles = useStyles2(getHeaderStyles);
 
@@ -84,11 +88,7 @@ export function DataSourcesListHeader({ filterCheckbox, healthFilter, onHealthFi
         />
       )}
       {healthFilter !== undefined && onHealthFilterChange && (
-        <RadioButtonGroup
-          options={healthFilterOptions}
-          value={healthFilter}
-          onChange={onHealthFilterChange}
-        />
+        <RadioButtonGroup options={healthFilterOptions} value={healthFilter} onChange={onHealthFilterChange} />
       )}
       <SortPicker
         onChange={setSort}
