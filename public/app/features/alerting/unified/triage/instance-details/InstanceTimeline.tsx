@@ -7,7 +7,7 @@ import {
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, RadioButtonGroup, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
@@ -359,25 +359,19 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
 
   return (
     <div className={styles.notificationDetailRow}>
-      <div className={styles.detailTime}>
+      <div className={styles.notificationRowMain}>
         <Text variant="bodySmall" color="secondary">
           {dateFormatter.format(new Date(notification.timestamp))}
         </Text>
-      </div>
-      <div className={styles.detailReceiver}>
-        <Stack direction="row" gap={1} alignItems="center">
+        <Stack direction="row" gap={0.5} alignItems="center">
           <IntegrationIcon integration={notification.integration} />
-          <Tooltip content={notification.receiver} placement="top">
-            <Text variant="bodySmall" truncate>
-              {notification.receiver}
-            </Text>
-          </Tooltip>
+          <Text variant="bodySmall" weight="medium" truncate>
+            {notification.receiver}
+          </Text>
           <Text variant="bodySmall" color="secondary">
             ({receiverTypeNames[notification.integration] ?? notification.integration})
           </Text>
         </Stack>
-      </div>
-      <div className={styles.detailOutcome}>
         {isSuccess ? (
           <Stack direction="row" gap={0.5} alignItems="center">
             <Icon name="check-circle" size="sm" className={styles.successIcon} />
@@ -386,23 +380,25 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
             </Text>
           </Stack>
         ) : (
-          <Tooltip
-            content={notification.error || t('alerting.instance-details.timeline-unknown-error', 'Unknown error')}
-          >
-            <Stack direction="row" gap={0.5} alignItems="center">
-              <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
-              <Text variant="bodySmall" color="error">
-                {t('alerting.instance-details.timeline-failed', 'Failed')}
-              </Text>
-            </Stack>
-          </Tooltip>
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
+            <Text variant="bodySmall" color="error">
+              {t('alerting.instance-details.timeline-failed', 'Failed')}
+            </Text>
+          </Stack>
         )}
-      </div>
-      <div className={styles.detailDuration}>
         <Text variant="bodySmall" color="secondary">
           {formatDuration(notification.duration)}
         </Text>
       </div>
+      {!isSuccess && notification.error && (
+        <div className={styles.notificationRowError}>
+          <Icon name="exclamation-triangle" size="xs" className={styles.errorIcon} />
+          <Text variant="bodySmall" color="secondary" truncate={false}>
+            {notification.error}
+          </Text>
+        </div>
+      )}
     </div>
   );
 }
@@ -516,33 +512,29 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   notificationDetailRow: css({
     display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: theme.spacing(0.5, 1.5),
+    flexDirection: 'column',
+    padding: theme.spacing(0.75, 1.5),
+    gap: theme.spacing(0.5),
     '&:not(:last-child)': {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     },
   }),
 
-  detailTime: css({
-    width: '140px',
-    flexShrink: 0,
+  notificationRowMain: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
   }),
 
-  detailReceiver: css({
-    flex: 1,
-    minWidth: 0,
-  }),
-
-  detailOutcome: css({
-    width: '100px',
-    flexShrink: 0,
-  }),
-
-  detailDuration: css({
-    width: '80px',
-    flexShrink: 0,
-    textAlign: 'right',
+  notificationRowError: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing(0.5),
+    paddingLeft: theme.spacing(0.5),
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
 
   successIcon: css({
