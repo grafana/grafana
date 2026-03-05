@@ -152,7 +152,13 @@ Learn more about saved queries:
 
 You can see a list of these queries in the **Saved queries** drawer:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.4.png" max-width="600px" alt="List of saved queries and the edit query form" caption="The **Saved queries** drawer accessed from Dashboards" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-drawer-v13.0.png" max-width="600px" alt="List of saved queries and the edit query form" caption="The **Saved queries** drawer accessed from Dashboards" >}}
+
+{{< admonition type="tip">}}
+When you select a query with a logs, metrics, traces, or profiles data source, the **Saved queries** drawer displays a **Drilldown** button.
+Click the button to open the associated Drilldown app, while maintaining the context of the query.
+Learn more about these apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
+{{< /admonition >}}
 
 When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
 However, you can clear that filter to display all saved queries.
@@ -176,12 +182,6 @@ To access your saved queries, click **+ Add from saved queries** or open the **S
 {{< figure src="/media/docs/grafana/dashboards/screenshot-use-saved-queries-v12.3.png" max-width="750px" alt="Access saved queries" >}}
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
-
-{{< admonition type="tip" >}}
-When you select a query with a logs, metrics, traces, or profiles data source, the **Saved queries** drawer displays a **Drilldown** button.
-Click the button to open the associated Drilldown app while maintaining the context of the query.
-Learn more about these apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
-{{< /admonition >}}
 
 ### Roles, permissions, and RBAC
 
