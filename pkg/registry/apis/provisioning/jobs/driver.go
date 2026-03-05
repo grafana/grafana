@@ -174,7 +174,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	defer rollback()
 
 	namespace := claimedJob.GetNamespace()
-	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
+	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace)
 	ctx = logging.Context(ctx, logger)
 	d.currentJob = claimedJob
 
@@ -208,11 +208,12 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 
 	// Process the job with lease loss detection
 	err = d.processJobWithLeaseCheck(jobctx, recorder, leaseExpired)
-	duration := time.Since(recorder.Started())
+	end := time.Now()
+	logger.Debug("job processed", "duration", end.Sub(recorder.Started()), "error", err)
 
 	// Check if parent context was cancelled (graceful shutdown)
 	if ctx.Err() != nil {
-		logger.Warn("context cancelled - job will retry", "duration", duration)
+		logger.Debug("context cancel - job will retry")
 		// Don't complete the job - let it be retried by another worker
 		d.mu.Lock()
 		d.currentJob = nil
@@ -239,10 +240,10 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	}()
 
 	// Save the finished job
-	if err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy()); err != nil {
+	err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy())
+	if err != nil {
+		// We're not going to return this as it is not critical. Not ideal, but not critical.
 		logger.Warn("failed to write historic job", "error", err)
-	} else {
-		logger.Debug("historic job saved")
 	}
 
 	// Mark the job as completed.
@@ -365,16 +366,10 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		}
 
 		r := repo.Config()
-		connName := r.ConnectionName()
-		logger = logger.With("connection", connName, "repositoryType", r.Spec.Type)
-		ctx = logging.Context(ctx, logger)
-		span.SetAttributes(
-			attribute.String("job.connection", connName),
-			attribute.String("repository.type", string(r.Spec.Type)),
-		)
-
 		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
 			logger.Info("repository marked for deletion - skip job",
+				"name", r.Name,
+				"namespace", r.Namespace,
 				"deletionTimestamp", r.DeletionTimestamp,
 			)
 			return nil
