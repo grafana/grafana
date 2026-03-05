@@ -4139,6 +4139,7 @@
       "dark-theme": "Dark",
       "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
+      "open-interactive-learning": "Open interactive learning",
       "scopes": "Scopes"
     },
     "empty-state": {
@@ -4167,12 +4168,12 @@
       "placeholder-filtered": "Search by entity name..."
     },
     "section": {
-      "actions": "Actions",
       "dashboard-search-results": "Dashboards",
+      "dashboards": "Dashboards",
       "folder-search-results": "Folders",
-      "pages": "Pages",
-      "preferences": "Preferences",
-      "recent-dashboards": "Recent dashboards",
+      "global": "Global",
+      "navigation": "Navigation",
+      "recents": "Recents",
       "recent-scopes": "Recent scopes"
     }
   },

@@ -4151,12 +4151,12 @@
       "placeholder": "Buscar o saltar a..."
     },
     "section": {
-      "actions": "Acciones",
       "dashboard-search-results": "Paneles de control",
+      "dashboards": "",
       "folder-search-results": "Carpetas",
-      "pages": "Páginas",
-      "preferences": "Preferencias",
-      "recent-dashboards": "Paneles de control recientes",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Ámbitos recientes"
     }
   },

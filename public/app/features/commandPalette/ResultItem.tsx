@@ -38,16 +38,11 @@ export const ResultItem = React.forwardRef(
     const { query } = useKBar();
     const styles = useStyles2(getResultItemStyles);
 
-    let name = action.name;
+    const name = action.name;
 
     const hasCommandOrLink = (action: ActionImpl) =>
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
-
-    // TODO: does this needs adjusting for i18n?
-    if (action.children.length && !hasCommandOrLink(action) && !name.endsWith('...')) {
-      name += '...';
-    }
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const secondaryActions = (action as ActionWithSecondaryActions).secondaryActions;
@@ -69,7 +64,14 @@ export const ResultItem = React.forwardRef(
             ))}
             <span>{name}</span>
           </div>
-          {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
+          {action.subtitle && (
+            <span className={styles.subtitleText}>
+              {isLocationSubtitle(action.id) && (
+                <Icon name="folder" size="sm" className={styles.subtitleIcon} />
+              )}
+              {action.subtitle}
+            </span>
+          )}
         </div>
         {secondaryActions && (
           <div
@@ -91,6 +93,10 @@ export const ResultItem = React.forwardRef(
 );
 
 ResultItem.displayName = 'ResultItem';
+
+function isLocationSubtitle(actionId: string): boolean {
+  return actionId.startsWith('recent-dashboards') || actionId.startsWith('go/');
+}
 
 const getResultItemStyles = (theme: GrafanaTheme2) => {
   return {
@@ -115,6 +121,9 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       fontSize: theme.typography.fontSize,
       width: '100%',
+      '& > svg': {
+        color: theme.colors.text.secondary,
+      },
     }),
     textContainer: css({
       display: 'block',
@@ -133,7 +142,9 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     subtitleText: css({
       ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
-      display: 'block',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
       flexBasis: '20%',
       flexGrow: 1,
       flexShrink: 0,
@@ -141,6 +152,10 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+    }),
+    subtitleIcon: css({
+      color: theme.colors.text.disabled,
+      flexShrink: 0,
     }),
     secondaryActionsContainer: css({
       display: 'none',

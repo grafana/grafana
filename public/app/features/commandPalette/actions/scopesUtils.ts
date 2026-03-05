@@ -1,14 +1,16 @@
+import { createElement } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { ScopeNode } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { Icon } from '@grafana/ui';
 
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
 import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';
 import { CommandPaletteAction } from '../types';
-import { SCOPES_PRIORITY } from '../values';
+import { DASHBOARDS_PRIORITY } from '../values';
 
 export function useScopeServicesState() {
   const services = useScopesServices();
@@ -55,10 +57,11 @@ export function useScopeServicesState() {
 export function getScopesParentAction(): CommandPaletteAction {
   return {
     id: 'scopes',
-    section: t('command-palette.action.scopes', 'Scopes'),
+    section: t('command-palette.section.dashboards', 'Dashboards'),
     name: t('command-palette.action.scopes', 'Scopes'),
     keywords: 'scopes filters',
-    priority: SCOPES_PRIORITY,
+    priority: DASHBOARDS_PRIORITY + 0.5,
+    icon: createElement(Icon, { name: 'filter' }),
   };
 }
 
@@ -128,7 +131,7 @@ export function mapScopeNodeToAction(
       name: scopeNode.spec.title,
       subtitle: subtitle,
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
-      priority: SCOPES_PRIORITY,
+      priority: DASHBOARDS_PRIORITY,
       parent: parentId,
     };
 
@@ -143,8 +146,8 @@ export function mapScopeNodeToAction(
       id: `scopes/${scopeNode.metadata.name}`,
       name: scopeNode.spec.title,
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
-      priority: SCOPES_PRIORITY,
-      section: t('command-palette.action.scopes', 'Scopes'),
+      priority: DASHBOARDS_PRIORITY,
+      section: t('command-palette.section.dashboards', 'Dashboards'),
       subtitle: subtitle,
       perform: () => {
         selectScope(scopeNode.metadata.name);

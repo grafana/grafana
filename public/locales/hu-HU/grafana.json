@@ -4151,12 +4151,12 @@
       "placeholder": "Keresés vagy ugrás ide:"
     },
     "section": {
-      "actions": "Műveletek",
       "dashboard-search-results": "Irányítópultok",
+      "dashboards": "",
       "folder-search-results": "Mappák",
-      "pages": "Oldalak",
-      "preferences": "Preferenciák",
-      "recent-dashboards": "Legutóbbi irányítópultok",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Legutóbbi hatókörök"
     }
   },

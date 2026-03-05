@@ -4151,12 +4151,12 @@
       "placeholder": "Suche oder springe zu ..."
     },
     "section": {
-      "actions": "Aktionen",
       "dashboard-search-results": "Dashboards",
+      "dashboards": "",
       "folder-search-results": "Ordner",
-      "pages": "Seiten",
-      "preferences": "Einstellungen",
-      "recent-dashboards": "Kürzliche Dashboards",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Aktuelle Bereiche"
     }
   },
