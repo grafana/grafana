@@ -4078,7 +4078,7 @@ __metadata:
     "@types/systemjs": "npm:6.15.3"
     "@types/uuid": "npm:10.0.0"
     i18next-cli: "npm:^1.48.0"
-    immutable: "npm:5.1.5"
+    immutable: "npm:^5.1.5"
     jest: "npm:^29.6.4"
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
@@ -4216,7 +4216,7 @@ __metadata:
     hoist-non-react-statics: "npm:3.3.2"
     i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
-    immutable: "npm:5.1.5"
+    immutable: "npm:^5.1.5"
     is-hotkey: "npm:0.2.0"
     jquery: "npm:3.7.1"
     lodash: "npm:^4.17.23"
@@ -21722,7 +21722,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:5.1.5":
+"immutable@npm:5.1.5, immutable@npm:^5.1.5":
   version: 5.1.5
   resolution: "immutable@npm:5.1.5"
   checksum: 10/7aec2740239772ec8e92e793c991bd809203a97694f4ff3a18e50e28f9a6b02393ad033d87b458037bdf8c0ea37d4446d640e825f6171df3405cf6cf300ce028
