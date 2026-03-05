@@ -3,20 +3,27 @@ import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 
 import {
+  FieldConfigSource,
   FieldType,
   LoadingState,
   PanelData,
+  PanelPlugin,
   PanelPluginVisualizationSuggestion,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
-import { getPresets } from 'app/features/panel/presets/getPresets';
+import { getPluginPresets } from 'app/features/panel/presets/getPresets';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { PanelStylesSection } from './PanelStylesSection';
 
+jest.mock('app/features/plugins/importPanelPlugin', () => ({
+  importPanelPlugin: jest.fn(),
+}));
+
 jest.mock('app/features/panel/presets/getPresets', () => ({
-  getPresets: jest.fn(),
+  getPluginPresets: jest.fn(),
 }));
 
 jest.mock('@grafana/scenes', () => ({
@@ -58,8 +65,11 @@ jest.mock('app/features/panel/components/VizTypePicker/VisualizationCardGrid', (
   ),
 }));
 
-const mockGetPresets = jest.mocked(getPresets);
+const mockImportPanelPlugin = jest.mocked(importPanelPlugin);
+const mockGetPluginPresets = jest.mocked(getPluginPresets);
 const mockSceneGraph = jest.mocked(sceneGraph);
+
+const fakePlugin = {} as PanelPlugin;
 
 const mockPresets: PanelPluginVisualizationSuggestion[] = [
   {
@@ -92,12 +102,14 @@ const mockData: PanelData = {
   structureRev: 1,
 };
 
-const mockFieldConfig = { defaults: { custom: { lineWidth: 2 } }, overrides: [] };
+const mockFieldConfig: FieldConfigSource = { defaults: { custom: { lineWidth: 2 } }, overrides: [] };
 
-function buildPanel(pluginId = 'timeseries') {
+function buildPanel(pluginId = 'timeseries', fieldConfig: FieldConfigSource = mockFieldConfig) {
   return {
-    useState: () => ({ pluginId }),
-    state: { fieldConfig: mockFieldConfig },
+    useState: () => ({ pluginId, fieldConfig }),
+    get state() {
+      return { fieldConfig };
+    },
     onFieldConfigChange: jest.fn(),
   } as unknown as VizPanel;
 }
@@ -111,34 +123,35 @@ describe('PanelStylesSection', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetPresets.mockResolvedValue(mockPresets);
+    mockImportPanelPlugin.mockResolvedValue(fakePlugin);
+    mockGetPluginPresets.mockReturnValue(mockPresets);
     setupDataMock();
   });
 
   it('renders null while presets are loading', () => {
-    mockGetPresets.mockReturnValue(new Promise(() => {})); // never resolves
+    mockImportPanelPlugin.mockReturnValue(new Promise(() => {})); // never resolves
     const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders null when presets are empty', async () => {
-    mockGetPresets.mockResolvedValue([]);
+    mockGetPluginPresets.mockReturnValue([]);
     const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
-    await waitFor(() => expect(mockGetPresets).toHaveBeenCalled());
+    await waitFor(() => expect(mockImportPanelPlugin).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders null when panel data has no series', async () => {
     setupDataMock({ ...mockData, series: [] });
     const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
-    await waitFor(() => expect(mockGetPresets).toHaveBeenCalled());
+    await waitFor(() => expect(mockImportPanelPlugin).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders null when data is null', async () => {
     setupDataMock(null);
     const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
-    await waitFor(() => expect(mockGetPresets).toHaveBeenCalled());
+    await waitFor(() => expect(mockImportPanelPlugin).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -157,9 +170,10 @@ describe('PanelStylesSection', () => {
     });
   });
 
-  it('calls getPresets with the panel pluginId', async () => {
+  it('loads the plugin with the panel pluginId and gets its presets', async () => {
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
-    await waitFor(() => expect(mockGetPresets).toHaveBeenCalledWith('timeseries', mockFieldConfig));
+    await waitFor(() => expect(mockImportPanelPlugin).toHaveBeenCalledWith('timeseries'));
+    expect(mockGetPluginPresets).toHaveBeenCalledWith(fakePlugin, mockFieldConfig);
   });
 
   it('calls onApplyPreset when a card is clicked', async () => {
@@ -172,12 +186,9 @@ describe('PanelStylesSection', () => {
     expect(onApplyPreset).toHaveBeenCalledWith(mockPresets[1], mockFieldConfig);
   });
 
-  it('does not call onApplyPreset when preset has no fieldConfig', async () => {
+  it('does not call onApplyPreset when preset has no fieldConfig and no options', async () => {
     const user = userEvent.setup();
-    const presetsWithoutFieldConfig: PanelPluginVisualizationSuggestion[] = [
-      { pluginId: 'timeseries', name: 'No Config', hash: 'no-config-hash', options: {} },
-    ];
-    mockGetPresets.mockResolvedValue(presetsWithoutFieldConfig);
+    mockGetPluginPresets.mockReturnValue([{ pluginId: 'timeseries', name: 'No config', hash: 'no-config-hash' }]);
 
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(screen.getByTestId('preset-no-config-hash')).toBeInTheDocument());
@@ -204,8 +215,10 @@ describe('PanelStylesSection', () => {
     const user = userEvent.setup();
     let pluginId = 'timeseries';
     const panel = {
-      useState: () => ({ pluginId }),
-      state: { fieldConfig: mockFieldConfig },
+      useState: () => ({ pluginId, fieldConfig: mockFieldConfig }),
+      get state() {
+        return { fieldConfig: mockFieldConfig };
+      },
       onFieldConfigChange: jest.fn(),
     } as unknown as VizPanel;
 
@@ -216,7 +229,7 @@ describe('PanelStylesSection', () => {
     expect(screen.getByTestId('preset-smooth-hash')).toHaveAttribute('data-selected', 'true');
 
     pluginId = 'table';
-    mockGetPresets.mockResolvedValue([
+    mockGetPluginPresets.mockReturnValue([
       {
         pluginId: 'table',
         name: 'Table preset',
