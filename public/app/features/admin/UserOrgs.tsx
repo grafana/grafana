@@ -140,11 +140,11 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
     if (user && org.orgId !== contextSrv.user.orgId) {
       // Switch org first, then navigate
       await getBackendSrv().post('/api/user/using/' + org.orgId);
-      locationService.push(`/admin/users/roles/${user.uid}`);
+      locationService.push(`/admin/users/edit/${user.uid}/roles`);
       window.location.reload();
     } else if (user) {
       // Already in the right org, just navigate
-      locationService.push(`/admin/users/roles/${user.uid}`);
+      locationService.push(`/admin/users/edit/${user.uid}/roles`);
     }
   };
 

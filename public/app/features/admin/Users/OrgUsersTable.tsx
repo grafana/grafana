@@ -161,7 +161,26 @@ export const OrgUsersTable = ({
       {
         id: 'login',
         header: 'Login',
-        cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
+        cell: ({ cell: { value }, row: { original } }: Cell<'login'>) => (
+          <a
+            href={`/admin/users/edit/${original.uid}/information`}
+            style={{
+              color: 'inherit',
+              textDecoration: 'none',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#6E9FFF';
+              e.currentTarget.style.textDecoration = 'underline';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'inherit';
+              e.currentTarget.style.textDecoration = 'none';
+            }}
+          >
+            {value}
+          </a>
+        ),
         sortType: 'string',
       },
       {
@@ -347,7 +366,7 @@ export const OrgUsersTable = ({
           basicRoleDisabledMessage={disabledRoleMessage}
           onSave={handleDrawerSave}
           canUpdateRoles={canUpdateRoles}
-          advancedViewUrl={drawerUser.uid ? `/admin/users/roles/${drawerUser.uid}` : undefined}
+          advancedViewUrl={drawerUser.uid ? `/admin/users/edit/${drawerUser.uid}/roles` : undefined}
         />
       )}
       {Boolean(userToRemove) && (

@@ -372,6 +372,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/users/edit/:uid/:page',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "UserPages" */ 'app/features/admin/UserPages')
+      ),
+    },
+    {
       path: '/admin/users/edit/:id',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
@@ -379,9 +385,13 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users/roles/:uid',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserPermissionsPage" */ 'app/features/admin/UserPermissionsPage')
-      ),
+      component: () => {
+        const RedirectToRoles = () => {
+          const { uid } = useParams<{ uid: string }>();
+          return <Navigate to={`/admin/users/edit/${uid}/roles`} replace />;
+        };
+        return <RedirectToRoles />;
+      },
     },
     {
       path: '/admin/orgs',

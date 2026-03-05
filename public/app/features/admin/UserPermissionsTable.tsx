@@ -12,7 +12,7 @@ import { UserOrg } from 'app/types/user';
 
 import { RolePermissionsModal } from './RolePermissionsModal';
 import { UserPermissionsModal } from './UserPermissionsModal';
-import { RoleWithOrg } from './UserPermissionsPage';
+import type { RoleWithOrg } from './UserPermissionsPage';
 
 type RoleType = 'basic' | 'fixed' | 'custom' | 'plugin';
 
