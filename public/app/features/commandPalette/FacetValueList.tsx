@@ -75,13 +75,19 @@ export function FacetValueList({
             onSelect(values[activeIndex].id);
           }
           break;
+        case 'Backspace':
+          if (searchQuery.length === 0) {
+            e.preventDefault();
+            onBack();
+          }
+          break;
         case 'Escape':
           e.preventDefault();
           onBack();
           break;
       }
     },
-    [values, activeIndex, onSelect, onBack]
+    [values, activeIndex, onSelect, onBack, searchQuery]
   );
 
   return (

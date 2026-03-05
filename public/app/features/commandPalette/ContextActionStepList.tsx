@@ -254,17 +254,21 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
         return;
       }
 
-      if (e.key === 'Backspace' && searchQuery === '' && breadcrumbs.length > 0) {
+      if (e.key === 'Backspace' && searchQuery === '') {
         e.preventDefault();
-        const removed = breadcrumbs[breadcrumbs.length - 1];
-        if (!isDeferred && rootStepRef.current.onRemoveBreadcrumb) {
-          rootStepRef.current.onRemoveBreadcrumb(removed);
+        if (breadcrumbs.length > 0) {
+          const removed = breadcrumbs[breadcrumbs.length - 1];
+          if (!isDeferred && rootStepRef.current.onRemoveBreadcrumb) {
+            rootStepRef.current.onRemoveBreadcrumb(removed);
+          }
+          onTransition({ ...state, breadcrumbs: breadcrumbs.slice(0, -1) });
+        } else {
+          goBack(); // exit context action mode (same as Back button or Escape)
         }
-        onTransition({ ...state, breadcrumbs: breadcrumbs.slice(0, -1) });
         return;
       }
     },
-    [applyAndGoBack, handleApply, selectableItems, activeIndex, handleSelectOption, searchQuery, breadcrumbs, isDeferred, state, onTransition]
+    [applyAndGoBack, handleApply, selectableItems, activeIndex, handleSelectOption, searchQuery, breadcrumbs, isDeferred, state, onTransition, goBack]
   );
 
   useEffect(() => {
@@ -478,18 +482,18 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0, 0.5),
       background: 'rgba(255, 255, 255, 0.10)',
       borderRadius: theme.shape.radius.default,
-      fontSize: theme.typography.bodySmall.fontSize,
+      fontSize: theme.typography.body.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.primary,
       whiteSpace: 'nowrap',
     }),
     separator: css({
       color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
+      fontSize: theme.typography.body.fontSize,
     }),
     selectedSummary: css({
       color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
+      fontSize: theme.typography.body.fontSize,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
