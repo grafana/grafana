@@ -114,7 +114,6 @@ export const getFormErrors = (data: ErrorDetails[] | Status): FormErrors => {
     'git.branch': 'repository.branch',
     'git.url': 'repository.url',
     'sync.intervalSeconds': 'repository.sync.intervalSeconds',
-    workflows: 'repository.branch',
   };
 
   const errors = extractFormErrors(data);
@@ -133,7 +132,6 @@ export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormEr
     token: 'token',
     tokenUser: 'tokenUser',
     'sync.intervalSeconds': 'sync.intervalSeconds',
-    workflows: 'branch',
   };
 
   const errors = extractFormErrors(data);

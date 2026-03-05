@@ -12600,6 +12600,7 @@
       "error-connection-required": "Connection is required",
       "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
+      "error-save-failed": "Failed to save repository setting",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
       "label-connection": "GitHub App connection",
