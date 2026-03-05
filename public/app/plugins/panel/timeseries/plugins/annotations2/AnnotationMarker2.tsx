@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 
 import { ActionModel, DataFrame, GrafanaTheme2, InterpolateFunction, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { TimeZone } from '@grafana/schema';
 import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
 import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
@@ -152,6 +153,11 @@ export const AnnotationMarker2 = ({
 
   return (
     <button
+      aria-label={
+        isRegion
+          ? t('timeseries.annotation-marker.annotation-region-label', 'Annotation region')
+          : t('timeseries.annotation-marker.annotation-label', 'Annotation')
+      }
       ref={refs.setReference}
       className={isRegion ? styles.annoRegion : styles.annoMarker}
       style={style!}

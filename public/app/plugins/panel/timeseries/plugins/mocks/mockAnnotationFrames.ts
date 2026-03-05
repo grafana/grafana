@@ -185,6 +185,8 @@ export const mockIRMAnnotation: DataFrame = {
       name: 'id',
       config: {},
       type: FieldType.number,
+      // @todo we probably want a better way of defining this, but I've added test coverage and we can come back to this later
+      // id of 0 means the annotation is not editable or deletable
       values: [0, 4665, 4683],
     },
     {
@@ -322,6 +324,8 @@ export const mockIRMAnnotationRegion: DataFrame = {
       name: 'id',
       config: {},
       type: FieldType.number,
+      // @todo we probably want a better way of defining this, but I've added test coverage and we can come back to this later
+      // id of 0 means the annotation is not editable or deletable
       values: [0, 4665, 4683],
     },
     {
@@ -840,42 +844,6 @@ export const mockAlertingFrame: DataFrame = {
       config: {},
       type: FieldType.other,
       values: [{ error: 'Alerting error test!' }, null, null, null, null, null, null, null, null, null, null],
-    },
-  ],
-};
-
-export const mockWipFrame: DataFrame = {
-  length: 1,
-  meta: {
-    dataTopic: DataTopic.Annotations,
-    custom: {
-      isWip: true,
-    },
-  },
-  fields: [
-    {
-      name: 'time',
-      config: {},
-      type: FieldType.time,
-      values: [1759388897560],
-    },
-    {
-      name: 'timeEnd',
-      config: {},
-      type: FieldType.other,
-      values: [null],
-    },
-    {
-      name: 'isRegion',
-      config: {},
-      type: FieldType.boolean,
-      values: [false],
-    },
-    {
-      name: 'color',
-      config: {},
-      type: FieldType.string,
-      values: ['#00d3ffff'],
     },
   ],
 };

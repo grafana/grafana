@@ -149,7 +149,7 @@ const SilencesTable = () => {
       <GrafanaAlertmanagerWarning currentAlertmanager={alertManagerSourceName} />
       {!!silences.length && (
         <Stack direction="column">
-          <SilencesFilter />
+          <SilencesFilter silences={silences} />
           <Authorize actions={[AlertmanagerAction.CreateSilence]}>
             <Stack justifyContent="end">
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">

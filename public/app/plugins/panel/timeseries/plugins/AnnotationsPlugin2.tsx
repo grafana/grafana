@@ -338,9 +338,10 @@ export const AnnotationsPlugin2 = ({
 
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
+          const annotationKey = getAnnotationKey(frameIdx, i);
           const setPinned = (active: boolean) => {
             if (active) {
-              setPinnedAnnotationIndex(getAnnotationKey(frameIdx, i));
+              setPinnedAnnotationIndex(annotationKey);
             } else {
               setPinnedAnnotationIndex(undefined);
             }
@@ -350,11 +351,11 @@ export const AnnotationsPlugin2 = ({
           const showTooltipOnHover = !pinnedAnnotationId && !isWipVisible;
 
           // The tooltip should render as pinned if the pinned state index matches this annotation
-          const isPinned = pinnedAnnotationId === getAnnotationKey(frameIdx, i);
+          const isPinned = pinnedAnnotationId === annotationKey;
 
           markers.push(
             <AnnotationMarker2
-              key={getAnnotationKey(frameIdx, i)}
+              key={annotationKey}
               setPinned={setPinned}
               isPinned={isPinned}
               showTooltipOnHover={showTooltipOnHover}

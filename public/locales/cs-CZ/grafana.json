@@ -4834,7 +4834,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Odkaz na Připojení",
-      "body": "Zdroje dat mají nový domov! Na stránce Připojení, která je dostupná přímo z hlavní nabídky, si můžete prohlížet nové zdroje dat nebo spravovat ty stávající.",
+      "body": "Zdroje dat mají nový domov! Na <0>stránce Připojení</0>, která je dostupná přímo z hlavní nabídky, si můžete prohlížet nové zdroje dat nebo spravovat ty stávající.",
       "go-to-connections": "Přejít na Připojení"
     },
     "data-source-details-page": {

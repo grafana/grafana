@@ -24,7 +24,6 @@ import {
   mockIRMAnnotation,
   mockIRMAnnotationRegion,
   mockIRMClusteringAnnotation,
-  mockWipFrame,
 } from './mocks/mockAnnotationFrames';
 
 const minTime = 1759388895560;
@@ -124,6 +123,7 @@ describe('AnnotationsPlugin2', () => {
 
     const annotations = props?.annotations ?? [mockAnnotationFrame];
     const frames = annotations.map((fr) => createDataFrame(fr));
+    // @todo we need to call applyFieldOverrides to add the link supplier to the frames on the frames in AnnotationsPlugin2
     const withOverrides = applyFieldOverrides({
       data: frames,
       fieldConfig: {
@@ -297,7 +297,11 @@ describe('AnnotationsPlugin2', () => {
             canDeleteAnnotations: () => true,
           } as PanelContext);
 
-          setUp({ annotations: [frame, mockWipFrame] });
+          setUp({
+            annotations: [frame],
+            // newRange sets the wip annotation
+            newRange: { from: minTime + 10, to: minTime + 10 },
+          });
 
           // Wait for AnnotationsPlugin2 setTimeout(forceUpdate) to complete
           await act(async () => {
@@ -324,6 +328,11 @@ describe('AnnotationsPlugin2', () => {
 
           // And it should be the wip edit tooltip
           expect(screen.getByText('Add annotation')).toBeVisible();
+
+          // Close the wip anno
+          await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+          expect(screen.queryByText('Add annotation')).not.toBeInTheDocument();
         });
 
         it('pins on keyboard', async () => {
