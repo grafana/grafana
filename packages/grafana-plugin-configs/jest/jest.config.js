@@ -46,6 +46,4 @@ export default {
   // ES module without it being transformed first. ./config/README.md#esm-errors-with-jest
   transformIgnorePatterns: [nodeModulesToTransform(grafanaESModules)],
   watchPathIgnorePatterns: ['<rootDir>/node_modules', '<rootDir>/dist'],
-  workerIdleMemoryLimit: '1024MB',
-  workerThreads: true,
 };

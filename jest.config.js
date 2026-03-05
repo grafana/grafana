@@ -95,6 +95,4 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/zipkin',
   ],
   projects: ['<rootDir>'],
-  workerIdleMemoryLimit: '1024MB',
-  workerThreads: true,
 };
