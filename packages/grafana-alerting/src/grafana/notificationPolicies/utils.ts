@@ -113,7 +113,7 @@ export function getInheritedProperties<T extends Route>(
 
   const inherited = reduce(
     inheritableProperties,
-    // @ts-expect-error we're using "keyof" for the property so the type checker can help us out but this makes the
+    // @ts-expect-error we're using "keyof" for the property so the type checker can help us out but this makes the reduce function signature unhappy
     (inheritedProperties: InheritableProperties, parentValue, property: keyof InheritableProperties) => {
       const parentHasValue = parentValue != null;
 
