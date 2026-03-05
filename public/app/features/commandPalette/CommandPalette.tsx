@@ -169,6 +169,42 @@ function CommandPaletteContents() {
     setActiveFacetsState({});
   }, [resetFacets]);
 
+  // Backspace with empty search clears the selected provider or the last facet
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key !== 'Backspace' || searchQuery.length > 0) {
+        return;
+      }
+      if (!selectedCategory) {
+        return;
+      }
+      if (isInFacetMode || isInContextActionMode) {
+        return; // FacetValueList or context step has its own input focused
+      }
+      e.preventDefault();
+      // If facets are applied, clear the last one first; otherwise clear the provider
+      if (hasActiveFacets) {
+        const lastActiveFacet = [...availableFacets].reverse().find((f) => f.id in activeFacets);
+        if (lastActiveFacet) {
+          removeFacet(lastActiveFacet.id);
+        }
+      } else {
+        handleDeselectCategory();
+      }
+    },
+    [
+      searchQuery,
+      selectedCategory,
+      isInFacetMode,
+      isInContextActionMode,
+      hasActiveFacets,
+      availableFacets,
+      activeFacets,
+      removeFacet,
+      handleDeselectCategory,
+    ]
+  );
+
   // Compute the shortcut range string for keyboard hints
   const shortcutRange = useMemo(() => {
     if (selectedCategory && hasFacets) {
@@ -318,6 +354,7 @@ function CommandPaletteContents() {
                     : t('command-palette.search-box.placeholder', 'Type a command or search...')
                 }
                 className={styles.search}
+                onKeyDown={handleSearchKeyDown}
               />
               {(searchQuery || selectedCategory) && (
                 <IconButton
