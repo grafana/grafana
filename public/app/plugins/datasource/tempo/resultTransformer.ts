@@ -60,18 +60,23 @@ function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.An
 function resourceToProcess(resource: collectorTypes.opentelemetryProto.resource.v1.Resource | undefined) {
   const serviceTags: TraceKeyValuePair[] = [];
   let serviceName = 'OTLPResourceNoServiceName';
+  let serviceNamespace: string | undefined;
   if (!resource) {
-    return { serviceName, serviceTags };
+    return { serviceName, serviceNamespace, serviceTags };
   }
 
   for (const attribute of resource.attributes) {
     if (attribute.key === SemanticResourceAttributes.SERVICE_NAME) {
       serviceName = attribute.value.stringValue || serviceName;
     }
+    // Coalesce service.namespace (OTel semconv canonical) and service.namespace.name (alternative)
+    if (attribute.key === 'service.namespace' || attribute.key === 'service.namespace.name') {
+      serviceNamespace = serviceNamespace ?? attribute.value.stringValue ?? undefined;
+    }
     serviceTags.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
   }
 
-  return { serviceName, serviceTags };
+  return { serviceName, serviceNamespace, serviceTags };
 }
 
 function getSpanTags(span: collectorTypes.opentelemetryProto.trace.v1.Span): TraceKeyValuePair[] {
@@ -141,6 +146,7 @@ export function transformFromOTLP(
       { name: 'parentSpanID', type: FieldType.string, values: [] },
       { name: 'operationName', type: FieldType.string, values: [] },
       { name: 'serviceName', type: FieldType.string, values: [] },
+      { name: 'serviceNamespace', type: FieldType.string, values: [] },
       { name: 'kind', type: FieldType.string, values: [] },
       { name: 'statusCode', type: FieldType.number, values: [] },
       { name: 'statusMessage', type: FieldType.string, values: [] },
@@ -163,7 +169,7 @@ export function transformFromOTLP(
   });
   try {
     for (const data of traceData) {
-      const { serviceName, serviceTags } = resourceToProcess(data.resource);
+      const { serviceName, serviceNamespace, serviceTags } = resourceToProcess(data.resource);
       for (const librarySpan of data.instrumentationLibrarySpans) {
         for (const span of librarySpan.spans) {
           frame.add({
@@ -172,6 +178,7 @@ export function transformFromOTLP(
             parentSpanID: span.parentSpanId || '',
             operationName: span.name || '',
             serviceName,
+            serviceNamespace,
             kind: getSpanKind(span),
             statusCode: span.status?.code,
             statusMessage: span.status?.message,

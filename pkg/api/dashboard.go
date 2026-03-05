@@ -256,7 +256,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		Meta:      meta,
 	}
 
-	c.TimeRequest(metrics.MApiDashboardGet)
 	return response.JSON(http.StatusOK, dto)
 }
 
@@ -414,9 +413,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return response.Error(http.StatusBadRequest, "Failed to read dashboard", err)
 	}
 
-	// Items with v2 schema elements must set v2 properties
+	// Check for v2 schema elements without a k8s style wrapper
 	if dashboards.LooksLikeV2Spec(spec) {
-		return response.Error(http.StatusBadRequest, dashboards.LooksLikeV2SpecMessage, nil)
+		return response.Error(http.StatusBadRequest, dashboards.LooksLikeV2SpecMessage+
+			" OR it should include a object wrapper with an explicit 'apiVersion' and move the body into a 'spec' element", nil)
 	}
 
 	// Items with metadata, spec, etc
@@ -494,7 +494,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
 	}
 
-	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
 		"status":    "success",
 		"slug":      dashboard.Slug,
@@ -545,12 +544,48 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	meta.SetManagedFields(nil)
 
 	name := obj.GetName()
+	if name == "" {
+		name, _, _ = unstructured.NestedString(obj.Object, "spec", "uid")
+	}
+
+	// Check (and remove) any legacy internal IDs
+	var old *unstructured.Unstructured
+	internalID, err := nestedInternalID(obj.Object)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, err.Error(), err)
+	}
+	if internalID > 0 && name == "" {
+		found, err := client.List(ctx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, internalID),
+			Limit:         2,
+		})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "unable to lookup previous version", err)
+		}
+		if len(found.Items) == 0 {
+			return response.Error(http.StatusBadRequest,
+				fmt.Sprintf("The payload includes an internal identifier (%d) that is not found", internalID), nil)
+		}
+
+		old = &found.Items[0]
+		name = old.GetName()
+		meta.SetName(name)
+		if !cmd.Overwrite {
+			return response.Error(http.StatusConflict,
+				"Dashboard with the same internal ID already exists. Use overwrite flag to update.", nil)
+		}
+	}
+
+	// Never send internal ID or UID in the body
+	unstructured.RemoveNestedField(obj.Object, "spec", "id")
+	unstructured.RemoveNestedField(obj.Object, "spec", "uid")
+
 	isCreate := name == ""
 	if isCreate {
 		obj.SetGenerateName("a") // prefix
-	} else {
+	} else if old == nil {
 		// Read the old value first
-		old, err := client.Get(ctx, name, metav1.GetOptions{})
+		old, err = client.Get(ctx, name, metav1.GetOptions{})
 		if err == nil && old != nil {
 			if !cmd.Overwrite {
 				return response.Error(http.StatusConflict,
@@ -584,13 +619,12 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 
 	meta, err = utils.MetaAccessor(dash)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to save dashboard", err)
+		return response.Error(http.StatusInternalServerError, "Failed get meta accessor", err)
 	}
 
 	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
 	slug := slugify.Slugify(title)
 
-	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
 		"status":    "success",
 		"slug":      slug,
@@ -600,6 +634,22 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 		"url":       dashboards.GetDashboardFolderURL(false, meta.GetName(), slug),
 		"folderUid": meta.GetFolder(),
 	})
+}
+
+func nestedInternalID(obj map[string]interface{}) (int64, error) {
+	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "id")
+	if !found || err != nil {
+		return 0, nil
+	}
+	i, ok := val.(int64)
+	if ok {
+		return i, nil
+	}
+	n, ok := val.(json.Number)
+	if ok {
+		return n.Int64()
+	}
+	return 0, fmt.Errorf("unsupported ID type: %T", val)
 }
 
 // swagger:route GET /dashboards/home dashboards getHomeDashboard
