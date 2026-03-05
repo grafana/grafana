@@ -14,6 +14,8 @@ export function createPromDS(dataSourceID: string, name: string): void {
     .should('be.visible') // prevents flakiness
     .click();
 
+  e2e.pages.ConnectionsDataSource.button().should('exist').click();
+
   // add url for DS to save without error
   e2e.components.DataSource.Prometheus.configPage.connectionSettings().type('http://prom-url:9090');
 

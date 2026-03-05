@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PluginType } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Badge, Card, Grid, Stack, useStyles2 } from '@grafana/ui';
@@ -70,6 +71,7 @@ function PluginEnterpriseBadgeWithoutSignature() {
 
 export type CardGridItem = CatalogPlugin & {
   logo?: string;
+  category?: string;
 };
 
 export interface CardGridProps {
@@ -94,7 +96,16 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
             }
           }}
         >
-          <Card.Heading className={styles.heading}>{item.name}</Card.Heading>
+          <Card.Heading
+            className={styles.heading}
+            aria-label={
+              item.type === PluginType.datasource
+                ? e2eSelectors.pages.AddDataSource.dataSourcePluginsV2(item.name)
+                : item.name
+            }
+          >
+            {item.name}
+          </Card.Heading>
 
           <Card.Figure align="center" className={styles.figure}>
             <img className={styles.logo} src={item.logo} alt="" />

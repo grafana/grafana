@@ -56,10 +56,13 @@ export function AddNewConnection() {
   const location = useLocation();
   const history = useHistory();
   const locationSearch = locationSearchToObject(location.search);
-  const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const sortBy = (locationSearch.sortBy ?? Sorters.nameAsc) as Sorters;
   const filterBy = locationSearch.filterBy?.toString() || 'all';
+  const categoryFilter = locationSearch.category?.toString() || 'all';
   const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const styles = useStyles2(getStyles);
+
   const handleSearchChange = (val: string) => {
     setQueryParams({
       search: val,
@@ -118,24 +121,88 @@ export function AddNewConnection() {
   const dataSourcesPlugins = getPluginsByType[PluginType.datasource];
   const appsPlugins = getPluginsByType[PluginType.app];
 
-  const datasourceCardGridItems = useMemo(
-    () =>
-      dataSourcesPlugins.map((plugin) => ({
+  console.log('appsPlugins', appsPlugins);
+  const datasourceCardGridItems = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allPlugins: Record<string, any> = {};
+
+    // Add remote/available datasources from useGetAll
+    dataSourcesPlugins.forEach((plugin) => {
+      allPlugins[plugin.id] = {
         ...plugin,
         logo: plugin.info.logos.small,
         url: ROUTES.DataSourcesDetails.replace(':id', plugin.id),
-      })),
-    [dataSourcesPlugins]
-  );
+        category: plugin.category || 'other',
+      };
+    });
+
+    // Convert to array and filter by categoryFilter
+    return Object.values(allPlugins).filter((plugin) => {
+      const matchesCategory = categoryFilter === 'all' || plugin.category === categoryFilter;
+      return matchesCategory;
+    });
+  }, [dataSourcesPlugins, categoryFilter]);
+
+  const categoryOptions = useMemo(() => {
+    // Predefined categories with nice labels (matching buildCategories.ts)
+    const predefinedCategories: Record<string, string> = {
+      tsdb: t('datasources.build-categories.categories.title.time-series-databases', 'Time series databases'),
+      logging: t('datasources.build-categories.categories.title.logging-document-databases', 'Logging & document databases'),
+      tracing: t('datasources.build-categories.categories.title.distributed-tracing', 'Distributed tracing'),
+      profiling: t('datasources.build-categories.categories.title.profiling', 'Profiling'),
+      sql: t('datasources.build-categories.categories.title.sql', 'SQL'),
+      cloud: t('datasources.build-categories.categories.title.cloud', 'Cloud'),
+      enterprise: t('datasources.build-categories.categories.title.enterprise-plugins', 'Enterprise plugins'),
+      iot: t('datasources.build-categories.categories.title.industrial-io-t', 'Industrial & IoT'),
+      other: t('datasources.build-categories.categories.title.others', 'Others'),
+    };
+
+    // Collect categories from plugins that aren't in predefined list
+    const customCategories = new Set<string>();
+    
+    dataSourcesPlugins.forEach((plugin) => {
+      if (plugin.category && !predefinedCategories[plugin.category]) {
+        customCategories.add(plugin.category);
+      }
+    });
+    
+    appsPlugins.forEach((plugin) => {
+      if (plugin.category && !predefinedCategories[plugin.category]) {
+        customCategories.add(plugin.category);
+      }
+    });
+
+    // Build options: predefined first, then custom
+    return [
+      { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All categories') },
+      ...Object.entries(predefinedCategories)
+        .map(([id, label]) => ({
+          value: id,
+          label,
+        })),
+      ...Array.from(customCategories)
+        .sort()
+        .map((category) => ({
+          value: category,
+          label: category.charAt(0).toUpperCase() + category.slice(1),
+        })),
+    ];
+  }, [dataSourcesPlugins, appsPlugins]);
 
   const appsCardGridItems = useMemo(
     () =>
-      appsPlugins.map((plugin) => ({
-        ...plugin,
-        logo: plugin.info.logos.small,
-        url: `/plugins/${plugin.id}`,
-      })),
-    [appsPlugins]
+      appsPlugins
+        .map((plugin) => ({
+          ...plugin,
+          logo: plugin.info.logos.small,
+          url: `/plugins/${plugin.id}`,
+          category: plugin.category || 'other',
+        }))
+        .filter((plugin) => {
+          const matchesCategory = categoryFilter === 'all' || plugin.category === categoryFilter;
+          return matchesCategory;
+        }),
+    [appsPlugins, categoryFilter]
   );
 
   const onSortByChange = (value: SelectableValue<string>) => {
@@ -144,6 +211,10 @@ export function AddNewConnection() {
 
   const onFilterByChange = (value: string) => {
     history.push({ query: { filterBy: value } });
+  };
+
+  const onCategoryFilterChange = (option: { value?: string } | null) => {
+    history.push({ query: { category: option?.value || 'all' } });
   };
 
   const showNoResults = useMemo(
@@ -157,13 +228,13 @@ export function AddNewConnection() {
 
       <div className={styles.searchContainer}>
         <HorizontalGroup wrap>
-          <Field label={t('common.search', 'Search')}>
+          <Field label={t('common.search', 'Search')} noMargin>
             <SearchField value={searchTerm} onSearch={handleSearchChange} />
           </Field>
           <HorizontalGroup className={styles.actionBar}>
             {/* Filter by installed / all */}
             {remotePluginsAvailable ? (
-              <Field label={t('plugins.filter.state', 'State')}>
+              <Field label={t('plugins.filter.state', 'State')} noMargin>
                 <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
               </Field>
             ) : (
@@ -175,7 +246,7 @@ export function AddNewConnection() {
                 placement="top"
               >
                 <div>
-                  <Field label={t('plugins.filter.state', 'State')}>
+                  <Field label={t('plugins.filter.state', 'State')} noMargin>
                     <RadioButtonGroup
                       disabled={true}
                       value={filterBy}
@@ -188,7 +259,7 @@ export function AddNewConnection() {
             )}
 
             {/* Sorting */}
-            <Field label={t('plugins.filter.sort', 'Sort')}>
+            <Field label={t('plugins.filter.sort', 'Sort')} noMargin>
               <Combobox
                 aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
                 width={24}
@@ -212,6 +283,19 @@ export function AddNewConnection() {
                 ]}
               />
             </Field>
+
+            {/* Category Filter */}
+            {dataSourcesPlugins.length > 0 && (
+              <Field label={t('connections.add-new-connection.label.category', 'Category')} noMargin>
+                <Combobox
+                  aria-label={t('connections.add-new-connection.label.filter-by-category', 'Filter by Category')}
+                  width={24}
+                  value={categoryFilter}
+                  onChange={onCategoryFilterChange}
+                  options={categoryOptions}
+                />
+              </Field>
+            )}
           </HorizontalGroup>
         </HorizontalGroup>
       </div>
@@ -220,12 +304,11 @@ export function AddNewConnection() {
           <LoadingPlaceholder text={t('common.loading', 'Loading...')} />
         ) : !!error ? (
           <Trans i18nKey="alerting.policies.update-errors.error-code" values={{ error: error.message }}>
-            Error message: "{{ error: error.message }}"
+            Error message: &quot;{{ error: error.message }}&quot;
           </Trans>
         ) : (
           <>
-            {/* Data Sources Section */}
-            {dataSourcesPlugins.length > 0 && (
+            {datasourceCardGridItems.length > 0 && (
               <>
                 <CategoryHeader
                   iconName="database"
@@ -235,8 +318,7 @@ export function AddNewConnection() {
               </>
             )}
 
-            {/* Apps Section */}
-            {appsPlugins.length > 0 && (
+            {appsCardGridItems.length > 0 && (
               <>
                 <div className={styles.spacer} />
                 <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />

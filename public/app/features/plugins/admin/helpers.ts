@@ -108,6 +108,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     versionSignatureType,
     versionSignedByOrgName,
     url,
+    category,
   } = plugin;
 
   const isDisabled = !!error;
@@ -146,6 +147,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
     url,
+    category: category || '',
   };
 }
 
@@ -162,6 +164,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     hasUpdate,
     accessControl,
     angularDetected,
+    category,
   } = plugin;
 
   const isDisabled = !!error;
@@ -196,6 +199,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isFullyInstalled: true,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
+    category,
   };
 }
 
@@ -206,6 +210,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const type = local?.type || remote?.typeCode;
   const isDisabled = !!error;
   const keywords = remote?.keywords || local?.info.keywords || [];
+  const category = local?.category || remote?.category;
 
   let logos = {
     small: `/public/build/img/icn-${type}.svg`,
@@ -260,6 +265,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
+    category,
   };
 }
 
