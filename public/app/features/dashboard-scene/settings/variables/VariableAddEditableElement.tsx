@@ -9,6 +9,7 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneVariable,
   SceneVariableSet,
   sceneGraph,
 } from '@grafana/scenes';
@@ -135,7 +136,11 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
         return;
       }
 
-      const newVar = getVariableScene(type, { name: getNextAvailableId(type, variablesSet.state.variables ?? []) });
+      const dashboardVars = variablesSet.state.variables ?? [];
+      const sectionVars = collectDescendantVariables(dashboard);
+      const allVars = [...dashboardVars, ...sectionVars];
+
+      const newVar = getVariableScene(type, { name: getNextAvailableId(type, allVars) });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
       DashboardInteractions.newVariableTypeSelected({ type });
@@ -217,6 +222,18 @@ function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableA
       </Stack>
     </Stack>
   );
+}
+
+/** @internal Exported for testing */
+export function collectDescendantVariables(sceneObject: SceneObject): SceneVariable[] {
+  const result: SceneVariable[] = [];
+  sceneObject.forEachChild((child) => {
+    if (child.state.$variables instanceof SceneVariableSet) {
+      result.push(...child.state.$variables.state.variables);
+    }
+    result.push(...collectDescendantVariables(child));
+  });
+  return result;
 }
 
 function getStyles(theme: GrafanaTheme2) {
