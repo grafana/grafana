@@ -134,7 +134,7 @@ func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v0alpha1 with dual writer mode %d", mode), func(t *testing.T) {
 			runDashboardTest(t, mode, gvr)
@@ -150,7 +150,7 @@ func TestIntegrationDashboardsAppV1(t *testing.T) {
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v1beta1 with dual writer mode %d", mode), func(t *testing.T) {
 			runDashboardTest(t, mode, gvr)
@@ -166,7 +166,7 @@ func TestIntegrationDashboardsAppV2beta1(t *testing.T) {
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v1alpha2 with dual writer mode %d", mode), func(t *testing.T) {
 			runDashboardTest(t, mode, gvr)
@@ -492,7 +492,7 @@ func TestIntegrationListPagination(t *testing.T) {
 	}
 
 	// Test on modes with legacy
-	modes := []rest.DualWriterMode{rest.Mode1, rest.Mode2, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode1}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -678,7 +678,7 @@ func TestIntegrationListPagination(t *testing.T) {
 func TestIntegrationSearchTypeFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		runDashboardSearchTest(t, mode)
 	}
@@ -697,7 +697,7 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
-			UnifiedStorageDisableSearch: mode < rest.Mode3,
+			UnifiedStorageDisableSearch: mode < rest.Mode4,
 		})
 		defer helper.Shutdown()
 
