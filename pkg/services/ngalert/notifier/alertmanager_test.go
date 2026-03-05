@@ -77,7 +77,7 @@ func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
 	require.False(t, am.Ready())
 }
 
-func TestAlertmanager_SaveAndApplyConfig_WithExternalSecrets(t *testing.T) {
+func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *testing.T) {
 	moa := NewTestMultiOrgAlertmanager(t)
 	am, err := moa.AlertmanagerFor(1)
 	require.NoError(t, err)
@@ -95,11 +95,15 @@ func TestAlertmanager_SaveAndApplyConfig_WithExternalSecrets(t *testing.T) {
 				},
 			},
 		},
-		ExtraConfigs: []definitions.ExtraConfiguration{
-			{
-				Identifier:    "external-prometheus",
-				MergeMatchers: []*labels.Matcher{{Type: labels.MatchEqual, Name: "cluster", Value: "prod"}},
-				AlertmanagerConfig: `
+	}
+
+	err = moa.saveAndApplyConfig(context.Background(), 1, am, cfg)
+	require.NoError(t, err)
+
+	_, err = moa.SaveAndApplyExtraConfiguration(context.Background(), 1, definitions.ExtraConfiguration{
+		Identifier:    "external-prometheus",
+		MergeMatchers: []*labels.Matcher{{Type: labels.MatchEqual, Name: "cluster", Value: "prod"}},
+		AlertmanagerConfig: `
 route:
   receiver: webhook-receiver
 receivers:
@@ -119,11 +123,7 @@ receivers:
         smarthost: 'smtp.gmail.com:587'
         auth_username: 'grafana@example.com'
         auth_password: 'another-secret-password'`,
-			},
-		},
-	}
-
-	err = am.SaveAndApplyConfig(context.Background(), cfg)
+	}, false, false)
 	require.NoError(t, err)
 
 	savedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(context.Background(), am.(*alertmanager).Base.TenantID())
@@ -241,10 +241,12 @@ receivers:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			am := setupAMTest(t)
+			moa := NewTestMultiOrgAlertmanager(t)
+			am, err := moa.AlertmanagerFor(1)
+			require.NoError(t, err)
 			ctx := context.Background()
 
-			err := am.SaveAndApplyConfig(ctx, tc.config)
+			err = moa.saveAndApplyConfig(ctx, 1, am, tc.config)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)

@@ -54,7 +54,6 @@ var (
 type Alertmanager interface {
 	// Configuration
 	ApplyConfig(context.Context, alertingNotify.NotificationsConfiguration) (bool, error)
-	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
 	GetStatus(context.Context) (apimodels.GettableStatus, error)
 
 	// Silences

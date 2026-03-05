@@ -82,19 +82,6 @@ func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, con
 	return applied, nil
 }
 
-func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	if err := fam.remote.SaveAndApplyConfig(ctx, config); err != nil {
-		return err
-	}
-
-	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
-		// An error in the internal Alertmanager shouldn't make the whole operation fail.
-		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
-		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
-	}
-	return nil
-}
-
 func (fam *RemotePrimaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
 	return fam.remote.GetStatus(ctx)
 }

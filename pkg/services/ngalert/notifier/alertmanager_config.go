@@ -253,7 +253,13 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 
 	previousConfig, cleanPermissionsErr := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
 
-	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
+	if len(cfg.ExtraConfigs) > 0 {
+		if err := moa.Crypto.EncryptExtraConfigs(ctx, cfg); err != nil {
+			return fmt.Errorf("failed to encrypt external configurations: %w", err)
+		}
+	}
+
+	if err := moa.saveAndApplyConfig(ctx, orgId, am, cfg); err != nil {
 		moa.logger.Error("Unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
 		return AlertmanagerConfigRejectedError{err}
 	}
@@ -444,7 +450,11 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		}
 	}
 
-	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
+	if err := moa.Crypto.EncryptExtraConfigs(ctx, cfg); err != nil {
+		return definition.RenameResources{}, fmt.Errorf("failed to encrypt external configurations: %w", err)
+	}
+
+	if err := moa.saveAndApplyConfig(ctx, org, am, cfg); err != nil {
 		moa.logger.Error("Unable to save and apply alertmanager configuration with extra config", "error", err, "org", org)
 		return definition.RenameResources{}, AlertmanagerConfigRejectedError{err}
 	}
@@ -597,21 +607,6 @@ func extractReceiverNames(rawConfig string) (sets.Set[string], error) {
 	return receiverNames, nil
 }
 
-// extractExtraConfigs extracts encrypted (does not decrypt) extra configurations from the raw Alertmanager config.
-func extractExtraConfigs(rawConfig string) ([]definitions.ExtraConfiguration, error) {
-	// Slimmed down version of the Alertmanager configuration to extract extra configs.
-	type extraConfigUserConfig struct {
-		ExtraConfigs []definitions.ExtraConfiguration `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-	}
-
-	cfg := &extraConfigUserConfig{}
-	if err := json.Unmarshal([]byte(rawConfig), cfg); err != nil {
-		return nil, fmt.Errorf("unable to parse Alertmanager configuration: %w", err)
-	}
-
-	return cfg.ExtraConfigs, nil
-}
-
 // applyConfig is a helper method for preparing the db onfiguration and then applying it to the given alertmanager.
 func (moa *MultiOrgAlertmanager) applyConfig(ctx context.Context, orgID int64, am Alertmanager, dbConfig *models.AlertConfiguration) (bool, error) {
 	cfg, err := PrepareConfig(ctx, orgID, dbConfig, PrepareConfigOptions{
@@ -652,6 +647,22 @@ func newSaveAMConfigCmd(cfg string, orgID int64, isDefault bool) *models.SaveAle
 		OrgID:                     orgID,
 		LastApplied:               time.Now().UTC().Unix(),
 	}
+}
+
+// saveAndApplyConfig saves a full legacy configuration blob to the database and applies the configuration to the Alertmanager.
+// This should not be generally used but exists to facilitate operations that rely on the legacy blob config:
+// - Create/Update ExtraConfig, whose storage currently piggybacks on PostableUserConfig.
+// - Config version history revert, which will eventually need to be replaced with per-resource version history.
+func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *definitions.PostableUserConfig) error {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	cfgToSave, err := json.Marshal(&cfg)
+	if err != nil {
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
+	}
+
+	return moa.saveAndApplyCmd(ctx, orgID, am, newSaveAMConfigCmd(string(cfgToSave), orgID, false), ErrorOnInvalidReceivers)
 }
 
 // saveAndApplyDefaultConfig is a helper method for resetting the configuration to default.

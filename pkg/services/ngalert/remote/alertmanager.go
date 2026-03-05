@@ -3,7 +3,6 @@ package remote
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -449,33 +448,6 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 
 	am.metrics.LastStateSync.SetToCurrentTime()
 	return nil
-}
-
-// SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
-func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	// Copy the configuration by marshalling to avoid any mutations to the provided configuration.
-	rawCopy, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-
-	c, err := notifier.PrepareConfig(ctx, am.orgID, &models.AlertConfiguration{AlertmanagerConfiguration: string(rawCopy), CreatedAt: time.Now().Unix()}, notifier.PrepareConfigOptions{
-		OnInvalid:        notifier.LogInvalidReceivers,
-		Crypto:           am.crypto,
-		AutogenRuleStore: am.autogenRuleStore,
-		Logger:           am.log,
-		Features:         am.features,
-	})
-	if err != nil {
-		return fmt.Errorf("unable to prepare configuration: %w", err)
-	}
-
-	payload, err := am.buildConfiguration(ctx, c)
-	if err != nil {
-		return fmt.Errorf("unable to build configuration: %w", err)
-	}
-	am.log.Debug("Sending configuration", "hash", payload.Hash, "default", payload.Default)
-	return am.sendConfiguration(ctx, payload)
 }
 
 func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
