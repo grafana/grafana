@@ -117,7 +117,7 @@ Large deployments suit organization-wide platforms and high-traffic production e
 | --------- | ------------------------------------- |
 | CPU       | 8 – 16+ cores per instance            |
 | Memory    | 16 – 32+ GB per instance              |
-| Disk      | 50+ GB SSD, high IOPS (database host) |
+| Disk      | 50+ GB SSD, high I/O operations per second (IOPS) (database host) |
 | Instances | 3+ (load-balanced)                    |
 | Network   | 10 Gbps or faster                     |
 
