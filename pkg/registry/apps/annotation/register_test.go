@@ -88,10 +88,10 @@ func TestK8sRESTAdapter_Create_GenerateName(t *testing.T) {
 			"expected error message about missing name/generateName")
 	})
 
-	t.Run("generateName takes precedence over name", func(t *testing.T) {
+	t.Run("name takes precedence over generateName", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:         "my-annotation-name",
+				Name:         "my-special-name",
 				GenerateName: "generated-",
 				Namespace:    "default",
 			},
@@ -107,10 +107,8 @@ func TestK8sRESTAdapter_Create_GenerateName(t *testing.T) {
 
 		result := created.(*annotationV0.Annotation)
 
-		// When both are provided, generateName takes priority
-		assert.True(t, strings.HasPrefix(result.Name, "generated-"),
-			"expected name to be generated from generateName prefix")
-		assert.NotEqual(t, "my-annotation-name", result.Name,
-			"explicit name should be overridden when generateName is present")
+		// When both are provided, name takes priority
+		assert.Equal(t, "my-special-name", result.Name,
+			"expected name to match the provided name, not the generateName")
 	})
 }

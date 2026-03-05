@@ -345,8 +345,8 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
 	}
 
-	// If generateName is provided, generate a unique name using the provided prefix
-	if resource.GenerateName != "" {
+	// If a name is empty and generateName is not, generate a unique name using the provided prefix
+	if resource.Name == "" && resource.GenerateName != "" {
 		resource.Name = resource.GenerateName + util.GenerateShortUID()
 	}
 
