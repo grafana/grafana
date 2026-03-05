@@ -22,6 +22,7 @@ import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import RulesFilter from './filter/RulesFilter';
+import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
 function RuleList() {
@@ -32,11 +33,16 @@ function RuleList() {
     <Stack direction="column">
       <AlertsActivityBanner />
       <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
-      {viewMode === 'list' ? (
-        <FilterView filterState={filterState} />
-      ) : (
-        <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
-      )}
+      <div style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
+        <RulesFilterSidebar />
+        <div style={{ flex: 1, minWidth: 0, paddingLeft: '16px' }}>
+          {viewMode === 'list' ? (
+            <FilterView filterState={filterState} />
+          ) : (
+            <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+          )}
+        </div>
+      </div>
     </Stack>
   );
 }
