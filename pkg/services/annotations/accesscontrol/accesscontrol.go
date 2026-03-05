@@ -21,6 +21,11 @@ var (
 		"annotations.accesscontrol.read",
 		errutil.WithPublicMessage("User missing permissions"),
 	)
+	ErrWriteForbidden = errutil.NewBase(
+		errutil.StatusForbidden,
+		"annotations.accesscontrol.write",
+		errutil.WithPublicMessage("User missing permissions"),
+	)
 	ErrAccessControlInternal = errutil.NewBase(
 		errutil.StatusInternal,
 		"annotations.accesscontrol.internal",
@@ -49,16 +54,18 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashb
 	}
 }
 
-// Authorize checks if the user has permission to read annotations, then returns a struct containing dashboards and scope types that the user has access to.
-func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQuery) (*AccessResources, error) {
+// Authorize checks if the user has permission to perform action on annotations and returns
+// the set of resources the user can access. action should be one of ac.ActionAnnotationsRead,
+// ac.ActionAnnotationsCreate, ac.ActionAnnotationsWrite, or ac.ActionAnnotationsDelete.
+func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQuery, action string) (*AccessResources, error) {
 	user := query.SignedInUser
 	if user == nil || user.IsNil() {
-		return nil, ErrReadForbidden.Errorf("missing user")
+		return nil, errForbidden(action).Errorf("missing user")
 	}
 
-	scopes, has := user.GetPermissions()[ac.ActionAnnotationsRead]
+	scopes, has := user.GetPermissions()[action]
 	if !has {
-		return nil, ErrReadForbidden.Errorf("user does not have permission to read annotations")
+		return nil, errForbidden(action).Errorf("user does not have permission to perform %q on annotations", action)
 	}
 	scopeTypes := annotationScopeTypes(scopes)
 	_, canAccessOrgAnnotations := scopeTypes[annotations.Organization.String()]
@@ -145,6 +152,14 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 	}
 
 	return visibleDashboards, nil
+}
+
+// errForbidden returns the appropriate forbidden error base for the given action.
+func errForbidden(action string) errutil.Base {
+	if action == ac.ActionAnnotationsRead {
+		return ErrReadForbidden
+	}
+	return ErrWriteForbidden
 }
 
 func annotationScopeTypes(scopes []string) map[any]struct{} {

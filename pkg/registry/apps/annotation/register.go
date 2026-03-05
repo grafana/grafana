@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,9 +23,12 @@ import (
 	"github.com/grafana/grafana/apps/annotation/pkg/apis"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,6 +53,7 @@ func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
+	authService *accesscontrol.AuthService,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{
 		cfg: cfg,
@@ -64,8 +69,9 @@ func RegisterAppInstaller(
 
 		// Layer 2→3: Wrap Store interface with K8s REST adapter
 		installer.k8sAdapter = &k8sRESTAdapter{
-			store:  sqlAdapter,
-			mapper: mapper,
+			store:       sqlAdapter,
+			mapper:      mapper,
+			authService: authService,
 		}
 
 		// Create the tags handler using the sqlAdapter (which implements TagProvider)
@@ -102,7 +108,8 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionNoOpinion, "", nil
 		}
 
-		// Any authenticated user can access the API
+		// Allow all authenticated users through - fine-grained authorization is
+		// handled in k8sRESTAdapter methods, consistent across read and write paths.
 		return authorizer.DecisionAllow, "", nil
 	})
 }
@@ -160,6 +167,7 @@ type k8sRESTAdapter struct {
 	store          Store
 	mapper         grafrequest.NamespaceMapper
 	tableConverter rest.TableConvertor
+	authService    *accesscontrol.AuthService
 }
 
 func (s *k8sRESTAdapter) New() runtime.Object {
@@ -245,21 +253,89 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 		opts.Continue = options.Continue
 	}
 
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, errors.NewUnauthorized("authentication required")
+	}
+
+	resources, err := s.authService.Authorize(ctx, annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: opts.DashboardUID,
+	}, ac.ActionAnnotationsRead)
+	if err != nil {
+		if accesscontrol.ErrAccessControlInternal.Is(err) {
+			return nil, errors.NewInternalError(err)
+		}
+		return nil, errors.NewForbidden(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), "", err,
+		)
+	}
+
 	result, err := s.store.List(ctx, namespace, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return list with continue token for pagination
+	// Filter annotations based on permissions.
+	// TODO: post-fetch filtering breaks pagination: storage returns opts.Limit items but
+	// the filtered result may be smaller, while the Continue token still advances by
+	// opts.Limit. Callers may need multiple round-trips to fill a page, or receive
+	// a non-empty Continue token with an empty Items slice.
+	filtered := make([]annotationV0.Annotation, 0, len(result.Items))
+	for _, anno := range result.Items {
+		if s.canAccessAnnotation(&anno, resources) {
+			filtered = append(filtered, anno)
+		}
+	}
+
 	return &annotationV0.AnnotationList{
-		Items:    result.Items,
+		Items:    filtered,
 		ListMeta: metav1.ListMeta{Continue: result.Continue},
 	}, nil
 }
 
 func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	return s.store.Get(ctx, namespace, name)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, errors.NewUnauthorized("authentication required")
+	}
+
+	annotation, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboardUID := ""
+	if annotation.Spec.DashboardUID != nil {
+		dashboardUID = *annotation.Spec.DashboardUID
+	}
+
+	resources, err := s.authService.Authorize(ctx, annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: dashboardUID,
+	}, ac.ActionAnnotationsRead)
+	if err != nil {
+		// Internal errors propagate; permission errors become NotFound to avoid leaking existence.
+		if accesscontrol.ErrAccessControlInternal.Is(err) {
+			return nil, errors.NewInternalError(err)
+		}
+		return nil, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name,
+		)
+	}
+
+	if !s.canAccessAnnotation(annotation, resources) {
+		return nil, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			name,
+		)
+	}
+
+	return annotation, nil
 }
 
 func (s *k8sRESTAdapter) Create(ctx context.Context,
@@ -267,11 +343,21 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	resource, ok := obj.(*annotationV0.Annotation)
+	annotation, ok := obj.(*annotationV0.Annotation)
 	if !ok {
 		return nil, fmt.Errorf("expected annotation")
 	}
-	return s.store.Create(ctx, resource)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, errors.NewUnauthorized("authentication required")
+	}
+
+	if err := s.authorizeWrite(ctx, user, annotation, ac.ActionAnnotationsCreate); err != nil {
+		return nil, err
+	}
+
+	return s.store.Create(ctx, annotation)
 }
 
 func (s *k8sRESTAdapter) Update(ctx context.Context,
@@ -284,7 +370,21 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 ) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
 
-	obj, err := objInfo.UpdatedObject(ctx, nil)
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, errors.NewUnauthorized("authentication required")
+	}
+
+	// Fetch the existing annotation so that:
+	//   1. UpdatedObject can merge patch on top of it.
+	//   2. We can verify the caller has write access to the existing resource,
+	//      not just the (potentially changed) new body.
+	existing, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, existing)
 	if err != nil {
 		return nil, false, err
 	}
@@ -302,6 +402,16 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, fmt.Errorf("namespace in URL does not match namespace in body")
 	}
 
+	// Check write access on the existing annotation (prevents moving an annotation
+	// the caller can't write) and on the new body (prevents writing to a scope
+	// the caller can't access).
+	if err := s.authorizeWrite(ctx, user, existing, ac.ActionAnnotationsWrite); err != nil {
+		return nil, false, err
+	}
+	if err := s.authorizeWrite(ctx, user, resource, ac.ActionAnnotationsWrite); err != nil {
+		return nil, false, err
+	}
+
 	updated, err := s.store.Update(ctx, resource)
 	if err != nil {
 		return nil, false, err
@@ -312,10 +422,91 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	err := s.store.Delete(ctx, namespace, name)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, errors.NewUnauthorized("authentication required")
+	}
+
+	annotation, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	dashboardUID := ""
+	if annotation.Spec.DashboardUID != nil {
+		dashboardUID = *annotation.Spec.DashboardUID
+	}
+
+	resources, err := s.authService.Authorize(ctx, annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: dashboardUID,
+	}, ac.ActionAnnotationsDelete)
+	if err != nil {
+		if accesscontrol.ErrAccessControlInternal.Is(err) {
+			return nil, false, errors.NewInternalError(err)
+		}
+		return nil, false, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name,
+		)
+	}
+
+	if !s.canAccessAnnotation(annotation, resources) {
+		return nil, false, errors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name,
+		)
+	}
+
+	err = s.store.Delete(ctx, namespace, name)
 	return nil, false, err
 }
 
 func (s *k8sRESTAdapter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("DeleteCollection for annotation is not available")
+}
+
+// authorizeWrite checks that user has write access to the annotation's target resource
+// (dashboard or org). Used by Create and Update. action should be one of
+// ac.ActionAnnotationsCreate or ac.ActionAnnotationsWrite.
+func (s *k8sRESTAdapter) authorizeWrite(ctx context.Context, user identity.Requester, anno *annotationV0.Annotation, action string) error {
+	dashboardUID := ""
+	if anno.Spec.DashboardUID != nil {
+		dashboardUID = *anno.Spec.DashboardUID
+	}
+
+	resources, err := s.authService.Authorize(ctx, annotations.ItemQuery{
+		SignedInUser: user,
+		OrgID:        user.GetOrgID(),
+		DashboardUID: dashboardUID,
+	}, action)
+	if err != nil {
+		if accesscontrol.ErrAccessControlInternal.Is(err) {
+			return errors.NewInternalError(err)
+		}
+		return errors.NewForbidden(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), "", err,
+		)
+	}
+
+	if !s.canAccessAnnotation(anno, resources) {
+		return errors.NewForbidden(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			"", fmt.Errorf("insufficient permissions"),
+		)
+	}
+
+	return nil
+}
+
+func (s *k8sRESTAdapter) canAccessAnnotation(anno *annotationV0.Annotation, resources *accesscontrol.AccessResources) bool {
+	// Organization annotations (no dashboard UID)
+	if anno.Spec.DashboardUID == nil || *anno.Spec.DashboardUID == "" {
+		return resources.CanAccessOrgAnnotations
+	}
+
+	// Dashboard annotations - check if user has access to the dashboard
+	dashboardUID := *anno.Spec.DashboardUID
+	_, canAccess := resources.Dashboards[dashboardUID]
+	return canAccess
 }

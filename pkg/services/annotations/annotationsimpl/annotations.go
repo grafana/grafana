@@ -5,6 +5,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl/loki"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -104,7 +105,7 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	// Iterate over available annotations until query limit is reached
 	// or all available dashboards are checked
 	for len(results) < int(query.Limit) {
-		resources, err := r.authZ.Authorize(ctx, *query)
+		resources, err := r.authZ.Authorize(ctx, *query, ac.ActionAnnotationsRead)
 		if err != nil {
 			return nil, err
 		}
