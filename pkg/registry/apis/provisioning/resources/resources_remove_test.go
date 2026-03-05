@@ -69,9 +69,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "my-dashboard", name)
 		require.Equal(t, "my-folder", folderName)
-		// NOTE: RemoveResourceFromFile currently returns empty GVK on success (line 395 of resources.go).
-		// This is a pre-existing issue separate from the classic dashboard fallback bug.
-		require.Equal(t, schema.GroupVersionKind{}, gvk)
+		require.Equal(t, dashboardGVK, gvk)
 	})
 
 	t.Run("classic dashboard format is deleted successfully", func(t *testing.T) {
@@ -116,8 +114,36 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		require.NoError(t, err, "classic dashboard format should be handled by RemoveResourceFromFile via ReadClassicResource fallback")
 		require.Equal(t, "classic-dash-uid", name)
 		require.Equal(t, "my-folder", folderName)
-		// Same pre-existing GVK issue: RemoveResourceFromFile always returns empty GVK
-		require.Equal(t, schema.GroupVersionKind{}, gvk)
+		require.Equal(t, dashboardGVK, gvk)
+	})
+
+	t.Run("folder resource file returns validation error", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		clients := NewMockResourceClients(t)
+
+		folderResource := map[string]any{
+			"apiVersion": FolderKind.GroupVersion().String(),
+			"kind":       FolderKind.Kind,
+			"metadata": map[string]any{
+				"name": "my-folder",
+			},
+			"spec": map[string]any{
+				"title": "My Folder",
+			},
+		}
+		data, _ := json.Marshal(folderResource)
+
+		repo.On("Read", mock.Anything, "folders/my-folder.json", "abc123").
+			Return(&repository.FileInfo{Data: data, Path: "folders/my-folder.json"}, nil)
+
+		mgr := NewResourcesManager(repo, nil, nil, clients)
+		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "folders/my-folder.json", "abc123")
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot declare folders through files")
+
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr, "should be a ResourceValidationError")
 	})
 
 	t.Run("non-resource JSON file returns validation error", func(t *testing.T) {

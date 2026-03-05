@@ -347,6 +347,10 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 		return "", "", schema.GroupVersionKind{}, err
 	}
 
+	if gvk.Group == FolderKind.Group && gvk.Kind == FolderKind.Kind {
+		return "", "", schema.GroupVersionKind{}, NewResourceValidationError(errors.New("cannot declare folders through files"))
+	}
+
 	objName := obj.GetName()
 	if objName == "" {
 		return "", "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
