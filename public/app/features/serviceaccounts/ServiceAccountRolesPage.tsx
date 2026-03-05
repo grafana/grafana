@@ -29,6 +29,7 @@ export const ServiceAccountRolesPage = ({ serviceAccount }: Props) => {
   } = useListUserRolesQuery({
     userId: serviceAccount.id,
     includeHidden: false,
+    includeMapped: true,
     targetOrgId: serviceAccount.orgId,
   });
 

@@ -1,5 +1,7 @@
+import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
@@ -12,6 +14,9 @@ import {
   RadioButtonGroup,
   Stack,
   Tag,
+  Text,
+  Tooltip,
+  useStyles2,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useDeleteRoleMutation, useListRolesQuery } from 'app/api/clients/roles';
@@ -59,16 +64,17 @@ const TYPE_OPTIONS = [
   { label: 'Plugin', value: 'plugin' },
 ];
 
-const TYPE_BADGE_COLORS: Record<RoleType, 'blue' | 'green' | 'purple' | 'orange'> = {
-  basic: 'blue',
-  fixed: 'green',
-  custom: 'purple',
-  plugin: 'orange',
+const TYPE_BADGE_COLOR_INDEX: Record<RoleType, number> = {
+  basic: 1,   // blue
+  fixed: 4,   // green
+  custom: 6,  // purple
+  plugin: 8,  // orange
 };
 
 export const RolesListTab = () => {
   const { data: roles = [], isLoading } = useListRolesQuery({ includeHidden: true });
   const [deleteRole] = useDeleteRoleMutation();
+  const styles = useStyles2(getStyles);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -106,7 +112,9 @@ export const RolesListTab = () => {
       {
         id: 'group',
         header: t('admin.roles-list.column-group', 'Group'),
-        cell: ({ row: { original } }: CellProps<Role, unknown>) => <span>{original.group || '—'}</span>,
+        cell: ({ row: { original } }: CellProps<Role, unknown>) => (
+          <Text color="secondary" variant="bodySmall">{original.group || '—'}</Text>
+        ),
         sortType: (a, b) => (a.original.group || '').localeCompare(b.original.group || ''),
       },
       {
@@ -118,7 +126,13 @@ export const RolesListTab = () => {
           // Fixed roles share generic names like "Reader" — qualify with group
           const displayName =
             roleType === 'fixed' && original.group ? `${original.group}: ${baseName}` : baseName;
-          return <span>{displayName}</span>;
+          return original.description ? (
+            <Tooltip content={original.description} placement="top-start">
+              <span><Text weight="medium">{displayName}</Text></span>
+            </Tooltip>
+          ) : (
+            <Text weight="medium">{displayName}</Text>
+          );
         },
         sortType: (a, b) => {
           const getDisplayName = (role: Role) => {
@@ -132,7 +146,9 @@ export const RolesListTab = () => {
       {
         id: 'role',
         header: t('admin.roles-list.column-role', 'Role'),
-        cell: ({ row: { original } }: CellProps<Role, unknown>) => <span>{original.name || '—'}</span>,
+        cell: ({ row: { original } }: CellProps<Role, unknown>) => (
+          <span className={styles.roleId}>{original.name || '—'}</span>
+        ),
         sortType: (a, b) => (a.original.name || '').localeCompare(b.original.name || ''),
       },
       {
@@ -141,7 +157,7 @@ export const RolesListTab = () => {
         cell: ({ row: { original } }: CellProps<Role, unknown>) => {
           const roleType = getRoleType(original);
           const label = isProvisioned(original) ? 'Provisioned' : roleType.charAt(0).toUpperCase() + roleType.slice(1);
-          return <Tag name={label} colorIndex={Object.keys(TYPE_BADGE_COLORS).indexOf(roleType)} />;
+          return <Tag name={label} colorIndex={TYPE_BADGE_COLOR_INDEX[roleType]} />;
         },
       },
       {
@@ -187,7 +203,7 @@ export const RolesListTab = () => {
         },
       },
     ],
-    [deleteRole]
+    [deleteRole, styles.roleId]
   );
 
   return (
@@ -202,6 +218,12 @@ export const RolesListTab = () => {
               width={40}
             />
             <RadioButtonGroup options={TYPE_OPTIONS} value={typeFilter} onChange={setTypeFilter} size="sm" />
+            {!isLoading && (
+              <Text color="secondary" variant="bodySmall">
+                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+                {filteredRoles.length} {filteredRoles.length === 1 ? 'role' : 'roles'}{typeFilter ? ` (${typeFilter})` : ''}
+              </Text>
+            )}
           </Stack>
           <Button icon="plus" onClick={() => locationService.push('/admin/roles/edit/new')}>
             {t('admin.roles-list.create-button', 'New custom role')}
@@ -210,6 +232,11 @@ export const RolesListTab = () => {
 
         {isLoading ? (
           <p>{t('admin.roles-list.loading', 'Loading roles...')}</p>
+        ) : filteredRoles.length === 0 ? (
+          <Text color="secondary" italic>
+            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+            No {typeFilter || ''} roles{searchQuery ? ` matching "${searchQuery}"` : ' found'}
+          </Text>
         ) : (
           <InteractiveTable columns={columns} data={filteredRoles} getRowId={(role) => role.uid || role.name || ''} />
         )}
@@ -218,3 +245,12 @@ export const RolesListTab = () => {
     </Page.Contents>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  roleId: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    wordBreak: 'break-all' as const,
+  }),
+});
