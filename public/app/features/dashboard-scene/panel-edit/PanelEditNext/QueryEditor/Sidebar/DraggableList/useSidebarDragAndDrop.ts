@@ -1,14 +1,14 @@
 import { DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
-import { trackReorder } from '../../tracking';
+import { trackReorder } from '../../../tracking';
 import {
   useActionsContext,
   usePanelContext,
   useQueryEditorUIContext,
   useQueryRunnerContext,
-} from '../QueryEditorContext';
-import { getTransformId } from '../utils';
+} from '../../QueryEditorContext';
+import { getTransformId } from '../../utils';
 
 function getDropIndices(result: DropResult): { startIndex: number; endIndex: number } | null {
   if (!result.destination || result.source.index === result.destination.index) {
