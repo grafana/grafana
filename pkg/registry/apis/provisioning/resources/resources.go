@@ -369,11 +369,11 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return objName, folderName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+			return objName, folderName, *gvk, nil // Already deleted or simply non-existing, nothing to do
 		}
 
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
+		return objName, folderName, *gvk, fmt.Errorf("failed to delete: %w", err)
 	}
 
-	return objName, folderName, schema.GroupVersionKind{}, nil
+	return objName, folderName, *gvk, nil
 }
