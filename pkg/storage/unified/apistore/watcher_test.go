@@ -118,6 +118,9 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		kv := resource.NewBadgerKV(db)
 		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 			KvStore: kv,
+			WatchOptions: resource.WatchOptions{
+				SettleDelay: 1 * time.Millisecond,
+			},
 		})
 		require.NoError(t, err)
 
@@ -200,7 +203,7 @@ func TestIntegrationWatch(t *testing.T) {
 func TestClusterScopedWatch(t *testing.T) {
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
+			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
 			defer destroyFunc()
 			assert.NoError(t, err)
 			storagetesting.RunTestClusterScopedWatch(ctx, t, store)
@@ -211,7 +214,7 @@ func TestClusterScopedWatch(t *testing.T) {
 func TestNamespaceScopedWatch(t *testing.T) {
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
+			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
 			defer destroyFunc()
 			assert.NoError(t, err)
 			storagetesting.RunTestNamespaceScopedWatch(ctx, t, store)
@@ -222,7 +225,7 @@ func TestNamespaceScopedWatch(t *testing.T) {
 func TestDeleteTriggerWatch(t *testing.T) {
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
+			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
 			defer destroyFunc()
 			assert.NoError(t, err)
 			storagetesting.RunTestDeleteTriggerWatch(ctx, t, store)
@@ -246,7 +249,7 @@ func TestDeleteTriggerWatch(t *testing.T) {
 func TestWatchFromNonZero(t *testing.T) {
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
+			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
 			defer destroyFunc()
 			assert.NoError(t, err)
 			storagetesting.RunTestWatchFromNonZero(ctx, t, store)

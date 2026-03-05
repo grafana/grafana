@@ -86,6 +86,8 @@ type kvStorageBackend struct {
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
+	watchOpts WatchOptions
+
 	rvManager *rvmanager.ResourceVersionManager
 
 	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
@@ -115,6 +117,7 @@ type KVBackendOptions struct {
 	GarbageCollection            GarbageCollectionConfig
 
 	UseChannelNotifier bool
+	WatchOptions       WatchOptions
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -174,6 +177,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
 		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		watchOpts:                    opts.WatchOptions.normalize(),
 		snowflake:                    s,
 		log:                          logger,
 		eventRetentionPeriod:         eventRetentionPeriod,
@@ -1545,7 +1549,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
-	notifierEvents := k.notifier.Watch(ctx, defaultWatchOptions())
+	notifierEvents := k.notifier.Watch(ctx, k.watchOpts)
 	go func() {
 		for event := range notifierEvents {
 			// fetch the data

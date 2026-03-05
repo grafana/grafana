@@ -24,7 +24,7 @@ const (
 
 type notifier interface {
 	// Watch returns a channel that will receive events as they happen.
-	Watch(context.Context, watchOptions) <-chan Event
+	Watch(context.Context, WatchOptions) <-chan Event
 	// Publish lets callers to inform watchers about events. Some notifiers
 	// (e.g., channel notifier) require callers to provide the events to be published.
 	// Others (e.g., polling notifier) queries events separately, making
@@ -42,25 +42,19 @@ type notifierOptions struct {
 	useChannelNotifier bool
 }
 
-type watchOptions struct {
+type WatchOptions struct {
 	SettleDelay time.Duration // How long to wait before emitting events to allow late-persisting events to appear
 	BufferSize  int           // How many events to buffer
 	MinBackoff  time.Duration // Minimum interval between polling requests
 	MaxBackoff  time.Duration // Maximum interval between polling requests
 }
 
-func defaultWatchOptions() watchOptions {
-	return watchOptions{
-		SettleDelay: defaultSettleDelay,
-		BufferSize:  defaultBufferSize,
-		MinBackoff:  defaultMinBackoff,
-		MaxBackoff:  defaultMaxBackoff,
-	}
-}
-
-func (opts watchOptions) normalize() watchOptions {
+func (opts WatchOptions) normalize() WatchOptions {
 	if opts.SettleDelay <= 0 {
 		opts.SettleDelay = defaultSettleDelay
+	}
+	if opts.BufferSize == 0 {
+		opts.BufferSize = defaultBufferSize
 	}
 	if opts.MinBackoff <= 0 {
 		opts.MinBackoff = defaultMinBackoff
@@ -92,9 +86,7 @@ func newChannelNotifier(log log.Logger) *channelNotifier {
 	}
 }
 
-func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
-	opts = opts.normalize()
-
+func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	cn.log.Info("creating new notifier",
 		"settle_delay", opts.SettleDelay,
 		"buffer_size", opts.BufferSize,
@@ -194,9 +186,7 @@ func (n *pollingNotifier) lastEventResourceVersion(ctx context.Context) (int64, 
 	return e.ResourceVersion, nil
 }
 
-func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
-	opts = opts.normalize()
-
+func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	n.log.Info("creating new notifier",
 		"settle_delay", opts.SettleDelay,
 		"buffer_size", opts.BufferSize,
