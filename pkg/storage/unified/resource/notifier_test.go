@@ -34,11 +34,14 @@ func TestIntegrationNewNotifier(t *testing.T) {
 	assert.NotNil(t, notifier.eventStore)
 }
 
-func TestDefaultWatchOptions(t *testing.T) {
-	opts := defaultWatchOptions()
+func TestWatchOptionsNormalize(t *testing.T) {
+	var opts WatchOptions
+	opts = opts.normalize()
 
 	assert.Equal(t, defaultSettleDelay, opts.SettleDelay)
 	assert.Equal(t, defaultBufferSize, opts.BufferSize)
+	assert.Equal(t, defaultMinBackoff, opts.MinBackoff)
+	assert.Equal(t, defaultMaxBackoff, opts.MaxBackoff)
 }
 
 func runNotifierTestWith(t *testing.T, storeName string, newStoreFn func(*testing.T) (*pollingNotifier, *eventStore), testFn func(*testing.T, context.Context, *pollingNotifier, *eventStore)) {
@@ -127,7 +130,7 @@ func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *poll
 	err := eventStore.Save(ctx, initialEvent)
 	require.NoError(t, err)
 
-	opts := watchOptions{
+	opts := WatchOptions{
 		SettleDelay: 50 * time.Millisecond,
 		BufferSize:  10,
 		MinBackoff:  50 * time.Millisecond,
@@ -187,7 +190,7 @@ func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, noti
 		require.NoError(t, err)
 	}
 
-	opts := watchOptions{
+	opts := WatchOptions{
 		SettleDelay: 50 * time.Millisecond,
 		BufferSize:  10,
 		MinBackoff:  50 * time.Millisecond,
@@ -247,7 +250,7 @@ func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, not
 	err := eventStore.Save(ctx, initialEvent)
 	require.NoError(t, err)
 
-	opts := watchOptions{
+	opts := WatchOptions{
 		SettleDelay: 50 * time.Millisecond,
 		BufferSize:  10,
 		MinBackoff:  20 * time.Millisecond,
@@ -299,7 +302,7 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 	err := eventStore.Save(ctx, initialEvent)
 	require.NoError(t, err)
 
-	opts := watchOptions{
+	opts := WatchOptions{
 		SettleDelay: 50 * time.Millisecond,
 		BufferSize:  10,
 		MinBackoff:  20 * time.Millisecond,
@@ -391,7 +394,7 @@ func TestChannelNotifier(t *testing.T) {
 
 	// Use a very short settle delay for unit tests so events are emitted immediately
 	// after the buffering goroutine processes them.
-	opts := watchOptions{BufferSize: 5, SettleDelay: 1 * time.Millisecond, MinBackoff: 1 * time.Millisecond}
+	opts := WatchOptions{BufferSize: 5, SettleDelay: 1 * time.Millisecond, MinBackoff: 1 * time.Millisecond}
 
 	t.Run("events are received", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
