@@ -14,8 +14,9 @@ import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { LogRecord } from '../../components/rules/state-history/common';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
+import { formatPrometheusDuration } from '../../utils/time';
 
-import { dateFormatter, formatDuration, noop } from './timelineUtils';
+import { dateFormatter, noop } from './timelineUtils';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;
 
@@ -71,17 +72,17 @@ export function buildTimelineGroups(records: LogRecord[], notifications: Notific
     }
   }
 
-  const groups: TimelineGroup[] = [...stateGroups].reverse();
+  stateGroups.reverse();
 
   if (orphanNotifications.length > 0) {
-    groups.push({
+    stateGroups.push({
       timestamp: new Date(orphanNotifications[0].timestamp).getTime(),
       type: 'orphan-notifications',
       notifications: orphanNotifications,
     });
   }
 
-  return groups;
+  return stateGroups;
 }
 
 interface InstanceTimelineProps {
@@ -123,43 +124,33 @@ export function buildTimelineEntries(groups: TimelineGroup[]): TimelineEntry[] {
   return entries;
 }
 
-type Styles = ReturnType<typeof getStyles>;
+function EntryDot({ entry }: { entry: TimelineEntry }) {
+  const styles = useStyles2(getStyles);
 
-function getEntryDotStyle(entry: TimelineEntry, styles: Styles): string {
   if (entry.type !== 'notifications' || !entry.notifications) {
-    return styles.dot;
+    return <div className={styles.dot} />;
   }
   const hasFailures = entry.notifications.some((n) => n.outcome !== 'success');
   if (hasFailures) {
-    return styles.dotWarning;
+    return <div className={styles.dotWarning} />;
   }
   const isFiring = entry.notifications.some((n) => n.status === 'firing');
-  return isFiring ? styles.dotFiring : styles.dotResolved;
+  return <div className={isFiring ? styles.dotFiring : styles.dotResolved} />;
 }
 
 type TimelineFilter = 'all' | 'states' | 'notifications';
 
-function useTimelineFilterOptions(): Array<{ label: string; value: TimelineFilter }> {
-  return useMemo(
-    () => [
-      { label: t('alerting.instance-details.timeline-filter-all', 'All'), value: 'all' as const },
-      {
-        label: t('alerting.instance-details.timeline-filter-states', 'State changes'),
-        value: 'states' as const,
-      },
-      {
-        label: t('alerting.instance-details.timeline-filter-notifications', 'Notifications'),
-        value: 'notifications' as const,
-      },
-    ],
-    []
-  );
-}
-
 export function InstanceTimeline({ records, notifications }: InstanceTimelineProps) {
   const styles = useStyles2(getStyles);
   const [filter, setFilter] = useState<TimelineFilter>('all');
-  const filterOptions = useTimelineFilterOptions();
+  const filterOptions = [
+    { label: t('alerting.instance-details.timeline-filter-all', 'All'), value: 'all' as const },
+    { label: t('alerting.instance-details.timeline-filter-states', 'State changes'), value: 'states' as const },
+    {
+      label: t('alerting.instance-details.timeline-filter-notifications', 'Notifications'),
+      value: 'notifications' as const,
+    },
+  ];
 
   const groups = useMemo(() => buildTimelineGroups(records, notifications), [records, notifications]);
   const allEntries = useMemo(() => buildTimelineEntries(groups), [groups]);
@@ -201,7 +192,7 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
               </div>
 
               <div className={styles.connectorCol}>
-                <div className={getEntryDotStyle(entry, styles)} />
+                <EntryDot entry={entry} />
                 {index < entries.length - 1 && <div className={styles.connectorLine} />}
               </div>
 
@@ -388,7 +379,7 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
           </Stack>
         )}
         <Text variant="bodySmall" color="secondary">
-          {formatDuration(notification.duration)}
+          {formatPrometheusDuration(Math.floor(notification.duration / 1_000_000))}
         </Text>
       </div>
       {!isSuccess && notification.error && (

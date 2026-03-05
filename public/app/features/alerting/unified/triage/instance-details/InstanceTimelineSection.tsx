@@ -34,7 +34,7 @@ export function InstanceTimelineSection({
     { data: notificationData, isLoading: notificationsLoading, isError: notificationsError },
   ] = useCreateNotificationqueryMutation();
 
-  const labelsKey = useMemo(() => JSON.stringify(instanceLabels), [instanceLabels]);
+  const labelsKey = JSON.stringify(instanceLabels);
 
   useEffect(() => {
     if (!timeRange?.from || !timeRange?.to) {
