@@ -6,11 +6,13 @@ import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useLayoutCategory } from '../../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 
+import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
 import { DashboardVariablesList } from './DashboardVariablesList';
 
@@ -44,8 +46,9 @@ function useEditPaneOptions(
 
   const layoutCategory = useLayoutCategory(body);
   const variablesCategory = useVariablesCategory($variables);
+  const annotationsCategory = useAnnotationsCategory(dashboardSceneGraph.getDataLayers(dashboard));
 
-  return [dashboardOptions, ...layoutCategory, ...variablesCategory];
+  return [dashboardOptions, ...layoutCategory, ...variablesCategory, ...annotationsCategory];
 }
 
 export class DashboardEditableElement implements EditableDashboardElement {
@@ -111,4 +114,26 @@ function useVariablesCategory(variableSet: SceneVariables | undefined): OptionsP
 
     return [category];
   }, [variableSet, variableListId]);
+}
+
+function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPaneCategoryDescriptor[] {
+  const annotationsListId = useId();
+
+  return useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard-scene.use-annotations-category.category.title.annotations', 'Annotations'),
+      id: 'dashboard-annotations',
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: annotationsListId,
+        skipField: true,
+        render: () => <DashboardAnnotationsList dataLayerSet={dataLayerSet} />,
+      })
+    );
+
+    return [category];
+  }, [dataLayerSet, annotationsListId]);
 }
