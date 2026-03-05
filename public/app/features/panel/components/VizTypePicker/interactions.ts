@@ -40,8 +40,8 @@ class VizSuggestionsDashboardSaveTracker {
   private _receipts = new Map<string, PanelSuggestionInfo>();
 
   constructor() {
-    appEvents?.subscribe(DashboardSavedEvent, this.onDashboardSaved);
-    appEvents?.subscribe(DashboardDiscardedEvent, this.onDashboardDiscarded);
+    appEvents?.subscribe?.(DashboardSavedEvent, this.onDashboardSaved);
+    appEvents?.subscribe?.(DashboardDiscardedEvent, this.onDashboardDiscarded);
   }
 
   record(panelKey: string, info: PanelSuggestionInfo | undefined) {
