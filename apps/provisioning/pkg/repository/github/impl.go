@@ -24,7 +24,7 @@ func NewClient(client *github.Client) Client {
 
 // translateGitHubError converts GitHub API errors into common repository errors
 // For "expired" errors, it returns a more descriptive wrapped error
-func translateGitHubError(err error, operation string) error {
+func translateGitHubError(err error) error {
 	if err == nil {
 		return nil
 	}
@@ -45,7 +45,7 @@ func translateGitHubError(err error, operation string) error {
 		// 401 - Authentication failed
 		// Special case: "expired" is cryptic, so add helpful context
 		if strings.Contains(strings.ToLower(ghMessage), "expired") {
-			return fmt.Errorf("authentication token has expired (operation: %s): %w", operation, repository.ErrUnauthorized)
+			return fmt.Errorf("authentication token has expired: %w", repository.ErrUnauthorized)
 		}
 		return repository.ErrUnauthorized
 
@@ -53,7 +53,7 @@ func translateGitHubError(err error, operation string) error {
 		// 403 - Permission denied
 		// Special case: rate limit gets additional context
 		if strings.Contains(strings.ToLower(ghMessage), "rate limit") {
-			return fmt.Errorf("API rate limit exceeded (operation: %s): %w", operation, repository.ErrPermissionDenied)
+			return fmt.Errorf("API rate limit exceeded: %w", repository.ErrPermissionDenied)
 		}
 		return repository.ErrPermissionDenied
 
@@ -67,7 +67,7 @@ func translateGitHubError(err error, operation string) error {
 
 	default:
 		// Other errors - return with GitHub message context
-		return fmt.Errorf("GitHub API error (HTTP %d: %s, operation: %s)", statusCode, ghMessage, operation)
+		return fmt.Errorf("GitHub API error (HTTP %d: %s)", statusCode, ghMessage)
 	}
 }
 
@@ -120,7 +120,7 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 func (r *githubClient) GetRepository(ctx context.Context, owner, repository string) (Repository, error) {
 	repo, _, err := r.gh.Repositories.Get(ctx, owner, repository)
 	if err != nil {
-		return Repository{}, translateGitHubError(err, fmt.Sprintf("get repository '%s/%s'", owner, repository))
+		return Repository{}, translateGitHubError(err)
 	}
 
 	return Repository{
@@ -203,7 +203,7 @@ func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository strin
 		return nil, fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks)
 	}
 	if err != nil {
-		return nil, translateGitHubError(err, fmt.Sprintf("list webhooks for repository '%s/%s'", owner, repository))
+		return nil, translateGitHubError(err)
 	}
 
 	// Pre-allocate the result slice
@@ -244,7 +244,7 @@ func (r *githubClient) CreateWebhook(ctx context.Context, owner, repository stri
 
 	createdHook, _, err := r.gh.Repositories.CreateHook(ctx, owner, repository, hook)
 	if err != nil {
-		return WebhookConfig{}, translateGitHubError(err, fmt.Sprintf("create webhook for repository '%s/%s'", owner, repository))
+		return WebhookConfig{}, translateGitHubError(err)
 	}
 
 	return WebhookConfig{
@@ -262,7 +262,7 @@ func (r *githubClient) CreateWebhook(ctx context.Context, owner, repository stri
 func (r *githubClient) GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error) {
 	hook, _, err := r.gh.Repositories.GetHook(ctx, owner, repository, webhookID)
 	if err != nil {
-		return WebhookConfig{}, translateGitHubError(err, fmt.Sprintf("get webhook %d for repository '%s/%s'", webhookID, owner, repository))
+		return WebhookConfig{}, translateGitHubError(err)
 	}
 
 	contentType := hook.GetConfig().GetContentType()
@@ -285,7 +285,7 @@ func (r *githubClient) GetWebhook(ctx context.Context, owner, repository string,
 func (r *githubClient) DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error {
 	_, err := r.gh.Repositories.DeleteHook(ctx, owner, repository, webhookID)
 	if err != nil {
-		return translateGitHubError(err, fmt.Sprintf("delete webhook %d for repository '%s/%s'", webhookID, owner, repository))
+		return translateGitHubError(err)
 	}
 	return nil
 }
@@ -307,7 +307,7 @@ func (r *githubClient) EditWebhook(ctx context.Context, owner, repository string
 	}
 	_, _, err := r.gh.Repositories.EditHook(ctx, owner, repository, cfg.ID, hook)
 	if err != nil {
-		return translateGitHubError(err, fmt.Sprintf("edit webhook %d for repository '%s/%s'", cfg.ID, owner, repository))
+		return translateGitHubError(err)
 	}
 	return nil
 }
@@ -326,7 +326,7 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, owner, reposito
 		return nil, fmt.Errorf("pull request contains too many files (more than %d)", maxPRFiles)
 	}
 	if err != nil {
-		return nil, translateGitHubError(err, fmt.Sprintf("list files for pull request %d in repository '%s/%s'", number, owner, repository))
+		return nil, translateGitHubError(err)
 	}
 
 	// Convert to the interface type
@@ -344,7 +344,7 @@ func (r *githubClient) CreatePullRequestComment(ctx context.Context, owner, repo
 	}
 
 	if _, _, err := r.gh.Issues.CreateComment(ctx, owner, repository, number, comment); err != nil {
-		return translateGitHubError(err, fmt.Sprintf("create comment on pull request %d in repository '%s/%s'", number, owner, repository))
+		return translateGitHubError(err)
 	}
 
 	return nil
