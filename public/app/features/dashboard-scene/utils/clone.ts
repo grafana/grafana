@@ -32,6 +32,23 @@ export function isRepeatCloneOrChildOf(scene: SceneObject): boolean {
   return false;
 }
 
+/**
+ * Walk up the scene graph to find the nearest ancestor (or self) that is a repeat clone,
+ * then return its repeat source key so the caller can resolve the original object.
+ */
+export function getRepeatCloneSourceKey(scene: SceneObject): string | undefined {
+  let obj: SceneObject | undefined = scene;
+
+  do {
+    if ('repeatSourceKey' in obj.state && obj.state.repeatSourceKey) {
+      return String(obj.state.repeatSourceKey);
+    }
+    obj = obj.parent;
+  } while (obj);
+
+  return undefined;
+}
+
 export function getLocalVariableValueSet(
   variable: SceneVariable<MultiValueVariableState>,
   value: VariableValueSingle,

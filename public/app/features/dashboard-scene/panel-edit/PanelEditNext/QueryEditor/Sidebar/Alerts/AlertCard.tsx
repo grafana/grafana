@@ -3,8 +3,8 @@ import { Icon, useTheme2 } from '@grafana/ui';
 import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
 import { useQueryEditorUIContext } from '../../QueryEditorContext';
 import { AlertRule } from '../../types';
-import { CardTitle } from '../CardTitle';
-import { SidebarCard } from '../SidebarCard';
+import { CardTitle } from '../Cards/CardTitle';
+import { SidebarCard } from '../Cards/SidebarCard';
 
 export const AlertCard = ({ alert }: { alert: AlertRule }) => {
   const { selectedAlert, setSelectedAlert } = useQueryEditorUIContext();

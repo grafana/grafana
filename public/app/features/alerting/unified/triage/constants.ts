@@ -31,6 +31,30 @@ export const DATASOURCE_UID = config.unifiedAlerting.stateHistory?.prometheusTar
 export const METRIC_NAME = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
 
 /**
+ * Internal/structural labels to exclude from frequency counting.
+ *
+ * Prometheus internal:
+ *   __name__, alertname, alertstate
+ *
+ * Grafana structural (rule identity / routing):
+ *   grafana_alertstate, grafana_folder, grafana_rule_uid
+ *
+ * Grafana instance metadata (org/folder context, state-history origin):
+ *   orgID, folderUID, from
+ */
+export const INTERNAL_LABELS = new Set([
+  '__name__',
+  'alertname',
+  'alertstate',
+  'folderUID',
+  'from',
+  'grafana_alertstate',
+  'grafana_folder',
+  'grafana_rule_uid',
+  'orgID',
+]);
+
+/**
  * DataFrame field names returned by the alert history metric queries.
  */
 export const FIELD_NAMES = {

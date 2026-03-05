@@ -193,6 +193,9 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 
 func validateLabels(l map[string]string) error {
 	for key := range l {
+		if key == "" {
+			return fmt.Errorf("label key cannot be empty")
+		}
 		if _, ok := ngmodels.LabelsUserCannotSpecify[key]; ok {
 			return fmt.Errorf("system reserved labels cannot be defined in the rule. Label %s is the reserved", key)
 		}
