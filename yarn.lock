@@ -3970,13 +3970,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.0.3":
-  version: 7.0.3
-  resolution: "@grafana/scenes-react@npm:7.0.3"
+"@grafana/scenes-react@npm:7.1.1":
+  version: 7.1.1
+  resolution: "@grafana/scenes-react@npm:7.1.1"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.0.3"
+    "@grafana/scenes": "npm:7.1.1"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3990,7 +3990,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/231509fa235a3dcc83bc202f13dd7d5c6bb702ea6b7c2f5753aa825ffaf456fec4d1a7aa6220332dd1a61096f479ed9f0daab55839da51132005ae6d8c8aad4c
+  checksum: 10/b1e8fea520aa36e9ac38fec5a7ff5de1e5b74380c3e9ddcafc64c69131d6c3327d621e51b4983998ccf6d90ec0920a9bf09ba96925e6bf30fd98555faa677f28
   languageName: node
   linkType: hard
 
@@ -4020,9 +4020,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:7.0.3":
-  version: 7.0.3
-  resolution: "@grafana/scenes@npm:7.0.3"
+"@grafana/scenes@npm:7.1.1":
+  version: 7.1.1
+  resolution: "@grafana/scenes@npm:7.1.1"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -4047,7 +4047,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/37d99592c1fd421a524413ab89fc09348bb203a3a41e5596859e718282007014b55a29d5549669a6293c50368a4fec99ae1e3bb593f645786877033e1a7a218f
+  checksum: 10/38369e1f2f5eddbc0a96fc99e4d1cb669e7e4e997002421df6a0d33b8be9b78e63706809607618a872abecd6b87641693d29423ddfd0c4acb77ba4fd4a105635
   languageName: node
   linkType: hard
 
@@ -14300,13 +14300,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:5.5.2":
-  version: 5.5.2
-  resolution: "centrifuge@npm:5.5.2"
+"centrifuge@npm:5.5.3":
+  version: 5.5.3
+  resolution: "centrifuge@npm:5.5.3"
   dependencies:
     events: "npm:^3.3.0"
     protobufjs: "npm:^7.2.5"
-  checksum: 10/d48bff4fe5ab9a1dfe8f1b4100a197c1e90b929f15ba4a5ff5c191c5bbd5f103aa1fe46945338e3f854174c99a90ef94412f142d84410b4c28d309e7ce73ce69
+  checksum: 10/2074551adc0ea421d8d4880236b956d6fde0d652c3da2d82124b49c1d6659817069bb58f8f8525794382915d5bff3310592bb023a4afa35fc3ca2b69158ba412
   languageName: node
   linkType: hard
 
@@ -20254,8 +20254,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.0.3"
-    "@grafana/scenes-react": "npm:7.0.3"
+    "@grafana/scenes": "npm:7.1.1"
+    "@grafana/scenes-react": "npm:7.1.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -20371,7 +20371,7 @@ __metadata:
     blob-polyfill: "npm:9.0.20240710"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
-    centrifuge: "npm:5.5.2"
+    centrifuge: "npm:5.5.3"
     chance: "npm:^1.1.13"
     chrome-remote-interface: "npm:0.33.3"
     classnames: "npm:2.5.1"

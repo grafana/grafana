@@ -1,12 +1,17 @@
 package provisioning
 
 import (
+	"context"
+	"encoding/base64"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -106,4 +111,183 @@ func waitForHealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningT
 		}
 		assert.Equal(collect, expectedReason, cond.Reason)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+}
+
+// TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota verifies
+// that auth token refresh and health checks are not skipped when a repository is
+// blocked due to namespace quota being exceeded.
+func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	const (
+		connName  = "ns-quota-token-conn"
+		repoName1 = "ns-quota-token-repo1"
+		repoName2 = "ns-quota-token-repo2"
+	)
+
+	// --- Step 1: create a GitHub connection backed by the mocked GitHub API ---
+	conn := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      connName,
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"title": "NS Quota Token Refresh Conn",
+			"type":  "github",
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "789012",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": privateKeyBase64,
+			},
+		},
+	}}
+
+	_, err := helper.CreateGithubConnection(t, ctx, conn)
+	require.NoError(t, err, "failed to create GitHub connection")
+
+	// Wait for the connection itself to be reconciled (token acquired).
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		obj, err := helper.Connections.Resource.Get(ctx, connName, metav1.GetOptions{})
+		if !assert.NoError(c, err) {
+			return
+		}
+		connObj := unstructuredToConnection(t, obj)
+		assert.NotEqual(c, int64(0), connObj.Status.ObservedGeneration,
+			"connection should be reconciled at least once")
+		assert.False(c, connObj.Secure.Token.IsZero(),
+			"connection should have a token after initial reconciliation")
+	}, waitTimeoutDefault, waitIntervalDefault, "connection %s should be reconciled with token", connName)
+
+	// --- Step 2: create two GitHub repos linked to the connection -------------
+	// sync.enabled=false avoids triggering actual Git operations; the connection
+	// still drives token generation for the repo.
+	for _, name := range []string{repoName1, repoName2} {
+		repoObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": "default",
+				"finalizers": []string{
+					"remove-orphan-resources",
+					"cleanup",
+				},
+			},
+			"spec": map[string]any{
+				"title": name,
+				"type":  "github",
+				"github": map[string]any{
+					"url":    "https://github.com/some/url",
+					"branch": "main",
+				},
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"connection": map[string]any{
+					"name": connName,
+				},
+			},
+		}}
+		_, err = helper.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+		require.NoError(t, err, "failed to create repository %s", name)
+	}
+
+	// Wait for both repos to receive an initial token from the connection.
+	for _, name := range []string{repoName1, repoName2} {
+		name := name
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			obj, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+			if !assert.NoError(c, err) {
+				return
+			}
+			r := unstructuredToRepository(t, obj)
+			assert.False(c, r.Secure.Token.IsZero(),
+				"repo %s should have a token after initial reconciliation", name)
+		}, waitTimeoutDefault, waitIntervalDefault,
+			"repo %s should be reconciled with an initial token", name)
+	}
+
+	// --- Step 3: lower quota to 1 — both repos exceed the limit ---------------
+	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
+	helper.TriggerRepositoryReconciliation(t, repoName1)
+	helper.TriggerRepositoryReconciliation(t, repoName2)
+
+	waitForUnhealthyWithNamespaceQuota(t, helper, repoName1, provisioning.ReasonQuotaExceeded)
+
+	// --- Step 4: manufacture a near-expiry token state on repo1 ---------------
+	// Simulate the scenario where the repo is still blocked but its token is
+	// about to expire
+	//
+	// The controller reconciler runs concurrently and may update the repo's
+	// status between our Get and UpdateStatus, bumping resourceVersion and
+	// causing a conflict error. Retry with a fresh Get on each conflict.
+	now := time.Now()
+	var staledHealthChecked, staledTokenLastUpdated int64
+
+	const maxStatusRetries = 5
+	for attempt := range maxStatusRetries {
+		repoUnstr, err := helper.Repositories.Resource.Get(ctx, repoName1, metav1.GetOptions{})
+		require.NoError(t, err, "failed to get repo1 before status manipulation")
+		repo1 := unstructuredToRepository(t, repoUnstr)
+
+		// Token lastUpdated far in the past (not "recently created") and expiration
+		// soon (within the 2*resyncInterval+10s refresh buffer).
+		repo1.Status.Token = provisioning.TokenStatus{
+			LastUpdated: now.Add(-1 * time.Hour).UnixMilli(),
+			Expiration:  now.Add(30 * time.Second).UnixMilli(),
+		}
+		// Age the health.checked beyond recentUnhealthyDuration (1 min) so the
+		// health checker considers it stale. This also ensures health.checked will
+		// visibly advance after the next reconciliation.
+		repo1.Status.Health.Checked = now.Add(-2 * time.Minute).UnixMilli()
+		staledHealthChecked = repo1.Status.Health.Checked
+		staledTokenLastUpdated = repo1.Status.Token.LastUpdated
+
+		updatedUnstr := repositoryToUnstructured(t, repo1)
+		_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedUnstr, metav1.UpdateOptions{})
+		if err == nil {
+			break
+		}
+		if apierrors.IsConflict(err) && attempt < maxStatusRetries-1 {
+			continue
+		}
+		require.NoError(t, err, "failed to update repo1 status with near-expiry token")
+	}
+
+	// --- Step 5: verify health check AND token refresh happened, repo still blocked
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		obj, err := helper.Repositories.Resource.Get(ctx, repoName1, metav1.GetOptions{})
+		if !assert.NoError(c, err) {
+			return
+		}
+		r := unstructuredToRepository(t, obj)
+
+		// Repository must still be blocked by the namespace quota.
+		cond := findCondition(r.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
+		if !assert.NotNil(c, cond, "NamespaceQuota condition should exist") {
+			return
+		}
+		assert.Equal(c, provisioning.ReasonQuotaExceeded, cond.Reason,
+			"repo should still be quota-blocked after token refresh")
+
+		// Health check ran: checked timestamp advanced beyond the staled value.
+		assert.Greater(c, r.Status.Health.Checked, staledHealthChecked,
+			"health.checked should be updated even when the repo is over namespace quota")
+
+		// Token was refreshed: lastUpdated advanced beyond the staled value.
+		assert.Greater(c, r.Status.Token.LastUpdated, staledTokenLastUpdated,
+			"token should be refreshed even when the repo is over namespace quota")
+	}, waitTimeoutDefault, waitIntervalDefault,
+		"health check and token refresh must run for quota-blocked repositories")
 }

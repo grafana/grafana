@@ -645,6 +645,22 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	}
 }
 
+// WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository
+// matches the expected limit.
+func (h *ProvisioningTestHelper) WaitForResourceQuotaLimit(t *testing.T, repoName string, expectedLimit int64) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := h.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := UnstructuredToRepository(t, repoObj)
+		assert.Equal(collect, expectedLimit, repo.Status.Quota.MaxResourcesPerRepository,
+			"repository quota limit not yet updated by controller")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "Status.Quota.MaxResourcesPerRepository should be %d", expectedLimit)
+}
+
 // WaitForQuotaReconciliation waits for the repository's quota condition to match the expected reason.
 // It uses the typed Repository object and the quotas package to check conditions.
 func (h *ProvisioningTestHelper) WaitForQuotaReconciliation(t *testing.T, repoName string, expectedReason string) {
