@@ -155,28 +155,45 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 
 		// Check the rules in this ruleset
 		rules := ruleset.GetRules()
-		if rules != nil {
-			// Check for pull request requirement
-			if rules.PullRequest != nil {
-				logging.FromContext(ctx).Debug("Ruleset has PullRequest rule",
-					slog.String("ruleset_name", rulesetName))
-				result.RequiresPullRequest = true
-			}
+		if rules == nil {
+			logging.FromContext(ctx).Warn("Ruleset has nil rules",
+				slog.String("ruleset_name", rulesetName))
+			continue
+		}
 
-			// Check for other blocking rules
-			if rules.RequiredStatusChecks != nil || rules.RequiredSignatures != nil ||
-				rules.RequiredLinearHistory != nil || rules.RequiredDeployments != nil ||
-				rules.Creation != nil || rules.NonFastForward != nil {
-				logging.FromContext(ctx).Debug("Ruleset has blocking rules",
-					slog.String("ruleset_name", rulesetName),
-					slog.Bool("RequiredStatusChecks", rules.RequiredStatusChecks != nil),
-					slog.Bool("RequiredSignatures", rules.RequiredSignatures != nil),
-					slog.Bool("RequiredLinearHistory", rules.RequiredLinearHistory != nil),
-					slog.Bool("RequiredDeployments", rules.RequiredDeployments != nil),
-					slog.Bool("Creation", rules.Creation != nil),
-					slog.Bool("NonFastForward", rules.NonFastForward != nil))
-				result.HasBlockingRules = true
-			}
+		// Log all rule fields to see what's actually present
+		logging.FromContext(ctx).Debug("Checking ruleset rules",
+			slog.String("ruleset_name", rulesetName),
+			slog.Bool("PullRequest", rules.PullRequest != nil),
+			slog.Bool("RequiredStatusChecks", rules.RequiredStatusChecks != nil),
+			slog.Bool("RequiredSignatures", rules.RequiredSignatures != nil),
+			slog.Bool("RequiredLinearHistory", rules.RequiredLinearHistory != nil),
+			slog.Bool("RequiredDeployments", rules.RequiredDeployments != nil),
+			slog.Bool("Creation", rules.Creation != nil),
+			slog.Bool("NonFastForward", rules.NonFastForward != nil),
+			slog.Bool("Deletion", rules.Deletion != nil),
+			slog.Bool("Update", rules.Update != nil))
+
+		// Check for pull request requirement
+		if rules.PullRequest != nil {
+			logging.FromContext(ctx).Debug("Ruleset has PullRequest rule",
+				slog.String("ruleset_name", rulesetName))
+			result.RequiresPullRequest = true
+		}
+
+		// Check for other blocking rules
+		if rules.RequiredStatusChecks != nil || rules.RequiredSignatures != nil ||
+			rules.RequiredLinearHistory != nil || rules.RequiredDeployments != nil ||
+			rules.Creation != nil || rules.NonFastForward != nil {
+			logging.FromContext(ctx).Debug("Ruleset has blocking rules",
+				slog.String("ruleset_name", rulesetName),
+				slog.Bool("RequiredStatusChecks", rules.RequiredStatusChecks != nil),
+				slog.Bool("RequiredSignatures", rules.RequiredSignatures != nil),
+				slog.Bool("RequiredLinearHistory", rules.RequiredLinearHistory != nil),
+				slog.Bool("RequiredDeployments", rules.RequiredDeployments != nil),
+				slog.Bool("Creation", rules.Creation != nil),
+				slog.Bool("NonFastForward", rules.NonFastForward != nil))
+			result.HasBlockingRules = true
 		}
 	}
 
