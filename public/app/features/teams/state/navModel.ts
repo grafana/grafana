@@ -60,6 +60,27 @@ export function buildNavModel(team: Team): NavModelItem {
     });
   }
 
+  // Roles tab - available with RBAC and ActionTeamsRolesList permission
+  if (
+    !isLoadingTeam &&
+    contextSrv.licensedAccessControlEnabled() &&
+    contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRolesList, team)
+  ) {
+    // Find Members tab index
+    const membersTabIndex = navModel.children!.findIndex((child) => child.id === `team-members-${team.uid}`);
+
+    // Insert Roles tab after Members (or at beginning if Members doesn't exist)
+    const insertIndex = membersTabIndex >= 0 ? membersTabIndex + 1 : 0;
+
+    navModel.children!.splice(insertIndex, 0, {
+      active: false,
+      icon: 'shield',
+      id: `team-roles-${team.uid}`,
+      text: t('teams.build-nav-model.text.roles', 'Roles'),
+      url: `org/teams/edit/${team.uid}/roles`,
+    });
+  }
+
   const teamGroupSync: NavModelItem = {
     active: false,
     icon: 'sync',

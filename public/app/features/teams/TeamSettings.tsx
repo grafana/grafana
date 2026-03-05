@@ -2,8 +2,6 @@ import { useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
-import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
-import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -17,23 +15,13 @@ interface Props {
 
 const TeamSettings = ({ team }: Props) => {
   const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
-  const currentOrgId = contextSrv.user.orgId;
   const [updateTeam] = useUpdateTeam();
 
-  const [{ roleOptions }] = useRoleOptions(currentOrgId);
   const {
     handleSubmit,
     register,
     formState: { errors },
   } = useForm<Team>({ defaultValues: team });
-
-  const canUpdateRoles =
-    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
-    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRemove);
-
-  const canListRoles =
-    contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRolesList, team) &&
-    contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
   const onSubmit = async (formTeam: Team) => {
     return updateTeam({
@@ -67,12 +55,6 @@ const TeamSettings = ({ team }: Props) => {
             >
               <Input {...register('name', { required: true })} id="name-input" />
             </Field>
-
-            {contextSrv.licensedAccessControlEnabled() && canListRoles && (
-              <Field noMargin label={t('teams.team-settings.label-role', 'Role')}>
-                <TeamRolePicker teamId={team.id} roleOptions={roleOptions} disabled={!canUpdateRoles} maxWidth="100%" />
-              </Field>
-            )}
 
             <Field
               noMargin
