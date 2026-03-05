@@ -22,7 +22,6 @@ import {
   replaceDatasourcesInDashboard,
   DatasourceMappings,
 } from './inputs';
-import { create } from 'lodash';
 
 // Mock external dependencies
 jest.mock('@grafana/runtime', () => ({
