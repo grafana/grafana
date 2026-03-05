@@ -7615,6 +7615,9 @@
     "list": {
       "starred": "Starred"
     },
+    "list-header": {
+      "search-placeholder": "Search by name or type"
+    },
     "new-data-source-view": {
       "cancel": "Cancel",
       "placeholder-filter-by-name-or-type": "Filter by name or type"

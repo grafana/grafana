@@ -1,5 +1,6 @@
-import { findLatestDatasourceCheck } from './useAdvisorHealthStatus';
 import type { Check } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+
+import { findLatestDatasourceCheck } from './useAdvisorHealthStatus';
 
 const makeCheck = (overrides: Partial<Check> = {}): Check => ({
   apiVersion: 'advisor.grafana.app/v0alpha1',

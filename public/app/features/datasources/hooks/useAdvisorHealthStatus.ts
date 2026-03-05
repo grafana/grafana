@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 
-import { config } from '@grafana/runtime';
-
 import { useListCheckQuery, type Check } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import { config } from '@grafana/runtime';
 
 const CHECK_TYPE_LABEL = 'advisor.grafana.app/type';
 const STATUS_ANNOTATION = 'advisor.grafana.app/status';

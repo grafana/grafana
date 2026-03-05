@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { getMockDataSources } from '../mocks/dataSourcesMocks';
 
@@ -44,8 +45,7 @@ jest.mock('app/core/hooks/useQueryParams', () => ({
   useQueryParams: () => mockUseQueryParams(),
 }));
 
-// contextSrv is imported by the component — spy on hasRole to simulate admin
-import { contextSrv } from 'app/core/services/context_srv';
+// spy on hasRole to simulate admin
 jest.spyOn(contextSrv, 'hasRole').mockImplementation((role: string) => role === 'Admin');
 
 const setup = (overrides: Partial<ViewProps> = {}) => {
