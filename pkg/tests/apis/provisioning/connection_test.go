@@ -26,6 +26,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only)
@@ -60,7 +61,7 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
@@ -218,7 +219,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
@@ -255,7 +256,7 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
-			}, waitTimeoutDefault, waitIntervalDefault)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
 
@@ -292,7 +293,7 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
-			}, waitTimeoutDefault, waitIntervalDefault)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
 
@@ -329,7 +330,7 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
-			}, waitTimeoutDefault, waitIntervalDefault)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
 }
@@ -342,7 +343,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 	}
 
 	// Enforcing enterprise connection types for the test (defaults to github only)
-	helper := runGrafana(t, withRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
+	helper := common.RunGrafana(t, common.WithRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
 	ctx := context.Background()
 
 	gitlabNamePrefix := fmt.Sprintf("%s-", provisioning.GitlabConnectionType)
@@ -377,7 +378,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
-			}, waitTimeoutDefault, waitIntervalDefault)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
 
@@ -412,7 +413,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
-			}, waitTimeoutDefault, waitIntervalDefault)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
 
@@ -447,7 +448,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
-			}, waitTimeoutDefault, waitIntervalDefault)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
 
@@ -480,7 +481,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
-			}, waitTimeoutDefault, waitIntervalDefault)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
 
@@ -515,7 +516,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
-			}, waitTimeoutDefault, waitIntervalDefault)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
 
@@ -550,7 +551,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
 				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 				require.NoError(collect, err)
-			}, waitTimeoutDefault, waitIntervalDefault)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
 }
@@ -558,7 +559,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
@@ -932,7 +933,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 	}
 
 	// Enforcing enterprise connection types for the test (defaults to github only)
-	helper := runGrafana(t, withRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
+	helper := common.RunGrafana(t, common.WithRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
@@ -1086,7 +1087,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -1295,7 +1296,7 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -1466,7 +1467,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -1706,7 +1707,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -1869,7 +1870,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
@@ -2045,7 +2046,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
@@ -2144,7 +2145,7 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
@@ -2191,7 +2192,7 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -2292,7 +2293,7 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 	}
 
 	// Enforcing enterprise connection types for the test (defaults to github only)
-	helper := runGrafana(t, withRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
+	helper := common.RunGrafana(t, common.WithRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
 	ctx := context.Background()
 
 	t.Run("GitLab connection can be created and reconciled", func(t *testing.T) {
@@ -2591,7 +2592,7 @@ func createAppInstallationWithPermissions(id int64, permissions map[string]strin
 func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Base64 encoded test private key
@@ -2743,7 +2744,7 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 				require.EventuallyWithT(t, func(collect *assert.CollectT) {
 					err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 					require.NoError(collect, err)
-				}, waitTimeoutDefault, waitIntervalDefault)
+				}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 			})
 
 			restConfig := helper.Org1.Admin.NewRestConfig()
@@ -2806,7 +2807,7 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Base64 encoded test private key
@@ -2962,7 +2963,7 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 				require.EventuallyWithT(t, func(collect *assert.CollectT) {
 					err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
 					require.NoError(collect, err)
-				}, waitTimeoutDefault, waitIntervalDefault)
+				}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 			})
 
 			restConfig := helper.Org1.Admin.NewRestConfig()

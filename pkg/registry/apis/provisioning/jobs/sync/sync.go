@@ -66,7 +66,7 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 		}
 
 		if quotas.IsQuotaExceeded(cfg.Status.Conditions) {
-			logger.Info("repository is over quota, running full sync", "repository", cfg.Name)
+			logger.Info("repository is over quota, running full sync")
 		}
 	}
 	progress.SetMessage(ctx, "full sync")

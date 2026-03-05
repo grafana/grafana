@@ -388,7 +388,6 @@
         "timing-options": "Časování"
       },
       "pending-period": "Čekající období",
-      "rule": "Pravidlo",
       "rule-identifier": "Identifikátor pravidla",
       "rule-type": "Typ pravidla",
       "state-error-timeout": "Stav výstrahy při chybě provádění nebo vypršení časového limitu",
@@ -3432,8 +3431,14 @@
     },
     "triage": {
       "alert-instances": "Instance výstrah",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Chyba při načítání pravidla",
-      "firing-instances-count": "Spuštění instancí výstrah",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Podrobnosti o instanci"
       },
@@ -3443,7 +3448,6 @@
       "no-matching-instances-with-filters": "Aktuální sadě filtrů pro vybraný časový rozsah neodpovídají žádné instance výstrah.",
       "open-in-sidebar": "Otevřít v postranním panelu",
       "open-rule-details": "Otevřít podrobnosti pravidla",
-      "pending-instances-count": "Čekající instance výstrah",
       "rule-details": {
         "subtitle": "Podrobnosti a podmínky pravidla",
         "title": "Podrobnosti pravidla"
@@ -3452,15 +3456,29 @@
         "description": "Požadované pravidlo se nepodařilo najít.",
         "title": "Pravidlo nebylo nalezeno"
       },
-      "rules-with-firing-instances": "Pravidla výstrah s aktivními instancemi",
-      "rules-with-pending-instances": "Pravidla výstrah s čekajícími instancemi",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_few": "",
+      "hidden-label-count_many": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_few": "",
+      "show-all-labels_many": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_few": "",
+      "show-all-values_many": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_few": "",
+      "tooltip-more-values_many": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Přidat výraz"
@@ -3558,7 +3576,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Podrobnosti",
           "enrichment": "Rozšiřující modul výstrah",
           "history": "Historie",
           "instances": "Instance",
@@ -5496,11 +5513,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6926,10 +6945,8 @@
       "title-delete-all-transformations": "Odstranit všechny transformace?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Přepnout zobrazení tabulky",
-      "table-view-label-table-view": "Zobrazení tabulky",
-      "try-new-editor": ""
+      "table-view-label-table-view": "Zobrazení tabulky"
     },
     "panel-editor": {
       "text": {
@@ -7208,6 +7225,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Nástěnka byla uložena"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Na tuto proměnnou neodkazuje žádná proměnná ani nástěnka.",
       "aria-label-variable-referenced-other-variables-dashboard": "Na tuto proměnnou odkazují jiné proměnné nebo nástěnka.",
@@ -7303,6 +7327,30 @@
       "preview-of-values_few": "Náhled hodnot ({{count}})",
       "preview-of-values_many": "Náhled hodnot ({{count}})",
       "preview-of-values_other": "Náhled hodnot ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_few": "",
+      "title-above-dashboard_many": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_few": "",
+      "title-controls-menu_many": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_few": "",
+      "title-hidden_many": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9963,6 +10011,7 @@
       "csv-placeholder": "Zadej CSV tady…",
       "filter": {
         "add-all": "Přidat všechny zobrazené hodnoty do filtru",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10995,6 +11044,7 @@
     "name-order": "Objednávka",
     "name-prettify-json": "Zkrášlit JSON",
     "name-show-controls": "Zobrazit ovládací prvky",
+    "name-show-level": "",
     "name-time": "Zobrazit časová razítka",
     "name-unique-labels": "Jedinečné štítky",
     "name-unwrapped-columns": "",
@@ -12089,6 +12139,12 @@
       "could-anything-matching-query": "Nenašly jsme žádnou shodu s vaším dotazem"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "Seskupit podle",
     "loading": "Načítání možností",
@@ -12531,6 +12587,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné)",
@@ -12570,9 +12632,6 @@
     "title-created-branch-in-repo": "Ve větvi úložiště {{repoType}} byl vytvořen nový zdroj.",
     "title-loaded-pull-request-in-repo": "Tento zdroj je načten z větve, kterou jste právě vytvořili v úložišti {{repoType}}, a je viditelný pouze pro vás"
   },
-  "provisioned-resource-request-handler": "Zdroj byl úspěšně uložen",
-  "provisioned-resource-request-handler-dashboard": "Nástěnka byla úspěšně uložena",
-  "provisioned-resource-request-handler-folder": "Složka úspěšně vytvořena",
   "provisioning": {
     "banner": {
       "message": "Tato funkce je v současné době v aktivním vývoji. Pro nejlepší zážitek a nejnovější vylepšení doporučujeme použít <2>noční sestavení</2> Grafany."
@@ -13528,6 +13587,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

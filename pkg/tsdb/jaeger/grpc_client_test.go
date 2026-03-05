@@ -69,7 +69,7 @@ func TestJaegerGrpcClient_Services(t *testing.T) {
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
-			services, err := client.GrpcServices()
+			services, err := client.GrpcServices(context.Background())
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -387,7 +387,7 @@ func TestJaegerGrpcClient_Operations(t *testing.T) {
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
-			operations, err := client.GrpcOperations(tt.service)
+			operations, err := client.GrpcOperations(context.Background(), tt.service)
 
 			if tt.expectError {
 				assert.Error(t, err)
