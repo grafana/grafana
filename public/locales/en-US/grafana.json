@@ -1977,6 +1977,7 @@
       "loading": "Loading...",
       "no-transitions-match-filters": "No state transitions match the selected filters",
       "start-state": "Start state",
+      "timeline-hidden": "Timeline is hidden when state filters are active",
       "title-error-fetching-the-state-history": "Error fetching the state history",
       "tooltip-common-labels": "Common labels are the ones attached to all of the alert instances"
     },

@@ -29,8 +29,8 @@ const STATE_FILTER_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Alerting', value: StateFilterValues.firing },
   { label: 'Normal', value: StateFilterValues.normal },
   { label: 'Pending', value: StateFilterValues.pending },
-  { label: 'NoData', value: StateFilterValues.noData },
-  { label: 'Error', value: StateFilterValues.error },
+  { label: 'NoData', value: 'NoData' },
+  { label: 'Error', value: 'Error' },
   { label: 'Recovering', value: StateFilterValues.recovering },
 ];
 const MAX_TIMELINE_SERIES = 12;
@@ -162,22 +162,24 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         </Field>
       </Stack>
       {!isEmpty(commonLabels) && (
-        <Stack gap={1} alignItems="center" wrap="wrap">
-          <Stack gap={0.5} alignItems="center" minWidth="fit-content">
-            <Text variant="bodySmall">
-              <Trans i18nKey="alerting.loki-state-history.common-labels">Common labels</Trans>
-            </Text>
-            <Tooltip
-              content={t(
-                'alerting.loki-state-history.tooltip-common-labels',
-                'Common labels are the ones attached to all of the alert instances'
-              )}
-            >
-              <Icon name="info-circle" size="sm" />
-            </Tooltip>
+        <div className={styles.commonLabels}>
+          <Stack gap={1} alignItems="center" wrap="wrap">
+            <Stack gap={0.5} alignItems="center" minWidth="fit-content">
+              <Text variant="bodySmall">
+                <Trans i18nKey="alerting.loki-state-history.common-labels">Common labels</Trans>
+              </Text>
+              <Tooltip
+                content={t(
+                  'alerting.loki-state-history.tooltip-common-labels',
+                  'Common labels are the ones attached to all of the alert instances'
+                )}
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+            <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
           </Stack>
-          <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
-        </Stack>
+        </div>
       )}
       {isEmpty(frameSubset) ? (
         <div className={styles.emptyState}>
@@ -190,9 +192,19 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         </div>
       ) : (
         <>
-          <div className={styles.graphWrapper}>
-            <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} />
-          </div>
+          {hasActiveStateFilter ? (
+            <div className={styles.timelineHiddenMessage}>
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="alerting.loki-state-history.timeline-hidden">
+                  Timeline is hidden when state filters are active
+                </Trans>
+              </Text>
+            </div>
+          ) : (
+            <div className={styles.graphWrapper}>
+              <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} />
+            </div>
+          )}
           {hasMoreInstances && (
             <div className={styles.moreInstancesWarning}>
               <Stack direction="row" alignItems="center" gap={1}>
@@ -311,6 +323,13 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 
     display: 'flex',
     flexDirection: 'column',
+  }),
+  commonLabels: css({
+    padding: theme.spacing(1, 0),
+  }),
+  timelineHiddenMessage: css({
+    textAlign: 'center',
+    padding: theme.spacing(1, 0),
   }),
   instancesFilterForm: css({
     flex: 1,
