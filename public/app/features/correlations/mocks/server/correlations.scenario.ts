@@ -7,7 +7,7 @@ import {
   getCorrelationsHandler,
 } from '../handlers/';
 
-const generateCorrMetadata = (correlation: CorrelationSpec) => {
+export const generateCorrMetadata = (uid: string, correlation: CorrelationSpec) => {
   let labels: Record<string, string> = {
     'correlations.grafana.app/sourceDS-ref': `${correlation.source.group}.${correlation.source.name}`,
   };
@@ -20,8 +20,8 @@ const generateCorrMetadata = (correlation: CorrelationSpec) => {
     kind: 'Correlation',
     apiVersion: 'correlations.grafana.app/v0alpha1',
     metadata: {
-      uid: Math.floor(Math.random() * 1000).toString(),
-      name: Math.floor(Math.random() * 1000).toString(),
+      uid: uid,
+      name: uid,
       namespace: 'default',
       labels: labels,
     },
@@ -29,7 +29,7 @@ const generateCorrMetadata = (correlation: CorrelationSpec) => {
   };
 };
 
-const fakeCorrelations: CorrelationSpec[] = [
+export const fakeCorrelations: CorrelationSpec[] = [
   {
     source: { group: 'loki', name: 'lokiUID' },
     target: { group: 'loki', name: 'lokiUID' },
@@ -82,7 +82,7 @@ export const existingCorrelationsScenario = [
     kind: 'CorrelationList',
     apiVersion: 'correlations.grafana.app/v0alpha1',
     metadata: {},
-    items: fakeCorrelations.map((rc) => generateCorrMetadata(rc)),
+    items: fakeCorrelations.map((rc, i) => generateCorrMetadata(i.toString(), rc)),
   }),
 ];
 
@@ -98,7 +98,7 @@ const newCorrelation: CorrelationSpec = {
   },
 };
 
-export const createCorrelationsScenario = [createCorrelationsHandler(generateCorrMetadata(newCorrelation))];
+export const createCorrelationsScenario = [createCorrelationsHandler(generateCorrMetadata('0', newCorrelation))];
 
 export const deleteCorrelationsScenario = [
   deleteCorrelationsHandler({
@@ -113,4 +113,4 @@ export const deleteCorrelationsScenario = [
 const editedCorr = { ...fakeCorrelations[0] };
 editedCorr.label = 'edited label';
 
-export const editCorrelationsScenario = [editCorrelationsHandler(generateCorrMetadata(editedCorr))];
+export const editCorrelationsScenario = [editCorrelationsHandler(generateCorrMetadata('0', editedCorr))];
