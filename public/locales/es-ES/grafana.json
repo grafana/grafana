@@ -4782,7 +4782,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Enlace a Conexiones",
-      "body": "¡Las fuentes de datos han cambiado de sitio! Puedes descubrir nuevas fuentes de datos o gestionar las existentes en la página Conexiones, accesible desde el menú principal.",
+      "body": "¡Las fuentes de datos han cambiado de sitio! Puedes descubrir nuevas fuentes de datos o gestionar las existentes en la <0>página Conexiones</0>, accesible desde el menú principal.",
       "go-to-connections": "Ir a conexiones"
     },
     "data-source-details-page": {
