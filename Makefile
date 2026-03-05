@@ -23,7 +23,8 @@ BUILD_STAMP := $(shell echo $${SOURCE_DATE_EPOCH:-$$(date +%s 2>/dev/null)})
 GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	-X main.commit=$(BUILD_COMMIT) \
 	-X main.buildBranch=$(BUILD_BRANCH) \
-	-X main.buildstamp=$(BUILD_STAMP)
+	-X main.buildstamp=$(BUILD_STAMP) \
+	$(if $(LDFLAGS),-extldflags \"$(LDFLAGS)\")
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
@@ -285,7 +286,7 @@ update-workspace: gen-go
 .PHONY: build-go
 build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
 	@echo "build go binaries"
-	$(if $(GO_BUILD_OS),GOOS=$(GO_BUILD_OS)) $(if $(GO_BUILD_ARCH),GOARCH=$(GO_BUILD_ARCH)) $(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
+	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) $(if $(GO_BUILD_OS),GOOS=$(GO_BUILD_OS)) $(if $(GO_BUILD_ARCH),GOARCH=$(GO_BUILD_ARCH)) $(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
 
 .PHONY: build-backend
 build-backend: build-go
