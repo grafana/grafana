@@ -21,7 +21,7 @@ interface AnnotationMarkerProps {
   annoVals: Record<string, any[]>;
   // The value index, sometimes called rowIndex
   annoIdx: number;
-  // Styles calculated from plot
+  // Styles calculated from plot, e.g. calculated region width & annotation offset
   style: React.CSSProperties | null;
   // Method to close user created (wip) annotation
   exitWipEdit?: null | (() => void);
