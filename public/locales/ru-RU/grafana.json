@@ -388,7 +388,6 @@
         "timing-options": "Временные периоды"
       },
       "pending-period": "Период ожидания",
-      "rule": "Правило",
       "rule-identifier": "Идентификатор правила",
       "rule-type": "Тип правила",
       "state-error-timeout": "Состояние оповещения при ошибке выполнения или превышении времени ожидания",
@@ -3432,8 +3431,14 @@
     },
     "triage": {
       "alert-instances": "Экземпляры оповещения",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Ошибка при загрузке правила",
-      "firing-instances-count": "Активные экземпляры оповещений",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Сведения об экземпляре"
       },
@@ -3443,7 +3448,6 @@
       "no-matching-instances-with-filters": "Ни один экземпляр оповещения не соответствует текущему набору фильтров для выбранного временного интервала.",
       "open-in-sidebar": "Открыть на боковой панели",
       "open-rule-details": "Открыть сведения о правиле",
-      "pending-instances-count": "Экземпляры оповещения в состоянии ожидания",
       "rule-details": {
         "subtitle": "Сведения о правиле и условия",
         "title": "Сведения о правиле"
@@ -3452,15 +3456,29 @@
         "description": "Не удалось найти указанное правило.",
         "title": "Правило не найдено"
       },
-      "rules-with-firing-instances": "Правила оповещения с активными экземплярами",
-      "rules-with-pending-instances": "Правила оповещения с экземплярами в состоянии ожидания",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_few": "",
+      "hidden-label-count_many": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_few": "",
+      "show-all-labels_many": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_few": "",
+      "show-all-values_many": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_few": "",
+      "tooltip-more-values_many": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Добавить выражение"
@@ -3558,7 +3576,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Подробности",
           "enrichment": "Пополнение оповещений информацией",
           "history": "История",
           "instances": "Экземпляры",
@@ -5496,11 +5513,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6926,10 +6945,8 @@
       "title-delete-all-transformations": "Удалить все преобразования?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Переключить табличное представление",
-      "table-view-label-table-view": "Табличное представление",
-      "try-new-editor": ""
+      "table-view-label-table-view": "Табличное представление"
     },
     "panel-editor": {
       "text": {
@@ -7208,6 +7225,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Дашборд сохранен"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "На эту переменную не ссылается ни одна переменная или дашборд",
       "aria-label-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд",
@@ -7303,6 +7327,30 @@
       "preview-of-values_few": "Просмотр значений ({{count}})",
       "preview-of-values_many": "Просмотр значений ({{count}})",
       "preview-of-values_other": "Просмотр значений ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_few": "",
+      "title-above-dashboard_many": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_few": "",
+      "title-controls-menu_many": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_few": "",
+      "title-hidden_many": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9963,6 +10011,7 @@
       "csv-placeholder": "Ввести CSV...",
       "filter": {
         "add-all": "Добавить все отображаемые значения в фильтр",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10995,6 +11044,7 @@
     "name-order": "Порядок",
     "name-prettify-json": "Форматировать JSON",
     "name-show-controls": "Показывать элементы управления",
+    "name-show-level": "",
     "name-time": "Показать метки времени",
     "name-unique-labels": "Уникальные метки",
     "name-unwrapped-columns": "",
@@ -12089,6 +12139,12 @@
       "could-anything-matching-query": "Не удалось найти данные, соответствующие вашему запросу"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "Группировать по",
     "loading": "Загрузка параметров",
@@ -12531,6 +12587,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Добавить примечание с описанием изменений (необязательно)",
@@ -12570,9 +12632,6 @@
     "title-created-branch-in-repo": "В ветви в {{repoType}} создан новый ресурс.",
     "title-loaded-pull-request-in-repo": "Этот ресурс загружается из ветви, которую вы только что создали в {{repoType}}, и виден только вам"
   },
-  "provisioned-resource-request-handler": "Ресурс сохранен",
-  "provisioned-resource-request-handler-dashboard": "Дашборд сохранен",
-  "provisioned-resource-request-handler-folder": "Папка создана",
   "provisioning": {
     "banner": {
       "message": "В настоящее время эта функция находится в стадии активной разработки. Чтобы обеспечить максимальное удобство пользования и получить доступ к последним улучшениям, рекомендуем использовать <2>ночную сборку</2> Grafana."
@@ -13528,6 +13587,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

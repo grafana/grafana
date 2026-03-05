@@ -129,6 +129,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 // EnsureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
+// - it will update the title if it has changed
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
 	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
@@ -140,6 +141,21 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		if current != cfg.Name {
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
 		}
+
+		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		if currentTitle != folder.Title {
+			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+			if err != nil {
+				return fmt.Errorf("unable to use provisioning identity %w", err)
+			}
+			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+				return fmt.Errorf("set folder title: %w", err)
+			}
+			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+				return fmt.Errorf("update folder title: %w", err)
+			}
+		}
+
 		return nil
 	} else if !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if folder exists: %w", err)

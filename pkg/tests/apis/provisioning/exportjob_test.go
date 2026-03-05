@@ -13,13 +13,14 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Write dashboards at
@@ -42,7 +43,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 	// Now for the repository.
 	const repo = "local-repository"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:               repo,
 		Target:             "instance",          // Export is only supported for instance sync
 		Copies:             map[string]string{}, // No initial files needed for export test
@@ -72,7 +73,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		fileName   string
 	}
 
-	printFileTree(t, helper.ProvisioningPath)
+	common.PrintFileTree(t, helper.ProvisioningPath)
 
 	// Check that each file was exported with its stored version
 	for _, test := range []props{
@@ -108,7 +109,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Test table for different dashboard versions
@@ -176,7 +177,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 
 	// Create repository
 	const repo = "version-test-repository"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:               repo,
 		Target:             "instance", // Export is only supported for instance sync
 		Copies:             map[string]string{},
@@ -271,7 +272,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// FIXME: helper to create dashboards.
@@ -289,7 +290,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	// Create the first repository with sync enabled and separate filesystem path
 	const repo1 = "first-repository"
 	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
-	testRepo1 := TestRepo{
+	testRepo1 := common.TestRepo{
 		Name:               repo1,
 		Target:             "folder",
 		Path:               repo1Path,
@@ -300,7 +301,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	helper.CreateRepo(t, testRepo1)
 
 	// Print file tree before export
-	printFileTree(t, helper.ProvisioningPath)
+	common.PrintFileTree(t, helper.ProvisioningPath)
 
 	// Initial export
 	helper.DebugState(t, repo1, "BEFORE INITIAL EXPORT")
@@ -318,7 +319,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	helper.DebugState(t, repo1, "AFTER INITIAL EXPORT")
 	helper.SyncAndWait(t, repo1, nil)
 
-	printFileTree(t, helper.ProvisioningPath)
+	common.PrintFileTree(t, helper.ProvisioningPath)
 	// Verify that the first repository has claimed ownership of the dashboards
 	managedDash1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
 	require.NoError(t, err)
@@ -331,7 +332,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	// Create second repository - enable sync and set different target with separate filesystem path
 	const repo2 = "second-repository"
 	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
-	testRepo2 := TestRepo{
+	testRepo2 := common.TestRepo{
 		Name:               repo2,
 		Target:             "folder",
 		Path:               repo2Path,
@@ -344,7 +345,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	// Wait for second repository to sync
 	helper.SyncAndWait(t, repo2, nil)
 
-	printFileTree(t, helper.ProvisioningPath)
+	common.PrintFileTree(t, helper.ProvisioningPath)
 
 	// FIXME: use helpers to check status
 	// Validate that folders for both repositories exist
@@ -375,9 +376,9 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	manager, found := unmanagedDash3.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 	require.True(t, !found || manager == "", "dashboard3 should not be managed initially")
 
-	printFileTree(t, helper.ProvisioningPath)
+	common.PrintFileTree(t, helper.ProvisioningPath)
 	// Count files in first repo before second export
-	files1Before, err := countFilesInDir(repo1Path)
+	files1Before, err := common.CountFilesInDir(repo1Path)
 	require.NoError(t, err)
 
 	// Export from second repository - this should only export the unmanaged dashboard3
@@ -398,8 +399,8 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	helper.SyncAndWait(t, repo1, nil)
 	helper.SyncAndWait(t, repo2, nil)
 
-	printFileTree(t, helper.ProvisioningPath)
-	files1After, err := countFilesInDir(repo1Path)
+	common.PrintFileTree(t, helper.ProvisioningPath)
+	files1After, err := common.CountFilesInDir(repo1Path)
 	require.NoError(t, err)
 
 	actualNewFiles := files1After - files1Before
@@ -408,7 +409,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		0, actualNewFiles)
 
 	// Verify files in the second repository
-	files2After, err := countFilesInDir(repo2Path)
+	files2After, err := common.CountFilesInDir(repo2Path)
 	require.NoError(t, err)
 	require.Equal(t, 1, files2After,
 		"second repository should only export the unmanaged dashboard (expected %d new files, got %d)",
@@ -436,11 +437,11 @@ func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Run Grafana WITHOUT the export feature flag enabled
-	helper := runGrafana(t, withoutExportFeatureFlag)
+	helper := common.RunGrafana(t, common.WithoutExportFeatureFlag)
 
 	// Create a repository
 	const repo = "test-repository"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:   repo,
 		Target: "instance",
 	}

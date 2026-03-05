@@ -22,5 +22,7 @@ func PlaylistMigration(migrator migrator.PlaylistMigrator) migrations.MigrationD
 		Validators: []migrations.ValidatorFactory{
 			migrations.CountValidation(playlistGR, "playlist", "org_id = ?"),
 		},
+		// Playlist tables are still being used
+		RenameTables: []string{},
 	}
 }

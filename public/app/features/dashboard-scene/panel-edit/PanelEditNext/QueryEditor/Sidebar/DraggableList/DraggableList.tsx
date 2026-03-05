@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../constants';
+import { SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
 
 import { useDropIndicator } from './useDropIndicator';
 
@@ -102,10 +102,20 @@ function getStyles(theme: GrafanaTheme2) {
     dropIndicator: css({
       position: 'absolute',
       left: theme.spacing(SIDEBAR_CARD_INDENT),
-      right: 0,
+      right: theme.spacing(SIDEBAR_CARD_INDENT),
       background: theme.colors.primary.transparent,
-      borderLeft: `1px solid ${theme.colors.primary.border}`,
       pointerEvents: 'none',
+      borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 3,
+        background: theme.colors.primary.border,
+      },
     }),
   };
 }

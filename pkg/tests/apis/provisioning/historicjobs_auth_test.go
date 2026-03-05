@@ -9,17 +9,18 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	const repo = "historicjobs-auth-test"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:               repo,
 		Target:             "folder",
 		Copies:             map[string]string{}, // No files needed for this test
@@ -33,7 +34,7 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
 	}
-	body := asJSON(jobSpec)
+	body := common.AsJSON(jobSpec)
 
 	// Create a job as admin
 	var statusCode int
