@@ -14,8 +14,9 @@ import (
 )
 
 const (
+	// TODO: remove defaultLookbackPeriod once no longer used by the KV backend.
 	defaultLookbackPeriod = 30 * time.Second
-	defaultSettleDelay    = 500 * time.Millisecond
+	defaultSettleDelay    = 1 * time.Second
 	defaultMinBackoff     = 100 * time.Millisecond
 	defaultMaxBackoff     = 5 * time.Second
 	defaultBufferSize     = 10000
@@ -88,13 +89,14 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan 
 
 	cn.log.Info("creating new notifier", "buffer_size", opts.BufferSize, "settle_delay", opts.SettleDelay)
 
-	// Raw channel that Publish writes into
+	// Raw channel that Publish writes into; acts as a fixed-size buffer of
+	// events that will eventually be "settled" and sent to the watcher.
 	raw := make(chan Event, opts.BufferSize)
 	cn.mu.Lock()
 	cn.subscribers[raw] = struct{}{}
 	cn.mu.Unlock()
 
-	// Output channel with settled, sorted events
+	// Output channel with settled, sorted events, returned to the watcher.
 	out := make(chan Event, opts.BufferSize)
 
 	context.AfterFunc(ctx, func() {

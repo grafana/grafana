@@ -378,7 +378,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 
 	// Pre-create all WriteEvent structs.
 	writeEvents := make([]WriteEvent, numEvents)
-	for i := 0; i < numEvents; i++ {
+	for i := range numEvents {
 		name := fmt.Sprintf("concurrent-resource-%d", i)
 		obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
 		require.NoError(t, err)
@@ -440,15 +440,14 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 
 	// Collect events from the watch stream.
 	received := make([]*WrittenEvent, 0, numEvents)
-	timeout := time.After(15 * time.Second)
+	receiveCtx, stop := context.WithTimeout(ctx, 15*time.Second)
+	defer stop()
 	for len(received) < numEvents {
 		select {
 		case evt := <-stream:
 			received = append(received, evt)
-		case <-timeout:
+		case <-receiveCtx.Done():
 			t.Fatalf("timed out: received %d/%d events", len(received), numEvents)
-		case <-ctx.Done():
-			t.Fatalf("context cancelled: received %d/%d events", len(received), numEvents)
 		}
 	}
 
@@ -461,8 +460,8 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 		require.True(t, receivedRVs[rv], "event with RV %d was written but never received on the watch stream", rv)
 	}
 
-	// Assert no duplicates.
-	require.Len(t, receivedRVs, numEvents, "no duplicate events should be received")
+	// Assert nothing else was received.
+	require.Len(t, receivedRVs, numEvents, "should have received exactly numEvents")
 
 	// Assert ascending RV order.
 	for i := 1; i < len(received); i++ {

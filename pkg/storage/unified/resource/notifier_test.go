@@ -208,13 +208,13 @@ func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, noti
 	err := eventStore.Save(ctx, newEvent)
 	require.NoError(t, err)
 
-	// Should receive the new event (settle delay adds ~500ms)
+	// Should receive the new event (settle delay adds ~1s)
 	select {
 	case receivedEvent := <-events:
 		assert.Equal(t, newEvent.Name, receivedEvent.Name)
 		assert.Equal(t, newEvent.ResourceVersion, receivedEvent.ResourceVersion)
 		assert.Equal(t, newEvent.Action, receivedEvent.Action)
-	case <-time.After(2 * time.Second):
+	case <-time.After(5 * time.Second):
 		t.Fatal("Expected to receive an event, but timed out")
 	}
 }
@@ -375,13 +375,13 @@ func TestChannelNotifier(t *testing.T) {
 		}
 	}
 
-	// Use zero settle delay for unit tests so events are emitted immediately
+	// Use a very short settle delay for unit tests so events are emitted immediately
 	// after the buffering goroutine processes them.
-	unitOpts := watchOptions{BufferSize: 5, SettleDelay: 1 * time.Millisecond, MinBackoff: 1 * time.Millisecond}
+	opts := watchOptions{BufferSize: 5, SettleDelay: 1 * time.Millisecond, MinBackoff: 1 * time.Millisecond}
 
 	t.Run("events are received", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
-		watcher := notifier.Watch(t.Context(), unitOpts)
+		watcher := notifier.Watch(t.Context(), opts)
 
 		event := newEvent()
 		notifier.Publish(event)
@@ -391,7 +391,7 @@ func TestChannelNotifier(t *testing.T) {
 
 	t.Run("multiple events are received in order", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
-		watcher := notifier.Watch(t.Context(), unitOpts)
+		watcher := notifier.Watch(t.Context(), opts)
 
 		events := []Event{newEvent(), newEvent(), newEvent()}
 		for _, event := range events {
@@ -408,9 +408,9 @@ func TestChannelNotifier(t *testing.T) {
 	t.Run("multiple watchers and multiple events", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
 
-		watcher1 := notifier.Watch(t.Context(), unitOpts)
-		watcher2 := notifier.Watch(t.Context(), unitOpts)
-		watcher3 := notifier.Watch(t.Context(), unitOpts)
+		watcher1 := notifier.Watch(t.Context(), opts)
+		watcher2 := notifier.Watch(t.Context(), opts)
+		watcher3 := notifier.Watch(t.Context(), opts)
 
 		events := []Event{newEvent(), newEvent(), newEvent()}
 		for _, event := range events {
@@ -430,7 +430,7 @@ func TestChannelNotifier(t *testing.T) {
 
 	t.Run("continues to receive events", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
-		watcher := notifier.Watch(t.Context(), unitOpts)
+		watcher := notifier.Watch(t.Context(), opts)
 
 		events := []Event{newEvent(), newEvent(), newEvent()}
 		for _, event := range events {
@@ -451,7 +451,7 @@ func TestChannelNotifier(t *testing.T) {
 
 	t.Run("publishing more than the buffer size", func(t *testing.T) {
 		notifier := newChannelNotifier(log)
-		watcher := notifier.Watch(t.Context(), unitOpts)
+		watcher := notifier.Watch(t.Context(), opts)
 
 		const numEvents = 10
 		events := make([]Event, numEvents)
