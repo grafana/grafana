@@ -1972,8 +1972,11 @@
     "loki-state-history": {
       "clear-filters": "Clear filters",
       "common-labels": "Common labels",
+      "end-state": "End state",
       "error-unable-to-fetch": "Unable to fetch alert state history",
       "loading": "Loading...",
+      "no-transitions-match-filters": "No state transitions match the selected filters",
+      "start-state": "Start state",
       "title-error-fetching-the-state-history": "Error fetching the state history",
       "tooltip-common-labels": "Common labels are the ones attached to all of the alert instances"
     },
