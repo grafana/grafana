@@ -1801,7 +1801,6 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 			branch:     "main",
 			wantRulesets: &Rulesets{
 				RequiresPullRequest: true,
-				HasBlockingRules:    false,
 			},
 			wantErr: nil,
 		},
@@ -1853,14 +1852,11 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 					}),
 				),
 			),
-			owner:      "test-owner",
-			repository: "test-repo",
-			branch:     "main",
-			wantRulesets: &Rulesets{
-				RequiresPullRequest: false,
-				HasBlockingRules:    true,
-			},
-			wantErr: nil,
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil, // RequiredStatusChecks doesn't block direct push
+			wantErr:      nil,
 		},
 		{
 			name: "ruleset with pull request and blocking rules",
@@ -1917,7 +1913,6 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 			branch:     "main",
 			wantRulesets: &Rulesets{
 				RequiresPullRequest: true,
-				HasBlockingRules:    true,
 			},
 			wantErr: nil,
 		},

@@ -1433,19 +1433,6 @@ func TestRulesets_BlocksDirectPush(t *testing.T) {
 			rulesets: &Rulesets{RequiresPullRequest: true},
 			expected: []string{"ruleset requires pull request"},
 		},
-		{
-			name:     "has blocking rules",
-			rulesets: &Rulesets{HasBlockingRules: true},
-			expected: []string{"ruleset has blocking rules"},
-		},
-		{
-			name: "both blocking conditions",
-			rulesets: &Rulesets{
-				RequiresPullRequest: true,
-				HasBlockingRules:    true,
-			},
-			expected: []string{"ruleset requires pull request", "ruleset has blocking rules"},
-		},
 	}
 
 	for _, tt := range tests {
@@ -1481,24 +1468,11 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 			expectedDetail:     "ruleset requires pull request",
 		},
 		{
-			name:      "rulesets with blocking rules and write workflow",
-			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
-			branch:    "main",
-			rulesetsResult: &Rulesets{
-				HasBlockingRules: true,
-			},
-			expectRulesetsCall: true,
-			expectedSuccess:    false,
-			expectedErrField:   "spec.workflows",
-			expectedDetail:     "ruleset has blocking rules",
-		},
-		{
-			name:      "rulesets with both blocking conditions",
+			name:      "rulesets requiring pull request blocks write workflow",
 			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 			branch:    "main",
 			rulesetsResult: &Rulesets{
 				RequiresPullRequest: true,
-				HasBlockingRules:    true,
 			},
 			expectRulesetsCall: true,
 			expectedSuccess:    false,
@@ -1549,7 +1523,6 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 			branch:    "main",
 			rulesetsResult: &Rulesets{
 				RequiresPullRequest: false,
-				HasBlockingRules:    false,
 			},
 			expectRulesetsCall: true,
 			expectedSuccess:    true,
@@ -1632,12 +1605,12 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 			bpResult: &BranchProtection{
 				RequiredPullRequestReviews: true,
 			},
-			rulesetsResult: &Rulesets{
-				HasBlockingRules: true,
-			},
+		rulesetsResult: &Rulesets{
+			RequiresPullRequest: true,
+		},
 			expectedSuccess:  false,
 			expectedErrField: "spec.workflows",
-			expectedDetails:  []string{"required pull request reviews", "ruleset has blocking rules"},
+			expectedDetails:  []string{"required pull request reviews", "ruleset requires pull request"},
 		},
 		{
 			name:      "classic protection blocks, rulesets clean",
@@ -1681,7 +1654,6 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 			},
 			rulesetsResult: &Rulesets{
 				RequiresPullRequest: true,
-				HasBlockingRules:    true,
 			},
 			expectedSuccess:  false,
 			expectedErrField: "spec.workflows",
@@ -1689,7 +1661,6 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 				"required pull request reviews",
 				"branch is locked (read-only)",
 				"ruleset requires pull request",
-				"ruleset has blocking rules",
 			},
 		},
 		{

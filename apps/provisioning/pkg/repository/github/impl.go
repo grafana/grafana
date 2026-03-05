@@ -165,42 +165,22 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 			continue
 		}
 
-		// Log rules struct with just the relevant blocking fields
-		rulesetLogger.Debug("Checking ruleset rules",
-			slog.Group("rules",
-				slog.Bool("pull_request", rules.PullRequest != nil),
-				slog.Bool("required_status_checks", rules.RequiredStatusChecks != nil),
-				slog.Bool("required_signatures", rules.RequiredSignatures != nil),
-				slog.Bool("required_linear_history", rules.RequiredLinearHistory != nil),
-				slog.Bool("required_deployments", rules.RequiredDeployments != nil),
-				slog.Bool("creation", rules.Creation != nil),
-				slog.Bool("non_fast_forward", rules.NonFastForward != nil)))
-
-		// Check for pull request requirement
+		// Only pull_request rules actually block direct pushes
+		// Other rules like non_fast_forward (blocks force push only),
+		// required_status_checks (checks run after push), etc. are not blockers
 		if rules.PullRequest != nil {
-			rulesetLogger.Debug("Ruleset has PullRequest rule")
+			rulesetLogger.Debug("Ruleset requires pull request (blocks direct push)")
 			result.RequiresPullRequest = true
-		}
-
-		// Check for other blocking rules
-		if rules.RequiredStatusChecks != nil || rules.RequiredSignatures != nil ||
-			rules.RequiredLinearHistory != nil || rules.RequiredDeployments != nil ||
-			rules.Creation != nil || rules.NonFastForward != nil {
-			rulesetLogger.Debug("Ruleset has blocking rules")
-			result.HasBlockingRules = true
 		}
 	}
 
 	// Return nil if no blocking rules found
-	if !result.RequiresPullRequest && !result.HasBlockingRules {
+	if !result.RequiresPullRequest {
 		logger.Debug("No blocking rulesets found for branch")
 		return nil, nil
 	}
 
-	logger.Debug("Found blocking rulesets for branch",
-		slog.Group("blocking",
-			slog.Bool("requires_pull_request", result.RequiresPullRequest),
-			slog.Bool("has_blocking_rules", result.HasBlockingRules)))
+	logger.Debug("Found blocking rulesets for branch")
 
 	return result, nil
 }

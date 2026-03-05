@@ -147,17 +147,17 @@ func (bp *BranchProtection) BlocksDirectPush() []string {
 // or "enabled" are considered blocking.
 type Rulesets struct {
 	// RequiresPullRequest is true when a "pull_request" rule is active.
-	// This forces all changes to go through a PR.
+	// This forces all changes to go through a PR, blocking direct pushes.
 	RequiresPullRequest bool
-
-	// HasBlockingRules is true when there are other active rules that would
-	// block a direct push (e.g., required_status_checks, required_signatures).
-	HasBlockingRules bool
 }
 
 // BlocksDirectPush returns human-readable reasons why direct pushes would be
 // blocked by repository rulesets. A nil slice means no blocking rules were
 // detected.
+//
+// Note: Only pull_request rules actually block direct pushes. Other rules like
+// non_fast_forward (blocks force push only), required_status_checks (checks run
+// after push), etc. do not prevent regular git push operations.
 func (r *Rulesets) BlocksDirectPush() []string {
 	if r == nil {
 		return nil
@@ -166,9 +166,6 @@ func (r *Rulesets) BlocksDirectPush() []string {
 	var reasons []string
 	if r.RequiresPullRequest {
 		reasons = append(reasons, "ruleset requires pull request")
-	}
-	if r.HasBlockingRules {
-		reasons = append(reasons, "ruleset has blocking rules")
 	}
 	return reasons
 }
