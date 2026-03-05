@@ -236,7 +236,13 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		s.grpcService.Health.AddHealthListener(modules.SearchServerDistributor, svc)
+		s.grpcService.Health.Register(
+			grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
+				return s.searchServerRing.State() == services.Running, nil
+			}),
+			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
+			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
+		)
 		return svc, nil
 	})
 
@@ -270,7 +276,17 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		s.grpcService.Health.AddHealthListener(modules.StorageServer, svc)
+		if probe, ok := svc.(grpcserver.HealthProbe); ok {
+			s.grpcService.Health.Register(probe,
+				resourcepb.ResourceStore_ServiceDesc.ServiceName,
+				resourcepb.ResourceIndex_ServiceDesc.ServiceName,
+				resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
+				resourcepb.BlobStore_ServiceDesc.ServiceName,
+				resourcepb.BulkStore_ServiceDesc.ServiceName,
+				resourcepb.Diagnostics_ServiceDesc.ServiceName,
+				resourcepb.Quotas_ServiceDesc.ServiceName,
+			)
+		}
 		return svc, nil
 	})
 
@@ -283,7 +299,13 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		s.grpcService.Health.AddHealthListener(modules.SearchServer, svc)
+		if probe, ok := svc.(grpcserver.HealthProbe); ok {
+			s.grpcService.Health.Register(probe,
+				resourcepb.ResourceIndex_ServiceDesc.ServiceName,
+				resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
+				resourcepb.Diagnostics_ServiceDesc.ServiceName,
+			)
+		}
 		return svc, nil
 	})
 

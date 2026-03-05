@@ -398,13 +398,16 @@ func (s *service) running(ctx context.Context) error {
 
 // CheckHealth calls IsHealthy on the storage backend and returns whether it is healthy.
 // It implements grpcserver.HealthProbe.
-func (s *service) CheckHealth(ctx context.Context) bool {
+func (s *service) CheckHealth(ctx context.Context) (bool, error) {
 	diag, ok := s.backend.(resourcepb.DiagnosticsServer) //nolint:staticcheck
 	if !ok {
-		return true
+		return true, nil
 	}
 	resp, err := diag.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
-	return err == nil && resp.GetStatus() == resourcepb.HealthCheckResponse_SERVING
+	if err != nil {
+		return false, fmt.Errorf("storage backend health check error: %w", err)
+	}
+	return resp.GetStatus() == resourcepb.HealthCheckResponse_SERVING, nil
 }
 
 func (s *service) stopping(_ error) error {
