@@ -649,6 +649,11 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
+  * Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking
+  * @default false
+  */
+  alertingAlertListPanelEnhancements?: boolean;
+  /**
   * Enables the new Alerting navigation structure with improved menu grouping
   * @default false
   */
@@ -1572,6 +1577,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryGlobal?: boolean;
+  /**
+  * Enables the notification history timeline in the triage instance details drawer
+  * @default false
+  */
+  alertingNotificationHistoryTriage?: boolean;
   /**
   * Whether to use the new React 19 runtime
   * @default false
