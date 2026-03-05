@@ -86,8 +86,11 @@ export const AnnotationMarker2 = ({
     });
   }
 
+  const isTooltipPinned = isPinned && !(state === STATE_EDITING);
+  const isTooltipHovered = showTooltipOnHover && isHovering && !(state === STATE_EDITING);
+
   const contents =
-    (isPinned && !(state === STATE_EDITING)) || (showTooltipOnHover && isHovering && !(state === STATE_EDITING)) ? (
+    isTooltipPinned || isTooltipHovered ? (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
