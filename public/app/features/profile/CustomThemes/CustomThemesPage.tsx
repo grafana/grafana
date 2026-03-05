@@ -7,8 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, EmptyState, Grid, LinkButton } from '@grafana/ui';
 
 import { Page } from '../../../core/components/Page/Page';
-
-import { ThemeCard } from './ThemeCard';
+import { ThemeCard } from '../../themes/ThemeCard';
 
 export default function CustomThemesPage() {
   const customThemes = useListUserThemeQuery({});

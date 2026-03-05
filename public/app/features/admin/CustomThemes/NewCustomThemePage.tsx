@@ -11,8 +11,7 @@ import { Box, Button, CodeEditor, Field, Input, Stack, TextLink, useStyles2 } fr
 
 import { Page } from '../../../core/components/Page/Page';
 import { ThemePreview } from '../../../core/components/Theme/ThemePreview';
-
-import { fetchGcomTheme, validateGcomTheme } from './utils';
+import { fetchGcomTheme, validateGcomTheme } from '../../themes/utils';
 
 interface FormData {
   themeJson: string;

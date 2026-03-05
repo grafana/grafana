@@ -3,10 +3,10 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Box, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 
-import { ThemePreview } from '../../../core/components/Theme/ThemePreview';
+import { ThemePreview } from '../../core/components/Theme/ThemePreview';
 
 interface ThemeCardProps {
   themeOption: ThemeRegistryItem;
@@ -19,7 +19,16 @@ function ThemeCardComponent({ themeOption, onEdit, onRemove }: ThemeCardProps) {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.card}>
+    <Box
+      boxShadow="z1"
+      borderColor="weak"
+      borderRadius="default"
+      borderStyle="solid"
+      display="flex"
+      direction="column"
+      overflow="hidden"
+      height={25}
+    >
       <div className={styles.header}>
         {themeOption.name}
         <Stack>
@@ -40,21 +49,12 @@ function ThemeCardComponent({ themeOption, onEdit, onRemove }: ThemeCardProps) {
         </Stack>
       </div>
       <ThemePreview theme={theme} />
-    </div>
+    </Box>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    card: css({
-      boxShadow: theme.shadows.z1,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      height: '200px',
-    }),
     header: css({
       alignItems: 'center',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
