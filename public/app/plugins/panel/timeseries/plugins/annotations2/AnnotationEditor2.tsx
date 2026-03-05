@@ -151,12 +151,6 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    controls: css({
-      display: 'flex',
-      '> :last-child': {
-        marginLeft: 0,
-      },
-    }),
     editor: css({
       background: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,
