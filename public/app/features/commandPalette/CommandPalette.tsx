@@ -681,7 +681,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       maxWidth: 796,
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.lg,
-      border: '1px solid #535355',
+      position: 'relative',
       background:
         'radial-gradient(222.44% 269.03% at -37.28% -70%, rgba(42, 48, 55, 0.80) 16.94%, rgba(18, 20, 23, 0.70) 80.25%)',
       boxShadow: '0 4px 34px 0 rgba(0, 0, 0, 0.50)',
@@ -689,6 +689,18 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       overflow: 'hidden',
       [theme.transitions.handleMotion('no-preference')]: {
         transition: theme.transitions.create('max-width', { duration: theme.transitions.duration.short }),
+      },
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        borderRadius: 'inherit',
+        padding: '1px',
+        background: 'radial-gradient(circle at top left, #535355 0%, #2e2f31 43%, #1f2023 100%)',
+        WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+        WebkitMaskComposite: 'xor',
+        maskComposite: 'exclude',
+        pointerEvents: 'none',
       },
     }),
     animatorWide: css({
