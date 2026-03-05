@@ -17,11 +17,12 @@ import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { TabItem } from './TabItem';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
-  const { title, key, isDropTarget, layout } = model.useState();
+  const { title, isDropTarget, layout, key, repeatSourceKey } = model.useState();
   const parentLayout = model.getParentLayout();
   const { currentTabSlug, isDropTarget: isParentDropTarget } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
+  const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
@@ -71,9 +72,11 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             truncate
             className={cx(
               isConditionallyHidden && styles.hidden,
-              isSelected && 'dashboard-selected-element',
               // !isParentDropTarget prevents highlighting tabs during drag (we use a placeholder instead)
-              isSelectable && !isSelected && !isParentDropTarget && 'dashboard-selectable-element',
+
+              isSelectable && !isSelected && !isSourceSelected && !isParentDropTarget && 'dashboard-selectable-element',
+              (isSelected || isSourceSelected) && !isParentDropTarget && 'dashboard-selected-element',
+              (isSelected || isSourceSelected) && styles.selectedTab,
               isDropTarget && 'dashboard-drop-target'
             )}
             active={isActive}
@@ -163,6 +166,11 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  selectedTab: css({
+    '&.dashboard-selected-element': {
+      outlineOffset: '-2px',
+    },
+  }),
   dragging: css({
     cursor: 'move',
   }),

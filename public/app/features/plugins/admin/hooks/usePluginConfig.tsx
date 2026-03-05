@@ -11,11 +11,9 @@ export const usePluginConfig = (plugin?: CatalogPlugin) => {
       return null;
     }
 
-    // On Cloud, check both isFullyInstalled (for multi-instance setup) and isInstalled (fallback for single instance)
-    // This ensures tabs show even if instance data hasn't fully loaded
-    const isPluginInstalled = config.pluginAdminExternalManageEnabled
-      ? plugin.isFullyInstalled || plugin.isInstalled
-      : plugin.isInstalled;
+    // When pluginAdminExternalManageEnabled is true, only check isFullyInstalled to avoid loading a plugin that was requested for
+    // install but isn't locally available yet (external installs are async).
+    const isPluginInstalled = config.pluginAdminExternalManageEnabled ? plugin.isFullyInstalled : plugin.isInstalled;
 
     if (isPluginInstalled && !plugin.isDisabled) {
       return loadPlugin(plugin.id);

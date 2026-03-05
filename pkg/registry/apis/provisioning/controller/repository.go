@@ -75,6 +75,7 @@ type RepositoryController struct {
 	queue           workqueue.TypedRateLimitingInterface[*queueItem]
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
+	drainTimeout    time.Duration
 
 	registry    prometheus.Registerer
 	tracer      tracing.Tracer
@@ -100,6 +101,7 @@ func NewRepositoryController(
 	parallelOperations int,
 	resyncInterval time.Duration,
 	minSyncInterval time.Duration,
+	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
@@ -131,6 +133,7 @@ func NewRepositoryController(
 		tracer:          tracer,
 		resyncInterval:  resyncInterval,
 		minSyncInterval: minSyncInterval,
+		drainTimeout:    drainTimeout,
 		quotaGetter:     quotaGetter,
 	}
 
@@ -161,9 +164,13 @@ func repoKeyFunc(obj any) (string, error) {
 
 // Run starts the RepositoryController.
 //
+// The onStarted callback is invoked once all workers have been launched.
+// The onShutdown callback is invoked immediately when context cancellation is
+// detected, before draining in-flight work.
+//
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
 // until shutdown. Individual processing operations already have their own spans.
-func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func()) {
+func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
 
@@ -185,7 +192,22 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	onStarted()
 
 	<-ctx.Done()
-	logger.Info("Shutting down workers")
+	onShutdown()
+	logger.Info("Shutting down workers, draining queue")
+
+	drainDone := make(chan struct{})
+	go func() {
+		rc.queue.ShutDownWithDrain()
+		close(drainDone)
+	}()
+
+	select {
+	case <-drainDone:
+		logger.Info("Queue drained successfully")
+	case <-time.After(rc.drainTimeout):
+		logger.Warn("Drain timeout exceeded, forcing shutdown")
+		rc.queue.ShutDown()
+	}
 }
 
 func (rc *RepositoryController) runWorker(ctx context.Context) {
@@ -632,12 +654,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		})
 	}
 
-	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
-	); conditionPatchOps != nil {
-		patchOperations = append(patchOperations, conditionPatchOps...)
-	}
-
 	// Repository needs to be blocked.
 	if !isCurrentlyBlocked && isOverQuota {
 		// Rule 1: Not blocked + over quota -> Block and exit
@@ -645,6 +661,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"namespace", namespace,
 			"max_repositories", newQuota.MaxRepositories,
 		)
+
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
+		); conditionPatchOps != nil {
+			patchOperations = append(patchOperations, conditionPatchOps...)
+		}
 
 		// Mark the repository as unhealthy
 		patchOperations = append(patchOperations, map[string]interface{}{
@@ -665,15 +687,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			}
 		}
 		return nil
-	}
-
-	// We're unblocking the repository. Here - we should set the condition correctly, to match this case.
-	if forceProcessForUnblock {
-		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-			obj.Status.Conditions, obj.GetGeneration(), quotaCondition,
-		); conditionPatchOps != nil {
-			patchOperations = append(patchOperations, conditionPatchOps...)
-		}
 	}
 
 	if shouldGenerateToken {
@@ -743,14 +756,23 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
+	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
 	}
+	testResults := healthResult.TestResults
+	healthStatus := healthResult.HealthStatus
 
-	// Add health patch operations first
-	if len(healthPatchOps) > 0 {
-		patchOperations = append(patchOperations, healthPatchOps...)
+	// Add health patch operations
+	if len(healthResult.PatchOps) > 0 {
+		patchOperations = append(patchOperations, healthResult.PatchOps...)
+	}
+
+	// Build ALL condition patches together to avoid one overwriting another.
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
+	); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
 
 	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors

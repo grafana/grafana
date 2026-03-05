@@ -172,7 +172,7 @@ You can build the back-end as follows:
 3. Build the Grafana binaries:
 
 ```
-go run build.go build
+make build
 ```
 
 The Grafana binaries will be installed in `bin\\windows-amd64`.
@@ -201,11 +201,7 @@ go test -v ./pkg/...
 
 #### On Windows
 
-Running the backend tests on Windows currently needs some tweaking, so use the `build.go` script:
-
-```
-go run build.go test
-```
+Running the backend tests on Windows currently needs some tweaking; use `make test-go-unit` or the test commands in the Makefile.
 
 ### Run SQLite, PostgreSQL and MySQL integration tests
 

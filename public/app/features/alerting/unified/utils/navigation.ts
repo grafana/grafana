@@ -18,6 +18,7 @@ const ContactPointsTab = {
  * Navigation IDs used for Alerting pages
  */
 export const NAV_IDS = {
+  ALERT_ACTIVITY: 'alert-activity',
   NOTIFICATION_CONFIG: 'notification-config',
   RECEIVERS: 'receivers',
   ROUTES: 'am-routes',
@@ -27,6 +28,8 @@ export const NAV_IDS = {
  * Alerting page paths
  */
 export const ALERTING_PATHS: Record<string, RelativeUrl> = {
+  ALERTS: '/alerting/alerts',
+  ALERT_GROUPS: '/alerting/groups',
   NOTIFICATIONS: '/alerting/notifications',
   TEMPLATES: '/alerting/notifications/templates',
   TIME_INTERVALS: '/alerting/routes/mute-timing',
