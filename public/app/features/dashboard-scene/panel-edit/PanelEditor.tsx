@@ -4,6 +4,7 @@ import { debounce } from 'lodash';
 import { NavIndex, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
@@ -21,7 +22,7 @@ import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
-import { VizSuggestionsInteractions } from 'app/features/panel/components/VizTypePicker/interactions';
+import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -41,6 +42,7 @@ import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
+import { trackEditorVersionToggle } from './PanelEditNext/tracking';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
@@ -321,9 +323,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setState({ isDirty: false });
 
     const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(this);
+
+    // clear pending suggestions
+    vizSuggestionsTracker.record(panel.state.key!, undefined);
 
     if (this.state.isNewPanel) {
-      getDashboardSceneFor(this).removePanel(panel);
+      dashboard.removePanel(panel);
     } else {
       // Revert any layout element changes
       this._layoutItem!.setState(this._layoutItemState!);
@@ -335,17 +341,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public dashboardSaved() {
     this.setOriginalState(this.state.panelRef);
     this.setState({ isDirty: false });
-
-    if (this.state.optionsPane?.state.suggestionApplied) {
-      const panel = this.state.panelRef.resolve();
-      VizSuggestionsInteractions.panelSaved({
-        pluginId: panel.state.pluginId,
-        isNewPanel: this.state.isNewPanel,
-        ...this.state.optionsPane.state.suggestionApplied,
-      });
-
-      this.state.optionsPane.setState({ suggestionApplied: undefined });
-    }
 
     // Remember that we have done changes
     this._changesHaveBeenMade = true;
@@ -411,6 +406,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
    */
   public onToggleQueryEditorVersion = () => {
     const newUseQueryExperienceNext = !this.state.useQueryExperienceNext;
+    trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');
     const dataPane = PanelDataPane.createFor(this.getPanel(), newUseQueryExperienceNext);
 
     this.setState({
@@ -425,7 +421,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
-    useQueryExperienceNext: config.featureToggles.queryEditorNext,
+    useQueryExperienceNext: getFeatureFlagClient().getBooleanValue('queryEditorNext', false),
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,

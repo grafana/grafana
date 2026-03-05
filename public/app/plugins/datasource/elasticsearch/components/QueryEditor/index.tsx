@@ -7,10 +7,9 @@ import { config } from '@grafana/runtime';
 import { Alert, ConfirmModal, InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
 
 import { ElasticsearchDataQuery } from '../../dataquery.gen';
-import { ElasticDatasource } from '../../datasource';
 import { useNextId } from '../../hooks/useNextId';
 import { useDispatch } from '../../hooks/useStatelessReducer';
-import { EditorType, ElasticsearchOptions } from '../../types';
+import { ElasticDatasourceLike, EditorType, ElasticsearchOptions } from '../../types';
 import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
@@ -22,11 +21,15 @@ import { QueryTypeSelector } from './QueryTypeSelector';
 import { RawQueryEditor } from './RawQueryEditor';
 import { changeAliasPattern, changeEditorTypeAndResetQuery, changeQuery } from './state';
 
-export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchDataQuery, ElasticsearchOptions>;
+export type ElasticQueryEditorProps = QueryEditorProps<
+  ElasticDatasourceLike,
+  ElasticsearchDataQuery,
+  ElasticsearchOptions
+>;
 
 // a react hook that returns the elasticsearch database version,
 // or `null`, while loading, or if it is not possible to determine the value.
-function useElasticVersion(datasource: ElasticDatasource): SemVer | null {
+function useElasticVersion(datasource: ElasticDatasourceLike): SemVer | null {
   const [version, setVersion] = useState<SemVer | null>(null);
   useEffect(() => {
     let canceled = false;

@@ -388,7 +388,6 @@
         "timing-options": "Horaires"
       },
       "pending-period": "Période en attente",
-      "rule": "Règle",
       "rule-identifier": "Identifiant de la règle",
       "rule-type": "Type de règle",
       "state-error-timeout": "État d'alerte en cas d'erreur d'exécution ou de délai d'attente",
@@ -3404,8 +3403,14 @@
     },
     "triage": {
       "alert-instances": "Instances d’alerte",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Erreur lors du chargement de la règle",
-      "firing-instances-count": "Instances d’alerte déclenchées",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Détails de l’instance"
       },
@@ -3415,7 +3420,6 @@
       "no-matching-instances-with-filters": "Aucune instance d’alerte ne correspond aux filtres actuellement sélectionnés pour la plage temporelle choisie.",
       "open-in-sidebar": "Ouvrir dans la barre latérale",
       "open-rule-details": "Ouvrir les détails de la règle",
-      "pending-instances-count": "Instances d’alerte en attente",
       "rule-details": {
         "subtitle": "Détails et conditions de la règle",
         "title": "Détails de la règle"
@@ -3424,15 +3428,21 @@
         "description": "La règle demandée est introuvable.",
         "title": "Règle introuvable"
       },
-      "rules-with-firing-instances": "Règles d’alerte avec des instances déclenchées",
-      "rules-with-pending-instances": "Règles d’alerte avec des instances en attente",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Ajouter une expression"
@@ -3530,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Détails",
           "enrichment": "Enrichissement des alertes",
           "history": "Historique",
           "instances": "Instances",
@@ -4773,7 +4782,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Lien vers Connexions",
-      "body": "Les sources de données ont un nouveau foyer ! Vous pouvez découvrir de nouvelles sources de données ou gérer celles qui existent déjà dans la page Connexions, accessible depuis le menu principal.",
+      "body": "Les sources de données ont un nouveau foyer ! Vous pouvez découvrir de nouvelles sources de données ou gérer celles qui existent déjà dans la <0>page Connexions</0>, accessible depuis le menu principal.",
       "go-to-connections": "Accéder aux connexions"
     },
     "data-source-details-page": {
@@ -5452,11 +5461,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6876,10 +6887,8 @@
       "title-delete-all-transformations": "Supprimer toutes les transformations ?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Basculer la vue du tableau",
-      "table-view-label-table-view": "Vue du tableau",
-      "try-new-editor": ""
+      "table-view-label-table-view": "Vue du tableau"
     },
     "panel-editor": {
       "text": {
@@ -7156,6 +7165,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Tableau de bord enregistré"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Cette variable n’est référencée par aucune variable ou aucun tableau de bord.",
       "aria-label-variable-referenced-other-variables-dashboard": "Cette variable est référencée par d’autres variables ou d’autres tableaux de bord.",
@@ -7249,6 +7265,24 @@
       "show-more": "Afficher plus",
       "preview-of-values_one": "Aperçu des valeurs ({{count}})",
       "preview-of-values_other": "Aperçu des valeurs ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9885,6 +9919,7 @@
       "csv-placeholder": "Saisir le CSV ici…",
       "filter": {
         "add-all": "Ajouter toutes les valeurs affichées au filtre",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10901,6 +10936,7 @@
     "name-order": "Ordre",
     "name-prettify-json": "Embellir le JSON",
     "name-show-controls": "Afficher les contrôles",
+    "name-show-level": "",
     "name-time": "Afficher les horodatages",
     "name-unique-labels": "Étiquettes uniques",
     "name-unwrapped-columns": "",
@@ -11989,6 +12025,12 @@
       "could-anything-matching-query": "Impossible de trouver quoi que ce soit correspondant à votre requête"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "Regrouper par",
     "loading": "Chargement des options",
@@ -12431,6 +12473,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Ajouter une note pour décrire vos modifications (facultatif)",
@@ -12470,9 +12518,6 @@
     "title-created-branch-in-repo": "Une nouvelle ressource a été créée dans une branche dans {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Cette ressource est chargée depuis la branche que vous venez de créer dans {{repoType}} et elle est uniquement visible pour vous"
   },
-  "provisioned-resource-request-handler": "Ressource enregistrée avec succès",
-  "provisioned-resource-request-handler-dashboard": "Tableau de bord enregistré avec succès",
-  "provisioned-resource-request-handler-folder": "Dossier créé avec succès",
   "provisioning": {
     "banner": {
       "message": "Cette fonctionnalité est actuellement en cours de développement. Pour une expérience optimale et les dernières améliorations, nous vous recommandons d’utiliser la <2>compilation nocturne</2> de Grafana."
@@ -13414,6 +13459,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {
