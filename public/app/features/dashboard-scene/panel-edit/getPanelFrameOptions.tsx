@@ -36,7 +36,7 @@ export function createPresetApplyHandler(panel: VizPanel) {
             defaults: {
               ...defaults,
               custom: { ...defaults.custom, ...presetDefaults?.custom },
-              ...(presetDefaults?.color ? { color: presetDefaults.color } : {}),
+              ...(presetDefaults?.color && { color: presetDefaults.color }),
             },
             overrides,
           },

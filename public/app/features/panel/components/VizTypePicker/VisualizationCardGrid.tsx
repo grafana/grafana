@@ -79,7 +79,7 @@ export function VisualizationCardGrid({
           data={data}
           suggestion={item}
           width={width}
-          isSelected={selectedKey !== undefined && getItemKey(item) === selectedKey}
+          isSelected={getItemKey(item) === selectedKey}
           onClick={() => onItemClick(item, itemIndex)}
         />
       </div>
