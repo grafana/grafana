@@ -11,10 +11,10 @@
       ],
       "area_labels": ["area/alerting"],
       "enabled": {
-        "pr_notify": true,
-        "pr_weekly": true,
-        "fr_notify": true,
-        "fr_weekly": true
+        "pr_notify": false,
+        "pr_weekly": false,
+        "fr_notify": false,
+        "fr_weekly": false
       }
     },
     {
@@ -25,10 +25,10 @@
       ],
       "area_labels": ["area/panel"],
       "enabled": {
-        "pr_notify": true,
-        "pr_weekly": true,
-        "fr_notify": true,
-        "fr_weekly": true
+        "pr_notify": false,
+        "pr_weekly": false,
+        "fr_notify": false,
+        "fr_weekly": false
       }
     }
   ]
