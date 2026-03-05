@@ -987,7 +987,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  789,
-			wantErr:    ErrUnauthorized,
+			wantErr:    repoerrors.ErrUnauthorized,
 		},
 		{
 			name: "other error",

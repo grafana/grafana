@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	repoerrors "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -337,7 +337,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			ref:  "main",
 			mockSetup: func(m *MockClient) {
 				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/nonexistent.json", "main").
-					Return(nil, ErrResourceNotFound)
+					Return(nil, repoerrors.ErrFileNotFound)
 			},
 			expectedError: repository.ErrFileNotFound,
 		},
@@ -1075,7 +1075,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 			name: "handles not found error",
 			mockSetup: func(m *MockClient) {
 				m.On("GetRepository", mock.Anything, "grafana", "grafana").
-					Return(Repository{}, ErrResourceNotFound)
+					Return(Repository{}, repoerrors.ErrFileNotFound)
 			},
 			expectedError: "failed to get repository metadata:",
 		},
@@ -1294,7 +1294,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 			name:             "GetBranchProtection unauthorized (401) returns test failure",
 			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
 			branch:           "main",
-			bpError:          ErrUnauthorized,
+			bpError:          repoerrors.ErrUnauthorized,
 			expectBPCall:     true,
 			expectedSuccess:  false,
 			expectedErrField: "spec.github.branch",
