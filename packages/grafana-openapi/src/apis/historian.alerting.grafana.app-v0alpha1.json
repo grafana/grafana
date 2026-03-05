@@ -1132,6 +1132,34 @@
           "$ref": "#/components/schemas/CreateNotificationqueryMatcher"
         }
       },
+      "CreateNotificationqueryNotificationCount": {
+        "type": "object",
+        "required": ["count"],
+        "properties": {
+          "count": {
+            "description": "Count is the number of notification attempts in the time period.",
+            "type": "integer"
+          },
+          "error": {
+            "type": "string"
+          },
+          "integration": {
+            "type": "string"
+          },
+          "integrationIndex": {
+            "type": "integer"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/CreateNotificationqueryNotificationOutcome"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CreateNotificationqueryNotificationStatus"
+          }
+        }
+      },
       "CreateNotificationqueryNotificationEntry": {
         "type": "object",
         "required": [
@@ -1286,6 +1314,31 @@
             "type": "string",
             "format": "date-time"
           },
+          "groupBy": {
+            "description": "GroupBy specifies how to aggregate counts queries.",
+            "type": "object",
+            "required": ["receiver", "integration", "integrationIndex", "status", "outcome", "error"],
+            "properties": {
+              "error": {
+                "type": "boolean"
+              },
+              "integration": {
+                "type": "boolean"
+              },
+              "integrationIndex": {
+                "type": "boolean"
+              },
+              "outcome": {
+                "type": "boolean"
+              },
+              "receiver": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "boolean"
+              }
+            }
+          },
           "groupLabels": {
             "description": "GroupLabels optionally filters the entries by matching group labels.",
             "allOf": [
@@ -1334,13 +1387,24 @@
             "description": "To is the starting timestamp for the query.",
             "type": "string",
             "format": "date-time"
+          },
+          "type": {
+            "description": "Type of query to perform (default: entries)",
+            "type": "string",
+            "enum": ["entries", "counts"]
           }
         }
       },
       "CreateNotificationqueryResponse": {
         "type": "object",
-        "required": ["entries"],
+        "required": ["entries", "counts"],
         "properties": {
+          "counts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateNotificationqueryNotificationCount"
+            }
+          },
           "entries": {
             "type": "array",
             "items": {

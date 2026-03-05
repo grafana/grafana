@@ -388,7 +388,6 @@
         "timing-options": "Tempi"
       },
       "pending-period": "Periodo di attesa",
-      "rule": "Regola",
       "rule-identifier": "Identificatore della regola",
       "rule-type": "Tipo di regola",
       "state-error-timeout": "Stato di avviso in caso di errore di esecuzione o timeout",
@@ -906,7 +905,7 @@
       "title-failed-to-fetch-contact-points": "Impossibile recuperare i punti di contatto"
     },
     "contact-points": {
-      "create": "Crea punto di contatto",
+      "create": "",
       "custom-template-value": "Valore del modello personalizzato",
       "delete-reasons": {
         "heading": "Il punto di contatto non può essere eliminato per i seguenti motivi:",
@@ -2105,7 +2104,9 @@
       "select-namespace": "Seleziona spazio di nomi"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Regole di avviso",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Eliminati di recente",
@@ -2129,7 +2130,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Aggiungi intervallo di tempo"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2174,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2182,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Cerca per punto di contatto",
@@ -2252,7 +2252,7 @@
       "title-failed-to-fetch-notification-templates": "Impossibile recuperare i modelli di notifica"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Aggiungi il gruppo di modelli di notifica",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Crea modelli di notifica per personalizzare le notifiche."
     },
     "notifications-list": {
@@ -2279,6 +2279,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2303,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Aggiungi etichette per aiutarti a gestire meglio le regole di registrazione.",
@@ -2333,8 +2332,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Visualizza gli avvisi correnti ed esplora i dati storici per indagare sui problemi correnti o passati.",
-        "title": "Avvisi"
+        "subtitle": "Visualizza gli avvisi correnti ed esplora i dati storici per indagare sui problemi correnti o passati."
       }
     },
     "panel-alert-tab-content": {
@@ -3264,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Modulo modelli",
+      "body-legacy": "",
       "label-examples-documentation": "Documentazione di esempio",
       "label-template-group": "Gruppo modelli",
       "label-template-group-name": "Nome del gruppo di modelli",
@@ -3272,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Assegna un nome al gruppo di modelli",
       "title-error-saving-template": "Errore durante il salvataggio del modello",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Foglio di riferimento per la creazione di modelli"
     },
     "template-preview": {
@@ -3312,6 +3312,8 @@
       "help": {
         "intro": "I modelli di notifica utilizzano il linguaggio di modellazione Go per creare messaggi di notifica.\n\nIn Grafana, un gruppo di modelli può definire più modelli di notifica utilizzando {{ define \"<NAME>\" }}.\nQuesti modelli possono quindi essere utilizzati nei punti di contatto e all'interno di altri modelli di notifica richiamando {{ template \"<NAME>\" }}.\nPer informazioni dettagliate sui modelli di notifica, consulta la nostra documentazione."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Configurazione errata",
       "misconfigured-warning": "Questo modello non è configurato correttamente.",
       "misconfigured-warning-details": "I modelli devono essere definiti in entrambe le sezioni <2></2> e <5></5> della configurazione di Alertmanager."
@@ -3350,7 +3352,7 @@
       "stop-alerting-when": "Interrompi l'avviso (o lo stato in sospeso) quando"
     },
     "time-interval": {
-      "add-time-interval": "Aggiungi intervallo di tempo",
+      "add-time-interval": "",
       "save": "Salva intervallo di tempo",
       "saving": "Salvataggio dell'intervallo di tempo"
     },
@@ -3401,8 +3403,14 @@
     },
     "triage": {
       "alert-instances": "Istanze di avviso",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Errore durante il caricamento della regola",
-      "firing-instances-count": "Attivazione di istanze di avviso",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Dettagli dell'istanza"
       },
@@ -3412,7 +3420,6 @@
       "no-matching-instances-with-filters": "Nessuna istanza di avviso corrisponde al tuo set di filtri corrente per l'intervallo di tempo selezionato.",
       "open-in-sidebar": "Apri nella barra laterale",
       "open-rule-details": "Apri i dettagli della regola",
-      "pending-instances-count": "Istanze di avviso in sospeso",
       "rule-details": {
         "subtitle": "Dettagli e condizioni della regola",
         "title": "Dettagli della regola"
@@ -3421,8 +3428,21 @@
         "description": "Impossibile trovare la regola richiesta.",
         "title": "Regola non trovata"
       },
-      "rules-with-firing-instances": "Regole di avviso con istanze attive",
-      "rules-with-pending-instances": "Regole di avviso con istanze in sospeso"
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Aggiungi espressione"
@@ -3520,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Dettagli",
           "enrichment": "Arricchimento degli avvisi",
           "history": "Cronologia",
           "instances": "Istanze",
@@ -4185,7 +4204,6 @@
     "quota-banner": {
       "at-limit-body": "",
       "at-limit-title": "",
-      "dismiss": "",
       "nearing-body": "",
       "nearing-title": "",
       "request-extension": "",
@@ -5443,11 +5461,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6605,6 +6625,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Impossibile eliminare la dashboard",
       "cancel-action": "Annulla",
@@ -6861,8 +6887,6 @@
       "title-delete-all-transformations": "Eliminare tutte le trasformazioni?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Attiva/disattiva visualizzazione tabella",
       "table-view-label-table-view": "Vista tabella"
     },
@@ -6909,6 +6933,16 @@
     },
     "query-editor": {
       "query": "Query"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "I gruppi di acquisizione con nome possono essere utilizzati per separare il testo e il valore di visualizzazione (<1>vedi esempi</1>).",
@@ -7033,6 +7067,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Impossibile creare avvisi da questo pannello perché non è stata trovata alcuna query a un'origine dei dati con funzione di avviso.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Nuova regola di avviso",
       "title-no-alerting-capable-query-found": "Nessuna query con funzione di avviso trovata"
     },
@@ -7130,6 +7165,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Questa variabile non è referenziata da nessuna variabile o dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "Questa variabile è referenziata da altre variabili o dashboard.",
@@ -7223,6 +7265,24 @@
       "show-more": "Mostra di più",
       "preview-of-values_one": "Anteprima dei valori ({{count}})",
       "preview-of-values_other": "Anteprima dei valori ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -7813,7 +7873,10 @@
     "pro-tip": "Suggerimento pro: {{proTip}} "
   },
   "entity-not-found": {
-    "description": "Stiamo cercando ma non riusciamo a trovare {{lowerCaseEntity}}. Prova a tornare alla <4>Home</4> o a cercare aiuto sul <7>sito della community.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -9449,11 +9512,13 @@
       },
       "legend": {
         "category": "Legenda",
+        "description-limit": "",
         "description-values": "Seleziona i valori o i calcoli da mostrare nella legenda",
         "mode-options": {
           "label-list": "Elenco",
           "label-table": "Tabella"
         },
+        "name-limit": "",
         "name-mode": "Modalità",
         "name-placement": "Posizionamento",
         "name-values": "Valori",
@@ -9854,6 +9919,7 @@
       "csv-placeholder": "Inserisci qui il CSV...",
       "filter": {
         "add-all": "Aggiungi tutti i valori visualizzati al filtro",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10384,6 +10450,11 @@
     "subtitle": "L'integrazione LDAP in Grafana consente agli utenti di Grafana di accedere con le proprie credenziali LDAP. Scopri di più nella nostra <2><1>documentazione</1></2>.",
     "title": "Impostazioni di base"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Esiste già un pannello della libreria con questo nome",
@@ -10865,6 +10936,7 @@
     "name-order": "Ordina",
     "name-prettify-json": "Migliora JSON",
     "name-show-controls": "Mostra controlli",
+    "name-show-level": "",
     "name-time": "Mostra marche temporali",
     "name-unique-labels": "Etichette univoche",
     "name-unwrapped-columns": "",
@@ -11258,9 +11330,17 @@
       "subtitle": "Scopri i problemi nei tuoi sistemi pochi istanti dopo che si sono verificati",
       "title": "Avvisi"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Gestisci le configurazioni di Alertmanager e abilita la ricezione di avvisi gestiti da Grafana",
       "title": "Impostazioni"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Determina come vengono instradati gli avvisi ai punti di contatto",
@@ -11926,8 +12006,6 @@
       "tooltip-delete": "Elimina"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Impossibile caricare alcuni suggerimenti"
       },
@@ -11945,6 +12023,12 @@
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
+    }
+  },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "panel-group-by": {
@@ -12389,6 +12473,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Aggiungi una nota per descrivere le modifiche (facoltativo)",
@@ -12396,13 +12486,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Ramo",
       "label-comment": "Commento",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Percorso",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Ultimo ramo",
       "suffix-new-branch": "",
@@ -12423,9 +12518,6 @@
     "title-created-branch-in-repo": "È stata creata una nuova risorsa in un ramo in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Questa risorsa viene caricata dal ramo appena creato in {{repoType}} ed è visibile solo a te"
   },
-  "provisioned-resource-request-handler": "Risorsa salvata correttamente",
-  "provisioned-resource-request-handler-dashboard": "Dashboard salvata correttamente",
-  "provisioned-resource-request-handler-folder": "Cartella creata correttamente",
   "provisioning": {
     "banner": {
       "message": "Questa funzione è attualmente in fase di sviluppo attivo. Per un'esperienza ottimale e gli ultimi miglioramenti, consigliamo di utilizzare la <2>nightly build</2> di Grafana."
@@ -12516,6 +12608,8 @@
       "instance-fully-managed-tooltip": "La configurazione è disabilitata perché questa istanza è completamente gestita"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12655,6 +12749,20 @@
       "label-generate-dashboard-previews": "Genera anteprime della dashboard",
       "label-read-only": "Solo lettura",
       "label-sync-interval": "Intervallo di sincronizzazione (secondi)"
+    },
+    "fix-folder-metadata": {
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -12797,6 +12905,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13304,6 +13414,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13348,6 +13459,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {
@@ -13393,6 +13510,7 @@
       "card-click": "Seleziona scheda {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
       "transformations": "Trasformazioni",
@@ -14351,6 +14469,11 @@
           "settings": "Impostazioni"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Sincronizzazione gruppo esterno"
@@ -14407,6 +14530,19 @@
       "loading-teams": "Caricamento team in corso...",
       "new-team": "Nuovo team",
       "placeholder-search-teams": "Cerca team"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Questo è facoltativo e viene utilizzato principalmente per impostare l'avatar del profilo del team (tramite il servizio Gravatar)",
@@ -14638,6 +14774,12 @@
     "name-show-matches-only": "Mostra solo corrispondenze",
     "traces-panel": {
       "no-data-found-in-response": "Nessun dato trovato in risposta"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

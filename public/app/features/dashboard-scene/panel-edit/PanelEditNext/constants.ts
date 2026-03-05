@@ -28,20 +28,40 @@ export enum SidebarSize {
 }
 
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
+export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
+export const QUERY_EDITOR_BANNER_FEEDBACK_URL = 'https://forms.gle/54uCfRjxzjcXVysp8';
+
+export function getQueryEditorBannerColors(theme: GrafanaTheme2) {
+  return {
+    background: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+    border: theme.isDark ? '#314158' : theme.colors.border.medium,
+    accent: theme.isDark ? '#FF9830' : '#C47B20',
+  };
+}
 
 export const QUERY_EDITOR_COLORS = {
-  footerBackground: '#1e2939',
-  sidebarFooterBackground: '#141820',
   query: '#FF8904',
   expression: '#C27AFF',
   transformation: '#00D492',
-  card: {
-    activeBg: '#314158',
-    hoverBg: '#1D293D',
-    headerBg: '#20262F',
-  },
-  error: '#D10E5C',
+  error: '#E7000B',
 };
+
+// TODO: Remove this once all the new colors are finalized
+const USE_THEME_COLORS = true;
+
+export function getQueryEditorColors(theme: GrafanaTheme2) {
+  return {
+    contentHeaderBackground: theme.colors.background.secondary,
+    footerBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#1e2939',
+    sidebarFooterBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#141820',
+    sidebarHeaderBackground: USE_THEME_COLORS ? theme.colors.background.secondary : '#20262F',
+    card: {
+      activeBg: theme.isDark ? '#314158' : 'oklch(92.9% 0.013 255.508)',
+      hoverBg: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+      bg: theme.colors.background.primary,
+    },
+  };
+}
 
 export interface QueryEditorTypeConfig {
   icon: IconName;
@@ -109,9 +129,12 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
  */
 export const TIME_OPTION_PLACEHOLDER = '1h';
 
+export const TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME = 5000;
+
 export const SIDEBAR_CARD_HEIGHT = 30;
 export const SIDEBAR_CARD_SPACING = 1;
 export const SIDEBAR_CARD_INDENT = 2;
+export const FOOTER_HEIGHT = 32;
 
 export const CONTENT_SIDE_BAR = {
   fieldLabelWidth: 130,
@@ -207,3 +230,9 @@ export const EXPRESSION_IMAGE_MAP: Record<ExpressionQueryType, { dark: string; l
   [ExpressionQueryType.classic]: { dark: classicConditionDarkImage, light: classicConditionLightImage },
   [ExpressionQueryType.threshold]: { dark: thresholdDarkImage, light: thresholdLightImage },
 };
+
+export const PENDING_CARD_ID = {
+  expression: 'pending-expression',
+  savedQuery: 'pending-saved-query',
+  transformation: 'pending-transformation',
+} as const;

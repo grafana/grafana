@@ -29,6 +29,8 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
+import { getDashboardSceneFor } from '../utils/utils';
+
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
@@ -73,6 +75,14 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       plugin_id: pluginId,
       from_suggestions: options.fromSuggestions ?? false,
     });
+
+    const dashboard = getDashboardSceneFor(this);
+    dashboard.recordPanelSuggestion(
+      panel.state.key!,
+      options.suggestionMetadata
+        ? { pluginId: options.pluginId, isNewPanel: this.state.isNewPanel ?? false, ...options.suggestionMetadata }
+        : undefined
+    );
 
     // clear custom options
     let newFieldConfig: FieldConfigSource = {
