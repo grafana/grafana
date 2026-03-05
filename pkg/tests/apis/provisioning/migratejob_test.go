@@ -234,13 +234,11 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 		"migration job should have no warnings when all resources were exported and taken over")
 }
 
-// TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards verifies that
+// TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards verifies that
 // when a second repository migrates, only unmanaged dashboards are exported.
 // Dashboards already claimed by the first repository are skipped.
 // This test focuses on files written to each repository directory.
-// TODO: once we support exporting with new UIDs, extend this test to verify
-// that the sync phase correctly correlates old and new identifiers.
-func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testing.T) {
+func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t)
