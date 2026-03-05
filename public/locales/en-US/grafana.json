@@ -14729,7 +14729,12 @@
       "label-tags": "Tags",
       "placeholder-add-tags": "Add tags",
       "save": "Save",
-      "saving": "Saving"
+      "saving": "Saving",
+      "tooltip-close": "Close"
+    },
+    "annotation-marker": {
+      "annotation-label": "Annotation",
+      "annotation-region-label": "Annotation region"
     },
     "annotation-tooltip2": {
       "tooltip-delete": "Delete",
