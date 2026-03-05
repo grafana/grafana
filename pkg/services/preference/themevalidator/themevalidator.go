@@ -13,8 +13,9 @@ import (
 )
 
 type Service struct {
-	namespacer      apiserverrequest.NamespaceMapper
-	clientGenerator func(ctx context.Context) (*themeV0alpha1.ThemeClient, error)
+	namespacer               apiserverrequest.NamespaceMapper
+	clientGenerator          func(ctx context.Context) (*themeV0alpha1.ThemeClient, error)
+	userThemeClientGenerator func(ctx context.Context) (*themeV0alpha1.UserThemeClient, error)
 }
 
 func ProvideService(
@@ -34,6 +35,15 @@ func ProvideService(
 			clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{})
 			return themeV0alpha1.NewThemeClientFromGenerator(clientGenerator)
 		},
+		userThemeClientGenerator: func(ctx context.Context) (*themeV0alpha1.UserThemeClient, error) {
+			kubeConfig, err := restConfigProvider.GetRestConfig(ctx)
+			if err != nil {
+				return nil, err
+			}
+			kubeConfig.APIPath = "apis"
+			clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{})
+			return themeV0alpha1.NewUserThemeClientFromGenerator(clientGenerator)
+		},
 	}
 }
 
@@ -44,7 +54,12 @@ func (s *Service) IsValidThemeID(ctx context.Context, orgID int64, id string) bo
 	}
 
 	// Slow path: check custom themes via theme app
-	return s.getCustomTheme(ctx, orgID, id) != nil
+	if s.getCustomTheme(ctx, orgID, id) != nil {
+		return true
+	}
+
+	// Check user themes
+	return s.getUserTheme(ctx, orgID, id) != nil
 }
 
 func (s *Service) GetThemeByID(ctx context.Context, orgID int64, id string) *pref.ThemeDTO {
@@ -54,7 +69,39 @@ func (s *Service) GetThemeByID(ctx context.Context, orgID int64, id string) *pre
 	}
 
 	// Slow path: fetch from theme app
-	return s.getCustomTheme(ctx, orgID, id)
+	if dto := s.getCustomTheme(ctx, orgID, id); dto != nil {
+		return dto
+	}
+
+	// Check user themes
+	return s.getUserTheme(ctx, orgID, id)
+}
+
+func (s *Service) getUserTheme(ctx context.Context, orgID int64, id string) *pref.ThemeDTO {
+	client, err := s.userThemeClientGenerator(ctx)
+	if err != nil {
+		return nil
+	}
+
+	namespace := s.namespacer(orgID)
+	theme, err := client.Get(ctx, resource.Identifier{
+		Namespace: namespace,
+		Name:      id,
+	})
+	if err != nil {
+		return nil
+	}
+
+	themeType := "dark"
+	if theme.Spec.Colors != nil && theme.Spec.Colors.Mode != nil {
+		themeType = string(*theme.Spec.Colors.Mode)
+	}
+
+	return &pref.ThemeDTO{
+		ID:      id,
+		Type:    themeType,
+		IsExtra: true,
+	}
 }
 
 func (s *Service) getCustomTheme(ctx context.Context, orgID int64, id string) *pref.ThemeDTO {

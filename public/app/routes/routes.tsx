@@ -364,6 +364,18 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/profile/themes/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CustomThemes" */ 'app/features/profile/CustomThemes/NewCustomThemePage')
+      ),
+    },
+    {
+      path: '/profile/themes/:name/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CustomThemes" */ 'app/features/profile/CustomThemes/EditCustomThemePage')
+      ),
+    },
+    {
       path: '/admin/upgrading',
       component: SafeDynamicImport(() => import('app/features/admin/UpgradePage')),
     },

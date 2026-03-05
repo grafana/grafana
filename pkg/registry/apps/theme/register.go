@@ -3,6 +3,7 @@ package theme
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	apis "github.com/grafana/grafana/apps/theme/pkg/apis/manifestdata"
 	themeapp "github.com/grafana/grafana/apps/theme/pkg/app"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -49,6 +51,13 @@ func RegisterAppInstaller(
 	installer.AppInstaller = i
 
 	return installer, nil
+}
+
+func (a *AppInstaller) GetNamespaceScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer {
+	if gr.Resource == "userthemes" {
+		return NewUserThemeStorageAuthorizer()
+	}
+	return nil
 }
 
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {

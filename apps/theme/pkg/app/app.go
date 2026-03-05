@@ -29,9 +29,12 @@ func New(cfg app.Config) (app.App, error) {
 		// Reconcilers and/or Watchers are also attached here, though they should only be attached to a single version per kind.
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: themeV0alpha1.ThemeKind(),
-				// Validator is run on ingress and is it returns an error the request is rejected
+				Kind:      themeV0alpha1.ThemeKind(),
 				Validator: NewValidator(),
+			},
+			{
+				Kind:      themeV0alpha1.UserThemeKind(),
+				Validator: NewUserThemeValidator(),
 			},
 		},
 	}
@@ -55,6 +58,6 @@ func New(cfg app.Config) (app.App, error) {
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := themeV0alpha1.GroupVersion
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {themeV0alpha1.ThemeKind()},
+		gv: {themeV0alpha1.ThemeKind(), themeV0alpha1.UserThemeKind()},
 	}
 }

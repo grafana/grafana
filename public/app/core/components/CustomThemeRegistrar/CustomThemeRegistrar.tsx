@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { useListThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
+import { Theme, useListThemeQuery, useListUserThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
 import { createTheme, registerCustomTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -13,29 +13,37 @@ import { changeTheme } from '../../services/theme';
  */
 export function CustomThemeRegistrar() {
   const { data } = useListThemeQuery({});
+  const { data: userThemeData } = useListUserThemeQuery({});
 
   useEffect(() => {
-    // If the user's preferred theme is a custom theme, it wasn't available in
-    // the registry at boot time so the app fell back to the default. Now that
-    // custom themes are registered, apply the correct one.
-    const userTheme = config.bootData.user.theme;
-
     for (const theme of data?.items ?? []) {
-      registerCustomTheme({
-        id: theme.metadata.name!,
-        name: theme.spec.name,
-        isExtra: true,
-        build: () => createTheme(theme.spec),
-      });
-
-      // If the user's preferred theme is a custom theme, it wasn't available in
-      // the registry at boot time so the app fell back to the default. Now that
-      // custom themes are registered, apply the correct one.
-      if (theme.metadata.name === userTheme) {
-        changeTheme(userTheme, true);
-      }
+      registerTheme(theme);
     }
   }, [data?.items]);
 
+  useEffect(() => {
+    for (const theme of userThemeData?.items ?? []) {
+      registerTheme(theme);
+    }
+  }, [userThemeData?.items]);
+
   return null;
+}
+
+function registerTheme(theme: Theme) {
+  const configTheme = config.bootData.user.theme;
+
+  registerCustomTheme({
+    id: theme.metadata.name!,
+    name: theme.spec.name,
+    isExtra: true,
+    build: () => createTheme(theme.spec),
+  });
+
+  // If the user's preferred theme is a custom theme, it wasn't available in
+  // the registry at boot time so the app fell back to the default. Now that
+  // custom themes are registered, apply the correct one.
+  if (theme.metadata.name === configTheme) {
+    changeTheme(configTheme, true);
+  }
 }

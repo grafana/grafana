@@ -19,5 +19,5 @@ manifest: {
 }
 
 v0alpha1: {
-    kinds: [themeV0alpha1]
+    kinds: [themeV0alpha1, userThemeV0alpha1]
 }
