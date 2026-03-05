@@ -43,7 +43,7 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
   const handlePresetApply = useCallback(
     (preset: PanelPluginVisualizationSuggestion) => {
       setSelectedPreset(preset.hash);
-      if (preset.fieldConfig) {
+      if (preset.fieldConfig || preset.options) {
         onApplyPreset(preset, panel.state.fieldConfig);
       }
     },
