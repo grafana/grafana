@@ -36,7 +36,7 @@ func newMerger(cfg *setting.Cfg, sql *legacy.LegacySQL) *merger {
 }
 
 func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	schema := defs["github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preference"].Schema
+	schema := defs[preferences.Preferences{}.OpenAPIModelName()].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{

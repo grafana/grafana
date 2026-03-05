@@ -10,12 +10,10 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { getPanelPluginMeta } from '@grafana/runtime/internal';
+import { getListedPanelPluginMetas, getPanelPluginMeta } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
 import { isBuiltinPluginPath } from 'app/features/plugins/built_in_plugins';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-
-import { getAllPanelPluginMeta } from '../state/util';
 
 import { panelsToCheckFirst } from './consts';
 
@@ -24,12 +22,13 @@ interface PluginLoadResult {
   hasErrors: boolean;
 }
 
-function getPanelPluginIds(): string[] {
-  return config.featureToggles.externalVizSuggestions
-    ? getAllPanelPluginMeta()
-        .filter((panel) => panel.suggestions)
-        .map((m) => m.id)
-    : panelsToCheckFirst;
+async function getPanelPluginIds(): Promise<string[]> {
+  if (config.featureToggles.externalVizSuggestions) {
+    const plugins = await getListedPanelPluginMetas();
+    return plugins.filter((panel) => panel.suggestions).map((m) => m.id);
+  }
+
+  return panelsToCheckFirst;
 }
 
 async function isBuiltInPlugin(id?: string): Promise<boolean> {
@@ -153,7 +152,7 @@ export async function getAllSuggestions(series?: DataFrame[]): Promise<Suggestio
   const dataSummary = getPanelDataSummary(series);
   const list: PanelPluginVisualizationSuggestion[] = [];
 
-  const pluginIds: string[] = getPanelPluginIds();
+  const pluginIds: string[] = await getPanelPluginIds();
   const { plugins, hasErrors: pluginLoadErrors } = await loadPlugins(pluginIds);
 
   let pluginSuggestionsError = false;

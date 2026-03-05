@@ -499,7 +499,7 @@ func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provena
 func defaultPostableReceiver(t *testing.T, uid string) *definitions.PostableApiReceiver {
 	t.Helper()
 	return &definitions.PostableApiReceiver{
-		Receiver: amConfig.Receiver{
+		Receiver: definitions.Receiver{
 			Name: uid,
 		},
 		PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{

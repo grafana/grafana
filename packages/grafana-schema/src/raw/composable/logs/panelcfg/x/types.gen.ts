@@ -44,6 +44,7 @@ export interface Options {
   showControls?: boolean;
   showFieldSelector?: boolean;
   showLabels: boolean;
+  showLevel?: boolean;
   showLogAttributes?: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;

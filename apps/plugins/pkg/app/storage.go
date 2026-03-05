@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -119,33 +120,52 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to list plugins: %w", err))
 	}
 
-	// Convert each Plugin to Meta
-	metaItems := make([]pluginsv0alpha1.Meta, 0, len(plugins.Items))
-	for _, plugin := range plugins.Items {
-		result, err := s.metaManager.GetMeta(ctx, meta.PluginRef{
-			ID:       plugin.Spec.Id,
-			Version:  plugin.Spec.Version,
-			ParentID: plugin.Spec.ParentId,
-		})
-		if err != nil {
-			// Log error but continue with other plugins
-			logger.Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
-			continue
-		}
+	// Resolve metadata for all plugins concurrently.
+	// Results are written into a fixed-size slice so ordering is preserved
+	// and no mutex is needed on the output. Nil entries are plugins whose
+	// metadata lookup failed.
+	results := make([]*pluginsv0alpha1.Meta, len(plugins.Items))
 
-		pluginMeta := pluginsv0alpha1.Meta{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      plugin.Name,
-				Namespace: plugin.Namespace,
-			},
-			Spec: result.Meta,
-		}
-		pluginMeta.SetGroupVersionKind(schema.GroupVersionKind{
-			Group:   pluginsv0alpha1.APIGroup,
-			Version: pluginsv0alpha1.APIVersion,
-			Kind:    pluginsv0alpha1.MetaKind().Kind(),
+	g, gCtx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+	for i, plugin := range plugins.Items {
+		g.Go(func() error {
+			result, err := s.metaManager.GetMeta(gCtx, meta.PluginRef{
+				ID:       plugin.Spec.Id,
+				Version:  plugin.Spec.Version,
+				ParentID: plugin.Spec.ParentId,
+			})
+			if err != nil {
+				logger.Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+				return nil
+			}
+
+			m := &pluginsv0alpha1.Meta{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      plugin.Name,
+					Namespace: plugin.Namespace,
+				},
+				Spec: result.Meta,
+			}
+			m.SetGroupVersionKind(schema.GroupVersionKind{
+				Group:   pluginsv0alpha1.APIGroup,
+				Version: pluginsv0alpha1.APIVersion,
+				Kind:    pluginsv0alpha1.MetaKind().Kind(),
+			})
+			results[i] = m
+			return nil
 		})
-		metaItems = append(metaItems, pluginMeta)
+	}
+
+	if err = g.Wait(); err != nil {
+		return nil, err
+	}
+
+	metaItems := make([]pluginsv0alpha1.Meta, 0, len(results))
+	for _, r := range results {
+		if r != nil {
+			metaItems = append(metaItems, *r)
+		}
 	}
 
 	list := &pluginsv0alpha1.MetaList{

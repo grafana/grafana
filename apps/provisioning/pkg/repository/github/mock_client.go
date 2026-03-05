@@ -290,6 +290,67 @@ func (_c *MockClient_EditWebhook_Call) RunAndReturn(run func(context.Context, st
 	return _c
 }
 
+// GetBranchProtection provides a mock function with given fields: ctx, owner, repository, branch
+func (_m *MockClient) GetBranchProtection(ctx context.Context, owner string, repository string, branch string) (*BranchProtection, error) {
+	ret := _m.Called(ctx, owner, repository, branch)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBranchProtection")
+	}
+
+	var r0 *BranchProtection
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*BranchProtection, error)); ok {
+		return rf(ctx, owner, repository, branch)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *BranchProtection); ok {
+		r0 = rf(ctx, owner, repository, branch)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*BranchProtection)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, branch)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_GetBranchProtection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBranchProtection'
+type MockClient_GetBranchProtection_Call struct {
+	*mock.Call
+}
+
+// GetBranchProtection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner string
+//   - repository string
+//   - branch string
+func (_e *MockClient_Expecter) GetBranchProtection(ctx interface{}, owner interface{}, repository interface{}, branch interface{}) *MockClient_GetBranchProtection_Call {
+	return &MockClient_GetBranchProtection_Call{Call: _e.mock.On("GetBranchProtection", ctx, owner, repository, branch)}
+}
+
+func (_c *MockClient_GetBranchProtection_Call) Run(run func(ctx context.Context, owner string, repository string, branch string)) *MockClient_GetBranchProtection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_GetBranchProtection_Call) Return(_a0 *BranchProtection, _a1 error) *MockClient_GetBranchProtection_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_GetBranchProtection_Call) RunAndReturn(run func(context.Context, string, string, string) (*BranchProtection, error)) *MockClient_GetBranchProtection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetRepository provides a mock function with given fields: ctx, owner, repository
 func (_m *MockClient) GetRepository(ctx context.Context, owner string, repository string) (Repository, error) {
 	ret := _m.Called(ctx, owner, repository)

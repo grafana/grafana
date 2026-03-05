@@ -1,3 +1,7 @@
+import { render as RTLRender, screen } from '@testing-library/react';
+import * as React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
+
 import { SceneTimeRange } from '@grafana/scenes';
 import { VERSIONS_FETCH_LIMIT } from 'app/features/dashboard/types/revisionModels';
 
@@ -6,12 +10,22 @@ import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VersionsEditView } from './VersionsEditView';
 
+function render(component: React.ReactNode) {
+  return RTLRender(<TestProvider>{component}</TestProvider>);
+}
+
 const mockListDashboardHistory = jest.fn();
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: () => ({
     listDashboardHistory: mockListDashboardHistory,
   }),
+}));
+
+const mockUseGetDisplayMappingQuery = jest.fn();
+
+jest.mock('app/api/clients/iam/v0alpha1', () => ({
+  useGetDisplayMappingQuery: (...args: unknown[]) => mockUseGetDisplayMappingQuery(...args),
 }));
 
 describe('VersionsEditView', () => {
@@ -132,9 +146,96 @@ describe('VersionsEditView', () => {
       expect(versionsView.continueToken).toBe('');
     });
   });
+
+  describe('Display name resolution', () => {
+    beforeEach(() => {
+      mockUseGetDisplayMappingQuery.mockReset();
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should map display names by identity, not array index', async () => {
+      mockListDashboardHistory.mockResolvedValue({
+        metadata: { continue: '' },
+        items: [
+          createTestResource(2, '2024-01-02T00:00:00Z', 'user:uid-ryan'),
+          createTestResource(1, '2024-01-01T00:00:00Z', 'user:uid-bhaskar'),
+        ],
+      });
+
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:uid-ryan', 'user:uid-bhaskar'],
+          display: [
+            { identity: { type: 'user', name: 'uid-bhaskar' }, displayName: 'Bhaskar Surroy' },
+            { identity: { type: 'user', name: 'uid-ryan' }, displayName: 'Ryan Brown' },
+          ],
+        },
+      });
+
+      const { versionsView } = await buildTestScene();
+      render(<versionsView.Component model={versionsView} />);
+
+      expect(await screen.findByText('Ryan Brown')).toBeInTheDocument();
+      expect(screen.getByText('Bhaskar Surroy')).toBeInTheDocument();
+
+      const rows = screen.getAllByRole('row');
+      // row 0 is the header; row 1 is version 2 (Ryan), row 2 is version 1 (Bhaskar)
+      expect(rows[1]).toHaveTextContent('Ryan Brown');
+      expect(rows[2]).toHaveTextContent('Bhaskar Surroy');
+    });
+
+    it('should use createdBy annotation as fallback for initial version without updatedBy', async () => {
+      mockListDashboardHistory.mockResolvedValue({
+        metadata: { continue: '' },
+        items: [
+          createTestResource(2, '2024-01-02T00:00:00Z', 'user:uid-editor'),
+          createTestResourceWithCreatedByOnly(1, '2024-01-01T00:00:00Z', 'user:uid-creator'),
+        ],
+      });
+
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:uid-editor', 'user:uid-creator'],
+          display: [
+            { identity: { type: 'user', name: 'uid-creator' }, displayName: 'Creator User' },
+            { identity: { type: 'user', name: 'uid-editor' }, displayName: 'Editor User' },
+          ],
+        },
+      });
+
+      const { versionsView } = await buildTestScene();
+      render(<versionsView.Component model={versionsView} />);
+
+      expect(await screen.findByText('Editor User')).toBeInTheDocument();
+      expect(screen.getByText('Creator User')).toBeInTheDocument();
+
+      const rows = screen.getAllByRole('row');
+      expect(rows[1]).toHaveTextContent('Editor User');
+      expect(rows[2]).toHaveTextContent('Creator User');
+    });
+
+    it('should fall back to raw key when user is not found in display data', async () => {
+      mockListDashboardHistory.mockResolvedValue({
+        metadata: { continue: '' },
+        items: [createTestResource(1, '2024-01-01T00:00:00Z', 'user:uid-unknown')],
+      });
+
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: { keys: ['user:uid-unknown'], display: [], invalidKeys: ['user:uid-unknown'] },
+      });
+
+      const { versionsView } = await buildTestScene();
+      render(<versionsView.Component model={versionsView} />);
+
+      expect(await screen.findByText('user:uid-unknown')).toBeInTheDocument();
+    });
+  });
 });
 
-function createTestResource(version: number, created: string) {
+function createTestResource(version: number, created: string, updatedBy = 'admin') {
   return {
     apiVersion: 'v1beta1',
     kind: 'Dashboard',
@@ -143,7 +244,24 @@ function createTestResource(version: number, created: string) {
       generation: version,
       creationTimestamp: created,
       annotations: {
-        'grafana.app/updatedBy': 'admin',
+        'grafana.app/updatedBy': updatedBy,
+        'grafana.app/message': '',
+      },
+    },
+    spec: { version },
+  };
+}
+
+function createTestResourceWithCreatedByOnly(version: number, created: string, createdBy: string) {
+  return {
+    apiVersion: 'v1beta1',
+    kind: 'Dashboard',
+    metadata: {
+      name: '_U4zObQMz',
+      generation: version,
+      creationTimestamp: created,
+      annotations: {
+        'grafana.app/createdBy': createdBy,
         'grafana.app/message': '',
       },
     },

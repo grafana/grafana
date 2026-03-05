@@ -15,9 +15,9 @@ import {
   DISCOVERY_METHODS,
   EVENT_LOCATIONS,
   SourceEntryPoint,
-  TemplateDashboardInteractions,
   TemplateDashboardSourceEntryPoint,
-} from './interactions';
+} from './constants';
+import { TemplateDashboardInteractions } from './interactions';
 import { GnetDashboard, GnetDashboardsResponse, Link } from './types';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 

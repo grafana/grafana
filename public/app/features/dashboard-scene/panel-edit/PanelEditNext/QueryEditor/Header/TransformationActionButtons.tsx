@@ -4,6 +4,7 @@ import { FrameMatcherID } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
+import { trackTransformationToolAction } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 export function TransformationActionButtons() {
@@ -70,7 +71,10 @@ export function TransformationActionButtons() {
           fill="text"
           icon="question-circle"
           variant={transformToggles.showHelp ? 'primary' : 'secondary'}
-          onClick={transformToggles.toggleHelp}
+          onClick={() => {
+            trackTransformationToolAction('toggle_help');
+            transformToggles.toggleHelp();
+          }}
           tooltip={helpLabel}
           aria-label={helpLabel}
         />
@@ -82,7 +86,10 @@ export function TransformationActionButtons() {
           fill="text"
           icon="filter"
           variant={isFilterActive ? 'primary' : 'secondary'}
-          onClick={handleFilterToggle}
+          onClick={() => {
+            trackTransformationToolAction('toggle_filter');
+            handleFilterToggle();
+          }}
           tooltip={filterLabel}
           aria-label={filterLabel}
         />
@@ -93,7 +100,10 @@ export function TransformationActionButtons() {
         fill="text"
         icon="bug"
         variant={transformToggles.showDebug ? 'primary' : 'secondary'}
-        onClick={transformToggles.toggleDebug}
+        onClick={() => {
+          trackTransformationToolAction('toggle_debug');
+          transformToggles.toggleDebug();
+        }}
         tooltip={t('query-editor-next.action.transformation-debug', 'Debug')}
         aria-label={t('query-editor-next.action.transformation-debug', 'Debug')}
       />
