@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -167,6 +168,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				}
 			}
 
+			// Verify default values
 			if extensions.IsEnterprise {
 				assert.ElementsMatch(collect, []provisioning.RepositoryType{
 					provisioning.LocalRepositoryType,
@@ -238,6 +240,49 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			}, stats)
 		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})
+}
+
+func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	var helper *provisioningTestHelper
+	// Changing the repository types to check if users can override the default values
+	if !extensions.IsEnterprise {
+		helper = runGrafana(t, withRepositoryTypes([]string{"local", "github"}))
+	} else {
+		helper = runGrafana(t, withRepositoryTypes([]string{"local", "git", "github", "bitbucket"}))
+	}
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		settings := &provisioning.RepositoryViewList{}
+		rsp := helper.ViewerREST.Get().
+			Namespace("default").
+			Suffix("settings").
+			Do(context.Background())
+		if !assert.NoError(collect, rsp.Error()) {
+			return
+		}
+
+		err := rsp.Into(settings)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		// Verify default values
+		if extensions.IsEnterprise {
+			assert.ElementsMatch(collect, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitRepositoryType,
+				provisioning.GitHubRepositoryType,
+				provisioning.BitbucketRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		} else {
+			assert.ElementsMatch(collect, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		}
+	}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 }
 
 func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
@@ -810,6 +855,65 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 	})
 }
 
+func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	repoName := "webhook-unhealthy-test"
+	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+	require.NoError(t, os.MkdirAll(repoPath, 0o750))
+
+	helper.CreateRepo(t, TestRepo{
+		Name:                   repoName,
+		Path:                   repoPath,
+		Target:                 "folder",
+		SkipResourceAssertions: true,
+	})
+	helper.WaitForHealthyRepository(t, repoName)
+
+	// Make the repository unhealthy by removing its backing directory.
+	require.NoError(t, os.RemoveAll(repoPath))
+
+	// Trigger reconciliation so the controller detects the missing directory.
+	latestObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+	require.NoError(t, err)
+	updated := latestObj.DeepCopy()
+	updated.Object["spec"].(map[string]any)["title"] = "Webhook Unhealthy Test (updated)"
+	_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Wait for the controller to mark the repository unhealthy.
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories("default")
+
+	require.Eventually(t, func() bool {
+		repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		if err != nil {
+			return false
+		}
+		return repo.Status.ObservedGeneration == repo.Generation &&
+			repo.Status.Health.Checked > 0 &&
+			!repo.Status.Health.Healthy
+	}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
+
+	// POST to the webhook subresource — should return 424 because the repository is unhealthy.
+	var statusCode int
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("webhook").
+		SetHeader("Content-Type", "application/json").
+		Do(ctx).StatusCode(&statusCode)
+
+	require.Error(t, result.Error(), "webhook request should be rejected for unhealthy repository")
+	require.Equal(t, http.StatusFailedDependency, statusCode, "should return 424 Failed Dependency for unhealthy repository")
+}
+
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -1267,6 +1371,107 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 	}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
 }
 
+func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	t.Run("remove-orphan-resources finalizer deletes classic dashboards", func(t *testing.T) {
+		const repo = "finalizer-remove-classic"
+		repoPath := filepath.Join(helper.ProvisioningPath, repo)
+
+		classicDashboard := []byte(`{
+			"uid": "finalizer-remove-classic-uid",
+			"title": "Classic Dashboard for Remove Finalizer",
+			"schemaVersion": 39,
+			"panels": [],
+			"tags": []
+		}`)
+
+		require.NoError(t, os.MkdirAll(repoPath, 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(repoPath, "classic.json"), classicDashboard, 0o600))
+
+		helper.CreateRepo(t, TestRepo{
+			Name:                   repo,
+			Path:                   repoPath,
+			Target:                 "folder",
+			SkipResourceAssertions: true,
+		})
+
+		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
+		require.NoError(t, err, "classic dashboard should exist after initial sync")
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerKind)
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+
+		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		require.NoError(t, err, "should delete repository")
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+
+		_, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-remove-classic-uid", metav1.GetOptions{})
+		require.Error(t, err, "classic dashboard should be deleted by remove-orphan-resources finalizer")
+		require.True(t, apierrors.IsNotFound(err))
+	})
+
+	t.Run("release-orphan-resources finalizer releases classic dashboards", func(t *testing.T) {
+		const repo = "finalizer-release-classic"
+		repoPath := filepath.Join(helper.ProvisioningPath, repo)
+
+		classicDashboard := []byte(`{
+			"uid": "finalizer-release-classic-uid",
+			"title": "Classic Dashboard for Release Finalizer",
+			"schemaVersion": 39,
+			"panels": [],
+			"tags": []
+		}`)
+
+		require.NoError(t, os.MkdirAll(repoPath, 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(repoPath, "classic.json"), classicDashboard, 0o600))
+
+		helper.CreateRepo(t, TestRepo{
+			Name:                   repo,
+			Path:                   repoPath,
+			Target:                 "folder",
+			SkipResourceAssertions: true,
+		})
+
+		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
+		require.NoError(t, err, "classic dashboard should exist after initial sync")
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerKind)
+		require.Contains(t, dashboard.GetAnnotations(), utils.AnnoKeyManagerIdentity)
+
+		_, err = helper.Repositories.Resource.Patch(ctx, repo, types.JSONPatchType, []byte(`[
+			{"op": "replace", "path": "/metadata/finalizers", "value": ["cleanup", "release-orphan-resources"]}
+		]`), metav1.PatchOptions{})
+		require.NoError(t, err, "should successfully patch finalizers")
+
+		err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
+		require.NoError(t, err, "should delete repository")
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
+		}, time.Second*20, time.Millisecond*50, "repository should be deleted")
+
+		dashboard, err = helper.DashboardsV1.Resource.Get(ctx, "finalizer-release-classic-uid", metav1.GetOptions{})
+		require.NoError(t, err, "classic dashboard should still exist after release")
+
+		annotations := dashboard.GetAnnotations()
+		require.NotContains(t, annotations, utils.AnnoKeyManagerKind, "managedBy annotation should be removed")
+		require.NotContains(t, annotations, utils.AnnoKeyManagerIdentity, "managerId annotation should be removed")
+		require.NotContains(t, annotations, utils.AnnoKeySourcePath, "sourcePath annotation should be removed")
+		require.NotContains(t, annotations, utils.AnnoKeySourceChecksum, "sourceChecksum annotation should be removed")
+	})
+}
+
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -1607,43 +1812,56 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.Equal(collectT, "someToken", val.DangerouslyExposeAndConsumeValue())
 	}, time.Second*10, time.Second, "Expected repo to be reconciled")
 
-	repoUnstructured, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
-	require.NoError(t, err, "can get repository")
-	firstReconciledRepo := unstructuredToRepository(t, repoUnstructured)
 	// Setting up main triggering conditions to verify token is re-generated when
-	// needed, even if all other conditions are not triggered
-	now := time.Now()
-	firstReconciledRepo.Status.ObservedGeneration = firstReconciledRepo.Generation
-	firstReconciledRepo.Status.Sync = provisioning.SyncStatus{
-		State:     provisioning.JobStateSuccess,
-		JobID:     firstReconciledRepo.Status.Sync.JobID,
-		Started:   now.UnixMilli(),
-		Finished:  now.UnixMilli(),
-		Scheduled: now.UnixMilli(),
-		LastRef:   firstReconciledRepo.Status.Sync.LastRef,
+	// needed, even if all other conditions are not triggered.
+	// Retries on conflict errors caused by optimistic locking.
+	// TODO: extract this to a helper function
+	var firstReconciledRepo *provisioning.Repository
+	const maxStatusRetries = 5
+	for attempt := range maxStatusRetries {
+		repoUnstructured, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+		require.NoError(t, err, "can get repository")
+		firstReconciledRepo = unstructuredToRepository(t, repoUnstructured)
+
+		now := time.Now()
+		firstReconciledRepo.Status.ObservedGeneration = firstReconciledRepo.Generation
+		firstReconciledRepo.Status.Sync = provisioning.SyncStatus{
+			State:     provisioning.JobStateSuccess,
+			JobID:     firstReconciledRepo.Status.Sync.JobID,
+			Started:   now.UnixMilli(),
+			Finished:  now.UnixMilli(),
+			Scheduled: now.UnixMilli(),
+			LastRef:   firstReconciledRepo.Status.Sync.LastRef,
+		}
+		firstReconciledRepo.Status.Health = provisioning.HealthStatus{
+			Healthy: true,
+			Checked: now.UnixMilli(),
+		}
+		firstReconciledRepo.Status.Token = provisioning.TokenStatus{
+			LastUpdated: now.Add(-2 * time.Minute).UnixMilli(),
+			Expiration:  now.Add(-time.Minute).UnixMilli(),
+		}
+		firstReconciledRepo.Status.FieldErrors = []provisioning.ErrorDetails{}
+		firstReconciledRepo.Status.Conditions = []metav1.Condition{
+			{
+				Type:               provisioning.ConditionTypeReady,
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: firstReconciledRepo.Generation,
+				LastTransitionTime: metav1.Time{Time: now},
+				Reason:             provisioning.ReasonAvailable,
+			},
+		}
+		updatedRepo := repositoryToUnstructured(t, firstReconciledRepo)
+		// This should also trigger a reconciliation loop
+		_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedRepo, metav1.UpdateOptions{})
+		if err == nil {
+			break
+		}
+		if apierrors.IsConflict(err) && attempt < maxStatusRetries-1 {
+			continue
+		}
+		require.NoError(t, err, "failed to update status")
 	}
-	firstReconciledRepo.Status.Health = provisioning.HealthStatus{
-		Healthy: true,
-		Checked: now.UnixMilli(),
-	}
-	firstReconciledRepo.Status.Token = provisioning.TokenStatus{
-		LastUpdated: now.Add(-2 * time.Minute).UnixMilli(),
-		Expiration:  now.Add(-time.Minute).UnixMilli(),
-	}
-	firstReconciledRepo.Status.FieldErrors = []provisioning.ErrorDetails{}
-	firstReconciledRepo.Status.Conditions = []metav1.Condition{
-		{
-			Type:               provisioning.ConditionTypeReady,
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: firstReconciledRepo.Generation,
-			LastTransitionTime: metav1.Time{Time: now},
-			Reason:             provisioning.ReasonAvailable,
-		},
-	}
-	updatedRepo := repositoryToUnstructured(t, firstReconciledRepo)
-	// This should also trigger a reconciliation loop
-	_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedRepo, metav1.UpdateOptions{})
-	require.NoError(t, err, "failed to update status")
 
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
 		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
@@ -2407,4 +2625,63 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	}
 
 	t.Logf("Successfully created %d repositories concurrently without deadlocks", numRepos)
+}
+
+func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repoName = "folder-title-update-test"
+	const initialTitle = "Initial Folder Title"
+	const updatedTitle = "Updated Folder Title"
+
+	helper.CreateRepo(t, TestRepo{
+		Name:               repoName,
+		Target:             "folder",
+		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    1,
+		Values: map[string]any{
+			"Title": initialTitle,
+		},
+	})
+
+	// Verify the root folder has the initial title.
+	// The root folder for a folder-sync repo has the same name as the repository.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		folderObj, err := helper.Folders.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "should be able to get the root folder") {
+			return
+		}
+		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
+		assert.Equal(collect, initialTitle, title, "folder should have the initial title")
+	}, waitTimeoutDefault, waitIntervalDefault, "root folder should have initial title")
+
+	// Update the repository spec.title to a new value.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "should be able to get repository") {
+			return
+		}
+		err = unstructured.SetNestedField(repoObj.Object, updatedTitle, "spec", "title")
+		require.NoError(t, err, "should be able to set new title")
+
+		_, err = helper.Repositories.Resource.Update(ctx, repoObj, metav1.UpdateOptions{})
+		assert.NoError(collect, err, "should be able to update repository title")
+	}, waitTimeoutDefault, waitIntervalDefault, "should update repository title")
+
+	// Trigger a sync, which calls EnsureFolderExists for the root folder.
+	helper.SyncAndWait(t, repoName, nil)
+
+	// Verify the root folder title was updated.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		folderObj, err := helper.Folders.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "should be able to get the root folder") {
+			return
+		}
+		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
+		assert.Equal(collect, updatedTitle, title, "folder title should be updated after sync")
+	}, waitTimeoutDefault, waitIntervalDefault, "root folder title should be updated after sync")
 }

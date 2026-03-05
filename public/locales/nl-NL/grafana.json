@@ -388,7 +388,6 @@
         "timing-options": "Tijden"
       },
       "pending-period": "Wachttijd",
-      "rule": "Regel",
       "rule-identifier": "Regel-id",
       "rule-type": "Regeltype",
       "state-error-timeout": "Waarschuwingsstatus als uitvoeringsfout of time-out",
@@ -906,7 +905,7 @@
       "title-failed-to-fetch-contact-points": "Kan contactpunten niet ophalen"
     },
     "contact-points": {
-      "create": "Contactpunt aanmaken",
+      "create": "",
       "custom-template-value": "Aangepaste sjabloonwaarde",
       "delete-reasons": {
         "heading": "Contactpunt kan niet worden verwijderd om de volgende redenen:",
@@ -2105,7 +2104,9 @@
       "select-namespace": "Namespace selecteren"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "Waarschuwingsregels",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "Onlangs verwijderd",
@@ -2129,7 +2130,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "Tijdsinterval toevoegen"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2173,6 +2174,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2180,16 +2182,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Zoeken op contactpunt",
@@ -2252,7 +2252,7 @@
       "title-failed-to-fetch-notification-templates": "Kan meldingssjablonen niet ophalen"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "Meldingssjablonengroep toevoegen",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "Maak meldingsjablonen om je meldingen aan te passen."
     },
     "notifications-list": {
@@ -2279,6 +2279,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2302,17 +2303,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_one": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_one": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "Voeg labels toe om je opnameregels beter te beheren.",
@@ -2333,8 +2332,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Bekijk welke waarschuwingen momenteel actief zijn en verken historische gegevens om huidige of eerdere problemen te onderzoeken.",
-        "title": "Waarschuwingen"
+        "subtitle": "Bekijk welke waarschuwingen momenteel actief zijn en verken historische gegevens om huidige of eerdere problemen te onderzoeken."
       }
     },
     "panel-alert-tab-content": {
@@ -3264,6 +3262,7 @@
     },
     "template-form": {
       "aria-label-template-form": "Sjabloonformulier",
+      "body-legacy": "",
       "label-examples-documentation": "Voorbeelden documentatie",
       "label-template-group": "Sjabloongroep",
       "label-template-group-name": "Sjabloongroepnaam",
@@ -3272,6 +3271,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "Geef je sjabloongroep een naam",
       "title-error-saving-template": "Er is een fout opgetreden bij het opslaan van het sjabloon",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "Cheatsheet maken met sjabloon"
     },
     "template-preview": {
@@ -3312,6 +3312,8 @@
       "help": {
         "intro": "Meldingsjablonen gebruiken Go-templatetaal om meldingsberichten te maken.\n\nIn Grafana kan een sjabloongroep meerdere meldingssjablonen definiëren met behulp van {{ define \"<NAME>\" }}.\nDeze sjablonen kunnen vervolgens worden gebruikt in contactpunten en binnen andere meldingssjablonen door {{ template \"<NAME>\" }} te gebruiken.\nRaadpleeg onze documentatie voor gedetailleerde informatie over meldingssjablonen."
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "Verkeerd geconfigureerd",
       "misconfigured-warning": "Dit sjabloon is verkeerd geconfigureerd.",
       "misconfigured-warning-details": "Sjablonen moeten worden gedefinieerd in zowel de sectie <2></2> als <5></5> van je waarschuwingsmanager-configuratie."
@@ -3350,7 +3352,7 @@
       "stop-alerting-when": "Waarschuwingen (of status 'in afwachting') stoppen wanneer "
     },
     "time-interval": {
-      "add-time-interval": "Tijdsinterval toevoegen",
+      "add-time-interval": "",
       "save": "Tijdsinterval opslaan",
       "saving": "Tijdsinterval opslaan"
     },
@@ -3401,8 +3403,14 @@
     },
     "triage": {
       "alert-instances": "Waarschuwingsinstanties",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Fout bij het laden van de regel",
-      "firing-instances-count": "Waarschuwingsinstanties activeren",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Instantiedetails"
       },
@@ -3412,7 +3420,6 @@
       "no-matching-instances-with-filters": "Er komen geen waarschuwingsinstanties overeen met uw huidige filterset voor het geselecteerde tijdsbereik.",
       "open-in-sidebar": "Openen in zijbalk",
       "open-rule-details": "Regeldetails openen",
-      "pending-instances-count": "Waarschuwingsinstanties in behandeling",
       "rule-details": {
         "subtitle": "Regeldetails en voorwaarden",
         "title": "Regeldetails"
@@ -3421,8 +3428,21 @@
         "description": "De gevraagde regel kon niet worden gevonden.",
         "title": "Regel niet gevonden"
       },
-      "rules-with-firing-instances": "Waarschuwingsregels met actieve instanties",
-      "rules-with-pending-instances": "Waarschuwingsregels met wachtende instanties"
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Expressie toevoegen"
@@ -3520,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Details",
           "enrichment": "Waarschuwingsverrijking",
           "history": "Geschiedenis",
           "instances": "Instanties",
@@ -4181,6 +4200,15 @@
     "no-results": {
       "clear": "Zoekopdracht en filters wissen",
       "text": "Geen resultaten gevonden voor je zoekopdracht"
+    },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
     },
     "recently-viewed": {
       "clear": "Geschiedenis wissen",
@@ -4853,6 +4881,10 @@
       "view-json-diff": "JSON diff weergeven om alle wijzigingen te bekijken"
     }
   },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
+  },
   "correlations": {
     "add-new": "Nieuw toevoegen",
     "alert": {
@@ -5054,7 +5086,7 @@
     "canvas-actions": {
       "add-panel": "Paneel toevoegen",
       "disabled-child-contains-tabs": "Kan niet wijzigen in tabbladen omdat een rij al tabbladen bevat",
-      "disabled-nested-grouping": "Groepering is beperkt tot twee niveaus",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Tabbladen kunnen niet in andere tabbladen worden genest",
       "group-into-row": "Groeperen in rij",
       "group-into-tab": "Groeperen in tabblad",
@@ -5429,11 +5461,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6591,6 +6625,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "Kan dashboard niet verwijderen",
       "cancel-action": "Annuleren",
@@ -6847,8 +6887,6 @@
       "title-delete-all-transformations": "Alle transformaties verwijderen?"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "Tabelweergave in-/uitschakelen",
       "table-view-label-table-view": "Tabelweergave"
     },
@@ -6895,6 +6933,16 @@
     },
     "query-editor": {
       "query": "Query"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "Benoemde capturegroepen kunnen worden gebruikt om de weergavetekst en de waarde te scheiden (<1>zie voorbeelden</1>).",
@@ -7019,6 +7067,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Kan geen waarschuwingen maken vanuit dit paneel omdat er geen query is gevonden naar een gegevensbron die waarschuwingen mogelijk maakt.",
+      "disabled-tooltip": "",
       "new-alert-rule": "Nieuwe waarschuwingsregel",
       "title-no-alerting-capable-query-found": "Geen query gevonden die waarschuwingen mogelijk maakt"
     },
@@ -7116,6 +7165,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard opgeslagen"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Er wordt door geen enkele variabele of dashboard naar deze variabele verwezen.",
       "aria-label-variable-referenced-other-variables-dashboard": "Deze variabele wordt gebruikt door andere variabelen of dashboard.",
@@ -7209,6 +7265,24 @@
       "show-more": "Meer weergeven",
       "preview-of-values_one": "Voorbeeldweergave van waarden ({{count}})",
       "preview-of-values_other": "Voorbeeldweergave van waarden ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -7799,7 +7873,10 @@
     "pro-tip": "ProTip: {{proTip}} "
   },
   "entity-not-found": {
-    "description": "We zijn op zoek, maar kunnen deze {{lowerCaseEntity}} niet vinden. Ga terug naar <4>huis</4> of zoek hulp op de <7>communitysite.</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -9435,11 +9512,13 @@
       },
       "legend": {
         "category": "Legenda",
+        "description-limit": "",
         "description-values": "Selecteer waarden of berekeningen om in legenda weer te geven",
         "mode-options": {
           "label-list": "Lijst",
           "label-table": "Tabel"
         },
+        "name-limit": "",
         "name-mode": "Modus",
         "name-placement": "Plaatsing",
         "name-values": "Waarden",
@@ -9840,6 +9919,7 @@
       "csv-placeholder": "Voer hier csv in ...",
       "filter": {
         "add-all": "Voeg alle weergegeven waarden toe aan het filter",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10370,6 +10450,11 @@
     "subtitle": "Met de LDAP-integratie in Grafana kunnen uw Grafana-gebruikers inloggen met hun LDAP-inloggegevens. Lees meer in onze <2><1>documentatie</1></2>.",
     "title": "Basisinstellingen"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "Een bibliotheekpaneel met deze naam bestaat al",
@@ -10851,6 +10936,7 @@
     "name-order": "Orde",
     "name-prettify-json": "JSON verfraaien",
     "name-show-controls": "Bedieningselementen tonen",
+    "name-show-level": "",
     "name-time": "Tijdstempels weergeven",
     "name-unique-labels": "Unieke labels",
     "name-unwrapped-columns": "",
@@ -10965,7 +11051,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Geen opties gevonden"
@@ -11242,9 +11330,17 @@
       "subtitle": "Word vrijwel onmiddellijk op de hoogte gebracht van problemen in je systemen",
       "title": "Alerting"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "Beheer Alertmanager-configuraties en schakel het ontvangen van door Grafana beheerde waarschuwingen in",
       "title": "Instellingen"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Bepaal hoe waarschuwingen naar contactpunten worden gerouteerd",
@@ -11910,8 +12006,6 @@
       "tooltip-delete": "Verwijderen"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "Sommige suggesties konden niet worden geladen"
       },
@@ -11929,6 +12023,12 @@
     },
     "viz-type-picker": {
       "could-anything-matching-query": "Kon niets vinden dat overeenkomt met je query"
+    }
+  },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "panel-group-by": {
@@ -12368,6 +12468,17 @@
       "text-loading-teams": "Teams laden..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Een opmerking toevoegen om je wijzigingen te beschrijven (optioneel)",
@@ -12375,13 +12486,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "Vestiging",
       "label-comment": "Opmerking",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "Path",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "Laatste branch",
       "suffix-new-branch": "",
@@ -12402,9 +12518,6 @@
     "title-created-branch-in-repo": "Er is een nieuwe bron gemaakt in een tak in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Deze bron wordt geladen vanuit de tak die je zojuist hebt gemaakt in {{repoType}} en is alleen zichtbaar voor jou"
   },
-  "provisioned-resource-request-handler": "Bron is opgeslagen",
-  "provisioned-resource-request-handler-dashboard": "Dashboard is opgeslagen",
-  "provisioned-resource-request-handler-folder": "Map is gemaakt",
   "provisioning": {
     "banner": {
       "message": "Er wordt momenteel actief gewerkt aan de ontwikkeling van deze functie. Voor de beste ervaring en de nieuwste verbeteringen raden we je aan om de <2>nachtelijke versie</2> van Grafana te gebruiken."
@@ -12495,6 +12608,8 @@
       "instance-fully-managed-tooltip": "Configuratie is uitgeschakeld omdat deze instantie volledig wordt beheerd"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12634,6 +12749,20 @@
       "label-generate-dashboard-previews": "Dashboardvoorbeeldweergaven genereren",
       "label-read-only": "Alleen lezen",
       "label-sync-interval": "Synchronisatie-interval (seconden)"
+    },
+    "fix-folder-metadata": {
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -12776,6 +12905,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13283,6 +13414,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13327,6 +13459,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {
@@ -13372,6 +13510,7 @@
       "card-click": "Kaart {{id}} selecteren",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
       "transformations": "Transformaties",
@@ -13379,7 +13518,9 @@
       "alerts_one": "",
       "alerts_other": "",
       "footer-items_one": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_one": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -14328,6 +14469,11 @@
           "settings": "Instellingen"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "Externe groepssynchronisatie"
@@ -14384,6 +14530,19 @@
       "loading-teams": "Teams laden ...",
       "new-team": "Nieuw team",
       "placeholder-search-teams": "Teams zoeken"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "Dit is optioneel en wordt voornamelijk gebruikt voor het instellen van de teamprofielavatar (via de Gravatar-service)",
@@ -14615,6 +14774,12 @@
     "name-show-matches-only": "Alleen overeenkomende resultaten weergeven",
     "traces-panel": {
       "no-data-found-in-response": "Geen gegevens gevonden in reactie"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

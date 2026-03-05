@@ -102,6 +102,9 @@ describe('Backend / Frontend result comparison', () => {
         }
       }
 
+      // The backend snapshots exclude the internal ids
+      delete frontendMigrationResult.id;
+
       expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });
   });

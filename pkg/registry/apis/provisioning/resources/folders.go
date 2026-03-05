@@ -35,17 +35,37 @@ func (e *PathCreationError) Error() string {
 	return fmt.Sprintf("failed to create path %s: %v", e.Path, e.Err)
 }
 
+// FolderCreationInterceptor is called before a folder is created during path
+// traversal. Return an error to prevent the folder from being created.
+type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
+
+type FolderManagerOption func(*FolderManager)
+
 type FolderManager struct {
-	repo   repository.ReaderWriter
-	tree   FolderTree
-	client dynamic.ResourceInterface
+	repo         repository.ReaderWriter
+	tree         FolderTree
+	client       dynamic.ResourceInterface
+	beforeCreate FolderCreationInterceptor
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree) *FolderManager {
-	return &FolderManager{
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
+	fm := &FolderManager{
 		repo:   repo,
 		tree:   lookup,
 		client: client,
+		beforeCreate: func(context.Context, Folder) error {
+			return nil
+		},
+	}
+	for _, opt := range opts {
+		opt(fm)
+	}
+	return fm
+}
+
+func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
+	return func(fm *FolderManager) {
+		fm.beforeCreate = beforeCreate
 	}
 }
 
@@ -88,7 +108,6 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		}
 
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
-			// Wrap in PathCreationError to indicate which path failed
 			return &PathCreationError{
 				Path: f.Path,
 				Err:  fmt.Errorf("ensure folder exists: %w", err),
@@ -110,6 +129,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 // EnsureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
+// - it will update the title if it has changed
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
 	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
@@ -121,9 +141,29 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		if current != cfg.Name {
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
 		}
+
+		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		if currentTitle != folder.Title {
+			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+			if err != nil {
+				return fmt.Errorf("unable to use provisioning identity %w", err)
+			}
+			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+				return fmt.Errorf("set folder title: %w", err)
+			}
+			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+				return fmt.Errorf("update folder title: %w", err)
+			}
+		}
+
 		return nil
 	} else if !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if folder exists: %w", err)
+	}
+
+	// Run creation guard only when the folder does not already exist.
+	if err := fm.beforeCreate(ctx, folder); err != nil {
+		return err
 	}
 
 	// Always use the provisioning identity when writing

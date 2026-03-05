@@ -1035,14 +1035,6 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, kvpkg.ErrKeyAlreadyExists)
 
-		// Verify BatchError fields
-		var batchErr *kvpkg.BatchError
-		if assert.ErrorAs(t, err, &batchErr) {
-			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
-			assert.Equal(t, "create-exists-key", batchErr.Op.Key, "failed operation key should match")
-			assert.Equal(t, kvpkg.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
-		}
-
 		// Verify the original value is unchanged
 		reader, err := kv.Get(ctx, section, "create-exists-key")
 		require.NoError(t, err)
@@ -1081,14 +1073,6 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, resource.ErrNotFound)
-
-		// Verify BatchError fields
-		var batchErr *kvpkg.BatchError
-		if assert.ErrorAs(t, err, &batchErr) {
-			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
-			assert.Equal(t, "update-nonexistent-key", batchErr.Op.Key, "failed operation key should match")
-			assert.Equal(t, kvpkg.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
-		}
 
 		// Verify the key was not created
 		_, err = kv.Get(ctx, section, "update-nonexistent-key")
@@ -1155,14 +1139,6 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, kvpkg.ErrKeyAlreadyExists)
-
-		// Verify BatchError identifies the correct operation
-		var batchErr *kvpkg.BatchError
-		if assert.ErrorAs(t, err, &batchErr) {
-			assert.Equal(t, 1, batchErr.Index, "failed operation index should be 1 (second operation)")
-			assert.Equal(t, "rollback-exists", batchErr.Op.Key, "failed operation key should match")
-			assert.Equal(t, kvpkg.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
-		}
 
 		// Verify rollback: the first operation should NOT have persisted
 		_, err = kv.Get(ctx, section, "rollback-new1")
@@ -1243,20 +1219,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		}
 
 		err := kv.Batch(ctx, section, ops)
-		require.Error(t, err)
-
-		// Verify BatchError provides correct context
-		var batchErr *kvpkg.BatchError
-		require.ErrorAs(t, err, &batchErr, "error should be a BatchError")
-		assert.Equal(t, 2, batchErr.Index, "failed operation index should be 2")
-		assert.Equal(t, "error-context-nonexistent", batchErr.Op.Key, "failed operation key should match")
-		assert.Equal(t, kvpkg.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
-		assert.ErrorIs(t, batchErr.Err, resource.ErrNotFound, "underlying error should be ErrNotFound")
-
-		// Verify error message contains useful information
-		errMsg := err.Error()
-		assert.Contains(t, errMsg, "batch operation 2", "error message should contain operation index")
-		assert.Contains(t, errMsg, "error-context-nonexistent", "error message should contain key")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
 
 		// Verify atomic rollback - no keys should have been created
 		_, err = kv.Get(ctx, section, "error-context-key0")
