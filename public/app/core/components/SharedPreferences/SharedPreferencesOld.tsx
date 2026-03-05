@@ -49,14 +49,17 @@ export class SharedPreferences extends PureComponent<Props, State> {
     };
 
     const themes = getSelectableThemes();
+    const isUserPreference = props.preferenceType === 'user';
 
     // Options are translated, so must be called after init but call them
     // in constructor to avoid memo-break of array changing every render
-    this.themeOptions = themes.map((theme) => ({
-      value: theme.id,
-      label: getTranslatedThemeName(theme),
-      group: theme.isExtra ? t('shared-preferences.theme.custom', 'Custom themes') : undefined,
-    }));
+    this.themeOptions = themes
+      .filter((theme) => (isUserPreference ? true : !theme.isUser))
+      .map((theme) => ({
+        value: theme.id,
+        label: getTranslatedThemeName(theme),
+        group: theme.isExtra ? t('shared-preferences.theme.custom', 'Custom themes') : undefined,
+      }));
     this.languageOptions = getLanguageOptions();
     this.regionalFormatOptions = getRegionalFormatOptions();
 

@@ -23,20 +23,21 @@ export function CustomThemeRegistrar() {
 
   useEffect(() => {
     for (const theme of userThemeData?.items ?? []) {
-      registerTheme(theme);
+      registerTheme(theme, true);
     }
   }, [userThemeData?.items]);
 
   return null;
 }
 
-function registerTheme(theme: Theme) {
+function registerTheme(theme: Theme, isUserTheme?: boolean) {
   const configTheme = config.bootData.user.theme;
 
   registerCustomTheme({
     id: theme.metadata.name!,
     name: theme.spec.name,
     isExtra: true,
+    isUser: isUserTheme,
     build: () => createTheme(theme.spec),
   });
 

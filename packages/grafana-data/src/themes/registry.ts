@@ -17,6 +17,7 @@ import { GrafanaTheme2 } from './types';
 
 export interface ThemeRegistryItem extends RegistryItem {
   isExtra?: boolean;
+  isUser?: boolean;
   build: () => GrafanaTheme2;
 }
 
