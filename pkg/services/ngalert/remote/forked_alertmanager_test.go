@@ -386,7 +386,6 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 			internal.EXPECT().StopAndWait().Once()
 			remote.EXPECT().StopAndWait().Once()
-			remote.EXPECT().CompareAndSendConfiguration(mock.Anything, mock.Anything).Return(nil).Once()
 			remote.EXPECT().SendState(mock.Anything).Return(nil).Once()
 			forked.StopAndWait()
 		}
@@ -395,21 +394,6 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 			// An error in the remote Alertmanager should't be a problem.
 			// These errors are caught and logged.
 			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-			internal.EXPECT().StopAndWait().Once()
-			remote.EXPECT().StopAndWait().Once()
-			remote.EXPECT().CompareAndSendConfiguration(mock.Anything, mock.Anything).Return(expErr).Once()
-			remote.EXPECT().SendState(mock.Anything).Return(expErr).Once()
-			forked.StopAndWait()
-		}
-
-		{
-			// An error when retrieving the configuration should cause
-			// CompareAndSendConfiguration not to be called.
-			internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-			secondaryForked, ok := forked.(*RemoteSecondaryForkedAlertmanager)
-			require.True(t, ok)
-			secondaryForked.store = &errConfigStore{}
-
 			internal.EXPECT().StopAndWait().Once()
 			remote.EXPECT().StopAndWait().Once()
 			remote.EXPECT().SendState(mock.Anything).Return(expErr).Once()

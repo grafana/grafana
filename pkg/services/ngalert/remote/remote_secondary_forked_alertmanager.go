@@ -261,15 +261,6 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	if err := fam.remote.SendState(ctx); err != nil {
 		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
 	}
-
-	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
-	if err != nil {
-		fam.log.Error("Error getting latest Alertmanager configuration while stopping", "err", err)
-		return
-	}
-	if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
-		fam.log.Error("Error sending configuration to the remote Alertmanager while stopping", "err", err)
-	}
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
