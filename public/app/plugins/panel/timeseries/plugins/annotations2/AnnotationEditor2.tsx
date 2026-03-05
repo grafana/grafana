@@ -5,12 +5,14 @@ import { useAsyncFn, useClickAway } from 'react-use';
 
 import { AnnotationEventUIModel, GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, IconButton, Stack, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Button, Field, Stack, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { annotationServer } from 'app/features/annotations/api';
 
 import { AnnotationVals } from '../AnnotationsPlugin2';
+
+import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
 
 interface Props {
   annoVals: AnnotationVals;
@@ -85,15 +87,12 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, isPinn
           </Stack>
 
           {isPinned && (
-            <IconButton
-              name={'times'}
-              size={'sm'}
+            <AnnotationTooltipHeaderCloseIcon
               onClick={(e) => {
                 // Don't trigger onClick
                 e.stopPropagation();
                 dismiss();
               }}
-              tooltip={t('timeseries.annotation-editor2.tooltip-close', 'Close')}
             />
           )}
         </Stack>

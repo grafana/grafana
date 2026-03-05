@@ -8,6 +8,7 @@ import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { AnnotationAlertState } from './AnnotationAlertState';
 import { AnnotationAvatar } from './AnnotationAvatar';
+import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
 
 export function AnnotationTooltipHeader({
   text,
@@ -74,13 +75,7 @@ export function AnnotationTooltipHeader({
                 />
               )}
               {onRemove && isPinned && (
-                <IconButton
-                  ref={canEdit || canDelete ? null : focusRef}
-                  name={'times'}
-                  size={'sm'}
-                  onClick={onRemove}
-                  tooltip={t('timeseries.annotation-tooltip2.tooltip-close', 'Close')}
-                />
+                <AnnotationTooltipHeaderCloseIcon onClick={onRemove} ref={canEdit || canDelete ? null : focusRef} />
               )}
             </div>
           )}
