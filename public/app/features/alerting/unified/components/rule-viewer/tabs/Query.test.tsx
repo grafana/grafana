@@ -4,6 +4,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
+import { AlertDataQuery, AlertQuery } from '../../../../../../types/unified-alerting-dto';
 import { setupMswServer } from '../../../mockApi';
 import { mockCombinedRule, mockDataSource, mockRulerGrafanaRule } from '../../../mocks';
 import { AlertingQueryResponse } from '../../../state/AlertingQueryRunner';
@@ -41,7 +42,12 @@ const DEFAULT_RELATIVE_TIME_RANGE = { from: 600, to: 0 };
  * A relativeTimeRange is added to each query entry to avoid warnings from AlertingQueryRunner.
  */
 function makeGrafanaRule(data: Array<{ refId: string; datasourceUid: string; model: Record<string, unknown> }>) {
-  const dataWithTimeRange = data.map((q) => ({ ...q, relativeTimeRange: DEFAULT_RELATIVE_TIME_RANGE }));
+  const dataWithTimeRange: AlertQuery[] = data.map((q) => ({
+    ...q,
+    relativeTimeRange: DEFAULT_RELATIVE_TIME_RANGE,
+    queryType: '',
+    model: q.model as unknown as AlertDataQuery,
+  }));
   const rulerRule = mockRulerGrafanaRule({}, { uid: 'rule-uid', condition: 'A', data: dataWithTimeRange });
   return mockCombinedRule({ rulerRule });
 }
