@@ -388,7 +388,6 @@
         "timing-options": "Timings"
       },
       "pending-period": "Pending period",
-      "rule": "Rule",
       "rule-identifier": "Rule identifier",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
@@ -3404,8 +3403,16 @@
     },
     "triage": {
       "alert-instances": "Alert instances",
+      "all-labels": "All labels",
+      "all-labels-drawer-title": "All labels",
+      "compact-firing": "firing",
+      "compact-instances": "instances",
+      "compact-pending": "pending",
+      "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
-      "firing-instances-count": "Firing alert instances",
+      "hidden-label-count_one": "and {{ count }} more",
+      "hidden-label-count_other": "and {{ count }} more",
+      "high-activity-labels": "High Activity Labels",
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
@@ -3415,7 +3422,6 @@
       "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
-      "pending-instances-count": "Pending alert instances",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
@@ -3424,15 +3430,19 @@
         "description": "The requested rule could not be found.",
         "title": "Rule not found"
       },
-      "rules-with-firing-instances": "Alert rules with firing instances",
-      "rules-with-pending-instances": "Alert rules with pending instances",
       "saved-searches": {
         "predefined": {
           "firing-only": "Show only firing",
           "folder-firing": "Show only firing, grouped by folder",
           "folder-only": "Grouped by folder"
         }
-      }
+      },
+      "show-all-labels_one": "Show all ({{ count }})",
+      "show-all-labels_other": "Show all ({{ count }})",
+      "show-all-values_one": "Show all ({{ count }})",
+      "show-all-values_other": "Show all ({{ count }})",
+      "tooltip-more-values_one": "and {{ count }} more",
+      "tooltip-more-values_other": "and {{ count }} more"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -3530,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Details",
           "enrichment": "Alert enrichment",
           "history": "History",
           "instances": "Instances",
@@ -6901,10 +6910,8 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "Back to classic editor",
       "table-view-aria-label-toggletableview": "Toggle table view",
-      "table-view-label-table-view": "Table view",
-      "try-new-editor": "Try new editor"
+      "table-view-label-table-view": "Table view"
     },
     "panel-editor": {
       "text": {
@@ -6954,11 +6961,11 @@
       "description-classic": "Try the improved query editing experience.",
       "description-new": "Welcome to the improved query editing experience.",
       "dismiss": "Dismiss",
-      "downgrade-title": "New query editor!",
+      "downgrade-title": "New query editor",
       "give-feedback": "Give feedback",
       "go-back": "Back to classic",
       "try-it": "Try it out",
-      "upgrade-title": "New editor available!"
+      "upgrade-title": "New editor available"
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
@@ -7181,6 +7188,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": "Variables"
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard.",
@@ -7274,6 +7288,24 @@
       "preview-of-values_one": "Preview of values ({{count}})",
       "preview-of-values_other": "Preview of values ({{count}})",
       "show-more": "Show more"
+    },
+    "variables-list": {
+      "add-variable": "Add variable",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": "Reorder variables list"
+        }
+      },
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})",
+      "title-hidden_one": "Hidden ({{count}})",
+      "title-hidden_other": "Hidden ({{count}})"
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "Drag to reorder",
+      "select": "Select"
     },
     "version-history": {
       "comparison": {
@@ -9908,6 +9940,7 @@
       "csv-placeholder": "Enter CSV here...",
       "filter": {
         "add-all": "Add all displayed values to the filter",
+        "blanks": "(Blanks)",
         "button": "Filter {{name}}",
         "operator": {
           "contains": "Contains",
@@ -12013,6 +12046,12 @@
       "could-anything-matching-query": "Could not find anything matching your query"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "Try the new editor",
+      "tooltip": "Switch to the new query editor experience"
+    }
+  },
   "panel-group-by": {
     "button": "Group by",
     "loading": "Loading options",
@@ -12455,6 +12494,12 @@
     "sync-needed": "The folder has been successfully pushed to the repository but is not yet available in Grafana. It will appear once changes are synced from the repository",
     "view-folder": "View repository status"
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": "Changes successfully pushed to"
+    },
+    "saved-success": "Changes saved successfully"
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
@@ -12494,9 +12539,6 @@
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
-  "provisioned-resource-request-handler": "Resource saved successfully",
-  "provisioned-resource-request-handler-dashboard": "Dashboard saved successfully",
-  "provisioned-resource-request-handler-folder": "Folder created successfully",
   "provisioning": {
     "banner": {
       "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
@@ -13441,6 +13483,12 @@
       "width-of-panel": "Width of panel"
     },
     "edit-query-name": "Edit query name",
+    "experimental-button": {
+      "aria-label": "Experimental feature options",
+      "back-to-classic": "Go back to classic editor",
+      "give-feedback": "Give feedback",
+      "tooltip": "Experimental feature options"
+    },
     "footer": {
       "edit-option": "Edit {{label}}",
       "label": {

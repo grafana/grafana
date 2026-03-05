@@ -110,10 +110,13 @@ describe('FixFolderMetadataDrawer', () => {
 
     const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
+    // Click opens the Combobox menu, whose stateReducer clears the input.
+    // We must wait for that render before typing, otherwise the new text
+    // appends to the previous value (e.g. "mainfeature-branch").
     const branchInput = await screen.findByRole('combobox', { name: /branch/i });
-    await user.clear(branchInput);
-    await user.type(branchInput, 'feature-branch');
-    await user.keyboard('{Enter}');
+    await user.click(branchInput);
+    await waitFor(() => expect(branchInput).toHaveValue(''));
+    await user.keyboard('feature-branch{Enter}');
 
     await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
 
