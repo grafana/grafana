@@ -26,7 +26,12 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
   return (
     <div className={styles.linksContainer}>
       {linksToDisplay.map((link: DashboardLink, index: number) => (
-        <DashboardLinkRenderer link={link} dashboardUID={uid} key={`${link.title}-$${index}`} />
+        <DashboardLinkRenderer
+          link={link}
+          dashboardUID={uid}
+          key={`${link.title}-$${index}`}
+          linkIndex={links.indexOf(link)}
+        />
       ))}
     </div>
   );

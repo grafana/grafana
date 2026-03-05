@@ -30,6 +30,7 @@ export function DashboardControlsMenu({
   dashboard,
 }: DashboardControlsMenuProps) {
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const fullLinks = dashboard?.state.links ?? [];
 
   return (
     <Box
@@ -70,7 +71,12 @@ export function DashboardControlsMenu({
           {(variables.length > 0 || annotations.length > 0) && <MenuDivider />}
           {sortDefaultLinksFirst(links).map((link, index) => (
             <div key={`${link.title}-${index}`}>
-              <DashboardLinkRenderer link={link} dashboardUID={dashboardUID} inMenu />
+              <DashboardLinkRenderer
+                link={link}
+                dashboardUID={dashboardUID}
+                inMenu
+                linkIndex={fullLinks.indexOf(link)}
+              />
             </div>
           ))}
         </>
