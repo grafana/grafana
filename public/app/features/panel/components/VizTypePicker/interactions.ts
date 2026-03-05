@@ -28,7 +28,6 @@ export const VizSuggestionsInteractions = {
   },
 
   panelSaved: ({ pluginId, isNewPanel, suggestionName, suggestionIndex }: PanelSuggestionInfo) => {
-    console.log('panel saved', { pluginId, isNewPanel, suggestionName, suggestionIndex });
     reportVizSuggestionsInteraction('panel_saved', { pluginId, isNewPanel, suggestionName, suggestionIndex });
   },
 };
@@ -41,8 +40,8 @@ class VizSuggestionsDashboardSaveTracker {
   private _receipts = new Map<string, PanelSuggestionInfo>();
 
   constructor() {
-    appEvents.subscribe(DashboardSavedEvent, this.onDashboardSaved);
-    appEvents.subscribe(DashboardDiscardedEvent, this.onDashboardDiscarded);
+    appEvents?.subscribe(DashboardSavedEvent, this.onDashboardSaved);
+    appEvents?.subscribe(DashboardDiscardedEvent, this.onDashboardDiscarded);
   }
 
   record(panelKey: string, info: PanelSuggestionInfo | undefined) {
