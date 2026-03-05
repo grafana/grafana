@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -25,7 +26,7 @@ import (
 func TestIntegrationGitHubBranchProtection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Start test git server that responds to nanogit's smart HTTP protocol
@@ -338,7 +339,7 @@ func startTestGitServer(t *testing.T) *httptest.Server {
 func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Start test git server
@@ -404,7 +405,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 		require.NoError(t, err)
 
 		// Convert to repository (verify structure is valid)
-		_ = unstructuredToRepository(t, obj.(*unstructured.Unstructured))
+		_ = common.UnstructuredToRepository(t, obj.(*unstructured.Unstructured))
 
 		// Wait for health check to run and mark repository as unhealthy
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -413,7 +414,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				return
 			}
 
-			repo := unstructuredToRepository(t, repoStatus)
+			repo := common.UnstructuredToRepository(t, repoStatus)
 
 			// Log the actual health status for debugging
 			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
@@ -498,7 +499,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 		require.NoError(t, err)
 
 		// Convert to repository (verify structure is valid)
-		_ = unstructuredToRepository(t, obj.(*unstructured.Unstructured))
+		_ = common.UnstructuredToRepository(t, obj.(*unstructured.Unstructured))
 
 		// Wait for health check to run and mark repository as unhealthy
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -507,7 +508,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				return
 			}
 
-			repo := unstructuredToRepository(t, repoStatus)
+			repo := common.UnstructuredToRepository(t, repoStatus)
 
 			// Log the actual health status for debugging
 			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
@@ -591,7 +592,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 		require.NoError(t, err)
 
 		// Convert to repository (verify structure is valid)
-		_ = unstructuredToRepository(t, obj.(*unstructured.Unstructured))
+		_ = common.UnstructuredToRepository(t, obj.(*unstructured.Unstructured))
 
 		// Wait for health check to run, then verify no branch protection errors
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -600,7 +601,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				return
 			}
 
-			repo := unstructuredToRepository(t, repoStatus)
+			repo := common.UnstructuredToRepository(t, repoStatus)
 
 			// Log the actual health status for debugging
 			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)

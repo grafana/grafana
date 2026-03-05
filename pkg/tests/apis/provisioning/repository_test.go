@@ -2618,14 +2618,14 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	const repoName = "folder-title-update-test"
 	const initialTitle = "Initial Folder Title"
 	const updatedTitle = "Updated Folder Title"
 
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:               repoName,
 		Target:             "folder",
 		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
@@ -2645,7 +2645,7 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 		}
 		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
 		assert.Equal(collect, initialTitle, title, "folder should have the initial title")
-	}, waitTimeoutDefault, waitIntervalDefault, "root folder should have initial title")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "root folder should have initial title")
 
 	// Update the repository spec.title to a new value.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -2658,7 +2658,7 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 
 		_, err = helper.Repositories.Resource.Update(ctx, repoObj, metav1.UpdateOptions{})
 		assert.NoError(collect, err, "should be able to update repository title")
-	}, waitTimeoutDefault, waitIntervalDefault, "should update repository title")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should update repository title")
 
 	// Trigger a sync, which calls EnsureFolderExists for the root folder.
 	helper.SyncAndWait(t, repoName, nil)
@@ -2671,5 +2671,5 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 		}
 		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
 		assert.Equal(collect, updatedTitle, title, "folder title should be updated after sync")
-	}, waitTimeoutDefault, waitIntervalDefault, "root folder title should be updated after sync")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "root folder title should be updated after sync")
 }
