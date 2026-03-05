@@ -2865,7 +2865,6 @@
       "export-all-grafana-rules": "Export all Grafana rules",
       "export-group": "Export rules group",
       "filter-sidebar": {
-        "collapse": "Show filters",
         "rule-name-placeholder": "Filter by name..."
       },
       "filter-view": {
@@ -3050,8 +3049,7 @@
       "view-as": "View as"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Clear filters",
-      "hide-filters": "Hide filters"
+      "clear-filters": "Clear filters"
     },
     "rules-group": {
       "deleting": "Deleting",
