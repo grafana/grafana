@@ -350,7 +350,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
 
     const sourceManager = this._sourceDropTarget;
-    const destinationManager = this._lastDropTarget;
+    const destinationManager = !targetIndex ? this._lastDropTarget : sourceManager;
 
     if (!targetIndex && destinationManager && destinationManager instanceof TabsLayoutManager) {
       targetIndex = this._tabPlaceholderIndex ?? destinationManager.getTabsIncludingRepeats().length;
