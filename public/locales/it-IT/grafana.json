@@ -388,7 +388,6 @@
         "timing-options": "Tempi"
       },
       "pending-period": "Periodo di attesa",
-      "rule": "Regola",
       "rule-identifier": "Identificatore della regola",
       "rule-type": "Tipo di regola",
       "state-error-timeout": "Stato di avviso in caso di errore di esecuzione o timeout",
@@ -3404,8 +3403,14 @@
     },
     "triage": {
       "alert-instances": "Istanze di avviso",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Errore durante il caricamento della regola",
-      "firing-instances-count": "Attivazione di istanze di avviso",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Dettagli dell'istanza"
       },
@@ -3415,7 +3420,6 @@
       "no-matching-instances-with-filters": "Nessuna istanza di avviso corrisponde al tuo set di filtri corrente per l'intervallo di tempo selezionato.",
       "open-in-sidebar": "Apri nella barra laterale",
       "open-rule-details": "Apri i dettagli della regola",
-      "pending-instances-count": "Istanze di avviso in sospeso",
       "rule-details": {
         "subtitle": "Dettagli e condizioni della regola",
         "title": "Dettagli della regola"
@@ -3424,15 +3428,21 @@
         "description": "Impossibile trovare la regola richiesta.",
         "title": "Regola non trovata"
       },
-      "rules-with-firing-instances": "Regole di avviso con istanze attive",
-      "rules-with-pending-instances": "Regole di avviso con istanze in sospeso",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Aggiungi espressione"
@@ -3530,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Dettagli",
           "enrichment": "Arricchimento degli avvisi",
           "history": "Cronologia",
           "instances": "Istanze",
@@ -5452,11 +5461,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6876,10 +6887,8 @@
       "title-delete-all-transformations": "Eliminare tutte le trasformazioni?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Attiva/disattiva visualizzazione tabella",
-      "table-view-label-table-view": "Vista tabella",
-      "try-new-editor": ""
+      "table-view-label-table-view": "Vista tabella"
     },
     "panel-editor": {
       "text": {
@@ -7156,6 +7165,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Questa variabile non è referenziata da nessuna variabile o dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "Questa variabile è referenziata da altre variabili o dashboard.",
@@ -7249,6 +7265,24 @@
       "show-more": "Mostra di più",
       "preview-of-values_one": "Anteprima dei valori ({{count}})",
       "preview-of-values_other": "Anteprima dei valori ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9866,6 +9900,7 @@
       "csv-placeholder": "Inserisci qui il CSV...",
       "filter": {
         "add-all": "Aggiungi tutti i valori visualizzati al filtro",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10882,6 +10917,7 @@
     "name-order": "Ordina",
     "name-prettify-json": "Migliora JSON",
     "name-show-controls": "Mostra controlli",
+    "name-show-level": "",
     "name-time": "Mostra marche temporali",
     "name-unique-labels": "Etichette univoche",
     "name-unwrapped-columns": "",
@@ -11970,6 +12006,12 @@
       "could-anything-matching-query": "Non è stato possibile trovare nulla che corrispondesse alla tua query"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "Raggruppa per",
     "loading": "Caricamento opzioni in corso",
@@ -12412,6 +12454,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Aggiungi una nota per descrivere le modifiche (facoltativo)",
@@ -12451,9 +12499,6 @@
     "title-created-branch-in-repo": "È stata creata una nuova risorsa in un ramo in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Questa risorsa viene caricata dal ramo appena creato in {{repoType}} ed è visibile solo a te"
   },
-  "provisioned-resource-request-handler": "Risorsa salvata correttamente",
-  "provisioned-resource-request-handler-dashboard": "Dashboard salvata correttamente",
-  "provisioned-resource-request-handler-folder": "Cartella creata correttamente",
   "provisioning": {
     "banner": {
       "message": "Questa funzione è attualmente in fase di sviluppo attivo. Per un'esperienza ottimale e gli ultimi miglioramenti, consigliamo di utilizzare la <2>nightly build</2> di Grafana."
@@ -13395,6 +13440,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

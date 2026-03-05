@@ -174,6 +174,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     dashboard.timezone = timeRange.timeZone;
   }
 
+  delete dashboard.id; // Make sure we never save an internal ID
   return sortedDeepCloneWithoutNulls(dashboard, true);
 }
 

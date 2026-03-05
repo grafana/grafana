@@ -388,7 +388,6 @@
         "timing-options": "Tiempos"
       },
       "pending-period": "Periodo pendiente",
-      "rule": "Regla",
       "rule-identifier": "Identificador de la regla",
       "rule-type": "Tipo de regla",
       "state-error-timeout": "Estado de alerta en caso de error de ejecución o tiempo de espera",
@@ -3404,8 +3403,14 @@
     },
     "triage": {
       "alert-instances": "Instancias de alerta",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Error al cargar la regla",
-      "firing-instances-count": "Activando instancias de alerta",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Detalles de la instancia"
       },
@@ -3415,7 +3420,6 @@
       "no-matching-instances-with-filters": "Ninguna instancia de alerta coincide con tu conjunto actual de filtros para el intervalo de tiempo seleccionado.",
       "open-in-sidebar": "Abrir en la barra lateral",
       "open-rule-details": "Abrir detalles de la regla",
-      "pending-instances-count": "Instancias de alerta pendientes",
       "rule-details": {
         "subtitle": "Detalles y condiciones de la regla",
         "title": "Detalles de la regla"
@@ -3424,15 +3428,21 @@
         "description": "No se ha podido encontrar la regla solicitada.",
         "title": "Regla no encontrada"
       },
-      "rules-with-firing-instances": "Reglas de alerta con instancias de activación",
-      "rules-with-pending-instances": "Reglas de alerta con instancias pendientes",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Añadir expresión"
@@ -3530,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Detalles",
           "enrichment": "Enriquecimiento de alertas",
           "history": "Historial",
           "instances": "Instancias",
@@ -5452,11 +5461,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6876,10 +6887,8 @@
       "title-delete-all-transformations": "¿Eliminar todas las transformaciones?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Alternar vista de tabla",
-      "table-view-label-table-view": "Vista de tabla",
-      "try-new-editor": ""
+      "table-view-label-table-view": "Vista de tabla"
     },
     "panel-editor": {
       "text": {
@@ -7156,6 +7165,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard guardado"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Esta variable no está referenciada por ninguna variable o dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "Esta variable está referenciada por otras variables o dashboards.",
@@ -7249,6 +7265,24 @@
       "show-more": "Mostrar más",
       "preview-of-values_one": "Vista previa de los valores ({{count}})",
       "preview-of-values_other": "Vista previa de los valores ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9866,6 +9900,7 @@
       "csv-placeholder": "Introducir CSV aquí...",
       "filter": {
         "add-all": "Añadir todos los valores mostrados al filtro",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10882,6 +10917,7 @@
     "name-order": "Orden",
     "name-prettify-json": "Embellecer JSON",
     "name-show-controls": "Mostrar controles",
+    "name-show-level": "",
     "name-time": "Mostrar marcas de tiempo",
     "name-unique-labels": "Etiquetas únicas",
     "name-unwrapped-columns": "",
@@ -11970,6 +12006,12 @@
       "could-anything-matching-query": "No se ha encontrado nada que coincida con tu consulta"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "Agrupar por",
     "loading": "Cargando opciones",
@@ -12412,6 +12454,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Añada una nota para describir sus cambios (opcional)",
@@ -12451,9 +12499,6 @@
     "title-created-branch-in-repo": "Se ha creado un nuevo recurso en una rama en {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Este recurso se carga desde la rama que acabas de crear en {{repoType}} y solo es visible para ti"
   },
-  "provisioned-resource-request-handler": "Recurso guardado correctamente",
-  "provisioned-resource-request-handler-dashboard": "Dashboard guardado correctamente",
-  "provisioned-resource-request-handler-folder": "Carpeta creada correctamente",
   "provisioning": {
     "banner": {
       "message": "Esta función se encuentra actualmente en desarrollo activo. Para obtener la mejor experiencia y las últimas mejoras, recomendamos utilizar la <2>compilación nocturna</2> de Grafana."
@@ -13395,6 +13440,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

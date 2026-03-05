@@ -388,7 +388,6 @@
         "timing-options": "Pengaturan waktu"
       },
       "pending-period": "Periode tertunda",
-      "rule": "Aturan",
       "rule-identifier": "Pengidentifikasi aturan",
       "rule-type": "Jenis aturan",
       "state-error-timeout": "Status peringatan jika kesalahan eksekusi atau waktu habis",
@@ -3390,8 +3389,14 @@
     },
     "triage": {
       "alert-instances": "Instans peringatan",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Terjadi kesalahan saat memuat aturan",
-      "firing-instances-count": "Memicu instans peringatan",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Detail instans"
       },
@@ -3401,7 +3406,6 @@
       "no-matching-instances-with-filters": "Tidak ada instans peringatan yang cocok dengan rangkaian filter Anda saat ini untuk rentang waktu yang dipilih.",
       "open-in-sidebar": "Buka di bilah sisi",
       "open-rule-details": "Buka detail aturan",
-      "pending-instances-count": "Instans peringatan tertunda",
       "rule-details": {
         "subtitle": "Detail dan ketentuan aturan",
         "title": "Detail Aturan"
@@ -3410,15 +3414,17 @@
         "description": "Aturan yang diminta tidak dapat ditemukan.",
         "title": "Aturan tidak ditemukan"
       },
-      "rules-with-firing-instances": "Aturan peringatan dengan instans yang diaktifkan",
-      "rules-with-pending-instances": "Aturan peringatan dengan instans yang tertunda",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_other": "",
+      "show-all-labels_other": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Tambah pola"
@@ -3516,7 +3522,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Detail",
           "enrichment": "Pengayaan peringatan",
           "history": "Sejarah",
           "instances": "Instans",
@@ -5430,11 +5435,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6851,10 +6858,8 @@
       "title-delete-all-transformations": "Hapus semua transformasi?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Alihkan tombol tampilan tabel",
-      "table-view-label-table-view": "Tampilan tabel",
-      "try-new-editor": ""
+      "table-view-label-table-view": "Tampilan tabel"
     },
     "panel-editor": {
       "text": {
@@ -7130,6 +7135,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dasbor disimpan"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Variabel ini tidak direferensikan oleh variabel atau dasbor apa pun.",
       "aria-label-variable-referenced-other-variables-dashboard": "Variabel ini direferensikan oleh variabel atau dasbor lain.",
@@ -7222,6 +7234,21 @@
     "variable-values-preview": {
       "show-more": "Tampilkan lebih banyak",
       "preview-of-values_other": "Pratinjau nilai ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9827,6 +9854,7 @@
       "csv-placeholder": "Masukkan CSV di sini...",
       "filter": {
         "add-all": "Tambahkan semua nilai yang ditampilkan ke filter",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10835,6 +10863,7 @@
     "name-order": "Urutan",
     "name-prettify-json": "Rapikan JSON",
     "name-show-controls": "Tampilkan kontrol",
+    "name-show-level": "",
     "name-time": "Tampilkan stempel waktu",
     "name-unique-labels": "Label unik",
     "name-unwrapped-columns": "",
@@ -11920,6 +11949,12 @@
       "could-anything-matching-query": "Tidak dapat menemukan sesuatu yang cocok dengan kueri Anda"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "Kelompokkan berdasarkan",
     "loading": "Memuat opsi",
@@ -12362,6 +12397,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
@@ -12401,9 +12442,6 @@
     "title-created-branch-in-repo": "Sumber daya baru telah dibuat di cabang di {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Sumber daya ini dimuat dari cabang yang baru saja Anda buat di {{repoType}} dan hanya dapat dilihat oleh Anda"
   },
-  "provisioned-resource-request-handler": "Sumber daya berhasil disimpan",
-  "provisioned-resource-request-handler-dashboard": "Dasbor berhasil disimpan",
-  "provisioned-resource-request-handler-folder": "Folder berhasil dibuat",
   "provisioning": {
     "banner": {
       "message": "Fitur ini saat ini sedang dalam pengembangan aktif. Untuk pengalaman terbaik dan peningkatan terbaru, kami merekomendasikan Anda untuk menggunakan <2>versi nightly </2> Grafana."
@@ -13338,6 +13376,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

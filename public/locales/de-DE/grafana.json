@@ -388,7 +388,6 @@
         "timing-options": "Timings"
       },
       "pending-period": "Wartezeit",
-      "rule": "Regel",
       "rule-identifier": "Regel-Identifikator",
       "rule-type": "Regelart",
       "state-error-timeout": "Warnstatus bei Ausführungsfehler oder Zeitüberschreitung",
@@ -3404,8 +3403,14 @@
     },
     "triage": {
       "alert-instances": "Warnungsinstanzen",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Fehler beim Laden der Regel",
-      "firing-instances-count": "Auslösen von Warnungsinstanzen",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Instanzdetails"
       },
@@ -3415,7 +3420,6 @@
       "no-matching-instances-with-filters": "Keine Warnungsinstanzen entsprechen Ihrer aktuellen Filterreihe für den ausgewählten Zeitbereich.",
       "open-in-sidebar": "In der Seitenleiste öffnen",
       "open-rule-details": "Regeldetails öffnen",
-      "pending-instances-count": "Ausstehende Warnungsinstanzen",
       "rule-details": {
         "subtitle": "Regeldetails und -bedingungen",
         "title": "Regeldetails"
@@ -3424,15 +3428,21 @@
         "description": "Die angeforderte Regel konnte nicht gefunden werden.",
         "title": "Regel nicht gefunden"
       },
-      "rules-with-firing-instances": "Warnregeln mit auslösenden Instanzen",
-      "rules-with-pending-instances": "Warnregeln mit ausstehenden Instanzen",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "Ausdruck hinzufügen"
@@ -3530,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Details",
           "enrichment": "Warnungsanreicherung",
           "history": "Verlauf",
           "instances": "Instanzen",
@@ -5452,11 +5461,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6876,10 +6887,8 @@
       "title-delete-all-transformations": "Alle Transformationen löschen?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Tabellenansicht umschalten",
-      "table-view-label-table-view": "Tabellenansicht",
-      "try-new-editor": ""
+      "table-view-label-table-view": "Tabellenansicht"
     },
     "panel-editor": {
       "text": {
@@ -7156,6 +7165,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard gespeichert"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Diese Variable wird von keiner Variable bzw. keinem Dashboard referenziert.",
       "aria-label-variable-referenced-other-variables-dashboard": "Diese Variable wird von anderen Variablen oder Dashboards referenziert.",
@@ -7249,6 +7265,24 @@
       "show-more": "Mehr anzeigen",
       "preview-of-values_one": "Vorschau des Werts ({{count}})",
       "preview-of-values_other": "Vorschau der Werte ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9866,6 +9900,7 @@
       "csv-placeholder": "CSV hier eingeben …",
       "filter": {
         "add-all": "Alle angezeigten Werte zum Filter hinzufügen",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10882,6 +10917,7 @@
     "name-order": "Reihenfolge",
     "name-prettify-json": "JSON formatieren",
     "name-show-controls": "Steuerelemente anzeigen",
+    "name-show-level": "",
     "name-time": "Zeitstempel anzeigen",
     "name-unique-labels": "Eindeutige Labels",
     "name-unwrapped-columns": "",
@@ -11970,6 +12006,12 @@
       "could-anything-matching-query": "Es konnte nichts gefunden werden, was Ihrer Abfrage entspricht"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "Gruppieren nach",
     "loading": "Optionen werden geladen",
@@ -12412,6 +12454,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Fügen Sie eine Notiz hinzu, um Ihre Änderungen zu beschreiben (optional)",
@@ -12451,9 +12499,6 @@
     "title-created-branch-in-repo": "Eine neue Ressource wurde in einem Branch in {{repoType}} erstellt.",
     "title-loaded-pull-request-in-repo": "Diese Ressource wird aus dem Branch geladen, den Sie gerade in {{repoType}} erstellt haben, und ist nur für Sie sichtbar"
   },
-  "provisioned-resource-request-handler": "Ressource erfolgreich gespeichert",
-  "provisioned-resource-request-handler-dashboard": "Dashboard erfolgreich gespeichert",
-  "provisioned-resource-request-handler-folder": "Der Ordner wurde erfolgreich erstellt",
   "provisioning": {
     "banner": {
       "message": "Diese Funktion befindet sich momentan in der aktiven Entwicklung. Für die bestmögliche Nutzererfahrung und die neuesten Verbesserungen empfehlen wir die Nutzung von <2>Nightly Build</2> von Grafana."
@@ -13395,6 +13440,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

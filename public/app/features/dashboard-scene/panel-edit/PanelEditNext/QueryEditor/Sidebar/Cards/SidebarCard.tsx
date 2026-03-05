@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { ActionItem, Actions } from '../../Actions';
+import { ActionItem, Actions } from '../../../Actions';
 import {
   QUERY_EDITOR_COLORS,
   QUERY_EDITOR_TYPE_CONFIG,
@@ -14,10 +14,10 @@ import {
   SIDEBAR_CARD_INDENT,
   SIDEBAR_CARD_SPACING,
   getQueryEditorColors,
-} from '../../constants';
-import { getEditorBorderColor } from '../utils';
-
-import { AddCardButton } from './AddCardButton';
+} from '../../../constants';
+import { getEditorBorderColor } from '../../utils';
+import { AddCardButton } from '../AddCardButton';
+import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
 
 interface SidebarCardProps {
   children: React.ReactNode;
@@ -82,7 +82,7 @@ export const SidebarCard = ({
       <div className={cx(styles.wrapper, styles.ghostWrapper)} aria-hidden>
         <div className={cx(styles.card, styles.ghostCard)}>
           <div className={styles.cardContent}>
-            <Icon name={typeConfig.icon} color={typeConfig.color} size="sm" />
+            <Icon name={typeConfig.icon} size="sm" className={styles.ghostCardIcon} />
             <span className={styles.ghostCardLabel}>
               {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: typeConfig.getLabel() })}
             </span>
@@ -158,6 +158,18 @@ function getStyles(
   const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
   const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
+  const {
+    ghostBackgroundColor,
+    ghostBorderColor,
+    ghostAnimations,
+    ghostAnimationDelays,
+    ghostBlobStrong,
+    ghostBlobMedium,
+    ghostBlobSoft,
+    ghostBlobOpacity,
+    ghostIconColor,
+  } = getGhostCardVisuals(theme);
+
   const hoverActions = css({
     position: 'absolute',
     right: 0,
@@ -180,6 +192,10 @@ function getStyles(
       }),
     },
   });
+
+  const cardBorder = !!item.error
+    ? `1px solid color-mix(in srgb, ${QUERY_EDITOR_COLORS.error} 50%, transparent)`
+    : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
 
   return {
     cardContentIcons: css({
@@ -245,7 +261,7 @@ function getStyles(
       cursor: 'pointer',
 
       overflow: 'hidden',
-      border: `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`,
+      border: cardBorder,
       boxShadow: isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none',
       '&::before': {
         content: '""',
@@ -311,13 +327,40 @@ function getStyles(
     }),
 
     ghostCard: css({
-      border: `1px dashed ${borderColor}`,
-      background: 'transparent',
+      border: `1px solid ${ghostBorderColor}`,
+      background: ghostBackgroundColor,
       cursor: 'default',
       opacity: 1,
       '&::before': {
-        display: 'none',
+        display: 'block',
+        width: 2,
+        background: borderColor,
       },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: '-15%',
+        pointerEvents: 'none',
+        backgroundImage: [
+          `radial-gradient(ellipse 42% 32% at 12% 28%, ${ghostBlobStrong}, transparent)`,
+          `radial-gradient(ellipse 34% 26% at 84% 18%, ${ghostBlobMedium}, transparent)`,
+          `radial-gradient(ellipse 30% 38% at 44% 82%, ${ghostBlobSoft}, transparent)`,
+        ].join(', '),
+        backgroundRepeat: 'no-repeat',
+        filter: 'blur(7px)',
+        opacity: ghostBlobOpacity,
+        [theme.transitions.handleMotion('no-preference')]: {
+          animation: ghostAnimations,
+          animationDelay: ghostAnimationDelays,
+        },
+      },
+      '& > div': {
+        position: 'relative',
+        zIndex: 1,
+      },
+    }),
+    ghostCardIcon: css({
+      color: ghostIconColor,
     }),
 
     ghostCardLabel: css({
