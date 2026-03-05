@@ -1,6 +1,6 @@
 // @ts-check
-const { AST_NODE_TYPES } = require('@typescript-eslint/utils');
-const { upperFirst } = require('lodash');
+import { AST_NODE_TYPES } from '@typescript-eslint/utils';
+import upperFirst from 'lodash/upperFirst.js';
 
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'publicImg' | 'importImage' | 'useBuildFolder',  []>} RuleContextWithOptions */
 
@@ -31,7 +31,7 @@ const convertPathToImportName = (value) => {
  * @param {import('@typescript-eslint/utils').TSESTree.StringLiteral} node
  * @param {RuleContextWithOptions} context
  */
-function getImageImportFixers(fixer, node, context) {
+export function getImageImportFixers(fixer, node, context) {
   const { value: importPath } = node;
   const pathWithoutPublic = importPath.replace('public/', '');
 
@@ -67,12 +67,13 @@ function getImageImportFixers(fixer, node, context) {
  * @param {import('@typescript-eslint/utils/ts-eslint').RuleFixer} fixer
  * @param {import('@typescript-eslint/utils').TSESTree.StringLiteral} node
  */
-const replaceWithPublicBuild = (fixer, node) => {
+export const replaceWithPublicBuild = (fixer, node) => {
   const { value } = node;
 
   const startingQuote = node.raw.startsWith('"') ? '"' : "'";
   return fixer.replaceText(
     node,
+    // eslint-disable-next-line @grafana/no-restricted-img-srcs
     `${startingQuote}${value.replace('public/img/', 'public/build/img/')}${startingQuote}`
   );
 };
@@ -80,17 +81,12 @@ const replaceWithPublicBuild = (fixer, node) => {
 /**
  * @param {string} value
  */
-const isInvalidImageLocation = (value) => {
+export const isInvalidImageLocation = (value) => {
   return (
+    // eslint-disable-next-line @grafana/no-restricted-img-srcs
     value.startsWith('public/img/') ||
     (!value.startsWith('public/build/') &&
       !value.startsWith('public/plugins/') &&
       /public.*(\.svg|\.png|\.jpg|\.jpeg|\.gif)$/.test(value))
   );
-};
-
-module.exports = {
-  getImageImportFixers,
-  replaceWithPublicBuild,
-  isInvalidImageLocation,
 };

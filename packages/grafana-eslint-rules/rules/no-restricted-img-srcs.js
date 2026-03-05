@@ -1,9 +1,9 @@
 // @ts-check
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Literal} Literal */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.TemplateLiteral} TemplateLiteral */
-const { getImageImportFixers, replaceWithPublicBuild, isInvalidImageLocation } = require('./import-utils.cjs');
+import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 
-const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
+import { getImageImportFixers, replaceWithPublicBuild, isInvalidImageLocation } from './import-utils.js';
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
@@ -29,6 +29,7 @@ const imgSrcRule = createRule({
         const { value } = node;
 
         if (value && typeof value === 'string' && isInvalidImageLocation(value)) {
+          // eslint-disable-next-line @grafana/no-restricted-img-srcs
           const canUseBuildFolder = value.startsWith('public/img/');
           /**
            * @type {import('@typescript-eslint/utils/ts-eslint').SuggestionReportDescriptor<"publicImg" | "importImage" | "useBuildFolder">[]}
@@ -75,4 +76,4 @@ const imgSrcRule = createRule({
   defaultOptions: [],
 });
 
-module.exports = imgSrcRule;
+export default imgSrcRule;

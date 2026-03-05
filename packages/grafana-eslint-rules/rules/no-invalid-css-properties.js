@@ -1,6 +1,6 @@
-const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
-const { all: allCssProperties } = require('known-css-properties');
-const htmlTagsModule = require('html-tags');
+import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
+import htmlTagsModule from 'html-tags';
+import { all as allCssProperties } from 'known-css-properties';
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
@@ -150,4 +150,4 @@ const invalidCssPropertiesRule = createRule({
   defaultOptions: [],
 });
 
-module.exports = invalidCssPropertiesRule;
+export default invalidCssPropertiesRule;
