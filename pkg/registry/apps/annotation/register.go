@@ -348,7 +348,6 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	// If generateName is provided, generate a unique name using the provided prefix
 	if resource.GenerateName != "" {
 		resource.Name = resource.GenerateName + util.GenerateShortUID()
-		resource.GenerateName = ""
 	}
 
 	return s.store.Create(ctx, resource)
