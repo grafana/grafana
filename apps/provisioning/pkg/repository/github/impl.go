@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/v82/github"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 type githubClient struct {
@@ -18,6 +20,55 @@ type githubClient struct {
 
 func NewClient(client *github.Client) Client {
 	return &githubClient{client}
+}
+
+// translateGitHubError converts GitHub API errors into common repository errors
+// For "expired" errors, it returns a more descriptive wrapped error
+func translateGitHubError(err error, operation string) error {
+	if err == nil {
+		return nil
+	}
+
+	var ghErr *github.ErrorResponse
+	if !errors.As(err, &ghErr) {
+		// Not a GitHub API error, return as-is
+		return err
+	}
+
+	// Extract GitHub's error message for context
+	ghMessage := ghErr.Message
+	statusCode := ghErr.Response.StatusCode
+
+	// Map to common repository errors
+	switch statusCode {
+	case http.StatusUnauthorized:
+		// 401 - Authentication failed
+		// Special case: "expired" is cryptic, so add helpful context
+		if strings.Contains(strings.ToLower(ghMessage), "expired") {
+			return fmt.Errorf("authentication token has expired (operation: %s): %w", operation, repository.ErrUnauthorized)
+		}
+		return repository.ErrUnauthorized
+
+	case http.StatusForbidden:
+		// 403 - Permission denied
+		// Special case: rate limit gets additional context
+		if strings.Contains(strings.ToLower(ghMessage), "rate limit") {
+			return fmt.Errorf("API rate limit exceeded (operation: %s): %w", operation, repository.ErrPermissionDenied)
+		}
+		return repository.ErrPermissionDenied
+
+	case http.StatusNotFound:
+		// 404 - Resource not found
+		return repository.ErrFileNotFound
+
+	case http.StatusServiceUnavailable, http.StatusBadGateway, http.StatusGatewayTimeout:
+		// 503, 502, 504 - Service unavailable
+		return repository.ErrServerUnavailable
+
+	default:
+		// Other errors - return with GitHub message context
+		return fmt.Errorf("GitHub API error (HTTP %d: %s, operation: %s)", statusCode, ghMessage, operation)
+	}
 }
 
 const (
@@ -69,7 +120,7 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 func (r *githubClient) GetRepository(ctx context.Context, owner, repository string) (Repository, error) {
 	repo, _, err := r.gh.Repositories.Get(ctx, owner, repository)
 	if err != nil {
-		return Repository{}, fmt.Errorf("failed to get repository: %w", err)
+		return Repository{}, translateGitHubError(err, fmt.Sprintf("get repository '%s/%s'", owner, repository))
 	}
 
 	return Repository{
@@ -152,7 +203,7 @@ func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository strin
 		return nil, fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks)
 	}
 	if err != nil {
-		return nil, err
+		return nil, translateGitHubError(err, fmt.Sprintf("list webhooks for repository '%s/%s'", owner, repository))
 	}
 
 	// Pre-allocate the result slice
@@ -192,12 +243,8 @@ func (r *githubClient) CreateWebhook(ctx context.Context, owner, repository stri
 	}
 
 	createdHook, _, err := r.gh.Repositories.CreateHook(ctx, owner, repository, hook)
-	var ghErr *github.ErrorResponse
-	if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-		return WebhookConfig{}, ErrServiceUnavailable
-	}
 	if err != nil {
-		return WebhookConfig{}, err
+		return WebhookConfig{}, translateGitHubError(err, fmt.Sprintf("create webhook for repository '%s/%s'", owner, repository))
 	}
 
 	return WebhookConfig{
@@ -215,14 +262,7 @@ func (r *githubClient) CreateWebhook(ctx context.Context, owner, repository stri
 func (r *githubClient) GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error) {
 	hook, _, err := r.gh.Repositories.GetHook(ctx, owner, repository, webhookID)
 	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return WebhookConfig{}, ErrServiceUnavailable
-		}
-		if ghErr.Response.StatusCode == http.StatusNotFound {
-			return WebhookConfig{}, ErrResourceNotFound
-		}
-		return WebhookConfig{}, err
+		return WebhookConfig{}, translateGitHubError(err, fmt.Sprintf("get webhook %d for repository '%s/%s'", webhookID, owner, repository))
 	}
 
 	contentType := hook.GetConfig().GetContentType()
@@ -244,20 +284,10 @@ func (r *githubClient) GetWebhook(ctx context.Context, owner, repository string,
 
 func (r *githubClient) DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error {
 	_, err := r.gh.Repositories.DeleteHook(ctx, owner, repository, webhookID)
-	var ghErr *github.ErrorResponse
-	if !errors.As(err, &ghErr) {
-		return err
+	if err != nil {
+		return translateGitHubError(err, fmt.Sprintf("delete webhook %d for repository '%s/%s'", webhookID, owner, repository))
 	}
-	if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-		return ErrServiceUnavailable
-	}
-	if ghErr.Response.StatusCode == http.StatusNotFound {
-		return ErrResourceNotFound
-	}
-	if ghErr.Response.StatusCode == http.StatusUnauthorized || ghErr.Response.StatusCode == http.StatusForbidden {
-		return ErrUnauthorized
-	}
-	return err
+	return nil
 }
 
 func (r *githubClient) EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error {
@@ -276,11 +306,10 @@ func (r *githubClient) EditWebhook(ctx context.Context, owner, repository string
 		},
 	}
 	_, _, err := r.gh.Repositories.EditHook(ctx, owner, repository, cfg.ID, hook)
-	var ghErr *github.ErrorResponse
-	if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-		return ErrServiceUnavailable
+	if err != nil {
+		return translateGitHubError(err, fmt.Sprintf("edit webhook %d for repository '%s/%s'", cfg.ID, owner, repository))
 	}
-	return err
+	return nil
 }
 
 func (r *githubClient) ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error) {
@@ -297,7 +326,7 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, owner, reposito
 		return nil, fmt.Errorf("pull request contains too many files (more than %d)", maxPRFiles)
 	}
 	if err != nil {
-		return nil, err
+		return nil, translateGitHubError(err, fmt.Sprintf("list files for pull request %d in repository '%s/%s'", number, owner, repository))
 	}
 
 	// Convert to the interface type
@@ -315,11 +344,7 @@ func (r *githubClient) CreatePullRequestComment(ctx context.Context, owner, repo
 	}
 
 	if _, _, err := r.gh.Issues.CreateComment(ctx, owner, repository, number, comment); err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return ErrServiceUnavailable
-		}
-		return err
+		return translateGitHubError(err, fmt.Sprintf("create comment on pull request %d in repository '%s/%s'", number, owner, repository))
 	}
 
 	return nil

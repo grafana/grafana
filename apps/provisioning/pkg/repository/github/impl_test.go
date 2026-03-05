@@ -522,11 +522,8 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
-				} else {
-					assert.Contains(t, err.Error(), tt.wantErr.Error())
-				}
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -722,11 +719,8 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
-				} else {
-					assert.Contains(t, err.Error(), tt.wantErr.Error())
-				}
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -894,11 +888,8 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
-				} else {
-					assert.Contains(t, err.Error(), tt.wantErr.Error())
-				}
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1032,11 +1023,8 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
-				} else {
-					assert.Contains(t, err.Error(), tt.wantErr.Error())
-				}
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1221,11 +1209,8 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
-				} else {
-					assert.Contains(t, err.Error(), tt.wantErr.Error())
-				}
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1400,11 +1385,8 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
-				} else {
-					assert.Contains(t, err.Error(), tt.wantErr.Error())
-				}
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1515,11 +1497,8 @@ func TestCreatePullRequestComment(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				if errors.Is(err, tt.wantErr) {
-					assert.Equal(t, tt.wantErr, err)
-				} else {
-					assert.Contains(t, err.Error(), tt.wantErr.Error())
-				}
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1996,7 +1975,8 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.wantErr.Error())
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				assert.ErrorIs(t, err, tt.wantErr)
 				assert.Equal(t, tt.wantRepo, got)
 			} else {
 				assert.NoError(t, err)
