@@ -83,18 +83,13 @@ export function useWizardButtons({
       // Only disable next if github app is in create connection mode
       return githubAuthType === 'github-app' && githubAppMode === 'new';
     }
-    // Don't block on hasStepError for connection steps - users can fix their input and retry
-    if (!['connection'].includes(activeStep) && hasStepError) {
+    // Don't block on hasStepError for connection/finish steps - users can fix their input and retry
+    if (!['connection', 'finish'].includes(activeStep) && hasStepError) {
       return true;
     }
     // Synchronize step requires success or warning to proceed
     if (activeStep === 'synchronize') {
       return !(isStepSuccess || hasStepWarning);
-    }
-    // Finish step should not be blocked by isCreatingSkipJob since we only
-    // reach finish after the skip job was successfully created
-    if (activeStep === 'finish') {
-      return isSubmitting || isCancelling;
     }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   }, [
