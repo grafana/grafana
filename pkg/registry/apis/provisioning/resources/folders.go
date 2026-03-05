@@ -65,6 +65,10 @@ func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInter
 	return fm
 }
 
+func (fm *FolderManager) FolderMetadataEnabled() bool {
+	return fm.folderMetadataEnabled
+}
+
 func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
 	return func(fm *FolderManager) {
 		fm.beforeCreate = beforeCreate
