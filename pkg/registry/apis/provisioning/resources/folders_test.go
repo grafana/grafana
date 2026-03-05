@@ -237,12 +237,188 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 	})
 }
 
+func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
+	ctx := context.Background()
+
+	newRepo := func(t *testing.T) (*repository.MockReaderWriter, *provisioning.Repository) {
+		cfg := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "repo-a",
+				Namespace: "default",
+			},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{
+					Target: provisioning.SyncTargetTypeFolder,
+				},
+			},
+		}
+
+		repo := repository.NewMockReaderWriter(t)
+		repo.On("Config").Return(cfg)
+		return repo, cfg
+	}
+
+	managedFolder := func(name, title, managerIdentity string) *unstructured.Unstructured {
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "folder.grafana.app/v1beta1",
+				"kind":       "Folder",
+				"metadata": map[string]interface{}{
+					"name":      name,
+					"namespace": "default",
+					"annotations": map[string]interface{}{
+						"grafana.app/managerId": managerIdentity,
+					},
+				},
+				"spec": map[string]interface{}{
+					"title": title,
+				},
+			},
+		}
+		return obj
+	}
+
+	t.Run("does not update when title is the same", func(t *testing.T) {
+		repo, cfg := newRepo(t)
+		tree := resources.NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "Same Title", cfg.Name), nil
+			},
+		}
+
+		fm := resources.NewFolderManager(repo, client, tree)
+		err := fm.EnsureFolderExists(ctx, resources.Folder{
+			ID:    "folder-id",
+			Title: "Same Title",
+			Path:  "",
+		}, "")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"folder-id"}, client.getCalls)
+		require.Empty(t, client.updateCalls, "should not call update when title is unchanged")
+	})
+
+	t.Run("updates title when it has changed", func(t *testing.T) {
+		repo, cfg := newRepo(t)
+		tree := resources.NewEmptyFolderTree()
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "Old Title", cfg.Name), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj.DeepCopy()
+				return obj, nil
+			},
+		}
+
+		fm := resources.NewFolderManager(repo, client, tree)
+		err := fm.EnsureFolderExists(ctx, resources.Folder{
+			ID:    "folder-id",
+			Title: "New Title",
+			Path:  "",
+		}, "")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"folder-id"}, client.getCalls)
+		require.Equal(t, []string{"folder-id"}, client.updateCalls)
+
+		newTitle, _, _ := unstructured.NestedString(updatedObj.Object, "spec", "title")
+		require.Equal(t, "New Title", newTitle, "the updated object should have the new title")
+	})
+
+	t.Run("returns error when update fails", func(t *testing.T) {
+		repo, cfg := newRepo(t)
+		tree := resources.NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "Old Title", cfg.Name), nil
+			},
+			updateFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, fmt.Errorf("conflict")
+			},
+		}
+
+		fm := resources.NewFolderManager(repo, client, tree)
+		err := fm.EnsureFolderExists(ctx, resources.Folder{
+			ID:    "folder-id",
+			Title: "New Title",
+			Path:  "",
+		}, "")
+
+		require.Error(t, err)
+		require.ErrorContains(t, err, "update folder title")
+		require.Equal(t, []string{"folder-id"}, client.updateCalls)
+	})
+
+	t.Run("errors when folder is not managed by a repository", func(t *testing.T) {
+		repo, _ := newRepo(t)
+		tree := resources.NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":        name,
+							"annotations": map[string]interface{}{},
+						},
+						"spec": map[string]interface{}{
+							"title": "Some Title",
+						},
+					},
+				}
+				return obj, nil
+			},
+		}
+
+		fm := resources.NewFolderManager(repo, client, tree)
+		err := fm.EnsureFolderExists(ctx, resources.Folder{
+			ID:    "folder-id",
+			Title: "New Title",
+			Path:  "",
+		}, "")
+
+		require.Error(t, err)
+		require.ErrorContains(t, err, "not managed by a repository")
+		require.Empty(t, client.updateCalls)
+	})
+
+	t.Run("errors when folder is managed by a different repository", func(t *testing.T) {
+		repo, _ := newRepo(t)
+		tree := resources.NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "Title", "other-repo"), nil
+			},
+		}
+
+		fm := resources.NewFolderManager(repo, client, tree)
+		err := fm.EnsureFolderExists(ctx, resources.Folder{
+			ID:    "folder-id",
+			Title: "New Title",
+			Path:  "",
+		}, "")
+
+		require.Error(t, err)
+		require.ErrorContains(t, err, "managed by a different repository (other-repo)")
+		require.Empty(t, client.updateCalls)
+	})
+}
+
 type fakeDynamicResourceClient struct {
 	getFn    func(name string) (*unstructured.Unstructured, error)
 	createFn func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error)
+	updateFn func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error)
 
 	getCalls    []string
 	createCalls []string
+	updateCalls []string
 }
 
 func (f *fakeDynamicResourceClient) Create(_ context.Context, obj *unstructured.Unstructured, _ metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
@@ -253,8 +429,12 @@ func (f *fakeDynamicResourceClient) Create(_ context.Context, obj *unstructured.
 	return obj, nil
 }
 
-func (f *fakeDynamicResourceClient) Update(context.Context, *unstructured.Unstructured, metav1.UpdateOptions, ...string) (*unstructured.Unstructured, error) {
-	panic("unexpected call to Update")
+func (f *fakeDynamicResourceClient) Update(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+	f.updateCalls = append(f.updateCalls, obj.GetName())
+	if f.updateFn != nil {
+		return f.updateFn(obj)
+	}
+	return obj, nil
 }
 
 func (f *fakeDynamicResourceClient) UpdateStatus(context.Context, *unstructured.Unstructured, metav1.UpdateOptions) (*unstructured.Unstructured, error) {
