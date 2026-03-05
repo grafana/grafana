@@ -76,7 +76,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					// Return empty rulesets array (no rulesets configured)
@@ -119,7 +119,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					_, _ = w.Write([]byte("[]"))
@@ -162,7 +162,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					_, _ = w.Write([]byte("[]"))
@@ -204,7 +204,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					_, _ = w.Write([]byte("[]"))
@@ -283,7 +283,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					_, _ = w.Write([]byte("[]"))
@@ -325,50 +325,23 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					}))
 				}),
 			),
-			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
-				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					target := github.RulesetTargetBranch
-					rulesets := []*github.RepositoryRuleset{
-						{
-							ID:          github.Ptr(int64(1)),
-							Name:        "main protection",
-							Enforcement: github.RulesetEnforcementActive,
-							Target:      &target,
-							Conditions: &github.RepositoryRulesetConditions{
-								RefName: &github.RepositoryRulesetRefConditionParameters{
-									Include: []string{"refs/heads/main"},
-								},
-							},
-							// Rules NOT included in GetAllRulesets response
-						},
-					}
-					w.WriteHeader(http.StatusOK)
-					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
-				}),
-			),
-			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepoByRulesetId,
-				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					target := github.RulesetTargetBranch
-					ruleset := &github.RepositoryRuleset{
-						ID:          github.Ptr(int64(1)),
-						Name:        "main protection",
-						Enforcement: github.RulesetEnforcementActive,
-						Target:      &target,
-						Conditions: &github.RepositoryRulesetConditions{
-							RefName: &github.RepositoryRulesetRefConditionParameters{
-								Include: []string{"refs/heads/main"},
-							},
-						},
-						Rules: &github.RepositoryRulesetRules{
-							PullRequest: &github.PullRequestRuleParameters{},
-						},
-					}
-					w.WriteHeader(http.StatusOK)
-					require.NoError(t, json.NewEncoder(w).Encode(ruleset))
-				}),
-			),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				// Rules API returns array of rule objects
+				rules := []map[string]interface{}{
+					{
+						"type":                "pull_request",
+						"ruleset_source_type": "Repository",
+						"ruleset_source":      "test-owner/test-repo",
+						"ruleset_id":          1,
+						"parameters":          map[string]interface{}{},
+					},
+				}
+				w.WriteHeader(http.StatusOK)
+				require.NoError(t, json.NewEncoder(w).Encode(rules))
+			}),
+		),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -391,9 +364,9 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		require.Contains(t, testResults.Errors[0].Detail, "protection rules that prevent direct pushes")
 	})
 
-	t.Run("write workflow with ruleset having blocking rules returns error", func(t *testing.T) {
+	t.Run("write workflow with ruleset having non-blocking rules succeeds", func(t *testing.T) {
 		repoFactory := helper.GetEnv().GithubRepoFactory
-		// Mock no classic branch protection, but rulesets have blocking rules
+		// Mock no classic branch protection, rulesets only have non-blocking rules
 		repoFactory.Client = ghmock.NewMockedHTTPClient(
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
@@ -405,47 +378,20 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					target := github.RulesetTargetBranch
-					rulesets := []*github.RepositoryRuleset{
+					// Rules API returns non-blocking rules
+					rules := []map[string]interface{}{
 						{
-							ID:          github.Ptr(int64(2)),
-							Name:        "main protection",
-							Enforcement: github.RulesetEnforcementActive,
-							Target:      &target,
-							Conditions: &github.RepositoryRulesetConditions{
-								RefName: &github.RepositoryRulesetRefConditionParameters{
-									Include: []string{"main"},
-								},
-							},
-							// Rules NOT included in GetAllRulesets response
+							"type":                "required_status_checks",
+							"ruleset_source_type": "Repository",
+							"ruleset_source":      "test-owner/test-repo",
+							"ruleset_id":          2,
+							"parameters":          map[string]interface{}{},
 						},
 					}
 					w.WriteHeader(http.StatusOK)
-					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
-				}),
-			),
-			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepoByRulesetId,
-				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					target := github.RulesetTargetBranch
-					ruleset := &github.RepositoryRuleset{
-						ID:          github.Ptr(int64(2)),
-						Name:        "main protection",
-						Enforcement: github.RulesetEnforcementActive,
-						Target:      &target,
-						Conditions: &github.RepositoryRulesetConditions{
-							RefName: &github.RepositoryRulesetRefConditionParameters{
-								Include: []string{"main"},
-							},
-						},
-						Rules: &github.RepositoryRulesetRules{
-							RequiredStatusChecks: &github.RequiredStatusChecksRuleParameters{},
-						},
-					}
-					w.WriteHeader(http.StatusOK)
-					require.NoError(t, json.NewEncoder(w).Encode(ruleset))
+					require.NoError(t, json.NewEncoder(w).Encode(rules))
 				}),
 			),
 		)
@@ -454,20 +400,16 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		rawBody, _ := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
-			Name("test-ruleset-blocking").
+			Name("test-ruleset-non-blocking").
 			SubResource("test").
-			Body(makeRepoConfig("test-ruleset-blocking", []string{"write"})).
+			Body(makeRepoConfig("test-ruleset-non-blocking", []string{"write"})).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).
 			Raw()
 
 		var testResults provisioning.TestResults
 		require.NoError(t, json.Unmarshal(rawBody, &testResults))
-		require.False(t, testResults.Success, "test should fail when ruleset has blocking rules")
-		require.NotEmpty(t, testResults.Errors, "should have errors")
-		require.Equal(t, "spec.workflows", testResults.Errors[0].Field, "error should target spec.workflows")
-		require.Contains(t, testResults.Errors[0].Detail, "ruleset has blocking rules")
-		require.Contains(t, testResults.Errors[0].Detail, "protection rules that prevent direct pushes")
+		require.True(t, testResults.Success, "test should succeed when ruleset only has non-blocking rules")
 	})
 
 	t.Run("write workflow with both classic protection and rulesets returns error with all reasons", func(t *testing.T) {
@@ -484,50 +426,23 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
 			),
-			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
-				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					target := github.RulesetTargetBranch
-					rulesets := []*github.RepositoryRuleset{
-						{
-							ID:          github.Ptr(int64(3)),
-							Name:        "main protection",
-							Enforcement: github.RulesetEnforcementActive,
-							Target:      &target,
-							Conditions: &github.RepositoryRulesetConditions{
-								RefName: &github.RepositoryRulesetRefConditionParameters{
-									Include: []string{"refs/heads/main"},
-								},
-							},
-							// Rules NOT included in GetAllRulesets response
-						},
-					}
-					w.WriteHeader(http.StatusOK)
-					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
-				}),
-			),
-			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepoByRulesetId,
-				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					target := github.RulesetTargetBranch
-					ruleset := &github.RepositoryRuleset{
-						ID:          github.Ptr(int64(3)),
-						Name:        "main protection",
-						Enforcement: github.RulesetEnforcementActive,
-						Target:      &target,
-						Conditions: &github.RepositoryRulesetConditions{
-							RefName: &github.RepositoryRulesetRefConditionParameters{
-								Include: []string{"refs/heads/main"},
-							},
-						},
-						Rules: &github.RepositoryRulesetRules{
-							PullRequest: &github.PullRequestRuleParameters{},
-						},
-					}
-					w.WriteHeader(http.StatusOK)
-					require.NoError(t, json.NewEncoder(w).Encode(ruleset))
-				}),
-			),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				// Rules API returns pull_request rule
+				rules := []map[string]interface{}{
+					{
+						"type":                "pull_request",
+						"ruleset_source_type": "Repository",
+						"ruleset_source":      "test-owner/test-repo",
+						"ruleset_id":          3,
+						"parameters":          map[string]interface{}{},
+					},
+				}
+				w.WriteHeader(http.StatusOK)
+				require.NoError(t, json.NewEncoder(w).Encode(rules))
+			}),
+		),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -565,25 +480,15 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					}))
 				}),
 			),
-			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
-				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					target := github.RulesetTargetBranch
-					rulesets := []*github.RepositoryRuleset{
-						{
-							ID:          github.Ptr(int64(4)),
-							Name:        "disabled ruleset",
-							Enforcement: github.RulesetEnforcementDisabled,
-							Target:      &target,
-							Rules: &github.RepositoryRulesetRules{
-								PullRequest: &github.PullRequestRuleParameters{},
-							},
-						},
-					}
-					w.WriteHeader(http.StatusOK)
-					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
-				}),
-			),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				// Rules API does not return disabled rulesets (empty array)
+				rules := []interface{}{}
+				w.WriteHeader(http.StatusOK)
+				require.NoError(t, json.NewEncoder(w).Encode(rules))
+			}),
+		),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -619,30 +524,15 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					}))
 				}),
 			),
-			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
-				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					target := github.RulesetTargetBranch
-					rulesets := []*github.RepositoryRuleset{
-						{
-							ID:          github.Ptr(int64(5)),
-							Name:        "production protection",
-							Enforcement: github.RulesetEnforcementActive,
-							Target:      &target,
-							Conditions: &github.RepositoryRulesetConditions{
-								RefName: &github.RepositoryRulesetRefConditionParameters{
-									Include: []string{"refs/heads/production"},
-								},
-							},
-							Rules: &github.RepositoryRulesetRules{
-								PullRequest: &github.PullRequestRuleParameters{},
-							},
-						},
-					}
-					w.WriteHeader(http.StatusOK)
-					require.NoError(t, json.NewEncoder(w).Encode(rulesets))
-				}),
-			),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				// Rules API returns only rules matching the queried branch (none in this case)
+				rules := []interface{}{}
+				w.WriteHeader(http.StatusOK)
+				require.NoError(t, json.NewEncoder(w).Encode(rules))
+			}),
+		),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -681,7 +571,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusForbidden)
 					_, _ = w.Write([]byte(`{"message":"Resource not accessible"}`))
@@ -795,7 +685,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					_, _ = w.Write([]byte("[]"))
@@ -896,7 +786,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					_, _ = w.Write([]byte("[]"))
@@ -996,7 +886,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
-				ghmock.GetReposRulesetsByOwnerByRepo,
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					_, _ = w.Write([]byte("[]"))
