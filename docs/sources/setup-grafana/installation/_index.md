@@ -88,7 +88,7 @@ Small deployments suit small teams, internal tooling, and low-traffic environmen
 | Disk      | 10 – 20 GB SSD (database host) |
 | Instances | 1                              |
 
-**Database:** SQLite works for small environments. Refer to [Appropriate uses for SQLite](https://www.sqlite.org/whentouse.html) to assess whether it suits your use case. For higher reliability and growth capacity, consider an external MySQL or PostgreSQL instance. For more information, refer to [Supported databases](#supported-databases).
+**Database:** SQLite works for local development and small evaluation instances, but isn't recommended for production environments. For production use, consider an external MySQL or PostgreSQL instance for higher reliability and growth capacity. For more information, refer to [Supported databases](#supported-databases).
 
 **Image rendering:** optional; can run on the same host for light use. Refer to [Server-side image rendering](/grafana/plugins/grafana-image-renderer#requirements).
 
@@ -103,7 +103,7 @@ Medium deployments suit shared team environments and departmental observability 
 | Disk      | 20 – 50 GB SSD (database host) |
 | Instances | 2 (load-balanced)              |
 
-**Database:** SQLite is not suitable at this tier. Refer to [Supported databases](#supported-databases) for guidance on choosing an external database.
+**Database:** SQLite isn't recommended for production environments and isn't suitable at this tier. Use an external MySQL or PostgreSQL database. Refer to [Supported databases](#supported-databases) for guidance on choosing an external database.
 
 **Image rendering:** run the image renderer as a separate process or container. Each renderer worker uses approximately 1 GB of memory; size your renderer host accordingly. Refer to [Server-side image rendering](/grafana/plugins/grafana-image-renderer#requirements).
 
@@ -121,7 +121,7 @@ Large deployments suit organization-wide platforms and high-traffic production e
 | Instances | 3+ (load-balanced)                    |
 | Network   | 10 Gbps or faster                     |
 
-**Database:** a highly available MySQL or PostgreSQL cluster is strongly advised at this tier. Refer to [Supported databases](#supported-databases).
+**Database:** SQLite isn't recommended for production environments and isn't suitable at this tier. A highly available MySQL or PostgreSQL cluster is strongly advised. Refer to [Supported databases](#supported-databases).
 
 **Image rendering:** run a dedicated renderer fleet with multiple workers, isolated from Grafana instances. Each renderer worker uses approximately 1 GB of memory. Refer to [Server-side image rendering](/grafana/plugins/grafana-image-renderer#requirements).
 
@@ -145,8 +145,8 @@ Grafana supports the following databases:
 
 By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location. If you need to migrate to a different database later, note that database schema and data migrations are customer-managed operations and fall outside the scope of Grafana Support.
 
-{{< admonition type="note" >}}
-SQLite works well if your environment is small, but is not recommended when your environment starts growing. For more information about the limitations of SQLite, refer to [Appropriate Uses For SQLite](https://www.sqlite.org/whentouse.html). If you want [high availability](/docs/grafana/latest/setup-grafana/set-up-for-high-availability), you must use either a MySQL or PostgreSQL database. For information about how to define the database configuration parameters inside the `grafana.ini` file, refer to [[database]](/docs/grafana/latest/setup-grafana/configure-grafana/#database).
+{{< admonition type="caution" >}}
+SQLite isn't recommended for production environments. It works well for local development and small evaluation instances, but it doesn't scale for production workloads. If you want [high availability](/docs/grafana/latest/setup-grafana/set-up-for-high-availability), you must use either a MySQL or PostgreSQL database. For information about how to define the database configuration parameters inside the `grafana.ini` file, refer to [[database]](/docs/grafana/latest/setup-grafana/configure-grafana/#database).
 {{< /admonition >}}
 
 Grafana supports the versions of these databases that are officially supported by the project at the time a version of Grafana is released. When a Grafana version becomes unsupported, Grafana Labs might also drop support for that database version. See the links above for the support policies for each project.
