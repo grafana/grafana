@@ -6,7 +6,7 @@ const DASHBOARD_UID = 'ad7p5pj';
 
 test.use({ viewport: { width: 1000, height: 1440 } });
 
-test.describe('Panels test: Annotations', { tag: ['@panels', '@annotations'] }, () => {
+test.describe.only('Panels test: Annotations', { tag: ['@panels', '@annotations'] }, () => {
   test('Annotations should split into multiple rows if multi-lane panel option is set', async ({
     gotoDashboardPage,
     selectors,
@@ -37,6 +37,7 @@ const checkPanel = async (
   dashboardPage: DashboardPage,
   selectors: E2ESelectorGroups
 ) => {
+  const annoLaneHeight = 7;
   const timeSeries = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelName));
   const timeSeriesLanes = dashboardPage.getByGrafanaSelector(
     selectors.components.Panels.Panel.title(multiRowPanelName)
@@ -50,29 +51,29 @@ const checkPanel = async (
     timeSeriesLanes,
     selectors,
     6,
-    '[style*="top: 0px"]',
+    `[style*="top: ${annoLaneHeight * 0}px"]`,
     '6 annotations are in the first lane'
   );
   await assertPanelHasAnnoCount(
     timeSeriesLanes,
     selectors,
     4,
-    '[style*="top: 7px"]',
+    `[style*="top: ${annoLaneHeight * 1}px"]`,
     '4 annotations are in the 2nd lane'
   );
   await assertPanelHasAnnoCount(
     timeSeriesLanes,
     selectors,
     6,
-    '[style*="top: 14px"]',
+    `[style*="top: ${annoLaneHeight * 2}px"]`,
     '6 annotations are in the 3rd lane'
   );
   await assertPanelHasAnnoCount(
     timeSeriesLanes,
     selectors,
     12,
-    '[style*="top: 21px"]',
-    '6 annotations are in the 4th lane'
+    `[style*="top: ${annoLaneHeight * 3}px"]`,
+    '12 annotations are in the 4th lane'
   );
 };
 
