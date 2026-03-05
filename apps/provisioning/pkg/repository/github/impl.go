@@ -73,8 +73,9 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 		slog.String("repository", repository),
 		slog.String("branch", branch))
 
-	// Get all rulesets for the repository
-	rulesets, _, err := r.gh.Repositories.GetAllRulesets(ctx, owner, repository, nil)
+	// Get all active rules that apply to this specific branch
+	// This API returns only active rules (no disabled/evaluate enforcement)
+	branchRules, _, err := r.gh.Repositories.GetRulesForBranch(ctx, owner, repository, branch, nil)
 	if err != nil {
 		// Handle common error cases
 		var ghErr *github.ErrorResponse
@@ -83,7 +84,7 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 			case http.StatusUnauthorized:
 				return nil, ErrUnauthorized
 			case http.StatusForbidden:
-				// User lacks permissions to view rulesets (though Metadata read should be enough).
+				// User lacks permissions to view rules (though Metadata read should be enough).
 				// Skip check gracefully.
 				logger.Warn("Skipping ruleset check: insufficient permissions")
 				return nil, nil
@@ -94,149 +95,27 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 			}
 		}
 
-		return nil, fmt.Errorf("failed to get rulesets: %w", err)
+		return nil, fmt.Errorf("failed to get rules for branch: %w", err)
 	}
 
-	// No rulesets configured
-	if len(rulesets) == 0 {
-		logger.Debug("No rulesets configured for repository")
+	// No rules apply to this branch
+	if branchRules == nil {
+		logger.Debug("No rules configured for branch")
 		return nil, nil
 	}
 
-	logger.Debug("Checking rulesets for branch", slog.Int("ruleset_count", len(rulesets)))
-
-	result := &Rulesets{}
-
-	// Check each ruleset to see if it applies to the target branch
-	for _, ruleset := range rulesets {
-		rulesetName := ruleset.Name
-		enforcement := string(ruleset.Enforcement)
-		rulesetLogger := logger.With(
-			slog.String("ruleset_name", rulesetName),
-			slog.String("enforcement", enforcement))
-
-		rulesetLogger.Debug("Evaluating ruleset")
-
-		// Skip disabled or evaluate-only rulesets
-		if enforcement == "disabled" || enforcement == "evaluate" {
-			rulesetLogger.Debug("Skipping non-active ruleset")
-			continue
-		}
-
-		// Check if this ruleset targets branches and matches our branch
-		target := ruleset.GetTarget()
-		if target == nil || string(*target) != "branch" {
-			targetStr := "nil"
-			if target != nil {
-				targetStr = string(*target)
-			}
-			rulesetLogger.Debug("Skipping non-branch ruleset", slog.String("target", targetStr))
-			continue
-		}
-
-		// Check if the ruleset applies to this specific branch
-		if !rulesetMatchesBranch(ruleset, branch) {
-			rulesetLogger.Debug("Ruleset does not match branch")
-			continue
-		}
-
-		rulesetLogger.Debug("Ruleset matches branch, checking rules")
-
-		// GetAllRulesets doesn't include rule details, so we need to fetch the full ruleset
-		rulesetID := ruleset.GetID()
-		if rulesetID == 0 {
-			rulesetLogger.Warn("Ruleset has no ID, skipping")
-			continue
-		}
-
-		rulesetLogger = rulesetLogger.With(slog.Int64("ruleset_id", rulesetID))
-		rulesetLogger.Debug("Fetching full ruleset details")
-
-		fullRuleset, _, err := r.gh.Repositories.GetRuleset(ctx, owner, repository, rulesetID, false)
-		if err != nil {
-			rulesetLogger.Warn("Failed to fetch ruleset details", slog.String("error", err.Error()))
-			continue
-		}
-
-		// Check the rules in this ruleset
-		rules := fullRuleset.GetRules()
-		if rules == nil {
-			rulesetLogger.Warn("Ruleset has nil rules even after fetching full details")
-			continue
-		}
-
-		// Only pull_request rules actually block direct pushes
-		// Other rules like non_fast_forward (blocks force push only),
-		// required_status_checks (checks run after push), etc. are not blockers
-		if rules.PullRequest != nil {
-			rulesetLogger.Debug("Ruleset requires pull request (blocks direct push)")
-			result.RequiresPullRequest = true
-		}
+	// Check if pull request rule is active
+	// Only pull_request rules actually block direct pushes.
+	// Other rules like non_fast_forward (blocks force push only),
+	// required_status_checks (checks run after push), etc. do not prevent regular git push operations.
+	if len(branchRules.PullRequest) > 0 {
+		logger.Debug("Branch requires pull request (blocks direct push)",
+			slog.Int("pr_rule_count", len(branchRules.PullRequest)))
+		return &Rulesets{RequiresPullRequest: true}, nil
 	}
 
-	// Return nil if no blocking rules found
-	if !result.RequiresPullRequest {
-		logger.Debug("No blocking rulesets found for branch")
-		return nil, nil
-	}
-
-	logger.Debug("Found blocking rulesets for branch")
-
-	return result, nil
-}
-
-// rulesetMatchesBranch checks if a ruleset's conditions match the given branch name.
-func rulesetMatchesBranch(ruleset *github.RepositoryRuleset, branch string) bool {
-	if ruleset.Conditions == nil || ruleset.Conditions.RefName == nil {
-		// No conditions means it applies to all branches
-		return true
-	}
-
-	refName := ruleset.Conditions.RefName
-
-	// Check include patterns
-	if refName.Include != nil {
-		matched := false
-		for _, pattern := range refName.Include {
-			if matchesPattern(pattern, branch) {
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-
-	// Check exclude patterns
-	if refName.Exclude != nil {
-		for _, pattern := range refName.Exclude {
-			if matchesPattern(pattern, branch) {
-				return false
-			}
-		}
-	}
-
-	return true
-}
-
-// matchesPattern checks if a branch name matches a GitHub ref pattern.
-// Patterns can use ~DEFAULT_BRANCH or refs/heads/ prefixes, or be simple names.
-func matchesPattern(pattern, branch string) bool {
-	// Handle special ~DEFAULT_BRANCH pattern (we can't check this without repo metadata)
-	if pattern == "~DEFAULT_BRANCH" {
-		// We'd need to compare against repo.DefaultBranch, but we don't have that here
-		// For now, assume it might match (conservative approach)
-		return true
-	}
-
-	// Remove refs/heads/ prefix if present in pattern
-	if len(pattern) > 11 && pattern[:11] == "refs/heads/" {
-		pattern = pattern[11:]
-	}
-
-	// Simple exact match (we could add fnmatch pattern matching here if needed)
-	return pattern == branch
+	logger.Debug("No blocking rules found for branch")
+	return nil, nil
 }
 
 func (r *githubClient) GetRepository(ctx context.Context, owner, repository string) (Repository, error) {
