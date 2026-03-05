@@ -29,13 +29,15 @@ function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
+  const filterV2Enabled = config.featureToggles.alertingFilterV2;
+
   return (
     <Stack direction="column">
       <AlertsActivityBanner />
       <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
       <div style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
-        <RulesFilterSidebar />
-        <div style={{ flex: 1, minWidth: 0, paddingLeft: '16px' }}>
+        {filterV2Enabled && <RulesFilterSidebar />}
+        <div style={{ flex: 1, minWidth: 0, paddingLeft: filterV2Enabled ? '16px' : undefined }}>
           {viewMode === 'list' ? (
             <FilterView filterState={filterState} />
           ) : (

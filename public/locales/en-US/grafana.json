@@ -2865,15 +2865,8 @@
       "export-all-grafana-rules": "Export all Grafana rules",
       "export-group": "Export rules group",
       "filter-sidebar": {
-        "clear-all": "Clear all filters",
         "collapse": "Show filters",
-        "rule-name-placeholder": "Filter by name...",
-        "section-location": "Location",
-        "section-other": "Other",
-        "section-routing": "Routing",
-        "section-source": "Source",
-        "section-status": "Status",
-        "section-text": "Text"
+        "rule-name-placeholder": "Filter by name..."
       },
       "filter-view": {
         "cancel-search": "Cancel search",
@@ -3057,6 +3050,7 @@
       "view-as": "View as"
     },
     "rules-filter-sidebar": {
+      "clear-filters": "Clear filters",
       "hide-filters": "Hide filters"
     },
     "rules-group": {

@@ -14,7 +14,6 @@ import {
   Input,
   Label,
   MultiCombobox,
-  ScrollContainer,
   Stack,
   Text,
   Tooltip,
@@ -45,7 +44,6 @@ import {
 } from './utils';
 
 const SIDEBAR_WIDTH = 250;
-const COLLAPSED_WIDTH = 36;
 
 const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
@@ -59,28 +57,27 @@ export function RulesFilterSidebar() {
 
   return (
     <div className={cx(styles.sidebar, !open && styles.sidebarCollapsed)}>
-      <Stack direction="row" alignItems="center">
-        <Spacer />
-        {open ? (
-          <Button size="sm" variant="secondary" icon="angle-left" onClick={toggleOpen}>
-            <Trans i18nKey="alerting.rules-filter-sidebar.hide-filters">Hide filters</Trans>
-          </Button>
-        ) : (
-          <Tooltip content={t('alerting.rule-list.filter-sidebar.collapse', 'Show filters')} placement="right">
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="filter"
-              onClick={toggleOpen}
-              aria-label={t('alerting.rule-list.filter-sidebar.collapse', 'Show filters')}
-            />
-          </Tooltip>
-        )}
-      </Stack>
-      {open && (
-        <ScrollContainer scrollbarWidth="thin">
+      {open ? (
+        <>
+          <Stack direction="row" alignItems="center">
+            <Button size="sm" variant="primary" fill="text" onClick={() => {}}>
+              <Trans i18nKey="alerting.rules-filter-sidebar.clear-filters">Clear filters</Trans>
+            </Button>
+            <Spacer />
+            <Button size="sm" variant="secondary" icon="angle-left" onClick={toggleOpen}>
+              <Trans i18nKey="alerting.rules-filter-sidebar.hide-filters">Hide filters</Trans>
+            </Button>
+          </Stack>
           <FilterSidebarForm />
-        </ScrollContainer>
+        </>
+      ) : (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="filter"
+          onClick={toggleOpen}
+          aria-label={t('alerting.rule-list.filter-sidebar.collapse', 'Show filters')}
+        />
       )}
     </div>
   );
@@ -544,36 +541,14 @@ function getStyles(theme: GrafanaTheme2) {
       paddingBottom: theme.spacing(2),
     }),
     sidebarCollapsed: css({
-      width: COLLAPSED_WIDTH,
-      minWidth: COLLAPSED_WIDTH,
-      maxWidth: COLLAPSED_WIDTH,
+      width: 0,
       borderRight: 'none',
-    }),
-    collapseButton: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: 24,
-      height: 24,
-      padding: 0,
-      marginLeft: 'auto',
-      background: 'none',
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      cursor: 'pointer',
-      color: theme.colors.text.secondary,
-      flexShrink: 0,
-      '&:hover': {
-        background: theme.colors.action.hover,
-        color: theme.colors.text.primary,
-      },
     }),
     section: css({
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
     }),
-
     divider: css({
       borderTop: `1px solid ${theme.colors.border.weak}`,
       flexShrink: 0,
