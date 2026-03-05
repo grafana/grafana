@@ -332,8 +332,8 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					rulesets := []*github.RepositoryRuleset{
 						{
 							ID:          github.Ptr(int64(1)),
-							Name:        github.Ptr("main protection"),
-							Enforcement: github.Ptr(github.RulesetEnforcementActive),
+							Name:        "main protection",
+							Enforcement: github.RulesetEnforcementActive,
 							Target:      &target,
 							Conditions: &github.RepositoryRulesetConditions{
 								RefName: &github.RepositoryRulesetRefConditionParameters{
@@ -391,8 +391,8 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					rulesets := []*github.RepositoryRuleset{
 						{
 							ID:          github.Ptr(int64(2)),
-							Name:        github.Ptr("main protection"),
-							Enforcement: github.Ptr(github.RulesetEnforcementActive),
+							Name:        "main protection",
+							Enforcement: github.RulesetEnforcementActive,
 							Target:      &target,
 							Conditions: &github.RepositoryRulesetConditions{
 								RefName: &github.RepositoryRulesetRefConditionParameters{
@@ -451,8 +451,8 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					rulesets := []*github.RepositoryRuleset{
 						{
 							ID:          github.Ptr(int64(3)),
-							Name:        github.Ptr("main protection"),
-							Enforcement: github.Ptr(github.RulesetEnforcementActive),
+							Name:        "main protection",
+							Enforcement: github.RulesetEnforcementActive,
 							Target:      &target,
 							Conditions: &github.RepositoryRulesetConditions{
 								RefName: &github.RepositoryRulesetRefConditionParameters{
@@ -512,8 +512,8 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					rulesets := []*github.RepositoryRuleset{
 						{
 							ID:          github.Ptr(int64(4)),
-							Name:        github.Ptr("disabled ruleset"),
-							Enforcement: github.Ptr(github.RulesetEnforcementDisabled),
+							Name:        "disabled ruleset",
+							Enforcement: github.RulesetEnforcementDisabled,
 							Target:      &target,
 							Rules: &github.RepositoryRulesetRules{
 								PullRequest: &github.PullRequestRuleParameters{},
@@ -566,8 +566,8 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					rulesets := []*github.RepositoryRuleset{
 						{
 							ID:          github.Ptr(int64(5)),
-							Name:        github.Ptr("production protection"),
-							Enforcement: github.Ptr(github.RulesetEnforcementActive),
+							Name:        "production protection",
+							Enforcement: github.RulesetEnforcementActive,
 							Target:      &target,
 							Conditions: &github.RepositoryRulesetConditions{
 								RefName: &github.RepositoryRulesetRefConditionParameters{
