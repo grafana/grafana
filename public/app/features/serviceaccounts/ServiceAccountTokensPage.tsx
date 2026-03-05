@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { getTimeZone } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Button, Stack } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ApiKey } from 'app/types/apiKeys';

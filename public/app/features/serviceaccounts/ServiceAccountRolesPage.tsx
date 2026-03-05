@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 
-import { Stack, Alert, Button } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 import { useListUserRolesQuery } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
