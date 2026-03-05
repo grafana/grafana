@@ -66,6 +66,63 @@ interface PrepConfigOpts {
   rowsFrame?: { yBucketScale?: { type: ScaleDistribution; log?: number; linearThreshold?: number } };
 }
 
+/**
+ * Creates the sparse heatmap Y scale range function.
+ * Exported for testing — verifies the null-data guard that prevents the logAxisSplits OOM infinite loop.
+ * See utils.test.ts: 'logAxisSplits infinite loop with empty sparse heatmap data'.
+ */
+export function createSparseYScaleRange(
+  scaleDistribution: ScaleDistribution,
+  scaleLog: number,
+  yScaleKey: string,
+  isOrdinalY: boolean,
+  yAxisConfig: YAxisConfig
+): (u: uPlot, dataMin: number, dataMax: number) => [number | null, number | null] {
+  return (u, dataMin, dataMax) => {
+    // Guard: when dataMin/dataMax are null (empty panel data), uPlot.rangeLog(null, 0, base, true)
+    // returns [0, 0], and logAxisSplits(scaleMin=0, logBase=2) enters an infinite loop
+    // (pow(2,-Inf)=0, 0+0=0 forever) → OOM crash. Return [null,null] so uPlot skips logAxisSplits.
+    if (dataMin == null || dataMax == null) {
+      return [null, null];
+    }
+
+    const yMinData = u.data[1]?.[1];
+    const yMaxData = u.data[1]?.[2];
+    const yMinValues = Array.isArray(yMinData) ? yMinData : [];
+    const yMaxValues = Array.isArray(yMaxData) ? yMaxData : [];
+
+    // ...but uPlot currently only auto-ranges from the yMin facet data, so we have to grow by 1 extra factor
+    const bucketFactor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+    dataMax *= bucketFactor;
+
+    let scaleMin: number | null, scaleMax: number | null;
+
+    const isLogScale = scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
+    [scaleMin, scaleMax] = isLogScale ? uPlot.rangeLog(dataMin, dataMax, scaleLog, true) : [dataMin, dataMax];
+
+    let { min: explicitMin, max: explicitMax } = yAxisConfig;
+
+    if (isLogScale && !isOrdinalY) {
+      let yExp = u.scales[yScaleKey].log!;
+      let log = yExp === 2 ? Math.log2 : Math.log10;
+
+      if (explicitMin != null && explicitMin > 0) {
+        let minLog = log(explicitMin);
+        scaleMin = yExp ** incrRoundDn(minLog, 1);
+      }
+
+      if (explicitMax != null && explicitMax > 0) {
+        let maxLog = log(explicitMax);
+        scaleMax = yExp ** incrRoundUp(maxLog, 1);
+      }
+    } else if (!isOrdinalY) {
+      [scaleMin, scaleMax] = applyExplicitMinMax(scaleMin, scaleMax, explicitMin, explicitMax);
+    }
+
+    return [scaleMin, scaleMax];
+  };
+}
+
 export function prepConfig(opts: PrepConfigOpts) {
   const {
     dataRef,
@@ -242,48 +299,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     range:
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       isSparseHeatmap
-        ? (u, dataMin, dataMax) => {
-            // Extract yMin and yMax arrays
-            const yMinData = u.data[1]?.[1];
-            const yMaxData = u.data[1]?.[2];
-            const yMinValues = Array.isArray(yMinData) ? yMinData : [];
-            const yMaxValues = Array.isArray(yMaxData) ? yMaxData : [];
-
-            // ...but uPlot currently only auto-ranges from the yMin facet data, so we have to grow by 1 extra factor
-            const bucketFactor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-
-            dataMax *= bucketFactor;
-
-            let scaleMin: number | null, scaleMax: number | null;
-
-            const isLogScale =
-              scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
-            [scaleMin, scaleMax] = isLogScale ? uPlot.rangeLog(dataMin, dataMax, scaleLog, true) : [dataMin, dataMax];
-
-            let { min: explicitMin, max: explicitMax } = yAxisConfig;
-
-            if (isLogScale && !isOrdinalY) {
-              let yExp = u.scales[yScaleKey].log!;
-              let log = yExp === 2 ? Math.log2 : Math.log10;
-
-              // guard against <= 0
-              if (explicitMin != null && explicitMin > 0) {
-                // snap to magnitude
-                let minLog = log(explicitMin);
-                scaleMin = yExp ** incrRoundDn(minLog, 1);
-              }
-
-              if (explicitMax != null && explicitMax > 0) {
-                let maxLog = log(explicitMax);
-                scaleMax = yExp ** incrRoundUp(maxLog, 1);
-              }
-            } else if (!isOrdinalY) {
-              // Apply explicit min/max for linear scale
-              [scaleMin, scaleMax] = applyExplicitMinMax(scaleMin, scaleMax, explicitMin, explicitMax);
-            }
-
-            return [scaleMin, scaleMax];
-          }
+        ? createSparseYScaleRange(scaleDistribution, scaleLog, yScaleKey, isOrdinalY, yAxisConfig)
         : // dense and ordinal only have one of yMin|yMax|y, so expand range by one cell in the direction of le/ge/unknown
           (u, dataMin, dataMax) => {
             let scaleMin = dataMin,
