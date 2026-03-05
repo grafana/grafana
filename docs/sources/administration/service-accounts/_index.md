@@ -98,7 +98,7 @@ Service accounts can't be used for instance-wide operations, such as global user
 
 ## Service account tokens
 
-A service account token is a generated random string that acts as an alternative to a password when authenticating with Grafana's HTTP API. Use service access tokens the same way as API Keys, for example to access Grafana HTTP API programmatically. Service account access tokens inherit permissions from the service account.
+A service account token is a generated random string that acts as an alternative to a password when authenticating with the Grafana HTTP API. Use service access tokens the same way as API Keys, for example to access Grafana HTTP API programmatically. Service account access tokens inherit permissions from the service account.
 
 When you create a service account, you can associate one or more access tokens with it. Create multiple tokens for the same service account if:
 
