@@ -114,14 +114,11 @@ jobs:
         with:
           name: grafana-frontend
           path: |
-            public/build
-            public/dashboards
-            public/views
-            public/emails
-            public/app/plugins
+            public/
             !**/*.ts
             !**/*.tsx
             !public/**/node_modules/
+            !public/locales/
           retention-days: 1
 
   run-storybook-test:
