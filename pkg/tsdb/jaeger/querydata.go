@@ -51,7 +51,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 		// Handle "Search" query type
 		if query.QueryType == "search" {
 			// TODO: enable routing to gRPC when ready, currently pending on: https://github.com/jaegertracing/jaeger/issues/7594
-			frames, err := dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
+			frames, err := dsInfo.JaegerClient.Search(ctx, &query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
 			if err != nil {
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue
