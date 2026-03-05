@@ -24,8 +24,8 @@ jest.mock('./QueryEditor/QueryEditorContextWrapper', () => ({
   QueryEditorContextWrapper: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-jest.mock('./QueryEditor/Sidebar/QueryEditorSidebar', () => ({
-  QueryEditorSidebar: () => <div data-testid="query-editor-sidebar" />,
+jest.mock('./QueryEditor/Sidebar/Sidebar', () => ({
+  Sidebar: () => <div data-testid="query-editor-sidebar" />,
 }));
 
 // Minimal mock so instanceof checks in VizAndDataPaneNext work without scene setup

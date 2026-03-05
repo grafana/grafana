@@ -54,14 +54,15 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
         defaultValue: undefined,
         restorable: false,
       });
+      variable.changeValueTo([], []);
     } else {
+      const value = options.map((opt) => opt.value!);
+      const text = options.map((opt) => opt.label ?? opt.value!);
       variable.setState({
-        defaultValue: {
-          value: options.map((opt) => opt.value!),
-          text: options.map((opt) => opt.label ?? opt.value!),
-        },
+        defaultValue: { value, text },
         restorable: false,
       });
+      variable.changeValueTo(value, text);
     }
     onRunQuery();
   };
