@@ -155,7 +155,7 @@ export const FilterRow = memo(
         {/* Operator cell */}
         <div className={styles.operatorCell}>
           <Select<string>
-            aria-label={t('dashboard.filters-overview.operator', 'Operator')}
+            aria-label={t('dashboard.filters-overview.operator.aria-label', 'Operator')}
             options={operatorOptions}
             value={operatorValue}
             placeholder={t('dashboard.filters-overview.operator.placeholder', 'Select operator')}
@@ -173,10 +173,10 @@ export const FilterRow = memo(
         <div className={styles.valueCell}>
           {isMultiOperator ? (
             <MultiSelect<string>
-              aria-label={t('dashboard.filters-overview.value', 'Value')}
+              aria-label={t('dashboard.filters-overview.multi.value.aria-label', 'Value')}
               options={valueOptions}
               value={multiValues.map((v) => ({ label: v, value: v }))}
-              placeholder={t('dashboard.filters-overview.value.placeholder', 'Select values')}
+              placeholder={t('dashboard.filters-overview.multi.value.placeholder', 'Select values')}
               allowCustomValue
               isClearable
               isLoading={isLoadingValues}
@@ -194,7 +194,7 @@ export const FilterRow = memo(
             />
           ) : (
             <Select<string>
-              aria-label={t('dashboard.filters-overview.value', 'Value')}
+              aria-label={t('dashboard.filters-overview.value.aria-label', 'Value')}
               options={valueOptions}
               value={singleValue ? { label: singleValue, value: singleValue } : null}
               placeholder={t('dashboard.filters-overview.value.placeholder', 'Select value')}

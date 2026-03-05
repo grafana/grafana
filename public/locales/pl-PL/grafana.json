@@ -4834,7 +4834,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link do strony Połączenia",
-      "body": "Źródła danych są dostępne w nowym miejscu! Możesz odkrywać nowe źródła danych i zarządzać istniejącymi na stronie Połączenia dostępnej z menu głównego.",
+      "body": "Źródła danych są dostępne w nowym miejscu! Możesz odkrywać nowe źródła danych i zarządzać istniejącymi na <0>stronie Połączenia</0> dostępnej z menu głównego.",
       "go-to-connections": "Przejdź do strony Połączenia"
     },
     "data-source-details-page": {
