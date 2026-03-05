@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import assertsSvg from 'img/asserts_logo.svg';
+import knowledgeGraphSvg from 'img/knowledge_graph_logo.svg';
 
 import AdCard, { AdCardProps } from './AdCard';
 
@@ -14,7 +14,7 @@ export function getAssertsCardConfig(): AdCardProps {
       'Find and fix issues faster with automated root cause analysis for your services.'
     ),
     href: LINK,
-    logoUrl: assertsSvg,
+    logoUrl: knowledgeGraphSvg,
     items: [
       t('alerting.home.asserts-card-item-1', 'Automatically map services and their dependencies.'),
       t('alerting.home.asserts-card-item-2', 'Detect anomalies and surface root causes without manual queries.'),
