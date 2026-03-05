@@ -259,9 +259,7 @@ func TestMetricsCache_CleanupRemovesExpiredEntries(t *testing.T) {
 	require.Equal(t, 1, mockProv.getCallCount())
 
 	// Verify entry exists
-	cache.mu.RLock()
-	_, exists := cache.entries["ds-uid-1"]
-	cache.mu.RUnlock()
+	_, exists := cache.entries.Load("ds-uid-1")
 	require.True(t, exists)
 
 	// Wait for TTL to expire
@@ -271,9 +269,7 @@ func TestMetricsCache_CleanupRemovesExpiredEntries(t *testing.T) {
 	cache.cleanupExpired()
 
 	// Verify entry was removed
-	cache.mu.RLock()
-	_, exists = cache.entries["ds-uid-1"]
-	cache.mu.RUnlock()
+	_, exists = cache.entries.Load("ds-uid-1")
 	require.False(t, exists)
 }
 

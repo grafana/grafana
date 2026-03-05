@@ -10,6 +10,11 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
+// toEntry is a helper to type-assert sync.Map values to *cacheEntry.
+func toEntry(val any) *cacheEntry {
+	return val.(*cacheEntry)
+}
+
 const (
 	defaultCleanupInterval = 10 * time.Minute
 
@@ -33,9 +38,8 @@ type cacheEntry struct {
 // Providers are registered via RegisterProvider and looked up by datasource type.
 // Implements app.Runnable via Run() to manage the cleanup goroutine lifecycle.
 type MetricsCache struct {
-	mu        sync.RWMutex
-	entries   map[string]*cacheEntry     // key: datasourceUID
-	providers map[string]MetricsProvider // key: datasource type (e.g., "prometheus")
+	entries   sync.Map                   // key: datasourceUID → *cacheEntry
+	providers map[string]MetricsProvider // key: datasource type (e.g., "prometheus"), read-only after init
 	sf        singleflight.Group         // coalesces concurrent fetches for the same datasourceUID
 }
 
@@ -43,7 +47,6 @@ type MetricsCache struct {
 // Use RegisterProvider to add providers for each datasource type.
 func NewMetricsCache() *MetricsCache {
 	return &MetricsCache{
-		entries:   make(map[string]*cacheEntry),
 		providers: make(map[string]MetricsProvider),
 	}
 }
@@ -52,9 +55,6 @@ func NewMetricsCache() *MetricsCache {
 // This should be called during app initialization, before any GetMetrics calls.
 // Panics if a provider is already registered for the given type.
 func (c *MetricsCache) RegisterProvider(dsType string, provider MetricsProvider) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	if _, exists := c.providers[dsType]; exists {
 		panic("provider already registered for datasource type: " + dsType)
 	}
@@ -83,17 +83,16 @@ func (c *MetricsCache) Run(ctx context.Context) error {
 // On cache miss or expiration, fetches from provider and caches the result.
 func (c *MetricsCache) GetMetrics(ctx context.Context, dsType, datasourceUID, datasourceURL string,
 	client *http.Client) ([]string, error) {
-	// Check cache first (read lock)
-	c.mu.RLock()
-	cached, exists := c.entries[datasourceUID]
-	provider := c.providers[dsType]
-	c.mu.RUnlock()
-
-	if exists && time.Now().Before(cached.expiresAt) {
-		return cached.metrics, nil
+	// Check cache first
+	if val, ok := c.entries.Load(datasourceUID); ok {
+		cached := toEntry(val)
+		if time.Now().Before(cached.expiresAt) {
+			return cached.metrics, nil
+		}
 	}
 
 	// Verify provider exists
+	provider := c.providers[dsType]
 	if provider == nil {
 		return nil, fmt.Errorf("no metrics provider registered for datasource type: %s", dsType)
 	}
@@ -101,11 +100,11 @@ func (c *MetricsCache) GetMetrics(ctx context.Context, dsType, datasourceUID, da
 	// Cache miss or expired — use singleflight to coalesce concurrent fetches
 	v, err, _ := c.sf.Do(datasourceUID, func() (any, error) {
 		// Re-check cache: another goroutine may have populated it while we waited
-		c.mu.RLock()
-		cached, exists := c.entries[datasourceUID]
-		c.mu.RUnlock()
-		if exists && time.Now().Before(cached.expiresAt) {
-			return cached.metrics, nil
+		if val, ok := c.entries.Load(datasourceUID); ok {
+			cached := toEntry(val)
+			if time.Now().Before(cached.expiresAt) {
+				return cached.metrics, nil
+			}
 		}
 
 		result, err := provider.GetMetrics(ctx, datasourceUID, datasourceURL, client)
@@ -115,13 +114,11 @@ func (c *MetricsCache) GetMetrics(ctx context.Context, dsType, datasourceUID, da
 
 		// Don't cache results with zero TTL
 		if result.TTL > 0 {
-			c.mu.Lock()
-			c.entries[datasourceUID] = &cacheEntry{
+			c.entries.Store(datasourceUID, &cacheEntry{
 				metrics:    result.Metrics,
 				metricsSet: toMetricsSet(result.Metrics),
 				expiresAt:  time.Now().Add(result.TTL),
-			}
-			c.mu.Unlock()
+			})
 		}
 
 		return result.Metrics, nil
@@ -142,12 +139,11 @@ func (c *MetricsCache) GetMetrics(ctx context.Context, dsType, datasourceUID, da
 func (c *MetricsCache) GetMetricsSet(ctx context.Context, dsType, datasourceUID, datasourceURL string,
 	client *http.Client) (map[string]bool, error) {
 	// Check cache — return the pre-built set on hit
-	c.mu.RLock()
-	cached, exists := c.entries[datasourceUID]
-	c.mu.RUnlock()
-
-	if exists && time.Now().Before(cached.expiresAt) {
-		return cached.metricsSet, nil
+	if val, ok := c.entries.Load(datasourceUID); ok {
+		cached := toEntry(val)
+		if time.Now().Before(cached.expiresAt) {
+			return cached.metricsSet, nil
+		}
 	}
 
 	// Delegate to GetMetrics to handle provider lookup, fetching, and caching
@@ -157,12 +153,11 @@ func (c *MetricsCache) GetMetricsSet(ctx context.Context, dsType, datasourceUID,
 	}
 
 	// Re-check cache — GetMetrics will have stored the entry (with metricsSet) if TTL > 0
-	c.mu.RLock()
-	cached, exists = c.entries[datasourceUID]
-	c.mu.RUnlock()
-
-	if exists && time.Now().Before(cached.expiresAt) {
-		return cached.metricsSet, nil
+	if val, ok := c.entries.Load(datasourceUID); ok {
+		cached := toEntry(val)
+		if time.Now().Before(cached.expiresAt) {
+			return cached.metricsSet, nil
+		}
 	}
 
 	// Fallback: provider returned TTL=0 (explicitly opted out of caching), build set on the fly
@@ -182,12 +177,10 @@ func toMetricsSet(metrics []string) map[string]bool {
 func (c *MetricsCache) cleanupExpired() {
 	now := time.Now()
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	for key, entry := range c.entries {
-		if now.After(entry.expiresAt) {
-			delete(c.entries, key)
+	c.entries.Range(func(key, val any) bool {
+		if now.After(toEntry(val).expiresAt) {
+			c.entries.Delete(key)
 		}
-	}
+		return true
+	})
 }
