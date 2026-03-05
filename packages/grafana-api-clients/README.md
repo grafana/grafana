@@ -4,7 +4,45 @@
 
 This package provides reusable clients for Grafana APIs. The implementation is in ALPHA and the package is now published on npm as `@grafana/api-clients`.
 
-# Instructions within `grafana/grafana` repository:
+The clients are auto-generated [RTK Query](https://redux-toolkit.js.org/rtk-query/overview) API clients for Grafana's App Platform APIs.
+
+## Installation
+
+```bash
+yarn add @grafana/api-clients
+```
+
+## Usage
+
+Each API client is available as a separate subpath export, scoped by group and version:
+
+```ts
+import { generatedAPI } from '@grafana/api-clients/rtkq/<group>/<version>';
+```
+
+For example, to use the dashboard API or a hook:
+
+```ts
+import { generatedAPI, useListDashboardsQuery } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+```
+
+### Adding RTKQ middleware to your Redux store
+
+If you're using this package in the context of the Grafana application, the middleware is already added for all API clients, so you don't need to add it manually.
+If you're using this package for something else, outside of the core Grafana UI, you can add the middleware and reducers to your Redux store by importing the `allMiddleware` and `allReducers` exports.
+
+```ts
+import { allMiddleware, allReducers } from '@grafana/api-clients/rtkq';
+
+const store = configureStore({
+  reducer: {
+    ...allReducers,
+  },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(...allMiddleware),
+});
+```
+
+# Development (within `grafana/grafana`)
 
 ## Generating RTK Query API Clients
 
