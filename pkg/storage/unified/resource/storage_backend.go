@@ -483,10 +483,6 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					if err != nil {
 						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
 					}
-					// if in dry run mode, log the key to deletet
-					if b.garbageCollection.DryRun {
-						b.log.Info("garbage collection", "key to delete", deleteKey)
-					}
 					keysToDelete = append(keysToDelete, deleteKey)
 				}
 
