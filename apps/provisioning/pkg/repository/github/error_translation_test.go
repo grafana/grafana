@@ -14,9 +14,9 @@ import (
 
 func TestTranslateGitHubError(t *testing.T) {
 	tests := []struct {
-		name           string
-		inputErr       error
-		expectedErr    error
+		name                string
+		inputErr            error
+		expectedErr         error
 		expectedMsgContains string
 	}{
 		{

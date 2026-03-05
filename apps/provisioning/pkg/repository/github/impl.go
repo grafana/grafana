@@ -378,17 +378,7 @@ func paginatedList[T any](
 	for {
 		items, resp, err := listFn(ctx, &opts.ListOptions)
 		if err != nil {
-			var ghErr *github.ErrorResponse
-			if !errors.As(err, &ghErr) {
-				return nil, err
-			}
-			if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-				return nil, repo.ErrServerUnavailable
-			}
-			if ghErr.Response.StatusCode == http.StatusNotFound {
-				return nil, repo.ErrFileNotFound
-			}
-			return nil, err
+			return nil, translateGitHubError(err)
 		}
 
 		// Pre-allocate the slice if this is the first page

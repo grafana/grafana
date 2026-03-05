@@ -330,7 +330,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 			wantCommits: nil,
-			wantErr:     errors.New("Internal server error"),
+			wantErr:     errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -507,7 +507,7 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			owner:        "test-owner",
 			repository:   "test-repo",
 			wantWebhooks: nil,
-			wantErr:      errors.New("Internal server error"),
+			wantErr:      errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -524,8 +524,15 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Verify errors.Is() works for error type checking (used by upper layers)
-				assert.ErrorIs(t, err, tt.wantErr)
+				// Check if it's a wrapped/standard repository error or generic error
+				if errors.Is(err, tt.wantErr) {
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					// For generic errors not in the chain, verify message content
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}
@@ -704,7 +711,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				Secret:      "secret123",
 			},
 			want:    WebhookConfig{},
-			wantErr: errors.New("Internal server error"),
+			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -721,8 +728,15 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Verify errors.Is() works for error type checking (used by upper layers)
-				assert.ErrorIs(t, err, tt.wantErr)
+				// Check if it's a wrapped/standard repository error or generic error
+				if errors.Is(err, tt.wantErr) {
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					// For generic errors not in the chain, verify message content
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}
@@ -873,7 +887,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			repository: "test-repo",
 			webhookID:  123,
 			want:       WebhookConfig{},
-			wantErr:    errors.New("Internal server error"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -890,8 +904,15 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Verify errors.Is() works for error type checking (used by upper layers)
-				assert.ErrorIs(t, err, tt.wantErr)
+				// Check if it's a wrapped/standard repository error or generic error
+				if errors.Is(err, tt.wantErr) {
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					// For generic errors not in the chain, verify message content
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1008,7 +1029,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  101,
-			wantErr:    errors.New("Internal server error"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -1025,8 +1046,15 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Verify errors.Is() works for error type checking (used by upper layers)
-				assert.ErrorIs(t, err, tt.wantErr)
+				// Check if it's a wrapped/standard repository error or generic error
+				if errors.Is(err, tt.wantErr) {
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					// For generic errors not in the chain, verify message content
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1194,7 +1222,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				ContentType: "json",
 				Secret:      "secret123",
 			},
-			wantErr: errors.New("Internal server error"),
+			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -1211,8 +1239,15 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Verify errors.Is() works for error type checking (used by upper layers)
-				assert.ErrorIs(t, err, tt.wantErr)
+				// Check if it's a wrapped/standard repository error or generic error
+				if errors.Is(err, tt.wantErr) {
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					// For generic errors not in the chain, verify message content
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1370,7 +1405,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			repository: "test-repo",
 			number:     202,
 			wantFiles:  nil,
-			wantErr:    errors.New("Internal server error"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -1387,8 +1422,15 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Verify errors.Is() works for error type checking (used by upper layers)
-				assert.ErrorIs(t, err, tt.wantErr)
+				// Check if it's a wrapped/standard repository error or generic error
+				if errors.Is(err, tt.wantErr) {
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					// For generic errors not in the chain, verify message content
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1482,7 +1524,7 @@ func TestCreatePullRequestComment(t *testing.T) {
 			repository: "test-repo",
 			number:     101,
 			body:       "Test comment",
-			wantErr:    errors.New("Internal server error"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -1499,8 +1541,15 @@ func TestCreatePullRequestComment(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Verify errors.Is() works for error type checking (used by upper layers)
-				assert.ErrorIs(t, err, tt.wantErr)
+				// Check if it's a wrapped/standard repository error or generic error
+				if errors.Is(err, tt.wantErr) {
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					// For generic errors not in the chain, verify message content
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}
@@ -1830,7 +1879,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "nonexistent-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrFileNotFound,
 		},
 		{
 			name: "service unavailable error",
@@ -1851,7 +1900,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "unauthorized access",
@@ -1872,7 +1921,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "private-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrUnauthorized,
 		},
 		{
 			name: "forbidden access",
@@ -1893,7 +1942,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "restricted-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrPermissionDenied,
 		},
 		{
 			name: "rate limit exceeded",
@@ -1914,7 +1963,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    repo.ErrPermissionDenied,
 		},
 		{
 			name: "internal server error",
@@ -1935,7 +1984,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("failed to get repository"),
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal Server Error)"),
 		},
 		{
 			name: "repository with special characters in name",
@@ -1978,7 +2027,12 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			if tt.wantErr != nil {
 				assert.Error(t, err)
 				// Verify errors.Is() works for error type checking (used by upper layers)
-				assert.ErrorIs(t, err, tt.wantErr)
+				// For generic errors, verify the error message contains expected text
+				if errors.Is(err, tt.wantErr) {
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
 				assert.Equal(t, tt.wantRepo, got)
 			} else {
 				assert.NoError(t, err)
