@@ -35,9 +35,10 @@ type probeEntry struct {
 // It also demonstrates how to override authentication for a service – in this
 // case we are disabling any auth in AuthFuncOverride.
 type HealthService struct {
-	server *health.Server
-	logger log.Logger
-	cancel context.CancelFunc
+	server     *health.Server
+	logger     log.Logger
+	runningCtx context.Context
+	cancel     context.CancelFunc
 
 	// probes contains registered health probes.
 	probes []probeEntry
@@ -55,10 +56,13 @@ func ProvideHealthService(grpcServerProvider Provider) *HealthService {
 }
 
 func newHealthService() *HealthService {
+	runningCtx, cancel := context.WithCancel(context.Background())
 	return &HealthService{
-		server:   health.NewServer(),
-		statuses: make(map[string]grpc_health_v1.HealthCheckResponse_ServingStatus),
-		logger:   log.New("health-service"),
+		server:     health.NewServer(),
+		statuses:   make(map[string]grpc_health_v1.HealthCheckResponse_ServingStatus),
+		logger:     log.New("health-service"),
+		runningCtx: runningCtx,
+		cancel:     cancel,
 	}
 }
 
@@ -84,6 +88,8 @@ func (s *HealthService) List(ctx context.Context, req *grpc_health_v1.HealthList
 
 // Shutdown sets all serving status to NOT_SERVING and notifies watchers.
 func (s *HealthService) Shutdown() {
+	s.logger.Info("Shutting down health service, setting all registered services to NOT_SERVING")
+	s.cancel()
 	s.server.Shutdown()
 }
 
@@ -135,54 +141,38 @@ func (s *HealthService) Healthy() {
 	if !hasProbes {
 		return
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	s.cancel = cancel
-
-	s.logger.Debug("Service manager healthy, starting health check loop", "probes", len(s.probes))
-	s.checkAll(context.Background())
-	go s.pollLoop(ctx)
+	s.logger.Info("Service manager reported healthy, starting health check loop", "probes", len(s.probes))
+	s.checkAll()
+	go s.pollLoop()
 }
 
-// Stopped implements services.ManagerListener.
-func (s *HealthService) Stopped() {
-	s.logger.Debug("Service manager stopped, shutting down health server")
-	if s.cancel != nil {
-		s.cancel()
-	}
-	s.Shutdown()
-}
+// Stopped implements services.ManagerListener. No-op
+func (s *HealthService) Stopped() {}
 
-// Failure implements services.ManagerListener. When any managed service fails
-// the manager will shut down all services, so we mark everything NOT_SERVING.
-func (s *HealthService) Failure(_ services.Service) {
-	s.logger.Info("Service manager failure, shutting down health server")
-	if s.cancel != nil {
-		s.cancel()
-	}
-	s.Shutdown()
-}
+// Failure implements services.ManagerListener. No-op
+func (s *HealthService) Failure(_ services.Service) {}
 
-func (s *HealthService) pollLoop(ctx context.Context) {
+func (s *HealthService) pollLoop() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			s.checkAll(ctx)
-		case <-ctx.Done():
-			s.logger.Debug("health checker loop stopped")
+			s.checkAll()
+		case <-s.runningCtx.Done():
+			s.logger.Info("Health checker loop stopped")
 			return
 		}
 	}
 }
 
-func (s *HealthService) checkAll(ctx context.Context) {
+func (s *HealthService) checkAll() {
 	s.mu.Lock()
 	probes := s.probes
 	s.mu.Unlock()
 
 	for _, entry := range probes {
-		pollCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		pollCtx, cancel := context.WithTimeout(s.runningCtx, 5*time.Second)
 		healthy, err := entry.probe.CheckHealth(pollCtx)
 		cancel()
 

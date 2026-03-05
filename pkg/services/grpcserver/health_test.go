@@ -220,12 +220,12 @@ func TestHealthService_Probes(t *testing.T) {
 		healthy.Store(true)
 		hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return healthy.Load(), nil }), "svc-a", "svc-b")
 
-		hs.checkAll(context.Background())
+		hs.checkAll()
 		requireStatus(t, hs, "svc-a", serving)
 		requireStatus(t, hs, "svc-b", serving)
 
 		healthy.Store(false)
-		hs.checkAll(context.Background())
+		hs.checkAll()
 		requireStatus(t, hs, "svc-a", notServing)
 		requireStatus(t, hs, "svc-b", notServing)
 	})
@@ -234,7 +234,7 @@ func TestHealthService_Probes(t *testing.T) {
 		hs := newTestHealthService(t)
 		hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return false, fmt.Errorf("down") }), "svc-a")
 
-		hs.checkAll(context.Background())
+		hs.checkAll()
 		requireStatus(t, hs, "svc-a", notServing)
 	})
 
@@ -243,7 +243,7 @@ func TestHealthService_Probes(t *testing.T) {
 		var calls atomic.Int32
 		hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { calls.Add(1); return true, nil }), "svc-a", "svc-b", "svc-c")
 
-		hs.checkAll(context.Background())
+		hs.checkAll()
 		assert.Equal(t, int32(1), calls.Load())
 	})
 
@@ -254,7 +254,7 @@ func TestHealthService_Probes(t *testing.T) {
 		hs.Register(probeA, "svc-a", "svc-b")
 		hs.Register(probeB, "svc-b")
 
-		hs.checkAll(context.Background())
+		hs.checkAll()
 
 		// svc-a healthy, svc-b unhealthy — aggregate must be NOT_SERVING.
 		requireStatus(t, hs, "svc-a", serving)
@@ -266,27 +266,21 @@ func TestHealthService_Probes(t *testing.T) {
 		hs := newTestHealthService(t)
 		hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return true, nil }), "svc-a")
 		hs.Healthy()
-		defer func() {
-			if hs.cancel != nil {
-				hs.cancel()
-			}
-		}()
+		defer hs.Shutdown()
 		requireStatus(t, hs, "svc-a", serving)
 	})
 
-	t.Run("Stopped calls shutdown", func(t *testing.T) {
+	t.Run("Stopped and Failure are no-ops", func(t *testing.T) {
 		hs := newTestHealthService(t)
-		hs.SetServingStatus("svc-a", serving)
-		hs.Stopped()
-		requireStatus(t, hs, "svc-a", notServing)
-	})
+		hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return true, nil }), "svc-a")
+		hs.Healthy()
+		defer hs.Shutdown()
 
-	t.Run("Failure shuts down all", func(t *testing.T) {
-		hs := newTestHealthService(t)
-		hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return true, nil }), "svc-a", "svc-b")
+		// Stopped/Failure are no-ops — Shutdown is the DSKitService
+		// stopping function's responsibility.
+		hs.Stopped()
 		hs.Failure(nil)
-		requireStatus(t, hs, "svc-a", notServing)
-		requireStatus(t, hs, "svc-b", notServing)
+		requireStatus(t, hs, "svc-a", serving) // still serving
 	})
 }
 
@@ -294,7 +288,10 @@ func TestHealthService_ManagerListenerIntegration(t *testing.T) {
 	hs := newTestHealthService(t)
 	hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return true, nil }), "svc-a")
 
-	svc := services.NewIdleService(nil, nil).WithName("test-svc")
+	svc := services.NewIdleService(nil, func(_ error) error {
+		hs.Shutdown()
+		return nil
+	}).WithName("test-svc")
 	mgr, err := services.NewManager(svc)
 	require.NoError(t, err)
 	mgr.AddListener(hs)
@@ -303,6 +300,7 @@ func TestHealthService_ManagerListenerIntegration(t *testing.T) {
 	require.NoError(t, mgr.StartAsync(ctx))
 	require.NoError(t, mgr.AwaitHealthy(ctx))
 
+	// Healthy() triggers an immediate poll — services become SERVING.
 	require.Eventually(t, func() bool {
 		res, err := hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "svc-a"})
 		return err == nil && res.Status == grpc_health_v1.HealthCheckResponse_SERVING
@@ -311,10 +309,9 @@ func TestHealthService_ManagerListenerIntegration(t *testing.T) {
 	mgr.StopAsync()
 	require.NoError(t, mgr.AwaitStopped(ctx))
 
-	require.Eventually(t, func() bool {
-		res, err := hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "svc-a"})
-		return err == nil && res.Status == grpc_health_v1.HealthCheckResponse_NOT_SERVING
-	}, 20*time.Second, 50*time.Millisecond)
+	res, err := hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "svc-a"})
+	require.NoError(t, err)
+	assert.Equal(t, grpc_health_v1.HealthCheckResponse_NOT_SERVING, res.Status)
 }
 
 type fakeHealthWatchServer struct {
