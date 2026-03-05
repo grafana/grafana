@@ -683,52 +683,6 @@ func (_c *AlertmanagerMock_SaveAndApplyConfig_Call) RunAndReturn(run func(contex
 	return _c
 }
 
-// SaveAndApplyDefaultConfig provides a mock function with given fields: ctx
-func (_m *AlertmanagerMock) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SaveAndApplyDefaultConfig")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// AlertmanagerMock_SaveAndApplyDefaultConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveAndApplyDefaultConfig'
-type AlertmanagerMock_SaveAndApplyDefaultConfig_Call struct {
-	*mock.Call
-}
-
-// SaveAndApplyDefaultConfig is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *AlertmanagerMock_Expecter) SaveAndApplyDefaultConfig(ctx interface{}) *AlertmanagerMock_SaveAndApplyDefaultConfig_Call {
-	return &AlertmanagerMock_SaveAndApplyDefaultConfig_Call{Call: _e.mock.On("SaveAndApplyDefaultConfig", ctx)}
-}
-
-func (_c *AlertmanagerMock_SaveAndApplyDefaultConfig_Call) Run(run func(ctx context.Context)) *AlertmanagerMock_SaveAndApplyDefaultConfig_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *AlertmanagerMock_SaveAndApplyDefaultConfig_Call) Return(_a0 error) *AlertmanagerMock_SaveAndApplyDefaultConfig_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *AlertmanagerMock_SaveAndApplyDefaultConfig_Call) RunAndReturn(run func(context.Context) error) *AlertmanagerMock_SaveAndApplyDefaultConfig_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // SilenceState provides a mock function with given fields: _a0
 func (_m *AlertmanagerMock) SilenceState(_a0 context.Context) (notify.SilenceState, error) {
 	ret := _m.Called(_a0)

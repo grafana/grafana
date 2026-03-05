@@ -192,11 +192,6 @@ func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Con
 	return fam.internal.SaveAndApplyConfig(ctx, config)
 }
 
-// SaveAndApplyDefaultConfig is only called on the internal Alertmanager when running in remote secondary mode.
-func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return fam.internal.SaveAndApplyDefaultConfig(ctx)
-}
-
 func (fam *RemoteSecondaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
 	return fam.internal.GetStatus(ctx)
 }

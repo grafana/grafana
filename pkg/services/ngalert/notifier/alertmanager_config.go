@@ -158,7 +158,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, 
 
 	previousConfig, cleanPermissionsErr := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
 
-	err = orgAM.SaveAndApplyDefaultConfig(ctx)
+	err = moa.saveAndApplyDefaultConfig(ctx, orgId, orgAM)
 	if err != nil {
 		return err
 	}
@@ -642,4 +642,40 @@ func (moa *MultiOrgAlertmanager) applyConfig(ctx context.Context, orgID int64, a
 		}
 	}
 	return changed, nil
+}
+
+func newSaveAMConfigCmd(cfg string, orgID int64, isDefault bool) *models.SaveAlertmanagerConfigurationCmd {
+	return &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: cfg,
+		Default:                   isDefault,
+		ConfigurationVersion:      fmt.Sprintf("v%d", models.AlertConfigurationVersion),
+		OrgID:                     orgID,
+		LastApplied:               time.Now().UTC().Unix(),
+	}
+}
+
+// saveAndApplyDefaultConfig is a helper method for resetting the configuration to default.
+// Caller should lock the alertmanagersMtx.
+func (moa *MultiOrgAlertmanager) saveAndApplyDefaultConfig(ctx context.Context, orgID int64, am Alertmanager) error {
+	return moa.saveAndApplyCmd(ctx, orgID, am, newSaveAMConfigCmd(moa.settings.UnifiedAlerting.DefaultConfiguration, orgID, true), LogInvalidReceivers)
+}
+
+// saveAndApplyCmd is a helper method for saving and applying a configuration.
+// Caller should lock the alertmanagersMtx.
+func (moa *MultiOrgAlertmanager) saveAndApplyCmd(ctx context.Context, orgID int64, am Alertmanager, cmd *models.SaveAlertmanagerConfigurationCmd, onInvalid InvalidReceiversAction) error {
+	return moa.configStore.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(dbConfig models.AlertConfiguration) error {
+		cfg, err := PrepareConfig(ctx, orgID, &dbConfig, PrepareConfigOptions{
+			OnInvalid:        onInvalid,
+			Crypto:           moa.Crypto,
+			AutogenRuleStore: moa.configStore,
+			Logger:           moa.logger,
+			Features:         moa.featureManager,
+			Limits:           moa.limits,
+		})
+		if err != nil {
+			return err
+		}
+		_, err = am.ApplyConfig(ctx, cfg)
+		return err
+	})
 }

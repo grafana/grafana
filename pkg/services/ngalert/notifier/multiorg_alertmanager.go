@@ -55,7 +55,6 @@ type Alertmanager interface {
 	// Configuration
 	ApplyConfig(context.Context, alertingNotify.NotificationsConfiguration) (bool, error)
 	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus(context.Context) (apimodels.GettableStatus, error)
 
 	// Silences
@@ -398,7 +397,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 				// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
 				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
 			}
-			err := alertmanager.SaveAndApplyDefaultConfig(ctx)
+			err := moa.saveAndApplyDefaultConfig(ctx, orgID, alertmanager)
 			if err != nil {
 				moa.logger.Error("Failed to apply the default Alertmanager configuration", "org", orgID)
 				continue

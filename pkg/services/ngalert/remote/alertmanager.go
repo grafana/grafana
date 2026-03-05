@@ -478,31 +478,6 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	return am.sendConfiguration(ctx, payload)
 }
 
-// SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
-func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	am.log.Debug("Sending default configuration to a remote Alertmanager", "url", am.url)
-	c, err := notifier.PrepareConfig(ctx, am.orgID, &models.AlertConfiguration{AlertmanagerConfiguration: am.defaultConfig, CreatedAt: time.Now().Unix()}, notifier.PrepareConfigOptions{
-		OnInvalid:        notifier.LogInvalidReceivers,
-		Crypto:           am.crypto,
-		AutogenRuleStore: am.autogenRuleStore,
-		Logger:           am.log,
-		Features:         am.features,
-	})
-	if err != nil {
-		return fmt.Errorf("unable to prepare default configuration: %w", err)
-	}
-
-	payload, err := am.buildConfiguration(ctx, c)
-	if err != nil {
-		return fmt.Errorf("unable to build default configuration: %w", err)
-	}
-	payload.Default = true // override default status
-	return am.sendConfiguration(
-		ctx,
-		payload,
-	)
-}
-
 func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
 	defer func() {
 		if r := recover(); r != nil {

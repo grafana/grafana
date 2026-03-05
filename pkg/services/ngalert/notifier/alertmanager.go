@@ -213,43 +213,6 @@ func (am *alertmanager) StopAndWait() {
 	am.Base.StopAndWait()
 }
 
-// SaveAndApplyDefaultConfig saves the default configuration to the database and applies it to the Alertmanager.
-// It rolls back the save if we fail to apply the configuration.
-func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	var outerErr error
-	am.Base.WithLock(func() {
-		cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: am.DefaultConfiguration,
-			Default:                   true,
-			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-			OrgID:                     am.Base.TenantID(),
-			LastApplied:               time.Now().UTC().Unix(),
-		}
-
-		err := am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(dbConfig ngmodels.AlertConfiguration) error {
-			cfg, err := PrepareConfig(ctx, am.Base.TenantID(), &dbConfig, PrepareConfigOptions{
-				OnInvalid:        LogInvalidReceivers,
-				Crypto:           am.crypto,
-				AutogenRuleStore: am.Store,
-				Logger:           am.logger,
-				Features:         am.features,
-				Limits:           am.dynamicLimits,
-			})
-			if err != nil {
-				return fmt.Errorf("unable to prepare configuration: %w", err)
-			}
-			_, err = am.applyConfig(cfg)
-			return err
-		})
-		if err != nil {
-			outerErr = err
-			return
-		}
-	})
-
-	return outerErr
-}
-
 // SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
 func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
