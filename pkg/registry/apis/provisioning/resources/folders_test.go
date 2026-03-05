@@ -558,4 +558,65 @@ func TestCreateFolderWithUID(t *testing.T) {
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
 	})
+
+	t.Run("nested folder with metadata flag reads stable parent UID from _folder.json", func(t *testing.T) {
+		ctx := context.Background()
+		const stableUID = "child-stable-uid"
+		const stableParentUID = "stable-parent-uid"
+
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-parent-uid"},"spec":{"title":"parent"}}`)}, nil)
+
+		mockClient := &MockDynamicResourceInterface{}
+		// EnsureFolderExists for parent with stable UID from _folder.json
+		mockClient.On("Get", mock.Anything, stableParentUID, metav1.GetOptions{}, []string(nil)).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, stableParentUID))
+		mockClient.On("Create", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), metav1.CreateOptions{}, []string(nil)).
+			Return(nil, nil).Once()
+		// EnsureFolderExists for child
+		mockClient.On("Get", mock.Anything, stableUID, metav1.GetOptions{}, []string(nil)).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, stableUID))
+		mockClient.On("Create", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), metav1.CreateOptions{}, []string(nil)).
+			Return(nil, nil).Once()
+
+		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), true)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+
+		require.NoError(t, err)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("nested folder with metadata flag falls back to hash UID when _folder.json absent", func(t *testing.T) {
+		ctx := context.Background()
+		const stableUID = "child-stable-uid"
+
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+			Return(nil, errors.New("not found"))
+
+		parentFolder := ParseFolder("parent/", config.Name)
+
+		mockClient := &MockDynamicResourceInterface{}
+		// EnsureFolderExists for parent with hash-derived UID (fallback)
+		mockClient.On("Get", mock.Anything, parentFolder.ID, metav1.GetOptions{}, []string(nil)).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, parentFolder.ID))
+		mockClient.On("Create", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), metav1.CreateOptions{}, []string(nil)).
+			Return(nil, nil).Once()
+		// EnsureFolderExists for child
+		mockClient.On("Get", mock.Anything, stableUID, metav1.GetOptions{}, []string(nil)).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, stableUID))
+		mockClient.On("Create", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), metav1.CreateOptions{}, []string(nil)).
+			Return(nil, nil).Once()
+
+		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), true)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+
+		require.NoError(t, err)
+		mockClient.AssertExpectations(t)
+	})
 }
