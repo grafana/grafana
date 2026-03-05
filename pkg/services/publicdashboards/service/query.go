@@ -293,6 +293,20 @@ func groupQueriesByPanelIdV2(dashboard *simplejson.Json) map[int64][]*simplejson
 				uid := getDataSourceUidFromJsonSchemaV2(dataQueryKind)
 				datasource := map[string]any{"type": group, "uid": uid}
 				dataQuerySpec.Set("datasource", datasource)
+			} else {
+				// Check if the datasource UID is valid (not a saved query or user storage reference)
+				// Saved queries use UIDs like "saved-queries:xxxxx" which are not valid datasource UIDs
+				queryDsUid := dataQuerySpec.Get("datasource").Get("uid").MustString()
+				if queryDsUid == "" {
+					queryDsUid = dataQuerySpec.Get("datasource").MustString()
+				}
+				if isInvalidDatasourceUID(queryDsUid) {
+					// Remove invalid datasource reference and use panel datasource instead
+					dataQuerySpec.Del("datasource")
+					uid := getDataSourceUidFromJsonSchemaV2(dataQueryKind)
+					datasource := map[string]any{"type": group, "uid": uid}
+					dataQuerySpec.Set("datasource", datasource)
+				}
 			}
 
 			// We don't support exemplars for public dashboards currently
@@ -340,6 +354,17 @@ func extractQueriesFromPanels(panels []any, result map[int64][]*simplejson.Json)
 				uid := getDataSourceUidFromJson(panel)
 				datasource := map[string]any{"type": "public-ds", "uid": uid}
 				query.Set("datasource", datasource)
+			} else {
+				// Check if the datasource UID is valid (not a saved query or user storage reference)
+				// Saved queries use UIDs like "saved-queries:xxxxx" which are not valid datasource UIDs
+				queryDsUid := getDataSourceUidFromJson(query)
+				if isInvalidDatasourceUID(queryDsUid) {
+					// Remove invalid datasource reference and use panel datasource instead
+					query.Del("datasource")
+					uid := getDataSourceUidFromJson(panel)
+					datasource := map[string]any{"type": "public-ds", "uid": uid}
+					query.Set("datasource", datasource)
+				}
 			}
 			panelQueries = append(panelQueries, query)
 		}
@@ -405,6 +430,19 @@ func panelHasAnExpressionSchemaV2(panel *simplejson.Json) bool {
 	}
 
 	return hasExpression
+}
+
+// isInvalidDatasourceUID checks if a datasource UID is invalid for public dashboards.
+// Saved queries and other user storage resources use UIDs with colons (e.g., "saved-queries:xxxxx")
+// which are not valid datasource UIDs and should be filtered out.
+func isInvalidDatasourceUID(uid string) bool {
+	// Check for colon character which indicates a user storage resource name, not a datasource UID
+	for i := 0; i < len(uid); i++ {
+		if uid[i] == ':' {
+			return true
+		}
+	}
+	return false
 }
 
 func getDataSourceUidFromJson(query *simplejson.Json) string {
