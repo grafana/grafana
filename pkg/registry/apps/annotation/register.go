@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -337,6 +339,17 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected annotation")
 	}
+
+	// Validate either name or generateName is provided
+	if resource.Name == "" && resource.GenerateName == "" {
+		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
+	}
+
+	// If a name is empty and generateName is not, generate a unique name using the provided prefix
+	if resource.Name == "" && resource.GenerateName != "" {
+		resource.Name = resource.GenerateName + util.GenerateShortUID()
+	}
+
 	return s.store.Create(ctx, resource)
 }
 
