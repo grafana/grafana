@@ -254,6 +254,16 @@ jobs:
           GRAFANA_URL: http://localhost:3001
           CI: true
 
+      - name: Show failure instructions
+        if: failure()
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "Tests in this shard failed."
+          echo ""
+          echo "View combined logs and HTML report in the 'All Playwright tests complete' job once all tests finish."
+          exit 1
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:
