@@ -113,13 +113,13 @@ Medium deployments suit shared team environments and departmental observability 
 
 Large deployments suit organization-wide platforms and high-traffic production environments.
 
-| Resource  | Recommendation                        |
-| --------- | ------------------------------------- |
-| CPU       | 8 – 16+ cores per instance            |
-| Memory    | 16 – 32+ GB per instance              |
+| Resource  | Recommendation                                                    |
+| --------- | ----------------------------------------------------------------- |
+| CPU       | 8 – 16+ cores per instance                                        |
+| Memory    | 16 – 32+ GB per instance                                          |
 | Disk      | 50+ GB SSD, high I/O operations per second (IOPS) (database host) |
-| Instances | 3+ (load-balanced)                    |
-| Network   | 10 Gbps or faster                     |
+| Instances | 3+ (load-balanced)                                                |
+| Network   | 10 Gbps or faster                                                 |
 
 **Database:** SQLite isn't recommended for production environments and isn't suitable at this tier. A highly available MySQL or PostgreSQL cluster is strongly advised. Refer to [Supported databases](#supported-databases).
 
