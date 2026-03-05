@@ -21,7 +21,6 @@ import { setupCorrelationsMswServer } from './mocks/server';
 import {
   createCorrelationsScenario,
   emptyCorrelationsScenario,
-  existingCorrelationsScenario,
   deleteCorrelationsScenario,
   editCorrelationsScenario,
 } from './mocks/server/correlations.scenario';

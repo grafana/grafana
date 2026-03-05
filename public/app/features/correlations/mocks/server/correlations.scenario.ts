@@ -77,15 +77,6 @@ export const emptyCorrelationsScenario = [
   }),
 ];
 
-export const existingCorrelationsScenario = [
-  getCorrelationsHandler({
-    kind: 'CorrelationList',
-    apiVersion: 'correlations.grafana.app/v0alpha1',
-    metadata: {},
-    items: fakeCorrelations.map((rc, i) => generateCorrMetadata(i.toString(), rc)),
-  }),
-];
-
 const newCorrelation: CorrelationSpec = {
   source: { group: 'loki', name: 'lokiUID' },
   target: { group: 'loki', name: 'lokiUID' },
