@@ -78,6 +78,7 @@ export const AnnotationMarker2 = ({
 
   if (isHovering || isPinned) {
     frame.fields.forEach((field) => {
+      // @todo https://github.com/grafana/grafana/issues/119619, need to set getLinks on field, or applyFieldOverrides on dataframe
       links.push(...getDataLinks(field, annoIdx));
 
       if (canExecuteActions) {
