@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -40,12 +40,11 @@ export function DataSourcesListHeader({
 }: DataSourcesListHeaderProps) {
   const dispatch = useDispatch();
   const styles = useStyles2(getHeaderStyles);
-
   const healthFilterOptions: Array<SelectableValue<HealthFilter>> = useMemo(
     () => [
-      { label: t('datasources.health-filter.all', 'All'), value: 'all' as const },
-      { label: t('datasources.health-filter.healthy', 'Healthy'), value: 'healthy' as const },
-      { label: t('datasources.health-filter.unhealthy', 'Unhealthy'), value: 'unhealthy' as const },
+      { label: t('datasources.health-filter.all', 'All'), value: 'all' },
+      { label: t('datasources.health-filter.healthy', 'Healthy'), value: 'healthy' },
+      { label: t('datasources.health-filter.unhealthy', 'Unhealthy'), value: 'unhealthy' },
     ],
     []
   );
@@ -57,6 +56,8 @@ export function DataSourcesListHeader({
       }, 300),
     []
   );
+
+  useEffect(() => () => debouncedTrackSearch.cancel(), [debouncedTrackSearch]);
 
   const setSearchQuery = useCallback(
     (q: string) => {

@@ -3,29 +3,27 @@ import { useMemo } from 'react';
 import { useListCheckQuery, type Check } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config } from '@grafana/runtime';
 
-import { getDismissedTests } from './advisorDismissedTests';
-
 const CHECK_TYPE_LABEL = 'advisor.grafana.app/type';
 const STATUS_ANNOTATION = 'advisor.grafana.app/status';
 const DATASOURCE_CHECK_TYPE = 'datasource';
 
 export type HealthStatus = 'healthy' | 'unhealthy';
 
-export interface AdvisorHealthState {
+export interface AdvisorListHealthState {
   healthMap: Map<string, HealthStatus>;
   lastChecked: string | undefined;
   isLoading: boolean;
   isAvailable: boolean;
 }
 
-const EMPTY_STATE: AdvisorHealthState = {
+const EMPTY_STATE: AdvisorListHealthState = {
   healthMap: new Map(),
   lastChecked: undefined,
   isLoading: false,
   isAvailable: false,
 };
 
-export function useAdvisorHealthStatus(): AdvisorHealthState {
+export function useAdvisorHealthStatus(): AdvisorListHealthState {
   const enabled = Boolean(config.featureToggles.grafanaAdvisor);
 
   const { data, isLoading, isError } = useListCheckQuery({}, { skip: !enabled });
@@ -62,15 +60,6 @@ export function useAdvisorHealthStatus(): AdvisorHealthState {
       healthMap.set(failure.itemID, 'unhealthy');
     }
 
-    // Filter out datasources that were successfully tested after the last check
-    const dismissed = getDismissedTests();
-    const checkTimestamp = dsCheck.metadata.creationTimestamp;
-    for (const [uid, testedAt] of dismissed) {
-      if (checkTimestamp && new Date(testedAt) > new Date(checkTimestamp)) {
-        healthMap.delete(uid);
-      }
-    }
-
     return {
       healthMap,
       lastChecked: dsCheck.metadata.creationTimestamp,
@@ -78,6 +67,52 @@ export function useAdvisorHealthStatus(): AdvisorHealthState {
       isAvailable: true,
     };
   }, [enabled, data, isLoading, isError]);
+}
+
+export function getTimestampMs(timestamp?: string): number | undefined {
+  if (!timestamp) {
+    return undefined;
+  }
+
+  const parsed = Date.parse(timestamp);
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
+
+export function isTimestampAfter(left?: string, right?: string): boolean {
+  const leftMs = getTimestampMs(left);
+  const rightMs = getTimestampMs(right);
+
+  return leftMs !== undefined && rightMs !== undefined && leftMs > rightMs;
+}
+
+export function isTimestampOnOrAfter(left?: string, right?: string): boolean {
+  const leftMs = getTimestampMs(left);
+  const rightMs = getTimestampMs(right);
+
+  return leftMs !== undefined && rightMs !== undefined && leftMs >= rightMs;
+}
+
+export function getEffectiveAdvisorHealthMap(
+  advisorHealthMap: ReadonlyMap<string, HealthStatus>,
+  advisorCheckedAt?: string,
+  lastManualSuccessByUid?: ReadonlyMap<string, string> | Readonly<Record<string, string>>
+): Map<string, HealthStatus> {
+  const effectiveHealthMap = new Map(advisorHealthMap);
+
+  if (!advisorCheckedAt || !lastManualSuccessByUid) {
+    return effectiveHealthMap;
+  }
+
+  const manualSuccessEntries =
+    lastManualSuccessByUid instanceof Map ? lastManualSuccessByUid.entries() : Object.entries(lastManualSuccessByUid);
+
+  for (const [uid, testedAt] of manualSuccessEntries) {
+    if (isTimestampAfter(testedAt, advisorCheckedAt)) {
+      effectiveHealthMap.delete(uid);
+    }
+  }
+
+  return effectiveHealthMap;
 }
 
 export function findLatestDatasourceCheck(items: Check[]): Check | undefined {
@@ -89,7 +124,7 @@ export function findLatestDatasourceCheck(items: Check[]): Check | undefined {
       continue;
     }
 
-    if (!latest || new Date(check.metadata.creationTimestamp ?? 0) > new Date(latest.metadata.creationTimestamp ?? 0)) {
+    if (!latest || isTimestampAfter(check.metadata.creationTimestamp, latest.metadata.creationTimestamp)) {
       latest = check;
     }
   }

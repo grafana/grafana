@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -7,16 +8,30 @@ import { Page } from 'app/core/components/Page/Page';
 import { AdvisorRedirectNotice } from 'app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice';
 import { DataSourceAddButton } from 'app/features/datasources/components/DataSourceAddButton';
 import { DataSourcesList } from 'app/features/datasources/components/DataSourcesList';
-import { useAdvisorHealthStatus } from 'app/features/datasources/hooks/useAdvisorHealthStatus';
+import {
+  getEffectiveAdvisorHealthMap,
+  useAdvisorHealthStatus,
+} from 'app/features/datasources/hooks/useAdvisorHealthStatus';
 import { useRunHealthChecks } from 'app/features/datasources/hooks/useRunHealthChecks';
 import { getDataSourcesCount } from 'app/features/datasources/state/selectors';
 import { StoreState, useSelector } from 'app/types/store';
 
 export function DataSourcesListPage() {
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
+  const manualTestSuccessByUid = useSelector(({ dataSources }: StoreState) => dataSources.manualTestSuccessByUid);
   const { isRunning, runHealthChecks, enabled: advisorEnabled } = useRunHealthChecks();
-  const { lastChecked } = useAdvisorHealthStatus();
+  const advisorHealth = useAdvisorHealthStatus();
   const styles = useStyles2(getStyles);
+  const { healthMap, isAvailable, isLoading, lastChecked } = advisorHealth;
+  const effectiveAdvisorHealth = useMemo(
+    () => ({
+      healthMap: getEffectiveAdvisorHealthMap(healthMap, lastChecked, manualTestSuccessByUid),
+      isAvailable,
+      isLoading,
+      lastChecked,
+    }),
+    [healthMap, isAvailable, isLoading, lastChecked, manualTestSuccessByUid]
+  );
 
   const actions =
     dataSourcesCount > 0 ? (
@@ -57,7 +72,7 @@ export function DataSourcesListPage() {
     <Page navId={'connections-datasources'} actions={actions} subTitle={subTitle}>
       <Page.Contents>
         <AdvisorRedirectNotice />
-        <DataSourcesList />
+        <DataSourcesList advisorHealth={effectiveAdvisorHealth} />
       </Page.Contents>
     </Page>
   );

@@ -18,6 +18,7 @@ import {
   initDataSourceSettingsSucceeded,
   initialDataSourceSettingsState,
   initialState,
+  recordManualDataSourceTestSuccess,
   setDataSourceName,
   setDataSourcesLayoutMode,
   setDataSourcesSearchQuery,
@@ -140,6 +141,22 @@ describe('dataSourcesReducer', () => {
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setIsDefault(true))
         .thenStateShouldEqual({ ...initialState, dataSource: { isDefault: true } } as DataSourcesState);
+    });
+  });
+
+  describe('when recordManualDataSourceTestSuccess is dispatched', () => {
+    it('then state should store the latest timestamp by datasource uid', () => {
+      reducerTester<DataSourcesState>()
+        .givenReducer(dataSourcesReducer, initialState)
+        .whenActionIsDispatched(
+          recordManualDataSourceTestSuccess({ datasourceUid: 'uid-1', testedAt: '2024-07-01T00:00:00Z' })
+        )
+        .thenStateShouldEqual({
+          ...initialState,
+          manualTestSuccessByUid: {
+            'uid-1': '2024-07-01T00:00:00Z',
+          },
+        });
     });
   });
 });

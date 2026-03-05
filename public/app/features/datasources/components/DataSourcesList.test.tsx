@@ -148,6 +148,7 @@ describe('<DataSourcesList>', () => {
   describe('Advisor health status', () => {
     const advisorHealthAvailable = (unhealthyUids: string[] = []) => ({
       healthMap: new Map(unhealthyUids.map((uid) => [uid, 'unhealthy' as const])),
+      lastChecked: '2024-06-01T00:00:00Z',
       isLoading: false,
       isAvailable: true,
     });

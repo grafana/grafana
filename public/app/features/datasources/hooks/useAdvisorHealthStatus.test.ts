@@ -1,8 +1,12 @@
-import type { Check } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { renderHook } from '@testing-library/react';
 
-import { clearDismissedTests, dismissAdvisorHealthStatus } from './advisorDismissedTests';
-import { findLatestDatasourceCheck, useAdvisorHealthStatus } from './useAdvisorHealthStatus';
+import type { Check } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+
+import {
+  findLatestDatasourceCheck,
+  getEffectiveAdvisorHealthMap,
+  useAdvisorHealthStatus,
+} from './useAdvisorHealthStatus';
 
 jest.mock('@grafana/runtime', () => ({
   config: {
@@ -103,59 +107,86 @@ describe('findLatestDatasourceCheck', () => {
   });
 });
 
-describe('useAdvisorHealthStatus – dismissed tests filtering', () => {
+describe('useAdvisorHealthStatus', () => {
   afterEach(() => {
-    clearDismissedTests();
+    jest.resetAllMocks();
+  });
+
+  it('returns unhealthy datasource uids from the latest processed datasource check', () => {
+    mockUseListCheckQuery.mockReturnValue({
+      data: {
+        items: [
+          makeCheck({
+            metadata: {
+              name: 'ds-check',
+              labels: { 'advisor.grafana.app/type': 'datasource' },
+              creationTimestamp: '2024-06-01T00:00:00Z',
+              annotations: { 'advisor.grafana.app/status': 'processed' },
+            },
+            status: {
+              report: {
+                failures: [{ item: 'ds-1', itemID: 'ds-1', severity: 'high', stepID: 'step1', links: [] }],
+                count: 1,
+              },
+            },
+          }),
+        ],
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    const { result } = renderHook(() => useAdvisorHealthStatus());
+
+    expect(result.current.isAvailable).toBe(true);
+    expect(result.current.healthMap.get('ds-1')).toBe('unhealthy');
+    expect(result.current.lastChecked).toBe('2024-06-01T00:00:00Z');
+  });
+});
+
+describe('getEffectiveAdvisorHealthMap', () => {
+  afterEach(() => {
     jest.resetAllMocks();
   });
 
   const checkTimestamp = '2024-06-01T00:00:00Z';
-
-  const makeQueryData = (failureUIDs: string[]) => ({
-    data: {
-      items: [
-        makeCheck({
-          metadata: {
-            name: 'ds-check',
-            labels: { 'advisor.grafana.app/type': 'datasource' },
-            creationTimestamp: checkTimestamp,
-            annotations: { 'advisor.grafana.app/status': 'processed' },
-          },
-          status: {
-            report: {
-              failures: failureUIDs.map((uid) => ({ itemID: uid, severity: 'high', stepID: 'step1' })),
-              count: failureUIDs.length,
-            },
-          },
-        }),
-      ],
-    },
-    isLoading: false,
-    isError: false,
-  });
+  const advisorHealthMap = new Map([
+    ['ds-1', 'unhealthy' as const],
+    ['ds-2', 'unhealthy' as const],
+  ]);
 
   it('should exclude dismissed DS when test timestamp > check timestamp', () => {
-    mockUseListCheckQuery.mockReturnValue(makeQueryData(['ds-1', 'ds-2']));
-    dismissAdvisorHealthStatus('ds-1', '2024-07-01T00:00:00Z');
+    const effectiveHealthMap = getEffectiveAdvisorHealthMap(
+      advisorHealthMap,
+      checkTimestamp,
+      new Map([['ds-1', '2024-07-01T00:00:00Z']])
+    );
 
-    const { result } = renderHook(() => useAdvisorHealthStatus());
-    expect(result.current.healthMap.has('ds-1')).toBe(false);
-    expect(result.current.healthMap.has('ds-2')).toBe(true);
+    expect(effectiveHealthMap.has('ds-1')).toBe(false);
+    expect(effectiveHealthMap.has('ds-2')).toBe(true);
   });
 
   it('should keep dismissed DS when test timestamp < check timestamp', () => {
-    mockUseListCheckQuery.mockReturnValue(makeQueryData(['ds-1']));
-    dismissAdvisorHealthStatus('ds-1', '2024-01-01T00:00:00Z');
+    const effectiveHealthMap = getEffectiveAdvisorHealthMap(
+      advisorHealthMap,
+      checkTimestamp,
+      new Map([['ds-1', '2024-01-01T00:00:00Z']])
+    );
 
-    const { result } = renderHook(() => useAdvisorHealthStatus());
-    expect(result.current.healthMap.has('ds-1')).toBe(true);
+    expect(effectiveHealthMap.has('ds-1')).toBe(true);
   });
 
   it('should not affect non-dismissed datasources', () => {
-    mockUseListCheckQuery.mockReturnValue(makeQueryData(['ds-1', 'ds-2']));
+    const effectiveHealthMap = getEffectiveAdvisorHealthMap(advisorHealthMap, checkTimestamp, new Map());
 
-    const { result } = renderHook(() => useAdvisorHealthStatus());
-    expect(result.current.healthMap.has('ds-1')).toBe(true);
-    expect(result.current.healthMap.has('ds-2')).toBe(true);
+    expect(effectiveHealthMap.has('ds-1')).toBe(true);
+    expect(effectiveHealthMap.has('ds-2')).toBe(true);
+  });
+
+  it('should return a cloned map when there are no manual successes', () => {
+    const effectiveHealthMap = getEffectiveAdvisorHealthMap(advisorHealthMap, checkTimestamp);
+
+    expect(effectiveHealthMap).not.toBe(advisorHealthMap);
+    expect(effectiveHealthMap).toEqual(advisorHealthMap);
   });
 });

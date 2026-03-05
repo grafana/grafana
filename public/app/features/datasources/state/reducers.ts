@@ -22,6 +22,7 @@ export const initialState: DataSourcesState = {
   isLoadingDataSourcePlugins: false,
   dataSourceMeta: {} as DataSourcePluginMeta,
   isSortAscending: true,
+  manualTestSuccessByUid: {},
 };
 
 export const dataSourceLoaded = createAction<DataSourceSettings>('dataSources/dataSourceLoaded');
@@ -38,6 +39,9 @@ export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/se
 export const setDataSourceName = createAction<string>('dataSources/setDataSourceName');
 export const setIsDefault = createAction<boolean>('dataSources/setIsDefault');
 export const setIsSortAscending = createAction<boolean>('dataSources/setIsSortAscending');
+export const recordManualDataSourceTestSuccess = createAction<{ datasourceUid: string; testedAt: string }>(
+  'dataSources/recordManualDataSourceTestSuccess'
+);
 
 // Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
 // ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
@@ -106,6 +110,16 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
     return {
       ...state,
       isSortAscending: action.payload,
+    };
+  }
+
+  if (recordManualDataSourceTestSuccess.match(action)) {
+    return {
+      ...state,
+      manualTestSuccessByUid: {
+        ...state.manualTestSuccessByUid,
+        [action.payload.datasourceUid]: action.payload.testedAt,
+      },
     };
   }
 
