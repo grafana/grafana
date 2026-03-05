@@ -129,7 +129,6 @@ export function mapScopeNodeToAction(
     action = {
       id: `${parentId}/${scopeNode.metadata.name}`,
       name: scopeNode.spec.title,
-      subtitle: subtitle,
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
       priority: DASHBOARDS_PRIORITY,
       parent: parentId,

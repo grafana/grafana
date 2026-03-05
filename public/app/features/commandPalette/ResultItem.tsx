@@ -113,7 +113,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     activeRow: css({
       color: theme.colors.text.maxContrast,
       borderRadius: theme.shape.radius.default,
-      background: 'rgba(204, 204, 220, 0.12)',
+      background: theme.colors.action.selected,
     }),
     actionContainer: css({
       display: 'flex',

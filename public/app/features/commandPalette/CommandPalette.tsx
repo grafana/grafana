@@ -49,10 +49,11 @@ function CommandPaletteContents() {
   const [hasDetailPanel, setHasDetailPanel] = useState(false);
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
-  const { query, searchQuery, currentRootActionId } = useKBar((state) => ({
+  const { query, searchQuery, currentRootActionId, actions } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
     currentRootActionId: state.currentRootActionId,
+    actions: state.actions,
   }));
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
@@ -330,6 +331,26 @@ function CommandPaletteContents() {
           <div {...overlayProps} {...dialogProps}>
             {/* KBarSearch container — visually hidden in facet/context-action mode but stays mounted so kbar keeps its input ref */}
             <div className={cx(styles.searchContainer, (isInFacetMode || isInContextActionMode) && styles.srOnly)}>
+              {(currentRootActionId || selectedCategory) && (
+                <IconButton
+                  name="arrow-left"
+                  size="xl"
+                  variant="secondary"
+                  aria-label={t('command-palette.search-box.back', 'Go back')}
+                  className={styles.clearButton}
+                  tabIndex={-1}
+                  onClick={() => {
+                    if (currentRootActionId) {
+                      const parent = actions[currentRootActionId].parent;
+                      query.setCurrentRootAction(parent);
+                      query.setSearch('');
+                    } else if (selectedCategory) {
+                      handleDeselectCategory();
+                    }
+                    query.getInput().focus();
+                  }}
+                />
+              )}
               {selectedCategory ? (
                 <FacetBreadcrumbs
                   category={selectedCategory}
@@ -344,14 +365,22 @@ function CommandPaletteContents() {
               )}
               <KBarSearch
                 defaultPlaceholder={
-                  selectedCategory
-                    ? t('command-palette.search-box.placeholder-filtered', 'Search by entity name...')
-                    : t('command-palette.search-box.placeholder', 'Type a command or search...')
+                  currentRootActionId && actions[currentRootActionId]
+                    ? currentRootActionId.startsWith('scopes')
+                      ? t('command-palette.search-box.placeholder-scopes', 'Search by {{name}}...', {
+                          name: getScopesLevelLabel(currentRootActionId, actions[currentRootActionId].name),
+                        })
+                      : t('command-palette.search-box.placeholder-drilldown', 'Search {{name}}...', {
+                          name: getDrilldownPlaceholderName(actions[currentRootActionId].name),
+                        })
+                    : selectedCategory
+                      ? t('command-palette.search-box.placeholder-filtered', 'Search by entity name...')
+                      : t('command-palette.search-box.placeholder', 'Type a command or search...')
                 }
                 className={styles.search}
                 onKeyDown={handleSearchKeyDown}
               />
-              {(searchQuery || selectedCategory) && (
+              {searchQuery && (
                 <IconButton
                   name="times"
                   size="lg"
@@ -361,9 +390,6 @@ function CommandPaletteContents() {
                   tabIndex={-1}
                   onClick={() => {
                     query.setSearch('');
-                    if (selectedCategory) {
-                      handleDeselectCategory();
-                    }
                     query.getInput().focus();
                   }}
                 />
@@ -478,7 +504,6 @@ function AncestorBreadcrumbs() {
     currentRootActionId: state.currentRootActionId,
   }));
 
-  // To show breadcrumbs of actions selected if they are nested
   const currentAction = currentRootActionId ? actions[currentRootActionId] : undefined;
   const ancestorActions = currentAction ? [...currentAction.ancestors, currentAction] : [];
 
@@ -486,8 +511,23 @@ function AncestorBreadcrumbs() {
     ancestorActions.length > 0 && (
       <span className={styles.breadcrumbs}>
         {ancestorActions.map((action, index) => (
-          <React.Fragment key={action.id || index}>{action.name}&nbsp;/&nbsp;</React.Fragment>
+          <React.Fragment key={action.id || index}>
+            {index > 0 && <span className={styles.breadcrumbSeparator}>/</span>}
+            <span className={styles.breadcrumbBadge}>
+              {index === 0 && action.icon && (
+                <span className={styles.breadcrumbIcon}>{action.icon}</span>
+              )}
+              {action.name}
+            </span>
+          </React.Fragment>
         ))}
+        {currentRootActionId && (
+          currentRootActionId.startsWith('scopes')
+            ? (currentRootActionId.split('/').length - 1) < 2
+            : true
+        ) && (
+          <span className={styles.breadcrumbSeparator}>/</span>
+        )}
       </span>
     )
   );
@@ -583,7 +623,23 @@ const RenderResults = ({
       return results;
     }
 
-    const results: Array<ActionImpl | string> = [...kbarResults];
+    const results: Array<ActionImpl | string> = [];
+
+    if (currentRootActionId) {
+      const parentAction = actions[currentRootActionId];
+      if (parentAction) {
+        if (currentRootActionId.startsWith('scopes')) {
+          const label = getScopesLevelLabel(currentRootActionId, parentAction.name);
+          results.push(label.charAt(0).toUpperCase() + label.slice(1));
+        } else {
+          results.push(parentAction.name);
+        }
+      }
+      results.push(...kbarResults.filter((r): r is ActionImpl => typeof r !== 'string'));
+      return results;
+    }
+
+    results.push(...kbarResults);
 
     const folderResults = groupedSearchResults.get(foldersSectionTitle) ?? [];
     if (folderResults.length > 0) {
@@ -606,7 +662,7 @@ const RenderResults = ({
     }
 
     return results;
-  }, [kbarResults, groupedSearchResults, dashboardsSectionTitle, foldersSectionTitle, facetedSectionCategory, selectedCategory]);
+  }, [kbarResults, groupedSearchResults, dashboardsSectionTitle, foldersSectionTitle, facetedSectionCategory, selectedCategory, currentRootActionId, actions]);
 
   // Resolve the detail panel for the currently active item.
   // When drilled into children, use the parent action's panel.
@@ -680,6 +736,27 @@ const RenderResults = ({
     </div>
   );
 };
+
+const DRILLDOWN_PLACEHOLDER_NAMES: Record<string, string> = {
+  'Change theme': 'themes',
+};
+
+function getDrilldownPlaceholderName(actionName: string): string {
+  return DRILLDOWN_PLACEHOLDER_NAMES[actionName] ?? actionName.toLowerCase();
+}
+
+const PRODUCT_NAMES = new Set(['Loki', 'Mimir', 'Tempo', 'Pyroscope']);
+
+function getScopesLevelLabel(actionId: string, actionName: string): string {
+  if (actionId === 'scopes') {
+    return t('command-palette.scopes.level-category', 'category');
+  }
+  const depth = actionId.split('/').length - 1;
+  if (depth === 1) {
+    return t('command-palette.scopes.level-type', 'type');
+  }
+  return PRODUCT_NAMES.has(actionName) ? actionName : actionName.toLowerCase();
+}
 
 const getCommandPalettePosition = () => {
   const input = document.querySelector(`[data-testid="${selectors.components.NavToolbar.commandPaletteTrigger}"]`);
@@ -794,13 +871,41 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     }),
     breadcrumbs: css({
       label: 'breadcrumbs',
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      lineHeight: theme.typography.body.lineHeight,
-      color: theme.colors.text.primary,
       display: 'flex',
       alignItems: 'center',
       whiteSpace: 'nowrap',
+      gap: theme.spacing(1),
+      marginLeft: theme.spacing(1),
+      marginRight: theme.spacing(1),
+    }),
+    breadcrumbBadge: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      fontSize: '18px',
+      fontWeight: theme.typography.fontWeightRegular,
+      color: '#ccccdc',
+      background: theme.colors.action.selected,
+      borderRadius: theme.shape.radius.default,
+      padding: '0 6px',
+      height: '32px',
+      lineHeight: '32px',
+      letterSpacing: '-0.045px',
+    }),
+    breadcrumbIcon: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      '& > svg': {
+        width: '20px',
+        height: '20px',
+      },
+    }),
+    breadcrumbSeparator: css({
+      color: 'rgba(204, 204, 220, 0.4)',
+      fontSize: '18px',
+      lineHeight: '24px',
+      letterSpacing: '-0.045px',
     }),
     scopesText: css({
       label: 'scopesText',
