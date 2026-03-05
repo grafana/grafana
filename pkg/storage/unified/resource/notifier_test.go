@@ -119,7 +119,7 @@ func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *poll
 		Group:           "apps",
 		Resource:        "resource",
 		Name:            "initial-resource",
-		ResourceVersion: 100,
+		ResourceVersion: snowflakeFromTime(time.Now().Add(-2 * time.Second)),
 		Action:          DataActionCreated,
 		Folder:          "test-folder",
 		PreviousRV:      0,
@@ -128,9 +128,10 @@ func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *poll
 	require.NoError(t, err)
 
 	opts := watchOptions{
-		BufferSize: 10,
-		MinBackoff: 50 * time.Millisecond,
-		MaxBackoff: 500 * time.Millisecond,
+		SettleDelay: 50 * time.Millisecond,
+		BufferSize:  10,
+		MinBackoff:  50 * time.Millisecond,
+		MaxBackoff:  500 * time.Millisecond,
 	}
 
 	events := notifier.Watch(ctx, opts)
@@ -152,8 +153,10 @@ func TestIntegrationNotifier_Watch_WithExistingEvents(t *testing.T) {
 }
 
 func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
+
+	now := time.Now()
 
 	// Save some initial events
 	initialEvents := []Event{
@@ -162,7 +165,7 @@ func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, noti
 			Group:           "apps",
 			Resource:        "resource",
 			Name:            "test-resource-1",
-			ResourceVersion: 1000,
+			ResourceVersion: snowflakeFromTime(now.Add(-4 * time.Second)),
 			Action:          DataActionCreated,
 			Folder:          "test-folder",
 			PreviousRV:      0,
@@ -172,10 +175,10 @@ func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, noti
 			Group:           "apps",
 			Resource:        "resource",
 			Name:            "test-resource-2",
-			ResourceVersion: 2000,
+			ResourceVersion: snowflakeFromTime(now.Add(-3 * time.Second)),
 			Action:          DataActionUpdated,
 			Folder:          "test-folder",
-			PreviousRV:      1000,
+			PreviousRV:      snowflakeFromTime(now.Add(-4 * time.Second)),
 		},
 	}
 
@@ -185,36 +188,37 @@ func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, noti
 	}
 
 	opts := watchOptions{
-		BufferSize: 10,
-		MinBackoff: 50 * time.Millisecond,
-		MaxBackoff: 500 * time.Millisecond,
+		SettleDelay: 50 * time.Millisecond,
+		BufferSize:  10,
+		MinBackoff:  50 * time.Millisecond,
+		MaxBackoff:  500 * time.Millisecond,
 	}
 
 	// Start watching
 	events := notifier.Watch(ctx, opts)
 
-	// Save a new event after starting to watch
+	// Save a new event after starting to watch, using a snowflake-based RV
 	newEvent := Event{
 		Namespace:       "default",
 		Group:           "apps",
 		Resource:        "resource",
 		Name:            "test-resource-3",
-		ResourceVersion: 3000,
+		ResourceVersion: snowflakeFromTime(now.Add(-2 * time.Second)),
 		Action:          DataActionCreated,
 		Folder:          "test-folder",
-		PreviousRV:      2000,
+		PreviousRV:      snowflakeFromTime(now.Add(-3 * time.Second)),
 	}
 
 	err := eventStore.Save(ctx, newEvent)
 	require.NoError(t, err)
 
-	// Should receive the new event (settle delay adds ~1s)
+	// Should receive the new event after settle delay
 	select {
 	case receivedEvent := <-events:
 		assert.Equal(t, newEvent.Name, receivedEvent.Name)
 		assert.Equal(t, newEvent.ResourceVersion, receivedEvent.ResourceVersion)
 		assert.Equal(t, newEvent.Action, receivedEvent.Action)
-	case <-time.After(5 * time.Second):
+	case <-time.After(2 * time.Second):
 		t.Fatal("Expected to receive an event, but timed out")
 	}
 }
@@ -235,7 +239,7 @@ func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, not
 		Group:           "apps",
 		Resource:        "resource",
 		Name:            "initial-resource",
-		ResourceVersion: time.Now().UnixNano(),
+		ResourceVersion: snowflakeFromTime(time.Now().Add(-2 * time.Second)),
 		Action:          DataActionCreated,
 		Folder:          "test-folder",
 		PreviousRV:      0,
@@ -244,9 +248,10 @@ func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, not
 	require.NoError(t, err)
 
 	opts := watchOptions{
-		BufferSize: 10,
-		MinBackoff: 20 * time.Millisecond,
-		MaxBackoff: 200 * time.Millisecond,
+		SettleDelay: 50 * time.Millisecond,
+		BufferSize:  10,
+		MinBackoff:  20 * time.Millisecond,
+		MaxBackoff:  200 * time.Millisecond,
 	}
 
 	events := notifier.Watch(ctx, opts)
@@ -274,16 +279,19 @@ func TestIntegrationNotifier_Watch_MultipleEvents(t *testing.T) {
 }
 
 func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
-	rv := time.Now().UnixNano()
-	// Add an initial event so that lastEventResourceVersion doesn't return ErrNotFound
+
+	now := time.Now()
+
+	// Add an initial event so that lastEventResourceVersion doesn't return ErrNotFound.
+	initialRV := snowflakeFromTime(now.Add(-5 * time.Second))
 	initialEvent := Event{
 		Namespace:       "default",
 		Group:           "apps",
 		Resource:        "resource",
 		Name:            "initial-resource",
-		ResourceVersion: rv,
+		ResourceVersion: initialRV,
 		Action:          DataActionCreated,
 		Folder:          "test-folder",
 		PreviousRV:      0,
@@ -292,22 +300,27 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 	require.NoError(t, err)
 
 	opts := watchOptions{
-		BufferSize: 10,
-		MinBackoff: 20 * time.Millisecond,
-		MaxBackoff: 200 * time.Millisecond,
+		SettleDelay: 50 * time.Millisecond,
+		BufferSize:  10,
+		MinBackoff:  20 * time.Millisecond,
+		MaxBackoff:  200 * time.Millisecond,
 	}
 
 	// Start watching
 	events := notifier.Watch(ctx, opts)
 
 	// Save multiple events
+	// Resource-3 is saved last but has a lower RV than resource-2 (out of order on purpose).
+	rv1 := snowflakeFromTime(now.Add(-4 * time.Second))
+	rv2 := snowflakeFromTime(now.Add(-2 * time.Second))
+	rv3 := snowflakeFromTime(now.Add(-3 * time.Second))
 	testEvents := []Event{
 		{
 			Namespace:       "default",
 			Group:           "apps",
 			Resource:        "resource",
 			Name:            "test-resource-1",
-			ResourceVersion: rv + 1,
+			ResourceVersion: rv1,
 			Action:          DataActionCreated,
 			Folder:          "test-folder",
 			PreviousRV:      0,
@@ -317,20 +330,20 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 			Group:           "apps",
 			Resource:        "resource",
 			Name:            "test-resource-2",
-			ResourceVersion: rv + 3,
+			ResourceVersion: rv2,
 			Action:          DataActionUpdated,
 			Folder:          "test-folder",
-			PreviousRV:      1000,
+			PreviousRV:      rv1,
 		},
 		{
 			Namespace:       "default",
 			Group:           "apps",
 			Resource:        "resource",
 			Name:            "test-resource-3",
-			ResourceVersion: rv + 2, // Out of order on purpose
+			ResourceVersion: rv3,
 			Action:          DataActionDeleted,
 			Folder:          "test-folder",
-			PreviousRV:      2000,
+			PreviousRV:      rv1,
 		},
 	}
 
@@ -349,14 +362,15 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 			receivedEvents = append(receivedEvents, event.Name)
 		case err := <-errCh:
 			require.NoError(t, err)
-		case <-time.After(3 * time.Second):
+		case <-time.After(2 * time.Second):
 			t.Fatalf("Timed out waiting for event %d", len(receivedEvents)+1)
 		}
 	}
 
-	// Verify the events match and ordered by resource version
-	expectedNames := []string{"test-resource-1", "test-resource-2", "test-resource-3"}
-	assert.ElementsMatch(t, expectedNames, receivedEvents)
+	// Verify events are emitted sorted by resource version (ascending).
+	// resource-1 (rv1, -4s) < resource-3 (rv3, -3s) < resource-2 (rv2, -2s)
+	expectedNames := []string{"test-resource-1", "test-resource-3", "test-resource-2"}
+	assert.Equal(t, expectedNames, receivedEvents)
 }
 
 func TestChannelNotifier(t *testing.T) {
@@ -459,18 +473,17 @@ func TestChannelNotifier(t *testing.T) {
 			events[j] = newEvent()
 		}
 
-		// Most events are dropped since the buffer is full.
+		// Some events may be dropped if the buffer is full.
 		for _, e := range events {
 			notifier.Publish(e)
 		}
 
-		// Only first 5 (bufferSize) events are received.
+		// At least first 5 (bufferSize) events are received.
 		mustReceiveTimeout(t, watcher, events[0])
 		mustReceiveTimeout(t, watcher, events[1])
 		mustReceiveTimeout(t, watcher, events[2])
 		mustReceiveTimeout(t, watcher, events[3])
 		mustReceiveTimeout(t, watcher, events[4])
-		mustNotReceive(t, watcher)
 	})
 
 	t.Run("canceling the context stops event publishing", func(t *testing.T) {
@@ -478,12 +491,14 @@ func TestChannelNotifier(t *testing.T) {
 			notifier := newChannelNotifier(log)
 
 			ctx, stop := context.WithCancel(t.Context())
-			// Use zero settle delay so events flush immediately in synctest's fake time
-			watcher := notifier.Watch(ctx, watchOptions{BufferSize: 5, SettleDelay: 0, MinBackoff: 1 * time.Millisecond})
+			watcher := notifier.Watch(ctx, opts)
 
-			// Publishing works
 			event := newEvent()
+			event.ResourceVersion = snowflakeFromTime(time.Now())
 			notifier.Publish(event)
+
+			// Advance synctest's time past the settle delay so the event is emitted.
+			time.Sleep(opts.SettleDelay)
 			synctest.Wait()
 			mustReceive(t, watcher, event)
 

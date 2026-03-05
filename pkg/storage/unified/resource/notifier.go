@@ -58,6 +58,19 @@ func defaultWatchOptions() watchOptions {
 	}
 }
 
+func (opts watchOptions) normalize() watchOptions {
+	if opts.SettleDelay <= 0 {
+		opts.SettleDelay = defaultSettleDelay
+	}
+	if opts.MinBackoff <= 0 {
+		opts.MinBackoff = defaultMinBackoff
+	}
+	if opts.MaxBackoff <= 0 || opts.MaxBackoff <= opts.MinBackoff {
+		opts.MaxBackoff = defaultMaxBackoff
+	}
+	return opts
+}
+
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	if opts.useChannelNotifier {
 		return newChannelNotifier(opts.log.New("notifier", "channelNotifier"))
@@ -80,14 +93,14 @@ func newChannelNotifier(log log.Logger) *channelNotifier {
 }
 
 func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
-	if opts.SettleDelay < 0 {
-		opts.SettleDelay = defaultSettleDelay
-	}
-	if opts.MinBackoff <= 0 {
-		opts.MinBackoff = defaultMinBackoff
-	}
+	opts = opts.normalize()
 
-	cn.log.Info("creating new notifier", "buffer_size", opts.BufferSize, "settle_delay", opts.SettleDelay)
+	cn.log.Info("creating new notifier",
+		"settle_delay", opts.SettleDelay,
+		"buffer_size", opts.BufferSize,
+		"min_backoff", opts.MinBackoff,
+		"max_backoff", opts.MaxBackoff,
+	)
 
 	// Raw channel that Publish writes into; acts as a fixed-size buffer of
 	// events that will eventually be "settled" and sent to the watcher.
@@ -110,45 +123,23 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan 
 		defer close(out)
 		var buffer []Event
 
-		ticker := time.NewTicker(opts.MinBackoff)
-		defer ticker.Stop()
+		currentInterval := opts.MinBackoff
+		backoffConfig := backoff.Config{
+			MinBackoff: opts.MinBackoff,
+			MaxBackoff: opts.MaxBackoff,
+			MaxRetries: 0, // infinite retries
+		}
+		bo := backoff.New(ctx, backoffConfig)
 
 		for {
 			// Wait for an event or a tick
 			select {
-			case evt, ok := <-raw:
-				if !ok {
-					// Channel closed, flush all remaining sorted events
-					slices.SortFunc(buffer, func(a, b Event) int {
-						return cmp.Compare(a.ResourceVersion, b.ResourceVersion)
-					})
-					for _, e := range buffer {
-						select {
-						case out <- e:
-						case <-ctx.Done():
-							return
-						}
-					}
-					return
-				}
+			case evt := <-raw:
 				buffer = append(buffer, evt)
-			case <-ticker.C:
+				continue
+			case <-time.After(currentInterval):
 			case <-ctx.Done():
 				return
-			}
-
-			// Non-blocking drain of raw channel to collect as many events as possible
-		drain:
-			for {
-				select {
-				case evt, ok := <-raw:
-					if !ok {
-						break drain
-					}
-					buffer = append(buffer, evt)
-				default:
-					break drain
-				}
 			}
 
 			// Sort buffer by RV
@@ -157,13 +148,9 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan 
 			})
 
 			// Emit events that have "settled" (old enough that concurrent writes should have appeared).
-			// When SettleDelay is 0, emit all buffered events immediately.
-			var threshold int64
-			if opts.SettleDelay > 0 {
-				threshold = snowflakeFromTime(time.Now().Add(-opts.SettleDelay))
-			}
+			threshold := snowflakeFromTime(time.Now().Add(-opts.SettleDelay))
 			emitted := 0
-			for emitted < len(buffer) && (threshold == 0 || buffer[emitted].ResourceVersion <= threshold) {
+			for emitted < len(buffer) && buffer[emitted].ResourceVersion <= threshold {
 				select {
 				case out <- buffer[emitted]:
 				case <-ctx.Done():
@@ -172,6 +159,13 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan 
 				emitted++
 			}
 			buffer = buffer[emitted:]
+
+			if emitted > 0 || len(buffer) > 0 {
+				bo.Reset()
+				currentInterval = opts.MinBackoff
+			} else {
+				currentInterval = bo.NextDelay()
+			}
 		}
 	}()
 
@@ -201,15 +195,7 @@ func (n *pollingNotifier) lastEventResourceVersion(ctx context.Context) (int64, 
 }
 
 func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
-	if opts.MinBackoff <= 0 {
-		opts.MinBackoff = defaultMinBackoff
-	}
-	if opts.MaxBackoff <= 0 || opts.MaxBackoff <= opts.MinBackoff {
-		opts.MaxBackoff = defaultMaxBackoff
-	}
-	if opts.SettleDelay <= 0 {
-		opts.SettleDelay = defaultSettleDelay
-	}
+	opts = opts.normalize()
 
 	n.log.Info("creating new notifier",
 		"settle_delay", opts.SettleDelay,
