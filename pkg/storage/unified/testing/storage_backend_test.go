@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/require"
@@ -78,6 +79,7 @@ func TestIntegrationBenchmarkSQLKVStorageAndSearch(t *testing.T) {
 				Resources: &resource.TestDocumentBuilderSupplier{
 					GroupsResources: groupsResources,
 				},
+				IndexModificationCacheTTL: 5 * time.Minute,
 			}
 			RunStorageAndSearchBenchmark(t, backend, searchOpts, opts)
 		})

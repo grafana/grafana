@@ -232,6 +232,9 @@ type SearchOptions struct {
 	// that subsequent search will observe the effect of the writing.
 	IndexMinUpdateInterval time.Duration
 
+	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
+	IndexModificationCacheTTL time.Duration
+
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 }

@@ -32,11 +32,6 @@ import (
 
 const maxBatchSize = 1000
 
-const (
-	dedupCacheExpiration = 5 * time.Minute
-	dedupCacheCleanup    = 1 * time.Minute
-)
-
 type NamespacedResource struct {
 	Namespace string
 	Group     string
@@ -164,7 +159,8 @@ type searchServer struct {
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
 
-	injectFailuresPercent int
+	injectFailuresPercent     int
+	indexModificationCacheTTL time.Duration
 
 	backendDiagnostics resourcepb.DiagnosticsServer
 }
@@ -216,10 +212,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		indexMetrics:   indexMetrics,
 		ownsIndexFn:    ownsIndexFn,
 
-		dashboardIndexMaxAge:  opts.DashboardIndexMaxAge,
-		maxIndexAge:           opts.MaxIndexAge,
-		minBuildVersion:       opts.MinBuildVersion,
-		injectFailuresPercent: opts.InjectFailuresPercent,
+		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
+		maxIndexAge:               opts.MaxIndexAge,
+		minBuildVersion:           opts.MinBuildVersion,
+		injectFailuresPercent:     opts.InjectFailuresPercent,
+		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -1144,7 +1141,18 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		return listRV, err
 	}
 
-	dedupCache := gocache.New(dedupCacheExpiration, dedupCacheCleanup)
+	var dedupCache *gocache.Cache
+	if s.indexModificationCacheTTL > 0 {
+		dedupCache = gocache.New(s.indexModificationCacheTTL, time.Minute)
+	}
+
+	addToDedupCache := func(pendingKeys []string) {
+		if dedupCache != nil {
+			for _, k := range pendingKeys {
+				dedupCache.SetDefault(k, struct{}{})
+			}
+		}
+	}
 
 	var lastSinceRV int64
 	var lastCalledAt *time.Time
@@ -1188,12 +1196,14 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				return 0, 0, err
 			}
 
-			// Skip events we've already processed. The underlying ListModifiedSince
-			// implementation may return events prior to sinceRV, and the cache
-			// lets us skip the extra work.
+			// Skip events we've already processed when the dedupCache is enabled.
+			// The underlying ListModifiedSince implementation may return events
+			// prior to sinceRV, and the cache lets us skip the extra work.
 			cacheKey := fmt.Sprintf("%s~%d", res.Key.Name, res.ResourceVersion)
-			if _, found := dedupCache.Get(cacheKey); found {
-				continue
+			if dedupCache != nil {
+				if _, found := dedupCache.Get(cacheKey); found {
+					continue
+				}
 			}
 
 			docs++
@@ -1234,9 +1244,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					return 0, 0, err
 				}
 
-				for _, k := range pendingKeys {
-					dedupCache.SetDefault(k, struct{}{})
-				}
+				addToDedupCache(pendingKeys)
 				items = items[:0]
 				pendingKeys = pendingKeys[:0]
 			}
@@ -1249,9 +1257,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				return 0, 0, err
 			}
 
-			for _, k := range pendingKeys {
-				dedupCache.Set(k, struct{}{}, gocache.DefaultExpiration)
-			}
+			addToDedupCache(pendingKeys)
 		}
 
 		return rv, docs, nil
