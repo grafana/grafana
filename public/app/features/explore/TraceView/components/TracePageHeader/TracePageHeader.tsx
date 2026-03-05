@@ -57,6 +57,7 @@ import { ViewRangeTimeUpdate, TUpdateViewRangeTimeFunction, ViewRange } from '..
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
+import { getServiceColorKey } from '../utils/service-name';
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
@@ -142,8 +143,9 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   });
 
   // Memoize service count to avoid recomputing on every render
+  // Uses getServiceColorKey to count namespace/serviceName pairs as distinct services
   const serviceCount = useMemo(() => {
-    return new Set(trace?.spans.map((span) => span.process?.serviceName)).size;
+    return new Set(trace?.spans.map((span) => (span.process ? getServiceColorKey(span.process) : ''))).size;
   }, [trace?.spans]);
 
   if (!trace) {

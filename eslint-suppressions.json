@@ -227,7 +227,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 7
+      "count": 2
     }
   },
   "packages/grafana-data/src/types/options.ts": {
@@ -1044,9 +1044,9 @@
       "count": 1
     }
   },
-  "public/app/core/components/SharedPreferences/SharedPreferences.tsx": {
+  "public/app/core/components/SharedPreferences/SharedPreferencesOld.tsx": {
     "no-restricted-syntax": {
-      "count": 8
+      "count": 6
     },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -1395,11 +1395,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
-    "no-restricted-syntax": {
-      "count": 10
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -1454,11 +1449,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rules/RuleListStateView.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rules/state-history/LokiStateHistory.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1693,16 +1683,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelOptionsPane.test.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1724,9 +1704,6 @@
   "public/app/features/dashboard-scene/scene/export/exporters.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 6
-    },
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.ts": {
@@ -1734,10 +1711,7 @@
       "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 8
-    },
-    "no-restricted-syntax": {
-      "count": 1
+      "count": 7
     }
   },
   "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItemEditor.tsx": {
@@ -2155,9 +2129,6 @@
   "public/app/features/dashboard/state/DashboardMigrator.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 10
-    },
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/state/DashboardMigrator.ts": {
@@ -2183,7 +2154,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 23
+      "count": 24
     }
   },
   "public/app/features/dashboard/state/PanelModel.test.ts": {
@@ -2612,11 +2583,6 @@
   },
   "public/app/features/panel/panellinks/linkSuppliers.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/panel/state/util.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },

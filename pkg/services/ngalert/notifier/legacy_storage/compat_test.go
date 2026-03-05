@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/grafana/alerting/definition"
@@ -27,14 +28,14 @@ func TestPostableMimirReceiverToIntegrations(t *testing.T) {
 			expectedType, err := notify.IntegrationTypeFromMimirTypeReflect(configType)
 			assert.NoError(t, err)
 			expectedVersion := schema.V0mimir1
-			if configType.Name() == "MSTeamsConfig" {
+			if strings.Contains(configType.PkgPath(), "/teams/v0mimir1") {
 				expectedType = teams.Type
 			}
-			if configType.Name() == "MSTeamsV2Config" {
+			if strings.Contains(configType.PkgPath(), "/teams/v0mimir2") {
 				expectedType = teams.Type
 				expectedVersion = schema.V0mimir2
 			}
-			t.Run(fmt.Sprintf("%s as %s %s", configType.Name(), expectedType, expectedVersion), func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s as %s %s", configType.PkgPath(), expectedType, expectedVersion), func(t *testing.T) {
 				integrations, err := PostableMimirReceiverToIntegrations(receiver)
 				require.NoError(t, err)
 				require.Len(t, integrations, 1)

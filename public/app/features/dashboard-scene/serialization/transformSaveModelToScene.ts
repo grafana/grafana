@@ -411,6 +411,7 @@ export function createDashboardSceneFromDashboardModel(
 
   const dashboardScene = new DashboardScene(
     {
+      id: oldModel.id,
       uid,
       description: oldModel.description,
       editable: oldModel.editable,

@@ -34,6 +34,10 @@ func (tc *shortURLsTestCase) FeatureToggles() []string {
 	return []string{featuremgmt.FlagKubernetesShortURLs}
 }
 
+func (tc *shortURLsTestCase) RenameTables() []string {
+	return []string{"short_url"}
+}
+
 func (tc *shortURLsTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		{

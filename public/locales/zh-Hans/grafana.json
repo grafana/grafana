@@ -388,7 +388,6 @@
         "timing-options": "计时"
       },
       "pending-period": "待处理时段",
-      "rule": "规则",
       "rule-identifier": "规则标识符",
       "rule-type": "规则类型",
       "state-error-timeout": "如果执行错误或超时，则提醒状态",
@@ -903,7 +902,7 @@
       "title-failed-to-fetch-contact-points": "获取联络点失败"
     },
     "contact-points": {
-      "create": "创建联络点",
+      "create": "",
       "custom-template-value": "自定义模板值",
       "delete-reasons": {
         "heading": "无法删除联络点，原因为：",
@@ -2096,7 +2095,9 @@
       "select-namespace": "选择命名空间"
     },
     "navigation": {
+      "active-notifications": "",
       "alert-rules": "警报规则",
+      "alerts": "",
       "contact-points": "",
       "notification-policies": "",
       "recently-deleted": "最近删除",
@@ -2120,7 +2121,7 @@
     },
     "new-mute-timing-page": {
       "text": {
-        "add-time-interval": "添加时间间隔"
+        "add-time-interval": ""
       }
     },
     "new-rule-from-panel-button": {
@@ -2164,6 +2165,7 @@
         "status": "",
         "tooltip": ""
       },
+      "firing-alerts": "",
       "labels": "",
       "loading": "",
       "notification-error": "",
@@ -2171,14 +2173,14 @@
         "failed": "",
         "success": ""
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status": {
         "firing": "",
         "resolved": ""
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "按联络点搜索",
@@ -2241,7 +2243,7 @@
       "title-failed-to-fetch-notification-templates": "获取通知模板失败"
     },
     "notification-templates-tab": {
-      "add-notification-template-group": "添加通知模板组",
+      "add-notification-template-group": "",
       "create-notification-templates-customize-notifications": "创建通知模板以自定义您的通知。"
     },
     "notifications-list": {
@@ -2268,6 +2270,7 @@
         "clear": ""
       },
       "filterBy": "",
+      "firing-alerts": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2291,15 +2294,15 @@
           "receiver": ""
         }
       },
+      "resolved-alerts": "",
+      "showing-alerts": "",
       "started": "",
       "status-filter-variable": {
         "label": {
           "status": ""
         }
       },
-      "summary": "",
-      "firing-alerts_other": "",
-      "resolved-alerts_other": ""
+      "summary": ""
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "添加标签，以帮助您更好地管理录制规则。",
@@ -2320,8 +2323,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "查看当前的警报并浏览历史数据，以调查当前或过去的问题。",
-        "title": "警报"
+        "subtitle": "查看当前的警报并浏览历史数据，以调查当前或过去的问题。"
       }
     },
     "panel-alert-tab-content": {
@@ -3246,6 +3248,7 @@
     },
     "template-form": {
       "aria-label-template-form": "模板表单",
+      "body-legacy": "",
       "label-examples-documentation": "示例文档",
       "label-template-group": "模板组",
       "label-template-group-name": "模板组名称",
@@ -3254,6 +3257,7 @@
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "为模板组命名",
       "title-error-saving-template": "保存模板时出错",
+      "title-legacy": "",
       "title-templating-cheat-sheet": "模板速查表"
     },
     "template-preview": {
@@ -3294,6 +3298,8 @@
       "help": {
         "intro": "通知模板使用 Go 模板语言来创建通知消息。\n\n在 Grafana，模板组可以使用 {{ define \"<NAME>\" }} 定义多个通知模板。\n然后，可以通过调用 {{ template \"<NAME>\" }} 在联络点和其他通知模板中使用这些模板。\n有关通知模板的详细信息，请参阅我们的文档。"
       },
+      "legacy-badge-text": "",
+      "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "配置错误",
       "misconfigured-warning": "此模板配置错误。",
       "misconfigured-warning-details": "模板必须在 Alertmanager 配置的 <2></2> 和 <5></5> 部分中定义。"
@@ -3332,7 +3338,7 @@
       "stop-alerting-when": "当出现以下情况时停止警报（或待处理状态）："
     },
     "time-interval": {
-      "add-time-interval": "添加时间间隔",
+      "add-time-interval": "",
       "save": "保存时间间隔",
       "saving": "正在保存时间间隔"
     },
@@ -3383,8 +3389,14 @@
     },
     "triage": {
       "alert-instances": "警报实例",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "加载规则时出错",
-      "firing-instances-count": "触发警报实例",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "实例详情"
       },
@@ -3394,7 +3406,6 @@
       "no-matching-instances-with-filters": "在所选时间范围内，没有符合您当前筛选条件组的警报实例。",
       "open-in-sidebar": "在侧边栏中打开",
       "open-rule-details": "打开规则详情",
-      "pending-instances-count": "待处理的警报实例",
       "rule-details": {
         "subtitle": "规则详情和条件",
         "title": "规则详情"
@@ -3403,8 +3414,17 @@
         "description": "找不到请求的规则。",
         "title": "未找到规则"
       },
-      "rules-with-firing-instances": "带触发实例的警报规则",
-      "rules-with-pending-instances": "带待处理实例的警报规则"
+      "saved-searches": {
+        "predefined": {
+          "firing-only": "",
+          "folder-firing": "",
+          "folder-only": ""
+        }
+      },
+      "hidden-label-count_other": "",
+      "show-all-labels_other": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "添加表达式"
@@ -3502,7 +3522,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "详情",
           "enrichment": "警报扩充",
           "history": "历史记录",
           "instances": "实例",
@@ -4159,6 +4178,15 @@
       "clear": "清除搜索和筛选条件",
       "text": "未找到与您的查询相关的结果"
     },
+    "quota-banner": {
+      "at-limit-body": "",
+      "at-limit-title": "",
+      "nearing-body": "",
+      "nearing-title": "",
+      "request-extension": "",
+      "resource-detail-dashboards": "",
+      "resource-detail-folders": ""
+    },
     "recently-viewed": {
       "clear": "清除历史记录",
       "error": "无法加载近期查看的数据面板。",
@@ -4728,7 +4756,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "关联的链接",
-      "body": "数据源有了新家！您可以在“关联”页面中发现新的数据源或管理现有数据源，该页面可从主菜单访问。",
+      "body": "数据源有了新家！您可以在<0>「关联」页面</0>中发现新的数据源或管理现有数据源，该页面可从主菜单访问。",
       "go-to-connections": "前往关联"
     },
     "data-source-details-page": {
@@ -4826,6 +4854,10 @@
       },
       "view-json-diff": "查看 JSON 差异以查看所有更改"
     }
+  },
+  "correlation": {
+    "edit-error": "",
+    "edit-success": ""
   },
   "correlations": {
     "add-new": "添加新的",
@@ -5028,7 +5060,7 @@
     "canvas-actions": {
       "add-panel": "添加面板",
       "disabled-child-contains-tabs": "无法更改为选项卡，因为行已包含选项卡",
-      "disabled-nested-grouping": "分组限制为 2 级",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "选项卡不能嵌套在其他选项卡中",
       "group-into-row": "分组成行",
       "group-into-tab": "分组成标签页",
@@ -5403,11 +5435,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6563,6 +6597,12 @@
         }
       }
     },
+    "default-value-editor": {
+      "aria-label": "",
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
     "delete-provisioned-dashboard-form": {
       "api-error": "删除数据面板失败",
       "cancel-action": "取消",
@@ -6818,8 +6858,6 @@
       "title-delete-all-transformations": "删除所有转换？"
     },
     "panel-edit-controls": {
-      "query-editor-version": "",
-      "query-editor-version-toggle": "",
       "table-view-aria-label-toggletableview": "切换表格视图",
       "table-view-label-table-view": "表视图"
     },
@@ -6866,6 +6904,16 @@
     },
     "query-editor": {
       "query": "查询"
+    },
+    "query-editor-banner": {
+      "description-classic": "",
+      "description-new": "",
+      "dismiss": "",
+      "downgrade-title": "",
+      "give-feedback": "",
+      "go-back": "",
+      "try-it": "",
+      "upgrade-title": ""
     },
     "query-variable-editor-form": {
       "description-examples": "命名捕获组可用于分隔显示文本和值（<1>查看示例</1>）。",
@@ -6989,6 +7037,7 @@
     },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "无法从此面板创建警报，因为未找到对支持警报的数据源的查询。",
+      "disabled-tooltip": "",
       "new-alert-rule": "新建警报规则",
       "title-no-alerting-capable-query-found": "未找到支持警报的查询"
     },
@@ -7086,6 +7135,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "数据面板已保存"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "此变量未被任何变量或数据面板引用。",
       "aria-label-variable-referenced-other-variables-dashboard": "此变量被其他变量或数据面板引用。",
@@ -7178,6 +7234,21 @@
     "variable-values-preview": {
       "show-more": "显示更多",
       "preview-of-values_other": "值预览 ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -7768,7 +7839,10 @@
     "pro-tip": "专业提示：{{proTip}}"
   },
   "entity-not-found": {
-    "description": "我们正在查找，但似乎找不到这个 {{lowerCaseEntity}}。请尝试返回<4>主页</4>或在<7>社区网站</7>上寻求帮助</7>"
+    "community-link": "",
+    "description": "",
+    "home-link": "",
+    "title": ""
   },
   "errors": {
     "dashboard-settings": {
@@ -9392,11 +9466,13 @@
       },
       "legend": {
         "category": "图例",
+        "description-limit": "",
         "description-values": "选择要在图例中显示的值或计算",
         "mode-options": {
           "label-list": "列表",
           "label-table": "表格"
         },
+        "name-limit": "",
         "name-mode": "模式",
         "name-placement": "放置",
         "name-values": "值",
@@ -9797,6 +9873,7 @@
       "csv-placeholder": "在此处输入 CSV...",
       "filter": {
         "add-all": "将所有显示的值添加到筛选条件",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10325,6 +10402,11 @@
     "subtitle": "Grafana 中的 LDAP 集成允许您的 Grafana 用户使用其 LDAP 凭证登录。在我们的<2><1>文档</1></2>中了解更多信息。",
     "title": "基本设置"
   },
+  "legend": {
+    "container": {
+      "show-all-series": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "error": "库面板名称已存在",
@@ -10800,6 +10882,7 @@
     "name-order": "顺序",
     "name-prettify-json": "美化 JSON",
     "name-show-controls": "显示控件",
+    "name-show-level": "",
     "name-time": "显示时间戳",
     "name-unique-labels": "唯一标签",
     "name-unwrapped-columns": "",
@@ -10914,7 +10997,9 @@
     "manage-folder-owner-alert-text": "",
     "manage-folder-owner-alert-title": "",
     "save-owner": "",
-    "select-owner": ""
+    "select-owner": "",
+    "selected-team-not-found": "",
+    "team-not-found": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到选项"
@@ -11191,9 +11276,17 @@
       "subtitle": "在系统发生问题后立即获悉",
       "title": "警报"
     },
+    "alerting-activity": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-admin": {
       "subtitle": "管理 Alertmanager 配置并启用接收 Grafana 管理的提醒",
       "title": "设置"
+    },
+    "alerting-alerts": {
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "确定警报如何路由到联络点",
@@ -11856,8 +11949,6 @@
       "tooltip-delete": "删除"
     },
     "visualization-suggestions": {
-      "edit": "",
-      "edit-aria-label": "",
       "error-loading-some-suggestions": {
         "message": "无法加载某些建议"
       },
@@ -11875,6 +11966,12 @@
     },
     "viz-type-picker": {
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
+    }
+  },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "panel-group-by": {
@@ -12314,6 +12411,17 @@
       "text-loading-teams": "正在加载团队..."
     }
   },
+  "provisioned-folder-preview-banner": {
+    "folder-pushed-to-repository": "",
+    "sync-needed": "",
+    "view-folder": ""
+  },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "添加备注以描述您的更改（可选）",
@@ -12321,13 +12429,18 @@
       "description-branch": "",
       "description-branch-restricted": "",
       "description-file-path": "",
+      "description-filename": "",
+      "description-folder": "",
       "description-folder-path": "",
       "description-inside-repository": "",
       "info-branch-disabled": "",
       "label-branch": "分支",
       "label-comment": "评论",
+      "label-filename": "",
+      "label-folder": "",
       "label-path": "路径",
       "placeholder-branch": "",
+      "placeholder-folder": "",
       "suffix-configured-branch": "",
       "suffix-last-used": "最后一个分支",
       "suffix-new-branch": "",
@@ -12348,9 +12461,6 @@
     "title-created-branch-in-repo": "已在 {{repoType}} 的分支中创建新资源。",
     "title-loaded-pull-request-in-repo": "此资源从您刚刚在 {{repoType}} 中创建的分支加载，并且仅对您可见"
   },
-  "provisioned-resource-request-handler": "资源已成功保存",
-  "provisioned-resource-request-handler-dashboard": "数据面板已成功保存",
-  "provisioned-resource-request-handler-folder": "文件夹已成功创建",
   "provisioning": {
     "banner": {
       "message": "此功能目前正在积极开发中。为了获得最佳体验和最新改进，我们建议您使用 Grafana 的<2>夜间版本</2>。"
@@ -12438,6 +12548,8 @@
       "instance-fully-managed-tooltip": "配置已禁用，因为此实例已完全托管"
     },
     "connect-step": {
+      "text-folders-not-available": "",
+      "text-repository-folders-not-ready": "",
       "text-repository-not-ready": ""
     },
     "connection": {
@@ -12576,6 +12688,20 @@
       "label-generate-dashboard-previews": "生成数据面板预览",
       "label-read-only": "只读",
       "label-sync-interval": "间隔（秒）"
+    },
+    "fix-folder-metadata": {
+      "button": ""
+    },
+    "fix-folder-metadata-drawer": {
+      "cancel": "",
+      "error-message": "",
+      "error-title": "",
+      "loading": "",
+      "read-only-message": "",
+      "submit": "",
+      "submitting": "",
+      "success-title": "",
+      "title": ""
     },
     "folder-permissions": {
       "loading": ""
@@ -12716,6 +12842,8 @@
       "error-message": "",
       "error-title": "",
       "message": "",
+      "repo-message": "",
+      "repo-title": "",
       "title": ""
     },
     "mode-options": {
@@ -13222,6 +13350,7 @@
     "action": {
       "add-transformation-filter": "",
       "duplicate": "",
+      "error": "",
       "hide": "",
       "hide-help": "",
       "hide-transformation-help": "",
@@ -13266,6 +13395,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {
@@ -13311,12 +13446,14 @@
       "card-click": "选择卡片 {{id}}",
       "data": "",
       "loading-queries-transformations": "",
+      "new-type": "",
       "queries-expressions": "查询和表达式",
       "toggle-size": "切换侧边栏大小",
       "transformations": "转换",
       "view-toggle": "",
       "alerts_other": "",
-      "footer-items_other": ""
+      "footer-items_other": "",
+      "footer-items-alert_other": ""
     },
     "transformation-debug": {
       "input-data": "",
@@ -14261,6 +14398,11 @@
           "settings": "设置"
         }
       },
+      "team-folders": {
+        "text": {
+          "folders": ""
+        }
+      },
       "team-group-sync": {
         "text": {
           "external-group-sync": "外部组同步"
@@ -14317,6 +14459,19 @@
       "loading-teams": "正在加载团队...",
       "new-team": "新建团队",
       "placeholder-search-teams": "搜索团队"
+    },
+    "team-pages": {
+      "team-folders": {
+        "empty-state-content": "",
+        "empty-state-message": "",
+        "error-loading-folders": "",
+        "loading": "",
+        "open-folder": "",
+        "table": {
+          "name": "",
+          "path": ""
+        }
+      }
     },
     "team-settings": {
       "description-email": "这是可选项，主要用于设置团队资料头像（通过 Gravatar 服务）",
@@ -14548,6 +14703,12 @@
     "name-show-matches-only": "仅显示匹配项",
     "traces-panel": {
       "no-data-found-in-response": "回复中未找到数据"
+    }
+  },
+  "transformation-editor": {
+    "no-options": {
+      "description": "",
+      "title": ""
     }
   },
   "transformation-editor-renderer": {

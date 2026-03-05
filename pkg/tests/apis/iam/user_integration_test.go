@@ -38,7 +38,6 @@ func TestIntegrationUsers(t *testing.T) {
 					featuremgmt.FlagKubernetesAuthnMutation,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {

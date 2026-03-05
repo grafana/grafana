@@ -18,6 +18,7 @@ import { memo } from 'react';
 
 import { ViewRange, TUpdateViewRangeTimeFunction, ViewRangeTimeUpdate } from '../../TraceTimelineViewer/types';
 import { Trace, TraceSpan } from '../../types/trace';
+import { getServiceColorKey } from '../../utils/service-name';
 
 import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
@@ -52,7 +53,7 @@ function getItem(span: TraceSpan): SpanItem {
   return {
     valueOffset: span.relativeStartTime,
     valueWidth: span.duration,
-    serviceName: span.process.serviceName,
+    serviceName: getServiceColorKey(span.process),
   };
 }
 

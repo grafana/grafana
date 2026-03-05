@@ -9,21 +9,13 @@ import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelRenderer } from '../PanelRenderer';
 
-export interface Props extends HTMLAttributes<HTMLButtonElement> {
+export interface Props extends HTMLAttributes<HTMLDivElement> {
   data: PanelData;
   width: number;
   suggestion: PanelPluginVisualizationSuggestion;
-  isSelected?: boolean;
 }
 
-export function VisualizationSuggestionCard({
-  data,
-  suggestion,
-  width,
-  isSelected = false,
-  className,
-  ...restProps
-}: Props) {
+export function VisualizationSuggestionCard({ data, suggestion, width, className, ...restProps }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
@@ -31,25 +23,20 @@ export function VisualizationSuggestionCard({
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: cx(
-      className,
-      styles.vizBox,
-      config.featureToggles.newVizSuggestions && isSelected && styles.selectedBox
-    ),
+    className: cx(className, styles.vizBox),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
-    tabIndex: -1, // selection is handled by parent container
     ...restProps,
-  } satisfies HTMLAttributes<HTMLButtonElement> & { 'data-testid': string };
+  } satisfies HTMLAttributes<HTMLDivElement> & { 'data-testid': string };
 
   let content: ReactNode;
 
   if (cardOptions.imgSrc) {
     content = (
-      <button {...commonButtonProps} className={cx(commonButtonProps.className, styles.imgBox)}>
+      <div {...commonButtonProps} className={cx(commonButtonProps.className, styles.imgBox)}>
         <div className={styles.name}>{suggestion.name}</div>
         <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
-      </button>
+      </div>
     );
   } else {
     let preview = suggestion;
@@ -59,13 +46,9 @@ export function VisualizationSuggestionCard({
     }
 
     content = (
-      <button {...commonButtonProps}>
+      <div {...commonButtonProps}>
         {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
-        <div
-          style={innerStyles}
-          className={cx(styles.renderContainer, isSelected && styles.selectedSuggestion)}
-          {...{ inert: '' }}
-        >
+        <div style={innerStyles} className={styles.renderContainer} {...{ inert: '' }}>
           <PanelRenderer
             title=""
             data={data}
@@ -76,7 +59,7 @@ export function VisualizationSuggestionCard({
             fieldConfig={preview.fieldConfig}
           />
         </div>
-      </button>
+      </div>
     );
   }
 
@@ -100,13 +83,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.border.medium}`,
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background'], {
+        transition: theme.transitions.create(['background', 'border-color'], {
           duration: theme.transitions.duration.short,
         }),
       },
 
       '&:hover': {
         background: theme.colors.background.secondary,
+        borderColor: theme.colors.primary.border,
       },
     }),
     imgBox: css({
@@ -141,10 +125,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       transformOrigin: 'left top',
       top: '6px',
       left: '6px',
-    }),
-    selectedBox: css({
-      border: `1px solid ${theme.colors.primary.border}`,
-      background: theme.colors.action.selected,
     }),
   };
 };
