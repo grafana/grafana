@@ -1813,43 +1813,56 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.Equal(collectT, "someToken", val.DangerouslyExposeAndConsumeValue())
 	}, time.Second*10, time.Second, "Expected repo to be reconciled")
 
-	repoUnstructured, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
-	require.NoError(t, err, "can get repository")
-	firstReconciledRepo := common.UnstructuredToRepository(t, repoUnstructured)
 	// Setting up main triggering conditions to verify token is re-generated when
-	// needed, even if all other conditions are not triggered
-	now := time.Now()
-	firstReconciledRepo.Status.ObservedGeneration = firstReconciledRepo.Generation
-	firstReconciledRepo.Status.Sync = provisioning.SyncStatus{
-		State:     provisioning.JobStateSuccess,
-		JobID:     firstReconciledRepo.Status.Sync.JobID,
-		Started:   now.UnixMilli(),
-		Finished:  now.UnixMilli(),
-		Scheduled: now.UnixMilli(),
-		LastRef:   firstReconciledRepo.Status.Sync.LastRef,
+	// needed, even if all other conditions are not triggered.
+	// Retries on conflict errors caused by optimistic locking.
+	// TODO: extract this to a helper function
+	var firstReconciledRepo *provisioning.Repository
+	const maxStatusRetries = 5
+	for attempt := range maxStatusRetries {
+		repoUnstructured, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+		require.NoError(t, err, "can get repository")
+		firstReconciledRepo = common.UnstructuredToRepository(t, repoUnstructured)
+
+		now := time.Now()
+		firstReconciledRepo.Status.ObservedGeneration = firstReconciledRepo.Generation
+		firstReconciledRepo.Status.Sync = provisioning.SyncStatus{
+			State:     provisioning.JobStateSuccess,
+			JobID:     firstReconciledRepo.Status.Sync.JobID,
+			Started:   now.UnixMilli(),
+			Finished:  now.UnixMilli(),
+			Scheduled: now.UnixMilli(),
+			LastRef:   firstReconciledRepo.Status.Sync.LastRef,
+		}
+		firstReconciledRepo.Status.Health = provisioning.HealthStatus{
+			Healthy: true,
+			Checked: now.UnixMilli(),
+		}
+		firstReconciledRepo.Status.Token = provisioning.TokenStatus{
+			LastUpdated: now.Add(-2 * time.Minute).UnixMilli(),
+			Expiration:  now.Add(-time.Minute).UnixMilli(),
+		}
+		firstReconciledRepo.Status.FieldErrors = []provisioning.ErrorDetails{}
+		firstReconciledRepo.Status.Conditions = []metav1.Condition{
+			{
+				Type:               provisioning.ConditionTypeReady,
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: firstReconciledRepo.Generation,
+				LastTransitionTime: metav1.Time{Time: now},
+				Reason:             provisioning.ReasonAvailable,
+			},
+		}
+		updatedRepo := common.RepositoryToUnstructured(t, firstReconciledRepo)
+		// This should also trigger a reconciliation loop
+		_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedRepo, metav1.UpdateOptions{})
+		if err == nil {
+			break
+		}
+		if apierrors.IsConflict(err) && attempt < maxStatusRetries-1 {
+			continue
+		}
+		require.NoError(t, err, "failed to update status")
 	}
-	firstReconciledRepo.Status.Health = provisioning.HealthStatus{
-		Healthy: true,
-		Checked: now.UnixMilli(),
-	}
-	firstReconciledRepo.Status.Token = provisioning.TokenStatus{
-		LastUpdated: now.Add(-2 * time.Minute).UnixMilli(),
-		Expiration:  now.Add(-time.Minute).UnixMilli(),
-	}
-	firstReconciledRepo.Status.FieldErrors = []provisioning.ErrorDetails{}
-	firstReconciledRepo.Status.Conditions = []metav1.Condition{
-		{
-			Type:               provisioning.ConditionTypeReady,
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: firstReconciledRepo.Generation,
-			LastTransitionTime: metav1.Time{Time: now},
-			Reason:             provisioning.ReasonAvailable,
-		},
-	}
-	updatedRepo := common.RepositoryToUnstructured(t, firstReconciledRepo)
-	// This should also trigger a reconciliation loop
-	_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedRepo, metav1.UpdateOptions{})
-	require.NoError(t, err, "failed to update status")
 
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
 		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})

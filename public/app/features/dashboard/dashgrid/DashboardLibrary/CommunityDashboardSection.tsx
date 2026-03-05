@@ -303,10 +303,10 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         ) : showError ? (
           <Stack direction="column" alignItems="center" gap={2}>
             <Alert
-              title={t('dashboard-library.community-error-title', 'Error loading community dashboards')}
+              title={t('dashboard-library.multi-community-error-title', 'Error loading community dashboards')}
               severity="error"
             >
-              <Trans i18nKey="dashboard-library.community-error">
+              <Trans i18nKey="dashboard-library.multi-community-error">
                 Failed to load community dashboards. Please try again.
               </Trans>
             </Alert>
