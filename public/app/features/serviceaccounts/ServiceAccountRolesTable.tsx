@@ -253,7 +253,7 @@ export const ServiceAccountRolesTable = ({
             </Text>
             <RadioButtonGroup options={TYPE_OPTIONS} value={typeFilter} onChange={setTypeFilter} size="sm" />
           </Stack>
-          {allRows.length > 3 && (
+          {allRows.length > 0 && (
             <div className={styles.searchWrapper}>
               <FilterInput
                 // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
