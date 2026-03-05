@@ -105,6 +105,11 @@ export function LinkList({ dashboard }: { dashboard: DashboardScene }) {
             <Draggable key={`link-${item.originalIndex}`} draggableId={`link-${item.originalIndex}`} index={index}>
               {(draggableProvided) => (
                 <div className={styles.linkItem} ref={draggableProvided.innerRef} {...draggableProvided.draggableProps}>
+                  <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
+                    <Tooltip content={t('dashboard.edit-pane.links.reorder', 'Drag to reorder')} placement="top">
+                      <Icon name="draggabledots" size="md" className={styles.dragHandle} />
+                    </Tooltip>
+                  </div>
                   <div
                     className={styles.linkContent}
                     aria-label={t('dashboard-scene.link-list.render-list.aria-label-link', 'Link')}
@@ -118,21 +123,16 @@ export function LinkList({ dashboard }: { dashboard: DashboardScene }) {
                       }
                     }}
                   >
-                    <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
-                      <Tooltip content={t('dashboard.edit-pane.links.reorder', 'Drag to reorder')} placement="top">
-                        <Icon name="draggabledots" size="md" className={styles.dragHandle} />
-                      </Tooltip>
-                    </div>
                     <Text truncate>{item.link.title || t('dashboard.edit-pane.links.untitled', 'Untitled link')}</Text>
                     {item.link.placement === 'inControlsMenu' && (
                       <Icon name="sliders-v-alt" size="sm" className={styles.hiddenIcon} />
                     )}
+                    <Stack direction="row" gap={1} alignItems="center">
+                      <Button variant="primary" size="sm" fill="outline">
+                        <Trans i18nKey="dashboard.edit-pane.links.select-link">Select</Trans>
+                      </Button>
+                    </Stack>
                   </div>
-                  <Stack direction="row" gap={1} alignItems="center">
-                    <Button variant="primary" size="sm" fill="outline">
-                      <Trans i18nKey="dashboard.edit-pane.links.select-link">Select</Trans>
-                    </Button>
-                  </Stack>
                 </div>
               )}
             </Draggable>
@@ -167,10 +167,17 @@ function getStyles(theme: GrafanaTheme2) {
     linkItem: css({
       display: 'flex',
       flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: theme.spacing(1),
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
       padding: theme.spacing(0.5),
-      borderRadius: theme.shape.radius.default,
+    }),
+    linkContent: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(0.5),
+      width: '100%',
       cursor: 'pointer',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['color'], {
@@ -186,11 +193,6 @@ function getStyles(theme: GrafanaTheme2) {
           visibility: 'visible',
         },
       },
-    }),
-    linkContent: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
     }),
     dragHandle: css({
       display: 'flex',

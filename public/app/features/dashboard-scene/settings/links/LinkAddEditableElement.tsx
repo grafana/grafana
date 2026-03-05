@@ -33,12 +33,11 @@ export function openAddLinkPane(dashboard: DashboardScene) {
   const newLink: DashboardLink = { ...NEW_LINK, asDropdown: true };
   const linkIndex = currentLinks.length;
 
-  linkEditActions.addLink({ dashboard, link: newLink });
-  DashboardInteractions.addLinkButtonClicked({ source: 'edit_pane' });
-
   const selectionId = linkSelectionId(linkIndex);
   const element = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
-  dashboard.state.editPane.selectObject(element, selectionId, { force: true, multi: false });
+
+  linkEditActions.addLink({ dashboard, link: newLink, addedObject: element });
+  DashboardInteractions.addLinkButtonClicked({ source: 'edit_pane' });
 }
 
 export function linkSelectionId(linkIndex: number) {

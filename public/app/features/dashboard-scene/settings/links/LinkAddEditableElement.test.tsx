@@ -103,6 +103,32 @@ describe('LinkAddEditableElement', () => {
       expect(dashboard.state.links).toHaveLength(1);
       expect(dashboard.state.links[0].title).toBe('Existing');
     });
+
+    it('clears selection on undo after adding a link', () => {
+      const dashboard = buildDashboard();
+      const editPane = dashboard.state.editPane;
+
+      openAddLinkPane(dashboard);
+      expect(editPane.state.selection).toBeDefined();
+
+      act(() => editPane.undoAction());
+      expect(editPane.state.selection).toBeUndefined();
+    });
+
+    it('reselects the link on redo after undo', () => {
+      const dashboard = buildDashboard();
+      const editPane = dashboard.state.editPane;
+
+      openAddLinkPane(dashboard);
+      expect(editPane.state.selection).toBeDefined();
+
+      act(() => editPane.undoAction());
+      expect(editPane.state.selection).toBeUndefined();
+
+      act(() => editPane.redoAction());
+      expect(editPane.state.selection).toBeDefined();
+      expect(dashboard.state.links).toHaveLength(1);
+    });
   });
 
   describe('LinkEditEditableElement', () => {
