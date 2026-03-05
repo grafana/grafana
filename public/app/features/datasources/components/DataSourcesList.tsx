@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
-import { useAdvisorHealthStatus } from '../hooks/useAdvisorHealthStatus';
+import { type HealthStatus, useAdvisorHealthStatus } from '../hooks/useAdvisorHealthStatus';
 import { useLoadDataSources } from '../state/hooks';
 import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';
@@ -62,7 +62,7 @@ export type ViewProps = {
   showFavoritesOnly?: boolean;
   handleFavoritesCheckboxChange?: (value: boolean) => void;
   favoriteDataSources?: FavoriteDatasources;
-  advisorHealth?: { healthMap: Map<string, string>; isAvailable: boolean };
+  advisorHealth?: { healthMap: Map<string, HealthStatus>; isAvailable: boolean };
 };
 
 export function DataSourcesListView({

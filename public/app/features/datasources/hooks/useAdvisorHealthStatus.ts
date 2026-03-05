@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { useListCheckQuery, type Check } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config } from '@grafana/runtime';
 
+import { getDismissedTests } from './advisorDismissedTests';
+
 const CHECK_TYPE_LABEL = 'advisor.grafana.app/type';
 const STATUS_ANNOTATION = 'advisor.grafana.app/status';
 const DATASOURCE_CHECK_TYPE = 'datasource';
@@ -58,6 +60,15 @@ export function useAdvisorHealthStatus(): AdvisorHealthState {
 
     for (const failure of failures) {
       healthMap.set(failure.itemID, 'unhealthy');
+    }
+
+    // Filter out datasources that were successfully tested after the last check
+    const dismissed = getDismissedTests();
+    const checkTimestamp = dsCheck.metadata.creationTimestamp;
+    for (const [uid, testedAt] of dismissed) {
+      if (checkTimestamp && new Date(testedAt) > new Date(checkTimestamp)) {
+        healthMap.delete(uid);
+      }
     }
 
     return {

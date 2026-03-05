@@ -67,11 +67,13 @@ export function useRunHealthChecks() {
     }
   }, [enabled, isRunning, createCheck]);
 
-  // Detect if a check is already in progress on mount
+  // Detect if a check is already in progress on initial data load
+  const hasDetectedInitial = useRef(false);
   useEffect(() => {
-    if (!data?.items) {
+    if (!data?.items || hasDetectedInitial.current) {
       return;
     }
+    hasDetectedInitial.current = true;
     const latest = findLatestDatasourceCheck(data.items);
     if (latest) {
       const status = latest.metadata.annotations?.[CHECK_STATUS_ANNOTATION];

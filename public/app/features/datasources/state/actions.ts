@@ -32,6 +32,7 @@ import { ThunkDispatch, ThunkResult } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
+import { dismissAdvisorHealthStatus } from '../hooks/advisorDismissedTests';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 
 import { buildCategories } from './buildCategories';
@@ -159,6 +160,7 @@ export const testDataSource = (
 
         const parsedResult = parseHealthCheckSuccess({ ...result, details: { ...result.details } });
         dispatch(testDataSourceSucceeded(parsedResult));
+        dismissAdvisorHealthStatus(dsApi.uid);
 
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
