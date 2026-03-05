@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import type { JSX } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, ClipboardButton, Stack, Text, Tooltip } from '@grafana/ui';
+import { Box, ClipboardButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import ConditionalWrap from '../ConditionalWrap';
 
@@ -28,6 +30,18 @@ type ConditionalProps =
     }
   | { showCopyButton?: never; copyValue?: never };
 
+const Value = ({ children }: { children: React.ReactNode }) => {
+  const styles = useStyles2(getStyles);
+  return <span className={styles.value}>{children}</span>;
+};
+
+const getStyles = (_theme: GrafanaTheme2) => ({
+  value: css({
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+  }),
+});
+
 export const DetailText = ({
   id,
   label,
@@ -49,7 +63,7 @@ export const DetailText = ({
             shouldWrap={Boolean(tooltipValue)}
             wrap={(children) => <Tooltip content={tooltipValue!}>{children}</Tooltip>}
           >
-            <span>{value}</span>
+            <Value>{value}</Value>
           </ConditionalWrap>
           {showCopyButton && (
             <ClipboardButton
