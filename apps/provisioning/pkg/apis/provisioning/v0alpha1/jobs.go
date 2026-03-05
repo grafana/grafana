@@ -164,10 +164,6 @@ type ExportJobOptions struct {
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
-
-	// When true, exported resources will be assigned new generated names
-	// instead of preserving their original metadata.name.
-	GenerateNewUIDs bool `json:"generateNewUIDs,omitempty"`
 }
 
 func (ExportJobOptions) OpenAPIModelName() string {

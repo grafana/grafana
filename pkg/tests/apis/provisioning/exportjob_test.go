@@ -74,7 +74,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 	common.PrintFileTree(t, helper.ProvisioningPath)
 
-	// Check that each file was exported with its stored version
+	// Check that each file was exported with its stored version and new UIDs
 	for _, test := range []props{
 		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
 		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
@@ -97,9 +97,12 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, test.title, val)
 
+		// Standalone export generates new UIDs — name must differ from original
 		val, _, err = unstructured.NestedString(obj, "metadata", "name")
 		require.NoError(t, err)
-		require.Equal(t, test.name, val)
+		require.NotEmpty(t, val, "exported file should have a metadata.name")
+		require.NotEqual(t, test.name, val,
+			"standalone export should generate a new UID for %s", test.title)
 
 		require.Nil(t, obj["status"], "should not have a status element")
 	}
@@ -217,10 +220,12 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			require.NoError(t, err)
 			require.Equal(t, tt.expectedTitle, val)
 
-			// Verify name
+			// Standalone export generates new UIDs — name must differ from original
 			val, _, err = unstructured.NestedString(obj, "metadata", "name")
 			require.NoError(t, err)
-			require.Equal(t, tt.expectedName, val)
+			require.NotEmpty(t, val, "exported file should have a metadata.name")
+			require.NotEqual(t, tt.expectedName, val,
+				"standalone export should generate a new UID for %s", tt.name)
 
 			// Verify no status field in exported file
 			require.Nil(t, obj["status"], "exported file should not have status element")
@@ -297,12 +302,10 @@ func TestIntegrationProvisioning_ExportWithGenerateNewUIDs(t *testing.T) {
 	}
 	helper.CreateRepo(t, testRepo)
 
-	// Export with GenerateNewUIDs enabled
+	// Export — standalone export always generates new UIDs
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			GenerateNewUIDs: true,
-		},
+		Push:   &provisioning.ExportJobOptions{},
 	}
 	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 

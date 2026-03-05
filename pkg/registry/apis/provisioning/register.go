@@ -780,15 +780,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 
-			// Export worker wrapped with feature flag check
+			exportEnabled := b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport) //nolint:staticcheck
+
+			// Standalone export generates new UIDs so exported files don't
+			// reference existing resource identifiers.
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
 				b.resourceLister,
-				export.ExportAll,
+				export.ExportAllWithNewUIDs,
 				stageIfPossible,
 				metrics,
-				b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport), //nolint:staticcheck
+				exportEnabled,
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics)
@@ -802,11 +805,21 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				10,
 			)
 
-			// Migration worker with feature flag check
+			// Migration export preserves original names so the takeover
+			// allowlist can correlate resources during the sync phase.
+			migrateExportWorker := export.NewExportWorker(
+				b.clients,
+				b.repositoryResources,
+				b.resourceLister,
+				export.ExportAll,
+				stageIfPossible,
+				metrics,
+				exportEnabled,
+			)
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
 				cleaner,
-				exportWorker,
+				migrateExportWorker,
 				syncWorker,
 			)
 			migrationWorker := migrate.NewMigrationWorker(

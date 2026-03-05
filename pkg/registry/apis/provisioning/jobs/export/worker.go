@@ -82,7 +82,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		attribute.String("export.branch", options.Branch),
 		attribute.String("export.folder", options.Folder),
 		attribute.String("export.path", options.Path),
-		attribute.Bool("export.generateNewUIDs", options.GenerateNewUIDs),
 	)
 
 	start := time.Now()
