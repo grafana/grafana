@@ -177,7 +177,7 @@ afterAll(() => {
 });
 
 describe('CorrelationsPage - App Platform', () => {
-  describe.skip('With no correlations', () => {
+  describe('With no correlations', () => {
     beforeEach(async () => {
       server.use(...emptyCorrelationsScenario, ...createCorrelationsScenario);
 
@@ -338,11 +338,11 @@ describe('CorrelationsPage - App Platform', () => {
       getHeaderByName = renderResult.getHeaderByName;
     });
 
-    it.skip('shows a table with correlations', async () => {
+    it('shows a table with correlations', async () => {
       expect(await screen.findByRole('table')).toBeInTheDocument();
     });
 
-    it.skip('correctly sorts by source', async () => {
+    it('correctly sorts by source', async () => {
       // wait for table to appear
       await screen.findByRole('table');
 
@@ -404,7 +404,7 @@ describe('CorrelationsPage - App Platform', () => {
       expect(await screen.findByRole('table')).toBeInTheDocument();
     });
 
-    it.skip('correctly closes the form when clicking on the close icon', async () => {
+    it('correctly closes the form when clicking on the close icon', async () => {
       const addNewButton = await screen.findByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
       await userEvent.click(addNewButton);
@@ -431,14 +431,13 @@ describe('CorrelationsPage - App Platform', () => {
 
       await userEvent.click(confirmButton);
 
-      expect(screen.queryByRole('cell', { name: /loki to loki$/i })).not.toBeInTheDocument();
-
       await waitFor(() => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_deleted');
+        expect(screen.queryByRole('cell', { name: /loki to loki$/i })).not.toBeInTheDocument();
       });
     });
 
-    it.skip('correctly edits correlations', async () => {
+    it('correctly edits correlations', async () => {
       // wait for table to appear
       await screen.findByRole('table');
 
@@ -463,14 +462,14 @@ describe('CorrelationsPage - App Platform', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
 
-      expect(await screen.findByRole('cell', { name: /edited label$/i }, { timeout: 5000 })).toBeInTheDocument();
-
       await waitFor(() => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
       });
+
+      expect(await screen.findByRole('cell', { name: /edited label$/i }, { timeout: 5000 })).toBeInTheDocument();
     });
 
-    it.skip('correctly edits transformations', async () => {
+    it('correctly edits transformations', async () => {
       // wait for table to appear
       await screen.findByRole('table');
 

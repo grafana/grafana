@@ -11,7 +11,6 @@ import { mockCorrelationsMap } from '../fixtures';
 
 export const getCorrelationsHandler = (data: ListCorrelationApiResponse) =>
   http.get('/apis/correlations.grafana.app/v0alpha1/namespaces/:namespace/correlations', ({}) => {
-    console.log('get', mockCorrelationsMap);
     const corrItems = Array.from(mockCorrelationsMap.entries()).map((corrData) => {
       return corrData[1];
     });
@@ -31,23 +30,19 @@ export const deleteCorrelationsHandler = (
 ) =>
   http.delete('/apis/correlations.grafana.app/v0alpha1/namespaces/:namespace/correlations/:id', ({ params }) => {
     const { id } = params;
-    // console.log('delete pre', id, mockCorrelationsMap);
     if (id !== undefined && typeof id === 'string') {
       mockCorrelationsMap.delete(id);
     }
-    //console.log('delete post', id, mockCorrelationsMap);
     return HttpResponse.json(data);
   });
 
-export const editCorrelationsHandler = (
-  data: UpdateCorrelationApiResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Response)
-) =>
+export const editCorrelationsHandler = (data: UpdateCorrelationApiResponse) =>
   http.patch('/apis/correlations.grafana.app/v0alpha1/namespaces/:namespace/correlations/:id', ({ params }) => {
     const { id } = params;
     if (id !== undefined && typeof id === 'string') {
       const existingCorr = mockCorrelationsMap.get(id);
       if (existingCorr !== undefined) {
-        const updatedCorr = { ...existingCorr, data };
+        const updatedCorr = { ...existingCorr, ...data };
         mockCorrelationsMap.set(id, updatedCorr);
       }
     }

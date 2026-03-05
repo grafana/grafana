@@ -110,4 +110,7 @@ export const deleteCorrelationsScenario = [
   }),
 ];
 
-export const editCorrelationsScenario = [editCorrelationsHandler(generateCorrMetadata(fakeCorrelations[0]))];
+const editedCorr = { ...fakeCorrelations[0] };
+editedCorr.label = 'edited label';
+
+export const editCorrelationsScenario = [editCorrelationsHandler(generateCorrMetadata(editedCorr))];
