@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"math/rand"
 	"slices"
 	"strings"
 	"sync"
@@ -157,8 +158,18 @@ type searchServer struct {
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
 
-	lifecycle          LifecycleHooks
+	injectFailuresPercent int
+
 	backendDiagnostics resourcepb.DiagnosticsServer
+}
+
+// maybeInjectFailure returns an error for a configured percentage of calls.
+// Returns nil when failure injection is disabled or the call is not selected.
+func (s *searchServer) maybeInjectFailure() error {
+	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
+		return fmt.Errorf("injected search failure")
+	}
+	return nil
 }
 
 var (
@@ -199,9 +210,10 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		indexMetrics:   indexMetrics,
 		ownsIndexFn:    ownsIndexFn,
 
-		dashboardIndexMaxAge: opts.DashboardIndexMaxAge,
-		maxIndexAge:          opts.MaxIndexAge,
-		minBuildVersion:      opts.MinBuildVersion,
+		dashboardIndexMaxAge:  opts.DashboardIndexMaxAge,
+		maxIndexAge:           opts.MaxIndexAge,
+		minBuildVersion:       opts.MinBuildVersion,
+		injectFailuresPercent: opts.InjectFailuresPercent,
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -251,6 +263,10 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.ListManagedObjects")
 	defer span.End()
+
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
+	}
 
 	if req.NextPageToken != "" {
 		return &resourcepb.ListManagedObjectsResponse{
@@ -309,7 +325,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 func (s *searchServer) logStats(ctx context.Context, stats *SearchStats, span trace.Span, params ...any) {
 	elapsed := time.Since(stats.startTime)
 
-	args := []any{
+	args := []any{ //nolint:prealloc
 		"operation", stats.operation,
 		"elapsedTime", elapsed,
 		"indexBuildTime", stats.indexBuildTime,
@@ -336,6 +352,10 @@ func (s *searchServer) logStats(ctx context.Context, stats *SearchStats, span tr
 func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.CountManagedObjects")
 	defer span.End()
+
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
+	}
 
 	stats := NewSearchStats("CountManagedObjects")
 	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
@@ -395,6 +415,10 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	ctx, span := tracer.Start(ctx, "resource.searchServer.Search")
 	defer span.End()
 
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
+	}
+
 	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return &resourcepb.ResourceSearchResponse{
 			Error: NewBadRequestError("missing namespace, group or resource"),
@@ -448,6 +472,10 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.GetStats")
 	defer span.End()
+
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
+	}
 
 	if req.Namespace == "" {
 		return &resourcepb.ResourceStatsResponse{
@@ -666,7 +694,6 @@ func (s *searchServer) init(ctx context.Context) error {
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
-
 	return nil
 }
 
@@ -678,22 +705,11 @@ func (s *searchServer) stop() {
 
 // Init initializes the search server.
 func (s *searchServer) Init(ctx context.Context) error {
-	if s.lifecycle != nil {
-		if err := s.lifecycle.Init(ctx); err != nil {
-			return fmt.Errorf("failed to initialize lifecycle hooks: %w", err)
-		}
-	}
 	return s.init(ctx)
 }
 
 // Stop stops the search server.
 func (s *searchServer) Stop(ctx context.Context) error {
-	if s.lifecycle != nil {
-		err := s.lifecycle.Stop(ctx)
-		if err != nil {
-			return fmt.Errorf("service stopped with error: %w", err)
-		}
-	}
 	s.stop()
 	return nil
 }
@@ -1393,6 +1409,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 		Title: title,
 		Tags:  tags,
 		Fields: map[string]interface{}{
+			"title": title,
 			"value": val,
 		},
 	}, nil

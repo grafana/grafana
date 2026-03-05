@@ -24,6 +24,11 @@ func NewDashboardCompatibilityScoreDataSourceMapping() *DashboardCompatibilitySc
 	return &DashboardCompatibilityScoreDataSourceMapping{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardCompatibilityScoreDataSourceMapping.
+func (DashboardCompatibilityScoreDataSourceMapping) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreDataSourceMapping"
+}
+
 // +k8s:openapi-gen=true
 type DashboardCompatibilityScoreSpec struct {
 	// Complete dashboard JSON object to validate.
@@ -46,9 +51,8 @@ func NewDashboardCompatibilityScoreSpec() *DashboardCompatibilityScoreSpec {
 		DatasourceMappings: []DashboardCompatibilityScoreDataSourceMapping{},
 	}
 }
-func (DashboardCompatibilityScoreDataSourceMapping) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreDataSourceMapping"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardCompatibilityScoreSpec.
 func (DashboardCompatibilityScoreSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashvalidator.pkg.apis.dashvalidator.v1alpha1.DashboardCompatibilityScoreSpec"
 }

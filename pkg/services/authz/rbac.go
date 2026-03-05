@@ -90,7 +90,6 @@ func ProvideAuthZClient(
 		return rbacClient, err
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
-
 		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
 		if cfg != nil {
 			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
@@ -116,14 +115,30 @@ func ProvideAuthZClient(
 		)
 
 		channel := &inprocgrpc.Channel{}
-		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+
+		authInterceptor := grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
 			ctx = authlib.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "*",
 				},
 			}))
 			return ctx, nil
-		}))
+		})
+
+		// Chain trace propagation with the auth interceptor.
+		// inprocgrpc.Channel wraps the server context with noValuesContext which
+		// strips all context values — including OpenTelemetry spans — to prevent
+		// leaking client state to the server. We recover the span context from
+		// the original client context so that server-side spans are properly
+		// linked to the calling trace.
+		channel.WithServerUnaryInterceptor(func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+			if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
+				if sc := trace.SpanContextFromContext(clientCtx); sc.IsValid() {
+					ctx = trace.ContextWithRemoteSpanContext(ctx, sc)
+				}
+			}
+			return authInterceptor(ctx, req, info, handler)
+		})
 		authzv1.RegisterAuthzServiceServer(channel, server)
 		rbacClient := authzlib.NewClient(
 			channel,
@@ -286,7 +301,7 @@ func RegisterRBACAuthZService(
 		tracer,
 		reg,
 		cache,
-		rbac.Settings{CacheTTL: cfg.CacheTTL}, // anonymous org role can only be set in-proc
+		rbac.Settings{CacheTTL: cfg.CacheTTL, LocalFolderCacheTTL: cfg.LocalFolderCacheTTL}, // anonymous org role can only be set in-proc
 	)
 
 	srv := handler.GetServer()

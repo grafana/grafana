@@ -31,6 +31,36 @@ type ZanzanaClientSettings struct {
 	TokenNamespace string
 }
 
+type ZanzanaReconcilerMode string
+
+const (
+	ZanzanaReconcilerModeLegacy   ZanzanaReconcilerMode = "legacy"
+	ZanzanaReconcilerModeMT       ZanzanaReconcilerMode = "mt"
+	ZanzanaReconcilerModeDisabled ZanzanaReconcilerMode = "disabled"
+)
+
+type ZanzanaReconcilerSettings struct {
+	// Mode selects which reconciler to run: "legacy", "mt", or "disabled".
+	Mode ZanzanaReconcilerMode
+
+	// --- MT reconciler settings (only used when Mode == "mt") ---
+
+	// URL of the folder apiserver (standalone mode only, not needed for embedded).
+	FolderAPIServerURL string
+	// URL of the IAM apiserver (standalone mode only, not needed for embedded).
+	IAMAPIServerURL string
+	// Skip TLS verification when connecting to apiservers.
+	TLSInsecure bool
+	// Number of worker goroutines.
+	Workers int
+	// Interval between reconciliation cycles.
+	Interval time.Duration
+	// Batch size for writing tuples to Zanzana.
+	WriteBatchSize int
+	// Size of the buffered work queue for namespaces.
+	QueueSize int
+}
+
 type ZanzanaServerSettings struct {
 	// OpenFGA http server address which allows to connect with fga cli.
 	// Can only be used in dev mode.
@@ -136,6 +166,8 @@ type OpenFgaServerSettings struct {
 	MaxAuthorizationModelSizeInBytes int
 	// Size of the authorization model cache
 	AuthorizationModelCacheSize int
+	// Size of the typesystem cache (controls how many resolved typesystems are kept in memory)
+	TypesystemCacheSize int
 	// Offset for changelog horizon
 	ChangelogHorizonOffset int
 }
@@ -300,7 +332,21 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.OpenFgaServerSettings.RequestTimeout = openfgaSec.Key("request_timeout").MustDuration(0)
 	zs.OpenFgaServerSettings.MaxAuthorizationModelSizeInBytes = openfgaSec.Key("max_authorization_model_size_in_bytes").MustInt(0)
 	zs.OpenFgaServerSettings.AuthorizationModelCacheSize = openfgaSec.Key("authorization_model_cache_size").MustInt(0)
+	zs.OpenFgaServerSettings.TypesystemCacheSize = openfgaSec.Key("typesystem_cache_size").MustInt(0)
 	zs.OpenFgaServerSettings.ChangelogHorizonOffset = openfgaSec.Key("changelog_horizon_offset").MustInt(0)
 
 	cfg.ZanzanaServer = zs
+
+	// Reconciler settings
+	reconcilerSec := cfg.SectionWithEnvOverrides("zanzana.reconciler")
+	zr := ZanzanaReconcilerSettings{}
+	zr.Mode = ZanzanaReconcilerMode(reconcilerSec.Key("mode").MustString("legacy"))
+	zr.FolderAPIServerURL = reconcilerSec.Key("folder_apiserver_url").MustString("")
+	zr.IAMAPIServerURL = reconcilerSec.Key("iam_apiserver_url").MustString("")
+	zr.TLSInsecure = reconcilerSec.Key("tls_insecure").MustBool(false)
+	zr.Workers = reconcilerSec.Key("workers").MustInt(4)
+	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
+	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
+	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
+	cfg.ZanzanaReconciler = zr
 }

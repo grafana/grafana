@@ -9,6 +9,8 @@ import datasourcesHandlers from 'app/features/alerting/unified/mocks/server/hand
 import evalHandlers from 'app/features/alerting/unified/mocks/server/handlers/eval';
 import folderHandlers from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import grafanaRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import inhibitionRulesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/inhibitionRules.k8s';
+import integrationTypeSchemasK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/integrationTypeSchemas.k8s';
 import receiverK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
 import routingTreeK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/routingtrees.k8s';
 import templatesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/templates.k8s';
@@ -35,6 +37,8 @@ export const alertingHandlers = [
   ...provisioningHandlers,
 
   // Kubernetes-style handlers
+  ...inhibitionRulesK8sHandlers,
+  ...integrationTypeSchemasK8sHandlers,
   ...timeIntervalK8sHandlers,
   ...receiverK8sHandlers,
   ...receiverTestK8sHandlers,

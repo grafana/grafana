@@ -1,25 +1,16 @@
-import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
 import { getDashboardSceneFor } from '../../../../utils/utils';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { trackQueryMenuAction } from '../../tracking';
 import { useActionsContext, usePanelContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-interface QueryActionsMenuProps {
-  app?: CoreApp;
-}
-
-/**
- * Actions menu for queries and expressions.
- * Contains duplicate, data source help, and inspector actions.
- */
-export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
+export function QueryActionsMenu() {
   const { duplicateQuery } = useActionsContext();
   const { panel } = usePanelContext();
   const {
@@ -30,8 +21,6 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
     toggleDatasourceHelp,
     cardType,
   } = useQueryEditorUIContext();
-
-  const styles = useStyles2(getStyles);
 
   const onOpenInspector = useCallback(() => {
     const dashboard = getDashboardSceneFor(panel);
@@ -51,32 +40,38 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
       overlay={
         <Menu>
           <Menu.Item
-            className={styles.menuItem}
             label={t('query-editor-next.action.duplicate', 'Duplicate {{type}}', { type: typeLabel })}
             icon="copy"
-            onClick={() => duplicateQuery(selectedQuery.refId)}
+            onClick={() => {
+              trackQueryMenuAction('duplicate', cardType);
+              duplicateQuery(selectedQuery.refId);
+            }}
           />
 
           {/* Data source help (queries only, not expressions) */}
           {hasEditorHelp && !isExpression && (
             <Menu.Item
-              className={styles.menuItem}
               label={
                 showingDatasourceHelp
                   ? t('query-editor-next.action.hide-help', 'Hide data source help')
                   : t('query-editor-next.action.show-help', 'Show data source help')
               }
               icon="question-circle"
-              onClick={toggleDatasourceHelp}
+              onClick={() => {
+                trackQueryMenuAction('toggle_datasource_help', cardType);
+                toggleDatasourceHelp();
+              }}
               active={showingDatasourceHelp}
             />
           )}
 
           <Menu.Item
-            className={styles.menuItem}
             label={t('query-editor-next.action.inspector', 'Query inspector')}
             icon="brackets-curly"
-            onClick={onOpenInspector}
+            onClick={() => {
+              trackQueryMenuAction('open_inspector', cardType);
+              onOpenInspector();
+            }}
           />
         </Menu>
       }
@@ -93,9 +88,3 @@ export function QueryActionsMenu({ app }: QueryActionsMenuProps) {
     </Dropdown>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  menuItem: css({
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-});

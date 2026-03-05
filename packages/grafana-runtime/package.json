@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "12.4.0-pre",
+  "version": "13.0.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -53,11 +53,11 @@
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@grafana/data": "12.4.0-pre",
-    "@grafana/e2e-selectors": "12.4.0-pre",
-    "@grafana/faro-web-sdk": "^1.13.2",
-    "@grafana/schema": "12.4.0-pre",
-    "@grafana/ui": "12.4.0-pre",
+    "@grafana/data": "13.0.0-pre",
+    "@grafana/e2e-selectors": "13.0.0-pre",
+    "@grafana/faro-web-sdk": "^2.2.4",
+    "@grafana/schema": "13.0.0-pre",
+    "@grafana/ui": "13.0.0-pre",
     "@openfeature/core": "^1.9.0",
     "@openfeature/ofrep-web-provider": "^0.3.3",
     "@openfeature/react-sdk": "^1.2.0",

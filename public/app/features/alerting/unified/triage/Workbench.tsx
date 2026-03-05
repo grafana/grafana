@@ -31,7 +31,7 @@ type WorkbenchProps = {
   hasActiveFilters?: boolean;
 };
 
-const initialSize = 1 / 3;
+const initialSize = 1 / 2;
 
 // Helper function to recursively render WorkbenchRow items with children pattern
 function renderWorkbenchRow(

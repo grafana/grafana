@@ -12,11 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // swagger:route GET /teams/{team_id}/members teams getTeamMembers
@@ -168,22 +170,39 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 // 404: notFoundError
 // 500: internalServerError
 func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Response {
+	var (
+		ctx                   = c.Req.Context()
+		defaultShouldRedirect = false
+	)
+
 	cmd := team.SetTeamMembershipsCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+
+	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
-	orgId := c.GetOrgID()
+	orgID := c.GetOrgID()
 
-	resp := tapi.validateTeam(c, teamId, "Team memberships cannot be updated for provisioned teams")
+	resp := tapi.validateTeam(c, teamID, "Team memberships cannot be updated for provisioned teams")
 	if resp != nil {
 		return resp
 	}
 
-	teamMemberships, err := tapi.getTeamMembershipUpdates(c.Req.Context(), orgId, teamId, cmd, c.SignedInUser)
+	shouldRedirect := openfeature.NewDefaultClient().Boolean(
+		ctx,
+		featuremgmt.FlagKubernetesTeamsHandlerRedirect,
+		defaultShouldRedirect,
+		openfeature.TransactionContext(ctx),
+	)
+
+	if shouldRedirect {
+		return tapi.setTeamMembershipsViaK8s(c, teamID, cmd)
+	}
+
+	teamMemberships, err := tapi.getTeamMembershipUpdates(c.Req.Context(), orgID, teamID, cmd, c.SignedInUser)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) || errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(http.StatusNotFound, err.Error(), nil)
@@ -191,7 +210,7 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusInternalServerError, "Failed to parse team membership updates", err)
 	}
 
-	_, err = tapi.teamPermissionsService.SetPermissions(c.Req.Context(), orgId, strconv.FormatInt(teamId, 10), teamMemberships...)
+	_, err = tapi.teamPermissionsService.SetPermissions(c.Req.Context(), orgID, strconv.FormatInt(teamID, 10), teamMemberships...)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) || errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(http.StatusNotFound, err.Error(), nil)

@@ -1,5 +1,17 @@
-import { IconName } from '@grafana/data';
+import { AlertState, GrafanaTheme2, IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import classicConditionDarkImage from 'app/features/expressions/images/dark/classicCondition.svg';
+import mathDarkImage from 'app/features/expressions/images/dark/math.svg';
+import reduceDarkImage from 'app/features/expressions/images/dark/reduce.svg';
+import resampleDarkImage from 'app/features/expressions/images/dark/resample.svg';
+import sqlDarkImage from 'app/features/expressions/images/dark/sqlExpression.svg';
+import thresholdDarkImage from 'app/features/expressions/images/dark/threshold.svg';
+import classicConditionLightImage from 'app/features/expressions/images/light/classicCondition.svg';
+import mathLightImage from 'app/features/expressions/images/light/math.svg';
+import reduceLightImage from 'app/features/expressions/images/light/reduce.svg';
+import resampleLightImage from 'app/features/expressions/images/light/resample.svg';
+import sqlLightImage from 'app/features/expressions/images/light/sqlExpression.svg';
+import thresholdLightImage from 'app/features/expressions/images/light/threshold.svg';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { QueryOptionField } from './QueryEditor/types';
@@ -8,24 +20,78 @@ export enum QueryEditorType {
   Query = 'query',
   Expression = 'expression',
   Transformation = 'transformation',
+  Alert = 'alert',
 }
-
 export enum SidebarSize {
   Mini = 'mini',
   Full = 'full',
 }
 
+export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
+export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
+export const QUERY_EDITOR_BANNER_FEEDBACK_URL = 'https://forms.gle/54uCfRjxzjcXVysp8';
+
+export function getQueryEditorBannerColors(theme: GrafanaTheme2) {
+  return {
+    background: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+    border: theme.isDark ? '#314158' : theme.colors.border.medium,
+    accent: theme.isDark ? '#FF9830' : '#C47B20',
+  };
+}
+
 export const QUERY_EDITOR_COLORS = {
-  footerBackground: '#1e2939',
   query: '#FF8904',
   expression: '#C27AFF',
   transformation: '#00D492',
+  error: '#E7000B',
 };
+
+// TODO: Remove this once all the new colors are finalized
+const USE_THEME_COLORS = true;
+
+export function getQueryEditorColors(theme: GrafanaTheme2) {
+  return {
+    contentHeaderBackground: theme.colors.background.secondary,
+    footerBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#1e2939',
+    sidebarFooterBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#141820',
+    sidebarHeaderBackground: USE_THEME_COLORS ? theme.colors.background.secondary : '#20262F',
+    card: {
+      activeBg: theme.isDark ? '#314158' : 'oklch(92.9% 0.013 255.508)',
+      hoverBg: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+      bg: theme.colors.background.primary,
+    },
+  };
+}
 
 export interface QueryEditorTypeConfig {
   icon: IconName;
   color: string;
   getLabel: () => string;
+  deleteConfirmation: boolean;
+}
+
+/**
+ * Gets the color for an alert based on its state from the theme.
+ * Used for alert card borders and indicators.
+ */
+export function getAlertStateColor(theme: GrafanaTheme2, state: AlertState | null): string {
+  if (!state) {
+    return theme.colors.text.secondary;
+  }
+
+  switch (state) {
+    case AlertState.Alerting:
+      return theme.colors.error.main;
+    case AlertState.Pending:
+      return theme.colors.warning.main;
+    case AlertState.NoData:
+      return theme.colors.info.main;
+    case AlertState.Paused:
+      return theme.colors.text.disabled;
+    case AlertState.OK:
+    default:
+      return theme.colors.success.main;
+  }
 }
 
 export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeConfig> = {
@@ -33,16 +99,27 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
     icon: 'database',
     color: QUERY_EDITOR_COLORS.query,
     getLabel: () => t('query-editor-next.labels.query', 'Query'),
+    deleteConfirmation: false,
   },
   [QueryEditorType.Expression]: {
     icon: 'calculator-alt',
     color: QUERY_EDITOR_COLORS.expression,
     getLabel: () => t('query-editor-next.labels.expression', 'Expression'),
+    deleteConfirmation: false,
   },
   [QueryEditorType.Transformation]: {
     icon: 'process',
     color: QUERY_EDITOR_COLORS.transformation,
     getLabel: () => t('query-editor-next.labels.transformation', 'Transformation'),
+    deleteConfirmation: true,
+  },
+  [QueryEditorType.Alert]: {
+    icon: 'bell',
+    // Note: For alerts, use getAlertStateColor() instead of this static color
+    // This placeholder is only used when alert state is unknown
+    color: '#6E6E6E',
+    getLabel: () => t('query-editor-next.labels.alert', 'Alert'),
+    deleteConfirmation: false,
   },
 } as const;
 
@@ -52,9 +129,18 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
  */
 export const TIME_OPTION_PLACEHOLDER = '1h';
 
+export const TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME = 5000;
+
+export const SIDEBAR_CARD_HEIGHT = 30;
+export const SIDEBAR_CARD_SPACING = 1;
+export const SIDEBAR_CARD_INDENT = 2;
+export const FOOTER_HEIGHT = 32;
+
 export const CONTENT_SIDE_BAR = {
-  width: 300,
+  fieldLabelWidth: 130,
   labelWidth: 80,
+  sidebarTransitionMs: 150,
+  width: 500,
 } as const;
 
 export interface QueryOptionFieldConfig {
@@ -108,6 +194,14 @@ export const QUERY_OPTION_FIELD_CONFIG: Record<QueryOptionField, QueryOptionFiel
     getLabel: () => t('query-editor-next.details-sidebar.time-shift', 'Time shift'),
     placeholder: TIME_OPTION_PLACEHOLDER,
   },
+  [QueryOptionField.hideTimeOverride]: {
+    getTooltip: () =>
+      t(
+        'query-editor-next.details-sidebar.hide-time-override-tooltip',
+        'Hides the time override displayed in the panel header when relative time or time shift is set.'
+      ),
+    getLabel: () => t('query-editor-next.details-sidebar.hide-time-override', 'Hide time info'),
+  },
   [QueryOptionField.cacheTimeout]: {
     getTooltip: () =>
       t(
@@ -128,11 +222,17 @@ export const QUERY_OPTION_FIELD_CONFIG: Record<QueryOptionField, QueryOptionFiel
   },
 };
 
-export const EXPRESSION_ICON_MAP = {
-  [ExpressionQueryType.math]: 'calculator-alt',
-  [ExpressionQueryType.reduce]: 'compress-arrows',
-  [ExpressionQueryType.resample]: 'sync',
-  [ExpressionQueryType.classic]: 'cog',
-  [ExpressionQueryType.threshold]: 'sliders-v-alt',
-  [ExpressionQueryType.sql]: 'database',
-} as const satisfies Record<ExpressionQueryType, string>;
+export const EXPRESSION_IMAGE_MAP: Record<ExpressionQueryType, { dark: string; light: string }> = {
+  [ExpressionQueryType.sql]: { dark: sqlDarkImage, light: sqlLightImage },
+  [ExpressionQueryType.math]: { dark: mathDarkImage, light: mathLightImage },
+  [ExpressionQueryType.reduce]: { dark: reduceDarkImage, light: reduceLightImage },
+  [ExpressionQueryType.resample]: { dark: resampleDarkImage, light: resampleLightImage },
+  [ExpressionQueryType.classic]: { dark: classicConditionDarkImage, light: classicConditionLightImage },
+  [ExpressionQueryType.threshold]: { dark: thresholdDarkImage, light: thresholdLightImage },
+};
+
+export const PENDING_CARD_ID = {
+  expression: 'pending-expression',
+  savedQuery: 'pending-saved-query',
+  transformation: 'pending-transformation',
+} as const;

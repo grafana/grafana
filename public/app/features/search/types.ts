@@ -98,6 +98,7 @@ export interface SearchState {
   explain?: boolean; // adds debug info
   datasource?: string;
   panel_type?: string;
+  createdBy?: string;
   sort?: string;
   prevSort?: string; // Save sorting data between layouts
   layout: SearchLayout;
@@ -123,6 +124,7 @@ export interface SearchQueryParams {
   tag?: string[] | null;
   layout?: SearchLayout | null;
   folder?: string | null;
+  createdBy?: string | null;
 }
 
 // new Search Types

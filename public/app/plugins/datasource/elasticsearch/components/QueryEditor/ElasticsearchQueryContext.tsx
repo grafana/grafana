@@ -3,14 +3,14 @@ import { Context, createContext, PropsWithChildren, useCallback, useContext, use
 import { TimeRange } from '@grafana/data';
 
 import { ElasticsearchDataQuery } from '../../dataquery.gen';
-import { ElasticDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
+import { ElasticDatasourceLike } from '../../types';
 
 import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
-import { aliasPatternReducer, queryReducer, rawDSLQueryReducer, editorTypeReducer, initQuery } from './state';
+import { aliasPatternReducer, queryReducer, queryTypeReducer, editorTypeReducer, initQuery } from './state';
 
-const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
+const DatasourceContext = createContext<ElasticDatasourceLike | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchDataQuery | undefined>(undefined);
 const RangeContext = createContext<TimeRange | undefined>(undefined);
 
@@ -18,7 +18,7 @@ interface Props {
   query: ElasticsearchDataQuery;
   onChange: (query: ElasticsearchDataQuery) => void;
   onRunQuery: () => void;
-  datasource: ElasticDatasource;
+  datasource: ElasticDatasourceLike;
   range: TimeRange;
 }
 
@@ -41,10 +41,10 @@ export const ElasticsearchProvider = ({
   );
 
   const reducer = combineReducers<
-    Pick<ElasticsearchDataQuery, 'query' | 'rawDSLQuery' | 'alias' | 'editorType' | 'metrics' | 'bucketAggs'>
+    Pick<ElasticsearchDataQuery, 'query' | 'queryType' | 'alias' | 'editorType' | 'metrics' | 'bucketAggs'>
   >({
     query: queryReducer,
-    rawDSLQuery: rawDSLQueryReducer,
+    queryType: queryTypeReducer,
     alias: aliasPatternReducer,
     editorType: editorTypeReducer,
     metrics: metricsReducer,

@@ -121,6 +121,15 @@ func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *dat
 	if err != nil {
 		return nil, err
 	}
+
+	// Don't return secret references in the response if the update just
+	// told us to remove them.
+	for k, v := range ds.Secure {
+		if v.Remove {
+			delete(out.SecureJsonData, k)
+		}
+	}
+
 	return q.converter.AsDataSource(out)
 }
 
@@ -130,7 +139,7 @@ func (q *scopedDatasourceProvider) DeleteDataSource(ctx context.Context, uid str
 	if err != nil {
 		return err
 	}
-	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, true)
 	if err != nil {
 		return err
 	}
@@ -151,10 +160,23 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 	if err != nil {
 		return nil, err
 	}
-	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, true)
 	if err != nil {
 		return nil, err
 	}
+
+	// The old api skips returning secrets with empty values.
+	// See pkg/api/datasources.go
+	secrets, err := q.dsService.DecryptedValues(ctx, ds)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range secrets {
+		if len(v) == 0 {
+			delete(ds.SecureJsonData, k)
+		}
+	}
+
 	return q.converter.AsDataSource(ds)
 }
 

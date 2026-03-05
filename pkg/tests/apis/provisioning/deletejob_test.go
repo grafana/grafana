@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -370,7 +371,109 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := mustNestedString(job.Object, "status", "state")
-		assert.Equal(t, "error", state, "delete job should have failed due to non-existent file")
+
+		// Convert to typed object to check warnings
+		jobObj := &provisioning.Job{}
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+		require.NoError(t, err)
+
+		// With the new behavior, ErrFileNotFound should result in a warning, not an error
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"delete job should complete with warning state for non-existent file")
+		require.NotEmpty(t, jobObj.Status.Warnings,
+			"job should have warnings for non-existent file")
+
+		// Verify the warning message mentions the file not found error
+		found := false
+		for _, warningMsg := range jobObj.Status.Warnings {
+			if strings.Contains(warningMsg, "non-existent.json") && strings.Contains(warningMsg, "file not found") {
+				found = true
+				break
+			}
+		}
+		require.True(t, found,
+			"should have warning message mentioning the non-existent file")
+	})
+
+	t.Run("delete non-existent file with successful deletion", func(t *testing.T) {
+		// First, create a new file to delete alongside the non-existent one
+		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "test-delete-mixed.json")
+		helper.SyncAndWait(t, repo, nil)
+
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{
+					"test-delete-mixed.json", // This exists
+					"non-existent-file.json", // This doesn't exist
+				},
+			},
+		}
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+
+		jobObj := &provisioning.Job{}
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+		require.NoError(t, err)
+
+		// Job should complete with warning state (one success, one warning)
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"job should have warning state when mixing successful deletes with non-existent files")
+
+		// Should have warnings for the non-existent file
+		require.NotEmpty(t, jobObj.Status.Warnings,
+			"job should have warnings for non-existent file")
+
+		// Verify the existing file was deleted
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "test-delete-mixed.json")
+		require.Error(t, err, "existing file should be deleted")
+		require.True(t, apierrors.IsNotFound(err))
+
+		// Verify warning message
+		found := false
+		for _, warningMsg := range jobObj.Status.Warnings {
+			if strings.Contains(warningMsg, "non-existent-file.json") {
+				found = true
+				break
+			}
+		}
+		require.True(t, found,
+			"should have warning message for non-existent file")
+	})
+
+	t.Run("delete multiple non-existent files", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{
+					"does-not-exist-1.json",
+					"does-not-exist-2.json",
+					"does-not-exist-3.json",
+				},
+			},
+		}
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+
+		jobObj := &provisioning.Job{}
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+		require.NoError(t, err)
+
+		// All non-existent files should result in warnings
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"job should complete with warning state when all files are non-existent")
+		require.NotEmpty(t, jobObj.Status.Warnings,
+			"job should have warnings for all non-existent files")
+
+		// Should have at least one warning mentioning file not found
+		foundWarning := false
+		for _, warningMsg := range jobObj.Status.Warnings {
+			if strings.Contains(warningMsg, "does-not-exist") {
+				foundWarning = true
+				break
+			}
+		}
+		require.True(t, foundWarning,
+			"should have warnings mentioning the non-existent files")
 	})
 }

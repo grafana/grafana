@@ -18,6 +18,11 @@ func NewCreateReceiverIntegrationTestRequestIntegration() *CreateReceiverIntegra
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for CreateReceiverIntegrationTestRequestIntegration.
+func (CreateReceiverIntegrationTestRequestIntegration) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestIntegration"
+}
+
 type CreateReceiverIntegrationTestRequestAlert struct {
 	Labels      map[string]string `json:"labels"`
 	Annotations map[string]string `json:"annotations"`
@@ -29,6 +34,11 @@ func NewCreateReceiverIntegrationTestRequestAlert() *CreateReceiverIntegrationTe
 		Labels:      map[string]string{},
 		Annotations: map[string]string{},
 	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CreateReceiverIntegrationTestRequestAlert.
+func (CreateReceiverIntegrationTestRequestAlert) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestAlert"
 }
 
 type CreateReceiverIntegrationTestRequestBody struct {
@@ -43,12 +53,8 @@ func NewCreateReceiverIntegrationTestRequestBody() *CreateReceiverIntegrationTes
 		Alert:       *NewCreateReceiverIntegrationTestRequestAlert(),
 	}
 }
-func (CreateReceiverIntegrationTestRequestIntegration) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestIntegration"
-}
-func (CreateReceiverIntegrationTestRequestAlert) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestAlert"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for CreateReceiverIntegrationTestRequestBody.
 func (CreateReceiverIntegrationTestRequestBody) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestRequestBody"
 }

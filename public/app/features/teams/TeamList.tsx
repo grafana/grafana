@@ -1,16 +1,18 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { SortingRule } from 'react-table';
 
+import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Avatar,
   CellProps,
   Column,
-  DeleteButton,
   EmptyState,
   FilterInput,
+  IconButton,
   InlineField,
   InteractiveTable,
   LinkButton,
@@ -21,15 +23,20 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
+import { useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
 import { TeamWithRoles } from 'app/types/teams';
 
+import { appEvents } from '../../core/app_events';
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
+import { ShowModalReactEvent } from '../../types/events';
 import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';
 
+import { TeamDeleteModal } from './TeamDeleteModal';
 import { useDeleteTeam, useGetTeams } from './hooks';
 
 type Cell<T extends keyof TeamWithRoles = keyof TeamWithRoles> = CellProps<TeamWithRoles, TeamWithRoles[T]>;
@@ -58,11 +65,14 @@ const TeamList = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<string>();
-  const { data, isLoading } = useGetTeams({ query, pageSize, page, sort });
+  const { data: teamData, isLoading } = useGetTeams({ query, pageSize, page, sort });
   const [deleteTeam] = useDeleteTeam();
+  const [triggerFoldersQuery] = useLazySearchDashboardsAndFoldersQuery();
+  const notifyApp = useAppNotification();
+  const foldersQueryRef = useRef<ReturnType<typeof triggerFoldersQuery> | null>(null);
 
-  const teams = data?.teams || [];
-  const totalPages = Math.ceil((data?.totalCount || 0) / pageSize) || 0;
+  const teams = teamData?.teams || [];
+  const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
   const noTeams = teams?.length === 0;
   const changeSort = useCallback(
     (sort: SortingRule<unknown>) => {
@@ -78,6 +88,14 @@ const TeamList = () => {
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
       fetchRoleOptions().then((roles) => setRoleOptions(roles));
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (foldersQueryRef.current) {
+        foldersQueryRef.current.abort();
+      }
+    };
   }, []);
 
   const columns: Array<Column<TeamWithRoles>> = useMemo(
@@ -197,34 +215,91 @@ const TeamList = () => {
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
+
+          const showDeleteModal = async () => {
+            let ownedFolders: DashboardHit[] = [];
+            if (config.featureToggles.teamFolders) {
+              foldersQueryRef.current = triggerFoldersQuery({
+                type: 'folder',
+                ownerReference: [`iam.grafana.app/Team/${original.uid}`],
+                limit: 1,
+              });
+
+              const { data: foldersData, isError, error } = await foldersQueryRef.current;
+
+              const isAbortError = error && typeof error === 'object' && 'name' in error && error.name === 'AbortError';
+
+              if (isError && !isAbortError) {
+                notifyApp.error(
+                  t(
+                    'teams.team-list.failed-to-check-folders',
+                    'Failed to check if the team owns folders. Please try again.'
+                  )
+                );
+                console.error(error);
+                return;
+              }
+
+              if (isAbortError) {
+                return;
+              }
+
+              if (foldersData?.hits) {
+                ownedFolders = foldersData.hits;
+              }
+            }
+
+            reportInteraction('grafana_teams_list_delete_button_clicked', {
+              ownedFolder: ownedFolders && ownedFolders.length > 0,
+            });
+            appEvents.publish(
+              new ShowModalReactEvent({
+                component: TeamDeleteModal,
+                props: {
+                  onConfirm: () => {
+                    reportInteraction('grafana_teams_list_delete_modal_confirm_clicked');
+                    deleteTeam({ uid: original.uid });
+                  },
+                  teamName: original.name,
+                  ownedFolder: ownedFolders && ownedFolders.length > 0,
+                },
+              })
+            );
+          };
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
-                <LinkButton
-                  href={`org/teams/edit/${original.uid}`}
-                  aria-label={t('teams.team-list.columns.aria-label-edit-team', 'Edit team {{teamName}}', {
-                    teamName: original.name,
-                  })}
-                  icon="pen"
-                  size="sm"
-                  variant="secondary"
-                  tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
-                />
+                <a href={`org/teams/edit/${original.uid}`} style={{ display: 'inline-flex' }}>
+                  <IconButton
+                    name="pen"
+                    size="md"
+                    variant="secondary"
+                    aria-label={t('teams.team-list.columns.aria-label-edit-team', 'Edit team {{teamName}}', {
+                      teamName: original.name,
+                    })}
+                    tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
+                  />
+                </a>
               )}
-              <DeleteButton
+              <IconButton
+                onClick={showDeleteModal}
+                variant="destructive"
+                disabled={!canDelete}
+                name="times"
+                size="md"
+                tooltip={t('teams.team-list.columns.tooltip-delete-button', 'Delete {{teamName}}', {
+                  teamName: original.name,
+                })}
                 aria-label={t('teams.team-list.columns.aria-label-delete-button', 'Delete team {{teamName}}', {
                   teamName: original.name,
                 })}
-                size="sm"
-                disabled={!canDelete}
-                onConfirm={() => deleteTeam({ uid: original.uid })}
               />
             </Stack>
           );
         },
       },
     ],
-    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam]
+    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, triggerFoldersQuery, notifyApp]
   );
 
   return (

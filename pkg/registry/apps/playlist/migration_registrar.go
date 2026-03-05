@@ -14,7 +14,7 @@ func PlaylistMigration(migrator migrator.PlaylistMigrator) migrations.MigrationD
 		ID:          "playlists",
 		MigrationID: "playlists migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: playlistGR, LockTable: "playlist"},
+			{GroupResource: playlistGR, LockTables: []string{"playlist", "playlist_item"}},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			playlistGR: migrator.MigratePlaylists,
@@ -22,5 +22,7 @@ func PlaylistMigration(migrator migrator.PlaylistMigrator) migrations.MigrationD
 		Validators: []migrations.ValidatorFactory{
 			migrations.CountValidation(playlistGR, "playlist", "org_id = ?"),
 		},
+		// Playlist tables are still being used
+		RenameTables: []string{},
 	}
 }

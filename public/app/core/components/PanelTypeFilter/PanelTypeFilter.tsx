@@ -3,8 +3,8 @@ import { useCallback, useMemo, useState, type JSX } from 'react';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
-import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 export interface Props {
   onChange: (plugins: PanelPluginMeta[]) => void;
@@ -12,7 +12,7 @@ export interface Props {
 }
 
 export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
-  const plugins = useMemo<PanelPluginMeta[]>(getAllPanelPluginMeta, []);
+  const { value: plugins = [] } = useListedPanelPluginMetas();
   const options = useMemo(
     () =>
       plugins

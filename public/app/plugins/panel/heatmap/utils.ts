@@ -23,7 +23,7 @@ import {
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './types';
+import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './panelcfg.gen';
 
 /** Validates and returns a safe log base (2 or 10), defaults to 2 if invalid */
 export function toLogBase(value: number | undefined): 2 | 10 {

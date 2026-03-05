@@ -130,6 +130,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 		if len(res.Bindings) >= int(query.Pagination.Limit)-1 {
 			res.Continue = lastID
+			break
 		}
 	}
 
@@ -199,6 +200,9 @@ func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.Namespa
 
 		teamMemberID, err := st.ExecWithReturningId(ctx, teamMemberQuery, req.GetArgs()...)
 		if err != nil {
+			if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
+				return team.ErrTeamMemberAlreadyAdded
+			}
 			return fmt.Errorf("failed to create team member: %w", err)
 		}
 

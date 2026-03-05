@@ -53,6 +53,7 @@ type jobProgressRecorder struct {
 	summaries           map[string]*provisioning.JobResourceSummary
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
+	resultReasons       map[string]struct{}
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
@@ -62,6 +63,7 @@ func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
+		resultReasons:       make(map[string]struct{}),
 	}
 }
 
@@ -105,6 +107,15 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 			r.failedDeletions = append(r.failedDeletions, result.Path())
 		}
 	} else if result.Warning() != nil {
+		// Still track failed deletions in case we get a warning
+		if result.Action() == repository.FileActionDeleted {
+			r.failedDeletions = append(r.failedDeletions, result.Path())
+		}
+
+		if reason := result.WarningReason(); reason != "" {
+			r.resultReasons[reason] = struct{}{}
+		}
+
 		shouldLogWarning = true
 		logWarning = result.Warning()
 	}
@@ -124,17 +135,29 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.maybeNotify(ctx)
 }
 
-// ResetResults will reset the results of the job
-func (r *jobProgressRecorder) ResetResults() {
+// ResetResults will reset the results of the job.
+// If the keepWarnings flag is set to true, the summary will preserve the warnings in it.
+func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	r.resultCount = 0
 	r.errorCount = 0
 	r.errors = nil
-	r.summaries = make(map[string]*provisioning.JobResourceSummary)
 	r.failedCreations = nil
 	r.failedDeletions = nil
+
+	summaries := make(map[string]*provisioning.JobResourceSummary)
+	for k, summary := range r.summaries {
+		if len(summary.Warnings) > 0 && keepWarnings {
+			summaries[k] = summary
+		}
+	}
+	r.summaries = summaries
+
+	if !keepWarnings {
+		r.resultReasons = make(map[string]struct{})
+	}
 }
 
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
@@ -299,7 +322,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	jobStatus.Errors = r.errors
 
 	// Extract warnings from summaries
-	warnings := make([]string, 0)
+	warnings := make([]string, 0) //nolint:prealloc
 	for _, summary := range summaries {
 		warnings = append(warnings, summary.Warnings...)
 	}
@@ -330,6 +353,20 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	return jobStatus
+}
+
+func (r *jobProgressRecorder) ResultReasons() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if len(r.resultReasons) == 0 {
+		return nil
+	}
+	reasons := make([]string, 0, len(r.resultReasons))
+	for reason := range r.resultReasons {
+		reasons = append(reasons, reason)
+	}
+	return reasons
 }
 
 // HasDirPathFailedCreation checks if a path is nested under any failed folder creation
