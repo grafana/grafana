@@ -92,7 +92,7 @@ jobs:
         uses: actions/cache@v5
         id: cache
         with:
-          key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', '.nvmrc') }}"
+          key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
           path: |
             public/build
             public/app/plugins/*/*/dist
@@ -107,6 +107,8 @@ jobs:
 
       - name: Build frontend
         if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          NO_SOURCEMAP: '1' # Don't generate sourcemaps for CI builds to speed up webpack + packaging
         run: make build-js
 
       - name: Upload frontend build artifacts
