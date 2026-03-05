@@ -79,7 +79,7 @@ export function createSparseYScaleRange(
   yAxisConfig: YAxisConfig
 ): (u: uPlot, dataMin: number, dataMax: number) => [number | null, number | null] {
   return (u, dataMin, dataMax) => {
-    // Guard: when dataMin/dataMax are null (empty panel data), uPlot.rangeLog(null, 0, base, true)
+    // Guard: when dataMin/dataMax are null (empty panel data in native histogram, sparse heatmap), uPlot.rangeLog(null, 0, base, true)
     // returns [0, 0], and logAxisSplits(scaleMin=0, logBase=2) enters an infinite loop
     // (pow(2,-Inf)=0, 0+0=0 forever) → OOM crash. Return [null,null] so uPlot skips logAxisSplits.
     if (dataMin == null || dataMax == null) {

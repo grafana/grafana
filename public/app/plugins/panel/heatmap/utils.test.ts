@@ -1,3 +1,5 @@
+import uPlot from 'uplot';
+
 import { ScaleDistribution } from '@grafana/schema';
 
 import {
@@ -5,9 +7,70 @@ import {
   boundedMinMax,
   calculateBucketExpansionFactor,
   calculateYSizeDivisor,
+  createSparseYScaleRange,
   toLogBase,
   valuesToFills,
 } from './utils';
+
+// Root cause of Chrome OOM crash (GitHub issue #20873):
+// Native histogram panels produce sparse DataFrameType.HeatmapCells frames. The sparse Y axis is
+// always log scale (base 2). When a panel receives no data, u.data[1] contains empty facet arrays
+// [[], [], [], []]. uPlot passes dataMin=null to the Y scale range function because there are no
+// data points to compute a minimum from. Without the null guard, null coerces to 0 in arithmetic,
+// so rangeLog receives scaleMin=0 on a log-base-2 axis. logAxisSplits then computes:
+//   foundIncr = pow(2, floor(log2(0))) = pow(2, -Infinity) = 0
+// and loops: do { split = 0 + 0 } while (0 <= 0) — forever. Chrome runs out of memory and crashes.
+describe('logAxisSplits OOM crash with empty sparse heatmap data', () => {
+  it('createSparseYScaleRange returns [null, null] for empty histogram panel data', () => {
+    // u.data[1] = [[], [], [], []] represents a native histogram panel with no data.
+    // uPlot passes dataMin=null, dataMax=null to the range function when dataLen=0.
+    // Without the null guard: null * bucketFactor(1) = 0, rangeLog(null, 0, 2, true) = [0, 0],
+    // which sets scale.min=0 and triggers the logAxisSplits infinite loop described above.
+    // With the null guard: returns [null, null] before reaching rangeLog.
+    // Remove the guard and this test fails with [0, 0].
+    const rangeFn = createSparseYScaleRange(ScaleDistribution.Log, 2, 'y_test', false, {});
+    const mockU = {
+      data: [null, [[], [], [], []], []],
+      scales: { y_test: { log: 2 } },
+    } as unknown as uPlot;
+
+    const result = rangeFn(mockU, null as unknown as number, null as unknown as number);
+    expect(result).toEqual([null, null]);
+  });
+
+  it('uPlot sets scale.min=null for empty histogram data — axesCalc skips logAxisSplits', () => {
+    // Proves the fix prevents logAxisSplits from being called in a real uPlot instance.
+    // uPlot axesCalc (uPlot.iife.js line 4799): if (scale.min == null) { return; }
+    // When scale.min is null, axesCalc returns before calling axis.splits, so logAxisSplits
+    // never executes and the infinite loop never starts.
+    // Remove the fix and this test fails: scale.min becomes 0, logAxisSplits is called,
+    // and the test runner throws RangeError: Invalid array length as the array push in the
+    // loop exhausts the JS array size limit. In Chrome the same loop exhausts memory instead.
+    const rangeFn = createSparseYScaleRange(ScaleDistribution.Log, 2, 'y', false, {});
+
+    const container = document.createElement('div');
+    const u = new uPlot(
+      {
+        width: 100,
+        height: 100,
+        scales: {
+          x: { time: false },
+          y: { distr: 3, log: 2, range: rangeFn as unknown as uPlot.Scale['range'] },
+        },
+        axes: [{}, { scale: 'y' }],
+        series: [{}, { scale: 'y' }],
+      },
+      [[], []],
+      container
+    );
+
+    u.setData([[], []]);
+
+    expect(u.scales.y.min).toBeNull();
+
+    u.destroy();
+  });
+});
 
 describe('toLogBase', () => {
   it('returns 10 when value is 10', () => {
