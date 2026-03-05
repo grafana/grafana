@@ -115,7 +115,7 @@ func (s *missingDatasourceStep) Run(ctx context.Context, log logging.Logger, obj
 		checks.NewCheckReportFailureWithMoreInfo(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
-			fmt.Sprintf("%s (%s)", dash.Title, dash.UID),
+			fmt.Sprintf("%s - missing datasource(s): %s", dash.Title, strings.Join(missingUIDs, ", ")),
 			dash.UID,
 			[]advisor.CheckErrorLink{
 				{Message: "Edit dashboard", Url: editURL},
