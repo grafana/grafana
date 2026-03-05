@@ -281,33 +281,34 @@ func NewAlertmanager(
 // 1. Execute a readiness check to make sure the remote Alertmanager we're about to communicate with is up and ready.
 // 2. Upload the configuration and state we currently hold.
 // On each subsequent call to ApplyConfig we compare and upload only the configuration.
-func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+func (am *Alertmanager) ApplyConfig(ctx context.Context, config alertingNotify.NotificationsConfiguration) (bool, error) {
 	if am.ready {
 		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check and state sync")
 	} else {
 		am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
 		if err := am.checkReadiness(ctx); err != nil {
-			return fmt.Errorf("unable to pass the readiness check: %w", err)
+			return false, fmt.Errorf("unable to pass the readiness check: %w", err)
 		}
 		am.log.Debug("Completed readiness check for remote Alertmanager, starting state upload", "url", am.url)
 
 		if err := am.SendState(ctx); err != nil {
-			return fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
+			return false, fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
 		}
 		am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 	}
 
 	if time.Since(am.lastConfigSync) < am.syncInterval {
 		am.log.Debug("Not syncing configuration to remote Alertmanager, last sync was too recent")
-		return nil
+		return false, nil
 	}
 
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
-	if err := am.CompareAndSendConfiguration(ctx, config); err != nil {
-		return fmt.Errorf("unable to upload the configuration to the remote Alertmanager: %w", err)
+	sent, err := am.CompareAndSendConfiguration(ctx, config)
+	if err != nil {
+		return false, fmt.Errorf("unable to upload the configuration to the remote Alertmanager: %w", err)
 	}
-	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
-	return nil
+	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url, "uploaded", sent)
+	return sent, nil
 }
 
 func (am *Alertmanager) checkReadiness(ctx context.Context) error {
@@ -324,36 +325,31 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
 // If not, it sends the configuration to the remote Alertmanager.
-func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	payload, err := am.buildConfiguration(ctx, config, notifier.LogInvalidReceivers)
+func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, c alertingNotify.NotificationsConfiguration) (bool, error) {
+	payload, err := am.buildConfiguration(ctx, c)
 	if err != nil {
-		return fmt.Errorf("unable to build configuration: %w", err)
+		return false, fmt.Errorf("unable to build configuration: %w", err)
 	}
 	// Send the configuration only if we need to.
 	if !am.shouldSendConfig(ctx, payload) {
-		return nil
+		return false, nil
 	}
 
-	return am.sendConfiguration(ctx, payload)
+	err = am.sendConfiguration(ctx, payload)
+	if err != nil {
+		return false, fmt.Errorf("unable to send configuration: %w", err)
+	}
+	return true, nil
 }
 
 func (am *Alertmanager) isDefaultConfiguration(cfg alertingNotify.NotificationsConfiguration) bool {
+	cfg.Limits = alertingNotify.DynamicLimits{} // Ignore Limits to support comparison with hash of default config.
 	return alertingNotify.CalculateConfigFingerprint(cfg) == am.defaultConfigHash
 }
 
 // buildConfiguration takes a raw Alertmanager configuration and returns a config that the remote Alertmanager can use.
 // It parses the initial configuration, adds auto-generated routes, decrypts receivers, and merges the extra configs.
-func (am *Alertmanager) buildConfiguration(ctx context.Context, dbConfig *models.AlertConfiguration, onInvalid notifier.InvalidReceiversAction) (remoteClient.UserGrafanaConfig, error) {
-	c, err := notifier.PrepareConfig(ctx, am.orgID, dbConfig, notifier.PrepareConfigOptions{
-		OnInvalid:        onInvalid,
-		Crypto:           am.crypto,
-		AutogenRuleStore: am.autogenRuleStore,
-		Logger:           am.log,
-		Features:         am.features,
-	})
-	if err != nil {
-		return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to prepare configuration: %w", err)
-	}
+func (am *Alertmanager) buildConfiguration(ctx context.Context, c alertingNotify.NotificationsConfiguration) (remoteClient.UserGrafanaConfig, error) {
 	amConfig := notifier.NotificationsConfigurationToPostableAPIConfig(c)
 
 	// Decrypt the receivers in the configuration.
@@ -463,7 +459,18 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		return err
 	}
 
-	payload, err := am.buildConfiguration(ctx, &models.AlertConfiguration{AlertmanagerConfiguration: string(rawCopy), CreatedAt: time.Now().Unix()}, notifier.LogInvalidReceivers)
+	c, err := notifier.PrepareConfig(ctx, am.orgID, &models.AlertConfiguration{AlertmanagerConfiguration: string(rawCopy), CreatedAt: time.Now().Unix()}, notifier.PrepareConfigOptions{
+		OnInvalid:        notifier.LogInvalidReceivers,
+		Crypto:           am.crypto,
+		AutogenRuleStore: am.autogenRuleStore,
+		Logger:           am.log,
+		Features:         am.features,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to prepare configuration: %w", err)
+	}
+
+	payload, err := am.buildConfiguration(ctx, c)
 	if err != nil {
 		return fmt.Errorf("unable to build configuration: %w", err)
 	}
@@ -474,7 +481,18 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	am.log.Debug("Sending default configuration to a remote Alertmanager", "url", am.url)
-	payload, err := am.buildConfiguration(ctx, &models.AlertConfiguration{AlertmanagerConfiguration: am.defaultConfig, CreatedAt: time.Now().Unix()}, notifier.LogInvalidReceivers)
+	c, err := notifier.PrepareConfig(ctx, am.orgID, &models.AlertConfiguration{AlertmanagerConfiguration: am.defaultConfig, CreatedAt: time.Now().Unix()}, notifier.PrepareConfigOptions{
+		OnInvalid:        notifier.LogInvalidReceivers,
+		Crypto:           am.crypto,
+		AutogenRuleStore: am.autogenRuleStore,
+		Logger:           am.log,
+		Features:         am.features,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to prepare default configuration: %w", err)
+	}
+
+	payload, err := am.buildConfiguration(ctx, c)
 	if err != nil {
 		return fmt.Errorf("unable to build default configuration: %w", err)
 	}

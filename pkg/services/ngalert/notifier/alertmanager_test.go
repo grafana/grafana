@@ -78,7 +78,9 @@ func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
 }
 
 func TestAlertmanager_SaveAndApplyConfig_WithExternalSecrets(t *testing.T) {
-	am := setupAMTest(t)
+	moa := NewTestMultiOrgAlertmanager(t)
+	am, err := moa.AlertmanagerFor(1)
+	require.NoError(t, err)
 
 	cfg := &definitions.PostableUserConfig{
 		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
@@ -121,10 +123,10 @@ receivers:
 		},
 	}
 
-	err := am.SaveAndApplyConfig(context.Background(), cfg)
+	err = am.SaveAndApplyConfig(context.Background(), cfg)
 	require.NoError(t, err)
 
-	savedConfig, err := am.Store.GetLatestAlertmanagerConfiguration(context.Background(), am.Base.TenantID())
+	savedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(context.Background(), am.(*alertmanager).Base.TenantID())
 	require.NoError(t, err)
 
 	// Verify secrets are encrypted in stored config
@@ -141,8 +143,9 @@ receivers:
 	require.NotContains(t, extraConfig.AlertmanagerConfig, "ABC123")
 
 	// Apply the saved configuration again and check that it is applied without errors
-	err = am.ApplyConfig(context.Background(), savedConfig)
+	changed, err := moa.ApplyConfig(context.Background(), 1, savedConfig)
 	require.NoError(t, err)
+	require.False(t, changed) // No errors, but the config has not changed.
 	require.True(t, am.Ready())
 }
 
@@ -470,27 +473,31 @@ receivers:
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			am := setupAMTest(t)
-			am.features = tc.features
-			am.Store = NewFakeNotificationStore(t, map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{
+			s := NewFakeConfigStore(t, map[int64]*ngmodels.AlertConfiguration{})
+			s.notificationSettings = map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{
 				1: tc.initialSettings,
-			})
+			}
 
-			changed, err := am.applyConfig(ctx, toDBConfig(t, tc.initialConfig()), ErrorOnInvalidReceivers)
+			moa := NewTestMultiOrgAlertmanager(t, WithConfigStore(s), WithFeatureToggles(tc.features))
+			am, err := moa.AlertmanagerFor(1)
+			require.NoError(t, err)
+			base := am.(*alertmanager).Base
+
+			changed, err := moa.ApplyConfig(ctx, 1, toDBConfig(t, tc.initialConfig()))
 			require.NoError(t, err)
 			require.True(t, changed)
 
-			firstHash := am.Base.ConfigHash()
-			firstApplied := am.Base.AppliedConfig()
+			firstHash := am.(*alertmanager).appliedHash
+			firstApplied := base.AppliedConfig()
 			for i := 0; i < 20; i++ {
-				changed, err = am.applyConfig(ctx, toDBConfig(t, tc.initialConfig()), ErrorOnInvalidReceivers)
+				changed, err = moa.ApplyConfig(ctx, 1, toDBConfig(t, tc.initialConfig()))
 				require.NoError(t, err)
-				diff := cmp.Diff(firstApplied, am.Base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))
+				diff := cmp.Diff(firstApplied, base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))
 				if diff != "" {
 					t.Errorf("Unexpected change in applied config: %v", diff)
 				}
 				require.Falsef(t, changed, "applyConfig should not return changed=true after first run, diff:\n%s", diff)
-				require.Equal(t, firstHash, am.Base.ConfigHash())
+				require.Equal(t, firstHash, am.(*alertmanager).appliedHash)
 			}
 
 			if tc.mutate == nil {
@@ -499,24 +506,24 @@ receivers:
 			mutatedCfg := tc.initialConfig()
 			tc.mutate(mutatedCfg, tc.initialSettings)
 
-			changed, err = am.applyConfig(ctx, toDBConfig(t, mutatedCfg), ErrorOnInvalidReceivers)
+			changed, err = moa.ApplyConfig(ctx, 1, toDBConfig(t, mutatedCfg))
 			require.NoError(t, err)
 			require.True(t, changed)
-			require.NotEqual(t, firstHash, am.Base.ConfigHash())
+			require.NotEqual(t, firstHash, am.(*alertmanager).appliedHash)
 
 			mutatedCfg = tc.initialConfig()
 			tc.mutate(mutatedCfg, tc.initialSettings)
 
-			updatedHash := am.Base.ConfigHash()
-			updatedApplied := am.Base.AppliedConfig()
-			changed, err = am.applyConfig(ctx, toDBConfig(t, mutatedCfg), ErrorOnInvalidReceivers)
+			updatedHash := am.(*alertmanager).appliedHash
+			updatedApplied := base.AppliedConfig()
+			changed, err = moa.ApplyConfig(ctx, 1, toDBConfig(t, mutatedCfg))
 			require.NoError(t, err)
-			diff := cmp.Diff(updatedApplied, am.Base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))
+			diff := cmp.Diff(updatedApplied, base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))
 			if diff != "" {
 				t.Errorf("Unexpected change in applied config: %v", diff)
 			}
 			require.Falsef(t, changed, "applyConfig should not return changed=true after second mutated update, diff:\n%s", diff)
-			require.Equal(t, updatedHash, am.Base.ConfigHash())
+			require.Equal(t, updatedHash, am.(*alertmanager).appliedHash)
 		})
 	}
 }

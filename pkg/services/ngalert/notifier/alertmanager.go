@@ -227,7 +227,18 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		}
 
 		err := am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(dbConfig ngmodels.AlertConfiguration) error {
-			_, err := am.applyConfig(ctx, &dbConfig, LogInvalidReceivers)
+			cfg, err := PrepareConfig(ctx, am.Base.TenantID(), &dbConfig, PrepareConfigOptions{
+				OnInvalid:        LogInvalidReceivers,
+				Crypto:           am.crypto,
+				AutogenRuleStore: am.Store,
+				Logger:           am.logger,
+				Features:         am.features,
+				Limits:           am.dynamicLimits,
+			})
+			if err != nil {
+				return fmt.Errorf("unable to prepare configuration: %w", err)
+			}
+			_, err = am.applyConfig(cfg)
 			return err
 		})
 		if err != nil {
@@ -266,7 +277,18 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(dbConfig ngmodels.AlertConfiguration) error {
-			_, err = am.applyConfig(ctx, &dbConfig, ErrorOnInvalidReceivers) // fail if the autogen config is invalid
+			config, err := PrepareConfig(ctx, am.Base.TenantID(), &dbConfig, PrepareConfigOptions{
+				OnInvalid:        ErrorOnInvalidReceivers,
+				Crypto:           am.crypto,
+				AutogenRuleStore: am.Store,
+				Logger:           am.logger,
+				Features:         am.features,
+				Limits:           am.dynamicLimits,
+			})
+			if err != nil {
+				return fmt.Errorf("unable to prepare configuration: %w", err)
+			}
+			_, err = am.applyConfig(config) // fail if the autogen config is invalid
 			return err
 		})
 		if err != nil {
@@ -279,29 +301,13 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 }
 
 // ApplyConfig applies the configuration to the Alertmanager.
-func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration) error {
+func (am *alertmanager) ApplyConfig(_ context.Context, cfg alertingNotify.NotificationsConfiguration) (bool, error) {
+	var configChanged bool
 	var outerErr error
 	am.Base.WithLock(func() {
-		configChanged, err := am.applyConfig(ctx, dbCfg, LogInvalidReceivers)
-		if err != nil {
-			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
-			return
-		}
-
-		if !configChanged {
-			return
-		}
-		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
-			OrgID:             am.Base.TenantID(),
-			ConfigurationHash: dbCfg.ConfigurationHash,
-		}
-		err = am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
-		if err != nil {
-			outerErr = fmt.Errorf("unable to mark configuration as applied: %w", err)
-		}
+		configChanged, outerErr = am.applyConfig(cfg)
 	})
-
-	return outerErr
+	return configChanged, outerErr
 }
 
 type AggregateMatchersUsage struct {
@@ -311,7 +317,7 @@ type AggregateMatchersUsage struct {
 	ObjectMatchers int
 }
 
-func (am *alertmanager) updateConfigMetrics(cfg alertingNotify.NotificationsConfiguration, cfgSize int) {
+func (am *alertmanager) updateConfigMetrics(cfg alertingNotify.NotificationsConfiguration) {
 	var amu AggregateMatchersUsage
 	am.aggregateRouteMatchers(cfg.RoutingTree, &amu)
 	am.aggregateInhibitMatchers(cfg.InhibitRules, &amu)
@@ -324,9 +330,14 @@ func (am *alertmanager) updateConfigMetrics(cfg alertingNotify.NotificationsConf
 		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
 		Set(hashAsMetricValue(am.appliedHash))
 
-	am.ConfigMetrics.ConfigSizeBytes.
-		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
-		Set(float64(cfgSize))
+	if rawCfg, err := json.Marshal(cfg); err == nil {
+		am.ConfigMetrics.ConfigSizeBytes.
+			WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
+			Set(float64(len(rawCfg)))
+	} else {
+		am.logger.Error("Failed to update config size metric", "configHash", am.appliedHash.String(), "error", err)
+	}
+
 }
 
 func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
@@ -353,18 +364,7 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []apimodels.InhibitRule, 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *alertmanager) applyConfig(ctx context.Context, dbConfig *ngmodels.AlertConfiguration, onInvalid InvalidReceiversAction) (bool, error) {
-	cfg, err := PrepareConfig(ctx, am.Base.TenantID(), dbConfig, PrepareConfigOptions{
-		OnInvalid:        onInvalid,
-		Crypto:           am.crypto,
-		AutogenRuleStore: am.Store,
-		Logger:           am.logger,
-		Features:         am.features,
-		Limits:           am.dynamicLimits,
-	})
-	if err != nil {
-		return false, fmt.Errorf("unable to prepare configuration: %w", err)
-	}
+func (am *alertmanager) applyConfig(cfg alertingNotify.NotificationsConfiguration) (bool, error) {
 	// If configuration hasn't changed, we've got nothing to do.
 	configHash := alertingNotify.CalculateConfigFingerprint(cfg)
 	if am.appliedHash == configHash {
@@ -372,14 +372,14 @@ func (am *alertmanager) applyConfig(ctx context.Context, dbConfig *ngmodels.Aler
 		return false, nil
 	}
 
-	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%d", configHash), "dbHash", dbConfig.ConfigurationHash)
-	err = am.Base.ApplyConfig(cfg)
+	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%d", configHash))
+	err := am.Base.ApplyConfig(cfg)
 	if err != nil {
 		return false, fmt.Errorf("unable to apply configuration: %w", err)
 	}
 	am.appliedHash = configHash
 
-	am.updateConfigMetrics(cfg, len(dbConfig.AlertmanagerConfiguration))
+	am.updateConfigMetrics(cfg)
 	return true, nil
 }
 
