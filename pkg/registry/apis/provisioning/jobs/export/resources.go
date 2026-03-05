@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	grafanautil "github.com/grafana/grafana/pkg/util"
 )
 
 // FIXME: This is used to make sure we save dashboards in the apiVersion they were original saved in
@@ -126,6 +127,11 @@ func exportResource(ctx context.Context,
 
 		if shim != nil {
 			item, err = shim(ctx, item)
+		}
+
+		if err == nil && options.GenerateNewUIDs {
+			item = item.DeepCopy()
+			item.SetName(grafanautil.GenerateShortUID())
 		}
 
 		if err == nil {

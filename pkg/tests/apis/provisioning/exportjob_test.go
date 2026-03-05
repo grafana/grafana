@@ -268,6 +268,86 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	}
 }
 
+func TestIntegrationProvisioning_ExportWithGenerateNewUIDs(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t)
+	ctx := context.Background()
+
+	// Create dashboards with known names
+	dashboard1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+	created1, err := helper.DashboardsV1.Resource.Create(ctx, dashboard1, metav1.CreateOptions{})
+	require.NoError(t, err, "should create first dashboard")
+	originalName1 := created1.GetName()
+
+	dashboard2 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2beta1.yaml")
+	created2, err := helper.DashboardsV2beta1.Resource.Create(ctx, dashboard2, metav1.CreateOptions{})
+	require.NoError(t, err, "should create second dashboard")
+	originalName2 := created2.GetName()
+
+	t.Logf("Original dashboard names: %s, %s", originalName1, originalName2)
+
+	const repo = "export-new-uids-repo"
+	testRepo := common.TestRepo{
+		Name:               repo,
+		Target:             "instance",
+		Copies:             map[string]string{},
+		ExpectedDashboards: 2,
+		ExpectedFolders:    0,
+	}
+	helper.CreateRepo(t, testRepo)
+
+	// Export with GenerateNewUIDs enabled
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			GenerateNewUIDs: true,
+		},
+	}
+	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+	common.PrintFileTree(t, helper.ProvisioningPath)
+
+	// Read all exported files and verify the names are NOT the originals
+	entries, err := os.ReadDir(helper.ProvisioningPath)
+	require.NoError(t, err)
+
+	var exportedNames []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		fpath := filepath.Join(helper.ProvisioningPath, entry.Name())
+		//nolint:gosec
+		body, err := os.ReadFile(fpath)
+		require.NoError(t, err, "should read exported file %s", entry.Name())
+
+		obj := map[string]any{}
+		require.NoError(t, json.Unmarshal(body, &obj))
+
+		name, _, err := unstructured.NestedString(obj, "metadata", "name")
+		require.NoError(t, err)
+		require.NotEmpty(t, name, "exported file should have a metadata.name")
+
+		t.Logf("Exported file %s has metadata.name=%s", entry.Name(), name)
+		exportedNames = append(exportedNames, name)
+	}
+
+	require.Len(t, exportedNames, 2, "should have exported 2 files")
+
+	// None of the exported names should match the original dashboard names
+	for _, exportedName := range exportedNames {
+		require.NotEqual(t, originalName1, exportedName,
+			"exported name should differ from original dashboard 1")
+		require.NotEqual(t, originalName2, exportedName,
+			"exported name should differ from original dashboard 2")
+	}
+
+	// The two exported names should be unique from each other
+	require.NotEqual(t, exportedNames[0], exportedNames[1],
+		"exported names should be unique")
+}
+
 func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
