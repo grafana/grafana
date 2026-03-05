@@ -21,13 +21,7 @@ interface RoleRow {
 }
 
 export const UserRoles = memo(({ roles, teams, orgs, userUid }: Props) => {
-  // Debug logging
-  console.log('UserRoles - roles:', roles);
-  console.log('UserRoles - teams:', teams);
-  console.log('UserRoles - orgs:', orgs);
-
   const roleRows = transformRolesToRows(roles, teams, orgs);
-  console.log('UserRoles - roleRows:', roleRows);
 
   if (roleRows.length === 0) {
     return null;

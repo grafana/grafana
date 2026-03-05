@@ -237,14 +237,11 @@ export default function UserPermissionsPage() {
   }, [user, currentOrg, currentOrgId, selectedRole, loadData]);
 
   const pageNav = {
-    text: 'Roles',
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    text: user ? `${user.name || user.login}` : 'Permissions',
     url: `/admin/users/roles/${uid}`,
-    subTitle:
-      user && currentOrg
-        ? orgs.length > 1
-          ? `Manage roles for user ${user.login} in organization ${currentOrg.name}.`
-          : `Manage roles for user ${user.login}.`
-        : undefined,
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    subTitle: 'View and manage all roles assigned to this user — directly, via teams, or through their basic role.',
     parentItem: user
       ? {
           text: user.login,
@@ -271,22 +268,12 @@ export default function UserPermissionsPage() {
         )}
         {!isLoading && !error && user && (
           <Stack gap={1} direction="column">
-            {currentOrg && (
+            {currentOrg && canAddRoles && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-48px', marginBottom: '16px', position: 'relative', zIndex: 10 }}>
-                <Stack gap={1}>
-                  {canChangeOrgRole && (
-                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                    <Button variant="secondary" onClick={handleOpenChangeRoleModal}>
-                      Change Basic Role
-                    </Button>
-                  )}
-                  {canAddRoles && (
-                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                    <Button variant="primary" icon="plus" onClick={() => setIsAddRoleModalOpen(true)}>
-                      Add Role
-                    </Button>
-                  )}
-                </Stack>
+                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+                <Button variant="primary" icon="plus" onClick={() => setIsAddRoleModalOpen(true)}>
+                  Add Role
+                </Button>
               </div>
             )}
 
@@ -307,6 +294,7 @@ export default function UserPermissionsPage() {
                   userId={user.id}
                   userName={user.login}
                   onRolesChanged={loadData}
+                  onChangeBasicRole={canChangeOrgRole ? handleOpenChangeRoleModal : undefined}
                 />
 
                 {canAddRoles && (
