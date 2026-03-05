@@ -4,18 +4,7 @@ package github
 
 import (
 	"context"
-	"errors"
 	"time"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-)
-
-// API errors that we need to convey after parsing real GH errors (or faking them).
-var (
-	ErrResourceNotFound   = errors.New("the resource does not exist")
-	ErrUnauthorized       = errors.New("unauthorized")
-	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
-	ErrTooManyItems       = errors.New("maximum number of items exceeded")
 )
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter
@@ -25,6 +14,9 @@ type Client interface {
 
 	// Branch protection
 	GetBranchProtection(ctx context.Context, owner, repository, branch string) (*BranchProtection, error)
+
+	// Repository rulesets
+	GetRulesets(ctx context.Context, owner, repository, branch string) (*Rulesets, error)
 
 	// Commits
 	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
@@ -129,6 +121,40 @@ func (bp *BranchProtection) BlocksDirectPush() []string {
 	}
 	if bp.LockBranch {
 		reasons = append(reasons, "branch is locked (read-only)")
+	}
+	return reasons
+}
+
+// Rulesets holds repository rulesets that apply to a specific branch and may
+// block direct pushes.
+//
+// GitHub Repository Rulesets are documented at:
+// https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets
+//
+// Rulesets are more flexible than branch protection rules and can target
+// multiple branches with patterns. Only rulesets with enforcement="active"
+// or "enabled" are considered blocking.
+type Rulesets struct {
+	// RequiresPullRequest is true when a "pull_request" rule is active.
+	// This forces all changes to go through a PR, blocking direct pushes.
+	RequiresPullRequest bool
+}
+
+// BlocksDirectPush returns human-readable reasons why direct pushes would be
+// blocked by repository rulesets. A nil slice means no blocking rules were
+// detected.
+//
+// Note: Only pull_request rules actually block direct pushes. Other rules like
+// non_fast_forward (blocks force push only), required_status_checks (checks run
+// after push), etc. do not prevent regular git push operations.
+func (r *Rulesets) BlocksDirectPush() []string {
+	if r == nil {
+		return nil
+	}
+
+	var reasons []string
+	if r.RequiresPullRequest {
+		reasons = append(reasons, "ruleset requires pull request")
 	}
 	return reasons
 }

@@ -4756,7 +4756,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Tautkan ke Koneksi",
-      "body": "Sumber data memiliki tempat baru! Anda dapat menemukan sumber data baru atau mengelola yang sudah ada di halaman Koneksi, dapat diakses dari menu utama.",
+      "body": "Sumber data memiliki tempat baru! Anda dapat menemukan sumber data baru atau mengelola yang sudah ada di <0>halaman Koneksi</0>, dapat diakses dari menu utama.",
       "go-to-connections": "Buka koneksi"
     },
     "data-source-details-page": {

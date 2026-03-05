@@ -1453,11 +1453,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rules/state-history/LokiStateHistory.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/state-history/StateHistory.tsx": {
     "no-restricted-syntax": {
       "count": 1
