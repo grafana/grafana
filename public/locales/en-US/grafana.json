@@ -14725,6 +14725,10 @@
       "saving": "Saving",
       "tooltip-close": "Close"
     },
+    "annotation-marker": {
+      "annotation-label": "Annotation",
+      "annotation-region-label": "Annotation region"
+    },
     "annotation-tooltip2": {
       "tooltip-delete": "Delete",
       "tooltip-edit": "Edit"
