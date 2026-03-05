@@ -153,10 +153,31 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 			slog.String("ruleset_name", rulesetName),
 			slog.String("branch", branch))
 
+		// GetAllRulesets doesn't include rule details, so we need to fetch the full ruleset
+		rulesetID := ruleset.GetID()
+		if rulesetID == 0 {
+			logging.FromContext(ctx).Warn("Ruleset has no ID, skipping",
+				slog.String("ruleset_name", rulesetName))
+			continue
+		}
+
+		logging.FromContext(ctx).Debug("Fetching full ruleset details",
+			slog.String("ruleset_name", rulesetName),
+			slog.Int64("ruleset_id", rulesetID))
+
+		fullRuleset, _, err := r.gh.Repositories.GetRuleset(ctx, owner, repository, rulesetID, false)
+		if err != nil {
+			logging.FromContext(ctx).Warn("Failed to fetch ruleset details",
+				slog.String("ruleset_name", rulesetName),
+				slog.Int64("ruleset_id", rulesetID),
+				slog.String("error", err.Error()))
+			continue
+		}
+
 		// Check the rules in this ruleset
-		rules := ruleset.GetRules()
+		rules := fullRuleset.GetRules()
 		if rules == nil {
-			logging.FromContext(ctx).Warn("Ruleset has nil rules",
+			logging.FromContext(ctx).Warn("Ruleset has nil rules even after fetching full details",
 				slog.String("ruleset_name", rulesetName))
 			continue
 		}
