@@ -830,13 +830,17 @@ describe('Plugins/Helpers', () => {
         const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
         config.pluginAdminExternalManageEnabled = true;
 
-        expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({ isManaged: true });
+        expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({
+          isManaged: true,
+        });
 
         config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
       });
 
       test('should return true if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
-        expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({ isManaged: false });
+        expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({
+          isManaged: false,
+        });
       });
     });
   });

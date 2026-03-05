@@ -164,7 +164,13 @@ describe('VersionList', () => {
     const installedVersion = '2.0.0';
 
     renderWithStore(
-      <VersionList pluginId={''} versions={versions} installedVersion={installedVersion} disableInstallation={false} communityManaged={true} />
+      <VersionList
+        pluginId={''}
+        versions={versions}
+        installedVersion={installedVersion}
+        disableInstallation={false}
+        communityManaged={true}
+      />
     );
 
     const buttons = screen.getAllByRole('button');
