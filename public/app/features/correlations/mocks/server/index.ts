@@ -4,6 +4,8 @@ import { setBackendSrv, setGrafanaLiveSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
+import { resetFixtures } from '../fixtures';
+
 export function setupCorrelationsMswServer() {
   const server = setupMockServer();
 
@@ -17,6 +19,18 @@ export function setupCorrelationsMswServer() {
     getDataStream: () => NEVER,
     getPresence: () => Promise.resolve({} as never),
     publish: () => Promise.resolve(undefined),
+  });
+
+  beforeEach(() => {
+    resetFixtures();
+  });
+
+  afterEach(() => {
+    server.resetHandlers();
+  });
+
+  afterAll(() => {
+    server.close();
   });
 
   return server;

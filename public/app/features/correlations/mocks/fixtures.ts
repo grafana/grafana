@@ -1,13 +1,10 @@
-import { CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { Correlation, CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 
-import {
-  createCorrelationsHandler,
-  deleteCorrelationsHandler,
-  editCorrelationsHandler,
-  getCorrelationsHandler,
-} from '../handlers/';
+export const setupMockCorrelations = () => {
+  mockCorrelationsMap.clear();
+};
 
-const generateCorrMetadata = (correlation: CorrelationSpec) => {
+const generateCorrMetadata = (uid: string, correlation: CorrelationSpec) => {
   let labels: Record<string, string> = {
     'correlations.grafana.app/sourceDS-ref': `${correlation.source.group}.${correlation.source.name}`,
   };
@@ -20,8 +17,8 @@ const generateCorrMetadata = (correlation: CorrelationSpec) => {
     kind: 'Correlation',
     apiVersion: 'correlations.grafana.app/v0alpha1',
     metadata: {
-      uid: Math.floor(Math.random() * 1000).toString(),
-      name: Math.floor(Math.random() * 1000).toString(),
+      uid: uid,
+      name: uid,
       namespace: 'default',
       labels: labels,
     },
@@ -68,46 +65,15 @@ const fakeCorrelations: CorrelationSpec[] = [
   },
 ];
 
-export const emptyCorrelationsScenario = [
-  getCorrelationsHandler({
-    kind: 'CorrelationList',
-    apiVersion: 'correlations.grafana.app/v0alpha1',
-    metadata: {},
-    items: [],
-  }),
-];
+export let mockCorrelationsMap = new Map<string, Correlation>();
 
-export const existingCorrelationsScenario = [
-  getCorrelationsHandler({
-    kind: 'CorrelationList',
-    apiVersion: 'correlations.grafana.app/v0alpha1',
-    metadata: {},
-    items: fakeCorrelations.map((rc) => generateCorrMetadata(rc)),
-  }),
-];
-
-const newCorrelation: CorrelationSpec = {
-  source: { group: 'loki', name: 'lokiUID' },
-  target: { group: 'loki', name: 'lokiUID' },
-  label: 'New Correlation',
-  type: 'query',
-  config: {
-    field: 'line',
-    target: {},
-    transformations: [{ type: 'regex', expression: 'url=http[s]?://(S*)', mapValue: 'path' }],
-  },
+export const resetFixtures = () => {
+  setupMockCorrelations();
 };
 
-export const createCorrelationsScenario = [createCorrelationsHandler(generateCorrMetadata(newCorrelation))];
-
-export const deleteCorrelationsScenario = [
-  deleteCorrelationsHandler({
-    kind: 'CorrelationList',
-    apiVersion: 'correlations.grafana.app/v0alpha1',
-    metadata: {},
-    status: '200',
-    message: 'success',
-  }),
-];
-
-export const editCorrelationsScenario = [editCorrelationsHandler(generateCorrMetadata(fakeCorrelations[0]))];
+export const prePopulateCorrelations = () => {
+  mockCorrelationsMap.set('1', generateCorrMetadata('1', fakeCorrelations[0]));
+  mockCorrelationsMap.set('2', generateCorrMetadata('2', fakeCorrelations[1]));
+  mockCorrelationsMap.set('3', generateCorrMetadata('3', fakeCorrelations[2]));
+  mockCorrelationsMap.set('4', generateCorrMetadata('4', fakeCorrelations[3]));
+};

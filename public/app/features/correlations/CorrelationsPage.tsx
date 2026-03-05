@@ -70,6 +70,8 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
     }
   };
 
+  console.log('correlations page', correlations);
+
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   const handleAdded = useCallback(() => {
@@ -85,6 +87,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
 
   const handleDelete = useCallback(
     async (params: RemoveCorrelationParams, isLastRow: boolean) => {
+      console.log('handleDelete', removeFn);
       if (removeFn) {
         await removeFn(params);
         reportInteraction('grafana_correlations_deleted');
