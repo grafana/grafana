@@ -154,9 +154,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           )}
           {!isCollapsed && (
             <div>
-              {sectionVariablesEnabled && rowVariablesSet && (
-                <SectionVariableControls variableSet={rowVariablesSet} />
-              )}
+              {sectionVariablesEnabled && rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
               <layout.Component model={layout} />
             </div>
           )}

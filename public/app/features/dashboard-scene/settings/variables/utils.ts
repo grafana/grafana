@@ -350,11 +350,7 @@ export function validateVariableName(
   return { isValid: true };
 }
 
-function findNameInDescendantSets(
-  sceneObject: SceneObject,
-  name: string,
-  excludeSet: SceneVariableSet
-): boolean {
+function findNameInDescendantSets(sceneObject: SceneObject, name: string, excludeSet: SceneVariableSet): boolean {
   let found = false;
   sceneObject.forEachChild((child) => {
     if (found) {
