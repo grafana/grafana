@@ -297,6 +297,26 @@ describe('browse-dashboards services', () => {
           offset: expectedFrom,
         });
       });
+
+      it('only adds shared with me folder on page 1, not on subsequent pages', async () => {
+        const mockFolders = [
+          { uid: 'folder-1', name: 'Folder 1' },
+          { uid: 'folder-2', name: 'Folder 2' },
+        ];
+        searchMock.mockResolvedValue(createSearchData(mockFolders));
+
+        const page1Result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
+        expect(page1Result).toHaveLength(3);
+        expect(page1Result[0].uid).toBe('sharedwithme');
+        expect(page1Result[1].uid).toBe('folder-1');
+        expect(page1Result[2].uid).toBe('folder-2');
+
+        const page2Result = await listFolders(undefined, undefined, 2, PAGE_SIZE);
+        expect(page2Result).toHaveLength(2);
+        expect(page2Result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
+        expect(page2Result[0].uid).toBe('folder-1');
+        expect(page2Result[1].uid).toBe('folder-2');
+      });
     });
 
     describe('permissions', () => {
