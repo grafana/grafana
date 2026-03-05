@@ -78,6 +78,49 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 5, cfg.IndexMinCount)
 	})
 
+	t.Run("search_inject_failures_percent", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, key, value string) {
+			section := cfg.Raw.Section("unified_storage")
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("defaults to 0", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 0, cfg.SearchInjectFailuresPercent)
+		})
+
+		t.Run("reads configured value", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "search_inject_failures_percent", "50")
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 50, cfg.SearchInjectFailuresPercent)
+		})
+
+		t.Run("clamps negative to 0", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "search_inject_failures_percent", "-10")
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 0, cfg.SearchInjectFailuresPercent)
+		})
+
+		t.Run("clamps over 100 to 100", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "search_inject_failures_percent", "200")
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 100, cfg.SearchInjectFailuresPercent)
+		})
+	})
+
 	t.Run("read unified_storage configs with defaults", func(t *testing.T) {
 		cfg := NewCfg()
 		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})

@@ -33,7 +33,25 @@ func New(hc *http.Client, logger log.Logger, settings backend.DataSourceInstance
 	return client, nil
 }
 
-func (j *JaegerClient) Services() ([]string, error) {
+// doGet performs a GET request with the given context so that contextual HTTP middleware
+// (e.g. Forward OAuth Identity, x-grafana-id) can attach headers to the outgoing request.
+func (j *JaegerClient) doGet(ctx context.Context, rawURL string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := j.httpClient.Do(req)
+	if err != nil {
+		j.logger.Error("Jaeger request failed", "error", err)
+		return nil, err
+	}
+	if res != nil && res.StatusCode/100 != 2 {
+		j.logger.Warn("Jaeger request returned non-2xx status", "status", res.StatusCode, "statusText", res.Status)
+	}
+	return res, nil
+}
+
+func (j *JaegerClient) Services(ctx context.Context) ([]string, error) {
 	var response types.ServicesResponse
 	services := []string{}
 
@@ -42,7 +60,7 @@ func (j *JaegerClient) Services() ([]string, error) {
 		return services, backend.DownstreamErrorf("failed to join url: %w", err)
 	}
 
-	res, err := j.httpClient.Get(u)
+	res, err := j.doGet(ctx, u)
 	if err != nil {
 		return services, err
 	}
@@ -61,7 +79,7 @@ func (j *JaegerClient) Services() ([]string, error) {
 	return services, err
 }
 
-func (j *JaegerClient) Operations(s string) ([]string, error) {
+func (j *JaegerClient) Operations(ctx context.Context, s string) ([]string, error) {
 	var response types.ServicesResponse
 	operations := []string{}
 
@@ -70,7 +88,7 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 		return operations, backend.DownstreamErrorf("failed to join url: %w", err)
 	}
 
-	res, err := j.httpClient.Get(u)
+	res, err := j.doGet(ctx, u)
 	if err != nil {
 		return operations, err
 	}
@@ -89,7 +107,7 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 	return operations, err
 }
 
-func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) (*data.Frame, error) {
+func (j *JaegerClient) Search(ctx context.Context, query *JaegerQuery, start, end int64) (*data.Frame, error) {
 	u, err := url.JoinPath(j.url, "/api/traces")
 	if err != nil {
 		return nil, backend.DownstreamErrorf("failed to join url path: %w", err)
@@ -147,7 +165,7 @@ func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) (*data.Frame
 	}
 
 	jaegerURL.RawQuery = urlQuery.Encode()
-	resp, err := j.httpClient.Get(jaegerURL.String())
+	resp, err := j.doGet(ctx, jaegerURL.String())
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
 			return nil, backend.DownstreamError(err)
@@ -217,7 +235,7 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		}
 	}
 
-	res, err := j.httpClient.Get(traceUrl)
+	res, err := j.doGet(ctx, traceUrl)
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
 			return nil, backend.DownstreamError(err)
@@ -276,7 +294,7 @@ func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (type
 	parsedURL.RawQuery = query.Encode()
 	u = parsedURL.String()
 
-	res, err := j.httpClient.Get(u)
+	res, err := j.doGet(ctx, u)
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
 			return dependencies, backend.DownstreamError(err)
