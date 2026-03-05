@@ -4782,7 +4782,7 @@
     },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Länk till anslutningar",
-      "body": "Datakällor har fått ett nytt hem! Du kan upptäcka nya datakällor eller hantera befintliga på sidan Anslutningar, som är tillgänglig från huvudmenyn.",
+      "body": "Datakällor har fått ett nytt hem! Du kan upptäcka nya datakällor eller hantera befintliga på <0>sidan Anslutningar</0>, som är tillgänglig från huvudmenyn.",
       "go-to-connections": "Gå till anslutningar"
     },
     "data-source-details-page": {
