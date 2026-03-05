@@ -25,7 +25,7 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex }:
   const linkInfo = getLinkSrv().getAnchorInfo(link);
   const styles = useStyles2(getStyles);
   const selectionId = linkIndex != null && linkIndex >= 0 ? linkSelectionId(linkIndex) : undefined;
-  const { isSelected, isSelectable } = useElementSelection(selectionId);
+  const { isSelected } = useElementSelection(selectionId);
 
   let content: React.ReactNode;
   if (link.type === 'dashboards') {
