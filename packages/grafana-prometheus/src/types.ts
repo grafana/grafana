@@ -51,6 +51,12 @@ export interface PromOptions extends DataSourceJsonData {
   oauthPassThru?: boolean;
   seriesEndpoint?: boolean;
   seriesLimit?: number;
+  // OAuth2 client credentials flow
+  oauth2ClientCredentials?: boolean;
+  oauth2ClientId?: string;
+  oauth2TokenUrl?: string;
+  oauth2Scopes?: string;
+  oauth2EndpointParams?: string;
 }
 
 export type ExemplarTraceIdDestination = {
