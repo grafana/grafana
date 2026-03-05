@@ -855,6 +855,65 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 	})
 }
 
+func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	repoName := "webhook-unhealthy-test"
+	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+	require.NoError(t, os.MkdirAll(repoPath, 0o750))
+
+	helper.CreateRepo(t, TestRepo{
+		Name:                   repoName,
+		Path:                   repoPath,
+		Target:                 "folder",
+		SkipResourceAssertions: true,
+	})
+	helper.WaitForHealthyRepository(t, repoName)
+
+	// Make the repository unhealthy by removing its backing directory.
+	require.NoError(t, os.RemoveAll(repoPath))
+
+	// Trigger reconciliation so the controller detects the missing directory.
+	latestObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+	require.NoError(t, err)
+	updated := latestObj.DeepCopy()
+	updated.Object["spec"].(map[string]any)["title"] = "Webhook Unhealthy Test (updated)"
+	_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Wait for the controller to mark the repository unhealthy.
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories("default")
+
+	require.Eventually(t, func() bool {
+		repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		if err != nil {
+			return false
+		}
+		return repo.Status.ObservedGeneration == repo.Generation &&
+			repo.Status.Health.Checked > 0 &&
+			!repo.Status.Health.Healthy
+	}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
+
+	// POST to the webhook subresource — should return 424 because the repository is unhealthy.
+	var statusCode int
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("webhook").
+		SetHeader("Content-Type", "application/json").
+		Do(ctx).StatusCode(&statusCode)
+
+	require.Error(t, result.Error(), "webhook request should be rejected for unhealthy repository")
+	require.Equal(t, http.StatusFailedDependency, statusCode, "should return 424 Failed Dependency for unhealthy repository")
+}
+
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -2553,4 +2612,63 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 	}
 
 	t.Logf("Successfully created %d repositories concurrently without deadlocks", numRepos)
+}
+
+func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repoName = "folder-title-update-test"
+	const initialTitle = "Initial Folder Title"
+	const updatedTitle = "Updated Folder Title"
+
+	helper.CreateRepo(t, TestRepo{
+		Name:               repoName,
+		Target:             "folder",
+		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    1,
+		Values: map[string]any{
+			"Title": initialTitle,
+		},
+	})
+
+	// Verify the root folder has the initial title.
+	// The root folder for a folder-sync repo has the same name as the repository.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		folderObj, err := helper.Folders.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "should be able to get the root folder") {
+			return
+		}
+		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
+		assert.Equal(collect, initialTitle, title, "folder should have the initial title")
+	}, waitTimeoutDefault, waitIntervalDefault, "root folder should have initial title")
+
+	// Update the repository spec.title to a new value.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "should be able to get repository") {
+			return
+		}
+		err = unstructured.SetNestedField(repoObj.Object, updatedTitle, "spec", "title")
+		require.NoError(t, err, "should be able to set new title")
+
+		_, err = helper.Repositories.Resource.Update(ctx, repoObj, metav1.UpdateOptions{})
+		assert.NoError(collect, err, "should be able to update repository title")
+	}, waitTimeoutDefault, waitIntervalDefault, "should update repository title")
+
+	// Trigger a sync, which calls EnsureFolderExists for the root folder.
+	helper.SyncAndWait(t, repoName, nil)
+
+	// Verify the root folder title was updated.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		folderObj, err := helper.Folders.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "should be able to get the root folder") {
+			return
+		}
+		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
+		assert.Equal(collect, updatedTitle, title, "folder title should be updated after sync")
+	}, waitTimeoutDefault, waitIntervalDefault, "root folder title should be updated after sync")
 }

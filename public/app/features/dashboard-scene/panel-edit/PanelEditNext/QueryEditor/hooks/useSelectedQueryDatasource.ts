@@ -52,6 +52,7 @@ export function useSelectedQueryDatasource(
       return undefined;
     }
   }, [
+    selectedQuery?.refId,
     selectedQuery?.datasource?.uid,
     selectedQuery?.datasource?.type,
     panelDsSettings?.uid,

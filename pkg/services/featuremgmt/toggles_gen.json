@@ -1326,6 +1326,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardSectionVariables",
+        "resourceVersion": "1772489275727",
+        "creationTimestamp": "2026-03-02T22:07:55Z"
+      },
+      "spec": {
+        "description": "Enables support for section level variables (rows and tabs)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardTemplates",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-10-28T20:05:32Z"
@@ -3034,15 +3048,18 @@
     {
       "metadata": {
         "name": "newGauge",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-10-20T16:33:19Z"
+        "resourceVersion": "1772547614592",
+        "creationTimestamp": "2025-10-20T16:33:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-03 14:20:14.59296 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable new gauge visualization",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4482,6 +4499,20 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "vizLegendSeriesLimit",
+        "resourceVersion": "1772507615654",
+        "creationTimestamp": "2026-03-03T03:13:35Z"
+      },
+      "spec": {
+        "description": "Limit the number of legend items by default, with an option to show all",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

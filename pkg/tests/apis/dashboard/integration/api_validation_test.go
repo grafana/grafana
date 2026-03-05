@@ -79,7 +79,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 						DualWriterMode: dualWriterMode,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -117,7 +116,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 						DualWriterMode: dualWriterMode,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -159,7 +157,6 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 			"zanzanaNoLegacyClient",
 			"kubernetesAuthzZanzanaSync",
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 
 	t.Cleanup(func() {
@@ -208,7 +205,6 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 			"zanzanaNoLegacyClient",
 			"kubernetesAuthzZanzanaSync",
 		},
-		UnifiedStorageEnableSearch:    true,
 		ZanzanaReconciliationInterval: 100 * time.Millisecond,
 	})
 
@@ -243,7 +239,6 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 						DualWriterMode: dualWriterMode,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {

@@ -4,6 +4,7 @@ import (
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
@@ -71,6 +72,13 @@ func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repo
 	}
 
 	return repository.ProvideFactory(enabledTypes, extras)
+}
+
+func ProvideQuotaGetter(cfg *setting.Cfg) quotas.QuotaGetter {
+	return quotas.NewFixedQuotaGetter(apisprovisioning.QuotaStatus{
+		MaxResourcesPerRepository: cfg.ProvisioningMaxResourcesPerRepository,
+		MaxRepositories:           cfg.ProvisioningMaxRepositories,
+	})
 }
 
 func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Extra) (connection.Factory, error) {
