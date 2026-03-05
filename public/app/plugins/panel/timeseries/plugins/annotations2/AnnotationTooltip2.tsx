@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { Stack, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
 import alertDef from 'app/features/alerting/state/alertDef';
+import { useEffect, useRef } from 'react';
 
 interface Props {
   annoVals: Record<string, any[]>;
@@ -76,9 +77,22 @@ export const AnnotationTooltip2 = ({
     text = annoVals.title[annoIdx] + (text ? `<br />${text}` : '');
   }
 
+  let ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isPinned) {
+      ref.current?.closest('.u-axis')?.style.pointerEvents = 'none';
+    }
+
+    return () => {
+      if (isPinned) {
+        ref.current?.closest('.u-axis')?.style.pointerEvents = 'all';
+      }
+    };
+  }, [isPinned]);
+
   return (
-    <div className={styles.wrapper}>
-      {isPinned && <div style={{ background: 'transparent', height: 7, marginTop: -7 }} />}
+    <div className={styles.wrapper} ref={ref}>
       <div className={styles.header}>
         <Stack gap={2} basis="100%" justifyContent="space-between" alignItems="center">
           <div className={styles.meta}>
