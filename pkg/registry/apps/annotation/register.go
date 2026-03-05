@@ -22,8 +22,10 @@ import (
 	"github.com/grafana/grafana/apps/annotation/pkg/apis"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -37,8 +39,9 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg        *setting.Cfg
-	k8sAdapter *k8sRESTAdapter
+	cfg           *setting.Cfg
+	k8sAdapter    *k8sRESTAdapter
+	accessControl ac.AccessControl
 }
 
 // RegisterAppInstaller Layers (from bottom to top):
@@ -49,9 +52,11 @@ func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
+	accessControl ac.AccessControl,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{
-		cfg: cfg,
+		cfg:           cfg,
+		accessControl: accessControl,
 	}
 
 	var tagHandler func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
@@ -64,8 +69,9 @@ func RegisterAppInstaller(
 
 		// Layer 2→3: Wrap Store interface with K8s REST adapter
 		installer.k8sAdapter = &k8sRESTAdapter{
-			store:  sqlAdapter,
-			mapper: mapper,
+			store:      sqlAdapter,
+			mapper:     mapper,
+			authorizer: newAnnotationAuthorizer(accessControl),
 		}
 
 		// Create the tags handler using the sqlAdapter (which implements TagProvider)
@@ -160,6 +166,7 @@ type k8sRESTAdapter struct {
 	store          Store
 	mapper         grafrequest.NamespaceMapper
 	tableConverter rest.TableConvertor
+	authorizer     *annotationAuthorizer
 }
 
 func (s *k8sRESTAdapter) New() runtime.Object {
@@ -186,6 +193,11 @@ func (s *k8sRESTAdapter) ConvertToTable(ctx context.Context, object runtime.Obje
 
 func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
 
 	opts := ListOptions{}
 	if options.FieldSelector != nil {
@@ -250,16 +262,41 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 		return nil, err
 	}
 
+	// Filter results to those the user has permission to read
+	filtered, err := s.authorizer.filterReadable(ctx, user, result.Items)
+	if err != nil {
+		return nil, fmt.Errorf("authorization check failed: %w", err)
+	}
+
 	// Return list with continue token for pagination
 	return &annotationV0.AnnotationList{
-		Items:    result.Items,
+		Items:    filtered,
 		ListMeta: metav1.ListMeta{Continue: result.Continue},
 	}, nil
 }
 
 func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	return s.store.Get(ctx, namespace, name)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	annotation, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err := s.authorizer.canRead(ctx, user, annotation)
+	if err != nil {
+		return nil, fmt.Errorf("authorization check failed: %w", err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("access denied")
+	}
+
+	return annotation, nil
 }
 
 func (s *k8sRESTAdapter) Create(ctx context.Context,
@@ -267,10 +304,24 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
 	resource, ok := obj.(*annotationV0.Annotation)
 	if !ok {
 		return nil, fmt.Errorf("expected annotation")
 	}
+
+	ok, err = s.authorizer.canWrite(ctx, user, resource)
+	if err != nil {
+		return nil, fmt.Errorf("authorization check failed: %w", err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("access denied")
+	}
+
 	return s.store.Create(ctx, resource)
 }
 
@@ -283,6 +334,11 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get user: %w", err)
+	}
 
 	obj, err := objInfo.UpdatedObject(ctx, nil)
 	if err != nil {
@@ -302,6 +358,14 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, fmt.Errorf("namespace in URL does not match namespace in body")
 	}
 
+	ok, err = s.authorizer.canWrite(ctx, user, resource)
+	if err != nil {
+		return nil, false, fmt.Errorf("authorization check failed: %w", err)
+	}
+	if !ok {
+		return nil, false, fmt.Errorf("access denied")
+	}
+
 	updated, err := s.store.Update(ctx, resource)
 	if err != nil {
 		return nil, false, err
@@ -312,7 +376,26 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	err := s.store.Delete(ctx, namespace, name)
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	annotation, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	ok, err := s.authorizer.canDelete(ctx, user, annotation)
+	if err != nil {
+		return nil, false, fmt.Errorf("authorization check failed: %w", err)
+	}
+	if !ok {
+		return nil, false, fmt.Errorf("access denied")
+	}
+
+	err = s.store.Delete(ctx, namespace, name)
 	return nil, false, err
 }
 
