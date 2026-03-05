@@ -575,5 +575,6 @@
       "failed": false,
       "storedVersion": "v1beta1"
     }
-  }
+  },
+  "context": {}
 }
