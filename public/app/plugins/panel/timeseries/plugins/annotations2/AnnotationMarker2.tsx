@@ -125,8 +125,8 @@ export const AnnotationMarker2 = ({
     <button
       aria-label={
         isRegion
-          ? t('timeseries.annotation-marker.annotation-label', 'Annotation')
-          : t('timeseries.annotation-marker.annotation-region-label', 'Annotation region')
+          ? t('timeseries.annotation-marker.annotation-region-label', 'Annotation region')
+          : t('timeseries.annotation-marker.annotation-label', 'Annotation')
       }
       ref={refs.setReference}
       className={isRegion ? styles.annoRegion : styles.annoMarker}
