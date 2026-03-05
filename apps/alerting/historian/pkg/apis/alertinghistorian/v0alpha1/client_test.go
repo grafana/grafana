@@ -36,7 +36,7 @@ func TestHistorianClient_NotificationQuery(t *testing.T) {
 		gotPath = r.URL.Path
 		gotMethod = r.Method
 		resp := CreateNotificationqueryResponse{}
-		json.NewEncoder(w).Encode(resp)
+		require.NoError(t, json.NewEncoder(w).Encode(resp))
 	})
 
 	client := newTestClient(t, handler)
@@ -53,7 +53,7 @@ func TestHistorianClient_NotificationsQueryAlerts(t *testing.T) {
 		gotPath = r.URL.Path
 		gotMethod = r.Method
 		resp := CreateNotificationsqueryalertsResponse{}
-		json.NewEncoder(w).Encode(resp)
+		require.NoError(t, json.NewEncoder(w).Encode(resp))
 	})
 
 	client := newTestClient(t, handler)
