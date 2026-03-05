@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	repoerrors "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -337,9 +337,9 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 			ref:  "main",
 			mockSetup: func(m *MockClient) {
 				m.On("Commits", mock.Anything, "grafana", "grafana", "dashboards/nonexistent.json", "main").
-					Return(nil, repoerrors.ErrFileNotFound)
+					Return(nil, repo.ErrFileNotFound)
 			},
-			expectedError: repository.ErrFileNotFound,
+			expectedError: repo.ErrFileNotFound,
 		},
 		{
 			name: "use default branch when ref is empty",
@@ -530,14 +530,14 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 func TestGitHubRepositoryResourceURLs(t *testing.T) {
 	tests := []struct {
 		name          string
-		file          *repository.FileInfo
+		file          *repo.FileInfo
 		config        *provisioning.Repository
 		expectedURLs  *provisioning.RepositoryURLs
 		expectedError error
 	}{
 		{
 			name: "file with ref",
-			file: &repository.FileInfo{
+			file: &repo.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "feature-branch",
 			},
@@ -558,7 +558,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 		},
 		{
 			name: "file without ref uses default branch",
-			file: &repository.FileInfo{
+			file: &repo.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "",
 			},
@@ -577,7 +577,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 		},
 		{
 			name: "empty path returns nil",
-			file: &repository.FileInfo{
+			file: &repo.FileInfo{
 				Path: "",
 				Ref:  "feature-branch",
 			},
@@ -593,7 +593,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 		},
 		{
 			name: "nil github config returns nil",
-			file: &repository.FileInfo{
+			file: &repo.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "feature-branch",
 			},
@@ -747,7 +747,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 
 	t.Run("Read delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
-		expectedFileInfo := &repository.FileInfo{
+		expectedFileInfo := &repo.FileInfo{
 			Path: "test.yaml",
 			Data: []byte("test data"),
 			Ref:  "main",
@@ -768,7 +768,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 
 	t.Run("ReadTree delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
-		expectedEntries := []repository.FileTreeEntry{
+		expectedEntries := []repo.FileTreeEntry{
 			{Path: "file1.yaml", Size: 100, Hash: "hash1", Blob: true},
 		}
 		mockGitRepo.On("ReadTree", ctx, "main").Return(expectedEntries, nil)
@@ -895,9 +895,9 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 
 	t.Run("CompareFiles delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
-		expectedChanges := []repository.VersionedFileChange{
+		expectedChanges := []repo.VersionedFileChange{
 			{
-				Action: repository.FileActionCreated,
+				Action: repo.FileActionCreated,
 				Path:   "new-file.yaml",
 				Ref:    "feature-branch",
 			},
@@ -917,9 +917,9 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 
 	t.Run("Stage delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
-		mockStagedRepo := repository.NewMockStagedRepository(t)
-		opts := repository.StageOptions{
-			Mode:    repository.StageModeCommitOnEach,
+		mockStagedRepo := repo.NewMockStagedRepository(t)
+		opts := repo.StageOptions{
+			Mode:    repo.StageModeCommitOnEach,
 			Timeout: 10 * time.Second,
 		}
 		mockGitRepo.On("Stage", ctx, opts).Return(mockStagedRepo, nil)
@@ -1075,7 +1075,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 			name: "handles not found error",
 			mockSetup: func(m *MockClient) {
 				m.On("GetRepository", mock.Anything, "grafana", "grafana").
-					Return(Repository{}, repoerrors.ErrFileNotFound)
+					Return(Repository{}, repo.ErrFileNotFound)
 			},
 			expectedError: "failed to get repository metadata:",
 		},
@@ -1294,7 +1294,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 			name:             "GetBranchProtection unauthorized (401) returns test failure",
 			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
 			branch:           "main",
-			bpError:          repoerrors.ErrUnauthorized,
+			bpError:          repo.ErrUnauthorized,
 			expectBPCall:     true,
 			expectedSuccess:  false,
 			expectedErrField: "spec.github.branch",

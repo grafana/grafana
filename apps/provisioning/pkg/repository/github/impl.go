@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/go-github/v82/github"
 	"github.com/grafana/grafana-app-sdk/logging"
-	repoerrors "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 type githubClient struct {
@@ -45,25 +45,25 @@ func translateGitHubError(err error) error {
 		// 401 - Authentication failed
 		// Special case: "expired" is cryptic, so add helpful context
 		if strings.Contains(strings.ToLower(ghMessage), "expired") {
-			return fmt.Errorf("authentication token has expired: %w", repoerrors.ErrUnauthorized)
+			return fmt.Errorf("authentication token has expired: %w", repo.ErrUnauthorized)
 		}
-		return repoerrors.ErrUnauthorized
+		return repo.ErrUnauthorized
 
 	case http.StatusForbidden:
 		// 403 - Permission denied
 		// Special case: rate limit gets additional context
 		if strings.Contains(strings.ToLower(ghMessage), "rate limit") {
-			return fmt.Errorf("API rate limit exceeded: %w", repoerrors.ErrPermissionDenied)
+			return fmt.Errorf("API rate limit exceeded: %w", repo.ErrPermissionDenied)
 		}
-		return repoerrors.ErrPermissionDenied
+		return repo.ErrPermissionDenied
 
 	case http.StatusNotFound:
 		// 404 - Resource not found
-		return repoerrors.ErrFileNotFound
+		return repo.ErrFileNotFound
 
 	case http.StatusServiceUnavailable, http.StatusBadGateway, http.StatusGatewayTimeout:
 		// 503, 502, 504 - Service unavailable
-		return repoerrors.ErrServerUnavailable
+		return repo.ErrServerUnavailable
 
 	default:
 		// Other errors - return with GitHub message context
@@ -90,7 +90,7 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 		if errors.As(err, &ghErr) {
 			switch ghErr.Response.StatusCode {
 			case http.StatusUnauthorized:
-				return nil, repoerrors.ErrUnauthorized
+				return nil, repo.ErrUnauthorized
 			case http.StatusForbidden:
 				// User lacks admin permissions to view branch protection.
 				// Skip check gracefully - if protection rules block pushes, they'll find out at push time.
@@ -100,9 +100,9 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 					slog.String("branch", branch))
 				return nil, nil
 			case http.StatusNotFound:
-				return nil, repoerrors.ErrFileNotFound
+				return nil, repo.ErrFileNotFound
 			case http.StatusServiceUnavailable:
-				return nil, repoerrors.ErrServerUnavailable
+				return nil, repo.ErrServerUnavailable
 			}
 		}
 
@@ -145,7 +145,7 @@ func (r *githubClient) Commits(ctx context.Context, owner, repository, path, bra
 		listFn,
 		defaultListOptions(maxCommits),
 	)
-	if errors.Is(err, repoerrors.ErrTooManyItems) {
+	if errors.Is(err, repo.ErrTooManyItems) {
 		return nil, fmt.Errorf("too many commits to fetch (more than %d)", maxCommits)
 	}
 	if err != nil {
@@ -199,7 +199,7 @@ func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository strin
 		listFn,
 		defaultListOptions(maxWebhooks),
 	)
-	if errors.Is(err, repoerrors.ErrTooManyItems) {
+	if errors.Is(err, repo.ErrTooManyItems) {
 		return nil, fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks)
 	}
 	if err != nil {
@@ -322,7 +322,7 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, owner, reposito
 		listFn,
 		defaultListOptions(maxPRFiles),
 	)
-	if errors.Is(err, repoerrors.ErrTooManyItems) {
+	if errors.Is(err, repo.ErrTooManyItems) {
 		return nil, fmt.Errorf("pull request contains too many files (more than %d)", maxPRFiles)
 	}
 	if err != nil {
@@ -383,10 +383,10 @@ func paginatedList[T any](
 				return nil, err
 			}
 			if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-				return nil, repoerrors.ErrServerUnavailable
+				return nil, repo.ErrServerUnavailable
 			}
 			if ghErr.Response.StatusCode == http.StatusNotFound {
-				return nil, repoerrors.ErrFileNotFound
+				return nil, repo.ErrFileNotFound
 			}
 			return nil, err
 		}
@@ -400,7 +400,7 @@ func paginatedList[T any](
 
 		// Check if we've exceeded the maximum allowed items
 		if len(allItems) > opts.MaxItems {
-			return nil, repoerrors.ErrTooManyItems
+			return nil, repo.ErrTooManyItems
 		}
 
 		// If there are no more pages, break

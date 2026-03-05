@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	repoerrors "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -1208,7 +1208,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			setupMock: func(m *MockClient) {
 				// Mock webhook not found
 				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
-					Return(WebhookConfig{}, repoerrors.ErrFileNotFound)
+					Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 				// Mock creating a new webhook
 				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
@@ -1401,11 +1401,11 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			expectedError: fmt.Errorf("failed to create webhook"),
 		},
 		{
-			name: "creates webhook when repoerrors.ErrFileNotFound",
+			name: "creates webhook when repo.ErrFileNotFound",
 			setupMock: func(m *MockClient) {
 				// Mock webhook not found
 				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
-					Return(WebhookConfig{}, repoerrors.ErrFileNotFound)
+					Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 				// Mock creating a new webhook
 				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
@@ -1446,7 +1446,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			setupMock: func(m *MockClient) {
 				// Mock webhook not found
 				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
-					Return(WebhookConfig{}, repoerrors.ErrFileNotFound)
+					Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 				// Mock error when creating a new webhook
 				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
@@ -1651,7 +1651,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			name: "webhook not found during deletion",
 			setupMock: func(m *MockClient) {
 				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
-					Return(repoerrors.ErrFileNotFound)
+					Return(repo.ErrFileNotFound)
 			},
 			config: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1677,7 +1677,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			name: "unauthorized to delete the webhook",
 			setupMock: func(m *MockClient) {
 				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
-					Return(repoerrors.ErrUnauthorized)
+					Return(repo.ErrUnauthorized)
 			},
 			config: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{

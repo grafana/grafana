@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	repoerrors "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func TestGithubClient_GetCommits(t *testing.T) {
@@ -155,7 +155,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 			wantCommits: nil,
-			wantErr:     repoerrors.ErrFileNotFound,
+			wantErr:     repo.ErrFileNotFound,
 		},
 		{
 			name: "commits missing author",
@@ -305,7 +305,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 			wantCommits: nil,
-			wantErr:     repoerrors.ErrServerUnavailable,
+			wantErr:     repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -486,7 +486,7 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			owner:        "test-owner",
 			repository:   "test-repo",
 			wantWebhooks: nil,
-			wantErr:      repoerrors.ErrServerUnavailable,
+			wantErr:      repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -676,7 +676,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				Secret:      "secret123",
 			},
 			want:    WebhookConfig{},
-			wantErr: repoerrors.ErrServerUnavailable,
+			wantErr: repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -829,7 +829,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			repository: "test-repo",
 			webhookID:  999,
 			want:       WebhookConfig{},
-			wantErr:    repoerrors.ErrFileNotFound,
+			wantErr:    repo.ErrFileNotFound,
 		},
 		{
 			name: "service unavailable",
@@ -851,7 +851,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			repository: "test-repo",
 			webhookID:  123,
 			want:       WebhookConfig{},
-			wantErr:    repoerrors.ErrServerUnavailable,
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -945,7 +945,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  456,
-			wantErr:    repoerrors.ErrFileNotFound,
+			wantErr:    repo.ErrFileNotFound,
 		},
 		{
 			name: "service unavailable",
@@ -966,7 +966,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  789,
-			wantErr:    repoerrors.ErrServerUnavailable,
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "unauthorized to delete the webhook",
@@ -987,7 +987,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  789,
-			wantErr:    repoerrors.ErrUnauthorized,
+			wantErr:    repo.ErrUnauthorized,
 		},
 		{
 			name: "other error",
@@ -1166,7 +1166,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				ContentType: "json",
 				Secret:      "secret123",
 			},
-			wantErr: repoerrors.ErrServerUnavailable,
+			wantErr: repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -1348,7 +1348,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			repository: "test-repo",
 			number:     101,
 			wantFiles:  nil,
-			wantErr:    repoerrors.ErrServerUnavailable,
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -1460,7 +1460,7 @@ func TestCreatePullRequestComment(t *testing.T) {
 			repository: "test-repo",
 			number:     101,
 			body:       "Test comment",
-			wantErr:    repoerrors.ErrServerUnavailable,
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -1587,7 +1587,7 @@ func TestPaginatedList(t *testing.T) {
 				return listFn, defaultListOptions(100)
 			},
 			want:    nil,
-			wantErr: repoerrors.ErrServerUnavailable,
+			wantErr: repo.ErrServerUnavailable,
 		},
 		{
 			name: "resource not found error",
@@ -1602,7 +1602,7 @@ func TestPaginatedList(t *testing.T) {
 				return listFn, defaultListOptions(100)
 			},
 			want:    nil,
-			wantErr: repoerrors.ErrFileNotFound,
+			wantErr: repo.ErrFileNotFound,
 		},
 		{
 			name: "too many items error",
@@ -1626,7 +1626,7 @@ func TestPaginatedList(t *testing.T) {
 				}
 			},
 			want:    nil,
-			wantErr: repoerrors.ErrTooManyItems,
+			wantErr: repo.ErrTooManyItems,
 		},
 	}
 
