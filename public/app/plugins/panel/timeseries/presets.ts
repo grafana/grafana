@@ -1,4 +1,9 @@
-import { FieldColorModeId, VisualizationPresetsSupplier, VisualizationSuggestion } from '@grafana/data';
+import {
+  FieldColorModeId,
+  VisualizationPresetsContext,
+  VisualizationPresetsSupplier,
+  VisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   AxisColorMode,
@@ -25,7 +30,7 @@ const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) 
   s.fieldConfig!.defaults.custom!.axisPlacement = AxisPlacement.Hidden;
 };
 
-const isStacked = (context: Parameters<VisualizationPresetsSupplier<Options, GraphFieldConfig>>[0]): boolean => {
+const isStacked = (context: VisualizationPresetsContext): boolean => {
   const mode = context.fieldConfig?.defaults?.custom?.stacking?.mode;
   return mode === StackingMode.Normal || mode === StackingMode.Percent;
 };
@@ -64,16 +69,21 @@ const STACKED_AREA_BASE_CUSTOM: GraphFieldConfig = {
 /**
  * Default preset
  */
-const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.default', 'Default'),
-  fieldConfig: {
-    defaults: {
-      custom: defaultGraphConfig,
+const defaultPreset = (context: VisualizationPresetsContext): VisualizationSuggestion<Options, GraphFieldConfig> => {
+  const stacking = isStacked(context) ? { stacking: { mode: StackingMode.Normal, group: 'A' } } : {};
+
+  return {
+    name: t('timeseries.presets.default', 'Default'),
+    fieldConfig: {
+      defaults: {
+        custom: { ...defaultGraphConfig, ...stacking },
+        color: { mode: FieldColorModeId.PaletteClassic },
+      },
+      overrides: [],
     },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
+    cardOptions: { previewModifier },
+  };
+};
 
 /**
  * Smooth preset with visible points - TS3
@@ -293,7 +303,7 @@ const stackedAreaGradientPreset = (): VisualizationSuggestion<Options, GraphFiel
 export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = (context) => {
   if (isStacked(context)) {
     return [
-      defaultPreset(),
+      defaultPreset(context),
       stackedStepPreset(),
       smoothStackedPreset(),
       stackedAreaPercentPointsPreset(),
@@ -301,5 +311,5 @@ export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, Gr
     ];
   }
 
-  return [defaultPreset(), smoothPreset(), areaPreset(), stepPreset(), stepFilledPreset(), stepHuePreset()];
+  return [defaultPreset(context), smoothPreset(), areaPreset(), stepPreset(), stepFilledPreset(), stepHuePreset()];
 };
