@@ -113,7 +113,12 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 }
 
 func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
-	return &repositoryResourcesFactory{parsers, clients, lister, folderMetadataEnabled}
+	return &repositoryResourcesFactory{
+		parsers:               parsers,
+		clients:               clients,
+		lister:                lister,
+		folderMetadataEnabled: folderMetadataEnabled,
+	}
 }
 
 func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter, opts ...RepositoryResourcesOption) (RepositoryResources, error) {
@@ -136,7 +141,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		opt(cfg)
 	}
 
-	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), cfg.folderManagerOptions...)
+	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), r.folderMetadataEnabled, cfg.folderManagerOptions...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{

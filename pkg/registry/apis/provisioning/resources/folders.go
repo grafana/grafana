@@ -49,11 +49,12 @@ type FolderManager struct {
 	folderMetadataEnabled bool
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderMetadataEnabled bool, opts ...FolderManagerOption) *FolderManager {
 	fm := &FolderManager{
-		repo:   repo,
-		tree:   lookup,
-		client: client,
+		repo:                  repo,
+		tree:                  lookup,
+		client:                client,
+		folderMetadataEnabled: folderMetadataEnabled,
 		beforeCreate: func(context.Context, Folder) error {
 			return nil
 		},
@@ -103,12 +104,27 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	f := ParseFolder(dir, cfg.Name)
+	// Use stable UID from _folder.json if available
+	if meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, ""); err == nil {
+		if meta.Name != "" {
+			f.ID = meta.Name
+		}
+	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
+		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	}
 	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
+		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
+			if meta.Name != "" {
+				f.ID = meta.Name
+			}
+		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
+		}
 		if fm.tree.In(f.ID) {
 			parent = f.ID
 			return nil
@@ -136,6 +152,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 // EnsureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
+// - it will update the title if it has changed
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
 	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
@@ -147,6 +164,21 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		if current != cfg.Name {
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
 		}
+
+		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		if currentTitle != folder.Title {
+			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+			if err != nil {
+				return fmt.Errorf("unable to use provisioning identity %w", err)
+			}
+			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+				return fmt.Errorf("set folder title: %w", err)
+			}
+			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+				return fmt.Errorf("update folder title: %w", err)
+			}
+		}
+
 		return nil
 	} else if !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if folder exists: %w", err)
@@ -223,6 +255,33 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
+}
+
+// CreateFolderWithUID creates a Grafana folder using a caller-provided stable UID
+// instead of the path-derived hash UID produced by ParseFolder.
+// It ensures all ancestor folders exist first, then creates the leaf folder.
+// Used when _folder.json has already been written to the repository.
+func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, stableUID string) error {
+	cfg := fm.repo.Config()
+
+	// Determine the parent folder ID, ensuring ancestor folders exist.
+	parentPath := safepath.Dir(folderPath)
+	var parentFolderID string
+	if parentPath == "" {
+		parentFolderID = RootFolder(cfg)
+	} else {
+		var err error
+		parentFolderID, err = fm.EnsureFolderPathExist(ctx, parentPath)
+		if err != nil {
+			return fmt.Errorf("ensure parent folder path: %w", err)
+		}
+	}
+
+	// Build the leaf folder struct but replace the hash-derived ID with the stable UID.
+	leaf := ParseFolder(folderPath, cfg.GetName())
+	leaf.ID = stableUID
+
+	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
 }
 
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
