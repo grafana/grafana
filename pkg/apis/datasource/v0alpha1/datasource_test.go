@@ -72,5 +72,4 @@ func TestDataSourceToFromUnstructured(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, ds, after)
 	})
-
 }
