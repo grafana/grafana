@@ -68,13 +68,27 @@ interface TransformationToggles {
   toggleDebug: () => void;
 }
 
+export interface SelectionModifiers {
+  /** True when Ctrl or Cmd is held — toggles this card in/out of the selection without clearing others. */
+  multi?: boolean;
+  /** True when Shift is held — range-selects from the last selected card to this one. */
+  range?: boolean;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
+  /** Ordered array of selected query refIds. Last element is the primary (shown in editor). */
+  selectedQueryRefIds: ReadonlyArray<string>;
+  /** Ordered array of selected transformation IDs. Last element is the primary. */
+  selectedTransformationIds: ReadonlyArray<string>;
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;
+  toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
+  toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
+  clearSelection: () => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
@@ -112,6 +126,12 @@ export interface QueryEditorActions {
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
+  // Bulk actions
+  bulkDeleteQueries: (refIds: string[]) => void;
+  bulkToggleQueriesHide: (refIds: string[], hide: boolean) => void;
+  bulkDeleteTransformations: (transformIds: string[]) => void;
+  bulkToggleTransformationsDisabled: (transformIds: string[], disabled: boolean) => void;
+  bulkChangeDataSource: (refIds: string[], settings: DataSourceInstanceSettings) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

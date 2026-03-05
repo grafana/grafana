@@ -1371,4 +1371,101 @@ describe('PanelDataPaneNext', () => {
       expect(mockQueryRunner.runQueries).toHaveBeenCalled();
     });
   });
+
+  describe('bulk query operations', () => {
+    it('bulkDeleteQueries removes all specified queries', () => {
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'C', datasource: { type: 'prometheus', uid: 'prom-1' } },
+      ];
+
+      dataPane.bulkDeleteQueries(['A', 'C']);
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queries: [{ refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' } }],
+        })
+      );
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkToggleQueriesHide hides the specified queries', () => {
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'C', datasource: { type: 'prometheus', uid: 'prom-1' } },
+      ];
+
+      dataPane.bulkToggleQueriesHide(['A', 'B'], true);
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [
+          { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: true },
+          { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: true },
+          { refId: 'C', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        ],
+      });
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkToggleQueriesHide shows hidden queries', () => {
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: true },
+        { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: true },
+      ];
+
+      dataPane.bulkToggleQueriesHide(['A', 'B'], false);
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [
+          { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: false },
+          { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' }, hide: false },
+        ],
+      });
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+  });
+
+  describe('bulk transformation operations', () => {
+    const mockTransformations: DataTransformerConfig[] = [
+      { id: 'organize', options: {} },
+      { id: 'reduce', options: {} },
+      { id: 'filter', options: {} },
+    ];
+
+    let mockTransformer: SceneDataTransformer;
+
+    beforeEach(() => {
+      mockTransformer = new SceneDataTransformer({
+        transformations: mockTransformations,
+        $data: mockQueryRunner,
+      });
+
+      jest.spyOn(mockTransformer, 'setState');
+      mockPanel.state.$data = mockTransformer;
+    });
+
+    it('bulkDeleteTransformations removes specified transformations by index', () => {
+      dataPane.bulkDeleteTransformations([0, 2]);
+
+      expect(mockTransformer.setState).toHaveBeenCalledWith({
+        transformations: [{ id: 'reduce', options: {} }],
+      });
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkToggleTransformationsDisabled disables specified transformations', () => {
+      dataPane.bulkToggleTransformationsDisabled([0, 1], true);
+
+      expect(mockTransformer.setState).toHaveBeenCalledWith({
+        transformations: [
+          { id: 'organize', options: {}, disabled: true },
+          { id: 'reduce', options: {}, disabled: true },
+          { id: 'filter', options: {} },
+        ],
+      });
+      expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+  });
 });
