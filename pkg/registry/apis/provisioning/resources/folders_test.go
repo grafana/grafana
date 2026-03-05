@@ -95,6 +95,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 
 		repo := repository.NewMockReaderWriter(t)
 		repo.On("Config").Return(cfg)
+		repo.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not found"))
 		return repo, cfg
 	}
 
@@ -509,6 +510,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").Return(nil, errors.New("not found"))
 
 		// Pre-populate tree with the parent's hash-derived ID so EnsureFolderPathExist
 		// finds it immediately without needing to create it.
@@ -537,6 +539,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").Return(nil, errors.New("not found"))
 
 		parentFolder := ParseFolder("parent/", config.Name)
 
@@ -597,7 +600,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "parent/_folder.json", "").
-			Return(nil, errors.New("not found"))
+			Return(nil, repository.ErrFileNotFound)
 
 		parentFolder := ParseFolder("parent/", config.Name)
 
@@ -618,5 +621,87 @@ func TestCreateFolderWithUID(t *testing.T) {
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("flag ON + non-NotFound error at pre-walk site returns error", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+			Return(nil, errors.New("connection refused"))
+
+		client := &fakeDynamicResourceClient{}
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), true)
+
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child.json")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "connection refused")
+		require.Empty(t, client.getCalls)
+	})
+
+	t.Run("flag ON + non-NotFound error inside walk returns error", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		// pre-walk reads "parent/child/_folder.json" — file not found, proceed to walk
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+		// walk traverse="parent" reads "parent/_folder.json" — real error
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+			Return(nil, errors.New("connection refused"))
+
+		client := &fakeDynamicResourceClient{}
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), true)
+
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "connection refused")
+		require.Empty(t, client.getCalls)
+	})
+
+	t.Run("flag OFF + non-NotFound error silently ignored", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+			Return(nil, errors.New("connection refused"))
+
+		// Pre-populate tree so the function returns early after ignoring the error.
+		tree := NewEmptyFolderTree()
+		parentFolder := ParseFolder("parent/", config.Name)
+		tree.Add(parentFolder, "")
+
+		client := &fakeDynamicResourceClient{}
+		fm := NewFolderManager(rw, client, tree, false)
+
+		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json")
+		require.NoError(t, err)
+		require.Equal(t, parentFolder.ID, parent)
+		require.Empty(t, client.getCalls)
+	})
+
+	t.Run("flag ON + ErrFileNotFound silently ignored (hash-UID fallback)", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+
+		// Pre-populate tree so the function returns early after ignoring the error.
+		tree := NewEmptyFolderTree()
+		parentFolder := ParseFolder("parent/", config.Name)
+		tree.Add(parentFolder, "")
+
+		client := &fakeDynamicResourceClient{}
+		fm := NewFolderManager(rw, client, tree, true)
+
+		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json")
+		require.NoError(t, err)
+		require.Equal(t, parentFolder.ID, parent)
+		require.Empty(t, client.getCalls)
 	})
 }

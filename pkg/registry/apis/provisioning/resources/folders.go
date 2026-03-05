@@ -99,10 +99,12 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 
 	f := ParseFolder(dir, cfg.Name)
 	// Use stable UID from _folder.json if available
-	if fm.folderMetadataEnabled {
-		if meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, ""); err == nil && meta.Name != "" {
+	if meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, ""); err == nil {
+		if meta.Name != "" {
 			f.ID = meta.Name
 		}
+	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
+		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
 	}
 	if fm.tree.In(f.ID) {
 		return f.ID, nil
@@ -110,10 +112,12 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
-		if fm.folderMetadataEnabled {
-			if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil && meta.Name != "" {
+		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
+			if meta.Name != "" {
 				f.ID = meta.Name
 			}
+		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
 		}
 		if fm.tree.In(f.ID) {
 			parent = f.ID
