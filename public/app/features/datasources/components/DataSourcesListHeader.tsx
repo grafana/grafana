@@ -78,7 +78,11 @@ export function DataSourcesListHeader({
   return (
     <div className={styles.container}>
       <InlineField grow>
-        <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={t('datasources.list-header.search-placeholder', 'Search by name or type')} />
+        <FilterInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder={t('datasources.list-header.search-placeholder', 'Search by name or type')}
+        />
       </InlineField>
       {filterCheckbox && (
         <Checkbox
