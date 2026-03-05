@@ -292,10 +292,20 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/org/serviceaccounts/:id',
+      path: '/org/serviceaccounts/edit/:uid/:page?',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
+        () => import(/* webpackChunkName: "ServiceAccountPages" */ 'app/features/serviceaccounts/ServiceAccountPages')
       ),
+    },
+    {
+      path: '/org/serviceaccounts/:id',
+      component: () => {
+        const RedirectToEdit = () => {
+          const { id } = useParams<{ id: string }>();
+          return <Navigate to={`/org/serviceaccounts/edit/${id}/information`} replace />;
+        };
+        return <RedirectToEdit />;
+      },
     },
     {
       path: '/org/teams',

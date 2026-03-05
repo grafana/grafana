@@ -89,7 +89,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
       } catch (e) {
         console.error(e);
       }
-      locationService.push(`/org/serviceaccounts/${response.uid}`);
+      locationService.push(`/org/serviceaccounts/edit/${response.uid}/information`);
     },
     [serviceAccount.role, pendingRoles]
   );

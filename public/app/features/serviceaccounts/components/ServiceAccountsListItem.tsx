@@ -36,7 +36,7 @@ const ServiceAccountListItemComponent = memo(
     onEnable,
     onAddTokenClick,
   }: ServiceAccountListItemProps) => {
-    const editUrl = `org/serviceaccounts/${serviceAccount.id}`;
+    const editUrl = `org/serviceaccounts/edit/${serviceAccount.uid}/information`;
     const styles = useStyles2(getStyles);
 
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);

@@ -72,12 +72,14 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
             value={serviceAccount.login}
             disabled={serviceAccount.isDisabled}
           />
-          <ServiceAccountRoleRow
-            label={t('serviceaccounts.service-account-profile.label-roles', 'Roles')}
-            serviceAccount={serviceAccount}
-            onRoleChange={onRoleChange}
-            roleOptions={roles}
-          />
+          {!contextSrv.licensedAccessControlEnabled() && (
+            <ServiceAccountRoleRow
+              label={t('serviceaccounts.service-account-profile.label-roles', 'Roles')}
+              serviceAccount={serviceAccount}
+              onRoleChange={onRoleChange}
+              roleOptions={roles}
+            />
+          )}
           <ServiceAccountProfileRow
             label={t('serviceaccounts.service-account-profile.label-creation-date', 'Creation date')}
             value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
