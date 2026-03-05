@@ -237,7 +237,6 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	if err != nil {
 		action := string(d.currentJob.Spec.Action)
 		repo := d.currentJob.Spec.Repository
-		duration := end.Sub(recorder.Started())
 
 		// Classify the error and add context
 		if errors.Is(err, context.DeadlineExceeded) || (jobctx.Err() != nil && errors.Is(jobctx.Err(), context.DeadlineExceeded)) {
