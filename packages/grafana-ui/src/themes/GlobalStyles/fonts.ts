@@ -8,6 +8,39 @@ export function getFontStyles(theme: GrafanaTheme2) {
 
   return css([
     {
+      /*
+    CommitMono v1.143 — https://github.com/eigilnikolajsen/commit-mono/releases/tag/v1.143
+    Font files converted from the official ttfautohint TTFs using woff2_compress.
+    No unicode-range restriction: CommitMono ships as a full-coverage font including box drawing
+    characters, mathematical operators, and other code-relevant glyphs beyond the Latin block.
+    */
+      '@font-face': {
+        fontFamily: 'CommitMono',
+        fontStyle: 'normal',
+        fontWeight: 400,
+        fontDisplay: 'swap',
+        src: `url('${fontRoot}commitmono/CommitMono-400-Regular.woff2') format('woff2')`,
+      },
+    },
+    {
+      '@font-face': {
+        fontFamily: 'CommitMono',
+        fontStyle: 'italic',
+        fontWeight: 400,
+        fontDisplay: 'swap',
+        src: `url('${fontRoot}commitmono/CommitMono-400-Italic.woff2') format('woff2')`,
+      },
+    },
+    {
+      '@font-face': {
+        fontFamily: 'CommitMono',
+        fontStyle: 'normal',
+        fontWeight: 700,
+        fontDisplay: 'swap',
+        src: `url('${fontRoot}commitmono/CommitMono-700-Regular.woff2') format('woff2')`,
+      },
+    },
+    {
       /* latin */
       '@font-face': {
         fontFamily: 'Roboto Mono',
