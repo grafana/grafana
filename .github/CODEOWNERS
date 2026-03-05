@@ -1096,7 +1096,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/grafana-frontend-platform
 /scripts/levitate-show-affected-plugins.js @grafana/grafana-frontend-platform
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
-/scripts/view-playwright-ci.sh @grafana/grafana-frontend-platform
 
 /scripts/codeowners-manifest/ @grafana/dataviz-squad
 /scripts/test-coverage-by-codeowner.js @grafana/dataviz-squad
@@ -1333,7 +1332,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-test-docker.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/update-schema-types.yml @grafana/grafana-frontend-platform
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
-/.github/workflows/pr-build-grafana.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
