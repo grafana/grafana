@@ -199,17 +199,36 @@ export class UnifiedSearcher implements GrafanaSearcher {
           console.log('no results', frame);
           return;
         }
-        if (frame.fields.length !== view.dataFrame.fields.length) {
-          console.log('invalid shape', frame, view.dataFrame);
-          return;
-        }
+        // Handle field mismatches between pages - different items may have different fields
+        // (e.g., dashboards have analytics fields that folders don't have)
+        const existingFieldNames = new Set(view.dataFrame.fields.map((f) => f.name));
+        const newFieldNames = new Set(frame.fields.map((f) => f.name));
+
+        // Add any new fields that appear in this page but not in previous pages
+        frame.fields.forEach((newField) => {
+          if (!existingFieldNames.has(newField.name)) {
+            // Create a new field in the existing dataFrame with default values for previous rows
+            const defaultValue = getDefaultValueForField(newField);
+            const paddedValues = new Array(view.dataFrame.length).fill(defaultValue);
+            view.dataFrame.fields.push({
+              ...newField,
+              values: paddedValues,
+            });
+          }
+        });
 
         // Append the raw values to the same array buffer
         const length = frame.length + view.dataFrame.length;
-        frame.fields.forEach((f) => {
-          const field = view.dataFrame.fields.find((vf) => vf.name === f.name);
-          if (field) {
-            field.values.push(...f.values);
+        view.dataFrame.fields.forEach((existingField) => {
+          const newField = frame.fields.find((f) => f.name === existingField.name);
+          if (newField) {
+            // Field exists in both - append the new values
+            existingField.values.push(...newField.values);
+          } else {
+            // Field doesn't exist in new page - pad with default values
+            const defaultValue = getDefaultValueForField(existingField);
+            const paddingValues = new Array(frame.length).fill(defaultValue);
+            existingField.values.push(...paddingValues);
           }
         });
 
@@ -357,6 +376,27 @@ export class UnifiedSearcher implements GrafanaSearcher {
 }
 
 const pageSize = 50;
+
+// Get appropriate default value for a field based on its type
+function getDefaultValueForField(field: any): any {
+  // Check the first non-null value to infer the type
+  const sampleValue = field.values?.find((v: any) => v != null);
+  
+  if (sampleValue !== undefined) {
+    if (typeof sampleValue === 'number') {
+      return 0;
+    }
+    if (typeof sampleValue === 'boolean') {
+      return false;
+    }
+    if (Array.isArray(sampleValue)) {
+      return [];
+    }
+  }
+  
+  // Default to empty string for string fields and unknown types
+  return '';
+}
 
 // Enterprise only sort field values for dashboards
 const sortFields = [
