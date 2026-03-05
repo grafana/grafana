@@ -4,12 +4,14 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/authchecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/configchecks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/dashboardcheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/instancechecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/integrationscheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
@@ -28,6 +30,7 @@ type CheckService interface {
 
 type Service struct {
 	datasourceSvc         datasources.DataSourceService
+	dashboardSvc          dashboards.DashboardService
 	pluginSettings        pluginsettings.Service
 	pluginStore           pluginstore.Store
 	pluginContextProvider *plugincontext.Provider
@@ -43,7 +46,7 @@ type Service struct {
 	cfg                   *setting.Cfg
 }
 
-func ProvideService(datasourceSvc datasources.DataSourceService, pluginSettings pluginsettings.Service, pluginStore pluginstore.Store,
+func ProvideService(datasourceSvc datasources.DataSourceService, dashboardSvc dashboards.DashboardService, pluginSettings pluginsettings.Service, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	updateChecker pluginchecker.PluginUpdateChecker,
 	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall, managedPlugins managedplugins.Manager,
@@ -52,6 +55,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginSettings 
 ) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
+		dashboardSvc:          dashboardSvc,
 		pluginSettings:        pluginSettings,
 		pluginStore:           pluginStore,
 		pluginContextProvider: pluginContextProvider,
@@ -80,6 +84,7 @@ func (s *Service) Checks() []checks.Check {
 				PluginClient:          s.pluginClient,
 			},
 		),
+		dashboardcheck.New(s.dashboardSvc, s.datasourceSvc),
 		plugincheck.New(
 			s.pluginStore,
 			s.pluginRepo,
