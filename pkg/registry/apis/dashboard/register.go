@@ -764,7 +764,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		}
 
 		if newContextSubresource != nil {
-			storage[dashboards.StoragePath("preferences")] = newContextSubresource(storage[dashboards.StoragePath()])
+			storage[dashboards.StoragePath("context")] = newContextSubresource(storage[dashboards.StoragePath()])
 		}
 
 		return nil
@@ -806,7 +806,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	}
 
 	if newContextSubresource != nil {
-		storage[dashboards.StoragePath("preferences")] = newContextSubresource(storage[dashboards.StoragePath()])
+		storage[dashboards.StoragePath("context")] = newContextSubresource(storage[dashboards.StoragePath()])
 	}
 
 	// Expose read library panels

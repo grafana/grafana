@@ -786,62 +786,13 @@
         }
       ]
     },
-    "/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/dashboards/{name}/dto": {
+    "/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/dashboards/{name}/context": {
       "get": {
         "tags": [
           "Dashboard"
         ],
-        "description": "connect GET requests to dto of Dashboard",
-        "operationId": "getDashboardDto",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardWithAccessInfo"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "dashboard.grafana.app",
-          "version": "v2beta1",
-          "kind": "DashboardWithAccessInfo"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the DashboardWithAccessInfo",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/dashboards/{name}/preferences": {
-      "get": {
-        "tags": [
-          "Dashboard"
-        ],
-        "description": "read preferences of the specified Dashboard",
-        "operationId": "getDashboardPreferences",
+        "description": "read context of the specified Dashboard",
+        "operationId": "getDashboardContext",
         "responses": {
           "200": {
             "description": "OK",
@@ -870,8 +821,8 @@
         "tags": [
           "Dashboard"
         ],
-        "description": "replace preferences of the specified Dashboard",
-        "operationId": "replaceDashboardPreferences",
+        "description": "replace context of the specified Dashboard",
+        "operationId": "replaceDashboardContext",
         "parameters": [
           {
             "name": "dryRun",
@@ -959,8 +910,8 @@
         "tags": [
           "Dashboard"
         ],
-        "description": "partially update preferences of the specified Dashboard",
-        "operationId": "updateDashboardPreferences",
+        "description": "partially update context of the specified Dashboard",
+        "operationId": "updateDashboardContext",
         "parameters": [
           {
             "name": "dryRun",
@@ -1088,6 +1039,55 @@
           "name": "pretty",
           "in": "query",
           "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/dashboards/{name}/dto": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "description": "connect GET requests to dto of Dashboard",
+        "operationId": "getDashboardDto",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardWithAccessInfo"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "DashboardWithAccessInfo"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DashboardWithAccessInfo",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
           "schema": {
             "type": "string",
             "uniqueItems": true

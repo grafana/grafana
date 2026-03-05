@@ -119,25 +119,18 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Dashboard'],
       }),
-      getDashboardDto: build.query<GetDashboardDtoApiResponse, GetDashboardDtoApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/${queryArg.name}/dto` }),
-        providesTags: ['Dashboard'],
-      }),
-      getDashboardPreferences: build.query<GetDashboardPreferencesApiResponse, GetDashboardPreferencesApiArg>({
+      getDashboardContext: build.query<GetDashboardContextApiResponse, GetDashboardContextApiArg>({
         query: (queryArg) => ({
-          url: `/dashboards/${queryArg.name}/preferences`,
+          url: `/dashboards/${queryArg.name}/context`,
           params: {
             pretty: queryArg.pretty,
           },
         }),
         providesTags: ['Dashboard'],
       }),
-      replaceDashboardPreferences: build.mutation<
-        ReplaceDashboardPreferencesApiResponse,
-        ReplaceDashboardPreferencesApiArg
-      >({
+      replaceDashboardContext: build.mutation<ReplaceDashboardContextApiResponse, ReplaceDashboardContextApiArg>({
         query: (queryArg) => ({
-          url: `/dashboards/${queryArg.name}/preferences`,
+          url: `/dashboards/${queryArg.name}/context`,
           method: 'PUT',
           body: queryArg.dashboard,
           params: {
@@ -149,12 +142,9 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Dashboard'],
       }),
-      updateDashboardPreferences: build.mutation<
-        UpdateDashboardPreferencesApiResponse,
-        UpdateDashboardPreferencesApiArg
-      >({
+      updateDashboardContext: build.mutation<UpdateDashboardContextApiResponse, UpdateDashboardContextApiArg>({
         query: (queryArg) => ({
-          url: `/dashboards/${queryArg.name}/preferences`,
+          url: `/dashboards/${queryArg.name}/context`,
           method: 'PATCH',
           body: queryArg.patch,
           params: {
@@ -166,6 +156,10 @@ const injectedRtkApi = api
           },
         }),
         invalidatesTags: ['Dashboard'],
+      }),
+      getDashboardDto: build.query<GetDashboardDtoApiResponse, GetDashboardDtoApiArg>({
+        query: (queryArg) => ({ url: `/dashboards/${queryArg.name}/dto` }),
+        providesTags: ['Dashboard'],
       }),
     }),
     overrideExisting: false,
@@ -338,22 +332,15 @@ export type UpdateDashboardApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetDashboardDtoApiResponse = /** status 200 OK */ DashboardWithAccessInfo;
-export type GetDashboardDtoApiArg = {
-  /** name of the DashboardWithAccessInfo */
-  name: string;
-};
-export type GetDashboardPreferencesApiResponse = /** status 200 OK */ Dashboard;
-export type GetDashboardPreferencesApiArg = {
+export type GetDashboardContextApiResponse = /** status 200 OK */ Dashboard;
+export type GetDashboardContextApiArg = {
   /** name of the Dashboard */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceDashboardPreferencesApiResponse = /** status 200 OK */
-  | Dashboard
-  | /** status 201 Created */ Dashboard;
-export type ReplaceDashboardPreferencesApiArg = {
+export type ReplaceDashboardContextApiResponse = /** status 200 OK */ Dashboard | /** status 201 Created */ Dashboard;
+export type ReplaceDashboardContextApiArg = {
   /** name of the Dashboard */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -366,10 +353,8 @@ export type ReplaceDashboardPreferencesApiArg = {
   fieldValidation?: string;
   dashboard: Dashboard;
 };
-export type UpdateDashboardPreferencesApiResponse = /** status 200 OK */
-  | Dashboard
-  | /** status 201 Created */ Dashboard;
-export type UpdateDashboardPreferencesApiArg = {
+export type UpdateDashboardContextApiResponse = /** status 200 OK */ Dashboard | /** status 201 Created */ Dashboard;
+export type UpdateDashboardContextApiArg = {
   /** name of the Dashboard */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -383,6 +368,11 @@ export type UpdateDashboardPreferencesApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type GetDashboardDtoApiResponse = /** status 200 OK */ DashboardWithAccessInfo;
+export type GetDashboardDtoApiArg = {
+  /** name of the DashboardWithAccessInfo */
+  name: string;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -1428,10 +1418,10 @@ export const {
   useReplaceDashboardMutation,
   useDeleteDashboardMutation,
   useUpdateDashboardMutation,
+  useGetDashboardContextQuery,
+  useLazyGetDashboardContextQuery,
+  useReplaceDashboardContextMutation,
+  useUpdateDashboardContextMutation,
   useGetDashboardDtoQuery,
   useLazyGetDashboardDtoQuery,
-  useGetDashboardPreferencesQuery,
-  useLazyGetDashboardPreferencesQuery,
-  useReplaceDashboardPreferencesMutation,
-  useUpdateDashboardPreferencesMutation,
 } = injectedRtkApi;
