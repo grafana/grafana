@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 
@@ -11,15 +12,6 @@ import AdCard, { AdCardProps } from './AdCard';
 
 interface Props {
   cards: AdCardProps[];
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
 }
 
 function SingleStack({ cards }: Props) {
@@ -45,8 +37,13 @@ function SingleStack({ cards }: Props) {
   }
 
   const top = visible[clampedIndex];
-  const behindIndex = (clampedIndex + 1) % visible.length;
-  const behind = visible.length > 1 ? visible[behindIndex] : undefined;
+
+  // Collect up to MAX_BEHIND cards that peek behind the top card
+  const MAX_BEHIND = 2;
+  const behindCards = Array.from({ length: Math.min(MAX_BEHIND, visible.length - 1) }, (_, depth) => {
+    const idx = (clampedIndex + depth + 1) % visible.length;
+    return visible[idx];
+  });
 
   const goPrev = () => setActiveIndex((i) => (i - 1 + visible.length) % visible.length);
   const goNext = () => setActiveIndex((i) => (i + 1) % visible.length);
@@ -59,13 +56,16 @@ function SingleStack({ cards }: Props) {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.stack}>
-        {/* Behind card — peek strip only */}
-        {behind && (
-          <div className={styles.behindCard} aria-hidden>
-            <AdCard {...behind} />
-          </div>
-        )}
+      <div className={styles.getStack(behindCards.length)}>
+        {/* Behind cards — rendered back-to-front so closer cards are on top */}
+        {[...behindCards].reverse().map((card, reversedDepth) => {
+          const depth = behindCards.length - 1 - reversedDepth;
+          return (
+            <div key={card.helpFlag} className={styles.getBehindCard(depth, behindCards.length)} aria-hidden>
+              <AdCard {...card} />
+            </div>
+          );
+        })}
         {/* Top card */}
         <div className={styles.topCard}>
           <AdCard {...top} onDismiss={handleDismiss} />
@@ -74,53 +74,96 @@ function SingleStack({ cards }: Props) {
 
       {visible.length > 1 && (
         <div className={styles.nav}>
-          <IconButton name="angle-left" size="md" onClick={goPrev} aria-label="Previous card" tooltip="Previous" />
+          <IconButton
+            name="angle-left"
+            size="md"
+            onClick={goPrev}
+            aria-label={t('alerting.single-stack.aria-label-previous-card', 'Previous card')}
+            tooltip={t('alerting.single-stack.tooltip-previous', 'Previous')}
+          />
           <span className={styles.counter}>
             <Trans i18nKey="alerting.ad-stack.counter" values={{ current: clampedIndex + 1, total: visible.length }}>
               {'{{current}} / {{total}}'}
             </Trans>
           </span>
-          <IconButton name="angle-right" size="md" onClick={goNext} aria-label="Next card" tooltip="Next" />
+          <IconButton
+            name="angle-right"
+            size="md"
+            onClick={goNext}
+            aria-label={t('alerting.single-stack.aria-label-next-card', 'Next card')}
+            tooltip={t('alerting.single-stack.tooltip-next', 'Next')}
+          />
         </div>
       )}
     </div>
   );
 }
 
+const MIN_CARD_WIDTH = 460;
+const MAX_CARD_WIDTH = 600;
+
 export function AdCardsStack({ cards }: Props) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const gapPx = parseInt(theme.spacing(2), 10);
+  const [measureRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
-  // Shuffle once at this level so the two halves are drawn from a single shuffle
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const shuffled = useMemo(() => shuffle(cards), []);
+  // Shuffle once at this level so all stacks are drawn from a single shuffle
+  const shuffled = useMemo(() => shuffle(cards), [cards]);
 
   if (!isOpenSourceBuildOrUnlicenced()) {
     return null;
   }
 
-  const mid = Math.ceil(shuffled.length / 2);
-  const leftCards = shuffled.slice(0, mid);
-  const rightCards = shuffled.slice(mid);
+  // How many columns fit given the current container width?
+  // Each column needs at least MIN_CARD_WIDTH px; columns are separated by gapPx.
+  const numCols = containerWidth > 0 ? Math.max(1, Math.floor((containerWidth + gapPx) / (MIN_CARD_WIDTH + gapPx))) : 1;
+
+  // Split shuffled cards into numCols stacks (round-robin distribution)
+  const stacks: AdCardProps[][] = Array.from({ length: numCols }, () => []);
+  shuffled.forEach((card, i) => stacks[i % numCols].push(card));
 
   return (
-    <div className={styles.twoCol}>
-      <SingleStack cards={leftCards} />
-      {rightCards.length > 0 && <SingleStack cards={rightCards} />}
+    <div
+      ref={measureRef}
+      className={styles.grid}
+      style={{ gridTemplateColumns: `repeat(${numCols}, minmax(0, ${MAX_CARD_WIDTH}px))` }}
+    >
+      {stacks.map(
+        (stackCards) =>
+          stackCards.length > 0 && (
+            <SingleStack
+              key={stackCards
+                .map((c) => c.helpFlag)
+                .sort()
+                .join(',')}
+              cards={stackCards}
+            />
+          )
+      )}
     </div>
   );
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
-  // How many px of the behind card peek out below the top card
-  const peekPx = 12;
-  // Uniform scale of the behind card (makes it visually smaller/further away)
-  const behindScale = 0.95;
+  // How many px each successive behind card peeks out below the one in front of it
+  const peekPx = 10;
+  // How much each successive depth level shrinks
+  const scaleStep = 0.04;
 
   return {
-    twoCol: css({
+    grid: css({
       display: 'grid',
       gap: theme.spacing(2),
-      gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))',
     }),
 
     wrapper: css({
@@ -129,31 +172,33 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
     }),
 
-    // Reserves space for the peeking strip beneath the top card
-    stack: css({
-      position: 'relative',
-      paddingBottom: `${peekPx}px`,
-    }),
+    // Reserves space for all peeking strips; numBehind drives total padding
+    getStack: (numBehind: number) =>
+      css({
+        position: 'relative',
+        paddingBottom: `${numBehind * peekPx}px`,
+      }),
 
     topCard: css({
       position: 'relative',
-      zIndex: 2,
+      zIndex: 10,
     }),
 
-    // Full card rendered behind the top card. Positioned absolutely so its
-    // bottom edge sits at the container's bottom edge (peekPx below the top card).
-    // z-index keeps it under the top card; no clipping needed — the top card
-    // naturally covers all but the peeking bottom strip.
-    behindCard: css({
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: 1,
-      transform: `scale(${behindScale})`,
-      transformOrigin: 'bottom center',
-      pointerEvents: 'none',
-    }),
+    // depth=0 is directly behind the top card, depth=1 is furthest back.
+    // Each level sits peekPx lower than the one in front, so strips cascade visually.
+    // numBehind is the total number of behind cards (needed to compute bottom offset).
+    getBehindCard: (depth: number, numBehind: number) =>
+      css({
+        position: 'absolute',
+        // depth=0 peeks out 1×peekPx, depth=1 peeks out 2×peekPx, etc.
+        bottom: `${(numBehind - 1 - depth) * peekPx}px`,
+        left: 0,
+        right: 0,
+        zIndex: 10 - (depth + 1),
+        transform: `scale(${1 - (depth + 1) * scaleStep})`,
+        transformOrigin: 'bottom center',
+        pointerEvents: 'none',
+      }),
 
     nav: css({
       display: 'flex',

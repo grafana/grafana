@@ -1,20 +1,20 @@
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Box, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { isLocalDevEnv } from '../utils/misc';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { AdCardsStack } from './AdCardsStack';
-import { assertsCardConfig } from './AssertsCard';
+import { getAssertsCardConfig } from './AssertsCard';
 import GettingStarted from './GettingStarted';
-import { irmCardConfig } from './IRMCard';
+import { getIrmCardConfig } from './IRMCard';
 import { getInsightsScenes, insightsIsAvailable } from './Insights';
 import { PluginIntegrations } from './PluginIntegrations';
-import { sloCardConfig } from './SLOCard';
-import { syntheticMonitoringCardConfig } from './SyntheticMonitoringCard';
+import { getSloCardConfig } from './SLOCard';
+import { getSyntheticMonitoringCardConfig } from './SyntheticMonitoringCard';
 
 function Home() {
   const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
@@ -25,10 +25,10 @@ function Home() {
   return (
     <AlertingPageWrapper subTitle="Learn about problems in your systems moments after they occur" navId="alerting">
       <PluginIntegrations />
-      <Box marginTop={{ lg: 2, md: 2, xs: 2 }}>
-        <AdCardsStack cards={[syntheticMonitoringCardConfig, irmCardConfig, assertsCardConfig, sloCardConfig]} />
-      </Box>
-      <Box marginTop={{ lg: 2, md: 0, xs: 0 }}>
+      <AdCardsStack
+        cards={[getSyntheticMonitoringCardConfig(), getIrmCardConfig(), getAssertsCardConfig(), getSloCardConfig()]}
+      />
+      <Stack direction="column" gap={2}>
         <TabsBar>
           {insightsEnabled && (
             <Tab
@@ -49,7 +49,7 @@ function Home() {
           {activeTab === 'insights' && <insightsScene.Component model={insightsScene} />}
           {activeTab === 'overview' && <GettingStarted />}
         </TabContent>
-      </Box>
+      </Stack>
     </AlertingPageWrapper>
   );
 }
