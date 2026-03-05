@@ -791,10 +791,12 @@ func (s *UserSync) getOrgID(orgID int64) int64 {
 	if orgID > 0 || !s.isKubernetesUserSyncEnabled(context.Background()) {
 		return orgID
 	}
-
 	return s.cfg.DefaultOrgID()
 }
 
 func (s *UserSync) isKubernetesUserSyncEnabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
+	}
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUserSync, false, openfeature.TransactionContext(ctx))
 }
