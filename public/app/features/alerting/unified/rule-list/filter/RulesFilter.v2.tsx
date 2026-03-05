@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -16,7 +17,6 @@ import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
-import { css } from '@emotion/css';
 
 type SearchQueryForm = {
   query: string;
@@ -132,9 +132,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               isLoading={savedSearchesLoading}
             />
           )}
-          <Box marginLeft={2}>
-            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
-          </Box>
+          <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
         </Stack>
       </Stack>
     </form>
