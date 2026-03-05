@@ -46,7 +46,7 @@ func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
 }
 
 // ReadFolderMetadata reads _folder.json from folderPath and returns the Folder resource.
-func ReadFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath, ref string) (*folders.Folder, error) {
+func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (*folders.Folder, error) {
 	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
 	info, err := repo.Read(ctx, metadataPath, ref)
 	if err != nil {

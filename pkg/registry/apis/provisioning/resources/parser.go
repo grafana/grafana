@@ -66,6 +66,7 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
+		reader:                repo,
 		urls:                  urls,
 		clients:               clients,
 		config:                config,
@@ -76,6 +77,9 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 type parser struct {
 	// The target repository
 	repo provisioning.ResourceRepositoryInfo
+
+	// reader allows reading files from the repository (e.g. _folder.json for parent UID lookup)
+	reader repository.Reader
 
 	// for repositories that have URL support
 	urls repository.RepositoryWithURLs
@@ -208,7 +212,15 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 			dirPath = safepath.Dir(dirPath)
 		}
 		if dirPath != "" {
-			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
+			folderID := ParseFolder(dirPath, r.repo.Name).ID
+			// When folder metadata is enabled and the parent folder has a _folder.json,
+			// use the stable UID from that file instead of the hash-derived one.
+			if r.folderMetadataEnabled && r.reader != nil {
+				if meta, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+					folderID = meta.Name
+				}
+			}
+			parsed.Meta.SetFolder(folderID)
 		} else {
 			parsed.Meta.SetFolder(RootFolder(r.config))
 		}

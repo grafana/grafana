@@ -1017,91 +1017,93 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
-	helper.CreateRepo(t, TestRepo{
-		Name:                   repo,
-		Target:                 "instance",
-		SkipResourceAssertions: true,
-	})
-
-	// POST to create a folder via the files endpoint
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-	url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/meta-test-folder/", addr, repo)
-	req, err := http.NewRequest(http.MethodPost, url, nil)
-	require.NoError(t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	// nolint:errcheck
-	defer resp.Body.Close()
-	require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
-
-	// Verify _folder.json was created via the files endpoint instead of .keep
-	wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/_folder.json")
-	require.NoError(t, err, "_folder.json should be readable via the files endpoint")
-
-	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
-	require.Equal(t, "folder.grafana.app/v1beta1", apiVersion)
-
-	kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
-	require.Equal(t, "Folder", kind)
-
-	folderUID, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
-	require.NotEmpty(t, folderUID, "_folder.json should contain a non-empty metadata.name (stable UID)")
-
-	title, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "spec", "title")
-	require.Equal(t, "meta-test-folder", title)
-
-	// Verify .keep was not created when flag is enabled
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
-	require.Error(t, err, ".keep should not exist when flag is enabled")
-
-	// Verify the Grafana folder was created with the stable UID from _folder.json
-	_, err = helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
-	require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
-}
-
-func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag_Nested(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := runGrafana(t, withProvisioningFolderMetadata)
-	ctx := context.Background()
-
-	const repo = "folder-metadata-nested-test-repo"
-	helper.CreateRepo(t, TestRepo{
-		Name:                   repo,
-		Target:                 "instance",
-		SkipResourceAssertions: true,
-	})
+	helper.CreateRepo(t, TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
-	// POST to create a nested folder: parent-folder/child-folder/
-	nestedURL := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/parent-folder/child-folder/", addr, repo)
-	req, err := http.NewRequest(http.MethodPost, nestedURL, nil)
-	require.NoError(t, err)
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	// nolint:errcheck
-	defer resp.Body.Close()
-	require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
+	postFolder := func(t *testing.T, path string) *http.Response {
+		t.Helper()
+		u := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s", addr, repo, path)
+		req, err := http.NewRequest(http.MethodPost, u, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() { resp.Body.Close() })
+		return resp
+	}
 
-	// Verify parent _folder.json was NOT created
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
-	require.Error(t, err, "parent _folder.json should not exist — only the directly-created folder gets one")
+	t.Run("simple folder creation writes _folder.json with stable UID", func(t *testing.T) {
+		resp := postFolder(t, "meta-test-folder/")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
 
-	// Verify child _folder.json was created
-	childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/child-folder/_folder.json")
-	require.NoError(t, err, "child _folder.json should be readable via the files endpoint")
+		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/_folder.json")
+		require.NoError(t, err, "_folder.json should be readable via the files endpoint")
 
-	childAPIVersion, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "apiVersion")
-	require.Equal(t, "folder.grafana.app/v1beta1", childAPIVersion)
+		apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
+		require.Equal(t, "folder.grafana.app/v1beta1", apiVersion)
+		kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
+		require.Equal(t, "Folder", kind)
+		folderUID, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, folderUID, "_folder.json should contain a non-empty stable UID")
+		title, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "spec", "title")
+		require.Equal(t, "meta-test-folder", title)
 
-	childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
-	require.NotEmpty(t, childUID, "child _folder.json should contain a non-empty metadata.name (stable UID)")
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
+		require.Error(t, err, ".keep should not exist when flag is enabled")
 
-	childTitle, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "spec", "title")
-	require.Equal(t, "child-folder", childTitle)
+		_, err = helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+		require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
+	})
 
-	// Verify child Grafana folder exists with stable UID from child _folder.json
-	_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
-	require.NoError(t, err, "child Grafana folder should exist with the stable UID from _folder.json")
+	t.Run("nested creation writes _folder.json only for the leaf", func(t *testing.T) {
+		resp := postFolder(t, "parent-folder/child-folder/")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
+
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
+		require.Error(t, err, "parent _folder.json should not exist — only the directly-created folder gets one")
+
+		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/child-folder/_folder.json")
+		require.NoError(t, err, "child _folder.json should be readable via the files endpoint")
+
+		childAPIVersion, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "apiVersion")
+		require.Equal(t, "folder.grafana.app/v1beta1", childAPIVersion)
+		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, childUID, "child _folder.json should contain a non-empty stable UID")
+		childTitle, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "spec", "title")
+		require.Equal(t, "child-folder", childTitle)
+
+		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child Grafana folder should exist with the stable UID from _folder.json")
+	})
+
+	t.Run("child created inside existing managed folder gets its own _folder.json", func(t *testing.T) {
+		resp := postFolder(t, "managed-parent/")
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating parent folder should succeed")
+
+		parentWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/_folder.json")
+		require.NoError(t, err, "parent _folder.json should exist")
+		parentUID, _, _ := unstructured.NestedString(parentWrap.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, parentUID, "parent should have a non-empty stable UID")
+
+		resp2 := postFolder(t, "managed-parent/child-folder/")
+		require.Equal(t, http.StatusOK, resp2.StatusCode, "creating child folder should succeed")
+
+		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/child-folder/_folder.json")
+		require.NoError(t, err, "child _folder.json should exist")
+		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, childUID, "child should have a non-empty stable UID")
+		require.NotEqual(t, parentUID, childUID, "child and parent UIDs must differ")
+
+		// Parent _folder.json must be unchanged.
+		parentWrap2, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/_folder.json")
+		require.NoError(t, err, "parent _folder.json should still exist after child creation")
+		parentUID2, _, _ := unstructured.NestedString(parentWrap2.Object, "resource", "file", "metadata", "name")
+		require.Equal(t, parentUID, parentUID2, "parent UID must be unchanged after child creation")
+
+		_, err = helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err, "parent Grafana folder should exist")
+		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child Grafana folder should exist")
+	})
+
 }

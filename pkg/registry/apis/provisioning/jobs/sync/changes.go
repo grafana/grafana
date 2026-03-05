@@ -98,7 +98,7 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 			// _folder.json is a folder-metadata file (like .keep), not a resource.
 			// Skip it here; the parent directory change handles folder creation.
 			if resources.IsFolderMetadataFile(file.Path) {
-				logger.Debug("skipping folder metadata file", "path", file.Path)
+				logger.Debug("skipping folder metadata file - will be handled by parent directory change", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
 					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 				}
