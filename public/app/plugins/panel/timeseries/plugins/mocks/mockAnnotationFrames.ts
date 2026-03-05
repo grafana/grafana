@@ -695,5 +695,41 @@ export const mockAlertingFrame: DataFrame = {
   ],
 };
 
+export const mockWipFrame: DataFrame = {
+  length: 1,
+  meta: {
+    dataTopic: DataTopic.Annotations,
+    custom: {
+      isWip: true,
+    },
+  },
+  fields: [
+    {
+      name: 'time',
+      config: {},
+      type: FieldType.time,
+      values: [1759388897560],
+    },
+    {
+      name: 'timeEnd',
+      config: {},
+      type: FieldType.other,
+      values: [null],
+    },
+    {
+      name: 'isRegion',
+      config: {},
+      type: FieldType.boolean,
+      values: [false],
+    },
+    {
+      name: 'color',
+      config: {},
+      type: FieldType.string,
+      values: ['#00d3ffff'],
+    },
+  ],
+};
+
 export const allAnnotations = [mockAnnotationFrame, mockIRMAnnotation];
 export const allAnnotationRegions = [mockAnnotationRegionFrame, mockIRMAnnotationRegion];

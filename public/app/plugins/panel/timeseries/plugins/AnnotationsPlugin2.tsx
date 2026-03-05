@@ -239,8 +239,13 @@ export const AnnotationsPlugin2 = ({
   }, []);
 
   if (plot) {
+    const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
+    const wipVals = wipFrame ? getVals(wipFrame) : null;
+    const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time[0] > 0;
+
     let markers = xAnnos.flatMap((frame, frameIdx) => {
-      let vals = getVals(frame);
+      const isWipFrame = frame?.meta?.custom?.isWip;
+      const vals = getVals(frame);
 
       let markers: React.ReactNode[] = [];
 
@@ -274,7 +279,6 @@ export const AnnotationsPlugin2 = ({
 
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
-          const isWip = frame.meta?.custom?.isWip;
           const setPinned = (active: boolean) => {
             if (active) {
               setPinnedAnnotationIndex(getAnnotationKey(frameIdx, i));
@@ -283,20 +287,24 @@ export const AnnotationsPlugin2 = ({
             }
           };
 
+          // Do not let other tooltips render if one is already pinned, or the wip is being edited
+          const showTooltipOnHover = !pinnedAnnotationId && !isWipVisible;
+
+          // The tooltip should render as pinned if the pinned state index matches this annotation
+          const isPinned = pinnedAnnotationId === getAnnotationKey(frameIdx, i);
+
           markers.push(
             <AnnotationMarker2
               key={getAnnotationKey(frameIdx, i)}
               setPinned={setPinned}
-              //@todo we want to set isPinned if the current annotation is in a wip editing state
-              isPinned={pinnedAnnotationId === getAnnotationKey(frameIdx, i)}
-              // @todo we want showTooltipOnHover to be false when a wip tooltip is displayed to prevent tooltips from overlaying the wip editor
-              showTooltipOnHover={!pinnedAnnotationId}
+              isPinned={isPinned}
+              showTooltipOnHover={showTooltipOnHover}
               frame={frame}
               annoIdx={i}
               annoVals={vals}
               style={style}
               timeZone={timeZone}
-              exitWipEdit={isWip ? exitWipEdit : null}
+              exitWipEdit={isWipFrame ? exitWipEdit : null}
               portalRoot={portalRoot}
               canExecuteActions={userCanExecuteActions}
               replaceVariables={replaceVariables}
