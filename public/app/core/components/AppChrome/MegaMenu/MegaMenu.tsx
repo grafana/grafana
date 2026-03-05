@@ -1,18 +1,20 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef, useCallback } from 'react';
+import { memo, forwardRef, useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { usePatchUserPreferencesMutation } from '@grafana/api-clients/rtkq/legacy/preferences';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
+import { fuzzySearch, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useStyles2, EmptyState } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
 
+import { MegaMenuControls } from './MegaMenuControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
@@ -27,7 +29,7 @@ export interface Props extends DOMAttributes {
 
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
-    const navTree = useSelector((state) => state.navBarTree);
+    const rawNavTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);
     const location = useLocation();
     const { chrome } = useGrafana();
@@ -35,6 +37,10 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
+    const { isAvailable: isAssistantAvailable } = useAssistant();
+
+    const [navTree, setFilteredNavTree] = useState<NavModelItem[]>(rawNavTree);
+    const [menuFilterValue, setMenuFilterValue] = useState<string>('');
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -102,14 +108,71 @@ export const MegaMenu = memo(
       }
     };
 
+    const navItemHasMatch = (item: NavModelItem, filter: string): boolean => {
+      const hasFuzzyMatch = fuzzySearch([item.text], filter).length > 0;
+      return hasFuzzyMatch || Boolean(item.children?.some((child) => navItemHasMatch(child, filter)));
+    };
+
+    const filterNavTree = (items: NavModelItem[], filter: string): NavModelItem[] => {
+      return items.reduce((acc: NavModelItem[], item) => {
+        const thisItemHasMatches = navItemHasMatch(item, filter);
+        const filteredChildren = item.children ? filterNavTree(item.children, filter) : undefined;
+
+        if (!thisItemHasMatches && (!filteredChildren || filteredChildren.length === 0)) {
+          return acc;
+        }
+
+        const filteredItem: NavModelItem = {
+          ...item,
+          children: filteredChildren,
+        };
+
+        acc.push(filteredItem);
+        return acc;
+      }, []);
+    };
+    /**
+     * Filter mega menu items based on filter from MegaMenuControls
+     */
+    const onFilterChange = (filterValue: string) => {
+      setMenuFilterValue(filterValue);
+
+      if (filterValue.trim() === '') {
+        setFilteredNavTree(rawNavTree);
+        return;
+      }
+
+      const filteredNavTree = filterNavTree(rawNavTree, filterValue);
+      setFilteredNavTree(filteredNavTree);
+    };
+
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
+        <MegaMenuControls onFilterChange={onFilterChange} />
+
         <nav className={styles.content}>
+          {menuFilterValue && navItems.length === 0 && (
+            <EmptyState
+              hideImage
+              variant="not-found"
+              role="alert"
+              message={t('command-palette.empty-state.message', 'No results found')}
+            >
+              {isAssistantAvailable && (
+                <OpenAssistantButton
+                  origin="grafana/command-palette-empty-state"
+                  prompt={`Search for ${menuFilterValue}`}
+                  title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
+                  onClick={() => setMenuFilterValue('')}
+                />
+              )}
+            </EmptyState>
+          )}
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
               <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                {navItems.map((link, index) => (
+                {navItems.map((link) => (
                   <MegaMenuItem
                     key={link.text}
                     link={link}
@@ -155,7 +218,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       listStyleType: 'none',
-      padding: theme.spacing(1, 1, 2, 0.5),
+      padding: theme.spacing(0, 1, 2, 0.5),
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
