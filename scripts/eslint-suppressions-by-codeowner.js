@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Reports which CODEOWNERS have the most suppressions in eslint-suppressions.json.
- * Run from repo root.
+ * Run from repo root. Requires the codeowners manifest (run: yarn codeowners-manifest).
  *
  * Usage:
  *   node scripts/eslint-suppressions-by-codeowner.js
@@ -18,8 +18,30 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
-const CODEOWNERS_PATH = path.join(ROOT, '.github/CODEOWNERS');
 const SUPPRESSIONS_PATH = path.join(ROOT, 'eslint-suppressions.json');
+
+const { CODEOWNERS_BY_FILENAME_JSON_PATH } = require('./codeowners-manifest/constants.js');
+
+function loadTeamsByFilename() {
+  const manifestPath = path.join(ROOT, CODEOWNERS_BY_FILENAME_JSON_PATH);
+  try {
+    return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      console.error('Codeowners manifest not found.');
+      console.error('Run: yarn codeowners-manifest');
+      process.exit(1);
+    }
+    throw e;
+  }
+}
+
+function buildGetOwners(teamsByFilename) {
+  return (filePath) => {
+    const normalized = filePath.replace(/^\/+/, '');
+    return teamsByFilename[normalized] || teamsByFilename['/' + normalized] || [];
+  };
+}
 
 function escapeCsv(value) {
   const s = String(value);
@@ -27,61 +49,6 @@ function escapeCsv(value) {
     return '"' + s.replace(/"/g, '""') + '"';
   }
   return s;
-}
-
-function parseCodeowners(content) {
-  const lines = [];
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) {
-      continue;
-    }
-    const firstSpace = trimmed.indexOf(' ');
-    if (firstSpace === -1) {
-      continue;
-    }
-    const pattern = trimmed.slice(0, firstSpace).trim();
-    const owners = trimmed
-      .slice(firstSpace)
-      .trim()
-      .split(/\s+/)
-      .filter((t) => t.startsWith('@'));
-    if (owners.length) {
-      lines.push({ pattern, owners });
-    }
-  }
-  return lines;
-}
-
-function patternToMatcher(pattern) {
-  const normalized = pattern.replace(/^\//, '').trim();
-  if (normalized.includes('*')) {
-    const regexStr = '^' + normalized.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*') + '$';
-    const regex = new RegExp(regexStr);
-    return (filePath) => regex.test(filePath) || filePath.startsWith(normalized.replace(/\*.*$/, '') + '/');
-  }
-  if (normalized.endsWith('/')) {
-    const prefix = normalized.slice(0, -1);
-    return (filePath) => filePath === prefix || filePath.startsWith(prefix + '/');
-  }
-  return (filePath) => filePath === normalized || filePath.startsWith(normalized + '/');
-}
-
-function buildFileToOwners(codeownersLines) {
-  const matchers = codeownersLines.map(({ pattern, owners }) => ({
-    match: patternToMatcher(pattern),
-    owners,
-  }));
-
-  return (filePath) => {
-    const normalizedPath = filePath.replace(/^\/+/, '');
-    for (let i = matchers.length - 1; i >= 0; i--) {
-      if (matchers[i].match(normalizedPath)) {
-        return matchers[i].owners;
-      }
-    }
-    return [];
-  };
 }
 
 function sumSuppressionsByOwner(suppressions, getOwners) {
@@ -174,9 +141,8 @@ function main() {
   const csv = args.includes('--csv');
   const codeownerArg = args.find((a) => a !== '--csv');
 
-  const codeownersContent = fs.readFileSync(CODEOWNERS_PATH, 'utf8');
-  const codeownersLines = parseCodeowners(codeownersContent);
-  const getOwners = buildFileToOwners(codeownersLines);
+  const teamsByFilename = loadTeamsByFilename();
+  const getOwners = buildGetOwners(teamsByFilename);
 
   const suppressions = JSON.parse(fs.readFileSync(SUPPRESSIONS_PATH, 'utf8'));
 
