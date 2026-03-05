@@ -937,6 +937,24 @@ func TestRebuildIndexesForResource(t *testing.T) {
 	require.Equal(t, 0, support.rebuildQueue.Len())
 }
 
+func TestMaybeInjectFailure(t *testing.T) {
+	t.Run("disabled when percent is 0", func(t *testing.T) {
+		s := &searchServer{injectFailuresPercent: 0}
+		for i := 0; i < 1000; i++ {
+			require.NoError(t, s.maybeInjectFailure())
+		}
+	})
+
+	t.Run("always fails when percent is 100", func(t *testing.T) {
+		s := &searchServer{injectFailuresPercent: 100}
+		for i := 0; i < 100; i++ {
+			err := s.maybeInjectFailure()
+			require.Error(t, err)
+			require.Equal(t, "injected search failure", err.Error())
+		}
+	})
+}
+
 func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 	opts := SearchOptions{
 		Backend: &mockSearchBackend{},

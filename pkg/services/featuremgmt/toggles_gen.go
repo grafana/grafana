@@ -830,6 +830,10 @@ const (
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
+	// FlagAppPluginAPIServer
+	// Registers an API server for each backend app plugin exposing a settings endpoint
+	FlagAppPluginAPIServer = "appPluginAPIServer"
+
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
@@ -841,6 +845,10 @@ const (
 	// FlagAlertingNotificationHistoryGlobal
 	// Enables the notification history global menu item viewer
 	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
+
+	// FlagAlertingNotificationHistoryTriage
+	// Enables the notification history timeline in the triage instance details drawer
+	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime
