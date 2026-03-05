@@ -55,9 +55,7 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
 
     if (groupByValues.length) {
-      const matchGroupBy = applicability.groupBy.length
-        ? buildApplicabilityMatcher(applicability.groupBy)
-        : undefined;
+      const matchGroupBy = applicability.groupBy.length ? buildApplicabilityMatcher(applicability.groupBy) : undefined;
       const groupByApplicability = groupByState?.keysApplicability;
 
       for (const groupByKey of groupByValues) {
