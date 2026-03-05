@@ -176,6 +176,7 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
+  const [autoScrolled, setAutoScrolled] = useState(false);
 
   useEffect(() => {
     if (!noInteractions) {
@@ -202,24 +203,32 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
     });
   }, []);
 
+  // Keep scroll position when adding filters or using displayed fields
+  // Remove after inlineLogDetailsNoScrolls is enabled by default
   useEffect(() => {
-    if (!scrollRef.current || inlineLogDetailsNoScrolls) {
+    if (!scrollRef.current || inlineLogDetailsNoScrolls || autoScrolled) {
       return;
     }
-    scrollRef.current.scrollTop = getDetailsScrollPosition(log);
-  }, [inlineLogDetailsNoScrolls, log]);
+    if (scrollRef.current.scrollHeight === scrollRef.current.clientHeight) {
+      return;
+    }
+    scrollRef.current.scrollTo(0, getDetailsScrollPosition(log));
+    setAutoScrolled(true);
+  }, [inlineLogDetailsNoScrolls, autoScrolled, log, scrollRef.current?.scrollHeight]);
 
   return (
     <div className={`${styles.inlineWrapper} log-line-inline-details`} style={{ maxWidth: detailsWidth }}>
       <div className={styles.inlineContainer}>
         <LogLineDetailsHeader log={log} search={search} onSearch={handleSearch} />
-        <div
-          className={inlineLogDetailsNoScrolls ? undefined : styles.scrollContainer}
-          ref={scrollRef}
-          onScroll={saveScroll}
-        >
-          <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
-        </div>
+        {inlineLogDetailsNoScrolls ? (
+          <div>
+            <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
+          </div>
+        ) : (
+          <ScrollContainer ref={scrollRef} onScroll={saveScroll}>
+            <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
+          </ScrollContainer>
+        )}
       </div>
     </div>
   );
