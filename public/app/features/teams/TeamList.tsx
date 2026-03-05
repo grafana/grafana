@@ -424,6 +424,7 @@ const TeamList = () => {
             roleOptions={drawerRoleOptions}
             canUpdateRoles={canUpdateTeamRoles}
             onSave={handleDrawerSave}
+            advancedViewUrl={drawerTeam.uid ? `/org/teams/edit/${drawerTeam.uid}/roles` : undefined}
           />
         )}
       </Page.Contents>

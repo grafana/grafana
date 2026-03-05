@@ -3,12 +3,35 @@ import { useMemo, useState, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Column, InteractiveTable, IconButton, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Column, FilterInput, InteractiveTable, IconButton, RadioButtonGroup, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { useSetUserRolesMutation } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Role, AccessControlAction } from 'app/types/accessControl';
 
 import { RolePermissionsModal } from '../admin/RolePermissionsModal';
+
+type RoleType = 'basic' | 'fixed' | 'custom' | 'plugin';
+
+function getRoleType(roleName: string): RoleType {
+  if (roleName.startsWith('basic:')) {
+    return 'basic';
+  }
+  if (roleName.startsWith('fixed:')) {
+    return 'fixed';
+  }
+  if (roleName.startsWith('plugins:')) {
+    return 'plugin';
+  }
+  return 'custom';
+}
+
+const TYPE_OPTIONS = [
+  { label: 'All', value: '' },
+  { label: 'Basic', value: 'basic' },
+  { label: 'Fixed', value: 'fixed' },
+  { label: 'Custom', value: 'custom' },
+  { label: 'Plugin', value: 'plugin' },
+];
 
 interface Props {
   roles: Role[];
@@ -24,6 +47,7 @@ interface ServiceAccountRoleRow {
   roleDisplayName: string;
   roleDescription?: string;
   roleGroup: string; // Always has a value, defaults to 'Other'
+  roleType: RoleType;
 }
 
 const transformRolesToRows = (roles: Role[]): ServiceAccountRoleRow[] => {
@@ -42,6 +66,7 @@ const transformRolesToRows = (roles: Role[]): ServiceAccountRoleRow[] => {
       roleDisplayName: role.displayName || role.name || 'Unknown',
       roleDescription: role.description,
       roleGroup: getGroup(role) || 'Other',
+      roleType: getRoleType(role.name || ''),
     };
   });
 };
@@ -56,13 +81,35 @@ export const ServiceAccountRolesTable = ({
   const [selectedRoleName, setSelectedRoleName] = useState<string>('');
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const styles = useStyles2(getStyles);
 
   const [updateUserRoles] = useSetUserRolesMutation();
 
   const canRemoveRoles = contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
-  const rows = useMemo(() => transformRolesToRows(roles), [roles]);
+  const allRows = useMemo(() => transformRolesToRows(roles), [roles]);
+
+  // Filter rows by search and type
+  const rows = useMemo(() => {
+    return allRows.filter((r) => {
+      const matchesType = !typeFilter || r.roleType === typeFilter;
+      if (!matchesType) {
+        return false;
+      }
+      if (!searchQuery.trim()) {
+        return true;
+      }
+      const q = searchQuery.toLowerCase();
+      return (
+        r.roleDisplayName.toLowerCase().includes(q) ||
+        r.roleName.toLowerCase().includes(q) ||
+        r.roleGroup.toLowerCase().includes(q) ||
+        (r.roleDescription || '').toLowerCase().includes(q)
+      );
+    });
+  }, [allRows, searchQuery, typeFilter]);
 
   const handleRemoveRole = useCallback(
     async (roleUidToRemove: string) => {
@@ -109,7 +156,16 @@ export const ServiceAccountRolesTable = ({
       {
         id: 'roleDisplayName',
         header: 'Name',
-        cell: ({ row }) => <span>{row.original.roleDisplayName}</span>,
+        cell: ({ row }) =>
+          row.original.roleDescription ? (
+            <Tooltip content={row.original.roleDescription} placement="top-start">
+              <span>
+                <Text weight="medium">{row.original.roleDisplayName}</Text>
+              </span>
+            </Tooltip>
+          ) : (
+            <Text weight="medium">{row.original.roleDisplayName}</Text>
+          ),
         sortType: 'string',
       },
       {
@@ -120,13 +176,12 @@ export const ServiceAccountRolesTable = ({
       },
       {
         id: 'permissions',
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         header: 'Permissions',
         cell: ({ row }) => (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <Tooltip
-              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-              content="View Role Permissions"
-            >
+          <div className={styles.centeredCell}>
+            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+            <Tooltip content="View permissions in this role">
               <IconButton
                 name="eye"
                 size="sm"
@@ -156,7 +211,7 @@ export const ServiceAccountRolesTable = ({
             // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             <Tooltip content="Remove role">
               <IconButton
-                name="trash-alt"
+                name="times"
                 size="sm"
                 variant="destructive"
                 onClick={() => handleRemoveRole(row.original.roleUid)}
@@ -171,7 +226,7 @@ export const ServiceAccountRolesTable = ({
     ];
 
     return cols;
-  }, [isRemoving, handleRemoveRole, canRemoveRoles, styles.roleId]);
+  }, [isRemoving, handleRemoveRole, canRemoveRoles, styles.roleId, styles.centeredCell]);
 
   const handleRoleModalDismiss = () => {
     setIsRoleModalOpen(false);
@@ -179,7 +234,7 @@ export const ServiceAccountRolesTable = ({
     setSelectedRoleName('');
   };
 
-  if (rows.length === 0) {
+  if (allRows.length === 0) {
     return (
       <div>
         <Trans i18nKey="serviceaccounts.roles.no-roles">No roles assigned to this service account.</Trans>
@@ -189,7 +244,37 @@ export const ServiceAccountRolesTable = ({
 
   return (
     <>
+      <div className={styles.tableHeader}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack direction="row" alignItems="center" gap={2}>
+            <Text color="secondary" variant="bodySmall">
+              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+              {rows.length} {rows.length === 1 ? 'role' : 'roles'}{typeFilter ? ` (${typeFilter})` : ' assigned'}
+            </Text>
+            <RadioButtonGroup options={TYPE_OPTIONS} value={typeFilter} onChange={setTypeFilter} size="sm" />
+          </Stack>
+          {allRows.length > 3 && (
+            <div className={styles.searchWrapper}>
+              <FilterInput
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                placeholder="Search roles..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
+            </div>
+          )}
+        </Stack>
+      </div>
+
       <InteractiveTable columns={columns} data={rows} getRowId={(row) => row.id} />
+
+      {(searchQuery || typeFilter) && rows.length === 0 && (
+        <Text color="secondary" italic>
+          {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+          No {typeFilter || ''} roles{searchQuery ? ` matching "${searchQuery}"` : ' assigned'}
+        </Text>
+      )}
+
       {selectedRoleUid && (
         <RolePermissionsModal
           roleUid={selectedRoleUid}
@@ -203,6 +288,17 @@ export const ServiceAccountRolesTable = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  tableHeader: css({
+    marginBottom: theme.spacing(1),
+  }),
+  searchWrapper: css({
+    maxWidth: 300,
+  }),
+  centeredCell: css({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  }),
   roleId: css({
     fontFamily: theme.typography.fontFamilyMonospace,
     fontSize: theme.typography.bodySmall.fontSize,
