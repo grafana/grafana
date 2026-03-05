@@ -279,13 +279,6 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
-
       - name: Download blob reports from GitHub Actions Artifacts
         uses: actions/download-artifact@v6
         with:
@@ -316,7 +309,7 @@ jobs:
 
       - name: Check test suites
         id: check-jobs
-        uses: ./.github/actions/check-jobs
+        uses: grafana/grafana/.github/actions/check-jobs@main
         continue-on-error: true # Failure will be reported on Show test results step
         with:
           needs: ${{ toJson(needs) }}
@@ -352,56 +345,6 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@v6
-        with:
-          path: blobs
-          pattern: playwright-blob-*
-          merge-multiple: true
-
-      - name: Merge into JSON Report
-        env:
-          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
-        run: npx playwright merge-reports --reporter=json ./blobs
-
-      - name: Bench report
-        run: |
-          docker run --rm \
-            --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.1 report \
-              --service grafana \
-              --service-url "http://localhost:3000" \
-              --service-version "CI-${{ github.sha }}" \
-              --suite-name "FrontendCore" \
-              --run-stage ci \
-              --report-input playwright \
-              --report-output log \
-              --log-level DEBUG \
-              /home/bench/tests/playwright-results.json
-
-  report-playwright-bench-no-checkout:
-    needs:
-      - run-playwright-tests
-    if: ${{ !cancelled() }}
-    name: Report Playwright benchmarks (no repo checkout)
-    runs-on: ubuntu-x64-small
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        if: github.event.pull_request.head.repo.fork == false
-
       - name: Download blob reports from GitHub Actions Artifacts
         uses: actions/download-artifact@v6
         with:
@@ -462,7 +405,7 @@ jobs:
   # a placeholder job to avoid needing to remove the required check from github yet.
   required-e2e-tests:
     needs:
-      - required-playwright-tests
+      - run-playwright-tests
     if: always()
 
     name: All E2E tests complete
