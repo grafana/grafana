@@ -1605,9 +1605,9 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 			bpResult: &BranchProtection{
 				RequiredPullRequestReviews: true,
 			},
-		rulesetsResult: &Rulesets{
-			RequiresPullRequest: true,
-		},
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
 			expectedSuccess:  false,
 			expectedErrField: "spec.workflows",
 			expectedDetails:  []string{"required pull request reviews", "ruleset requires pull request"},

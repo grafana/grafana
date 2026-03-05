@@ -325,23 +325,23 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					}))
 				}),
 			),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				// Rules API returns array of rule objects
-				rules := []map[string]interface{}{
-					{
-						"type":                "pull_request",
-						"ruleset_source_type": "Repository",
-						"ruleset_source":      "test-owner/test-repo",
-						"ruleset_id":          1,
-						"parameters":          map[string]interface{}{},
-					},
-				}
-				w.WriteHeader(http.StatusOK)
-				require.NoError(t, json.NewEncoder(w).Encode(rules))
-			}),
-		),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					// Rules API returns array of rule objects
+					rules := []map[string]interface{}{
+						{
+							"type":                "pull_request",
+							"ruleset_source_type": "Repository",
+							"ruleset_source":      "test-owner/test-repo",
+							"ruleset_id":          1,
+							"parameters":          map[string]interface{}{},
+						},
+					}
+					w.WriteHeader(http.StatusOK)
+					require.NoError(t, json.NewEncoder(w).Encode(rules))
+				}),
+			),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -426,23 +426,23 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
 			),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				// Rules API returns pull_request rule
-				rules := []map[string]interface{}{
-					{
-						"type":                "pull_request",
-						"ruleset_source_type": "Repository",
-						"ruleset_source":      "test-owner/test-repo",
-						"ruleset_id":          3,
-						"parameters":          map[string]interface{}{},
-					},
-				}
-				w.WriteHeader(http.StatusOK)
-				require.NoError(t, json.NewEncoder(w).Encode(rules))
-			}),
-		),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					// Rules API returns pull_request rule
+					rules := []map[string]interface{}{
+						{
+							"type":                "pull_request",
+							"ruleset_source_type": "Repository",
+							"ruleset_source":      "test-owner/test-repo",
+							"ruleset_id":          3,
+							"parameters":          map[string]interface{}{},
+						},
+					}
+					w.WriteHeader(http.StatusOK)
+					require.NoError(t, json.NewEncoder(w).Encode(rules))
+				}),
+			),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -480,15 +480,15 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					}))
 				}),
 			),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				// Rules API does not return disabled rulesets (empty array)
-				rules := []interface{}{}
-				w.WriteHeader(http.StatusOK)
-				require.NoError(t, json.NewEncoder(w).Encode(rules))
-			}),
-		),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					// Rules API does not return disabled rulesets (empty array)
+					rules := []interface{}{}
+					w.WriteHeader(http.StatusOK)
+					require.NoError(t, json.NewEncoder(w).Encode(rules))
+				}),
+			),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
@@ -524,15 +524,15 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					}))
 				}),
 			),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				// Rules API returns only rules matching the queried branch (none in this case)
-				rules := []interface{}{}
-				w.WriteHeader(http.StatusOK)
-				require.NoError(t, json.NewEncoder(w).Encode(rules))
-			}),
-		),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					// Rules API returns only rules matching the queried branch (none in this case)
+					rules := []interface{}{}
+					w.WriteHeader(http.StatusOK)
+					require.NoError(t, json.NewEncoder(w).Encode(rules))
+				}),
+			),
 		)
 		helper.SetGithubRepositoryFactory(repoFactory)
 
