@@ -67,6 +67,12 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 }
 
 func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branch string) (*Rulesets, error) {
+	// Create logger with base context
+	logger := logging.FromContext(ctx).With(
+		slog.String("owner", owner),
+		slog.String("repository", repository),
+		slog.String("branch", branch))
+
 	// Get all rulesets for the repository
 	rulesets, _, err := r.gh.Repositories.GetAllRulesets(ctx, owner, repository, nil)
 	if err != nil {
@@ -79,10 +85,7 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 			case http.StatusForbidden:
 				// User lacks permissions to view rulesets (though Metadata read should be enough).
 				// Skip check gracefully.
-				logging.FromContext(ctx).Warn("Skipping ruleset check: insufficient permissions",
-					slog.String("owner", owner),
-					slog.String("repository", repository),
-					slog.String("branch", branch))
+				logger.Warn("Skipping ruleset check: insufficient permissions")
 				return nil, nil
 			case http.StatusNotFound:
 				return nil, ErrResourceNotFound
@@ -96,17 +99,11 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 
 	// No rulesets configured
 	if len(rulesets) == 0 {
-		logging.FromContext(ctx).Debug("No rulesets configured for repository",
-			slog.String("owner", owner),
-			slog.String("repository", repository))
+		logger.Debug("No rulesets configured for repository")
 		return nil, nil
 	}
 
-	logging.FromContext(ctx).Debug("Checking rulesets for branch",
-		slog.String("owner", owner),
-		slog.String("repository", repository),
-		slog.String("branch", branch),
-		slog.Int("ruleset_count", len(rulesets)))
+	logger.Debug("Checking rulesets for branch", slog.Int("ruleset_count", len(rulesets)))
 
 	result := &Rulesets{}
 
@@ -114,91 +111,74 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 	for _, ruleset := range rulesets {
 		rulesetName := ruleset.Name
 		enforcement := string(ruleset.Enforcement)
-
-		logging.FromContext(ctx).Debug("Evaluating ruleset",
+		rulesetLogger := logger.With(
 			slog.String("ruleset_name", rulesetName),
 			slog.String("enforcement", enforcement))
 
+		rulesetLogger.Debug("Evaluating ruleset")
+
 		// Skip disabled or evaluate-only rulesets
 		if enforcement == "disabled" || enforcement == "evaluate" {
-			logging.FromContext(ctx).Debug("Skipping non-active ruleset",
-				slog.String("ruleset_name", rulesetName),
-				slog.String("enforcement", enforcement))
+			rulesetLogger.Debug("Skipping non-active ruleset")
 			continue
 		}
 
 		// Check if this ruleset targets branches and matches our branch
 		target := ruleset.GetTarget()
 		if target == nil || string(*target) != "branch" {
-			logging.FromContext(ctx).Debug("Skipping non-branch ruleset",
-				slog.String("ruleset_name", rulesetName),
-				slog.String("target", func() string {
-					if target == nil {
-						return "nil"
-					}
-					return string(*target)
-				}()))
+			targetStr := "nil"
+			if target != nil {
+				targetStr = string(*target)
+			}
+			rulesetLogger.Debug("Skipping non-branch ruleset", slog.String("target", targetStr))
 			continue
 		}
 
 		// Check if the ruleset applies to this specific branch
 		if !rulesetMatchesBranch(ruleset, branch) {
-			logging.FromContext(ctx).Debug("Ruleset does not match branch",
-				slog.String("ruleset_name", rulesetName),
-				slog.String("branch", branch))
+			rulesetLogger.Debug("Ruleset does not match branch")
 			continue
 		}
 
-		logging.FromContext(ctx).Debug("Ruleset matches branch, checking rules",
-			slog.String("ruleset_name", rulesetName),
-			slog.String("branch", branch))
+		rulesetLogger.Debug("Ruleset matches branch, checking rules")
 
 		// GetAllRulesets doesn't include rule details, so we need to fetch the full ruleset
 		rulesetID := ruleset.GetID()
 		if rulesetID == 0 {
-			logging.FromContext(ctx).Warn("Ruleset has no ID, skipping",
-				slog.String("ruleset_name", rulesetName))
+			rulesetLogger.Warn("Ruleset has no ID, skipping")
 			continue
 		}
 
-		logging.FromContext(ctx).Debug("Fetching full ruleset details",
-			slog.String("ruleset_name", rulesetName),
-			slog.Int64("ruleset_id", rulesetID))
+		rulesetLogger = rulesetLogger.With(slog.Int64("ruleset_id", rulesetID))
+		rulesetLogger.Debug("Fetching full ruleset details")
 
 		fullRuleset, _, err := r.gh.Repositories.GetRuleset(ctx, owner, repository, rulesetID, false)
 		if err != nil {
-			logging.FromContext(ctx).Warn("Failed to fetch ruleset details",
-				slog.String("ruleset_name", rulesetName),
-				slog.Int64("ruleset_id", rulesetID),
-				slog.String("error", err.Error()))
+			rulesetLogger.Warn("Failed to fetch ruleset details", slog.String("error", err.Error()))
 			continue
 		}
 
 		// Check the rules in this ruleset
 		rules := fullRuleset.GetRules()
 		if rules == nil {
-			logging.FromContext(ctx).Warn("Ruleset has nil rules even after fetching full details",
-				slog.String("ruleset_name", rulesetName))
+			rulesetLogger.Warn("Ruleset has nil rules even after fetching full details")
 			continue
 		}
 
-		// Log all rule fields to see what's actually present
-		logging.FromContext(ctx).Debug("Checking ruleset rules",
-			slog.String("ruleset_name", rulesetName),
-			slog.Bool("PullRequest", rules.PullRequest != nil),
-			slog.Bool("RequiredStatusChecks", rules.RequiredStatusChecks != nil),
-			slog.Bool("RequiredSignatures", rules.RequiredSignatures != nil),
-			slog.Bool("RequiredLinearHistory", rules.RequiredLinearHistory != nil),
-			slog.Bool("RequiredDeployments", rules.RequiredDeployments != nil),
-			slog.Bool("Creation", rules.Creation != nil),
-			slog.Bool("NonFastForward", rules.NonFastForward != nil),
-			slog.Bool("Deletion", rules.Deletion != nil),
-			slog.Bool("Update", rules.Update != nil))
+		// Log rules struct with just the relevant blocking fields
+		rulesetLogger.Debug("Checking ruleset rules",
+			slog.Group("rules",
+				slog.Bool("pull_request", rules.PullRequest != nil),
+				slog.Bool("required_status_checks", rules.RequiredStatusChecks != nil),
+				slog.Bool("required_signatures", rules.RequiredSignatures != nil),
+				slog.Bool("required_linear_history", rules.RequiredLinearHistory != nil),
+				slog.Bool("required_deployments", rules.RequiredDeployments != nil),
+				slog.Bool("creation", rules.Creation != nil),
+				slog.Bool("non_fast_forward", rules.NonFastForward != nil)))
 
 		// Check for pull request requirement
 		if rules.PullRequest != nil {
-			logging.FromContext(ctx).Debug("Ruleset has PullRequest rule",
-				slog.String("ruleset_name", rulesetName))
+			rulesetLogger.Debug("Ruleset has PullRequest rule")
 			result.RequiresPullRequest = true
 		}
 
@@ -206,33 +186,21 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 		if rules.RequiredStatusChecks != nil || rules.RequiredSignatures != nil ||
 			rules.RequiredLinearHistory != nil || rules.RequiredDeployments != nil ||
 			rules.Creation != nil || rules.NonFastForward != nil {
-			logging.FromContext(ctx).Debug("Ruleset has blocking rules",
-				slog.String("ruleset_name", rulesetName),
-				slog.Bool("RequiredStatusChecks", rules.RequiredStatusChecks != nil),
-				slog.Bool("RequiredSignatures", rules.RequiredSignatures != nil),
-				slog.Bool("RequiredLinearHistory", rules.RequiredLinearHistory != nil),
-				slog.Bool("RequiredDeployments", rules.RequiredDeployments != nil),
-				slog.Bool("Creation", rules.Creation != nil),
-				slog.Bool("NonFastForward", rules.NonFastForward != nil))
+			rulesetLogger.Debug("Ruleset has blocking rules")
 			result.HasBlockingRules = true
 		}
 	}
 
 	// Return nil if no blocking rules found
 	if !result.RequiresPullRequest && !result.HasBlockingRules {
-		logging.FromContext(ctx).Debug("No blocking rulesets found for branch",
-			slog.String("owner", owner),
-			slog.String("repository", repository),
-			slog.String("branch", branch))
+		logger.Debug("No blocking rulesets found for branch")
 		return nil, nil
 	}
 
-	logging.FromContext(ctx).Debug("Found blocking rulesets for branch",
-		slog.String("owner", owner),
-		slog.String("repository", repository),
-		slog.String("branch", branch),
-		slog.Bool("requires_pull_request", result.RequiresPullRequest),
-		slog.Bool("has_blocking_rules", result.HasBlockingRules))
+	logger.Debug("Found blocking rulesets for branch",
+		slog.Group("blocking",
+			slog.Bool("requires_pull_request", result.RequiresPullRequest),
+			slog.Bool("has_blocking_rules", result.HasBlockingRules)))
 
 	return result, nil
 }
