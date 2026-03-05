@@ -71,7 +71,7 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
   const languages = identifyOTelLanguages(logs);
   const otelFields = languages.length ? getSuggestedOTelDisplayFormat() : [];
 
-  const fields = [...suggestedFields, ...otelFields];
+  const fields = [...new Set([...suggestedFields, ...otelFields])];
 
   return fields.filter(
     (field) =>
@@ -82,7 +82,7 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
 }
 
 export function getSuggestedFieldsForAnyLogs() {
-  return ['app', 'scope_name', 'service_name', 'message', 'msg', 'traceID', 'trace_id', 'environment', 'error'];
+  return ['app', 'service_name', 'message', 'msg', 'traceID', 'trace_id', 'environment', 'error'];
 }
 
 export function getSuggestedOTelDisplayFormat() {
