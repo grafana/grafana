@@ -272,8 +272,4 @@ const getStyles = (
     lineHeight: fontSize === 'small' ? theme.typography.bodySmall.lineHeight : undefined,
   }),
   tabsWrapper: css({ height: '100%', display: 'flex', flexDirection: 'column' }),
-  scrollContainer: css({
-    overflow: 'auto',
-    height: '100%',
-  }),
 });
