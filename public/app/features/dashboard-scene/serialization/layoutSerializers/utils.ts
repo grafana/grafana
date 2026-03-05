@@ -1,5 +1,6 @@
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   SceneDataProvider,
   SceneDataQuery,
@@ -251,8 +252,9 @@ export function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined 
   const firstDatasource = datasources[0];
 
   // Check if queries use different datasources
+  // don't include expressions in this check since they don't have a datasource and shouldn't trigger mixed mode on their own
   const isMixedDatasource = datasources.some(
-    (ds) => ds?.uid !== firstDatasource?.uid || ds?.type !== firstDatasource?.type
+    (ds) => isNotExpressionDatasource(ds) && (ds?.uid !== firstDatasource?.uid || ds?.type !== firstDatasource?.type)
   );
 
   if (isMixedDatasource) {
@@ -437,4 +439,8 @@ export function getElement(
   scene: DashboardScene
 ): DashboardV2Spec['elements'] {
   return createElements([vizPanelToSchemaV2(gridItem.state.body, scene.serializer.getDSReferencesMapping())], scene);
+}
+
+function isNotExpressionDatasource(ds: DataSourceRef | undefined): boolean {
+  return ds?.type !== ExpressionDatasourceRef.type && ds?.uid !== ExpressionDatasourceRef.uid;
 }

@@ -1,3 +1,4 @@
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   defaultDataQueryKind,
   defaultPanelSpec,
@@ -197,6 +198,23 @@ describe('getPanelDataSource', () => {
     },
   });
 
+  const createQueryWithExpressionDatasource = (refId = 'A'): PanelQueryKind => ({
+    kind: 'PanelQuery',
+    spec: {
+      refId,
+      hidden: false,
+      query: {
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: ExpressionDatasourceRef.type,
+        datasource: {
+          name: ExpressionDatasourceRef.uid,
+        },
+        spec: {},
+      },
+    },
+  });
+
   it('should return undefined when panel has no queries', () => {
     const panel = createPanelWithQueries([]);
 
@@ -277,7 +295,6 @@ describe('getPanelDataSource', () => {
 
     expect(result).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
   });
-
   it('should return undefined when queries have no explicit datasource name but same type', () => {
     const panel = createPanelWithQueries([
       createQueryWithoutDatasourceName('prometheus', 'A'),
@@ -298,6 +315,17 @@ describe('getPanelDataSource', () => {
     const result = getPanelDataSource(panel);
 
     expect(result).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
+  });
+
+  it('should return datasource if expression is mixed with other datasource', () => {
+    const panel = createPanelWithQueries([
+      createQuery('prometheus-uid', 'prometheus', 'A'),
+      createQueryWithExpressionDatasource('B'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toBeUndefined();
   });
 });
 

@@ -489,14 +489,14 @@ function replaceElementDatasources(
   );
 }
 
-function checkUserInputMatch(
+export function checkUserInputMatch(
   templateizedUid: string,
   datasourceInputs: DataSourceInput[],
   userDsInputs: DataSourceInstanceSettings[]
 ) {
   const dsName = templateizedUid.replace(/\$\{(.*)\}/, '$1');
   const input = datasourceInputs?.find((ds) => ds.name === dsName);
-  const userInput = input && userDsInputs.find((ds) => ds.type === input.pluginId);
+  const userInput = input && userDsInputs.find((ds) => !!ds && ds.type === input.pluginId);
   return userInput;
 }
 

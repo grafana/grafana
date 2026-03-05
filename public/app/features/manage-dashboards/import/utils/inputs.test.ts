@@ -9,11 +9,12 @@ import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
+import { DashboardInputs, DataSourceInput, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
 
 import {
   applyV1Inputs,
   applyV2Inputs,
+  checkUserInputMatch,
   detectExportFormat,
   extractV1Inputs,
   extractV2Inputs,
@@ -21,6 +22,7 @@ import {
   replaceDatasourcesInDashboard,
   DatasourceMappings,
 } from './inputs';
+import { create } from 'lodash';
 
 // Mock external dependencies
 jest.mock('@grafana/runtime', () => ({
@@ -925,5 +927,83 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(getPanelQueryDatasourceName(result, 'panel-variable')).toBe('${ds}');
       expect(getPanelQueryDatasourceName(result, 'panel-hardcoded')).toBe('new-loki-uid');
     });
+  });
+});
+
+describe('checkUserInputMatch', () => {
+  const datasourceInputs: DataSourceInput[] = [
+    {
+      name: 'DS_TESTDATA_DB',
+      label: 'TestData DB',
+      description: '',
+      type: InputType.DataSource,
+      pluginId: 'grafana-testdata-datasource',
+      info: '',
+      value: '',
+    },
+    {
+      name: 'DS_EXPRESSION',
+      label: 'Expression',
+      description: '',
+      type: InputType.DataSource,
+      pluginId: '__expr__',
+      info: '',
+      value: '',
+    },
+    {
+      name: 'DS_GRAFANACLOUD_PROM',
+      label: 'Grafana Cloud Prometheus',
+      description: '',
+      type: InputType.DataSource,
+      pluginId: 'prometheus',
+      info: '',
+      value: '',
+    },
+  ];
+
+  const createUserInputDatasource = (uid: string, name: string, type: string): DataSourceInstanceSettings =>
+    ({ uid, name, type }) as DataSourceInstanceSettings;
+
+  // come from InputForm.tsx - expressions are never included
+  const defaultUserDsInputs: DataSourceInstanceSettings[] = [
+    createUserInputDatasource('testdata-uid', 'TestData DB', 'grafana-testdata-datasource'),
+    createUserInputDatasource('testdata-uid-2', 'TestData DB 2', 'grafana-testdata-datasource'),
+    createUserInputDatasource('prom-uid', 'Prometheus', 'prometheus'),
+  ];
+
+  it('returns user datasource when templateized UID matches Prometheus ds input and form has matching type', () => {
+    const result = checkUserInputMatch('${DS_GRAFANACLOUD_PROM}', datasourceInputs, defaultUserDsInputs);
+    expect(result).toBeDefined();
+    expect(result?.uid).toBe('prom-uid');
+    expect(result?.type).toBe('prometheus');
+  });
+
+  it('returns undefined when templateized UID is an expression', () => {
+    const result = checkUserInputMatch('${DS_EXPRESSION}', datasourceInputs, defaultUserDsInputs);
+    expect(result).toBeUndefined();
+  });
+
+  it('returns undefined when templateized UID has no matching input name', () => {
+    const userDsInputs = [createUserInputDatasource('prom-uid', 'Prometheus', 'prometheus')];
+    const result = checkUserInputMatch('${DS_UNKNOWN_INPUT}', datasourceInputs, userDsInputs);
+    expect(result).toBeUndefined();
+  });
+
+  it('returns undefined when input exists but form has no datasource of that pluginId', () => {
+    const userDsInputs = [createUserInputDatasource('loki-uid', 'Loki', 'loki')];
+    const result = checkUserInputMatch('${DS_TESTDATA_DB}', datasourceInputs, userDsInputs);
+    expect(result).toBeUndefined();
+  });
+
+  it('returns undefined when datasourceInputs is empty', () => {
+    const userDsInputs = [createUserInputDatasource('testdata-uid', 'TestData DB', 'grafana-testdata-datasource')];
+    const result = checkUserInputMatch('${DS_TESTDATA_DB}', [], userDsInputs);
+    expect(result).toBeUndefined();
+  });
+
+  it('returns first matching user datasource when form has multiple of same pluginId', () => {
+    const result = checkUserInputMatch('${DS_TESTDATA_DB}', datasourceInputs, defaultUserDsInputs);
+    expect(result).toBeDefined();
+    expect(result?.uid).toBe('testdata-uid');
   });
 });
