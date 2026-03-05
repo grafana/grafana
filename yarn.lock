@@ -12023,7 +12023,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native-preview@npm:^7.0.0-dev.20251128.1":
+"@typescript/native-preview@npm:^7.0.0-dev.20260305.1":
   version: 7.0.0-dev.20260306.1
   resolution: "@typescript/native-preview@npm:7.0.0-dev.20260306.1"
   dependencies:
@@ -19978,7 +19978,7 @@ __metadata:
     "@types/yargs": "npm:17.0.33"
     "@typescript-eslint/eslint-plugin": "npm:8.56.0"
     "@typescript-eslint/parser": "npm:8.56.0"
-    "@typescript/native-preview": "npm:^7.0.0-dev.20251128.1"
+    "@typescript/native-preview": "npm:^7.0.0-dev.20260305.1"
     "@visx/event": "npm:3.12.0"
     "@visx/gradient": "npm:3.12.0"
     "@visx/group": "npm:3.12.0"
