@@ -59,15 +59,29 @@ func (ds DataSource) ToUnstructured() (*unstructured.Unstructured, error) {
 		}
 		obj.Object["secure"] = secure
 	}
+	if ds.APIVersion != "" {
+		obj.SetAPIVersion(ds.APIVersion)
+	}
+	if ds.Kind != "" {
+		obj.SetKind(ds.Kind)
+	}
 	return obj, nil
 }
 
 func FromUnstructured(obj *unstructured.Unstructured) (*DataSource, error) {
 	ds := &DataSource{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: obj.GetAPIVersion(),
+			Kind:       obj.GetKind(),
+		},
 		Spec: UnstructuredSpec{},
 	}
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &ds.ObjectMeta)
+	metadata, _, err := unstructured.NestedMap(obj.Object, "metadata")
 	if err != nil {
+		return nil, err
+	}
+
+	if err = runtime.DefaultUnstructuredConverter.FromUnstructured(metadata, &ds.ObjectMeta); err != nil {
 		return nil, fmt.Errorf("failed to convert unstructured to ObjectMeta: %w", err)
 	}
 	ds.Spec.Object, _, err = unstructured.NestedMap(obj.Object, "spec")
