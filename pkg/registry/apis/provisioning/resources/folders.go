@@ -42,10 +42,11 @@ type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
 type FolderManagerOption func(*FolderManager)
 
 type FolderManager struct {
-	repo         repository.ReaderWriter
-	tree         FolderTree
-	client       dynamic.ResourceInterface
-	beforeCreate FolderCreationInterceptor
+	repo                  repository.ReaderWriter
+	tree                  FolderTree
+	client                dynamic.ResourceInterface
+	beforeCreate          FolderCreationInterceptor
+	folderMetadataEnabled bool
 }
 
 func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
@@ -66,6 +67,12 @@ func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInter
 func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
 	return func(fm *FolderManager) {
 		fm.beforeCreate = beforeCreate
+	}
+}
+
+func WithFolderMetadataEnabled(folderMetadataEnabled bool) FolderManagerOption {
+	return func(fm *FolderManager) {
+		fm.folderMetadataEnabled = folderMetadataEnabled
 	}
 }
 
@@ -239,19 +246,28 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 		_, err := fm.repo.Read(ctx, p, ref)
 		if err != nil && (!errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err)) {
 			return fn(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
-		} else if err == nil {
-			// Folder already exists in repository, add it to tree so resources can find it
-			fm.tree.Add(folder, parent)
-			return fn(folder, false, nil)
 		}
 
-		msg := fmt.Sprintf("Add folder %s", p)
-		if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
-			return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+		created := err != nil // err is ErrFileNotFound at this point
+		if created {
+			msg := fmt.Sprintf("Add folder %s", p)
+			if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
+				return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+			}
 		}
+
 		// Add it to the existing tree
 		fm.tree.Add(folder, parent)
 
-		return fn(folder, true, nil)
+		// TODO: Create real file when folder metadata utils is merged.
+		if fm.folderMetadataEnabled {
+			metadataPath := safepath.Join(p, "_folder.json")
+			msg := fmt.Sprintf("Add folder metadata %s", metadataPath)
+			if err := fm.repo.Write(ctx, metadataPath, ref, []byte("{}"), msg); err != nil {
+				return fn(folder, created, fmt.Errorf("write folder metadata: %w", err))
+			}
+		}
+
+		return fn(folder, created, nil)
 	})
 }

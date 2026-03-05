@@ -42,9 +42,10 @@ type RepositoryResources interface {
 }
 
 type repositoryResourcesFactory struct {
-	parsers ParserFactory
-	clients ClientFactory
-	lister  ResourceLister
+	parsers               ParserFactory
+	clients               ClientFactory
+	lister                ResourceLister
+	folderMetadataEnabled bool
 }
 
 type RepositoryResourcesOption func(*repositoryResourcesOptions)
@@ -111,8 +112,8 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	return sourcePath, nil
 }
 
-func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
-	return &repositoryResourcesFactory{parsers, clients, lister}
+func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
+	return &repositoryResourcesFactory{parsers, clients, lister, folderMetadataEnabled}
 }
 
 func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter, opts ...RepositoryResourcesOption) (RepositoryResources, error) {

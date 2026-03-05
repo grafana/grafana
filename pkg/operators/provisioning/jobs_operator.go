@@ -237,7 +237,7 @@ func setupWorkers(
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, false)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	workers := make([]jobs.Worker, 0)
