@@ -788,7 +788,7 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 }
 
 func (s *UserSync) getOrgID(orgID int64) int64 {
-	if orgID > 0 {
+	if orgID > 0 || !s.isKubernetesUserSyncEnabled(context.Background()) {
 		return orgID
 	}
 
