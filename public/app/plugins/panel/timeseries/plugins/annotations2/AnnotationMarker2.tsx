@@ -109,7 +109,6 @@ export const AnnotationMarker2 = ({
     />
   ) : showEditor ? (
     <AnnotationEditor2
-      isPinned={isPinned}
       annoIdx={annoIdx}
       annoVals={annoVals}
       timeZone={timeZone}

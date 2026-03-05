@@ -17,7 +17,6 @@ interface Props {
   annoIdx: number;
   timeZone: string;
   dismiss: () => void;
-  isPinned: boolean;
 }
 
 interface AnnotationEditFormDTO {
@@ -25,7 +24,7 @@ interface AnnotationEditFormDTO {
   tags: string[];
 }
 
-export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, isPinned, ...otherProps }: Props) => {
+export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
   const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
 
@@ -80,15 +79,13 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, isPinn
               : t('timeseries.annotation-editor2.add-annotation', 'Add annotation')}
           </div>
           <div>{time}</div>
-          {isPinned && (
-            <AnnotationTooltipHeaderCloseIcon
-              onClick={(e) => {
-                // Don't trigger onClick
-                e.stopPropagation();
-                dismiss();
-              }}
-            />
-          )}
+          <AnnotationTooltipHeaderCloseIcon
+            onClick={(e) => {
+              // Don't trigger onClick
+              e.stopPropagation();
+              dismiss();
+            }}
+          />
         </Stack>
       </div>
       <Form<AnnotationEditFormDTO>
