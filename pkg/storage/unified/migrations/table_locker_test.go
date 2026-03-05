@@ -52,7 +52,7 @@ func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
 	m.EXPECT().Migrate(mock.Anything, mock.Anything).Return(&resourcepb.BulkResponse{}, nil)
 	m.EXPECT().RebuildIndexes(mock.Anything, mock.Anything).Return(nil)
 
-	runner := NewMigrationRunner(m, locker, def, nil)
+	runner := NewMigrationRunner(m, locker, &transactionalTableRenamer{log: logger}, setting.NewCfg(), def, nil)
 	engine := dbstore.GetEngine()
 	mg := migrator.NewMigrator(engine, setting.NewCfg())
 	sess := engine.NewSession()

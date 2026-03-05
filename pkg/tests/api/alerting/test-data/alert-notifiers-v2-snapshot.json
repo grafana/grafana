@@ -8502,7 +8502,7 @@
                 "label": "Region",
                 "description": "The AWS region. If blank, the region from the default credentials chain is used",
                 "placeholder": "",
-                "propertyName": "Region",
+                "propertyName": "region",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",
@@ -8520,7 +8520,7 @@
                 "label": "Access key",
                 "description": "The AWS API access_key. If blank the environment variable \"AWS_ACCESS_KEY_ID\" is used",
                 "placeholder": "",
-                "propertyName": "AccessKey",
+                "propertyName": "access_key",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",
@@ -8538,7 +8538,7 @@
                 "label": "Secret key",
                 "description": "The AWS API secret_key. If blank the environment variable \"AWS_ACCESS_SECRET_ID\" is used",
                 "placeholder": "",
-                "propertyName": "SecretKey",
+                "propertyName": "secret_key",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",
@@ -8556,7 +8556,7 @@
                 "label": "Profile",
                 "description": "Named AWS profile used to authenticate",
                 "placeholder": "",
-                "propertyName": "Profile",
+                "propertyName": "profile",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",
@@ -8574,7 +8574,7 @@
                 "label": "Role ARN",
                 "description": "AWS Role ARN, an alternative to using AWS API keys",
                 "placeholder": "",
-                "propertyName": "RoleARN",
+                "propertyName": "role_arn",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",

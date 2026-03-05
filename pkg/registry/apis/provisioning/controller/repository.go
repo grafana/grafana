@@ -235,8 +235,8 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	}
 	defer rc.queue.Done(item)
 
-	// TODO: should we move tracking work to trace ids instead?
-	logger := logging.FromContext(ctx).With("work_key", item.key)
+	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
+	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "repository", name)
 	logger.Info("RepositoryController processing key")
 
 	err := rc.processFn(item)
@@ -414,10 +414,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 		logger.Info("skip sync as it's disabled")
 		return nil
 	case isBlocked:
-		logger.Info("skip sync for repository over quota",
-			"repository", obj.Name,
-			"namespace", obj.Namespace,
-		)
+		logger.Info("skip sync for repository over quota")
 		return nil
 	case !healthStatus.Healthy:
 		logger.Info("skip sync for unhealthy repository")
@@ -572,6 +569,14 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 
+	logger = logger.With(
+		"namespace", namespace,
+		"repository", name,
+		"repositoryType", string(obj.Spec.Type),
+		"connection", obj.ConnectionName(),
+	)
+	ctx = logging.Context(ctx, logger)
+
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
 		return err
@@ -618,7 +623,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	case isCurrentlyBlocked && isOverQuota:
 		logger.Info("repository blocked and over quota, reconciling but skipping sync")
 	case !isCurrentlyBlocked && isOverQuota:
-		logger.Info("namespace over quota, blocking repository", "namespace", namespace, "max_repositories", newQuota.MaxRepositories)
+		logger.Info("namespace over quota, blocking repository", "max_repositories", newQuota.MaxRepositories)
 	case hasSpecChanged:
 		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
 	case shouldResync:
@@ -656,23 +661,17 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	if shouldGenerateToken {
-		logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
+		logger.Info("updating token for repository")
 
 		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 		if err != nil {
-			logger.Error("retrieving connection",
-				"connection", obj.Spec.Connection.Name,
-				"error", err,
-			)
+			logger.Error("retrieving connection", "error", err)
 			return err
 		}
 
 		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
 		if err != nil {
-			logger.Error("generating token for repository",
-				"connection", obj.Spec.Connection.Name,
-				"error", err,
-			)
+			logger.Error("generating token for repository", "error", err)
 			return err
 		}
 

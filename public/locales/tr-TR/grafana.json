@@ -388,7 +388,6 @@
         "timing-options": "Zamanlamalar"
       },
       "pending-period": "Bekleme süresi",
-      "rule": "Kural",
       "rule-identifier": "Kural tanımlayıcı",
       "rule-type": "Kural türü",
       "state-error-timeout": "Yürütme hatası veya zaman aşımı durumunda uyarı durumu",
@@ -3404,8 +3403,14 @@
     },
     "triage": {
       "alert-instances": "Uyarı örnekleri",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "Kural yüklenirken hata oluştu",
-      "firing-instances-count": "Uyarı örnekleri tetikleniyor",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "Örnek ayrıntıları"
       },
@@ -3415,7 +3420,6 @@
       "no-matching-instances-with-filters": "Seçilen zaman aralığında mevcut filtre grubunuzla eşleşen uyarı örneği yok.",
       "open-in-sidebar": "Kenar çubuğunda aç",
       "open-rule-details": "Kural ayrıntılarını aç",
-      "pending-instances-count": "Bekleyen uyarı örnekleri",
       "rule-details": {
         "subtitle": "Kural ayrıntıları ve koşulları",
         "title": "Kural Ayrıntıları"
@@ -3424,15 +3428,21 @@
         "description": "İstenen kural bulunamadı.",
         "title": "Kural bulunamadı"
       },
-      "rules-with-firing-instances": "Örnekleri tetiklenen uyarı kuralları",
-      "rules-with-pending-instances": "Beklemede örnekleri olan uyarı kuralları",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_one": "",
+      "hidden-label-count_other": "",
+      "show-all-labels_one": "",
+      "show-all-labels_other": "",
+      "show-all-values_one": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_one": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "İfade ekle"
@@ -3530,7 +3540,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "Ayrıntılar",
           "enrichment": "Uyarı zenginleştirme",
           "history": "Geçmiş",
           "instances": "Örnekler",
@@ -5452,11 +5461,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6876,10 +6887,8 @@
       "title-delete-all-transformations": "Tüm dönüşümler silinsin mi?"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "Tablo görünümünü aç/kapat",
-      "table-view-label-table-view": "Tablo görünümü",
-      "try-new-editor": ""
+      "table-view-label-table-view": "Tablo görünümü"
     },
     "panel-editor": {
       "text": {
@@ -7156,6 +7165,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Pano kaydedildi"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Bu değişken başka bir değişken veya pano tarafından referans alınmıyor.",
       "aria-label-variable-referenced-other-variables-dashboard": "Bu değişkene diğer değişkenler veya panolar tarafından başvuruluyor.",
@@ -7249,6 +7265,24 @@
       "show-more": "Daha fazla göster",
       "preview-of-values_one": "Değerlerin ön izlemesi ({{count}})",
       "preview-of-values_other": "Değerlerin ön izlemesi ({{count}})"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": "",
+      "title-hidden_one": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9885,6 +9919,7 @@
       "csv-placeholder": "Buraya CSV girin...",
       "filter": {
         "add-all": "Görüntülenen tüm değerleri filtreye ekle",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10901,6 +10936,7 @@
     "name-order": "Sıralama",
     "name-prettify-json": "JSON'u iyileştir",
     "name-show-controls": "Kontrolleri göster",
+    "name-show-level": "",
     "name-time": "Zaman damgalarını göster",
     "name-unique-labels": "Benzersiz etiketler",
     "name-unwrapped-columns": "",
@@ -11989,6 +12025,12 @@
       "could-anything-matching-query": "Sorgunuzla eşleşen hiçbir şey bulunamadı"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "Gruplandırma ölçütü",
     "loading": "Seçenekler yükleniyor",
@@ -12431,6 +12473,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Değişikliklerinizi açıklayan bir not ekleyin (isteğe bağlı)",
@@ -12470,9 +12518,6 @@
     "title-created-branch-in-repo": "{{repoType}} içindeki bir dalda yeni bir kaynak oluşturuldu.",
     "title-loaded-pull-request-in-repo": "Bu kaynak, {{repoType}} içinde yeni oluşturduğunuz daldan yüklendi ve yalnızca siz görebilirsiniz"
   },
-  "provisioned-resource-request-handler": "Kaynak başarıyla kaydedildi",
-  "provisioned-resource-request-handler-dashboard": "Pano başarıyla kaydedildi",
-  "provisioned-resource-request-handler-folder": "Klasör başarıyla oluşturuldu",
   "provisioning": {
     "banner": {
       "message": "Bu özellik şu anda aktif geliştirme aşamasındadır. En iyi deneyim ve en yeni geliştirmeler için Grafana'nın <2>gecelik derleme</2> sürümünü kullanmanızı öneririz."
@@ -13414,6 +13459,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {

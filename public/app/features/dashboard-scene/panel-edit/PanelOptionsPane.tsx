@@ -29,6 +29,8 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
+import { getDashboardSceneFor } from '../utils/utils';
+
 import { PanelEditor } from './PanelEditor';
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -42,10 +44,6 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
-  suggestionApplied?: {
-    suggestionName: string;
-    suggestionIndex: number;
-  };
 }
 
 interface PluginOptionsCache {
@@ -81,7 +79,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       from_suggestions: options.fromSuggestions ?? false,
     });
 
-    this.setState({ suggestionApplied: options.suggestionMetadata });
+    const dashboard = getDashboardSceneFor(this);
+    dashboard.recordPanelSuggestion(
+      panel.state.key!,
+      options.suggestionMetadata
+        ? { pluginId: options.pluginId, isNewPanel: this.state.isNewPanel ?? false, ...options.suggestionMetadata }
+        : undefined
+    );
 
     // clear custom options
     let newFieldConfig: FieldConfigSource = {
