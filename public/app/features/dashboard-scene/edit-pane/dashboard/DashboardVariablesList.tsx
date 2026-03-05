@@ -15,6 +15,8 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { dashboardEditActions } from '../shared';
 
+import { partitionSceneObjects } from './helpers';
+
 const ID_VISIBLE_LIST = 'variables-list-visible';
 const ID_CONTROLS_MENU_LIST = 'variables-list-controls-menu';
 const ID_HIDDEN_LIST = 'variables-list-hidden';
@@ -223,25 +225,8 @@ function getTargetHide(droppableId: string, currentHide: VariableHide): Variable
   return DROPPABLE_TO_HIDE[droppableId];
 }
 
-function partitionVariables<K extends string>(
-  variables: SceneVariable[],
-  getPartitionKey: (v: SceneVariable) => K | null
-): Partial<Record<K, SceneVariable[]>> {
-  const result: Partial<Record<K, SceneVariable[]>> = {};
-  for (const v of variables) {
-    const key = getPartitionKey(v);
-    if (key !== null) {
-      if (!result[key]) {
-        result[key] = [];
-      }
-      result[key].push(v);
-    }
-  }
-  return result;
-}
-
 export function partitionVariablesByEditability(variables: SceneVariable[]) {
-  const { editable = [], nonEditable = [] } = partitionVariables(variables, (v) =>
+  const { editable = [], nonEditable = [] } = partitionSceneObjects(variables, (v) =>
     isEditableVariableType(v.state.type) ? 'editable' : 'nonEditable'
   );
   return { editable, nonEditable };
@@ -252,7 +237,7 @@ export function partitionVariablesByDisplay(variables: SceneVariable[]) {
     visible = [],
     controlsMenu = [],
     hidden = [],
-  } = partitionVariables(variables, (v) => {
+  } = partitionSceneObjects(variables, (v) => {
     if (!isEditableVariableType(v.state.type)) {
       return null;
     }
