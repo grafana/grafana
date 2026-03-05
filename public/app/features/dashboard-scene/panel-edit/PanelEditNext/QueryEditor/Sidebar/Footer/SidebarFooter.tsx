@@ -4,13 +4,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { FOOTER_HEIGHT, getQueryEditorColors, QueryEditorType } from '../../constants';
+import { FOOTER_HEIGHT, getQueryEditorColors, QueryEditorType } from '../../../constants';
 import {
   useAlertingContext,
   usePanelContext,
   useQueryEditorUIContext,
   useQueryRunnerContext,
-} from '../QueryEditorContext';
+} from '../../QueryEditorContext';
 
 export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();

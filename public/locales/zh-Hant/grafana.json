@@ -388,7 +388,6 @@
         "timing-options": "時間"
       },
       "pending-period": "待處理期間",
-      "rule": "規則",
       "rule-identifier": "規則識別碼",
       "rule-type": "規則類型",
       "state-error-timeout": "如果執行錯誤或逾時，則警報狀態",
@@ -3390,8 +3389,14 @@
     },
     "triage": {
       "alert-instances": "警報執行個體",
+      "all-labels": "",
+      "all-labels-drawer-title": "",
+      "compact-firing": "",
+      "compact-instances": "",
+      "compact-pending": "",
+      "compact-rules": "",
       "error-loading-rule": "載入規則時發生錯誤",
-      "firing-instances-count": "觸發警報執行個體",
+      "high-activity-labels": "",
       "instance-details-drawer": {
         "instance-details": "執行個體詳細資料"
       },
@@ -3401,7 +3406,6 @@
       "no-matching-instances-with-filters": "沒有警報執行個體符合您所選時間範圍的目前篩選條件。",
       "open-in-sidebar": "在側邊欄中開啟",
       "open-rule-details": "開啟規則詳細資料",
-      "pending-instances-count": "待處理的警報執行個體",
       "rule-details": {
         "subtitle": "規則詳細資料和條件",
         "title": "規則詳細資訊"
@@ -3410,15 +3414,17 @@
         "description": "找不到要求的規則。",
         "title": "找不到規則"
       },
-      "rules-with-firing-instances": "帶有觸發執行個體的警報規則",
-      "rules-with-pending-instances": "帶有待處理執行個體的警報規則",
       "saved-searches": {
         "predefined": {
           "firing-only": "",
           "folder-firing": "",
           "folder-only": ""
         }
-      }
+      },
+      "hidden-label-count_other": "",
+      "show-all-labels_other": "",
+      "show-all-values_other": "",
+      "tooltip-more-values_other": ""
     },
     "type-selector-button": {
       "add-expression": "新增表達式"
@@ -3516,7 +3522,6 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "details": "詳細資訊",
           "enrichment": "警報增強功能",
           "history": "歷史紀錄",
           "instances": "執行個體",
@@ -5430,11 +5435,13 @@
       "groupby": "",
       "missing-adhoc": "",
       "operator": "",
+      "restore": "",
       "search": {
         "aria-label": "",
         "placeholder": ""
       },
       "title": "",
+      "use-custom-value": "",
       "value": ""
     },
     "gen-aihistory": {
@@ -6851,10 +6858,8 @@
       "title-delete-all-transformations": "是否要刪除所有轉換？"
     },
     "panel-edit-controls": {
-      "back-to-classic": "",
       "table-view-aria-label-toggletableview": "切換表格檢視",
-      "table-view-label-table-view": "表格檢視",
-      "try-new-editor": ""
+      "table-view-label-table-view": "表格檢視"
     },
     "panel-editor": {
       "text": {
@@ -7130,6 +7135,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "此變數未被任何變數或儀表板參照使用。",
       "aria-label-variable-referenced-other-variables-dashboard": "此變數被其他變數或儀表板參照使用。",
@@ -7222,6 +7234,21 @@
     "variable-values-preview": {
       "show-more": "顯示更多",
       "preview-of-values_other": "數值預覽（{{count}} 個）"
+    },
+    "variables-list": {
+      "add-variable": "",
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": ""
+        }
+      },
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": "",
+      "title-hidden_other": ""
+    },
+    "variables-section": {
+      "content-drag-to-reorder": "",
+      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -9846,6 +9873,7 @@
       "csv-placeholder": "在此處輸入 CSV …",
       "filter": {
         "add-all": "將所有顯示的值新增至篩選條件",
+        "blanks": "",
         "button": "",
         "operator": {
           "contains": "",
@@ -10854,6 +10882,7 @@
     "name-order": "順序",
     "name-prettify-json": "美化 JSON",
     "name-show-controls": "顯示控制項",
+    "name-show-level": "",
     "name-time": "顯示時間戳記",
     "name-unique-labels": "唯一標籤",
     "name-unwrapped-columns": "",
@@ -11939,6 +11968,12 @@
       "could-anything-matching-query": "找不到符合您查詢的內容"
     }
   },
+  "panel-data-pane": {
+    "try-new-editor": {
+      "label": "",
+      "tooltip": ""
+    }
+  },
   "panel-group-by": {
     "button": "分組依據",
     "loading": "正在載入選項",
@@ -12381,6 +12416,12 @@
     "sync-needed": "",
     "view-folder": ""
   },
+  "provisioned-request": {
+    "push-success": {
+      "prefix": ""
+    },
+    "saved-success": ""
+  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "新增備註以描述您的變更（選填）",
@@ -12420,9 +12461,6 @@
     "title-created-branch-in-repo": "已在 {{repoType}} 的分支中建立新資源。",
     "title-loaded-pull-request-in-repo": "此資源是從您剛剛在 {{repoType}} 中建立的分支載入，且只有您可以查看"
   },
-  "provisioned-resource-request-handler": "資源已成功儲存",
-  "provisioned-resource-request-handler-dashboard": "儀表板已成功儲存",
-  "provisioned-resource-request-handler-folder": "已成功建立資料夾",
   "provisioning": {
     "banner": {
       "message": "此功能目前正在積極開發中。為了獲得最佳體驗和最新改進版本，建議使用 Grafana 的<2>夜間版本</2>。"
@@ -13357,6 +13395,12 @@
       "width-of-panel": ""
     },
     "edit-query-name": "",
+    "experimental-button": {
+      "aria-label": "",
+      "back-to-classic": "",
+      "give-feedback": "",
+      "tooltip": ""
+    },
     "footer": {
       "edit-option": "",
       "label": {
