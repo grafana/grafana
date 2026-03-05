@@ -4,6 +4,7 @@ import { debounce } from 'lodash';
 import { NavIndex, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
@@ -419,7 +420,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
-    useQueryExperienceNext: config.featureToggles.queryEditorNext,
+    useQueryExperienceNext: getFeatureFlagClient().getBooleanValue('queryEditorNext', false),
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,
