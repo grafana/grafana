@@ -56,7 +56,7 @@ export function DashboardControlsMenu({
       {annotations.length > 0 &&
         annotations.map((layer, index) => (
           <div key={layer.state.key}>
-            <DataLayerControl layer={layer} inMenu isEditingNewLayouts={isEditingNewLayouts} />
+            <DataLayerControl layer={layer} inMenu />
           </div>
         ))}
 
