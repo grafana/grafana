@@ -299,24 +299,22 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	}
 	helper.CreateRepo(t, testRepo1)
 
-	// Print file tree before export
+	// Print file tree before migration
 	printFileTree(t, helper.ProvisioningPath)
 
-	// Initial export
-	helper.DebugState(t, repo1, "BEFORE INITIAL EXPORT")
+	// Migrate repo1: export unmanaged dashboards then sync to claim them
+	helper.DebugState(t, repo1, "BEFORE INITIAL MIGRATION")
 
 	spec := provisioning.JobSpec{
-		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Folder: "", // export entire instance
-			Path:   "", // no prefix necessary for testing
+		Action: provisioning.JobActionMigrate,
+		Migrate: &provisioning.MigrateJobOptions{
+			Message: "initial migration",
 		},
 	}
 
 	helper.TriggerJobAndWaitForSuccess(t, repo1, spec)
 
-	helper.DebugState(t, repo1, "AFTER INITIAL EXPORT")
-	helper.SyncAndWait(t, repo1, nil)
+	helper.DebugState(t, repo1, "AFTER INITIAL MIGRATION")
 
 	printFileTree(t, helper.ProvisioningPath)
 	// Verify that the first repository has claimed ownership of the dashboards
@@ -380,23 +378,21 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	files1Before, err := countFilesInDir(repo1Path)
 	require.NoError(t, err)
 
-	// Export from second repository - this should only export the unmanaged dashboard3
-	helper.DebugState(t, repo2, "BEFORE SECOND EXPORT")
+	// Migrate second repository - this should only export the unmanaged dashboard3 and claim it
+	helper.DebugState(t, repo2, "BEFORE SECOND MIGRATION")
 
 	spec = provisioning.JobSpec{
-		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Folder: "", // export entire instance
-			Path:   "", // no prefix necessary for testing
+		Action: provisioning.JobActionMigrate,
+		Migrate: &provisioning.MigrateJobOptions{
+			Message: "second migration",
 		},
 	}
 	helper.TriggerJobAndWaitForSuccess(t, repo2, spec)
 
-	helper.DebugState(t, repo2, "AFTER SECOND EXPORT")
+	helper.DebugState(t, repo2, "AFTER SECOND MIGRATION")
 
-	// Wait for both repositories to sync
+	// Ensure repo1 is still in sync
 	helper.SyncAndWait(t, repo1, nil)
-	helper.SyncAndWait(t, repo2, nil)
 
 	printFileTree(t, helper.ProvisioningPath)
 	files1After, err := countFilesInDir(repo1Path)

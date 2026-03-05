@@ -38,7 +38,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				pr.On("StrictMaxErrors", 1).Return()
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
-				}), pr).Return(errors.New("export failed"))
+				}), mock.Anything).Return(errors.New("export failed"))
 			},
 			expectedError: "export resources: export failed",
 		},
@@ -60,7 +60,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				pr.On("StrictMaxErrors", 1).Return()
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
-				}), pr).Return(nil)
+				}), mock.Anything).Return(nil)
 				pr.On("ResetResults", false).Return()
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
@@ -90,7 +90,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				// Export and sync jobs succeed
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
-				}), pr).Return(nil)
+				}), mock.Anything).Return(nil)
 				pr.On("ResetResults", false).Return()
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
@@ -119,7 +119,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				// Export job succeeds
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
-				}), pr).Return(nil)
+				}), mock.Anything).Return(nil)
 
 				nc.On("Clean", mock.Anything, "test-namespace", pr).Return(nil)
 				// Reset progress and sync job succeeds
@@ -152,7 +152,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				pr.On("StrictMaxErrors", 1).Return()
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
-				}), pr).Return(nil)
+				}), mock.Anything).Return(nil)
 				pr.On("ResetResults", false).Return()
 				// Cleaner should be skipped - no cleaner-related mocks
 				// Sync job should run
@@ -182,7 +182,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				pr.On("StrictMaxErrors", 1).Return()
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
-				}), pr).Return(nil)
+				}), mock.Anything).Return(nil)
 				pr.On("ResetResults", false).Return()
 				// Sync job should run and fail
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
@@ -211,7 +211,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				pr.On("StrictMaxErrors", 1).Return()
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
-				}), pr).Return(nil)
+				}), mock.Anything).Return(nil)
 				pr.On("ResetResults", false).Return()
 
 				// Sync job and cleanup should also run
@@ -243,7 +243,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				pr.On("StrictMaxErrors", 1).Return()
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil
-				}), pr).Return(nil)
+				}), mock.Anything).Return(nil)
 				pr.On("ResetResults", false).Return()
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
@@ -273,7 +273,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 				// Verify that the export job receives the migrate message
 				ew.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
 					return job.Spec.Push != nil && job.Spec.Push.Message == "test migration message"
-				}), pr).Return(nil)
+				}), mock.Anything).Return(nil)
 				pr.On("ResetResults", false).Return()
 				pr.On("SetMessage", mock.Anything, "pull resources").Return()
 				sw.On("Process", mock.Anything, rw, mock.MatchedBy(func(job provisioning.Job) bool {
