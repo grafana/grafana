@@ -34,7 +34,7 @@ import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepositor
 import { RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
 import { getConfigFormErrors } from '../utils/getFormErrors';
-import { getHasTokenInstructions } from '../utils/git';
+import { getHasTokenInstructions, isBranchProtected } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
@@ -80,6 +80,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const [type, readOnly] = watch(['type', 'readOnly']);
+  const branch = watch('branch');
+  const enablePushToConfiguredBranch = watch('enablePushToConfiguredBranch');
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
@@ -107,6 +109,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
       value: ref.name,
     }));
   }, [refsData?.items]);
+
+  const selectedBranchIsProtected = isBranchProtected(refsData?.items, branch);
 
   // Get field configurations based on provider type
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
@@ -355,6 +359,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
             register={register}
             registerName="enablePushToConfiguredBranch"
             readOnly={readOnly}
+            branchIsProtected={selectedBranchIsProtected}
+            currentValue={enablePushToConfiguredBranch}
           />
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}

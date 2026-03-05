@@ -7,6 +7,8 @@ import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alph
 
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
+import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
+import { isBranchProtected } from '../utils/git';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields } from './fields';
@@ -21,7 +23,16 @@ export const FinishStep = memo(function FinishStep() {
   } = useFormContext<WizardFormData>();
   const settings = useGetFrontendSettingsQuery();
 
-  const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
+  const [type, readOnly, repositoryName, branch, enablePushToConfiguredBranch] = watch([
+    'repository.type',
+    'repository.readOnly',
+    'repositoryName',
+    'repository.branch',
+    'repository.enablePushToConfiguredBranch',
+  ]);
+
+  const { branchData } = useGetRepositoryRefs({ repositoryType: type, repositoryName });
+  const branchIsProtected = isBranchProtected(branchData?.items, branch);
 
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
@@ -97,6 +108,8 @@ export const FinishStep = memo(function FinishStep() {
           register={register}
           readOnly={readOnly}
           registerName="repository.enablePushToConfiguredBranch"
+          branchIsProtected={branchIsProtected}
+          currentValue={enablePushToConfiguredBranch}
         />
       )}
 

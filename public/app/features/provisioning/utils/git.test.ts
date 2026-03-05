@@ -1,6 +1,6 @@
 import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getRepoFileUrl, getRepoHrefForProvider } from './git';
+import { getRepoFileUrl, getRepoHrefForProvider, isBranchProtected } from './git';
 
 // Partial specs for testing; getRepoHrefForProvider only reads type and provider url/branch/path.
 function spec(s: Partial<RepositorySpec>): RepositorySpec {
@@ -214,5 +214,37 @@ describe('getRepoFileUrl', () => {
         filePath: undefined,
       })
     ).toBeUndefined();
+  });
+});
+
+describe('isBranchProtected', () => {
+  const refs = [{ name: 'main', protected: true }, { name: 'develop', protected: false }, { name: 'feature/test' }];
+
+  it('returns true when the branch is marked as protected', () => {
+    expect(isBranchProtected(refs, 'main')).toBe(true);
+  });
+
+  it('returns false when the branch is explicitly not protected', () => {
+    expect(isBranchProtected(refs, 'develop')).toBe(false);
+  });
+
+  it('returns false when the branch has no protected field', () => {
+    expect(isBranchProtected(refs, 'feature/test')).toBe(false);
+  });
+
+  it('returns false when the branch is not found in refs', () => {
+    expect(isBranchProtected(refs, 'nonexistent')).toBe(false);
+  });
+
+  it('returns false when refs is undefined', () => {
+    expect(isBranchProtected(undefined, 'main')).toBe(false);
+  });
+
+  it('returns false when branchName is undefined', () => {
+    expect(isBranchProtected(refs, undefined)).toBe(false);
+  });
+
+  it('returns false when both arguments are undefined', () => {
+    expect(isBranchProtected(undefined, undefined)).toBe(false);
   });
 });

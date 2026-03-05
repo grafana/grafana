@@ -3,6 +3,19 @@ import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 import { InstructionAvailability, RepoType } from '../Wizard/types';
 
 /**
+ * Check whether a branch is marked as protected in the refs endpoint response.
+ */
+export function isBranchProtected(
+  refsItems: Array<{ name?: string; protected?: boolean }> | undefined,
+  branchName: string | undefined
+): boolean {
+  if (!refsItems || !branchName) {
+    return false;
+  }
+  return refsItems.find((ref) => ref.name === branchName)?.protected ?? false;
+}
+
+/**
  * Validates a Git branch name according to the following rules:
  * 1. The branch name cannot start with `/`, end with `/`, `.`, or whitespace.
  * 2. The branch name cannot contain consecutive slashes (`//`).
