@@ -228,7 +228,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
-		if errors.Is(err, ErrResourceNotFound) {
+		if errors.Is(err, repository.ErrFileNotFound) {
 			return nil, repository.ErrFileNotFound
 		}
 

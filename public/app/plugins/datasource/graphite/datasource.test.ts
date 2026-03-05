@@ -10,6 +10,7 @@ import {
   DataQueryResponse,
   dateMath,
   dateTime,
+  FieldType,
   getFrameDisplayName,
   MetricFindValue,
   PluginType,
@@ -1577,6 +1578,52 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
       expect(data[0].text).toBe('apps.backend.backend_01');
       expect(data[1].text).toBe('apps.backend.backend_02');
+    });
+
+    it('should return metric names when queryType is GraphiteQueryType.MetricName in backend mode', async () => {
+      config.featureToggles.graphiteBackendMode = true;
+
+      const backendResponse: DataQueryResponse = {
+        data: [
+          {
+            fields: [
+              { name: 'time', type: FieldType.time, values: [1, 2], config: {} },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [10, 12],
+                config: { displayNameFromDS: 'apps.backend.backend_01' },
+              },
+            ],
+            length: 2,
+          },
+          {
+            fields: [
+              { name: 'time', type: FieldType.time, values: [1, 2], config: {} },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [10, 12],
+                config: { displayNameFromDS: 'apps.backend.backend_02' },
+              },
+            ],
+            length: 2,
+          },
+        ],
+      };
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of(backendResponse));
+
+      const variableQuery: GraphiteQuery = {
+        queryType: GraphiteQueryType.MetricName,
+        target: 'apps.backend.*',
+        refId: 'A',
+        datasource: ctx.ds,
+      };
+      const data = await ctx.ds.metricFindQuery(variableQuery);
+      expect(data[0].text).toBe('apps.backend.backend_01');
+      expect(data[1].text).toBe('apps.backend.backend_02');
+
+      config.featureToggles.graphiteBackendMode = false;
     });
   });
 

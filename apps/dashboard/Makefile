@@ -10,13 +10,7 @@ generate: do-generate post-generate-cleanup ## Run Grafana App SDK code generati
 
 .PHONY: do-generate
 do-generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
-	@$(APP_SDK_BIN) generate \
-		--source=./kinds/ \
-		--gogenpath=./pkg/apis \
-		--tsgenpath=../../packages/grafana-schema/src/schema \
-		--grouping=group \
-		--defencoding=none \
-		--genoperatorstate=false
+	@$(APP_SDK_BIN) generate --source=./kinds/
 
 .PHONY: post-generate-cleanup
 post-generate-cleanup: ## Clean up the generated code

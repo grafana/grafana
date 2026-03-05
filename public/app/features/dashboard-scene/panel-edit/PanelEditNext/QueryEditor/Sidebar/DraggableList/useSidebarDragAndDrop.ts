@@ -1,13 +1,14 @@
 import { DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
+import { trackReorder } from '../../../tracking';
 import {
   useActionsContext,
   usePanelContext,
   useQueryEditorUIContext,
   useQueryRunnerContext,
-} from '../QueryEditorContext';
-import { getTransformId } from '../utils';
+} from '../../QueryEditorContext';
+import { getTransformId } from '../../utils';
 
 function getDropIndices(result: DropResult): { startIndex: number; endIndex: number } | null {
   if (!result.destination || result.source.index === result.destination.index) {
@@ -36,6 +37,7 @@ export function useSidebarDragAndDrop() {
         return;
       }
       const { startIndex, endIndex } = drop;
+      trackReorder('query');
       updateQueries(reorder(queries, startIndex, endIndex));
       setSelectedQuery(queries[startIndex]);
     },
@@ -50,6 +52,7 @@ export function useSidebarDragAndDrop() {
       }
       const { startIndex, endIndex } = drop;
       const draggedTransformation = transformations[startIndex];
+      trackReorder('transformation');
       reorderTransformations(reorder(transformations, startIndex, endIndex).map((t) => t.transformConfig));
       setSelectedTransformation({
         ...draggedTransformation,
