@@ -15,9 +15,9 @@ export const summaryChartVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
   .setCustomFieldConfig('barWidthFactor', 1)
   .setCustomFieldConfig('barAlignment', BarAlignment.Center)
-  .setCustomFieldConfig('fillOpacity', 60)
+  .setCustomFieldConfig('fillOpacity', 100)
   .setCustomFieldConfig('lineWidth', 0)
-  .setCustomFieldConfig('stacking', { mode: StackingMode.None })
+  .setCustomFieldConfig('stacking', { mode: StackingMode.Normal })
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
   .setOption('legend', {
     showLegend: false,
