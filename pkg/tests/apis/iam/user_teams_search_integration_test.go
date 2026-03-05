@@ -55,7 +55,6 @@ func TestIntegrationUserTeams(t *testing.T) {
 					featuremgmt.FlagKubernetesTeamBindings,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() { helper.Shutdown() })

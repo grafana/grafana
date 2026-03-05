@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { Button, ConfirmModal, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { QUERY_EDITOR_COLORS, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from './constants';
+import { trackCardAction } from './tracking';
 
 export interface ActionItem {
   name: string;
@@ -73,10 +74,11 @@ export function Actions({
       if (requiresDeleteConfirmation) {
         setShowDeleteConfirmation(true);
       } else {
+        trackCardAction('delete', item.type);
         onDelete();
       }
     },
-    [requiresDeleteConfirmation, onDelete, handleResetFocus]
+    [requiresDeleteConfirmation, onDelete, handleResetFocus, item.type]
   );
 
   const handleConfirmDelete = useCallback(() => {
@@ -84,10 +86,11 @@ export function Actions({
       return;
     }
 
+    trackCardAction('delete', item.type);
     onDelete();
     setShowDeleteConfirmation(false);
     handleResetFocus?.();
-  }, [onDelete, handleResetFocus]);
+  }, [onDelete, handleResetFocus, item.type]);
 
   const handleDismissModal = useCallback(() => {
     setShowDeleteConfirmation(false);
@@ -108,6 +111,7 @@ export function Actions({
         label: labels.duplicate,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
+          trackCardAction('duplicate', item.type);
           onDuplicate();
         },
       },
@@ -123,6 +127,7 @@ export function Actions({
         label: item.isHidden ? labels.show : labels.hide,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
+          trackCardAction('toggle_hide', item.type);
           onToggleHide();
         },
       },
@@ -137,6 +142,7 @@ export function Actions({
     labels.remove,
     onToggleHide,
     item.isHidden,
+    item.type,
     onDelete,
     handleDelete,
     order,

@@ -919,6 +919,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "adHocFilterDefaultValues",
+			Description:  "Enables configuring default origin filters for ad-hoc filter variables",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "cloudWatchNewLabelParsing",
 			Description:  "Updates CloudWatch label parsing to be more accurate",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1005,6 +1014,14 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingAlertListPanelEnhancements",
+			Description:  "Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
 			Expression:   "false",
 		},
 		{
@@ -2135,10 +2152,10 @@ var (
 		{
 			Name:         "newGauge",
 			Description:  "Enable new gauge visualization",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "newVizSuggestions",
@@ -2167,6 +2184,14 @@ var (
 		{
 			Name:         "externalVizSuggestions",
 			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "vizLegendSeriesLimit",
+			Description:  "Limit the number of legend items by default, with an option to show all",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
@@ -2329,6 +2354,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardSectionVariables",
+			Description:  "Enables support for section level variables (rows and tabs)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "smoothingTransformation",
 			Description:  "Enables the ASAP smoothing transformation for time series data",
 			Stage:        FeatureStageExperimental,
@@ -2461,6 +2494,14 @@ var (
 		{
 			Name:         "alertingNotificationHistoryGlobal",
 			Description:  "Enables the notification history global menu item viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryTriage",
+			Description:  "Enables the notification history timeline in the triage instance details drawer",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,

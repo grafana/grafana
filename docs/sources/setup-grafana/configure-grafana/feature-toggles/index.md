@@ -64,6 +64,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown` | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
+| `newGauge`                            | Enable new gauge visualization                                                                                                                                | Yes                |
 | `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 
 ## Public preview feature toggles
@@ -93,7 +94,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `newGauge`                        | Enable new gauge visualization                                                                         |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `vizPresets`                      | Enable visualization presets                                                                           |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |

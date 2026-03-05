@@ -29,6 +29,7 @@ v0alpha1: {
 		namespaced: {
 			"/searchUsers": {
 				"GET": {
+					name: "getSearchUsers",
 					request: {
 						query: {
 							query?: string
@@ -52,6 +53,7 @@ v0alpha1: {
 			}
 			"/searchTeams": {
 				"GET": {
+				  name: "getSearchTeams",
 					request: {
 						query: { 
 							query?: string
