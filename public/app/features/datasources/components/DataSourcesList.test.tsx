@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
@@ -42,6 +43,10 @@ const mockUseQueryParams = jest.fn(() => [{ starred: undefined }, mockUpdateQuer
 jest.mock('app/core/hooks/useQueryParams', () => ({
   useQueryParams: () => mockUseQueryParams(),
 }));
+
+// contextSrv is imported by the component — spy on hasRole to simulate admin
+import { contextSrv } from 'app/core/services/context_srv';
+jest.spyOn(contextSrv, 'hasRole').mockImplementation((role: string) => role === 'Admin');
 
 const setup = (overrides: Partial<ViewProps> = {}) => {
   const defaultProps = {
@@ -137,6 +142,97 @@ describe('<DataSourcesList>', () => {
       expect(screen.getByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'dataSource-2' })).toBeInTheDocument();
       expect(screen.queryByRole('heading', { name: 'dataSource-1' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Advisor health status', () => {
+    const advisorHealthAvailable = (unhealthyUids: string[] = []) => ({
+      healthMap: new Map(unhealthyUids.map((uid) => [uid, 'unhealthy' as const])),
+      isLoading: false,
+      isAvailable: true,
+    });
+
+    beforeEach(() => {
+      config.featureToggles.grafanaAdvisor = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.grafanaAdvisor = false;
+    });
+
+    it('should not show health filter when feature toggle is off', async () => {
+      config.featureToggles.grafanaAdvisor = false;
+      setup();
+
+      expect(await screen.findByPlaceholderText('Search by name or type')).toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: 'All' })).not.toBeInTheDocument();
+    });
+
+    it('should show health filter when feature toggle is on and user is admin', async () => {
+      setup();
+
+      expect(await screen.findByRole('radio', { name: 'All' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Healthy' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Unhealthy' })).toBeInTheDocument();
+    });
+
+    it('should show health filter even when no checks have run yet', async () => {
+      // No advisorHealth prop = no data yet, but filter should still show
+      setup();
+
+      expect(await screen.findByRole('radio', { name: 'All' })).toBeInTheDocument();
+    });
+
+    it('should show unhealthy badge for datasources with failures', async () => {
+      setup({ advisorHealth: advisorHealthAvailable(['uid-1']) });
+
+      const listItems = await screen.findAllByRole('listitem');
+      expect(listItems).toHaveLength(3);
+      // The unhealthy datasource card (uid-1 = dataSource-1) should contain "Unhealthy" badge text
+      const unhealthyCard = listItems[1];
+      expect(within(unhealthyCard).getByText('Unhealthy')).toBeInTheDocument();
+    });
+
+    it('should not show unhealthy badge for healthy datasources', async () => {
+      setup({ advisorHealth: advisorHealthAvailable(['uid-1']) });
+
+      const listItems = await screen.findAllByRole('listitem');
+      // Healthy cards should not contain "Unhealthy" text
+      expect(within(listItems[0]).queryByText('Unhealthy')).not.toBeInTheDocument();
+      expect(within(listItems[2]).queryByText('Unhealthy')).not.toBeInTheDocument();
+    });
+
+    it('should filter to show only unhealthy datasources', async () => {
+      setup({ advisorHealth: advisorHealthAvailable(['uid-1']) });
+
+      await screen.findAllByRole('listitem');
+      await userEvent.click(screen.getByRole('radio', { name: 'Unhealthy' }));
+
+      const listItems = await screen.findAllByRole('listitem');
+      expect(listItems).toHaveLength(1);
+      expect(screen.getByRole('heading', { name: 'dataSource-1' })).toBeInTheDocument();
+    });
+
+    it('should filter to show only healthy datasources', async () => {
+      setup({ advisorHealth: advisorHealthAvailable(['uid-1']) });
+
+      await screen.findAllByRole('listitem');
+      await userEvent.click(screen.getByRole('radio', { name: 'Healthy' }));
+
+      const listItems = await screen.findAllByRole('listitem');
+      expect(listItems).toHaveLength(2);
+      expect(screen.getByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'dataSource-2' })).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'dataSource-1' })).not.toBeInTheDocument();
+    });
+
+    it('should show empty state when filtering unhealthy and all are healthy', async () => {
+      setup({ advisorHealth: advisorHealthAvailable([]) });
+
+      await screen.findAllByRole('listitem');
+      await userEvent.click(screen.getByRole('radio', { name: 'Unhealthy' }));
+
+      expect(screen.getByText('No data sources found')).toBeInTheDocument();
     });
   });
 });

@@ -219,7 +219,7 @@ func TestProcessCheckRetry_RetryError(t *testing.T) {
 		t.Fatal(err)
 	}
 	meta.SetCreatedBy("user:1")
-	client := &mockClient{}
+	client := &mockClient{res: obj}
 	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
@@ -346,6 +346,85 @@ func TestProcessCheckRetry_Success_Polling(t *testing.T) {
 	assert.Equal(t, 1, retryCount)
 }
 
+func TestProcessCheckRetry_NewFailuresAdded(t *testing.T) {
+	// Scenario: a previously healthy datasource is now broken.
+	// The retry should ADD new failures to the report.
+	retryAnnotationPollingInterval = 1 * time.Millisecond
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{
+		checks.RetryAnnotation:  "ds-1",
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	// Report has an existing failure for a different item
+	obj.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+		{ItemID: "ds-2", StepID: "health-check"},
+	}
+	obj.Status.Report.Count = 5
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
+	client := &mockClient{res: obj}
+	typesClient := &mockTypesClient{}
+	ctx := context.TODO()
+
+	check := &mockCheck{
+		items: []any{"ds-1"},
+	}
+	// Override the step to return a failure with specific ItemID/StepID
+	check.steps = []checks.Step{
+		&failingMockStep{itemID: "ds-1", stepID: "health-check"},
+	}
+
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
+	assert.NoError(t, err)
+	// Should have 2 failures: original ds-2 + new ds-1
+	assert.Len(t, obj.Status.Report.Failures, 2)
+	// Verify both failures are present
+	failureItemIDs := map[string]string{}
+	for _, f := range obj.Status.Report.Failures {
+		failureItemIDs[f.ItemID] = f.StepID
+	}
+	assert.Equal(t, "health-check", failureItemIDs["ds-1"])
+	assert.Equal(t, "health-check", failureItemIDs["ds-2"])
+}
+
+func TestProcessCheckRetry_ResolvedFailureRemoved(t *testing.T) {
+	// Scenario: a previously broken datasource is now fixed.
+	// The retry should REMOVE the old failure from the report.
+	retryAnnotationPollingInterval = 1 * time.Millisecond
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{
+		checks.RetryAnnotation:  "ds-1",
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	obj.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+		{ItemID: "ds-1", StepID: "health-check"},
+		{ItemID: "ds-2", StepID: "health-check"},
+	}
+	obj.Status.Report.Count = 5
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
+	client := &mockClient{res: obj}
+	typesClient := &mockTypesClient{}
+	ctx := context.TODO()
+
+	// Step returns no failures (ds-1 is now healthy)
+	check := &mockCheck{
+		items: []any{"ds-1"},
+	}
+
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
+	assert.NoError(t, err)
+	// Only ds-2 failure should remain
+	assert.Len(t, obj.Status.Report.Failures, 1)
+	assert.Equal(t, "ds-2", obj.Status.Report.Failures[0].ItemID)
+}
+
 func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
 	// Create an HTTP request with headers to simulate the real scenario
 	req, err := http.NewRequest("GET", "/test", nil)
@@ -443,6 +522,7 @@ type mockCheck struct {
 	err       error
 	items     []any
 	runPanics bool
+	steps     []checks.Step
 }
 
 func (m *mockCheck) ID() string {
@@ -466,6 +546,9 @@ func (m *mockCheck) Init(ctx context.Context) error {
 }
 
 func (m *mockCheck) Steps() []checks.Step {
+	if m.steps != nil {
+		return m.steps
+	}
 	return []checks.Step{
 		&mockStep{err: m.err, panics: m.runPanics},
 	}
@@ -504,6 +587,23 @@ func (m *mockStep) Resolution() string {
 func (m *mockStep) ID() string {
 	return "mock"
 }
+
+// failingMockStep always returns a failure with specific ItemID and StepID
+type failingMockStep struct {
+	itemID string
+	stepID string
+}
+
+func (f *failingMockStep) Run(_ context.Context, _ logging.Logger, _ *advisorv0alpha1.CheckSpec, _ any) ([]advisorv0alpha1.CheckReportFailure, error) {
+	return []advisorv0alpha1.CheckReportFailure{
+		{ItemID: f.itemID, StepID: f.stepID, Severity: "high"},
+	}, nil
+}
+
+func (f *failingMockStep) Title() string       { return "failing mock" }
+func (f *failingMockStep) Description() string  { return "failing mock" }
+func (f *failingMockStep) Resolution() string   { return "failing mock" }
+func (f *failingMockStep) ID() string           { return f.stepID }
 
 // headerModifyingStep is a mock step that modifies HTTP headers to simulate
 // the behavior of CookiesMiddleware and other middleware that caused the original panic

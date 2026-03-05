@@ -121,12 +121,22 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 	} else {
 		log.Debug("Item to retry found", "check", obj.GetName(), "item", itemToRetry)
 	}
+	// Re-fetch the full object from the API to get the complete status subresource.
+	// The admission webhook's req.Object may have an empty status when the PATCH
+	// only modifies annotations on the main resource.
+	obj, err := client.Get(ctx, resource.Identifier{
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
+	})
+	if err != nil {
+		return fmt.Errorf("error fetching check for retry: %w", err)
+	}
 	c, ok := obj.(*advisorv0alpha1.Check)
 	if !ok {
 		return fmt.Errorf("invalid object type")
 	}
 	// Get the items to check
-	err := check.Init(ctx)
+	err = check.Init(ctx)
 	if err != nil {
 		return fmt.Errorf("error initializing check: %w", err)
 	}
@@ -163,7 +173,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 			return fmt.Errorf("error running steps: %w", err)
 		}
 	}
-	// Pull failures from the report for the items to retry
+	// Remove old failures for the retried item that are no longer present
 	c.Status.Report.Failures = slices.DeleteFunc(c.Status.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
 		if f.ItemID == itemToRetry {
 			for _, newFailure := range failures {
@@ -178,6 +188,19 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		// Failure not in the list of items to retry, keep it
 		return false
 	})
+	// Add new failures that weren't already in the report
+	for _, newFailure := range failures {
+		found := false
+		for _, existing := range c.Status.Report.Failures {
+			if existing.ItemID == newFailure.ItemID && existing.StepID == newFailure.StepID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			c.Status.Report.Failures = append(c.Status.Report.Failures, newFailure)
+		}
+	}
 	// Wait for the retry annotation to be persisted before patching the object
 	err = waitForRetryAnnotation(ctx, log, client, obj, itemToRetry)
 	if err != nil {

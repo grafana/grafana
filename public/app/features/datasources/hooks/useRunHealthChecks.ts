@@ -1,0 +1,89 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { config } from '@grafana/runtime';
+import {
+  useCreateCheckMutation,
+  useListCheckQuery,
+} from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+
+import { findLatestDatasourceCheck } from './useAdvisorHealthStatus';
+
+const CHECK_STATUS_ANNOTATION = 'advisor.grafana.app/status';
+const DATASOURCE_CHECK_TYPE = 'datasource';
+const POLL_INTERVAL_MS = 2000;
+
+export function useRunHealthChecks() {
+  const enabled = Boolean(config.featureToggles.grafanaAdvisor);
+  const [isRunning, setIsRunning] = useState(false);
+  const runStartedAt = useRef<string | undefined>();
+
+  const [createCheck] = useCreateCheckMutation();
+  const { data } = useListCheckQuery(
+    {},
+    {
+      skip: !enabled,
+      pollingInterval: isRunning ? POLL_INTERVAL_MS : undefined,
+    }
+  );
+
+  // Stop polling once the latest datasource check is processed
+  useEffect(() => {
+    if (!isRunning || !data?.items || !runStartedAt.current) {
+      return;
+    }
+    const latest = findLatestDatasourceCheck(data.items);
+    if (!latest) {
+      return;
+    }
+    const createdAt = latest.metadata.creationTimestamp ?? '';
+    if (createdAt >= runStartedAt.current) {
+      const status = latest.metadata.annotations?.[CHECK_STATUS_ANNOTATION];
+      if (status === 'processed' || status === 'error') {
+        setIsRunning(false);
+        runStartedAt.current = undefined;
+      }
+    }
+  }, [isRunning, data]);
+
+  const runHealthChecks = useCallback(async () => {
+    if (!enabled || isRunning) {
+      return;
+    }
+    setIsRunning(true);
+    runStartedAt.current = new Date().toISOString();
+    try {
+      await createCheck({
+        check: {
+          apiVersion: 'advisor.grafana.app/v0alpha1',
+          kind: 'Check',
+          metadata: {
+            generateName: 'check-',
+            labels: { 'advisor.grafana.app/type': DATASOURCE_CHECK_TYPE },
+          },
+          spec: { data: {} },
+          status: { report: { count: 0, failures: [] } },
+        },
+      }).unwrap();
+    } catch {
+      setIsRunning(false);
+      runStartedAt.current = undefined;
+    }
+  }, [enabled, isRunning, createCheck]);
+
+  // Detect if a check is already in progress on mount
+  useEffect(() => {
+    if (!data?.items) {
+      return;
+    }
+    const latest = findLatestDatasourceCheck(data.items);
+    if (latest) {
+      const status = latest.metadata.annotations?.[CHECK_STATUS_ANNOTATION];
+      if (!status) {
+        setIsRunning(true);
+        runStartedAt.current = latest.metadata.creationTimestamp ?? new Date().toISOString();
+      }
+    }
+  }, [data?.items]);
+
+  return { isRunning, runHealthChecks, enabled };
+}
