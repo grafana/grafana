@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // DualReadWriter is a wrapper around a repository that can read from and write resources
@@ -30,10 +31,11 @@ import (
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo    repository.ReaderWriter
-	parser  Parser
-	folders *FolderManager
-	access  auth.AccessChecker
+	repo                  repository.ReaderWriter
+	parser                Parser
+	folders               *FolderManager
+	access                auth.AccessChecker
+	folderMetadataEnabled bool
 }
 
 type DualWriteOptions struct {
@@ -49,8 +51,8 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker, folderMetadataEnabled bool) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access, folderMetadataEnabled: folderMetadataEnabled}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -169,9 +171,23 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	// Now actually create the folder
-	if err := r.repo.Create(ctx, opts.Path, opts.Ref, nil, opts.Message); err != nil {
-		return nil, fmt.Errorf("failed to create folder: %w", err)
+	// When the feature flag is enabled, write a _folder.json with a stable UID
+	// for this folder only. Intermediate ancestor folders are not given a
+	// _folder.json automatically — they receive one only when explicitly created.
+	var stableUID string
+	if r.folderMetadataEnabled {
+		uid := util.GenerateShortUID()
+		manifest := NewFolderManifest(uid, safepath.Base(opts.Path))
+		var err error
+		stableUID, err = WriteFolderMetadata(ctx, r.repo, opts.Path, manifest, opts.Ref, opts.Message)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Existing behavior: git layer creates .keep when data is nil and path ends with /
+		if err := r.repo.Create(ctx, opts.Path, opts.Ref, nil, opts.Message); err != nil {
+			return nil, fmt.Errorf("failed to create folder: %w", err)
+		}
 	}
 
 	cfg := r.repo.Config()
@@ -196,17 +212,25 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	wrap.URLs = urls
 
 	if r.shouldUpdateGrafanaDB(opts, nil) {
-		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
-		if err != nil {
+		var folderID string
+		if stableUID != "" {
+			if err := r.folders.CreateFolderWithUID(ctx, opts.Path, stableUID); err != nil {
+				return nil, err
+			}
+			folderID = stableUID
+		} else {
+			var err error
+			folderID, err = r.folders.EnsureFolderPathExist(ctx, opts.Path)
+			if err != nil {
+				return nil, err
+			}
+		}
+		current, err := r.folders.GetFolder(ctx, folderID)
+		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, err
 		}
-
-		current, err := r.folders.GetFolder(ctx, folderName)
-		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, err // unable to check if the folder exists
-		}
-		wrap.Resource.Upsert = v0alpha1.Unstructured{
-			Object: current.Object,
+		if current != nil {
+			wrap.Resource.Upsert = v0alpha1.Unstructured{Object: current.Object}
 		}
 	}
 

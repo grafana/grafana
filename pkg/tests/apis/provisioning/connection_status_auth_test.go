@@ -10,13 +10,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 

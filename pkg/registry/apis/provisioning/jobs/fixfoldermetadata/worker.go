@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
@@ -23,19 +26,25 @@ func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
 	return job.Spec.Action == provisioning.JobActionFixFolderMetadata
 }
 
-func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-
-	// Get options, defaulting to empty if not provided
+func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	options := job.Spec.FixFolderMetadata
 	if options == nil {
 		options = &provisioning.FixFolderMetadataJobOptions{}
 	}
 
-	// Use the specified ref, or empty string to use repository's default branch
-	ref := options.Ref
+	logger := logging.FromContext(ctx).With("options", options)
+	ctx = logging.Context(ctx, logger)
+	ctx, span := tracing.Start(ctx, "provisioning.fixfoldermetadata.process")
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
+	span.SetAttributes(attribute.String("fixfoldermetadata.ref", options.Ref))
 
-	logger.Info("starting folder metadata fix job", "ref", ref)
+	ref := options.Ref
+	logger.Info("starting folder metadata fix job")
 	if ref == "" {
 		progress.SetMessage(ctx, "Creating marker commit on default branch")
 	} else {
