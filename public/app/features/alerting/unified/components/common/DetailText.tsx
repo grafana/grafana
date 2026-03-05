@@ -5,8 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, ClipboardButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
-import ConditionalWrap from '../ConditionalWrap';
-
 type DetailTextProps = {
   id: string;
   label: string;
@@ -59,12 +57,15 @@ export const DetailText = ({
           {label}
         </Text>
         <Text aria-labelledby={id} color="primary" variant={monospace ? 'code' : 'body'}>
-          <ConditionalWrap
-            shouldWrap={Boolean(tooltipValue)}
-            wrap={(children) => <Tooltip content={tooltipValue!}>{children}</Tooltip>}
-          >
+          {tooltipValue ? (
+            <Tooltip content={tooltipValue}>
+              <span>
+                <Value>{value}</Value>
+              </span>
+            </Tooltip>
+          ) : (
             <Value>{value}</Value>
-          </ConditionalWrap>
+          )}
           {showCopyButton && (
             <ClipboardButton
               aria-label={copyToClipboardLabel}
