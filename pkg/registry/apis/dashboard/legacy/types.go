@@ -17,6 +17,8 @@ type DashboardQuery struct {
 	UID   string // to select a single dashboard
 	Limit int
 
+	DeprecatedInternalID int64 // to select a single dashboard
+
 	// MaxRows is used internally by the iterator to fetch data in batches
 	// When set, the SQL query will include LIMIT MaxRows
 	// If Limit is smaller, that will be used instead
