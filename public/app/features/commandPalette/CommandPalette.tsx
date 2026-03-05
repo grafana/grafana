@@ -10,7 +10,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, Icon, IconButton, IconName, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptyState, IconButton, IconName, LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { CategoryPillBar } from './CategoryPillBar';
 import { ContextActionStepList, ContextActionStepState } from './ContextActionStepList';
@@ -298,7 +298,6 @@ function CommandPaletteContents() {
           <div {...overlayProps} {...dialogProps}>
             {/* KBarSearch container — visually hidden in facet/context-action mode but stays mounted so kbar keeps its input ref */}
             <div className={cx(styles.searchContainer, (isInFacetMode || isInContextActionMode) && styles.srOnly)}>
-              <Icon name="search" size="md" className={styles.searchIcon} />
               {selectedCategory ? (
                 <FacetBreadcrumbs
                   category={selectedCategory}
@@ -679,7 +678,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     }),
     animator: css({
       width: '100%',
-      maxWidth: 640,
+      maxWidth: 796,
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.lg,
       border: '1px solid #535355',
@@ -704,9 +703,9 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     searchContainer: css({
       alignItems: 'center',
       background: 'transparent',
-      borderBottom: '1px solid rgba(83, 83, 85, 0.5)',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(2.5, 2),
       position: 'relative',
       justifyContent: 'space-between',
     }),
@@ -716,14 +715,14 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       outline: 'none',
       border: 'none',
       background: 'transparent',
-      color: 'rgba(204, 204, 220, 0.65)',
+      color: theme.colors.text.primary,
       fontFamily: 'Inter, sans-serif',
       fontSize: '18px',
       fontWeight: 400,
       lineHeight: '24px',
       letterSpacing: '-0.045px',
       '&::placeholder': {
-        color: 'rgba(204, 204, 220, 0.65)',
+        color: theme.colors.text.secondary,
       },
     }),
     spinner: css({
@@ -750,17 +749,13 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       overflowX: 'hidden',
     }),
     sectionHeader: css({
-      padding: theme.spacing(1.5, 2, 2, 2),
+      padding: theme.spacing(1.5, 2, 0.5, 2),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      marginTop: theme.spacing(1),
     }),
     sectionHeaderFirst: css({
-      paddingBottom: theme.spacing(1),
-      borderTop: 'none',
-      marginTop: 0,
+      paddingTop: theme.spacing(0.5),
     }),
     breadcrumbs: css({
       label: 'breadcrumbs',
@@ -778,9 +773,6 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       fontWeight: theme.typography.fontWeightMedium,
       lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.secondary,
-    }),
-    searchIcon: css({
-      marginRight: theme.spacing(1),
     }),
     srOnly: css({
       position: 'absolute',

@@ -44,21 +44,22 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',
-      gap: theme.spacing(0.75),
-      padding: theme.spacing(0.75, 2),
-      borderBottom: '1px solid rgba(83, 83, 85, 0.5)',
+      gap: theme.spacing(1),
+      padding: theme.spacing(1, 2, 0),
       flexWrap: 'wrap',
     }),
     pill: css({
       display: 'inline-flex',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
-      padding: theme.spacing(0.25, 1),
-      borderRadius: theme.shape.radius.default,
+      justifyContent: 'center',
+      padding: theme.spacing(0.375, 0.75),
+      borderRadius: theme.shape.radius.sm,
       border: 'none',
       background: 'rgba(0, 0, 0, 0.40)',
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
       cursor: 'pointer',
       whiteSpace: 'nowrap',
       '&:hover': {
@@ -69,13 +70,15 @@ function getStyles(theme: GrafanaTheme2) {
     pillActive: css({
       display: 'inline-flex',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
-      padding: theme.spacing(0.25, 1),
-      borderRadius: theme.shape.radius.default,
+      justifyContent: 'center',
+      padding: theme.spacing(0.375, 0.75),
+      borderRadius: theme.shape.radius.sm,
       border: 'none',
       background: 'rgba(0, 0, 0, 0.40)',
       color: theme.colors.text.primary,
       fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
       cursor: 'pointer',
       whiteSpace: 'nowrap',
       '&:hover': {
@@ -83,10 +86,8 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     shortcut: css({
-      fontSize: '10px',
-      fontWeight: theme.typography.fontWeightMedium,
-      padding: '0 4px',
-      lineHeight: '18px',
+      color: 'rgba(204, 204, 220, 0.4)',
+      marginRight: theme.spacing(0.5),
     }),
   };
 }

@@ -57,8 +57,9 @@ export function KeyboardHints({ showBack, showFacetShortcuts, facetShortcutRange
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      borderTop: '1px solid rgba(83, 83, 85, 0.5)',
-      padding: theme.spacing(0.75, 2),
+      background: 'rgba(42, 48, 55, 0.3)',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: theme.spacing(1.5, 2),
     }),
     hints: css({
       display: 'flex',
