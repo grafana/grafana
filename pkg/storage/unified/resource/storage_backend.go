@@ -493,16 +493,17 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				if b.garbageCollection.DryRun {
 					// if in dry run mode, just count the keys to delete
 					totalDryRun += int64(len(keysToDelete))
-				} else {
-					// if not in dry run mode, batch delete the keys
-					err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
-					if err != nil {
-						return fmt.Errorf("failed to batch delete keys: %s", err)
-					}
-
-					// update the total number of keys deleted
-					keysDeleted = keysDeleted + int64(len(keysToDelete))
+					continue
 				}
+
+				// if not in dry run mode, batch delete the keys
+				err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
+				if err != nil {
+					return fmt.Errorf("failed to batch delete keys: %s", err)
+				}
+
+				// update the total number of keys deleted
+				keysDeleted = keysDeleted + int64(len(keysToDelete))
 			}
 		}
 
