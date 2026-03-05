@@ -282,6 +282,7 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
     return allRows.filter(
       (r) =>
         r.roleDisplayName.toLowerCase().includes(q) ||
+        r.roleName.toLowerCase().includes(q) ||
         r.roleGroup.toLowerCase().includes(q) ||
         r.source.toLowerCase().includes(q) ||
         (r.roleDescription || '').toLowerCase().includes(q)
@@ -343,6 +344,17 @@ export const UserPermissionsTable = ({ roles, teams, orgs, userId, userName, onR
           ) : (
             <Text weight="medium">{row.original.roleDisplayName}</Text>
           ),
+        sortType: 'string',
+      },
+      {
+        id: 'roleName',
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        header: 'Role',
+        cell: ({ row }) => (
+          <span className={styles.roleId}>
+            {row.original.roleName}
+          </span>
+        ),
         sortType: 'string',
       },
       {
@@ -513,5 +525,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+  }),
+  roleId: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    wordBreak: 'break-all',
   }),
 });
