@@ -277,6 +277,7 @@ export const OrgUsersTable = ({
           onClose={() => setDrawerUserId(null)}
           userName={drawerUser.name || drawerUser.login}
           userId={drawerUser.userId}
+          userUid={drawerUser.uid}
           orgId={orgId}
           basicRole={drawerUser.role}
           onBasicRoleChange={(newRole) => onRoleChange(newRole, drawerUser)}

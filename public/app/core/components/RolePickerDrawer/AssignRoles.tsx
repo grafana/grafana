@@ -1,10 +1,16 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole, SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, IconButton, RadioButtonGroup, Select, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, FilterInput, Icon, IconButton, RadioButtonGroup, Select, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Role } from 'app/types/accessControl';
+
+interface TeamRole {
+  role: Role;
+  teamName: string;
+  teamUid: string;
+}
 
 const BASIC_ROLE_OPTIONS: Array<SelectableValue<OrgRole>> = [
   { label: 'None', value: OrgRole.None },
@@ -31,24 +37,69 @@ interface Props {
   basicRole: OrgRole;
   appliedRoles: Role[];
   roleOptions: Role[];
+  teamRoles?: TeamRole[];
   basicRoleDisabled?: boolean;
   disabledMessage?: string;
   canUpdateRoles: boolean;
   onUpdate: (newRoles: Role[], newBasicRole?: OrgRole) => void;
+  /** User UID for linking to advanced permissions view */
+  userUid?: string;
 }
+
+export type { TeamRole };
 
 export const AssignRoles = ({
   basicRole,
   appliedRoles,
   roleOptions,
+  teamRoles = [],
   basicRoleDisabled,
   disabledMessage,
   canUpdateRoles,
   onUpdate,
+  userUid,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [selectedBasicRole, setSelectedBasicRole] = useState<OrgRole>(basicRole);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Sync state when props update (e.g. data loads after initial mount)
+  useEffect(() => {
+    setSelectedRoles(appliedRoles);
+  }, [appliedRoles]);
+
+  useEffect(() => {
+    setSelectedBasicRole(basicRole);
+  }, [basicRole]);
+
+  // Filter assigned roles by search
+  const filteredRoles = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return selectedRoles;
+    }
+    const q = searchQuery.toLowerCase();
+    return selectedRoles.filter(
+      (r) =>
+        (r.displayName || r.name).toLowerCase().includes(q) ||
+        (r.group || '').toLowerCase().includes(q) ||
+        (r.description || '').toLowerCase().includes(q)
+    );
+  }, [selectedRoles, searchQuery]);
+
+  // Filter team roles by search
+  const filteredTeamRoles = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return teamRoles;
+    }
+    const q = searchQuery.toLowerCase();
+    return teamRoles.filter(
+      (tr) =>
+        (tr.role.displayName || tr.role.name).toLowerCase().includes(q) ||
+        (tr.role.group || '').toLowerCase().includes(q) ||
+        tr.teamName.toLowerCase().includes(q)
+    );
+  }, [teamRoles, searchQuery]);
 
   // Build grouped options for the Add Role select, excluding already-selected
   const addRoleOptions = useMemo(() => {
@@ -57,7 +108,7 @@ export const AssignRoles = ({
     const toOption = (r: Role): SelectableValue<string> => ({
       label: r.displayName || r.name,
       value: r.uid,
-      description: r.group || undefined,
+      description: [r.group, r.description].filter(Boolean).join(' — ') || undefined,
     });
 
     const fixed = roleOptions
@@ -116,6 +167,63 @@ export const AssignRoles = ({
     selectedRoles.length !== appliedRoles.length ||
     selectedRoles.some((r) => !appliedRoles.find((a) => a.uid === r.uid));
 
+  const totalRoles = selectedRoles.length + teamRoles.length;
+
+  const renderRoleCard = (role: Role, source?: { type: 'team' | 'mapped'; label: string; teamUid?: string }) => (
+    <Tooltip
+      content={
+        <div>
+          <div><strong>{role.displayName || role.name}</strong></div>
+          {role.description && <div>{role.description}</div>}
+          {role.group && <div><em>{role.group}</em></div>}
+          {source && <div>Source: {source.label}</div>}
+        </div>
+      }
+      placement="left"
+      key={`${role.uid}-${source?.label || 'direct'}`}
+    >
+      <div className={styles.roleCard}>
+        <div className={styles.roleInfo}>
+          <Text>{role.displayName || role.name}</Text>
+          <Stack direction="row" gap={0.5} alignItems="center">
+            {role.group && (
+              <Text color="secondary" variant="bodySmall">
+                {role.group}
+              </Text>
+            )}
+            {source?.type === 'team' && (
+              <Text color="secondary" variant="bodySmall">
+                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+                <Icon name="users-alt" size="xs" /> {source.label}
+              </Text>
+            )}
+            {source?.type === 'mapped' && (
+              <Text color="secondary" variant="bodySmall">
+                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+                <Icon name="lock" size="xs" /> IdP
+              </Text>
+            )}
+          </Stack>
+        </div>
+        {!source && !role.mapped && (
+          <IconButton
+            name="trash-alt"
+            size="sm"
+            onClick={() => handleRemoveRole(role.uid)}
+            aria-label={t('role-picker-drawer.remove-role', 'Remove {{role}}', {
+              role: role.displayName || role.name,
+            })}
+          />
+        )}
+        {role.mapped && !source && (
+          <Tooltip content={t('role-picker-drawer.mapped-tooltip', 'Synced from identity provider')}>
+            <IconButton name="lock" size="sm" aria-label="Mapped role" />
+          </Tooltip>
+        )}
+      </div>
+    </Tooltip>
+  );
+
   return (
     <div className={styles.container}>
       {/* Basic role selector */}
@@ -144,41 +252,53 @@ export const AssignRoles = ({
 
       {/* Assigned roles */}
       <div className={styles.section}>
-        <Text weight="medium">
-          {t('role-picker-drawer.assigned-roles-label', 'Assigned roles')}
-        </Text>
-        {selectedRoles.length > 0 ? (
+        <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+          <Text weight="medium">
+            {t('role-picker-drawer.assigned-roles-label', 'Assigned roles')}
+            {totalRoles > 0 && (
+              <Text color="secondary" variant="bodySmall"> ({totalRoles})</Text>
+            )}
+          </Text>
+        </Stack>
+
+        {/* Search filter */}
+        {totalRoles > 3 && (
+          <FilterInput
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            placeholder="Search assigned roles..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+        )}
+
+        {/* Direct roles */}
+        {filteredRoles.length > 0 && (
           <div className={styles.roleList}>
-            {selectedRoles.map((role) => (
-              <div key={role.uid} className={styles.roleCard}>
-                <div className={styles.roleInfo}>
-                  <Text>{role.displayName || role.name}</Text>
-                  {role.group && (
-                    <Text color="secondary" variant="bodySmall">
-                      {role.group}
-                    </Text>
-                  )}
-                </div>
-                {role.mapped ? (
-                  <Tooltip content={t('role-picker-drawer.mapped-tooltip', 'Synced from identity provider')}>
-                    <IconButton name="lock" size="sm" aria-label="Mapped role" />
-                  </Tooltip>
-                ) : (
-                  <IconButton
-                    name="trash-alt"
-                    size="sm"
-                    onClick={() => handleRemoveRole(role.uid)}
-                    aria-label={t('role-picker-drawer.remove-role', 'Remove {{role}}', {
-                      role: role.displayName || role.name,
-                    })}
-                  />
-                )}
-              </div>
-            ))}
+            {filteredRoles.map((role) =>
+              renderRoleCard(role, role.mapped ? { type: 'mapped', label: 'Identity Provider' } : undefined)
+            )}
           </div>
-        ) : (
+        )}
+
+        {/* Team-inherited roles */}
+        {filteredTeamRoles.length > 0 && (
+          <div className={styles.roleList}>
+            {filteredTeamRoles.map((tr) =>
+              renderRoleCard(tr.role, { type: 'team', label: tr.teamName, teamUid: tr.teamUid })
+            )}
+          </div>
+        )}
+
+        {totalRoles === 0 && (
           <Text color="secondary" italic>
             {t('role-picker-drawer.no-roles', 'No additional roles assigned')}
+          </Text>
+        )}
+
+        {totalRoles > 0 && filteredRoles.length === 0 && filteredTeamRoles.length === 0 && searchQuery && (
+          <Text color="secondary" italic>
+            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+            No roles matching &quot;{searchQuery}&quot;
           </Text>
         )}
       </div>
@@ -200,12 +320,22 @@ export const AssignRoles = ({
 
       {/* Actions */}
       <div className={styles.actions}>
-        <Button size="sm" fill="text" onClick={handleClear} disabled={!canUpdateRoles}>
-          <Trans i18nKey="role-picker-drawer.clear-all">Clear all</Trans>
-        </Button>
-        <Button size="sm" onClick={handleSave} disabled={!hasChanges && canUpdateRoles}>
-          <Trans i18nKey="role-picker-drawer.save">Save</Trans>
-        </Button>
+        <Stack direction="row" gap={1} justifyContent="space-between" grow={1}>
+          {userUid && (
+            <TextLink href={`/admin/users/roles/${userUid}`} variant="bodySmall">
+              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+              View advanced permissions →
+            </TextLink>
+          )}
+          <Stack direction="row" gap={1}>
+            <Button size="sm" fill="text" onClick={handleClear} disabled={!canUpdateRoles}>
+              <Trans i18nKey="role-picker-drawer.clear-all">Clear all</Trans>
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={!hasChanges && canUpdateRoles}>
+              <Trans i18nKey="role-picker-drawer.save">Save</Trans>
+            </Button>
+          </Stack>
+        </Stack>
       </div>
     </div>
   );
@@ -235,6 +365,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     backgroundColor: theme.colors.background.primary,
+    '&:hover': {
+      borderColor: theme.colors.border.medium,
+    },
   }),
   roleInfo: css({
     display: 'flex',

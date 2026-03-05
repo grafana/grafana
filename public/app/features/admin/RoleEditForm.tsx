@@ -5,7 +5,7 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Permission } from '@grafana/api-clients/rtkq/legacy';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Button, ClipboardButton, Column, Combobox, ComboboxOption, Field, IconButton, Input, InteractiveTable, Stack, TextArea, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ClipboardButton, Combobox, ComboboxOption, Field, IconButton, Input, InteractiveTable, Stack, TextArea, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useCreateRoleMutation, useUpdateRoleMutation, useGetRoleQuery, useListRolesQuery } from 'app/api/clients/roles';
 import { fetchRoleDetail } from 'app/core/components/RolePicker/hooks';
@@ -398,13 +398,13 @@ export const RoleEditForm = ({ role, onSaved, forceReadOnly = false }: RoleEditF
                   {
                     id: 'action',
                     header: t('admin.role-edit.label-action', 'Action'),
-                    cell: ({ row }) => <span>{row.original.action}</span>,
+                    cell: ({ row }: { row: any }) => <span>{row.original.action}</span>,
                     sortType: 'string',
                   },
                   {
                     id: 'scope',
                     header: t('admin.role-edit.label-scope', 'Scope'),
-                    cell: ({ row }) => <span>{row.original.scope || '—'}</span>,
+                    cell: ({ row }: { row: any }) => <span>{row.original.scope || '—'}</span>,
                     sortType: 'string',
                   },
                 ]}

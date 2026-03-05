@@ -56,7 +56,7 @@ export default function RoleEditPage() {
     <Page navId="admin-roles" pageNav={pageNav}>
       <Page.Contents>
         <RoleEditForm
-          role={isCreating ? undefined : role}
+          role={isCreating ? undefined : role as any}
           onSaved={() => window.history.back()}
           forceReadOnly={!canWrite}
         />

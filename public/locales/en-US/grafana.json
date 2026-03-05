@@ -215,11 +215,11 @@
     },
     "role-edit": {
       "add-permission-button": "Add permission",
-      "basic-role-warning-body": "Changes to basic roles affect every user at this level. Basic roles update automatically — even if you remove a fixed role, future permissions associated with it will still be added to this basic role on upgrade.",
+      "basic-role-warning-body": "Changes to basic roles affect every user at this level. Basic roles update automatically — new permissions may be added when Grafana is upgraded.",
       "basic-role-warning-title": "Editing a basic role",
       "cancel-button": "Cancel",
       "create-button": "Create role",
-      "custom-role-warning-body": "Custom roles do not automatically update. When Grafana adds new permissions associated with a fixed role you've selected here, those permissions will not be added to this custom role. You'll need to update it manually.",
+      "custom-role-warning-body": "Custom roles do not automatically update. When Grafana is upgraded, new permissions will not be added to this role. You'll need to update it manually.",
       "custom-role-warning-title": "Custom role",
       "label-action": "Action",
       "label-description": "Description",

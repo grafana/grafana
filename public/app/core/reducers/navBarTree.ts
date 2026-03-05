@@ -5,6 +5,30 @@ import { config } from '@grafana/runtime';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
+// Inject "Roles" nav item under "Users and access" if not already present (Permission Lens hackathon)
+if (config.bootData?.navTree) {
+  const injectRolesNav = (items: NavModelItem[]) => {
+    for (const item of items) {
+      if (item.id === 'cfg/access' && item.children) {
+        const hasRoles = item.children.some((c) => c.id === 'admin-roles');
+        if (!hasRoles) {
+          item.children.push({
+            text: 'Roles',
+            id: 'admin-roles',
+            subTitle: 'View and manage roles and permissions',
+            icon: 'shield',
+            url: '/admin/roles',
+          });
+        }
+      }
+      if (item.children) {
+        injectRolesNav(item.children);
+      }
+    }
+  };
+  injectRolesNav(config.bootData.navTree);
+}
+
 export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {

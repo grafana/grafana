@@ -3,34 +3,20 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { IconButton, ScrollContainer, Stack, Tab, TabsBar, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { getBackendSrv } from '@grafana/runtime';
+import { IconButton, ScrollContainer, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useListUserRolesQuery, useListRolesQuery, useSetUserRolesMutation } from 'app/api/clients/roles';
-import { useInheritedRoles } from 'app/core/components/RolePicker/hooks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 
-import { AssignRoles } from './AssignRoles';
-import { PermissionsBreakdown } from './PermissionsBreakdown';
-
-const drawerSubtitle = (
-  <Trans i18nKey="role-picker.title.description">
-    Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out
-    more in our{' '}
-    <TextLink
-      external
-      href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
-    >
-      documentation
-    </TextLink>
-    .
-  </Trans>
-);
+import { AssignRoles, TeamRole } from './AssignRoles';
 
 export interface Props {
   onClose: () => void;
   userName: string;
   userId: number;
+  userUid?: string;
   orgId?: number;
   basicRole: OrgRole;
   onBasicRoleChange: (newRole: OrgRole) => void;
@@ -42,6 +28,7 @@ export const RolePickerDrawer = ({
   onClose,
   userName,
   userId,
+  userUid,
   orgId,
   basicRole,
   onBasicRoleChange,
@@ -49,7 +36,6 @@ export const RolePickerDrawer = ({
   basicRoleDisabledMessage,
 }: Props) => {
   const styles = useStyles2(getDrawerStyles);
-  const [activeTab, setActiveTab] = useState<'assign' | 'permissions'>('assign');
 
   const hasPermission = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0;
   const { data: userRoles = [] } = useListUserRolesQuery(
@@ -60,7 +46,37 @@ export const RolePickerDrawer = ({
   );
   const [updateUserRoles] = useSetUserRolesMutation();
 
-  const { inheritedRoles, orphanPermissions, isLoading: inheritanceLoading } = useInheritedRoles(basicRole, userRoles, roleOptions);
+  // Fetch user's teams and their roles
+  const [teamRoles, setTeamRoles] = useState<TeamRole[]>([]);
+  useEffect(() => {
+    if (userId <= 0) {
+      return;
+    }
+    let cancelled = false;
+    const fetchTeamRoles = async () => {
+      try {
+        const teams = await getBackendSrv().get<Array<{ id: number; uid: string; name: string }>>(`/api/users/${userId}/teams`);
+        const allTeamRoles: TeamRole[] = [];
+        for (const team of teams) {
+          try {
+            const roles = await getBackendSrv().get<Role[]>(`/api/access-control/teams/${team.id}/roles`);
+            for (const role of roles) {
+              allTeamRoles.push({ role, teamName: team.name, teamUid: team.uid });
+            }
+          } catch {
+            // Skip teams we can't fetch roles for
+          }
+        }
+        if (!cancelled) {
+          setTeamRoles(allTeamRoles);
+        }
+      } catch {
+        // User may not have permission to list teams
+      }
+    };
+    fetchTeamRoles();
+    return () => { cancelled = true; };
+  }, [userId]);
 
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
@@ -111,7 +127,7 @@ export const RolePickerDrawer = ({
 
   return createPortal(
     <>
-      <div className={styles.backdrop} />
+      <div className={styles.backdrop} onClick={onClose} />
       <div className={styles.panel} role="dialog" aria-label={userName}>
         <div className={styles.header}>
           <div className={styles.closeButton}>
@@ -126,46 +142,33 @@ export const RolePickerDrawer = ({
             <Text element="h3" truncate>
               {userName}
             </Text>
-            <div className={styles.subtitle}>{drawerSubtitle}</div>
+            <Text color="secondary" variant="bodySmall">
+              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+              Manage role assignments and permissions.{' '}
+              <TextLink
+                external
+                href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
+                variant="bodySmall"
+              >
+                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+                Learn more
+              </TextLink>
+            </Text>
           </Stack>
-          <div className={styles.tabs}>
-            <TabsBar>
-              <Tab
-                label={t('role-picker-drawer.tab-assign', 'Assign Roles')}
-                active={activeTab === 'assign'}
-                onChangeTab={() => setActiveTab('assign')}
-              />
-              <Tab
-                label={t('role-picker-drawer.tab-permissions', 'Permissions')}
-                active={activeTab === 'permissions'}
-                onChangeTab={() => setActiveTab('permissions')}
-                counter={inheritanceLoading ? undefined : inheritedRoles.size}
-              />
-            </TabsBar>
-          </div>
         </div>
         <ScrollContainer showScrollIndicators>
           <div className={styles.body}>
-            {activeTab === 'assign' && (
-              <AssignRoles
-                basicRole={basicRole}
-                appliedRoles={userRoles}
-                roleOptions={roleOptions}
-                basicRoleDisabled={basicRoleDisabled}
-                disabledMessage={basicRoleDisabledMessage}
-                canUpdateRoles={canUpdateRoles}
-                onUpdate={onUpdate}
-              />
-            )}
-            {activeTab === 'permissions' && (
-              <PermissionsBreakdown
-                basicRole={basicRole}
-                userRoles={userRoles}
-                inheritedRoles={inheritedRoles}
-                orphanPermissions={orphanPermissions}
-                isLoading={inheritanceLoading}
-              />
-            )}
+            <AssignRoles
+              basicRole={basicRole}
+              appliedRoles={userRoles}
+              roleOptions={roleOptions}
+              teamRoles={teamRoles}
+              basicRoleDisabled={basicRoleDisabled}
+              disabledMessage={basicRoleDisabledMessage}
+              canUpdateRoles={canUpdateRoles}
+              onUpdate={onUpdate}
+              userUid={userUid}
+            />
           </div>
         </ScrollContainer>
       </div>
@@ -217,7 +220,7 @@ const getDrawerStyles = (theme: GrafanaTheme2) => ({
   }),
   header: css({
     flexShrink: 0,
-    padding: theme.spacing(2, 2, 0),
+    padding: theme.spacing(2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     position: 'relative',
   }),
@@ -225,14 +228,6 @@ const getDrawerStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     right: theme.spacing(1),
     top: theme.spacing(1),
-  }),
-  subtitle: css({
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing(1),
-  }),
-  tabs: css({
-    marginLeft: theme.spacing(-2),
-    marginRight: theme.spacing(-2),
   }),
   body: css({
     padding: theme.spacing(2),
