@@ -135,6 +135,16 @@ Saved queries are available in:
 - [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/get-started-with-explore/#explore-elements)
 - [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries)
 
+Learn more about saved queries:
+
+- [Saved queries drawer](#saved-queries-drawer)
+- [Roles, permission, and RBAC](#roles-permissions-and-rbac)
+- [How to save a query](#save-a-query)
+- [Variables in saved queries](#variables-in-saved-queries)
+- [Known limitations](#known-limitations)
+
+#### Saved queries drawer
+
 You can see a list of these queries in the **Saved queries** drawer:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.4.png" max-width="600px" alt="List of saved queries and the edit query form" caption="The **Saved queries** drawer accessed from Dashboards" >}}
@@ -162,12 +172,11 @@ To access your saved queries, click **+ Add from saved queries** or open the **S
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
 
-Learn more about saved queries:
-
-- [Roles, permission, and RBAC](#roles-permissions-and-rbac)
-- [How to save a query](#save-a-query)
-- [Variables in saved queries](#variables-in-saved-queries)
-- [Known limitations](#known-limitations)
+{{< admonition type="tip" >}}
+When you select a query with logs, metrics, traces, or profiles data source, the **Saved queries** drawer displays a **Drilldown** button.
+Click the button to open the associated Drilldown app while maintaining the context of the query.
+Learn more about the apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
+{{< /admonition >}}
 
 #### Roles, permissions, and RBAC
 
