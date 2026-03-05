@@ -86,7 +86,14 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	if _, err = client.JaegerClient.Services(); err != nil {
+	var servicesErr error
+	if cfg.FeatureToggles().IsEnabled("jaegerEnableGrpcEndpoint") {
+		_, servicesErr = client.JaegerClient.GrpcServices(ctx)
+	} else {
+		_, servicesErr = client.JaegerClient.Services(ctx)
+	}
+
+	if servicesErr != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: err.Error(),
