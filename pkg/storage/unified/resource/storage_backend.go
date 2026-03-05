@@ -1104,7 +1104,7 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 // listModifiedSinceLookback is the duration subtracted from sinceRv before
 // querying the data or event store. This guards against concurrent writes that
 // commit slightly out-of-order, ensuring recently-committed events are re-scanned.
-const listModifiedSinceLookback = 500 * time.Millisecond
+const listModifiedSinceLookback = time.Second
 
 // ListModifiedSince returns all resources that have changed since the given
 // resource version. A small lookback window (listModifiedSinceLookback) is

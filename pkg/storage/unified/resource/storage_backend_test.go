@@ -1211,9 +1211,9 @@ func TestKvStorageBackend_ListModifiedSince_TimestampOptimization(t *testing.T) 
 		latestRv, _ := backend.ListModifiedSince(ctx, ns, rv1, nil)
 
 		// The sinceRv was created approximately now. For lookback to be skipped,
-		// lastCalledWithSinceRv must be > 500ms after sinceRv's embedded timestamp.
-		// Simulate this by using a time 1 second in the future.
-		futureTime := time.Now().Add(1 * time.Second)
+		// lastCalledWithSinceRv must be > 1s after sinceRv's embedded timestamp.
+		// Simulate this by using a time 2 second in the future.
+		futureTime := time.Now().Add(2 * time.Second)
 		returnedRv, seq := backend.ListModifiedSince(ctx, ns, latestRv, &futureTime)
 		require.Equal(t, latestRv, returnedRv)
 
