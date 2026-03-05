@@ -7,6 +7,8 @@ import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
+import { LinkEdit } from '../settings/links/LinkAddEditableElement';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -47,7 +49,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
   const styles = useStyles2(getStyles);
   const key = sceneObject.state.key;
   const [isCollapsed, setIsCollapsed] = useState(depth > 0);
-  const { isSelected } = useElementSelection(key);
+  const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
 
@@ -65,11 +67,14 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // Select directly via editPane.selectObject since the outline already has the
-    // sceneObject reference. This avoids sceneGraph.findByKey which only finds objects
-    // in the scene graph (outline containers like DashboardLinksSet are not).
     if (!isSelected) {
-      editPane.selectObject(sceneObject, key!);
+      if (sceneObject instanceof LinkEdit || sceneObject instanceof DashboardLinksSet) {
+        // Select directly via editPane.selectObject because link objects are not
+        // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
+        editPane.selectObject(sceneObject, key!);
+      } else {
+        onSelect?.(e);
+      }
     }
 
     editableElement.scrollIntoView?.();
