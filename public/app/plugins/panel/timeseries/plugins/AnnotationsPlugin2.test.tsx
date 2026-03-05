@@ -16,7 +16,6 @@ import {
   mockAnnotationFrame,
   mockIRMAnnotation,
   mockIRMAnnotationRegion,
-  mockWipFrame,
 } from './mocks/mockAnnotationFrames';
 
 const minTime = 1759388895560;
@@ -266,7 +265,11 @@ describe('AnnotationsPlugin2', () => {
             canDeleteAnnotations: () => true,
           } as PanelContext);
 
-          setUp({ annotations: [frame, mockWipFrame] });
+          setUp({
+            annotations: [frame],
+            // newRange sets the wip annotation
+            newRange: { from: minTime + 10, to: minTime + 10 },
+          });
 
           // Wait for AnnotationsPlugin2 setTimeout(forceUpdate) to complete
           await act(async () => {
@@ -293,6 +296,11 @@ describe('AnnotationsPlugin2', () => {
 
           // And it should be the wip edit tooltip
           expect(screen.getByText('Add annotation')).toBeVisible();
+
+          // Close the wip anno
+          await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+          expect(screen.queryByText('Add annotation')).not.toBeInTheDocument();
         });
 
         it('pins on keyboard', async () => {
