@@ -40,7 +40,15 @@ func (j *JaegerClient) doGet(ctx context.Context, rawURL string) (*http.Response
 	if err != nil {
 		return nil, err
 	}
-	return j.httpClient.Do(req)
+	res, err := j.httpClient.Do(req)
+	if err != nil {
+		j.logger.Error("Jaeger request failed", "error", err)
+		return nil, err
+	}
+	if res != nil && res.StatusCode/100 != 2 {
+		j.logger.Warn("Jaeger request returned non-2xx status", "status", res.StatusCode, "statusText", res.Status)
+	}
+	return res, nil
 }
 
 func (j *JaegerClient) Services(ctx context.Context) ([]string, error) {
