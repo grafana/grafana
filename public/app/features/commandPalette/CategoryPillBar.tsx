@@ -45,7 +45,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       gap: theme.spacing(1),
-      padding: theme.spacing(1, 2, 0),
+      padding: theme.spacing(1, 2),
       flexWrap: 'wrap',
     }),
     pill: css({

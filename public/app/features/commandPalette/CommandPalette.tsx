@@ -630,7 +630,7 @@ const RenderResults = ({
 
         const renderedItem =
           typeof item === 'string' ? (
-            <div className={cx(styles.sectionHeader, isFirst && styles.sectionHeaderFirst)}>{item}</div>
+            <div className={cx(styles.sectionHeader, isFirst && !selectedCategory && styles.sectionHeaderFirst)}>{item}</div>
           ) : (
             <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
           );
@@ -741,7 +741,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       height: '22px',
     }),
     resultsContainer: css({
-      paddingBottom: theme.spacing(1),
+      paddingBottom: theme.spacing(1.5),
     }),
     splitPane: css({
       display: 'flex',
