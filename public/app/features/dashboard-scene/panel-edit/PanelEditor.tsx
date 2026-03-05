@@ -21,6 +21,7 @@ import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
+import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -324,7 +325,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = getDashboardSceneFor(this);
 
     // clear pending suggestions
-    dashboard.recordPanelSuggestion(panel.state.key!, undefined);
+    vizSuggestionsTracker.record(panel.state.key!, undefined);
 
     if (this.state.isNewPanel) {
       dashboard.removePanel(panel);
