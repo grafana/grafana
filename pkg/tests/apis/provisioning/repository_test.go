@@ -2613,3 +2613,62 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 
 	t.Logf("Successfully created %d repositories concurrently without deadlocks", numRepos)
 }
+
+func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repoName = "folder-title-update-test"
+	const initialTitle = "Initial Folder Title"
+	const updatedTitle = "Updated Folder Title"
+
+	helper.CreateRepo(t, TestRepo{
+		Name:               repoName,
+		Target:             "folder",
+		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    1,
+		Values: map[string]any{
+			"Title": initialTitle,
+		},
+	})
+
+	// Verify the root folder has the initial title.
+	// The root folder for a folder-sync repo has the same name as the repository.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		folderObj, err := helper.Folders.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "should be able to get the root folder") {
+			return
+		}
+		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
+		assert.Equal(collect, initialTitle, title, "folder should have the initial title")
+	}, waitTimeoutDefault, waitIntervalDefault, "root folder should have initial title")
+
+	// Update the repository spec.title to a new value.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "should be able to get repository") {
+			return
+		}
+		err = unstructured.SetNestedField(repoObj.Object, updatedTitle, "spec", "title")
+		require.NoError(t, err, "should be able to set new title")
+
+		_, err = helper.Repositories.Resource.Update(ctx, repoObj, metav1.UpdateOptions{})
+		assert.NoError(collect, err, "should be able to update repository title")
+	}, waitTimeoutDefault, waitIntervalDefault, "should update repository title")
+
+	// Trigger a sync, which calls EnsureFolderExists for the root folder.
+	helper.SyncAndWait(t, repoName, nil)
+
+	// Verify the root folder title was updated.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		folderObj, err := helper.Folders.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "should be able to get the root folder") {
+			return
+		}
+		title, _, _ := unstructured.NestedString(folderObj.Object, "spec", "title")
+		assert.Equal(collect, updatedTitle, title, "folder title should be updated after sync")
+	}, waitTimeoutDefault, waitIntervalDefault, "root folder title should be updated after sync")
+}
