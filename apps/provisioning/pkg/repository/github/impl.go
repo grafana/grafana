@@ -96,34 +96,70 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 
 	// No rulesets configured
 	if len(rulesets) == 0 {
+		logging.FromContext(ctx).Debug("No rulesets configured for repository",
+			slog.String("owner", owner),
+			slog.String("repository", repository))
 		return nil, nil
 	}
+
+	logging.FromContext(ctx).Debug("Checking rulesets for branch",
+		slog.String("owner", owner),
+		slog.String("repository", repository),
+		slog.String("branch", branch),
+		slog.Int("ruleset_count", len(rulesets)))
 
 	result := &Rulesets{}
 
 	// Check each ruleset to see if it applies to the target branch
 	for _, ruleset := range rulesets {
+		rulesetName := ruleset.Name
+		enforcement := string(ruleset.Enforcement)
+
+		logging.FromContext(ctx).Debug("Evaluating ruleset",
+			slog.String("ruleset_name", rulesetName),
+			slog.String("enforcement", enforcement))
+
 		// Skip disabled or evaluate-only rulesets
-		if ruleset.Enforcement == "disabled" || ruleset.Enforcement == "evaluate" {
+		if enforcement == "disabled" || enforcement == "evaluate" {
+			logging.FromContext(ctx).Debug("Skipping non-active ruleset",
+				slog.String("ruleset_name", rulesetName),
+				slog.String("enforcement", enforcement))
 			continue
 		}
 
 		// Check if this ruleset targets branches and matches our branch
 		target := ruleset.GetTarget()
-		if target == nil || *target != "branch" {
+		if target == nil || string(*target) != "branch" {
+			logging.FromContext(ctx).Debug("Skipping non-branch ruleset",
+				slog.String("ruleset_name", rulesetName),
+				slog.String("target", func() string {
+					if target == nil {
+						return "nil"
+					}
+					return string(*target)
+				}()))
 			continue
 		}
 
 		// Check if the ruleset applies to this specific branch
 		if !rulesetMatchesBranch(ruleset, branch) {
+			logging.FromContext(ctx).Debug("Ruleset does not match branch",
+				slog.String("ruleset_name", rulesetName),
+				slog.String("branch", branch))
 			continue
 		}
+
+		logging.FromContext(ctx).Debug("Ruleset matches branch, checking rules",
+			slog.String("ruleset_name", rulesetName),
+			slog.String("branch", branch))
 
 		// Check the rules in this ruleset
 		rules := ruleset.GetRules()
 		if rules != nil {
 			// Check for pull request requirement
 			if rules.PullRequest != nil {
+				logging.FromContext(ctx).Debug("Ruleset has PullRequest rule",
+					slog.String("ruleset_name", rulesetName))
 				result.RequiresPullRequest = true
 			}
 
@@ -131,6 +167,14 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 			if rules.RequiredStatusChecks != nil || rules.RequiredSignatures != nil ||
 				rules.RequiredLinearHistory != nil || rules.RequiredDeployments != nil ||
 				rules.Creation != nil || rules.NonFastForward != nil {
+				logging.FromContext(ctx).Debug("Ruleset has blocking rules",
+					slog.String("ruleset_name", rulesetName),
+					slog.Bool("RequiredStatusChecks", rules.RequiredStatusChecks != nil),
+					slog.Bool("RequiredSignatures", rules.RequiredSignatures != nil),
+					slog.Bool("RequiredLinearHistory", rules.RequiredLinearHistory != nil),
+					slog.Bool("RequiredDeployments", rules.RequiredDeployments != nil),
+					slog.Bool("Creation", rules.Creation != nil),
+					slog.Bool("NonFastForward", rules.NonFastForward != nil))
 				result.HasBlockingRules = true
 			}
 		}
@@ -138,8 +182,19 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 
 	// Return nil if no blocking rules found
 	if !result.RequiresPullRequest && !result.HasBlockingRules {
+		logging.FromContext(ctx).Debug("No blocking rulesets found for branch",
+			slog.String("owner", owner),
+			slog.String("repository", repository),
+			slog.String("branch", branch))
 		return nil, nil
 	}
+
+	logging.FromContext(ctx).Debug("Found blocking rulesets for branch",
+		slog.String("owner", owner),
+		slog.String("repository", repository),
+		slog.String("branch", branch),
+		slog.Bool("requires_pull_request", result.RequiresPullRequest),
+		slog.Bool("has_blocking_rules", result.HasBlockingRules))
 
 	return result, nil
 }
