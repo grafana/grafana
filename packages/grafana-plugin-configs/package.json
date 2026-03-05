@@ -18,7 +18,7 @@
     "@types/react": "18.3.18",
     "@types/webpack-bundle-analyzer": "^4.7.0",
     "copy-webpack-plugin": "13.0.0",
-    "eslint": "9.32.0",
+    "eslint": "9.38.0",
     "eslint-webpack-plugin": "5.0.2",
     "fork-ts-checker-webpack-plugin": "9.1.0",
     "glob": "11.1.0",
