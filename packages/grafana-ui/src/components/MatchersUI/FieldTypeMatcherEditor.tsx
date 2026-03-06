@@ -9,21 +9,14 @@ import { Combobox } from '../Combobox/Combobox';
 import { ComboboxOption } from '../Combobox/types';
 import { Stack } from '../Layout/Stack/Stack';
 
+import { MatcherScopeSelector } from './MatcherScopeSelector';
 import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
-import { useScopesOptions } from './utils';
 
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps, id, scope = 'series' } = props;
   const counts = useFieldCounts(data);
   const selectOptions = useSelectOptions(counts, scope, options);
-  const uniqScopes = useMemo(() => {
-    const s = new Set([...counts.keys()]);
-    if (scope) {
-      s.add(scope);
-    }
-    return s;
-  }, [counts, scope]);
-  const matcherScopeOptions = useScopesOptions(uniqScopes);
+  const uniqScopes = useMemo(() => new Set([...counts.keys()]), [counts]);
 
   const onChange = useCallback(
     (selection: ComboboxOption) => {
@@ -32,25 +25,16 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
     [onChangeFromProps]
   );
 
-  const onScopeChange = useCallback(
-    (opt: ComboboxOption<MatcherScope>) => {
-      return onChangeFromProps(options, opt.value!);
-    },
-    [onChangeFromProps, options]
-  );
-
   const selectedOption = selectOptions.find((v) => v.value === options);
   return (
     <Stack direction="column" gap={1}>
-      {matcherScopeOptions.length > 0 ? (
-        <Combobox<MatcherScope>
-          aria-label={t('grafana-ui.field-type-matcher.scope-select-aria-label', 'Scope of matched series')}
-          options={matcherScopeOptions}
-          value={scope}
-          onChange={onScopeChange}
-        />
-      ) : null}
       <Combobox id={id} value={selectedOption} options={selectOptions} onChange={onChange} />
+      {/* @todo: its super weird that this is second, but the labels thing makes that hard to fix. */}
+      <MatcherScopeSelector
+        scope={scope}
+        scopes={uniqScopes}
+        onChange={(newScope) => onChangeFromProps(options, newScope)}
+      />
     </Stack>
   );
 });

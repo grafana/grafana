@@ -2,21 +2,19 @@ import { memo, useMemo, useState } from 'react';
 
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { MatcherScope } from '@grafana/schema';
 
-import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
+import { MatcherScopeSelector } from './MatcherScopeSelector';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useFieldDisplayNames, useScopesOptions } from './utils';
+import { useFieldDisplayNames } from './utils';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { id, options, onChange, data, scope = 'series' } = props;
   const [regexp, setRegexp] = useState(options);
   const names = useFieldDisplayNames(data);
   const uniqScopes = useMemo(() => new Set([...names.scopes.values()]), [names]);
-  const matcherScopeOptions = useScopesOptions(uniqScopes, scope);
 
   return (
     <Stack gap={1} direction="column">
@@ -27,14 +25,7 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
         onChange={(e) => setRegexp(e.currentTarget.value)}
         onBlur={() => onChange(regexp, scope)}
       />
-      {matcherScopeOptions.length > 0 ? (
-        <Combobox<MatcherScope>
-          aria-label={t('grafana-ui.field-name-by-regex-matcher.scope-select-aria-label', 'Scope of matched series')}
-          options={matcherScopeOptions}
-          value={scope}
-          onChange={(opt) => onChange(regexp, opt.value)}
-        />
-      ) : null}
+      <MatcherScopeSelector scope={scope} scopes={uniqScopes} onChange={(newScope) => onChange(regexp, newScope)} />
     </Stack>
   );
 });

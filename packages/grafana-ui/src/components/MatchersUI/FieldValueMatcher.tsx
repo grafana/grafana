@@ -1,6 +1,5 @@
 // @todo: FieldValueMatcher.tsx
-import { useMemo, useCallback } from 'react';
-import * as React from 'react';
+import { useMemo, useCallback, useId, type FormEvent } from 'react';
 
 import {
   FieldMatcherID,
@@ -18,8 +17,9 @@ import { ComboboxOption } from '../Combobox/types';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
+import { MatcherScopeSelector } from './MatcherScopeSelector';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useFieldDisplayNames, useScopesOptions } from './utils';
+import { useFieldDisplayNames } from './utils';
 
 type Props = MatcherUIProps<FieldValueMatcherConfig>;
 
@@ -50,7 +50,6 @@ export const FieldValueMatcherEditor = ({ id, options, onChange, data, scope }: 
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
   const names = useFieldDisplayNames(data);
   const uniqScopes = useMemo(() => new Set([...names.scopes.values()]), [names]);
-  const matcherScopeOptions = useScopesOptions(uniqScopes, scope);
 
   const onSetReducer = useCallback(
     (selection: ComboboxOption<ReducerID>) => {
@@ -67,7 +66,7 @@ export const FieldValueMatcherEditor = ({ id, options, onChange, data, scope }: 
   );
 
   const onChangeValue = useCallback(
-    (e: React.FormEvent<HTMLInputElement>) => {
+    (e: FormEvent<HTMLInputElement>) => {
       const value = e.currentTarget.valueAsNumber;
       return onChange({ ...options, value });
     },
@@ -75,8 +74,8 @@ export const FieldValueMatcherEditor = ({ id, options, onChange, data, scope }: 
   );
 
   const onScopeChange = useCallback(
-    (opt: ComboboxOption<MatcherScope>) => {
-      return onChange(options, opt.value!);
+    (newScope: MatcherScope) => {
+      return onChange(options, newScope);
     },
     [options, onChange]
   );
@@ -108,14 +107,8 @@ export const FieldValueMatcherEditor = ({ id, options, onChange, data, scope }: 
           </>
         )}
       </Stack>
-      {matcherScopeOptions.length > 0 ? (
-        <Combobox
-          aria-label={t('grafana-ui.field-name-by-regex-matcher.scope-select-aria-label', 'Scope of matched series')}
-          options={matcherScopeOptions}
-          value={scope ?? 'series'}
-          onChange={onScopeChange}
-        />
-      ) : null}
+
+      <MatcherScopeSelector scope={scope} scopes={uniqScopes} onChange={onScopeChange} />
     </Stack>
   );
 };
