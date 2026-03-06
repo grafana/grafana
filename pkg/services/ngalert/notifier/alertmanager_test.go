@@ -311,7 +311,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.AlertmanagerConfig.Config.Route.GroupByStr = []string{"cluster"}
+				cfg.AlertmanagerConfig.Route.GroupByStr = []string{"cluster"}
 			},
 		},
 		{
