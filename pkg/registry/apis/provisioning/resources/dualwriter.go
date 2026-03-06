@@ -9,15 +9,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	provauth "github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 )
 
 // DualReadWriter is a wrapper around a repository that can read from and write resources
@@ -30,10 +29,10 @@ import (
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo    repository.ReaderWriter
-	parser  Parser
-	folders *FolderManager
-	access  auth.AccessChecker
+	repo       repository.ReaderWriter
+	parser     Parser
+	folders    *FolderManager
+	authorizer provauth.Authorizer
 }
 
 type DualWriteOptions struct {
@@ -49,8 +48,8 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer provauth.Authorizer) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -79,7 +78,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 	}
 
 	// Authorize based on the existing resource
-	if err = r.authorize(ctx, parsed, utils.VerbGet); err != nil {
+	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbGet); err != nil {
 		return nil, err
 	}
 
@@ -87,7 +86,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 }
 
 func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
+	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
 		return nil, err
 	}
 
@@ -113,7 +112,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
-	if err = r.authorize(ctx, parsed, utils.VerbDelete); err != nil {
+	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbDelete); err != nil {
 		return nil, err
 	}
 
@@ -151,7 +150,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 // CreateFolder creates a new folder in the repository
 // FIXME: fix signature to return ParsedResource
 func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions) (*provisioning.ResourceWrapper, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
+	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
 		return nil, err
 	}
 
@@ -159,7 +158,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("not a folder path")
 	}
 
-	if err := r.authorizeCreateFolder(ctx, opts.Path); err != nil {
+	if err := r.authorizer.AuthorizeCreateFolder(ctx, opts.Path); err != nil {
 		return nil, err
 	}
 
@@ -225,7 +224,7 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, opts DualWriteOptio
 
 // Create or updates a resource in the repository
 func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts DualWriteOptions) (*ParsedResource, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
+	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
 		return nil, err
 	}
 
@@ -260,7 +259,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	if parsed.Action == provisioning.ResourceActionCreate {
 		verb = utils.VerbCreate
 	}
-	if err = r.authorize(ctx, parsed, verb); err != nil {
+	if err = r.authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
 		return nil, err
 	}
 
@@ -312,7 +311,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 // MoveResource moves a resource from one path to another in the repository
 func (r *DualReadWriter) MoveResource(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
+	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
 		return nil, err
 	}
 
@@ -356,7 +355,7 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 	// For folder operations (by path), we only check the top-level folder being moved,
 	// not recursively checking every nested resource. This follows the permission model where
 	// folder-level operations check the folder, and individual resource operations check the resource.
-	if err := r.authorizeMoveFolder(ctx, opts.OriginalPath, opts.Path); err != nil {
+	if err := r.authorizer.AuthorizeMoveFolder(ctx, opts.OriginalPath, opts.Path); err != nil {
 		return nil, err
 	}
 
@@ -513,106 +512,6 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	return newParsed, nil
 }
 
-func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
-	var name string
-	if parsed.Existing != nil {
-		name = parsed.Existing.GetName()
-	} else {
-		name = parsed.Obj.GetName()
-	}
-
-	// CRITICAL SECURITY FIX: For existing resources, we must check permissions in the folder
-	// where the resource actually exists, not the folder specified in the file.
-	// This prevents a security vulnerability where a malicious file could specify
-	// a different folder to bypass permission checks.
-	folder := parsed.Meta.GetFolder()
-	if parsed.Existing != nil {
-		// Use the folder from the existing resource
-		if meta, err := utils.MetaAccessor(parsed.Existing); err == nil && meta != nil {
-			folder = meta.GetFolder()
-		}
-	}
-
-	return r.access.Check(ctx, authlib.CheckRequest{
-		Group:    parsed.GVR.Group,
-		Resource: parsed.GVR.Resource,
-		Name:     name,
-		Verb:     verb,
-	}, folder)
-}
-
-func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string) error {
-	// Determine parent folder from path
-	parentFolder := ""
-	if path != "" {
-		parentPath := safepath.Dir(path)
-		if parentPath != "" {
-			parentFolder = ParseFolder(parentPath, r.repo.Config().Name).ID
-		} else {
-			parentFolder = RootFolder(r.repo.Config())
-		}
-	}
-
-	// For folder create operations, use empty name to check parent folder permissions
-	return r.access.Check(ctx, authlib.CheckRequest{
-		Group:    FolderResource.Group,
-		Resource: FolderResource.Resource,
-		Name:     "", // Empty name for create operations
-		Verb:     utils.VerbCreate,
-	}, parentFolder)
-}
-
-// authorizeDeleteFolder checks if the user has permission to delete the folder.
-// For folder operations (by path), we only check the top-level folder being deleted,
-// not recursively checking every nested resource. This follows the permission model where
-// folder-level operations check the folder itself, and individual resource operations check each resource.
-func (r *DualReadWriter) authorizeDeleteFolder(ctx context.Context, path string) error {
-	// Determine the folder ID being deleted
-	folderID := ParseFolder(path, r.repo.Config().Name).ID
-
-	// Check delete permission on the folder itself
-	return r.access.Check(ctx, authlib.CheckRequest{
-		Group:    FolderResource.Group,
-		Resource: FolderResource.Resource,
-		Name:     folderID,
-		Verb:     utils.VerbDelete,
-	}, folderID)
-}
-
-// authorizeMoveFolder checks if the user has permission to move the folder.
-// For folder operations (by path), we only check the top-level folder being moved,
-// not recursively checking every nested resource. This follows the permission model where
-// folder-level operations check the folder itself, and individual resource operations check each resource.
-func (r *DualReadWriter) authorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
-	// Check update permission on the source folder
-	sourceFolderID := ParseFolder(originalPath, r.repo.Config().Name).ID
-	if err := r.access.Check(ctx, authlib.CheckRequest{
-		Group:    FolderResource.Group,
-		Resource: FolderResource.Resource,
-		Name:     sourceFolderID,
-		Verb:     utils.VerbUpdate,
-	}, sourceFolderID); err != nil {
-		return err
-	}
-
-	// Check create permission on the target parent folder
-	parentFolder := ""
-	if targetPath != "" {
-		parentPath := safepath.Dir(targetPath)
-		if parentPath != "" {
-			parentFolder = ParseFolder(parentPath, r.repo.Config().Name).ID
-		} else {
-			parentFolder = RootFolder(r.repo.Config())
-		}
-	}
-
-	return r.access.Check(ctx, authlib.CheckRequest{
-		Group:    FolderResource.Group,
-		Resource: FolderResource.Resource,
-		Name:     "", // Empty name for create operations in parent
-		Verb:     utils.VerbCreate,
-	}, parentFolder)
-}
 
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	// Reject directory delete operations for configured branch - use bulk operations instead
@@ -631,7 +530,7 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 	// For folder operations (by path), we only check the top-level folder being operated on,
 	// not recursively checking every nested resource. This follows the permission model where
 	// folder-level operations check the folder, and individual resource operations check the resource.
-	if err := r.authorizeDeleteFolder(ctx, opts.Path); err != nil {
+	if err := r.authorizer.AuthorizeDeleteFolder(ctx, opts.Path); err != nil {
 		return nil, err
 	}
 

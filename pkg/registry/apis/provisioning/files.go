@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	provauth "github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -166,7 +167,8 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 	}
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-	return resources.NewDualReadWriter(readWriter, parser, folders, c.access), nil
+	authorizer := provauth.NewAuthorizer(repo.Config(), c.access)
+	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer), nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.

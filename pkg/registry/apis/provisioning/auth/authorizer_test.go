@@ -1,25 +1,24 @@
-package resources
+package auth
 
 import (
 	"context"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// TestAuthorize_SecurityFix tests the critical security fix where authorization
+// TestAuthorizeResource_SecurityFix tests the critical security fix where authorization
 // checks the actual resource's folder, not the folder claimed in the file.
-func TestAuthorize_SecurityFix(t *testing.T) {
+func TestAuthorizeResource_SecurityFix(t *testing.T) {
 	tests := []struct {
 		name           string
 		fileFolderID   string
@@ -51,14 +50,18 @@ func TestAuthorize_SecurityFix(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
-			rw := repository.NewMockReaderWriter(t)
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+			}
 
 			// Create mock metadata for file
 			mockMeta := utils.NewMockGrafanaMetaAccessor(t)
 			mockMeta.On("GetFolder").Return(tt.fileFolderID)
 
 			// Create parsed resource with file metadata
-			parsed := &ParsedResource{
+			parsed := &resources.ParsedResource{
 				Obj: &unstructured.Unstructured{
 					Object: map[string]interface{}{
 						"metadata": map[string]interface{}{
@@ -95,12 +98,8 @@ func TestAuthorize_SecurityFix(t *testing.T) {
 					req.Resource == parsed.GVR.Resource
 			}), tt.expectedFolder).Return(nil).Once()
 
-			dw := &DualReadWriter{
-				repo:   rw,
-				access: mockAccess,
-			}
-
-			err := dw.authorize(context.Background(), parsed, tt.verb)
+			authorizer := NewAuthorizer(repo, mockAccess)
+			err := authorizer.AuthorizeResource(context.Background(), parsed, tt.verb)
 
 			assert.NoError(t, err, tt.description)
 			mockAccess.AssertExpectations(t)
@@ -109,14 +108,71 @@ func TestAuthorize_SecurityFix(t *testing.T) {
 	}
 }
 
+// TestAuthorizeCreateFolder tests authorization checks for folder creation.
+func TestAuthorizeCreateFolder(t *testing.T) {
+	tests := []struct {
+		name         string
+		path         string
+		repoName     string
+		shouldAllow  bool
+		description  string
+	}{
+		{
+			name:        "create folder with permission",
+			path:        "team-folder/",
+			repoName:    "test-repo",
+			shouldAllow: true,
+			description: "Should allow folder creation when user has create permission on parent",
+		},
+		{
+			name:        "create folder without permission",
+			path:        "restricted-folder/",
+			repoName:    "test-repo",
+			shouldAllow: false,
+			description: "Should deny folder creation when user lacks create permission on parent",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockAccess := auth.NewMockAccessChecker(t)
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: tt.repoName,
+				},
+			}
+
+			if tt.shouldAllow {
+				mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+					return req.Verb == utils.VerbCreate &&
+						req.Group == resources.FolderResource.Group &&
+						req.Resource == resources.FolderResource.Resource
+				}), mock.Anything).Return(nil).Once()
+			} else {
+				mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
+			}
+
+			authorizer := NewAuthorizer(repo, mockAccess)
+			err := authorizer.AuthorizeCreateFolder(context.Background(), tt.path)
+
+			if tt.shouldAllow {
+				assert.NoError(t, err, tt.description)
+			} else {
+				assert.Error(t, err, tt.description)
+			}
+			mockAccess.AssertExpectations(t)
+		})
+	}
+}
+
 // TestAuthorizeDeleteFolder tests authorization checks for folder deletion.
 func TestAuthorizeDeleteFolder(t *testing.T) {
 	tests := []struct {
-		name        string
-		path        string
-		repoName    string
-		shouldAllow bool
-		description string
+		name         string
+		path         string
+		repoName     string
+		shouldAllow  bool
+		description  string
 	}{
 		{
 			name:        "delete folder with permission",
@@ -137,31 +193,26 @@ func TestAuthorizeDeleteFolder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
-			rw := repository.NewMockReaderWriter(t)
-			rw.On("Config").Return(&provisioning.Repository{
+			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.repoName,
 				},
-			})
+			}
 
-			expectedFolderID := ParseFolder(tt.path, tt.repoName).ID
+			expectedFolderID := resources.ParseFolder(tt.path, tt.repoName).ID
 
 			if tt.shouldAllow {
 				mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 					return req.Verb == utils.VerbDelete &&
-						req.Group == FolderResource.Group &&
-						req.Resource == FolderResource.Resource
+						req.Group == resources.FolderResource.Group &&
+						req.Resource == resources.FolderResource.Resource
 				}), expectedFolderID).Return(nil).Once()
 			} else {
 				mockAccess.On("Check", mock.Anything, mock.Anything, expectedFolderID).Return(assert.AnError).Once()
 			}
 
-			dw := &DualReadWriter{
-				repo:   rw,
-				access: mockAccess,
-			}
-
-			err := dw.authorizeDeleteFolder(context.Background(), tt.path)
+			authorizer := NewAuthorizer(repo, mockAccess)
+			err := authorizer.AuthorizeDeleteFolder(context.Background(), tt.path)
 
 			if tt.shouldAllow {
 				assert.NoError(t, err, tt.description)
@@ -220,21 +271,20 @@ func TestAuthorizeMoveFolder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
-			rw := repository.NewMockReaderWriter(t)
-			rw.On("Config").Return(&provisioning.Repository{
+			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.repoName,
 				},
-			})
+			}
 
-			sourceFolderID := ParseFolder(tt.originalPath, tt.repoName).ID
+			sourceFolderID := resources.ParseFolder(tt.originalPath, tt.repoName).ID
 
 			// Set up expectation for source folder update check
 			if tt.allowSourceUpdate {
 				mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 					return req.Verb == utils.VerbUpdate &&
-						req.Group == FolderResource.Group &&
-						req.Resource == FolderResource.Resource
+						req.Group == resources.FolderResource.Group &&
+						req.Resource == resources.FolderResource.Resource
 				}), sourceFolderID).Return(nil).Once()
 			} else {
 				mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
@@ -247,8 +297,8 @@ func TestAuthorizeMoveFolder(t *testing.T) {
 				if tt.allowTargetCreate {
 					mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 						return req.Verb == utils.VerbCreate &&
-							req.Group == FolderResource.Group &&
-							req.Resource == FolderResource.Resource
+							req.Group == resources.FolderResource.Group &&
+							req.Resource == resources.FolderResource.Resource
 					}), mock.Anything).Return(nil).Once()
 				} else {
 					mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
@@ -257,12 +307,8 @@ func TestAuthorizeMoveFolder(t *testing.T) {
 				}
 			}
 
-			dw := &DualReadWriter{
-				repo:   rw,
-				access: mockAccess,
-			}
-
-			err := dw.authorizeMoveFolder(context.Background(), tt.originalPath, tt.targetPath)
+			authorizer := NewAuthorizer(repo, mockAccess)
+			err := authorizer.AuthorizeMoveFolder(context.Background(), tt.originalPath, tt.targetPath)
 
 			if tt.shouldSucceed {
 				assert.NoError(t, err, tt.description)
