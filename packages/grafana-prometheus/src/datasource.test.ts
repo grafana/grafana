@@ -1602,12 +1602,14 @@ describe('getDrilldownsApplicability', () => {
   it('should use fetchSuggestions when scopes are provided', async () => {
     const fetchSuggestionsSpy = jest
       .fn()
-      .mockImplementation((_tr: TimeRange, _queries: PromQuery[], _scopes?: unknown, _unused?: unknown, key?: string) => {
-        if (key === 'env') {
-          return Promise.resolve(['prod', 'staging']);
+      .mockImplementation(
+        (_tr: TimeRange, _queries: PromQuery[], _scopes?: unknown, _unused?: unknown, key?: string) => {
+          if (key === 'env') {
+            return Promise.resolve(['prod', 'staging']);
+          }
+          return Promise.resolve(['env', 'cluster']);
         }
-        return Promise.resolve(['env', 'cluster']);
-      });
+      );
     mockLanguageProvider({ fetchSuggestions: fetchSuggestionsSpy });
 
     const scopes = [{ metadata: { name: 'scope1' }, spec: { filters: [] } }] as any[];
