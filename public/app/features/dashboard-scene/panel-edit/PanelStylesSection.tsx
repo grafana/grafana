@@ -18,7 +18,7 @@ export interface PanelStylesSectionProps {
 export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionProps) {
   const [plugin, setPlugin] = useState<PanelPlugin | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string | undefined>(undefined);
-  const { pluginId, fieldConfig } = panel.useState();
+  const { pluginId, fieldConfig, options } = panel.useState();
   const { data } = sceneGraph.getData(panel).useState();
 
   useEffect(() => {
@@ -37,7 +37,10 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
     };
   }, [pluginId]);
 
-  const presets = useMemo(() => (plugin ? getPluginPresets(plugin, fieldConfig) : null), [plugin, fieldConfig]);
+  const presets = useMemo(
+    () => (plugin ? getPluginPresets(plugin, fieldConfig, options) : null),
+    [plugin, fieldConfig, options]
+  );
 
   const handlePresetApply = useCallback(
     (preset: PanelPluginVisualizationSuggestion) => {
