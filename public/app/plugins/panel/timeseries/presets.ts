@@ -1,9 +1,4 @@
-import {
-  FieldColorModeId,
-  VisualizationPresetsContext,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestion,
-} from '@grafana/data';
+import { FieldColorModeId, VisualizationPresetsSupplier, VisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   AxisColorMode,
@@ -28,6 +23,10 @@ const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) 
     s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
   }
   s.fieldConfig!.defaults.custom!.axisPlacement = AxisPlacement.Hidden;
+};
+
+const STACKING_OFF: GraphFieldConfig = {
+  stacking: { mode: StackingMode.None, group: 'A' },
 };
 
 // Shared options for (3) step presets
@@ -60,19 +59,17 @@ const STACKED_AREA_BASE_CUSTOM: GraphFieldConfig = {
 /**
  * Default preset
  */
-const defaultPreset = (context: VisualizationPresetsContext): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
-    name: t('timeseries.presets.default', 'Default'),
-    fieldConfig: {
-      defaults: {
-        custom: defaultGraphConfig,
-        color: { mode: FieldColorModeId.PaletteClassic },
-      },
-      overrides: [],
+const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
+  name: t('timeseries.presets.default', 'Default'),
+  fieldConfig: {
+    defaults: {
+      custom: { ...defaultGraphConfig },
+      color: { mode: FieldColorModeId.PaletteClassic },
     },
-    cardOptions: { previewModifier },
-  };
-};
+    overrides: [],
+  },
+  cardOptions: { previewModifier },
+});
 
 /**
  * Smooth preset with visible points - TS3
@@ -82,6 +79,7 @@ const smoothPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => (
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         lineWidth: 1,
         fillOpacity: 24,
         gradientMode: GraphGradientMode.Opacity,
@@ -106,6 +104,7 @@ const areaPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         lineWidth: 0,
         fillOpacity: 100,
         gradientMode: GraphGradientMode.Opacity,
@@ -130,6 +129,7 @@ const stepPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         ...STEP_BASE_CUSTOM,
         fillOpacity: 0,
         gradientMode: GraphGradientMode.Opacity,
@@ -152,6 +152,7 @@ const stepFilledPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> 
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         ...STEP_BASE_CUSTOM,
         fillOpacity: 45,
         gradientMode: GraphGradientMode.Opacity,
@@ -174,6 +175,7 @@ const stepHuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         ...STEP_BASE_CUSTOM,
         fillOpacity: 45,
         gradientMode: GraphGradientMode.Hue,
@@ -289,9 +291,9 @@ const stackedAreaGradientPreset = (): VisualizationSuggestion<Options, GraphFiel
   cardOptions: { previewModifier },
 });
 
-export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = (context) => {
+export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = () => {
   return [
-    defaultPreset(context),
+    defaultPreset(),
     smoothPreset(),
     areaPreset(),
     stepPreset(),
