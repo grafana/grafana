@@ -95,6 +95,10 @@ interface DatasourceVariableModel {
   current?: { value?: string; text?: string; selected?: boolean };
 }
 
+interface ConstantVariableModel extends VariableModel {
+  query?: string;
+}
+
 // Removed duplicate constants - now defined at top of file
 
 describe('extractV1Inputs', () => {
@@ -407,6 +411,95 @@ describe('applyV1Inputs', () => {
 
     const dsVariable = result.templating?.list?.[1] as DatasourceVariableModel;
     expect(dsVariable.current?.value).toBe('ds-uid');
+  });
+
+  it('replaces constant variable query, current, and options with user-provided values', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      templating: {
+        list: [
+          {
+            type: 'constant',
+            name: 'timezone',
+            query: '${VAR_TIMEZONE}',
+            current: { text: '${VAR_TIMEZONE}', value: '${VAR_TIMEZONE}', selected: false },
+            options: [{ text: '${VAR_TIMEZONE}', value: '${VAR_TIMEZONE}', selected: false }],
+          },
+          {
+            type: 'constant',
+            name: 'url',
+            query: '${VAR_URL}',
+            current: { text: '${VAR_URL}', value: '${VAR_URL}', selected: false },
+            options: [{ text: '${VAR_URL}', value: '${VAR_URL}', selected: false }],
+          },
+        ],
+      },
+    } as unknown as Dashboard;
+
+    const inputs: DashboardInputs = {
+      dataSources: [],
+      constants: [
+        { name: 'VAR_TIMEZONE', label: 'Timezone', info: '', value: 'UTC', type: InputType.Constant },
+        { name: 'VAR_URL', label: 'URL', info: '', value: 'http://default', type: InputType.Constant },
+      ],
+      libraryPanels: [],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'Test',
+      uid: 'test-uid',
+      gnetId: '',
+      constants: ['Europe/Berlin', 'http://my-app:7070'],
+      dataSources: [],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, inputs, form);
+
+    const vars = result.templating?.list as ConstantVariableModel[];
+    expect(vars[0].query).toBe('Europe/Berlin');
+    expect(vars[0].current?.text).toBe('Europe/Berlin');
+    expect(vars[0].current?.value).toBe('Europe/Berlin');
+    expect(vars[0].options?.[0].text).toBe('Europe/Berlin');
+    expect(vars[1].query).toBe('http://my-app:7070');
+    expect(vars[1].current?.text).toBe('http://my-app:7070');
+    expect(vars[1].current?.value).toBe('http://my-app:7070');
+  });
+
+  it('replaces target datasource UIDs in panels with built-in datasources like Mixed', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      panels: [
+        {
+          datasource: { type: 'datasource', uid: '-- Mixed --' },
+          targets: [
+            { datasource: { type: 'grafana-bigquery-datasource', uid: '${DS}' }, refId: 'A' },
+            { datasource: { type: 'grafana-athena-datasource', uid: '${DS}' }, refId: 'B' },
+          ],
+        },
+      ],
+    } as unknown as Dashboard;
+
+    const form: ImportDashboardDTO = {
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, sampleV1Inputs, form);
+
+    expect(result.panels?.[0].datasource?.uid).toBe('-- Mixed --');
+
+    const panel = result.panels?.[0] as PanelWithTargets;
+    expect(panel.targets?.[0].datasource?.uid).toBe('ds-uid');
+    expect(panel.targets?.[1].datasource?.uid).toBe('ds-uid');
   });
 });
 
