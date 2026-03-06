@@ -69,6 +69,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
       const [moved] = sourceList.splice(source.index, 1);
       destList.splice(destination.index, 0, moved);
 
+      const oldState = { isHidden: moved.state.isHidden, placement: moved.state.placement };
       const newState = DROPPABLE_TO_HIDE[destination.droppableId](moved);
 
       dashboardEditActions.edit({
@@ -81,6 +82,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
           });
         },
         undo: () => {
+          moved.setState(oldState);
           dataLayerSet.setState({ annotationLayers: currentLayers });
         },
       });
