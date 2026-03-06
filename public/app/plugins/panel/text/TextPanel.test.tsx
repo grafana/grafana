@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { dateTime, LoadingState, EventBusSrv } from '@grafana/data';
 
 import { Props, TextPanel } from './TextPanel';
+import { plugin } from './module';
 import { TextMode } from './panelcfg.gen';
 
 const replaceVariablesMock = jest.fn();
@@ -161,5 +162,11 @@ describe('TextPanel', () => {
     expect(screen.getByTestId('TextPanel-converted-content').innerHTML).toEqual(
       'We begin by a simple sentence.\n```This is a code block\n```'
     );
+  });
+
+  it('should have mode and content as quick edit options', () => {
+    const quickEditPaths = plugin.getQuickEditPaths();
+
+    expect(quickEditPaths).toEqual(['mode', 'content']);
   });
 });

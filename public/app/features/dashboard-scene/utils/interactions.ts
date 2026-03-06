@@ -287,6 +287,48 @@ export const DashboardInteractions = {
     const properties = { item, action, context };
     reportDashboardInteraction('move_item', properties);
   },
+
+  /**
+   * Track when a user changes a panel option that is configured for quick edit.
+   * This event is fired both from quick edit sidebar and from the full panel editor,
+   * differentiated by the `source` property.
+   *
+   * Event name: `dashboards_quick_edit_option_changed`
+   *
+   * @param properties.panelType - The panel plugin ID (e.g., 'stat', 'timeseries', 'table')
+   * @param properties.optionPath - The option path that was changed (e.g., 'textMode', 'legend.showLegend')
+   * @param properties.optionName - Human-readable name of the option (e.g., 'Text mode', 'Show legend'). Optional, not available in panel editor context.
+   * @param properties.source - Where the change was made: 'quick_edit' (sidebar) or 'panel_editor' (full editor)
+   * @param properties.dashboardUid - UID of the dashboard being edited (undefined if not available)
+   */
+  quickEditOptionChanged: (properties: {
+    panelType: string;
+    optionPath: string;
+    optionName?: string;
+    source: 'quick_edit' | 'panel_editor';
+    dashboardUid?: string;
+  }) => {
+    reportDashboardInteraction('quick_edit_option_changed', properties);
+  },
+
+  /**
+   * Track when a user undoes a quick edit change via Ctrl+Z / Cmd+Z.
+   *
+   * Event name: `dashboards_quick_edit_option_undone`
+   *
+   * @param properties.panelType - The panel plugin ID (e.g., 'stat', 'timeseries', 'table')
+   * @param properties.optionPath - The option path that was undone (e.g., 'textMode', 'legend.showLegend')
+   * @param properties.optionName - Human-readable name of the option (e.g., 'Text mode', 'Show legend')
+   * @param properties.dashboardUid - UID of the dashboard being edited (undefined if not available)
+   */
+  quickEditOptionUndone: (properties: {
+    panelType: string;
+    optionPath: string;
+    optionName: string;
+    dashboardUid?: string;
+  }) => {
+    reportDashboardInteraction('quick_edit_option_undone', properties);
+  },
 };
 
 const reportDashboardInteraction = (
