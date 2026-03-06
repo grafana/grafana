@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { FeatureState, FieldConfigSource, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { FeatureState, FieldConfigSource, PanelPlugin, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { FeatureBadge, Stack } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
-import { getPresets } from 'app/features/panel/presets/getPresets';
+import { getPluginPresets } from 'app/features/panel/presets/getPresets';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 export interface PanelStylesSectionProps {
   panel: VizPanel;
@@ -15,30 +16,28 @@ export interface PanelStylesSectionProps {
 }
 
 export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionProps) {
-  const [presets, setPresets] = useState<PanelPluginVisualizationSuggestion[] | null>(null);
+  const [plugin, setPlugin] = useState<PanelPlugin | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string | undefined>(undefined);
-  const { pluginId } = panel.useState();
+  const { pluginId, fieldConfig } = panel.useState();
   const { data } = sceneGraph.getData(panel).useState();
 
   useEffect(() => {
     let cancelled = false;
-    setPresets(null);
+    setPlugin(null);
     setSelectedPreset(undefined);
-    getPresets(pluginId, panel.state.fieldConfig)
-      .then((loadedPresets) => {
+    importPanelPlugin(pluginId)
+      .then((p) => {
         if (!cancelled) {
-          setPresets(loadedPresets ?? []);
+          setPlugin(p);
         }
       })
-      .catch(() => {
-        if (!cancelled) {
-          setPresets([]);
-        }
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [pluginId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pluginId]);
+
+  const presets = useMemo(() => (plugin ? getPluginPresets(plugin, fieldConfig) : null), [plugin, fieldConfig]);
 
   const handlePresetApply = useCallback(
     (preset: PanelPluginVisualizationSuggestion) => {
