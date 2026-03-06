@@ -192,3 +192,44 @@ export function useSelectOptions(
     return options;
   }, [displayNames, currentName, firstItem, fieldType, baseNameMode]);
 }
+
+/**
+ * @internal
+ */
+export function useScopesFromNames(
+  names: FrameFieldsDisplayNames,
+  scopeFromProps?: MatcherScope
+): Array<ComboboxOption<MatcherScope>> {
+  return useMemo(() => {
+    const uniqScopes = new Set<MatcherScope>(names.scopes.values());
+
+    if (scopeFromProps) {
+      uniqScopes.add(scopeFromProps);
+    }
+
+    // Remove the series scope from the set, so we can gaurantee it's the first option, and also
+    // because it's the default scope, so if it's the only one detected, we should not show the scope selector.
+    uniqScopes.delete('series');
+    if (uniqScopes.size === 0) {
+      return [];
+    }
+
+    const arr: Array<ComboboxOption<MatcherScope>> = [
+      {
+        label: getGroupLabelForScope('series'),
+        description: getGroupDescriptionForScope('series'),
+        value: 'series',
+      },
+    ];
+
+    for (const scope of uniqScopes) {
+      arr.push({
+        label: getGroupLabelForScope(scope),
+        description: getGroupDescriptionForScope(scope),
+        value: scope,
+      });
+    }
+
+    return arr;
+  }, [names.scopes, scopeFromProps]);
+}

@@ -106,7 +106,7 @@ export function getFieldOverrideCategories(
       },
     });
 
-    const onMatcherConfigChange = (options: unknown, scope?: MatcherScope) => {
+    const onMatcherConfigChange = (options: unknown, scope: MatcherScope | undefined = override.matcher.scope) => {
       onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope, options } });
     };
 
