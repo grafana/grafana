@@ -21,7 +21,7 @@ import { annotationEditActions } from './actions';
 
 export type AnnotationLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
-function useEditPaneOptions(this: AnnotationEditableElement): OptionsPaneCategoryDescriptor[] {
+function useEditPaneOptions(this: AnnotationEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const annotationCategoryId = useId();
   const annotationNameId = useId();
   const enabledId = useId();
@@ -36,7 +36,7 @@ function useEditPaneOptions(this: AnnotationEditableElement): OptionsPaneCategor
         new OptionsPaneItemDescriptor({
           title: '',
           id: annotationNameId,
-          render: () => <AnnotationNameInput layer={this.layer} />,
+          render: () => <AnnotationNameInput layer={this.layer} autoFocus={isNewElement} />,
         })
       )
       .addItem(

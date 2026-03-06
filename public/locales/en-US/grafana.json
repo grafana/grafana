@@ -6544,6 +6544,17 @@
       "tooltip-move-down": "Move down",
       "tooltip-move-up": "Move up"
     },
+    "annotations-list": {
+      "drag-end": {
+        "description": "Reorder annotations list"
+      }
+    },
+    "annotations-section": {
+      "content-drag-to-reorder": "Drag to reorder",
+      "name-builtin": "{{annoName}} (Built-in)",
+      "name-disabled": "(Disabled) {{annoName}}",
+      "select": "Select"
+    },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
       "cannot-start-with": "It cannot start with '/' or end with '/', '.', or whitespace.",
@@ -6588,6 +6599,15 @@
       "name-json-values": "JSON",
       "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
+    },
+    "dashboard-annotations-list": {
+      "add-annotation-query": "Add annotation query",
+      "title-above-dashboard-count_one": "Above dashboard ({{count}})",
+      "title-above-dashboard-count_other": "Above dashboard ({{count}})",
+      "title-controls-menu-count_one": "Controls menu ({{count}})",
+      "title-controls-menu-count_other": "Controls menu ({{count}})",
+      "title-hidden-count_one": "Hidden ({{count}})",
+      "title-hidden-count_other": "Hidden ({{count}})"
     },
     "dashboard-edit-pane-renderer": {
       "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
@@ -7204,6 +7224,13 @@
       "discard": "Discard",
       "save-dashboard": "Save dashboard",
       "title-unsaved-changes": "Unsaved changes"
+    },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": "Annotations"
+        }
+      }
     },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
