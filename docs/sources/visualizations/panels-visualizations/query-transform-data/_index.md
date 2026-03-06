@@ -160,7 +160,7 @@ You can see a list of these queries in the **Saved queries** drawer:
 {{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-drawer-v13.0.png" max-width="600px" alt="List of saved queries and the edit query form" caption="The **Saved queries** drawer accessed from Dashboards" >}}
 
 {{< admonition type="tip">}}
-When you select a query with a logs, metrics, traces, or profiles data source, the **Saved queries** drawer displays a **Drilldown** button.
+When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the **Saved queries** drawer displays a **Drilldown** button.
 Click the button to open the associated Drilldown app, while maintaining the context of the query.
 Learn more about these apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
 {{< /admonition >}}
