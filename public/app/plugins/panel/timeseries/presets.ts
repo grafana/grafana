@@ -30,11 +30,6 @@ const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) 
   s.fieldConfig!.defaults.custom!.axisPlacement = AxisPlacement.Hidden;
 };
 
-const isStacked = (context: VisualizationPresetsContext): boolean => {
-  const mode = context.fieldConfig?.defaults?.custom?.stacking?.mode;
-  return mode === StackingMode.Normal || mode === StackingMode.Percent;
-};
-
 // Shared options for (3) step presets
 const STEP_BASE_CUSTOM: GraphFieldConfig = {
   lineWidth: 1,
@@ -63,20 +58,14 @@ const STACKED_AREA_BASE_CUSTOM: GraphFieldConfig = {
 };
 
 /**
- * @TODO: geometry support
- */
-
-/**
  * Default preset
  */
 const defaultPreset = (context: VisualizationPresetsContext): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  const stacking = isStacked(context) ? { stacking: { mode: StackingMode.Normal, group: 'A' } } : {};
-
   return {
     name: t('timeseries.presets.default', 'Default'),
     fieldConfig: {
       defaults: {
-        custom: { ...defaultGraphConfig, ...stacking },
+        custom: defaultGraphConfig,
         color: { mode: FieldColorModeId.PaletteClassic },
       },
       overrides: [],
