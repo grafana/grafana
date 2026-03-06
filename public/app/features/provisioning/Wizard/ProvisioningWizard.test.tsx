@@ -1,23 +1,20 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { screen } from '@testing-library/react';
 import { UserEvent } from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import type { JSX } from 'react';
 import { render } from 'test/test-utils';
 
-import { useGetRepositoryRefsQuery } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
-import {
-  useCreateRepositoryJobsMutation,
-  useGetFrontendSettingsQuery,
-  useGetRepositoryFilesQuery,
-  useGetResourceStatsQuery,
-  useListRepositoryQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 
-import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
+import { setupProvisioningMswServer } from '../mocks/server';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 import { StepStatusProvider } from './StepStatusContext';
+
+setupProvisioningMswServer();
 
 const mockNavigate = jest.fn();
 
@@ -26,39 +23,13 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+// Keep useCreateOrUpdateRepository as jest.mock — it orchestrates a multi-step
+// test→create/update flow and the error tests need fine-grained call-by-call control.
 jest.mock('../hooks/useCreateOrUpdateRepository');
-jest.mock('../hooks/useConnectionOptions');
-jest.mock('@grafana/api-clients/rtkq/provisioning/v0alpha1', () => ({
-  ...jest.requireActual('@grafana/api-clients/rtkq/provisioning/v0alpha1'),
-  useGetRepositoryRefsQuery: jest.fn(),
-}));
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
-  useGetFrontendSettingsQuery: jest.fn(),
-  useGetRepositoryFilesQuery: jest.fn(),
-  useListRepositoryQuery: jest.fn(),
-  useGetResourceStatsQuery: jest.fn(),
-  useCreateRepositoryJobsMutation: jest.fn(),
-}));
 
 const mockUseCreateOrUpdateRepository = useCreateOrUpdateRepository as jest.MockedFunction<
   typeof useCreateOrUpdateRepository
 >;
-const mockUseGetRepositoryRefsQuery = useGetRepositoryRefsQuery as jest.MockedFunction<
-  typeof useGetRepositoryRefsQuery
->;
-const mockUseGetFrontendSettingsQuery = useGetFrontendSettingsQuery as jest.MockedFunction<
-  typeof useGetFrontendSettingsQuery
->;
-const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
-  typeof useGetRepositoryFilesQuery
->;
-const mockUseListRepositoryQuery = useListRepositoryQuery as jest.MockedFunction<typeof useListRepositoryQuery>;
-const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
-const mockUseCreateRepositoryJobsMutation = useCreateRepositoryJobsMutation as jest.MockedFunction<
-  typeof useCreateRepositoryJobsMutation
->;
-const mockUseConnectionOptions = useConnectionOptions as jest.MockedFunction<typeof useConnectionOptions>;
 
 function setup(jsx: JSX.Element) {
   return render(<StepStatusProvider>{jsx}</StepStatusProvider>);
@@ -92,7 +63,7 @@ async function navigateToConnectionStep(
     const tokenPlaceholders = {
       github: 'ghp_xxxxxxxxxxxxxxxxxxxx',
       gitlab: 'glpat-xxxxxxxxxxxxxxxxxxxx',
-      bitbucket: 'ATBBxxxxxxxxxxxxxxxx',
+      bitbucket: 'ATATTxxxxxxxxxxxxxxxx',
       git: 'token or password',
     };
     await typeIntoTokenField(user, tokenPlaceholders[type], data.token);
@@ -143,7 +114,9 @@ async function fillConnectionForm(
   });
 
   if (type !== 'local' && data.branch) {
-    const branchCombobox = screen.getByRole('combobox');
+    // Index-based: Combobox uses downshift-generated IDs so Field's htmlFor
+    // doesn't associate and getByRole({ name }) can't match the label.
+    const branchCombobox = screen.getAllByRole('combobox')[0];
     await user.click(branchCombobox);
     await user.clear(branchCombobox);
     await user.paste(data.branch);
@@ -151,132 +124,63 @@ async function fillConnectionForm(
   }
 
   if (data.path) {
-    await pasteIntoInput(user, screen.getByRole('textbox', { name: /Path/i }), data.path);
+    if (type === 'local') {
+      await pasteIntoInput(user, screen.getByRole('textbox', { name: /Path/i }), data.path);
+    } else {
+      const pathCombobox = screen.getAllByRole('combobox')[1];
+      await user.click(pathCombobox);
+      await user.clear(pathCombobox);
+      await user.paste(data.path);
+      await user.keyboard('{Enter}');
+    }
   }
+}
+
+function setupMockSubmitData() {
+  const mockSubmitData = jest.fn();
+  const mockMutationState = {
+    status: QueryStatus.uninitialized,
+    isLoading: false,
+    error: null,
+    data: undefined,
+    isUninitialized: true,
+    isSuccess: false,
+    isError: false,
+    reset: jest.fn(),
+  };
+  (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
+    mockSubmitData,
+    mockMutationState,
+    mockMutationState,
+  ]);
+
+  mockSubmitData.mockResolvedValue({
+    data: {
+      metadata: {
+        name: 'test-repo-abc123',
+      },
+      spec: {
+        type: 'github',
+        title: 'Test Repository',
+      },
+    },
+  });
+
+  return mockSubmitData;
 }
 
 describe('ProvisioningWizard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Mock useGetRepositoryRefsQuery for GitHub repositories
-    mockUseGetRepositoryRefsQuery.mockReturnValue({
-      data: { items: [{ name: 'main' }, { name: 'develop' }] },
-      isLoading: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    // Mock useConnectionOptions to prevent async state updates
-    mockUseConnectionOptions.mockReturnValue({
-      options: [],
-      isLoading: false,
-      connections: [],
-      error: undefined,
-      refetch: jest.fn(),
-    });
-
-    mockUseGetFrontendSettingsQuery.mockReturnValue({
-      data: {
-        items: [],
-        allowImageRendering: true,
-        availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
-      },
-      isLoading: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    mockUseGetRepositoryFilesQuery.mockReturnValue({
-      data: [],
-      isLoading: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    mockUseListRepositoryQuery.mockReturnValue({
-      data: {
-        items: [
-          {
-            metadata: { name: 'test-repo', generation: 1 },
-            status: {
-              observedGeneration: 1,
-              health: {
-                healthy: true,
-                checked: Date.now(),
-                message: [],
-              },
-            },
-          },
-        ],
-      },
-      isLoading: false,
-      isFetching: false,
-      isError: false,
-      isSuccess: true,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    mockUseGetResourceStatsQuery.mockReturnValue({
-      data: {
-        instance: [],
-      },
-      isLoading: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-
-    const mockCreateJob = jest.fn();
-    mockUseCreateRepositoryJobsMutation.mockReturnValue([
-      mockCreateJob,
-      {
-        status: QueryStatus.uninitialized,
-        isLoading: false,
-        error: null,
-        data: undefined,
-        isUninitialized: true,
-        isSuccess: false,
-        isError: false,
-        reset: jest.fn(),
-      },
-    ]);
-
-    const mockSubmitData = jest.fn();
-    const mockMutationState = {
-      status: QueryStatus.uninitialized,
-      isLoading: false,
-      error: null,
-      data: undefined,
-      isUninitialized: true,
-      isSuccess: false,
-      isError: false,
-      reset: jest.fn(),
-    };
-    (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
-      mockSubmitData,
-      mockMutationState,
-      mockMutationState,
-    ]);
-
-    mockSubmitData.mockResolvedValue({
-      data: {
-        metadata: {
-          name: 'test-repo-abc123',
-        },
-        spec: {
-          type: 'github',
-          title: 'Test Repository',
-        },
-      },
-    });
+    setupMockSubmitData();
   });
 
   describe('Happy Path', () => {
     it('should render choose auth type step initially for GitHub', async () => {
       setup(<ProvisioningWizard type="github" />);
 
-      expect(screen.getByRole('heading', { name: /Connect/i })).toBeInTheDocument();
+      // Wait for async operations (useConnectionOptions fetches) to settle
+      expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: /Use a personal access token to authenticate/i })).toBeInTheDocument();
       expect(
         screen.getByRole('radio', { name: /Use a GitHub App for enhanced security and team colla/i })
@@ -306,23 +210,16 @@ describe('ProvisioningWizard', () => {
     });
 
     it('should progress through first 3 steps successfully', async () => {
-      mockUseGetResourceStatsQuery.mockReturnValue({
-        data: {
-          instance: [{ group: 'dashboard.grafana.app', count: 1 }],
-        },
-        isLoading: false,
-        error: null,
-        refetch: jest.fn(),
-      });
-      // Mock files to ensure sync step is not skipped for folder sync
-      mockUseGetRepositoryFilesQuery.mockReturnValue({
-        data: {
-          items: [{ name: 'test.json', path: 'test.json' }],
-        },
-        isLoading: false,
-        error: null,
-        refetch: jest.fn(),
-      });
+      // Override stats and files for this test via MSW
+      server.use(
+        http.get(`${BASE}/stats`, () =>
+          HttpResponse.json({ instance: [{ group: 'dashboard.grafana.app', count: 1 }] })
+        ),
+        http.get(`${BASE}/repositories/:name/files/`, () =>
+          HttpResponse.json({ items: [{ name: 'test.json', path: 'test.json' }] })
+        )
+      );
+
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       await fillConnectionForm(user, 'github', {
@@ -345,24 +242,6 @@ describe('ProvisioningWizard', () => {
     });
 
     it('should skip sync step when there are no resources', async () => {
-      mockUseGetResourceStatsQuery.mockReturnValue({
-        data: {
-          instance: [], // No resources
-        },
-        isLoading: false,
-        error: null,
-        refetch: jest.fn(),
-      });
-
-      mockUseGetRepositoryFilesQuery.mockReturnValue({
-        data: {
-          items: [], // No files
-        },
-        isLoading: false,
-        error: null,
-        refetch: jest.fn(),
-      } as ReturnType<typeof useGetRepositoryFilesQuery>);
-
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       await fillConnectionForm(user, 'github', {
@@ -386,17 +265,7 @@ describe('ProvisioningWizard', () => {
 
   describe('Error Handling', () => {
     it('should show field errors when connection test fails with TestResults error', async () => {
-      const mockSubmitData = jest.fn();
-      const mockMutationState = {
-        status: QueryStatus.uninitialized,
-        isLoading: false,
-        error: null,
-      };
-      (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
-        mockSubmitData,
-        mockMutationState,
-        mockMutationState,
-      ]);
+      const mockSubmitData = setupMockSubmitData();
 
       const testResultsError = {
         data: {
@@ -441,17 +310,7 @@ describe('ProvisioningWizard', () => {
     });
 
     it('should allow retry after non-field error on connection step', async () => {
-      const mockSubmitData = jest.fn();
-      const mockMutationState = {
-        status: QueryStatus.uninitialized,
-        isLoading: false,
-        error: null,
-      };
-      (mockUseCreateOrUpdateRepository as jest.Mock).mockReturnValue([
-        mockSubmitData,
-        mockMutationState,
-        mockMutationState,
-      ]);
+      const mockSubmitData = setupMockSubmitData();
 
       const urlError = {
         data: {
@@ -491,7 +350,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
 
       // User edits a visible field (branch)
-      const branchCombobox = screen.getByRole('combobox');
+      const branchCombobox = screen.getAllByRole('combobox')[0];
       await user.clear(branchCombobox);
       await user.paste('develop');
       await user.keyboard('{Enter}');
@@ -524,8 +383,8 @@ describe('ProvisioningWizard', () => {
       await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
       expect(await screen.findByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
 
-      const clearButton = screen.getByTitle(/Clear value/i);
-      await user.click(clearButton);
+      const clearButtons = screen.getAllByTitle(/Clear value/i);
+      await user.click(clearButtons[0]); // Clear the branch combobox
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
@@ -548,16 +407,15 @@ describe('ProvisioningWizard', () => {
         url: 'https://gitlab.com/test/repo',
       });
 
-      // Connection step fields
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
 
     it('should render Bitbucket-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
       // Auth step fields
-      expect(screen.getByText('App Password *')).toBeInTheDocument();
+      expect(screen.getByText('API Token *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Username/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
 
@@ -567,9 +425,8 @@ describe('ProvisioningWizard', () => {
         url: 'https://bitbucket.org/test/repo',
       });
 
-      // Connection step fields
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
 
     it('should render Git-specific fields', async () => {
@@ -586,9 +443,8 @@ describe('ProvisioningWizard', () => {
         url: 'https://git.example.com/test/repo.git',
       });
 
-      // Connection step fields
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
 
     it('should render local repository fields', async () => {
@@ -599,7 +455,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
       expect(screen.queryByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText('ATBBxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('ATATTxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /Repository URL/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
@@ -607,7 +463,7 @@ describe('ProvisioningWizard', () => {
     it('should accept tokenUser input for Bitbucket provider', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
-      await typeIntoTokenField(user, 'ATBBxxxxxxxxxxxxxxxx', 'test-token');
+      await typeIntoTokenField(user, 'ATATTxxxxxxxxxxxxxxxx', 'test-token');
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(
         user,

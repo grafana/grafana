@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
+import memoize from 'micro-memoize';
 
+import { isTableCellStylesKeyEqual } from '../styles';
 import { DataLinksCellProps, TableCellStyles } from '../types';
 import { getCellLinks, getJustifyContent } from '../utils';
 
@@ -17,25 +19,28 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
   ));
 };
 
-export const getStyles: TableCellStyles = (theme, { textWrap, textAlign }) =>
-  css({
-    ...(textWrap && {
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: `${getJustifyContent(textAlign)} !important`, // we can't guarantee order, and alignItems is set on a sibling class.
-    }),
-    '> a': {
-      flexWrap: 'nowrap',
-      ...(!textWrap && {
-        paddingInline: theme.spacing(0.5),
-        borderRight: `2px solid ${theme.colors.border.medium}`,
-        '&:first-child': {
-          paddingInlineStart: 0,
-        },
-        '&:last-child': {
-          paddingInlineEnd: 0,
-          borderRight: 'none',
-        },
+export const getStyles: TableCellStyles = memoize(
+  (theme, { textWrap, textAlign }) =>
+    css({
+      ...(textWrap && {
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: `${getJustifyContent(textAlign)} !important`, // we can't guarantee order, and alignItems is set on a sibling class.
       }),
-    },
-  });
+      '> a': {
+        flexWrap: 'nowrap',
+        ...(!textWrap && {
+          paddingInline: theme.spacing(0.5),
+          borderRight: `2px solid ${theme.colors.border.medium}`,
+          '&:first-child': {
+            paddingInlineStart: 0,
+          },
+          '&:last-child': {
+            paddingInlineEnd: 0,
+            borderRight: 'none',
+          },
+        }),
+      },
+    }),
+  { isMatchingKey: isTableCellStylesKeyEqual }
+);

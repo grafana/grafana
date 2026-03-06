@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, userEvent } from 'test/test-utils';
 
 import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
@@ -198,5 +198,24 @@ describe('browse-dashboards FolderActionsButton', () => {
       <FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: '123' }} isReadOnlyRepo />
     );
     expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+  });
+
+  describe('with provisioningFolderMetadata feature flag', () => {
+    testWithFeatureToggles({ enable: ['provisioningFolderMetadata'] });
+
+    it('renders the "Manage permissions" option for provisioned folders', async () => {
+      render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: '123' }} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+      expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+    });
+
+    it('renders the "Folder actions" button for provisioned root repo folder when user can view permissions', async () => {
+      render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: undefined }} />);
+
+      expect(screen.getByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+      expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+    });
   });
 });

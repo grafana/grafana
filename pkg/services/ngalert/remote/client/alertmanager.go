@@ -9,11 +9,12 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	amclient "github.com/prometheus/alertmanager/api/v2/client"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/util/httpclient"
-	amclient "github.com/prometheus/alertmanager/api/v2/client"
 )
 
 const alertmanagerAPIMountPath = "/alertmanager"
@@ -70,10 +71,12 @@ func (am *Alertmanager) GetAuthedClient() alertingInstrument.Requester {
 	return am.httpClient
 }
 
+var ReadinessTimeout = 10 * time.Second
+
 // IsReadyWithBackoff executes a readiness check against the `/-/ready` Alertmanager endpoint.
 // It uses exponential backoff (100ms * 2^attempts) with a 10s timeout.
 func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, ReadinessTimeout)
 	defer cancel()
 
 	var wait time.Duration

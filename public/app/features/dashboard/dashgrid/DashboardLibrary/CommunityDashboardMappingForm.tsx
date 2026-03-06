@@ -7,7 +7,8 @@ import { Stack, Text, Button, Alert, Field, Input, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/types';
 
-import { ContentKind, DashboardLibraryInteractions, EventLocation, SOURCE_ENTRY_POINTS } from './interactions';
+import { ContentKind, EventLocation, SOURCE_ENTRY_POINTS } from './constants';
+import { DashboardLibraryInteractions } from './interactions';
 import { InputMapping, mapConstantInputs, mapUserSelectedDatasources } from './utils/autoMapDatasources';
 
 interface Props {

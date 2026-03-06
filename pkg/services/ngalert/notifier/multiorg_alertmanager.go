@@ -265,8 +265,15 @@ func (moa *MultiOrgAlertmanager) initAlertBroadcast() {
 	if _, ok := moa.peer.(*NilPeer); ok {
 		return
 	}
+	queueSize := moa.settings.UnifiedAlerting.HASingleEvaluationAlertBroadcastQueueSize
+	if queueSize <= 0 {
+		queueSize = setting.AlertBroadcastDefaultQueueSize
+	}
 	state := newAlertBroadcastState(moa.logger.New("component", "alert-broadcast"), moa)
-	moa.alertsBroadcastChannel = moa.peer.AddState(alertBroadcastKey, state, moa.metrics.Registerer)
+	moa.alertsBroadcastChannel = moa.peer.AddState(alertBroadcastKey, state, moa.metrics.Registerer,
+		alertingCluster.WithReliableDelivery(true),
+		alertingCluster.WithQueueSize(queueSize),
+	)
 }
 
 // BroadcastAlerts sends alerts to all peers via the cluster channel.
@@ -642,10 +649,11 @@ type NilPeer struct{}
 
 func (p *NilPeer) Position() int                   { return 0 }
 func (p *NilPeer) WaitReady(context.Context) error { return nil }
-func (p *NilPeer) AddState(string, alertingCluster.State, prometheus.Registerer) alertingCluster.ClusterChannel {
+func (p *NilPeer) AddState(string, alertingCluster.State, prometheus.Registerer, ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
 	return &NilChannel{}
 }
 
 type NilChannel struct{}
 
-func (c *NilChannel) Broadcast([]byte) {}
+func (c *NilChannel) Broadcast([]byte)             {}
+func (c *NilChannel) ReliableDelivery([]byte) bool { return true }

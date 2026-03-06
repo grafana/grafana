@@ -5,9 +5,20 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
-import { Alert, Box, Drawer, Icon, LoadingBar, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Box,
+  Drawer,
+  Icon,
+  LoadingBar,
+  LoadingPlaceholder,
+  Stack,
+  Text,
+  TextLink,
+  useStyles2,
+} from '@grafana/ui';
 import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -16,12 +27,20 @@ import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
+import { groups, rulesNav } from '../../utils/navigation';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
+import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
+import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
+import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
+import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
+import { useInstanceAlertState } from './instanceStateUtils';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
+import { dateFormatter, noop } from './timelineUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
@@ -75,6 +94,18 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     return { historyRecords, annotations };
   }, [stateHistoryData]);
 
+  const instanceState = useInstanceAlertState(ruleUID, instanceLabels);
+
+  const showInstanceTimeline =
+    config.featureToggles.alertingNotificationHistoryTriage && config.featureToggles.kubernetesAlertingHistorian;
+
+  const showDrawerTimeRangeBanner = useMemo(() => {
+    if (!rule?.grafana_alert) {
+      return false;
+    }
+    return isDrawerRangeShorterThanQuery(rule.grafana_alert, timeRange);
+  }, [rule, timeRange]);
+
   if (error) {
     return (
       <Drawer
@@ -109,6 +140,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
         <Stack justifyContent="flex-end">
           <TimeRangePicker />
         </Stack>
+        {showDrawerTimeRangeBanner && !instanceState && <DrawerTimeRangeInfoBanner />}
+        {instanceState && <InstanceStateInfoBanner state={instanceState} />}
         {dataQueries.length > 0 && (
           <Box>
             <Stack direction="column" gap={2}>
@@ -125,30 +158,42 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
           </Box>
         )}
 
-        <Box ref={ref}>
-          <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
-          {stateHistoryFetching && <LoadingBar width={loadingBarWidth} />}
-          {stateHistoryError && (
-            <Alert
-              severity="error"
-              title={t('alerting.instance-details.history-error', 'Failed to load state history')}
-            >
-              {t(
-                'alerting.instance-details.history-error-desc',
-                'Unable to fetch state transition history for this instance.'
-              )}
-            </Alert>
-          )}
-          {!stateHistoryFetching && !stateHistoryError && (
-            <Stack direction="column" gap={1}>
-              {historyRecords.length > 0 ? (
-                <InstanceStateTransitions records={historyRecords} />
-              ) : (
-                <Text color="secondary">{t('alerting.instance-details.no-history', 'No recent state changes')}</Text>
-              )}
-            </Stack>
-          )}
-        </Box>
+        {showInstanceTimeline ? (
+          <InstanceTimelineSection
+            ruleUID={ruleUID}
+            instanceLabels={instanceLabels}
+            timeRange={timeRange}
+            historyRecords={historyRecords}
+            stateHistoryFetching={stateHistoryFetching}
+            stateHistoryError={stateHistoryError}
+            loadingBarRef={ref}
+          />
+        ) : (
+          <Box ref={ref}>
+            <Text variant="h5">{t('alerting.instance-details.state-history', 'Recent State Changes')}</Text>
+            {stateHistoryFetching && <LoadingBar width={loadingBarWidth} />}
+            {stateHistoryError && (
+              <Alert
+                severity="error"
+                title={t('alerting.instance-details.history-error', 'Failed to load state history')}
+              >
+                {t(
+                  'alerting.instance-details.history-error-desc',
+                  'Unable to fetch state transition history for this instance.'
+                )}
+              </Alert>
+            )}
+            {!stateHistoryFetching && !stateHistoryError && (
+              <Stack direction="column" gap={1}>
+                {historyRecords.length > 0 ? (
+                  <InstanceStateTransitions records={historyRecords} maxItems={10} />
+                ) : (
+                  <Text color="secondary">{t('alerting.instance-details.no-history', 'No recent state changes')}</Text>
+                )}
+              </Stack>
+            )}
+          </Box>
+        )}
       </Stack>
     </Drawer>
   );
@@ -158,18 +203,39 @@ export interface InstanceLocationProps {
   folderTitle: string;
   groupName: string;
   ruleName: string;
+  namespaceUid?: string;
+  ruleUid?: string;
 }
 
-export function InstanceLocation({ folderTitle, groupName, ruleName }: InstanceLocationProps) {
+export function InstanceLocation({ folderTitle, groupName, ruleName, namespaceUid, ruleUid }: InstanceLocationProps) {
+  const groupUrl =
+    namespaceUid != null ? groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, namespaceUid, groupName) : undefined;
+  const ruleViewUrl =
+    ruleUid != null
+      ? rulesNav.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, { uid: ruleUid, ruleSourceName: 'grafana' })
+      : undefined;
+
   return (
     <Stack direction="row" alignItems="center" gap={1}>
       <Icon size="xs" name="folder" />
       <Stack direction="row" alignItems="center" gap={0.5}>
         <Text variant="bodySmall">{folderTitle}</Text>
         <Icon size="sm" name="angle-right" />
-        <Text variant="bodySmall">{groupName}</Text>
+        {groupUrl ? (
+          <TextLink href={groupUrl} variant="bodySmall" color="primary" inline={false}>
+            {groupName}
+          </TextLink>
+        ) : (
+          <Text variant="bodySmall">{groupName}</Text>
+        )}
         <Icon size="sm" name="angle-right" />
-        <Text variant="bodySmall">{ruleName}</Text>
+        {ruleViewUrl ? (
+          <TextLink href={ruleViewUrl} variant="bodySmall" color="primary" inline={false}>
+            {ruleName}
+          </TextLink>
+        ) : (
+          <Text variant="bodySmall">{ruleName}</Text>
+        )}
       </Stack>
     </Stack>
   );
@@ -186,32 +252,28 @@ function extractQueryDetails(rule: GrafanaRuleDefinition) {
   return { dataQueries, thresholds };
 }
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
+const MAX_STATE_TRANSITIONS = 10;
 
-function formatTimestamp(timestamp: number) {
-  return dateFormatter.format(new Date(timestamp));
-}
-
-function InstanceStateTransitions({ records }: { records: LogRecord[] }) {
+function InstanceStateTransitions({
+  records,
+  maxItems = MAX_STATE_TRANSITIONS,
+}: {
+  records: LogRecord[];
+  maxItems?: number;
+}) {
   const styles = useStyles2(stateTransitionStyles);
-  const sortedRecords = orderBy(records, (r) => r.timestamp, 'desc');
+  const sortedRecords = orderBy(records, (r) => r.timestamp, 'desc').slice(0, maxItems);
 
   return (
     <div className={styles.container}>
       {sortedRecords.map((record, index) => (
         <Fragment key={`${record.timestamp}-${index}`}>
           <Text color="secondary" variant="bodySmall">
-            {formatTimestamp(record.timestamp)}
+            {dateFormatter.format(new Date(record.timestamp))}
           </Text>
-          <EventState state={record.line.previous} showLabel addFilter={() => {}} type="from" />
+          <EventState state={record.line.previous} showLabel addFilter={noop} type="from" />
           <Icon name="arrow-right" size="sm" />
-          <EventState state={record.line.current} showLabel addFilter={() => {}} type="to" />
+          <EventState state={record.line.current} showLabel addFilter={noop} type="to" />
         </Fragment>
       ))}
     </div>

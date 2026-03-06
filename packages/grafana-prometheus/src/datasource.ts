@@ -913,7 +913,7 @@ export class PrometheusDatasource
       return expr;
     }
 
-    const finalQuery = filters.reduce((acc, filter) => {
+    const finalQuery = filters.map(remapOneOf).reduce((acc, filter) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -1083,3 +1083,17 @@ export const extractResourceMatcher = (
   // Create a matcher using metric names and label filters
   return `{${[...metricMatch, ...labelsMatch].join(',')}}`;
 };
+
+export function remapOneOf(filter: AdHocVariableFilter) {
+  let { operator, value, values } = filter;
+  if (operator === '=|' || operator === '!=|') {
+    operator = operator === '=|' ? '=~' : '!~';
+    value = values?.map(prometheusRegularEscape).join('|') ?? '';
+  }
+
+  return {
+    ...filter,
+    operator,
+    value,
+  };
+}
