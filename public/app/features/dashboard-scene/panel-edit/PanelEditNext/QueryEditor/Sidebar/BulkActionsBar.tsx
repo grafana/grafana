@@ -1,14 +1,55 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isExpressionReference } from '@grafana/runtime';
-import { useState } from 'react';
-
-import { Button, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, IconName, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
-import { useActionsContext, usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+interface BulkActionButtonsProps {
+  onDelete: () => void;
+  toggleIcon: IconName;
+  toggleLabel: string;
+  toggleTooltip: string;
+  onToggle: () => void;
+  children?: React.ReactNode;
+}
+
+function BulkActionButtons({ onDelete, toggleIcon, toggleLabel, toggleTooltip, onToggle, children }: BulkActionButtonsProps) {
+  return (
+    <Stack direction="row" gap={0.25}>
+      <Button
+        size="sm"
+        variant="destructive"
+        fill="text"
+        icon="trash-alt"
+        onClick={onDelete}
+        tooltip={t('query-editor-next.bulk-actions.delete', 'Delete selected')}
+      >
+        {t('query-editor-next.bulk-actions.delete', 'Delete')}
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        fill="text"
+        icon={toggleIcon}
+        onClick={onToggle}
+        tooltip={toggleTooltip}
+      >
+        {toggleLabel}
+      </Button>
+      {children}
+    </Stack>
+  );
+}
+
+import {
+  useActionsContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from '../QueryEditorContext';
 
 export function BulkActionsBar() {
   const styles = useStyles2(getStyles);
@@ -49,12 +90,14 @@ export function BulkActionsBar() {
     selectedTransformations.every((transformation) => transformation.transformConfig.disabled);
 
   // Only show datasource change if all selected queries are non-expression queries
-  const canChangeDatasource =
-    hasQueriesSelected && selectedQueries.every((q) => !isExpressionReference(q.datasource));
+  const canChangeDatasource = hasQueriesSelected && selectedQueries.every((q) => !isExpressionReference(q.datasource));
 
   const handleConfirmedDeleteQueries = () => {
     bulkDeleteQueries([...selectedQueryRefIds]);
     setShowDeleteQueriesConfirm(false);
+    // Note: the bulkDeleteQueries action wrapper also calls clearSelection internally,
+    // but we call it here explicitly so test mocks (which replace the real action) still
+    // trigger the bar to dismiss.
     clearSelection();
   };
 
@@ -65,6 +108,7 @@ export function BulkActionsBar() {
   const handleConfirmedDeleteTransformations = () => {
     bulkDeleteTransformations([...selectedTransformationIds]);
     setShowDeleteTransformationsConfirm(false);
+    // Same rationale as handleConfirmedDeleteQueries above.
     clearSelection();
   };
 
@@ -86,111 +130,59 @@ export function BulkActionsBar() {
       >
         {/* Queries section */}
         {hasQueriesSelected && (
-          <>
-            <Text variant="bodySmall" color="secondary" truncate>
-              {t('query-editor-next.bulk-actions.queries-selected', '{{count}} queries selected', {
-                count: selectedQueryRefIds.length,
-              })}
-            </Text>
-            <div className={styles.separator} aria-hidden="true" />
-            <Stack direction="row" gap={0.25}>
-              <Button
-                size="sm"
-                variant="destructive"
-                fill="text"
-                icon="trash-alt"
-                onClick={() => setShowDeleteQueriesConfirm(true)}
-                tooltip={t('query-editor-next.bulk-actions.delete-queries', 'Delete selected queries')}
-              >
-                {t('query-editor-next.bulk-actions.delete', 'Delete')}
-              </Button>
+          <BulkActionButtons
+            onDelete={() => setShowDeleteQueriesConfirm(true)}
+            toggleIcon={allSelectedQueriesHidden ? 'eye' : 'eye-slash'}
+            toggleLabel={
+              allSelectedQueriesHidden
+                ? t('query-editor-next.bulk-actions.show-all', 'Show all')
+                : t('query-editor-next.bulk-actions.hide-all', 'Hide all')
+            }
+            toggleTooltip={
+              allSelectedQueriesHidden
+                ? t('query-editor-next.bulk-actions.show-all', 'Show all selected')
+                : t('query-editor-next.bulk-actions.hide-all', 'Hide all selected')
+            }
+            onToggle={handleBulkToggleHide}
+          >
+            {canChangeDatasource && (
               <Button
                 size="sm"
                 variant="secondary"
                 fill="text"
-                icon={allSelectedQueriesHidden ? 'eye' : 'eye-slash'}
-                onClick={handleBulkToggleHide}
-                tooltip={
-                  allSelectedQueriesHidden
-                    ? t('query-editor-next.bulk-actions.show-all-queries', 'Show all selected queries')
-                    : t('query-editor-next.bulk-actions.hide-all-queries', 'Hide all selected queries')
-                }
+                icon="database"
+                onClick={() => setShowDsModal(true)}
+                tooltip={t(
+                  'query-editor-next.bulk-actions.change-datasource',
+                  'Change data source for selected queries'
+                )}
               >
-                {allSelectedQueriesHidden
-                  ? t('query-editor-next.bulk-actions.show-all', 'Show all')
-                  : t('query-editor-next.bulk-actions.hide-all', 'Hide all')}
+                {t('query-editor-next.bulk-actions.datasource', 'Data source')}
               </Button>
-              {canChangeDatasource && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  fill="text"
-                  icon="database-alt"
-                  onClick={() => setShowDsModal(true)}
-                  tooltip={t(
-                    'query-editor-next.bulk-actions.change-datasource',
-                    'Change data source for selected queries'
-                  )}
-                >
-                  {t('query-editor-next.bulk-actions.datasource', 'Data source')}
-                </Button>
-              )}
-            </Stack>
-          </>
+            )}
+          </BulkActionButtons>
         )}
 
         {/* Transformations section */}
         {hasTransformationsSelected && (
-          <>
-            {hasQueriesSelected && <div className={styles.separator} aria-hidden="true" />}
-            <Text variant="bodySmall" color="secondary" truncate>
-              {t('query-editor-next.bulk-actions.transformations-selected', '{{count}} transformations selected', {
-                count: selectedTransformationIds.length,
-              })}
-            </Text>
-            <div className={styles.separator} aria-hidden="true" />
-            <Stack direction="row" gap={0.25}>
-              <Button
-                size="sm"
-                variant="destructive"
-                fill="text"
-                icon="trash-alt"
-                onClick={() => setShowDeleteTransformationsConfirm(true)}
-                tooltip={t(
-                  'query-editor-next.bulk-actions.delete-transformations',
-                  'Delete selected transformations'
-                )}
-              >
-                {t('query-editor-next.bulk-actions.delete', 'Delete')}
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                fill="text"
-                icon={allSelectedTransformationsDisabled ? 'play' : 'pause'}
-                onClick={handleBulkToggleDisabled}
-                tooltip={
-                  allSelectedTransformationsDisabled
-                    ? t(
-                        'query-editor-next.bulk-actions.enable-all-transformations',
-                        'Enable all selected transformations'
-                      )
-                    : t(
-                        'query-editor-next.bulk-actions.disable-all-transformations',
-                        'Disable all selected transformations'
-                      )
-                }
-              >
-                {allSelectedTransformationsDisabled
-                  ? t('query-editor-next.bulk-actions.enable-all', 'Enable all')
-                  : t('query-editor-next.bulk-actions.disable-all', 'Disable all')}
-              </Button>
-            </Stack>
-          </>
+          <BulkActionButtons
+            onDelete={() => setShowDeleteTransformationsConfirm(true)}
+            toggleIcon={allSelectedTransformationsDisabled ? 'play' : 'pause'}
+            toggleLabel={
+              allSelectedTransformationsDisabled
+                ? t('query-editor-next.bulk-actions.enable-all', 'Enable all')
+                : t('query-editor-next.bulk-actions.disable-all', 'Disable all')
+            }
+            toggleTooltip={
+              allSelectedTransformationsDisabled
+                ? t('query-editor-next.bulk-actions.enable-all', 'Enable all selected')
+                : t('query-editor-next.bulk-actions.disable-all', 'Disable all selected')
+            }
+            onToggle={handleBulkToggleDisabled}
+          />
         )}
 
         {/* Clear selection */}
-        <div className={styles.separator} aria-hidden="true" />
         <Button
           size="sm"
           variant="secondary"
@@ -199,6 +191,7 @@ export function BulkActionsBar() {
           onClick={clearSelection}
           tooltip={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
           aria-label={t('query-editor-next.bulk-actions.clear-selection', 'Clear selection')}
+          className={styles.clearButton}
         />
       </div>
 
@@ -255,15 +248,13 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(0.5),
       padding: theme.spacing(0.75, 1),
-      background: theme.colors.background.secondary,
+      background: theme.colors.background.canvas,
+      borderTop: `1px solid ${theme.colors.border.medium}`,
       borderBottom: `1px solid ${theme.colors.border.medium}`,
       flexWrap: 'wrap',
     }),
-    separator: css({
-      width: 1,
-      height: theme.spacing(2),
-      background: theme.colors.border.medium,
-      flexShrink: 0,
+    clearButton: css({
+      marginLeft: 'auto',
     }),
   };
 }
