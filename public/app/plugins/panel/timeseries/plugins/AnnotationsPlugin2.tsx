@@ -16,7 +16,7 @@ import {
 import { TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
-import { useAnnotationClustering } from './annotations2/useAnnotationClustering';
+import { ClusteringMode, useAnnotationClustering } from './annotations2/useAnnotationClustering';
 import { useAnnotations } from './annotations2/useAnnotations';
 import { ANNOTATION_LANE_SIZE } from './utils';
 
@@ -39,11 +39,6 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
   ctx.strokeStyle = color;
   ctx.stroke();
 };
-
-enum ClusteringMode {
-  Hover = 'hover',
-  Render = 'render',
-}
 
 const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8String();
 

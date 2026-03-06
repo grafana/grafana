@@ -12,7 +12,7 @@ interface Props {
   timeRange: TimeRange2;
 }
 
-enum ClusteringMode {
+export enum ClusteringMode {
   Hover = 'hover',
   Render = 'render',
 }

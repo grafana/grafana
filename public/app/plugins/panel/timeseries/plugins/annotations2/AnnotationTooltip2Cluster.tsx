@@ -48,14 +48,10 @@ export const AnnotationTooltip2Cluster = ({
         onAnnotationDelete
       );
 
-      let text = annoVals.text?.[i] ?? '';
-      let alertText = '';
-
-      if (annoVals.alertId?.[i] !== undefined && annoVals.newState?.[i]) {
-        alertText = annoVals.data?.[i] ? alertDef.getAlertAnnotationText(annoVals.data[i]) : '';
-      } else if (annoVals.title?.[i]) {
-        text = annoVals.title[i] + (text ? `<br />${text}` : '');
-      }
+      const isAlertAnnotation = annoVals.alertId?.[i] != null && annoVals.newState?.[i];
+      const text = !isAlertAnnotation ? (annoVals.text?.[i] ?? '') : '';
+      const alertText = annoVals.data?.[i] ? alertDef.getAlertAnnotationText(annoVals.data[i]) : '';
+      const title = annoVals.title?.[i] ?? '';
       const annotationId = annoVals.id?.[i];
 
       annotationTooltipComponents.push(
@@ -75,7 +71,7 @@ export const AnnotationTooltip2Cluster = ({
               onClose();
             }}
           />
-          <AnnotationTooltipBody text={text} alertText={alertText} tags={annoVals?.tags?.[i] ?? []} />
+          <AnnotationTooltipBody title={title} text={text} alertText={alertText} tags={annoVals?.tags?.[i] ?? []} />
         </>
       );
     }
