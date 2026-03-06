@@ -9,7 +9,7 @@ import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
+import { DashboardInputs, DataSourceInput, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
 
 import {
   applyV1Inputs,
@@ -213,6 +213,41 @@ describe('extractV1Inputs', () => {
     expect(result.constants).toHaveLength(0);
   });
 
+  it('should skip expressions datasource inputs', async () => {
+    const dashboard = createV1DashboardWithInputs([
+      {
+        name: 'DS_PROMETHEUS',
+        type: InputType.DataSource,
+        label: 'Prometheus',
+        pluginId: 'prometheus',
+      },
+      {
+        name: 'DS_LOKI',
+        type: InputType.DataSource,
+        label: 'Loki',
+        pluginId: 'loki',
+      },
+      {
+        name: 'VAR_NAMESPACE',
+        type: InputType.Constant,
+        label: 'Namespace',
+        value: 'default',
+      },
+      {
+        name: 'DS_EXPRESSION',
+        label: 'Expression',
+        description: '',
+        type: InputType.DataSource,
+        pluginId: '__expr__',
+      },
+    ]);
+
+    const result = await extractV1Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(2);
+    expect(result.constants).toHaveLength(1);
+  });
+
   it('should handle empty __inputs array', async () => {
     const dashboard = { title: 'Test Dashboard', __inputs: [] };
     const result = await extractV1Inputs(dashboard);
@@ -264,6 +299,20 @@ describe('extractV2Inputs', () => {
                     {
                       kind: 'PanelQuery',
                       spec: { query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+                    },
+                    // expression queries shouldn't be added to input, adding this just to prevent regressions
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          datasource: {
+                            name: '__expr__',
+                          },
+                          group: '__expr__',
+                          spec: {},
+                        },
+                        refId: 'B',
+                      },
                     },
                   ],
                 },
