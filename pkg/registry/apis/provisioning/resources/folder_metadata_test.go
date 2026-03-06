@@ -69,7 +69,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 		const uid = "my-stable-uid"
 		manifest := NewFolderManifest(uid, "myfolder")
 
-		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+		rw.On("Write", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
 			var f folders.Folder
 			if err := json.Unmarshal(b, &f); err != nil {
 				return false
@@ -86,10 +86,10 @@ func TestWriteFolderMetadata(t *testing.T) {
 		assert.Equal(t, uid, returnedUID)
 	})
 
-	t.Run("returns error when repo.Create fails", func(t *testing.T) {
+	t.Run("returns error when repo.Write fails", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		manifest := NewFolderManifest("some-uid", "myfolder")
-		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").
+		rw.On("Write", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").
 			Return(assert.AnError)
 
 		_, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "")

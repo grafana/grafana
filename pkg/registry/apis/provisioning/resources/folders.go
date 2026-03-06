@@ -42,19 +42,19 @@ type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
 type FolderManagerOption func(*FolderManager)
 
 type FolderManager struct {
-	repo                  repository.ReaderWriter
-	tree                  FolderTree
-	client                dynamic.ResourceInterface
-	beforeCreate          FolderCreationInterceptor
-	folderMetadataEnabled bool
+	repo                      repository.ReaderWriter
+	tree                      FolderTree
+	client                    dynamic.ResourceInterface
+	beforeCreate              FolderCreationInterceptor
+	folderMetadataEnabled     bool
+	folderMetadataForExisting bool
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderMetadataEnabled bool, opts ...FolderManagerOption) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
 	fm := &FolderManager{
-		repo:                  repo,
-		tree:                  lookup,
-		client:                client,
-		folderMetadataEnabled: folderMetadataEnabled,
+		repo:   repo,
+		tree:   lookup,
+		client: client,
 		beforeCreate: func(context.Context, Folder) error {
 			return nil
 		},
@@ -74,6 +74,14 @@ func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOptio
 func WithFolderMetadataEnabled(folderMetadataEnabled bool) FolderManagerOption {
 	return func(fm *FolderManager) {
 		fm.folderMetadataEnabled = folderMetadataEnabled
+	}
+}
+
+// WithFolderMetadataForExisting controls whether folder metadata (_folder.json) is
+// written even when the folder directory already exists in the repository.
+func WithFolderMetadataForExisting(forExisting bool) FolderManagerOption {
+	return func(fm *FolderManager) {
+		fm.folderMetadataForExisting = forExisting
 	}
 }
 
@@ -303,27 +311,28 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 		}
 
 		_, err := fm.repo.Read(ctx, p, ref)
-		if err != nil && (!errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err)) {
+		found := !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err))
+		if err != nil && found {
 			return fn(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
 		}
 
-		created := err != nil // err is ErrFileNotFound at this point
-		if created {
+		created := false
+		if !found {
 			msg := fmt.Sprintf("Add folder %s", p)
 			if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
 				return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
 			}
+			created = true
 		}
 
 		// Add it to the existing tree
 		fm.tree.Add(folder, parent)
 
-		// TODO: Create real file when folder metadata utils is merged.
-		if fm.folderMetadataEnabled {
-			metadataPath := safepath.Join(p, "_folder.json")
-			msg := fmt.Sprintf("Add folder metadata %s", metadataPath)
-			if err := fm.repo.Write(ctx, metadataPath, ref, []byte("{}"), msg); err != nil {
-				return fn(folder, created, fmt.Errorf("write folder metadata: %w", err))
+		if fm.folderMetadataEnabled && (created || fm.folderMetadataForExisting) {
+			msg := fmt.Sprintf("Add folder metadata %s", p)
+			manifest := NewFolderManifest(folder.ID, folder.Title)
+			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, ref, msg); err != nil {
+				return fn(folder, created, err)
 			}
 		}
 
