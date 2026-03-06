@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,6 +21,7 @@ interface BulkActionButtonsProps {
   toggleLabel: string;
   toggleTooltip: string;
   onToggle: () => void;
+  compact?: boolean;
   children?: React.ReactNode;
 }
 
@@ -29,6 +31,7 @@ function BulkActionButtons({
   toggleLabel,
   toggleTooltip,
   onToggle,
+  compact,
   children,
 }: BulkActionButtonsProps) {
   return (
@@ -41,10 +44,10 @@ function BulkActionButtons({
         onClick={onDelete}
         tooltip={t('query-editor-next.bulk-actions.delete-tooltip', 'Delete selected')}
       >
-        {t('query-editor-next.bulk-actions.delete', 'Delete')}
+        {compact ? undefined : t('query-editor-next.bulk-actions.delete', 'Delete')}
       </Button>
       <Button size="sm" variant="secondary" fill="text" icon={toggleIcon} onClick={onToggle} tooltip={toggleTooltip}>
-        {toggleLabel}
+        {compact ? undefined : toggleLabel}
       </Button>
       {children}
     </Stack>
@@ -53,6 +56,7 @@ function BulkActionButtons({
 
 export function BulkActionsBar() {
   const styles = useStyles2(getStyles);
+  const [barRef, { width: barWidth }] = useMeasure<HTMLDivElement>();
 
   const { selectedQueryRefIds, selectedTransformationIds, clearSelection } = useQueryEditorUIContext();
   const {
@@ -85,12 +89,15 @@ export function BulkActionsBar() {
   const selectedTransformations = hasTransformationsSelected
     ? transformations.filter((transformation) => selectedTransformationIds.includes(transformation.transformId))
     : [];
+
   const allSelectedTransformationsDisabled =
     selectedTransformations.length > 0 &&
     selectedTransformations.every((transformation) => transformation.transformConfig.disabled);
 
   // Only show datasource change if all selected queries are non-expression queries
   const canChangeDatasource = hasQueriesSelected && selectedQueries.every((q) => !isExpressionReference(q.datasource));
+
+  const compact = canChangeDatasource && barWidth > 0 && barWidth < 280;
 
   const handleConfirmedDeleteQueries = () => {
     bulkDeleteQueries(selectedQueryRefIds);
@@ -124,6 +131,7 @@ export function BulkActionsBar() {
   return (
     <>
       <div
+        ref={barRef}
         className={styles.bar}
         role="toolbar"
         aria-label={t('query-editor-next.bulk-actions.toolbar-label', 'Bulk actions')}
@@ -132,11 +140,11 @@ export function BulkActionsBar() {
         {hasQueriesSelected && (
           <BulkActionButtons
             onDelete={() => setShowDeleteQueriesConfirm(true)}
-            toggleIcon={allSelectedQueriesHidden ? 'eye' : 'eye-slash'}
+            toggleIcon={allSelectedQueriesHidden ? 'eye-slash' : 'eye'}
             toggleLabel={
               allSelectedQueriesHidden
-                ? t('query-editor-next.bulk-actions.show-all', 'Show all')
-                : t('query-editor-next.bulk-actions.hide-all', 'Hide all')
+                ? t('query-editor-next.bulk-actions.show', 'Show')
+                : t('query-editor-next.bulk-actions.hide', 'Hide')
             }
             toggleTooltip={
               allSelectedQueriesHidden
@@ -144,6 +152,7 @@ export function BulkActionsBar() {
                 : t('query-editor-next.bulk-actions.hide-all-tooltip', 'Hide all selected')
             }
             onToggle={handleBulkToggleHide}
+            compact={compact}
           >
             {canChangeDatasource && (
               <Button
@@ -157,7 +166,7 @@ export function BulkActionsBar() {
                   'Change data source for selected queries'
                 )}
               >
-                {t('query-editor-next.bulk-actions.datasource', 'Data source')}
+                {compact ? undefined : t('query-editor-next.bulk-actions.datasource', 'Data source')}
               </Button>
             )}
           </BulkActionButtons>
@@ -167,7 +176,7 @@ export function BulkActionsBar() {
         {hasTransformationsSelected && (
           <BulkActionButtons
             onDelete={() => setShowDeleteTransformationsConfirm(true)}
-            toggleIcon={allSelectedTransformationsDisabled ? 'play' : 'pause'}
+            toggleIcon={allSelectedTransformationsDisabled ? 'eye-slash' : 'eye'}
             toggleLabel={
               allSelectedTransformationsDisabled
                 ? t('query-editor-next.bulk-actions.enable-all', 'Enable all')
@@ -179,6 +188,7 @@ export function BulkActionsBar() {
                 : t('query-editor-next.bulk-actions.disable-all-tooltip', 'Disable all selected')
             }
             onToggle={handleBulkToggleDisabled}
+            compact={compact}
           />
         )}
 
@@ -247,7 +257,6 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.canvas,
       borderTop: `1px solid ${theme.colors.border.medium}`,
       borderBottom: `1px solid ${theme.colors.border.medium}`,
-      flexWrap: 'wrap',
     }),
     clearButton: css({
       marginLeft: 'auto',
