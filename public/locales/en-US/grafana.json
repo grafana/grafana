@@ -11744,7 +11744,7 @@
       "dialog-label": "Navigation",
       "dock": "Dock menu",
       "list-label": "Navigation",
-      "open": "Open menu",
+      "open": "Main menu",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -12632,6 +12632,7 @@
       "error-connection-required": "Connection is required",
       "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
+      "error-save-failed": "Failed to save repository setting",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
       "label-connection": "GitHub App connection",
@@ -13194,6 +13195,10 @@
       "make-sure": "Create a token with these permissions"
     },
     "warning-title-default": "Warning",
+    "watch-stream": {
+      "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
+      "error-title": "Live updates unavailable"
+    },
     "wizard": {
       "alert-intro": "Please be aware of the following limitations. For more details, see the <2>Git Sync documentation</2>.",
       "alert-point-1": "Resources can still be created, edited, or deleted during this process, but changes may not be exported.",
