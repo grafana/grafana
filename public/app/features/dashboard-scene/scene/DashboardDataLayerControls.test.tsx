@@ -1,6 +1,5 @@
 import { act, render } from '@testing-library/react';
 
-import {} from '@grafana/scenes-react';
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardDataLayerSet } from './DashboardDataLayerSet';

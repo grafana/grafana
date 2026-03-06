@@ -192,7 +192,7 @@ describe('User interactions', () => {
     });
   });
 
-  describe('when the "Add variable" button is clicked', () => {
+  describe('when the "Add annotation" button is clicked', () => {
     test('calls annotationEditActions.addAnnotation', async () => {
       const { visibleEnabled } = buildTestAnnotations();
 
@@ -247,7 +247,7 @@ describe('User interactions', () => {
       await findByText(/you have dropped the item/i);
     }
 
-    test('reorders visible variables when dragged down by one position', async () => {
+    test('reorders visible annotations when dragged down by one position', async () => {
       const { visibleEnabled, visibleDisabled, controlsMenuEnabled } = buildTestAnnotations();
 
       const { container, findByText, elements } = await renderAnnotationsList([
