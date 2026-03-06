@@ -101,6 +101,7 @@ export interface AnnotationActions {
 
 export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
+  organization?: AnnotationActions;
 }
 
 export interface SnapshotSpec {
