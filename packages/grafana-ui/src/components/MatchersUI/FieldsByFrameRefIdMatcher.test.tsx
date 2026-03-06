@@ -14,7 +14,7 @@ import {
 } from './FieldsByFrameRefIdMatcher';
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 const frame1 = toDataFrame({
@@ -34,7 +34,7 @@ const frame3 = toDataFrame({
   fields: [],
 });
 
-const mockOnChange = jest.fn();
+const mockOnChange = vi.fn();
 
 const props: Props = {
   data: [frame1, frame2, frame3],

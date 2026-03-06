@@ -35,7 +35,7 @@ describe('ColorPickerPopover', () => {
   });
 
   describe('named colors support', () => {
-    const onChangeSpy = jest.fn();
+    const onChangeSpy = vi.fn();
 
     it('should pass hex color value to onChange prop by default', async () => {
       render(<ColorPickerPopover color={'red'} onChange={onChangeSpy} />);

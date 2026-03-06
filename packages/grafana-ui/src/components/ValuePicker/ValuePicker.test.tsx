@@ -10,7 +10,7 @@ const mockOptions = [
   { label: 'Option 3', value: 'opt3' },
 ];
 
-const mockOnChange = jest.fn();
+const mockOnChange = vi.fn();
 const defaultProps = {
   label: 'Add Option',
   options: mockOptions,
@@ -26,7 +26,7 @@ const setup = (jsx: JSX.Element) => {
 
 describe('ValuePicker', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should switch to select view when button is clicked', async () => {

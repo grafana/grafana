@@ -43,9 +43,9 @@ describe('Combobox', () => {
     user = userEvent.setup({ applyAccept: false });
   });
 
-  const onChangeHandler = jest.fn();
+  const onChangeHandler = vi.fn();
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
+    const mockGetBoundingClientRect = vi.fn(() => ({
       width: 120,
       height: 120,
       top: 0,
@@ -381,7 +381,7 @@ describe('Combobox', () => {
 
   describe('create custom value', () => {
     it('should allow creating a custom value', async () => {
-      const onChangeHandler = jest.fn();
+      const onChangeHandler = vi.fn();
       render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
       const input = screen.getByRole('combobox');
       await userEvent.type(input, 'Use custom value');
@@ -392,7 +392,7 @@ describe('Combobox', () => {
     });
 
     it('should not allow creating a custom value when it is an existing value', async () => {
-      const onChangeHandler = jest.fn();
+      const onChangeHandler = vi.fn();
       render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
       const input = screen.getByRole('combobox');
       await userEvent.type(input, '4');
@@ -410,7 +410,7 @@ describe('Combobox', () => {
         { label: '3', value: 3 },
       ];
 
-      const onChangeHandler = jest.fn();
+      const onChangeHandler = vi.fn();
 
       render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
       const input = screen.getByRole('combobox');
@@ -432,35 +432,32 @@ describe('Combobox', () => {
   describe('async', () => {
     let user: ReturnType<typeof userEvent.setup>;
 
-    beforeAll(() => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
       user = userEvent.setup({ delay: null });
     });
 
-    beforeAll(() => {
-      jest.useFakeTimers();
-    });
-
-    afterAll(() => {
-      jest.useRealTimers();
+    afterEach(() => {
+      vi.useRealTimers();
     });
 
     // Assume that most apis only return with the value
     const simpleAsyncOptions = [{ value: 'Option 1' }, { value: 'Option 2' }, { value: 'Option 3' }];
 
     it('should allow async options', async () => {
-      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
       await user.click(input);
 
-      await act(async () => jest.advanceTimersByTime(200));
+      await act(async () => vi.advanceTimersByTime(200));
 
       expect(asyncOptions).toHaveBeenCalled();
     });
 
     it('should allow async options and select value', async () => {
-      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
@@ -474,7 +471,7 @@ describe('Combobox', () => {
     });
 
     it('should ignore late responses', async () => {
-      const asyncOptions = jest.fn(async (searchTerm: string) => {
+      const asyncOptions = vi.fn(async (searchTerm: string) => {
         if (searchTerm === 'a') {
           return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 1500));
         } else if (searchTerm === 'ab') {
@@ -489,49 +486,36 @@ describe('Combobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
-      await act(async () => {
-        await user.keyboard('a');
-        jest.advanceTimersByTime(200); // Skip debounce
-        await user.keyboard('b');
-        jest.advanceTimersByTime(200); // Skip debounce
-        await user.keyboard('c');
-        jest.advanceTimersByTime(500); // Resolve the second request, should be ignored
-      });
 
-      let firstItem = screen.queryByRole('option', { name: 'first' });
-      let secondItem = screen.queryByRole('option', { name: 'second' });
-      let thirdItem = screen.queryByRole('option', { name: 'third' });
+      await user.keyboard('a');
+      await act(async () => vi.advanceTimersByTime(200)); // Fire debounce for 'a'
 
-      expect(firstItem).not.toBeInTheDocument();
-      expect(secondItem).not.toBeInTheDocument();
-      expect(thirdItem).not.toBeInTheDocument();
+      await user.keyboard('b');
+      await act(async () => vi.advanceTimersByTime(200)); // Fire debounce for 'ab'
 
-      jest.advanceTimersByTime(800); // Resolve the third request, should be shown
+      await user.keyboard('c');
+      await act(async () => vi.advanceTimersByTime(500)); // Fire debounce for 'abc', also resolves 'ab' (ignored)
 
-      firstItem = screen.queryByRole('option', { name: 'first' });
-      secondItem = screen.queryByRole('option', { name: 'second' });
-      thirdItem = await screen.findByRole('option', { name: 'third' });
+      expect(screen.queryByRole('option', { name: 'first' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'second' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'third' })).not.toBeInTheDocument();
 
-      expect(firstItem).not.toBeInTheDocument();
-      expect(secondItem).not.toBeInTheDocument();
-      expect(thirdItem).toBeInTheDocument();
+      await act(async () => vi.advanceTimersByTime(800)); // Resolve 'abc' → 'third' shown
 
-      jest.advanceTimersByTime(1500); // Resolve the first request, should be ignored
+      expect(screen.queryByRole('option', { name: 'first' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'second' })).not.toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'third' })).toBeInTheDocument();
 
-      firstItem = screen.queryByRole('option', { name: 'first' });
-      secondItem = screen.queryByRole('option', { name: 'second' });
-      thirdItem = screen.queryByRole('option', { name: 'third' });
+      await act(async () => vi.advanceTimersByTime(1500)); // Resolve 'a' → should be ignored
 
-      expect(firstItem).not.toBeInTheDocument();
-      expect(secondItem).not.toBeInTheDocument();
-      expect(thirdItem).toBeInTheDocument();
-
-      jest.clearAllTimers();
+      expect(screen.queryByRole('option', { name: 'first' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'second' })).not.toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'third' })).toBeInTheDocument();
     });
 
     it('should debounce requests', async () => {
-      const asyncSpy = jest.fn();
-      const asyncOptions = jest.fn(async () => {
+      const asyncSpy = vi.fn();
+      const asyncOptions = vi.fn(async () => {
         return new Promise<ComboboxOption[]>(asyncSpy);
       });
 
@@ -541,35 +525,36 @@ describe('Combobox', () => {
       await user.click(input);
 
       expect(asyncSpy).not.toHaveBeenCalledTimes(1); // Not called yet
-      act(() => jest.advanceTimersByTime(200)); // Add the debounce time
+      act(() => vi.advanceTimersByTime(200)); // Add the debounce time
       expect(asyncSpy).toHaveBeenCalledTimes(1); // Then check if called on open
       asyncSpy.mockClear();
 
       await user.keyboard('a');
-      await act(async () => jest.advanceTimersByTime(10));
+      await act(async () => vi.advanceTimersByTime(10));
 
       await user.keyboard('b');
-      await act(async () => jest.advanceTimersByTime(10));
+      await act(async () => vi.advanceTimersByTime(10));
 
       await user.keyboard('c');
-      await act(async () => jest.advanceTimersByTime(200));
+      await act(async () => vi.advanceTimersByTime(200));
 
       expect(asyncSpy).toHaveBeenCalledTimes(1); // Called only for 'abc'
     });
 
     it('should allow custom value while async is being run', async () => {
-      const asyncOptions = jest.fn(async () => {
+      const asyncOptions = vi.fn(async () => {
         return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000));
       });
 
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
+      await act(async () => vi.advanceTimersByTime(2000));
 
       const input = screen.getByRole('combobox');
       await user.click(input);
 
       await user.type(input, 'fir');
       await act(async () => {
-        jest.advanceTimersByTime(500); // Custom value while typing
+        vi.advanceTimersByTime(500); // Custom value while typing
       });
 
       const customItem = screen.getByRole('option');
@@ -579,9 +564,9 @@ describe('Combobox', () => {
     });
 
     it('should display message when there is an error loading async options', async () => {
-      const fetchData = jest.fn();
+      const fetchData = vi.fn();
       const asyncOptions = fetchData.mockRejectedValue(new Error('Could not retrieve options'));
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
@@ -590,9 +575,9 @@ describe('Combobox', () => {
       await user.type(input, 'test');
 
       await act(async () => {
-        jest.advanceTimersByTimeAsync(500);
+        vi.advanceTimersByTimeAsync(500);
       });
-      expect(asyncOptions).rejects.toThrow('Could not retrieve options');
+      await expect(asyncOptions).rejects.toThrow('Could not retrieve options');
       await waitFor(() => expect(consoleErrorSpy).toHaveBeenCalled());
 
       const emptyMessage = screen.queryByText('An error occurred while loading options.');
@@ -605,7 +590,7 @@ describe('Combobox', () => {
       const selectedValue = { value: '1', label: 'Option 1' };
 
       it('shows an empty text input when opening the menu', async () => {
-        const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+        const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
         render(<Combobox options={asyncOptions} value={selectedValue} onChange={onChangeHandler} />);
 
         const input = screen.getByRole('combobox');
@@ -618,7 +603,7 @@ describe('Combobox', () => {
       });
 
       it('shows all options unfiltered when opening the menu', async () => {
-        const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+        const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
         render(<Combobox options={asyncOptions} value={selectedValue} onChange={onChangeHandler} />);
 
         const input = screen.getByRole('combobox');
@@ -632,7 +617,7 @@ describe('Combobox', () => {
       });
 
       it('exiting the menu without selecting an item restores the value to the text input', async () => {
-        const asyncOptions = jest.fn(async () => {
+        const asyncOptions = vi.fn(async () => {
           return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000));
         });
 
@@ -643,7 +628,7 @@ describe('Combobox', () => {
 
         await user.type(input, 'Opt');
         await act(async () => {
-          jest.advanceTimersByTime(500); // Custom value while typing
+          vi.advanceTimersByTime(500); // Custom value while typing
         });
 
         await user.keyboard('{Esc}');
@@ -654,17 +639,17 @@ describe('Combobox', () => {
 
       it('shows loading message', async () => {
         const loadingMessage = 'Loading options...';
-        const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+        const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
         render(<Combobox options={asyncOptions} onChange={onChangeHandler} />);
 
         const input = screen.getByRole('combobox');
         await user.click(input);
 
-        await act(async () => jest.advanceTimersByTime(0));
+        await act(async () => vi.advanceTimersByTime(0));
 
         expect(await screen.findByText(loadingMessage)).toBeInTheDocument();
 
-        await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+        await act(async () => vi.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
         expect(screen.queryByText(loadingMessage)).not.toBeInTheDocument();
       });

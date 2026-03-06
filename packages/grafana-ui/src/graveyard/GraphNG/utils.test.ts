@@ -201,8 +201,8 @@ function mockDataFrame() {
   });
 }
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
+vi.mock('@grafana/data', async (originalImport) => ({
+  ...(await originalImport()),
   DefaultTimeZone: 'utc',
 }));
 

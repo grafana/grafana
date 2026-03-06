@@ -2,6 +2,7 @@
 import 'core-js/stable/structured-clone';
 import 'whatwg-fetch';
 import '@testing-library/jest-dom';
+
 import { configure } from '@testing-library/react';
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';

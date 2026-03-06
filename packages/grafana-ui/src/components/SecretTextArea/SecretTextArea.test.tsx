@@ -38,7 +38,7 @@ describe('<SecretTextArea />', () => {
   });
 
   it('should be possible to reset a configured secret', async () => {
-    const onReset = jest.fn();
+    const onReset = vi.fn();
 
     render(<SecretTextArea isConfigured={true} onChange={() => {}} onReset={onReset} placeholder={PLACEHOLDER_TEXT} />);
 
@@ -53,7 +53,7 @@ describe('<SecretTextArea />', () => {
   });
 
   it('should be possible to change the value of the secret', async () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
 
     render(
       <SecretTextArea isConfigured={false} onChange={onChange} onReset={() => {}} placeholder={PLACEHOLDER_TEXT} />

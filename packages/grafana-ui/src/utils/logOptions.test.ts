@@ -4,11 +4,11 @@ const RECOMMENDED_AMOUNT = 10;
 
 describe('logOptions', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should not log anything if amount is less than or equal to recommendedAmount', () => {
-    console.warn = jest.fn();
+    console.warn = vi.fn();
 
     logOptions(5, RECOMMENDED_AMOUNT, 'test-id', 'test-aria');
 
@@ -16,7 +16,7 @@ describe('logOptions', () => {
   });
 
   it('should log a warning if amount exceeds recommendedAmount', () => {
-    console.warn = jest.fn();
+    console.warn = vi.fn();
 
     logOptions(15, RECOMMENDED_AMOUNT, 'test-id', 'test-aria');
 

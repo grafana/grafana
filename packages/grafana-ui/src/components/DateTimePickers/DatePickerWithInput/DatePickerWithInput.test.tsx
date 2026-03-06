@@ -13,33 +13,33 @@ describe('DatePickerWithInput', () => {
   });
 
   it('renders date input', () => {
-    render(<DatePickerWithInput onChange={jest.fn()} value={new Date(1400000000000)} />);
+    render(<DatePickerWithInput onChange={vi.fn()} value={new Date(1400000000000)} />);
 
     expect(screen.getByDisplayValue(dateTimeFormat(1400000000000, { format: 'L' }))).toBeInTheDocument();
   });
 
   it('renders date input with date passed in', () => {
-    render(<DatePickerWithInput value={new Date(1607431703363)} onChange={jest.fn()} />);
+    render(<DatePickerWithInput value={new Date(1607431703363)} onChange={vi.fn()} />);
 
     expect(screen.getByDisplayValue(dateTimeFormat(1607431703363, { format: 'L' }))).toBeInTheDocument();
   });
 
   it('does not render calendar', () => {
-    render(<DatePickerWithInput onChange={jest.fn()} />);
+    render(<DatePickerWithInput onChange={vi.fn()} />);
 
     expect(screen.queryByTestId('date-picker')).not.toBeInTheDocument();
   });
 
   describe('input is clicked', () => {
     it('renders input', async () => {
-      render(<DatePickerWithInput onChange={jest.fn()} />);
+      render(<DatePickerWithInput onChange={vi.fn()} />);
       await user.click(screen.getByPlaceholderText('Date'));
 
       expect(screen.getByPlaceholderText('Date')).toBeInTheDocument();
     });
 
     it('renders calendar', async () => {
-      render(<DatePickerWithInput onChange={jest.fn()} />);
+      render(<DatePickerWithInput onChange={vi.fn()} />);
 
       await user.click(screen.getByPlaceholderText('Date'));
 
@@ -48,7 +48,7 @@ describe('DatePickerWithInput', () => {
   });
 
   it('calls onChange after date is selected', async () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     render(<DatePickerWithInput onChange={onChange} />);
 
     // open calendar and select a date
@@ -59,7 +59,7 @@ describe('DatePickerWithInput', () => {
   });
 
   it('closes calendar after outside wrapper is clicked', async () => {
-    render(<DatePickerWithInput onChange={jest.fn()} />);
+    render(<DatePickerWithInput onChange={vi.fn()} />);
 
     // open calendar and click outside
     await user.click(screen.getByPlaceholderText('Date'));

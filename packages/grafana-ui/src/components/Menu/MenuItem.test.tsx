@@ -17,7 +17,7 @@ describe('MenuItem', () => {
   );
 
   it('renders correct element type', () => {
-    const { rerender } = render(getMenuItem({ onClick: jest.fn() }));
+    const { rerender } = render(getMenuItem({ onClick: vi.fn() }));
 
     expect(screen.getByLabelText(selectors.components.Menu.MenuItem('Test')).nodeName).toBe('BUTTON');
 
@@ -27,7 +27,7 @@ describe('MenuItem', () => {
   });
 
   it('calls onClick when item is clicked', async () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
 
     render(getMenuItem({ onClick }));
 
@@ -102,7 +102,7 @@ describe('MenuItem', () => {
   });
 
   it('activates link MenuItem with Space key', async () => {
-    const onClick = jest.fn((e: React.MouseEvent) => e.preventDefault());
+    const onClick = vi.fn((e: React.MouseEvent) => e.preventDefault());
     render(<MenuItem label="Link Item" url="/some-url" onClick={onClick} />);
 
     const item = screen.getByRole('menuitem', { name: 'Link Item' });

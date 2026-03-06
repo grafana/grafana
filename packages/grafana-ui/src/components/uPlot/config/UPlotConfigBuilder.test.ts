@@ -801,7 +801,7 @@ describe('UPlotConfigBuilder', () => {
   describe('Thresholds', () => {
     it('Only adds one threshold per scale', () => {
       const builder = new UPlotConfigBuilder();
-      const addHookFn = jest.fn();
+      const addHookFn = vi.fn();
       builder.addHook = addHookFn;
 
       builder.addThresholds({

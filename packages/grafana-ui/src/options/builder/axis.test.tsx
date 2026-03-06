@@ -8,7 +8,7 @@ import { ScaleDistributionEditor } from './axis';
 describe('ScaleDistributionEditor', () => {
   describe('Symlog', () => {
     it('linear threshold should not dispatch a change for 0', async () => {
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       const origValue = { type: ScaleDistribution.Symlog, log: 10 };
 
       render(<ScaleDistributionEditor value={{ type: ScaleDistribution.Symlog, log: 10 }} onChange={onChange} />);

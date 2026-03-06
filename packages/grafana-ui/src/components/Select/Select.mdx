@@ -185,7 +185,7 @@ import selectEvent from 'react-select-event';
 import { Select } from '@grafana/ui';
 
 it('should call onChange', () => {
-  const onChange = jest.fn();
+  const onChange = vi.fn();
 
   render(
     <>

@@ -82,6 +82,7 @@ module.exports = {
     '/node_modules/',
     '<rootDir>/packages/grafana-data',
     '<rootDir>/packages/grafana-runtime',
+    '<rootDir>/packages/grafana-ui',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
     '<rootDir>/public/app/plugins/datasource/cloud-monitoring',

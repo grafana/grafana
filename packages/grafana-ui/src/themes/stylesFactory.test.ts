@@ -7,7 +7,7 @@ interface FakeProps {
 }
 describe('Stylesheet creation', () => {
   it('memoizes results', () => {
-    const spy = jest.fn();
+    const spy = vi.fn();
 
     const getStyles = stylesFactory(({ theme }: FakeProps) => {
       spy();

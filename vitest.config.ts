@@ -12,6 +12,7 @@ export default defineConfig({
     include: [
       'packages/grafana-data/**/*.test.{ts,tsx}',
       'packages/grafana-runtime/**/*.test.{ts,tsx}',
+      'packages/grafana-ui/**/*.test.{ts,tsx}',
       // TODO: uncomment when everything is migrated
       // 'public/app/**/*.test.{ts,tsx}',
       // 'public/test/**/*.test.{ts,tsx}',
@@ -56,6 +57,7 @@ export default defineConfig({
       { find: 'systemjs/dist/extras/amd', replacement: '/public/test/mocks/systemjsAMDExtra.ts' },
       { find: '@bsull/augurs', replacement: '/public/test/mocks/augurs.ts' },
       { find: '@grafana/assistant', replacement: '/public/test/mocks/assistant.ts' },
+      { find: 'uwrap', replacement: 'uwrap/dist/uWrap.mjs' },
     ],
   },
   define: {

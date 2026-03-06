@@ -37,7 +37,7 @@ describe('ButtonSelect', () => {
 
   it('closes the menu when clicking an option', async () => {
     const selected = OPTIONS[0];
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     render(<ButtonSelect value={selected} options={OPTIONS} onChange={onChange} />);
 
     const button = screen.getByText('Hello');

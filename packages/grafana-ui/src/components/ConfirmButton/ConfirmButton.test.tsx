@@ -5,7 +5,7 @@ import { ConfirmButton } from './ConfirmButton';
 
 describe('ConfirmButton', () => {
   it('should show confirm delete when clicked', async () => {
-    const onConfirm = jest.fn();
+    const onConfirm = vi.fn();
     render(
       <ConfirmButton confirmText="Confirm delete" onConfirm={onConfirm}>
         Delete
@@ -47,7 +47,7 @@ describe('ConfirmButton', () => {
   });
 
   it('should show cancel when clicked', async () => {
-    const onCancel = jest.fn();
+    const onCancel = vi.fn();
     render(
       <ConfirmButton confirmText="Confirm delete" onCancel={onCancel} onConfirm={() => {}}>
         Delete

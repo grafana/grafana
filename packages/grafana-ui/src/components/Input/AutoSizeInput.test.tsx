@@ -6,9 +6,9 @@ import { measureText } from '../../utils/measureText';
 
 import { AutoSizeInput } from './AutoSizeInput';
 
-jest.mock('../../utils/measureText', () => {
+vi.mock('../../utils/measureText', () => {
   // Mocking measureText
-  const measureText = jest.fn().mockImplementation((text: string, fontSize: number) => {
+  const measureText = vi.fn().mockImplementation(function (text: string, fontSize: number) {
     return { width: text.length * fontSize };
   });
 
@@ -94,7 +94,7 @@ describe('AutoSizeInput', () => {
     });
 
     it('emits onCommitChange when you blur the input', () => {
-      const onCommitChange = jest.fn();
+      const onCommitChange = vi.fn();
       render(<AutoSizeInput value="Initial value" onCommitChange={onCommitChange} />);
 
       const input: HTMLInputElement = screen.getByTestId('autosize-input');
@@ -105,8 +105,8 @@ describe('AutoSizeInput', () => {
     });
 
     it('emits onBlur instead of onCommitChange when you blur the input', () => {
-      const onCommitChange = jest.fn();
-      const onBlur = jest.fn();
+      const onCommitChange = vi.fn();
+      const onBlur = vi.fn();
       render(<AutoSizeInput value="Initial value" onCommitChange={onCommitChange} onBlur={onBlur} />);
 
       const input: HTMLInputElement = screen.getByTestId('autosize-input');
@@ -118,7 +118,7 @@ describe('AutoSizeInput', () => {
     });
 
     it('emits the value when you press enter', async () => {
-      const onCommitChange = jest.fn();
+      const onCommitChange = vi.fn();
       render(<AutoSizeInput value="Initial value" onCommitChange={onCommitChange} />);
 
       const input: HTMLInputElement = screen.getByTestId('autosize-input');
@@ -129,7 +129,7 @@ describe('AutoSizeInput', () => {
     });
 
     it("allows the input to empty when there's a default value", async () => {
-      const onCommitChange = jest.fn();
+      const onCommitChange = vi.fn();
       render(<AutoSizeInput defaultValue="Initial value" onCommitChange={onCommitChange} />);
       const input: HTMLInputElement = screen.getByTestId('autosize-input');
       await userEvent.clear(input);
@@ -152,7 +152,7 @@ describe('AutoSizeInput', () => {
     // AutoSizeInput is considered controlled when it has both value and onChange props
 
     it('renders a value prop with correct width', () => {
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       render(<AutoSizeInput value="Initial value" onChange={onChange} />);
 
       const input: HTMLInputElement = screen.getByTestId('autosize-input');
@@ -163,7 +163,7 @@ describe('AutoSizeInput', () => {
     });
 
     it('renders an updated value prop with correct width', () => {
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       const { rerender } = render(<AutoSizeInput value="Initial value" onChange={onChange} />);
 
       const input: HTMLInputElement = screen.getByTestId('autosize-input');
@@ -176,7 +176,7 @@ describe('AutoSizeInput', () => {
     });
 
     it('as a user types, the value is not updated because it is controlled', async () => {
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       render(<AutoSizeInput value="Initial value" onChange={onChange} />);
 
       const input: HTMLInputElement = screen.getByTestId('autosize-input');
@@ -199,8 +199,8 @@ describe('AutoSizeInput', () => {
     });
 
     it('emits onCommitChange when you blur the input', () => {
-      const onCommitChange = jest.fn();
-      const onChange = jest.fn();
+      const onCommitChange = vi.fn();
+      const onChange = vi.fn();
       render(<AutoSizeInput value="Initial value" onCommitChange={onCommitChange} onChange={onChange} />);
 
       const input: HTMLInputElement = screen.getByTestId('autosize-input');
@@ -211,9 +211,9 @@ describe('AutoSizeInput', () => {
     });
 
     it('emits onBlur instead of onCommitChange when you blur the input', () => {
-      const onCommitChange = jest.fn();
-      const onBlur = jest.fn();
-      const onChange = jest.fn();
+      const onCommitChange = vi.fn();
+      const onBlur = vi.fn();
+      const onChange = vi.fn();
       render(
         <AutoSizeInput value="Initial value" onCommitChange={onCommitChange} onBlur={onBlur} onChange={onChange} />
       );
@@ -227,8 +227,8 @@ describe('AutoSizeInput', () => {
     });
 
     it('emits the value when you press enter', async () => {
-      const onCommitChange = jest.fn();
-      const onChange = jest.fn();
+      const onCommitChange = vi.fn();
+      const onChange = vi.fn();
       render(<AutoSizeInput value="Initial value" onCommitChange={onCommitChange} onChange={onChange} />);
 
       const input: HTMLInputElement = screen.getByTestId('autosize-input');

@@ -8,7 +8,7 @@ import { mockThemeContext, useStyles2 } from './ThemeContext';
 describe('useStyles', () => {
   it('memoizes the passed in function correctly', () => {
     // implementation has extra arguments to implicitly test the typescript definition of useStyles2
-    const getStyles = jest.fn((theme: GrafanaTheme2, isOdd: boolean) => ({ row: 'row-class-name' }));
+    const getStyles = vi.fn((theme: GrafanaTheme2, isOdd: boolean) => ({ row: 'row-class-name' }));
 
     function Row({ isOdd }: { isOdd: boolean }) {
       const styles = useStyles2(getStyles, isOdd);
@@ -51,22 +51,23 @@ describe('useStyles', () => {
     restoreThemeContext();
   });
 
-  it('passes in theme and returns style object', (done) => {
-    const Dummy = function () {
-      const styles = useStyles2((theme) => {
-        return {
-          someStyle: css({
-            color: theme.colors.success.main,
-          }),
-        };
-      });
+  it('passes in theme and returns style object', () =>
+    new Promise<void>((done) => {
+      const Dummy = function () {
+        const styles = useStyles2((theme) => {
+          return {
+            someStyle: css({
+              color: theme.colors.success.main,
+            }),
+          };
+        });
 
-      expect(typeof styles.someStyle).toBe('string');
-      done();
+        expect(typeof styles.someStyle).toBe('string');
+        done();
 
-      return <div>dummy</div>;
-    };
+        return <div>dummy</div>;
+      };
 
-    render(<Dummy />);
-  });
+      render(<Dummy />);
+    }));
 });

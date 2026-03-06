@@ -5,10 +5,6 @@ import { ThresholdsMode, FieldConfig, FieldColorModeId, createTheme } from '@gra
 
 import { Gauge, Props } from './Gauge';
 
-jest.mock('jquery', () => ({
-  plot: jest.fn(),
-}));
-
 const field: FieldConfig = {
   min: 0,
   max: 100,
@@ -38,12 +34,24 @@ const props: Props = {
 };
 
 describe('Gauge', () => {
+  // Gauge.draw() logs "Invalid dimensions" in jsdom because elements have no real layout (width=0).
+  // This is expected and not a real error.
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   it('should render without blowing up', () => {
     expect(() => render(<Gauge {...props} />)).not.toThrow();
   });
 
   it('should render as a button when an onClick is provided', async () => {
-    const mockOnClick = jest.fn();
+    const mockOnClick = vi.fn();
     render(<Gauge {...props} onClick={mockOnClick} />);
     const gaugeButton = screen.getByRole('button');
     expect(gaugeButton).toBeInTheDocument();

@@ -14,7 +14,7 @@ describe('SubMenu', () => {
     ];
     const parentItemRef = createRef<HTMLElement>();
 
-    render(<SubMenu parentItemRef={parentItemRef} items={items} isOpen={true} close={jest.fn()} />);
+    render(<SubMenu parentItemRef={parentItemRef} items={items} isOpen={true} close={vi.fn()} />);
 
     expect(screen.getByTestId(selectors.components.Menu.SubMenu.icon)).toBeInTheDocument();
 

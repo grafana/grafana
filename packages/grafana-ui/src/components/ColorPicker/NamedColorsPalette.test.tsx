@@ -11,7 +11,7 @@ describe('NamedColorsPalette', () => {
 
   describe('theme support for named colors', () => {
     it('should render provided color variant specific for theme', () => {
-      render(<NamedColorsPalette color={selectedShade.name} onChange={jest.fn()} />);
+      render(<NamedColorsPalette color={selectedShade.name} onChange={vi.fn()} />);
       expect(screen.getByRole('button', { name: `${selectedShade.name} color` })).toBeInTheDocument();
     });
   });

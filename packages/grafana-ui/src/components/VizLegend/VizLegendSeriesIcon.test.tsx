@@ -7,7 +7,7 @@ import { PanelContextProvider } from '../PanelChrome';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 
 describe('VizLegendSeriesIcon', () => {
-  const mockOnSeriesColorChange = jest.fn();
+  const mockOnSeriesColorChange = vi.fn();
 
   const mockPanelContext = {
     eventsScope: 'global',

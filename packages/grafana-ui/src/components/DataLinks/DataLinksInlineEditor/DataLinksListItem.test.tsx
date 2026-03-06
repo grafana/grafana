@@ -6,8 +6,8 @@ import { DataLinksListItem, DataLinksListItemProps } from './DataLinksListItem';
 const baseLink = {
   url: '',
   title: '',
-  onBuildUrl: jest.fn(),
-  onClick: jest.fn(),
+  onBuildUrl: vi.fn(),
+  onClick: vi.fn(),
 };
 
 function setupTestContext(options: Partial<DataLinksListItemProps>) {
@@ -15,13 +15,13 @@ function setupTestContext(options: Partial<DataLinksListItemProps>) {
     index: 0,
     item: baseLink,
     data: [],
-    onChange: jest.fn(),
-    onEdit: jest.fn(),
-    onRemove: jest.fn(),
+    onChange: vi.fn(),
+    onEdit: vi.fn(),
+    onRemove: vi.fn(),
     itemKey: 'itemKey',
   };
 
-  const onDragEnd = jest.fn();
+  const onDragEnd = vi.fn();
 
   const props = { ...defaults, ...options };
   const { rerender } = render(

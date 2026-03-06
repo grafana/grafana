@@ -308,10 +308,10 @@ describe('TableNG', () => {
   let user: ReturnType<typeof userEvent.setup>;
   let origResizeObserver = global.ResizeObserver;
   let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
-  let jestScrollIntoView = jest.fn();
+  let jestScrollIntoView = vi.fn();
 
   beforeEach(() => {
-    jestScrollIntoView = jest.fn();
+    jestScrollIntoView = vi.fn();
     user = userEvent.setup();
     origResizeObserver = global.ResizeObserver;
     origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
@@ -562,7 +562,7 @@ describe('TableNG', () => {
 
     it('expands nested data when clicking expand button', async () => {
       // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+      window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
       const { container } = render(
         <TableNG enableVirtualization={false} data={createNestedDataFrame()} width={800} height={600} />
@@ -1205,7 +1205,7 @@ describe('TableNG', () => {
     });
 
     it('triggers the onSortByChange callback', async () => {
-      const onSortByChange = jest.fn();
+      const onSortByChange = vi.fn();
 
       const { container } = render(
         <TableNG
@@ -1646,37 +1646,37 @@ describe('TableNG', () => {
 
   describe('Row hover functionality for shared crosshair', () => {
     const mockEventBus: EventBus = {
-      publish: jest.fn(),
-      getStream: jest.fn(),
-      subscribe: jest.fn(),
-      removeAllListeners: jest.fn(),
-      newScopedBus: jest.fn(),
+      publish: vi.fn(),
+      getStream: vi.fn(),
+      subscribe: vi.fn(),
+      removeAllListeners: vi.fn(),
+      newScopedBus: vi.fn(),
     };
 
     const mockPanelContext: PanelContext = {
       eventsScope: 'test',
       eventBus: mockEventBus,
-      onSeriesColorChange: jest.fn(),
-      onToggleSeriesVisibility: jest.fn(),
-      canAddAnnotations: jest.fn(),
-      canEditAnnotations: jest.fn(),
-      canDeleteAnnotations: jest.fn(),
-      onAnnotationCreate: jest.fn(),
-      onAnnotationUpdate: jest.fn(),
-      onAnnotationDelete: jest.fn(),
-      onSelectRange: jest.fn(),
-      onAddAdHocFilter: jest.fn(),
+      onSeriesColorChange: vi.fn(),
+      onToggleSeriesVisibility: vi.fn(),
+      canAddAnnotations: vi.fn(),
+      canEditAnnotations: vi.fn(),
+      canDeleteAnnotations: vi.fn(),
+      onAnnotationCreate: vi.fn(),
+      onAnnotationUpdate: vi.fn(),
+      onAnnotationDelete: vi.fn(),
+      onSelectRange: vi.fn(),
+      onAddAdHocFilter: vi.fn(),
       canEditThresholds: false,
       showThresholds: false,
-      onThresholdsChange: jest.fn(),
+      onThresholdsChange: vi.fn(),
       instanceState: {},
-      onInstanceStateChange: jest.fn(),
-      onToggleLegendSort: jest.fn(),
-      onUpdateData: jest.fn(),
+      onInstanceStateChange: vi.fn(),
+      onToggleLegendSort: vi.fn(),
+      onUpdateData: vi.fn(),
     };
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it('should publish DataHoverEvent when hovering over a row with time field', async () => {

@@ -35,9 +35,9 @@ describe('RadialGauge utils', () => {
 
   describe('getFieldDisplayProcessor', () => {
     it('should return display processor from view when available', () => {
-      const mockProcessor = jest.fn();
+      const mockProcessor = vi.fn();
       const mockView = {
-        getFieldDisplayProcessor: jest.fn().mockReturnValue(mockProcessor),
+        getFieldDisplayProcessor: vi.fn().mockReturnValue(mockProcessor),
       } as unknown as DataFrameView;
 
       const fieldDisplay: FieldDisplay = {

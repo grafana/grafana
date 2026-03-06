@@ -11,20 +11,25 @@ import { SeriesProps } from './config/UPlotSeriesBuilder';
 import { preparePlotData2, getStackingGroups } from './utils';
 
 const mockRaf = createMockRaf();
-const setDataMock = jest.fn();
-const setSizeMock = jest.fn();
-const initializeMock = jest.fn();
-const destroyMock = jest.fn();
 
-jest.mock('uplot', () => {
-  return jest.fn().mockImplementation(() => {
-    return {
-      setData: setDataMock,
-      setSize: setSizeMock,
-      initialize: initializeMock,
-      destroy: destroyMock,
-    };
-  });
+const { setDataMock, setSizeMock, initializeMock, destroyMock } = vi.hoisted(() => ({
+  setDataMock: vi.fn(),
+  setSizeMock: vi.fn(),
+  initializeMock: vi.fn(),
+  destroyMock: vi.fn(),
+}));
+
+vi.mock('uplot', () => {
+  return {
+    default: vi.fn().mockImplementation(function () {
+      return {
+        setData: setDataMock,
+        setSize: setSizeMock,
+        initialize: initializeMock,
+        destroy: destroyMock,
+      };
+    }),
+  };
 });
 
 const mockData = () => {
@@ -62,7 +67,7 @@ describe('UPlotChart', () => {
     initializeMock.mockClear();
     destroyMock.mockClear();
 
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(mockRaf.raf);
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(mockRaf.raf);
   });
 
   it('destroys uPlot instance when component unmounts', () => {

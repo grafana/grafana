@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { AlertingSettings, Props, AlertingConfig } from './AlertingSettings';
 
 const setup = () => {
-  const onOptionsChange = jest.fn();
+  const onOptionsChange = vi.fn();
   const props: Props<AlertingConfig> = {
     options: {
       id: 4,

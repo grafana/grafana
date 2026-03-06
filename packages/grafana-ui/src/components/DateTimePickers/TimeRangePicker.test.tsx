@@ -95,8 +95,8 @@ describe('TimePicker', () => {
   });
 
   it('shows a sync button if two are rendered inside a TimeRangeProvider', async () => {
-    const onChange1 = jest.fn();
-    const onChange2 = jest.fn();
+    const onChange1 = vi.fn();
+    const onChange2 = vi.fn();
     const value1 = makeTimeRange('2024-01-01T00:00:00Z', '2024-01-01T01:00:00Z');
     const value2 = makeTimeRange('2024-01-01T00:00:00Z', '2024-01-01T02:00:00Z');
 
@@ -131,7 +131,7 @@ describe('TimePicker', () => {
 });
 
 it('does not submit wrapping forms', async () => {
-  const onSubmit = jest.fn();
+  const onSubmit = vi.fn();
   render(
     <form onSubmit={onSubmit}>
       <TimeRangePicker
@@ -214,11 +214,11 @@ describe('TimePickerTooltip', () => {
       }),
     };
 
-    jest.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => mockIntl as Intl.DateTimeFormat);
+    vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => mockIntl as Intl.DateTimeFormat);
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   const timeRange: TimeRange = {

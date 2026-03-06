@@ -12,11 +12,11 @@ const setup = (jsx: JSX.Element) => {
 };
 
 const mockTags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
-const mockOnClick = jest.fn();
+const mockOnClick = vi.fn();
 
 describe('TagList', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it('should render all tags when displayMax is not provided', () => {
     render(<TagList tags={mockTags} />);

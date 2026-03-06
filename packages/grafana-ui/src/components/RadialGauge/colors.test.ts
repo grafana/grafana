@@ -43,7 +43,7 @@ describe('RadialGauge color utils', () => {
         field: field.config,
         colIndex: 0,
         view: {
-          getFieldDisplayProcessor: jest.fn(() => jest.fn(() => ({ color: undefined }))),
+          getFieldDisplayProcessor: vi.fn(() => vi.fn(() => ({ color: undefined }))),
         },
         display: {
           numeric: 75,
@@ -55,7 +55,7 @@ describe('RadialGauge color utils', () => {
         buildGradientColors(
           createTheme(),
           buildFieldDisplay(createField(FieldColorModeId.Thresholds), {
-            view: { getFieldDisplayProcessor: jest.fn(() => jest.fn(() => ({ color: '#444444' }))) },
+            view: { getFieldDisplayProcessor: vi.fn(() => vi.fn(() => ({ color: '#444444' }))) },
           })
         )
       ).toMatchSnapshot();

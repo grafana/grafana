@@ -69,7 +69,7 @@ The component requires mocking `getBoundingClientRect` because of virtualisation
 
 ```typescript
 beforeAll(() => {
-  const mockGetBoundingClientRect = jest.fn(() => ({
+  const mockGetBoundingClientRect = vi.fn(() => ({
     width: 120,
     height: 120,
     top: 0,

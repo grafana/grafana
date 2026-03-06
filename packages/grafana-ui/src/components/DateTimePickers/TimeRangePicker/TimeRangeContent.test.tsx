@@ -11,7 +11,7 @@ import { TimeRangeContent } from './TimeRangeContent';
 // If this flag is deleted, this mock also should be, and the additional tests for when
 // the flag was disabled.
 type LocaleFormatPreferenceType = FeatureToggles['localeFormatPreference'];
-jest.mock('../commonFormat', () => {
+vi.mock('../commonFormat', () => {
   const format = 'YYYY-MM-DD HH:mm:ss' as const;
   const moduleObject = {
     __esModule: true,
@@ -28,8 +28,8 @@ jest.mock('../commonFormat', () => {
 const mockSetCommonFormat: (enabled: LocaleFormatPreferenceType) => void = commonFormatModule.mockSetCommonFormat;
 
 const mockClipboard = {
-  writeText: jest.fn(),
-  readText: jest.fn(),
+  writeText: vi.fn(),
+  readText: vi.fn(),
 };
 
 const defaultTimeRange: TimeRange = {
@@ -46,7 +46,7 @@ const customRawTimeRange = {
   to: '2023-06-19 23:59:00',
 };
 
-const mockOnApply = jest.fn();
+const mockOnApply = vi.fn();
 
 beforeEach(() => {
   mockSetCommonFormat(true);
