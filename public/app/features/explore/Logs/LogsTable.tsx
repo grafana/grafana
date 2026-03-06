@@ -13,6 +13,7 @@ import {
   FieldType,
   guessFieldTypeForField,
   LogsSortOrder,
+  ScopedVars,
   sortDataFrame,
   SplitOpen,
   TimeRange,
@@ -33,7 +34,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { DATAPLANE_ID_NAME, LogsFrame } from 'app/features/logs/logsFrame';
+import { DATAPLANE_ID_NAME, LogFrameLabels, LogsFrame, parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -134,7 +135,7 @@ export function LogsTable(props: Props) {
   }, []);
 
   const prepareTableFrame = useCallback(
-    (frame: DataFrame): DataFrame => {
+    (frame: DataFrame, labelValues?: LogFrameLabels[] | null): DataFrame => {
       if (!frame.length) {
         return frame;
       }
@@ -170,12 +171,23 @@ export function LogsTable(props: Props) {
         }
 
         field.getLinks = (config: ValueLinkConfig) => {
+          // Build label scoped vars from the original (untransformed) dataFrame.
+          // The transformation pipeline removes the 'labels' field, so
+          // getFieldLinksForExplore cannot resolve label variables from sortedFrame.
+          const labelVars: ScopedVars = {};
+          if (labelValues && labelValues[config.valueRowIndex!]) {
+            for (const [key, value] of Object.entries(labelValues[config.valueRowIndex!])) {
+              labelVars[key] = { value };
+            }
+          }
+
           return getFieldLinksForExplore({
             field,
             rowIndex: config.valueRowIndex!,
             splitOpenFn: splitOpen,
             range: range,
             dataFrame: sortedFrame!,
+            vars: labelVars,
           });
         };
 
@@ -251,6 +263,11 @@ export function LogsTable(props: Props) {
         return;
       }
 
+      // Pre-extract label values from the original frame before transformation,
+      // since the extractFields + organize transformations remove the 'labels' field.
+      const origLogsFrame = parseLogsFrame(dataFrame);
+      const labelValues = origLogsFrame?.getLogFrameLabels() ?? null;
+
       // create extract JSON transformation for every field that is `json.RawMessage`
       const transformations: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
 
@@ -291,10 +308,10 @@ export function LogsTable(props: Props) {
 
       if (transformations.length > 0) {
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
-        const tableFrame = prepareTableFrame(transformedDataFrame[0]);
+        const tableFrame = prepareTableFrame(transformedDataFrame[0], labelValues);
         setTableFrame(tableFrame);
       } else {
-        setTableFrame(prepareTableFrame(dataFrame));
+        setTableFrame(prepareTableFrame(dataFrame, labelValues));
       }
     };
     prepare();
