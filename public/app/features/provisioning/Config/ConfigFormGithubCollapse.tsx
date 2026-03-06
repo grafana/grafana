@@ -18,6 +18,11 @@ export function ConfigFormGithubCollapse({ register }: ConfigFormGithubCollapseP
   const hasImageRenderer = checkImageRenderer();
   const imageRenderingAllowed = checkImageRenderingAllowed(settings.data);
 
+  if (!imageRenderingAllowed && isPublic) {
+    // don't display the whole collapse if neither feature is applicable
+    return null;
+  }
+
   return (
     <ControlledCollapse
       label={t('provisioning.config-form-github-collapse.label-git-hub-features', 'GitHub features')}

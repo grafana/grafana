@@ -61,16 +61,12 @@ describe('ConfigFormGithubCollapse', () => {
     jest.clearAllMocks();
   });
 
-  it('still renders collapse when image rendering is not allowed on a public instance', () => {
+  it('returns null when image rendering is not allowed on a public instance', () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
-    setup({ imageRenderingAllowed: false, isPublic: true });
+    const { renderResult } = setup({ imageRenderingAllowed: false, isPublic: true });
 
-    expect(screen.getByText('GitHub features')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('checkbox', {
-        name: /Enable dashboard previews in pull requests/i,
-      })
-    ).not.toBeInTheDocument();
+    expect(renderResult.container).toBeEmptyDOMElement();
+    expect(screen.queryByText('GitHub features')).not.toBeInTheDocument();
     jest.spyOn(console, 'warn').mockRestore();
   });
 
