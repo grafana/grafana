@@ -544,6 +544,9 @@ func (n *noopBulkProcessClient) CloseAndRecv() (*resourcepb.BulkResponse, error)
 // the actual bulkLock — the exact stack that failed before the fix.
 func TestIntegrationMigrate_SQLiteRetryReleasesLock(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("SQLite-only test")
+	}
 
 	// Use a standalone SQLite database to avoid interference from other tests.
 	dbPath := t.TempDir() + "/bulk-lock-test.db"
