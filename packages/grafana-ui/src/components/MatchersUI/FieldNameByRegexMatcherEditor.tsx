@@ -20,6 +20,11 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
 
   const matcherScopeOptions: Array<ComboboxOption<MatcherScope>> = useMemo(() => {
     const uniqScopes = new Set<MatcherScope>(names.scopes.values());
+
+    if (scopeFromProps) {
+      uniqScopes.add(scopeFromProps);
+    }
+
     // Remove the series scope from the set, so we can gaurantee it's the first option, and also
     // because it's the default scope, so if it's the only one detected, we should not show the scope selector.
     uniqScopes.delete('series');
@@ -44,7 +49,7 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
     }
 
     return arr;
-  }, [names.scopes]);
+  }, [names.scopes, scopeFromProps]);
 
   return (
     <Stack gap={1} direction="column">
@@ -55,7 +60,7 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
         onChange={(e) => setRegexp(e.currentTarget.value)}
         onBlur={() => onChange(regexp, scope)}
       />
-      {scopeFromProps || matcherScopeOptions.length > 0 ? (
+      {matcherScopeOptions.length > 0 ? (
         <Combobox<MatcherScope>
           aria-label={t('grafana-ui.field-name-by-regex-matcher.scope-select-aria-label', 'Scope of matched series')}
           options={matcherScopeOptions}
