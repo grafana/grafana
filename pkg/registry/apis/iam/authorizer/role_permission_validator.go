@@ -15,6 +15,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -414,7 +415,58 @@ type roleRefResolver struct {
 	configProvider ConfigProvider
 }
 
+// GetPermissionsForRef returns the effective permissions for a role ref (Role, CoreRole, or GlobalRole).
+// Only Role may have a single roleRef (to a GlobalRole); that ref is resolved with one direct fetch (no recursion).
 func (r *roleRefResolver) GetPermissionsForRef(ctx context.Context, kind, name string) ([]iamv0.RolespecPermission, error) {
+	spec, err := r.fetchRoleSpec(ctx, kind, name)
+	if err != nil {
+		return nil, err
+	}
+
+	ownPerms := parsePermissionsFromSpec(spec)
+	roleRefs := parseRoleRefsFromSpec(spec)
+	if len(roleRefs) == 0 {
+		return ownPerms, nil
+	}
+
+	// Only Role can have a roleRef, and only one (to GlobalRole). Resolve it with a single direct fetch.
+	if kind != string(iamv0.RoleBindingSpecRoleRefKindRole) {
+		return ownPerms, nil
+	}
+	ref := roleRefs[0]
+	globalSpec, err := r.fetchRoleSpec(ctx, string(iamv0.RoleBindingSpecRoleRefKindGlobalRole), ref.name)
+	if err != nil {
+		return nil, fmt.Errorf("role %s ref %s/%s: %w", name, ref.kind, ref.name, err)
+	}
+	globalPerms := parsePermissionsFromSpec(globalSpec)
+	globalPermsActionScope := make([]roleeffective.ActionScope, len(globalPerms))
+	for i, p := range globalPerms {
+		globalPermsActionScope[i] = roleeffective.ActionScope{Action: p.Action, Scope: p.Scope}
+	}
+
+	role := buildRoleFromSpec(spec, ownPerms, roleRefs[:1])
+	getGlobalPerms := func(roleName string) ([]roleeffective.ActionScope, error) {
+		if roleName == ref.name {
+			return globalPermsActionScope, nil
+		}
+		return nil, fmt.Errorf("unexpected role ref name %q", roleName)
+	}
+	effective, hasRefs, err := roleeffective.ResolveEffective(role, getGlobalPerms)
+	if err != nil {
+		return nil, err
+	}
+	if !hasRefs {
+		return ownPerms, nil
+	}
+	out := make([]iamv0.RolespecPermission, len(effective))
+	for i, p := range effective {
+		out[i] = iamv0.RolespecPermission{Action: p.Action, Scope: p.Scope}
+	}
+	return out, nil
+}
+
+// fetchRoleSpec fetches a single role by kind and name and returns its spec. No recursion.
+func (r *roleRefResolver) fetchRoleSpec(ctx context.Context, kind, name string) (map[string]interface{}, error) {
 	cfg, err := r.configProvider(ctx)
 	if err != nil {
 		return nil, err
@@ -453,12 +505,35 @@ func (r *roleRefResolver) GetPermissionsForRef(ctx context.Context, kind, name s
 	if !ok {
 		return nil, fmt.Errorf("unexpected type %T for role %s/%s", raw, kind, name)
 	}
-
 	obj := unstruct.UnstructuredContent()
 	spec, ok := obj["spec"].(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("role %s/%s has no spec", kind, name)
 	}
+	return spec, nil
+}
+
+// buildRoleFromSpec builds an iamv0.Role from unstructured spec for use with roleeffective.ResolveEffective.
+func buildRoleFromSpec(spec map[string]interface{}, perms []iamv0.RolespecPermission, refs []specRoleRef) *iamv0.Role {
+	roleRefs := make([]iamv0.RolespecRoleRef, len(refs))
+	for i, r := range refs {
+		roleRefs[i] = iamv0.RolespecRoleRef{Kind: r.kind, Name: r.name}
+	}
+	return &iamv0.Role{
+		Spec: iamv0.RoleSpec{
+			Permissions:        perms,
+			PermissionsOmitted: parsePermissionsOmittedSliceFromSpec(spec),
+			RoleRefs:          roleRefs,
+		},
+	}
+}
+
+type specRoleRef struct {
+	kind string
+	name string
+}
+
+func parsePermissionsFromSpec(spec map[string]interface{}) []iamv0.RolespecPermission {
 	rawPerms, _ := spec["permissions"].([]interface{})
 	out := make([]iamv0.RolespecPermission, 0, len(rawPerms))
 	for _, p := range rawPerms {
@@ -470,7 +545,39 @@ func (r *roleRefResolver) GetPermissionsForRef(ctx context.Context, kind, name s
 		scope, _ := pm["scope"].(string)
 		out = append(out, iamv0.RolespecPermission{Action: action, Scope: scope})
 	}
-	return out, nil
+	return out
+}
+
+func parseRoleRefsFromSpec(spec map[string]interface{}) []specRoleRef {
+	rawRefs, _ := spec["roleRefs"].([]interface{})
+	out := make([]specRoleRef, 0, len(rawRefs))
+	for _, r := range rawRefs {
+		m, ok := r.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		kind, _ := m["kind"].(string)
+		name, _ := m["name"].(string)
+		if kind != "" && name != "" {
+			out = append(out, specRoleRef{kind: kind, name: name})
+		}
+	}
+	return out
+}
+
+func parsePermissionsOmittedSliceFromSpec(spec map[string]interface{}) []iamv0.RolespecPermission {
+	rawOmitted, _ := spec["permissionsOmitted"].([]interface{})
+	out := make([]iamv0.RolespecPermission, 0, len(rawOmitted))
+	for _, p := range rawOmitted {
+		pm, ok := p.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		action, _ := pm["action"].(string)
+		scope, _ := pm["scope"].(string)
+		out = append(out, iamv0.RolespecPermission{Action: action, Scope: scope})
+	}
+	return out
 }
 
 func getRequestNamespace(ctx context.Context) string {
