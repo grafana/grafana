@@ -399,7 +399,7 @@ describe('CorrelationsPage - App Platform', () => {
       expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
     });
 
-    it.skip('correctly deletes correlations', async () => {
+    it('correctly deletes correlations', async () => {
       // A row with the correlation should exist
       expect(await screen.findByRole('cell', { name: /loki to loki/i })).toBeInTheDocument();
 
@@ -541,4 +541,6 @@ describe('CorrelationsPage - App Platform', () => {
       expect(labels[0].textContent).toBe('Loki to Loki');
     });
   });
+
+  //TODO add in provisioned correlations tests after discussing with app platform
 });
