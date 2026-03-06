@@ -211,10 +211,10 @@ export const AnnotationsPlugin2 = ({
         for (let i = 0; i < frame.length; i++) {
           let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-          let x0 = u.valToPos(vals.xMin?.[i]!, xKey, true);
-          let x1 = u.valToPos(vals.xMax?.[i]!, xKey, true);
-          let y0 = u.valToPos(vals.yMax?.[i]!, yKey, true);
-          let y1 = u.valToPos(vals.yMin?.[i]!, yKey, true);
+          let x0 = u.valToPos(vals.xMin?.[i], xKey, true);
+          let x1 = u.valToPos(vals.xMax?.[i], xKey, true);
+          let y0 = u.valToPos(vals.yMax?.[i], yKey, true);
+          let y1 = u.valToPos(vals.yMin?.[i], yKey, true);
 
           ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
           ctx.fillRect(x0, y0, x1 - x0, y1 - y0);

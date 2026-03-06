@@ -15,7 +15,8 @@ import { getAnnotationTooltip } from './getAnnotationTooltip';
 const retFalse = () => false;
 
 export interface AnnotationClusterTooltipProps extends Omit<AnnotationTooltipProps, 'onEdit'> {
-  onEdit: (annotationIndex: number) => void;
+  // clustered tooltips need to know which annotation is being edited
+  onEdit: (annotationId: number) => void;
 }
 
 export const AnnotationTooltip2Cluster = ({
