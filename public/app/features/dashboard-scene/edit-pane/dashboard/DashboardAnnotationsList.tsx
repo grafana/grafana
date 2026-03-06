@@ -22,7 +22,7 @@ const ID_VISIBLE_LIST = 'annotations-list-visible';
 const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
 const ID_HIDDEN_LIST = 'annotations-list-hidden';
 
-const DROPPABLE_TO_HIDE: Record<
+const DROPPABLE_TO_PLACEMENT: Record<
   string,
   (a: SceneDataLayerProvider) => { isHidden: boolean; placement?: 'inControlsMenu' }
 > = {
@@ -72,7 +72,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
       destList.splice(destination.index, 0, moved);
 
       const oldState = { isHidden: moved.state.isHidden, placement: moved.state.placement };
-      const newState = DROPPABLE_TO_HIDE[destination.droppableId](moved);
+      const newState = DROPPABLE_TO_PLACEMENT[destination.droppableId](moved);
 
       dashboardEditActions.edit({
         source: dataLayerSet,
