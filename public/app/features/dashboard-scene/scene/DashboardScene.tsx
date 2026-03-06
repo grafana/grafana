@@ -1034,8 +1034,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         const transformations = dataSpec.transformations;
         if (Array.isArray(transformations)) {
           for (const transformation of transformations) {
-            // V2 transformations have a 'kind' field which is the transformation id
-            const transformId = transformation?.kind || transformation?.spec?.id;
+            const transformId = transformation?.group || transformation?.kind;
             if (typeof transformId === 'string' && transformId) {
               transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
             }

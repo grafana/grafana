@@ -11,7 +11,7 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 import { DashboardWithAccessInfo } from './types';
 
 export function isV2StoredVersion(version: string | undefined): boolean {
-  return version === 'v2alpha1' || version === 'v2beta1';
+  return version === 'v2alpha1' || version === 'v2beta1' || version === 'v2beta2';
 }
 
 export function isV0V1StoredVersion(version: string | undefined): boolean {

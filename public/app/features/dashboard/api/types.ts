@@ -64,7 +64,7 @@ export interface DashboardVersionError extends Error {
   status: number;
   data: {
     // The version which was stored when the dashboard was created / updated.
-    // Currently known versions are: 'v2beta1' | 'v1beta1' | 'v0alpha1'
+    // Currently known versions are: 'v2beta2' | 'v2beta1' | 'v1beta1' | 'v0alpha1'
     storedVersion: string;
     message: string;
   };

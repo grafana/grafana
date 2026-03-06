@@ -158,9 +158,9 @@ export const handyTestingSchema: Spec = {
             },
             transformations: [
               {
-                kind: 'limit',
+                kind: 'Transformation',
+                group: 'limit',
                 spec: {
-                  id: 'limit',
                   disabled: false,
                   filter: {
                     id: 'byValue',
