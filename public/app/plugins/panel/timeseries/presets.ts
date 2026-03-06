@@ -301,15 +301,16 @@ const stackedAreaGradientPreset = (): VisualizationSuggestion<Options, GraphFiel
 });
 
 export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = (context) => {
-  if (isStacked(context)) {
-    return [
-      defaultPreset(context),
-      stackedStepPreset(),
-      smoothStackedPreset(),
-      stackedAreaPercentPointsPreset(),
-      stackedAreaGradientPreset(),
-    ];
-  }
-
-  return [defaultPreset(context), smoothPreset(), areaPreset(), stepPreset(), stepFilledPreset(), stepHuePreset()];
+  return [
+    defaultPreset(context),
+    smoothPreset(),
+    areaPreset(),
+    stepPreset(),
+    stepFilledPreset(),
+    stepHuePreset(),
+    stackedStepPreset(),
+    smoothStackedPreset(),
+    stackedAreaPercentPointsPreset(),
+    stackedAreaGradientPreset(),
+  ];
 };
