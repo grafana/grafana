@@ -333,6 +333,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
                       showDatasourceProvidedBadge={true}
                       dimThumbnail={true}
                       kind="suggested_dashboard"
+                      showAssistantButton={true}
                     />
                   );
                 } else {
@@ -351,6 +352,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
                       isLogo={isLogo}
                       details={details}
                       kind="suggested_dashboard"
+                      showAssistantButton={true}
                     />
                   );
                 }

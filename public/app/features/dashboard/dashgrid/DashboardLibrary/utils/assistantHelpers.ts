@@ -68,7 +68,7 @@ export function buildTemplateContextData(
           'Do not assume standard metric names exist.'
       );
     } else {
-      lines.push("Please adapt this template to the user's environment and available data sources.");
+      lines.push('Adapt this template to the already configured data sources that are on the panels');
     }
 
     return lines.join('\n');
@@ -82,7 +82,12 @@ export function buildTemplateContextData(
     datasource: kind === 'suggested_dashboard' && isGnet ? dashboard.datasource : undefined,
     panelTypes: isGnet ? dashboard.panelTypeSlugs : undefined,
     author: isGnet ? dashboard.orgName || dashboard.userName : undefined,
-    instructions: `Use the following template details to create the dashboard: ${buildInstructions()}`,
+    instructions:
+      `Use the following template details to create the dashboard: ${buildInstructions()}.` +
+      ' Fix any broken panels or queries that might not work with the selected datasource.' +
+      ' If "No data" is shown, ask the user if they want to change the query.' +
+      ' If the data source does not fit with the template, ask the user if they want to change the datasource.' +
+      ' Do not redirect the user to a new dashboard, but change the current one with the correct queries and data.',
   };
 }
 
@@ -98,7 +103,7 @@ export function buildTemplateContextTitle(dashboard: PluginDashboard | GnetDashb
  * Builds the prompt for the Grafana Assistant when using a dashboard template.
  */
 export function buildAssistantPrompt(): string {
-  return `Create a new dashboard based on this dashboard template.`;
+  return `Customize this dashboard with the current data source.`;
 }
 
 /**
