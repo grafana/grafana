@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -39,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -213,4 +216,73 @@ func TestIntegrationCallResource(t *testing.T) {
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 500, resp.StatusCode)
 	})
+}
+
+func TestValidateResourceMethod(t *testing.T) {
+	tests := []struct {
+		name      string
+		method    string
+		expectErr bool
+	}{
+		{name: "GET is allowed", method: http.MethodGet, expectErr: false},
+		{name: "POST is allowed", method: http.MethodPost, expectErr: false},
+		{name: "PUT is allowed", method: http.MethodPut, expectErr: false},
+		{name: "DELETE is allowed", method: http.MethodDelete, expectErr: false},
+		{name: "PATCH is allowed", method: http.MethodPatch, expectErr: false},
+		{name: "OPTIONS is not allowed", method: http.MethodOptions, expectErr: true},
+		{name: "HEAD is not allowed", method: http.MethodHead, expectErr: true},
+		{name: "TRACE is not allowed", method: http.MethodTrace, expectErr: true},
+		{name: "CONNECT is not allowed", method: http.MethodConnect, expectErr: true},
+		{name: "custom method is not allowed", method: "CUSTOM", expectErr: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateResourceMethod(tc.method)
+			if tc.expectErr {
+				require.Error(t, err)
+				require.ErrorIs(t, err, plugins.ErrPluginMethodNotAllowed)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestAllowedResourceMethodsList(t *testing.T) {
+	result := allowedResourceMethodsList()
+	require.Equal(t, "DELETE, GET, PATCH, POST, PUT", result)
+}
+
+func TestHandleCallResourceErrorMethodNotAllowed(t *testing.T) {
+	rec := httptest.NewRecorder()
+	reqCtx := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Resp: web.NewResponseWriter(http.MethodGet, rec),
+			Req:  httptest.NewRequest(http.MethodOptions, "/", nil),
+		},
+	}
+	handleCallResourceError(plugins.ErrPluginMethodNotAllowed, reqCtx)
+
+	require.Equal(t, http.StatusMethodNotAllowed, rec.Code)
+	require.Equal(t, "DELETE, GET, PATCH, POST, PUT", rec.Header().Get("Allow"))
+
+	var body map[string]interface{}
+	err := json.NewDecoder(rec.Body).Decode(&body)
+	require.NoError(t, err)
+	require.Contains(t, body["message"], "Method not allowed")
+}
+
+func TestHandleCallResourceErrorGeneric(t *testing.T) {
+	rec := httptest.NewRecorder()
+	reqCtx := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Resp: web.NewResponseWriter(http.MethodGet, rec),
+			Req:  httptest.NewRequest(http.MethodGet, "/", nil),
+		},
+	}
+	handleCallResourceError(errors.New("something went wrong"), reqCtx)
+
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	require.Empty(t, rec.Header().Get("Allow"))
 }
