@@ -5,12 +5,21 @@ import { EventBusSrv } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 
+import { DashboardInteractions } from '../utils/interactions';
+
 import { dashboardEditActions } from './shared';
 import { useQuickEditOptions } from './useQuickEditOptions';
 
 jest.mock('./shared', () => ({
   dashboardEditActions: {
     edit: jest.fn(),
+  },
+}));
+
+jest.mock('../utils/interactions', () => ({
+  DashboardInteractions: {
+    quickEditOptionChanged: jest.fn(),
+    quickEditOptionUndone: jest.fn(),
   },
 }));
 
@@ -247,6 +256,63 @@ describe('useQuickEditOptions', () => {
       editCall.undo();
 
       expect(panel.onOptionsChange).toHaveBeenCalledWith({ textMode: 'auto' });
+    });
+  });
+
+  describe('user events', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should report interaction when option is changed', () => {
+      const panel = createMockPanel({ textMode: 'auto' });
+      const plugin = createMockPlugin(['textMode']);
+
+      const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+      const item = result.current!.items[0];
+
+      const rendered = item.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+      act(() => {
+        rendered.props.onChange('value');
+      });
+
+      expect(DashboardInteractions.quickEditOptionChanged).toHaveBeenCalledWith({
+        panelType: 'stat',
+        optionPath: 'textMode',
+        optionName: 'Text mode',
+        source: 'quick_edit',
+        dashboardUid: undefined,
+      });
+    });
+
+    it('should report interaction when option is undone', () => {
+      const panel = createMockPanel({ textMode: 'auto' });
+      const plugin = createMockPlugin(['textMode']);
+
+      jest.spyOn(panel, 'state', 'get').mockReturnValue({
+        options: { textMode: 'value' },
+        pluginId: 'stat',
+        title: 'Test Panel',
+        fieldConfig: { defaults: {}, overrides: [] },
+      } as unknown as typeof panel.state);
+
+      const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+      const item = result.current!.items[0];
+
+      const rendered = item.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+      act(() => {
+        rendered.props.onChange('value');
+      });
+
+      const editCall = (dashboardEditActions.edit as jest.Mock).mock.calls[0][0];
+      editCall.undo();
+
+      expect(DashboardInteractions.quickEditOptionUndone).toHaveBeenCalledWith({
+        panelType: 'stat',
+        optionPath: 'textMode',
+        optionName: 'Text mode',
+        dashboardUid: undefined,
+      });
     });
   });
 });

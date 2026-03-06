@@ -9,7 +9,19 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
+import { DashboardInteractions } from '../utils/interactions';
+import { getDashboardSceneFor } from '../utils/utils';
+
 import { dashboardEditActions } from './shared';
+
+function getDashboardUid(panel: VizPanel): string | undefined {
+  try {
+    const dashboard = getDashboardSceneFor(panel);
+    return dashboard.state.uid;
+  } catch {
+    return undefined;
+  }
+}
 
 interface UseQuickEditOptionsProps {
   panel: VizPanel;
@@ -95,6 +107,16 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
             const handleChange = (newValue: unknown) => {
               const oldValue = currentValue;
               const newOptions = setOptionImmutably(currentOptions, optionPath, newValue);
+              const panelType = plugin.meta?.id ?? 'unknown';
+              const dashboardUid = getDashboardUid(panel);
+
+              DashboardInteractions.quickEditOptionChanged({
+                panelType,
+                optionPath,
+                optionName,
+                source: 'quick_edit',
+                dashboardUid,
+              });
 
               dashboardEditActions.edit({
                 description: t('dashboard.quick-edit.change-option', 'Change {{optionName}}', { optionName }),
@@ -103,6 +125,12 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
                   panel.onOptionsChange(newOptions);
                 },
                 undo: () => {
+                  DashboardInteractions.quickEditOptionUndone({
+                    panelType,
+                    optionPath,
+                    optionName,
+                    dashboardUid,
+                  });
                   const revertedOptions = setOptionImmutably(panel.state.options, optionPath, oldValue);
                   panel.onOptionsChange(revertedOptions);
                 },

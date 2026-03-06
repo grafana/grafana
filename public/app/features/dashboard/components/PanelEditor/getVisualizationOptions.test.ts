@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   EventBusSrv,
   FieldConfigOptionsRegistry,
@@ -6,12 +8,20 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelPlugin,
+  PanelOptionsEditorBuilder,
   Registry,
   toDataFrame,
 } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { getStandardEditorContext, getVisualizationOptions2 } from './getVisualizationOptions';
+
+jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
+  DashboardInteractions: {
+    quickEditOptionChanged: jest.fn(),
+  },
+}));
 
 describe('getVisualizationOptions', () => {
   describe('getStandardEditorContext', () => {
@@ -221,6 +231,7 @@ describe('getVisualizationOptions', () => {
       const plugin = {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
+        getQuickEditPaths: () => [],
         fieldConfigRegistry: customFieldRegistry,
       } as unknown as PanelPlugin;
 
@@ -283,6 +294,7 @@ describe('getVisualizationOptions', () => {
       const plugin = {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
+        getQuickEditPaths: () => [],
         fieldConfigRegistry: customFieldRegistry,
       } as unknown as PanelPlugin;
 
@@ -334,6 +346,7 @@ describe('getVisualizationOptions', () => {
       return {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
+        getQuickEditPaths: () => [],
         fieldConfigRegistry: customFieldRegistry,
       } as unknown as PanelPlugin;
     };
@@ -396,6 +409,145 @@ describe('getVisualizationOptions', () => {
       expect(showIfSpy.mock.calls.length).toEqual(1);
       expect(showIfSpy.mock.calls[0][0].displayName).toBe('default');
       expect(showIfSpy.mock.calls[0][2][0].fields[0].config.displayName).toBe('annotation');
+    });
+
+    describe('quick edit telemetry', () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
+
+      const createPluginWithQuickEdit = (quickEditPaths: string[]) => {
+        const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => []);
+
+        const plugin = {
+          meta: { id: 'test-panel', skipDataQuery: false },
+          getPanelOptionsSupplier: () => (builder: PanelOptionsEditorBuilder<{}>) => {
+            builder.addSelect({
+              path: 'testOption',
+              name: 'Test Option',
+              settings: { options: [] },
+            });
+            builder.addSelect({
+              path: 'otherOption',
+              name: 'Other Option',
+              settings: { options: [] },
+            });
+          },
+          getQuickEditPaths: () => quickEditPaths,
+          fieldConfigRegistry: customFieldRegistry,
+        } as unknown as PanelPlugin;
+
+        return plugin;
+      };
+
+      it('should track option change when path is in quickEditPaths', () => {
+        const panel = new VizPanel({
+          title: 'Test Panel',
+          pluginId: 'test-panel',
+          key: 'panel-1',
+          options: { testOption: 'initial' },
+        });
+
+        // Mock onOptionsChange to avoid full plugin setup
+        panel.onOptionsChange = jest.fn();
+
+        const plugin = createPluginWithQuickEdit(['testOption']);
+
+        const vizOptions = getVisualizationOptions2({
+          panel,
+          eventBus: new EventBusSrv(),
+          plugin,
+          instanceState: {},
+        });
+
+        // Find the testOption item and trigger onChange
+        const category = vizOptions.find((c) => c.items.some((i) => i.props.title === 'Test Option'));
+        const item = category?.items.find((i) => i.props.title === 'Test Option');
+
+        // Render the item to get the onChange handler
+        const rendered = item?.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+        rendered?.props.onChange('newValue');
+
+        expect(DashboardInteractions.quickEditOptionChanged).toHaveBeenCalledWith({
+          panelType: 'test-panel',
+          optionPath: 'testOption',
+          source: 'panel_editor',
+          dashboardUid: undefined,
+        });
+      });
+
+      it('should not track option change when path is not in quickEditPaths', () => {
+        const panel = new VizPanel({
+          title: 'Test Panel',
+          pluginId: 'test-panel',
+          key: 'panel-1',
+          options: { otherOption: 'initial' },
+        });
+
+        // Mock onOptionsChange to avoid full plugin setup
+        panel.onOptionsChange = jest.fn();
+
+        const plugin = createPluginWithQuickEdit(['testOption']); // otherOption is NOT in quickEditPaths
+
+        const vizOptions = getVisualizationOptions2({
+          panel,
+          eventBus: new EventBusSrv(),
+          plugin,
+          instanceState: {},
+        });
+
+        // Find the otherOption item and trigger onChange
+        const category = vizOptions.find((c) => c.items.some((i) => i.props.title === 'Other Option'));
+        const item = category?.items.find((i) => i.props.title === 'Other Option');
+
+        // Render the item to get the onChange handler
+        const rendered = item?.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+        rendered?.props.onChange('newValue');
+
+        expect(DashboardInteractions.quickEditOptionChanged).not.toHaveBeenCalled();
+      });
+
+      it('should not track when plugin has no quickEditPaths', () => {
+        const panel = new VizPanel({
+          title: 'Test Panel',
+          pluginId: 'test-panel',
+          key: 'panel-1',
+          options: { testOption: 'initial' },
+        });
+
+        // Mock onOptionsChange to avoid full plugin setup
+        panel.onOptionsChange = jest.fn();
+
+        const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => []);
+
+        const plugin = {
+          meta: { id: 'test-panel', skipDataQuery: false },
+          getPanelOptionsSupplier: () => (builder: PanelOptionsEditorBuilder<{}>) => {
+            builder.addSelect({
+              path: 'testOption',
+              name: 'Test Option',
+              settings: { options: [] },
+            });
+          },
+          getQuickEditPaths: () => undefined,
+          fieldConfigRegistry: customFieldRegistry,
+        } as unknown as PanelPlugin;
+
+        const vizOptions = getVisualizationOptions2({
+          panel,
+          eventBus: new EventBusSrv(),
+          plugin,
+          instanceState: {},
+        });
+
+        const category = vizOptions.find((c) => c.items.some((i) => i.props.title === 'Test Option'));
+        const item = category?.items.find((i) => i.props.title === 'Test Option');
+
+        const rendered = item?.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+        rendered?.props.onChange('newValue');
+
+        expect(DashboardInteractions.quickEditOptionChanged).not.toHaveBeenCalled();
+      });
     });
   });
 });
