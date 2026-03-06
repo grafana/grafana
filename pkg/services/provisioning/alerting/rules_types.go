@@ -151,7 +151,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		noDataState = models.NoData
 	}
 	alertRule.NoDataState = noDataState
-	alertRule.Annotations = rule.Annotations.Raw
+	alertRule.Annotations = rule.Annotations.Value()
 	alertRule.Labels = rule.Labels.Value()
 	for _, queryV1 := range rule.Data {
 		query, err := queryV1.mapToModel()
