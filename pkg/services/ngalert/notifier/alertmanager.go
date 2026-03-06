@@ -446,7 +446,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 
 	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
 	err = am.Base.ApplyConfig(alertingNotify.NotificationsConfiguration{
-		RoutingTree:       amConfig.Route.AsAMRoute(),
+		RoutingTree:       amConfig.Route,
 		InhibitRules:      amConfig.InhibitRules,
 		MuteTimeIntervals: amConfig.MuteTimeIntervals,
 		TimeIntervals:     amConfig.TimeIntervals,

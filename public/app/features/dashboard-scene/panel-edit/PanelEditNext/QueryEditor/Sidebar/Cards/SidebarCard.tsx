@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { ActionItem, Actions } from '../../Actions';
+import { ActionItem, Actions } from '../../../Actions';
 import {
   QUERY_EDITOR_COLORS,
   QUERY_EDITOR_TYPE_CONFIG,
@@ -14,11 +14,10 @@ import {
   SIDEBAR_CARD_INDENT,
   SIDEBAR_CARD_SPACING,
   getQueryEditorColors,
-} from '../../constants';
-import { getEditorBorderColor } from '../utils';
-
-import { AddCardButton } from './AddCardButton';
-import { getGhostCardVisuals } from './SidebarCardGhostStyles';
+} from '../../../constants';
+import { getEditorBorderColor } from '../../utils';
+import { AddCardButton } from '../AddCardButton';
+import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
 
 interface SidebarCardProps {
   children: React.ReactNode;

@@ -1602,8 +1602,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20260304175146-4d37d7b17452 h1:Je6s0bWwhd2kohkmFcsU2lXTG2yzcpDZ/z8DGdqzePU=
-github.com/grafana/alerting v0.0.0-20260304175146-4d37d7b17452/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
+github.com/grafana/alerting v0.0.0-20260304185607-3b455cb55a82 h1:oYpwHBp8MwZwuxyXmMZStMEtDoihSASrDsEpukB/gwU=
+github.com/grafana/alerting v0.0.0-20260304185607-3b455cb55a82/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
 github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d h1:9cE/YVzudTOdWRf+nv1LFSOnEMl4tM+aTp+juBd0eU8=
 github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d/go.mod h1:TZHiNIUlZa3p1ElRPnSQaHK1fIm/nPdJvlvdWqThggU=
 github.com/grafana/authlib/types v0.0.0-20260226130908-b01d89f85c4d h1:SMC55BzMlSKP29X7Op41MtdbCxmpENE+6TUFMLaO0Jg=
@@ -1664,6 +1664,8 @@ github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc h1:GN2Lv3MGO7AS6PrR
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
 github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56 h1:SDGrP81Vcd102L3UJEryRd1eestRw73wt+b8vnVEFe0=
 github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56/go.mod h1:S4+611dxnKt8z/ulbvaJzcgSHsuhjVc1QHNTcr1R7Fw=
+github.com/grafana/schemads v0.0.1 h1:hw+8zJlZG/dFPbAlXs+PU86pwqG2tPO1mL8ws0S8/Do=
+github.com/grafana/schemads v0.0.1/go.mod h1:i/iRKic1c9i/ZjApKe7+BDQjPhlQO7gWycVRu7x6c1U=
 github.com/grafana/sqlds/v5 v5.0.4 h1:Q4T4wXI5tolN1EUQtN81I4SGBFlBF4tD8XYh34/kk24=
 github.com/grafana/sqlds/v5 v5.0.4/go.mod h1:BvFzzPgc2bmr3R78s1TuZr2gOELpBM9tt6m1DKI8Ts4=
 github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec h1:wnzJov9RhSHGaTYGzTygL4qq986fLen8xSqnQgaMd28=
